@@ -18,7 +18,7 @@ importa ex "../../ast/expressia" privata Expressia
 functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
     discerne unariaExpr {
         casu UnariaExpressia ut u {
-            fixum argTypus = r.expressia(u.argumentum)
+            fixum argTypus = r.synthesize(u.argumentum)
 
             # Logical negation: !, non
             si u.signum inter ["!", "non"] {

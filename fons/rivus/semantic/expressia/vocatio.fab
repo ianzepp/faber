@@ -26,7 +26,7 @@ importa ex "../../parser/morphologia" privata formaExFlagga
 functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
     discerne vocatioExpr {
         casu VocatioExpressia ut v {
-            fixum vocatumTypus = r.expressia(v.vocatum)
+            fixum vocatumTypus = r.synthesize(v.vocatum)
 
             # Resolve/check arguments (bidirectional foundation)
             discerne vocatumTypus {
@@ -36,14 +36,14 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                         si i < f.parametriTypi.longitudo() {
                             r.check(arg, f.parametriTypi[i])
                         } secus {
-                            r.expressia(arg)
+                            r.synthesize(arg)
                         }
                         i += 1
                     }
                 }
                 casu _ {
                     itera ex v.argumenta fixum arg {
-                        r.expressia(arg)
+                        r.synthesize(arg)
                     }
                 }
             }
@@ -54,7 +54,7 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                     si non (m.computatum qua bivalens) {
                         discerne m.proprietas {
                             casu Nomen ut n {
-                                fixum obiectumTypus = r.expressia(m.obiectum)
+                                fixum obiectumTypus = r.synthesize(m.obiectum)
                                 fixum recipiens = nomenReceptor(obiectumTypus)
 
                                 # WHY: Set morphologia for method calls on known stdlib collection types.
@@ -165,11 +165,11 @@ functio estFormaPermissa(lista<textus> formae, textus forma) -> bivalens {
 functio resolveMembrum(Resolvitor r, Expressia membrumExpr) -> SemanticTypus {
     discerne membrumExpr {
         casu MembrumExpressia ut m {
-            fixum obiectumTypus = r.expressia(m.obiectum)
+            fixum obiectumTypus = r.synthesize(m.obiectum)
 
             # If computed access (obj[key]), resolve the key
             si m.computatum {
-                r.expressia(m.proprietas)
+                r.synthesize(m.proprietas)
             }
 
             # Handle known collection methods

@@ -66,11 +66,11 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
                                 discerne ult {
                                     casu ReddeSententia ut s {
                                         si nonnihil s.valor {
-                                            reditusTypus = r.expressia(s.valor qua Expressia)
+                                            reditusTypus = r.synthesize(s.valor qua Expressia)
                                         }
                                     }
                                     casu ExpressiaSententia ut s {
-                                        reditusTypus = r.expressia(s.expressia)
+                                        reditusTypus = r.synthesize(s.expressia)
                                     }
                                     casu _ tacet
                                 }
@@ -80,7 +80,7 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
                     }
                 }
                 casu Expr ut e {
-                    reditusTypus = r.expressia(e.valor)
+                    reditusTypus = r.synthesize(e.valor)
                 }
             }
 
@@ -107,7 +107,7 @@ functio resolveFingeExpr(Resolvitor r, Expressia fingeExpr) -> SemanticTypus {
         casu FingeExpressia ut f {
             # Resolve all field values
             itera ex f.campi fixum campo {
-                r.expressia(campo.valor)
+                r.synthesize(campo.valor)
             }
 
             # The type comes from the qua clause (scopus)
@@ -135,7 +135,7 @@ functio resolveCedeExpr(Resolvitor r, Expressia cedeExpr) -> SemanticTypus {
 
     discerne cedeExpr {
         casu CedeExpressia ut c {
-            fixum promissumTypus = r.expressia(c.argumentum)
+            fixum promissumTypus = r.synthesize(c.argumentum)
 
             # Check we're in an async context
             si non a.currentFunctioAsync et non a.currentFunctioGenerator {
@@ -172,7 +172,7 @@ functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) -> SemanticTypus {
         casu NovumExpressia ut n {
             # Resolve constructor arguments
             itera ex n.argumenta fixum arg {
-                r.expressia(arg)
+                r.synthesize(arg)
             }
 
             # The type is the class being instantiated
@@ -200,9 +200,9 @@ functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) -> SemanticTypus {
 functio resolveCondicio(Resolvitor r, Expressia condicioExpr) -> SemanticTypus {
     discerne condicioExpr {
         casu CondicioExpressia ut c {
-            r.expressia(c.condicio)
-            fixum consequensTypus = r.expressia(c.consequens)
-            r.expressia(c.alternans)
+            r.synthesize(c.condicio)
+            fixum consequensTypus = r.synthesize(c.consequens)
+            r.synthesize(c.alternans)
 
             # Return the consequent type (simplification)
             redde consequensTypus

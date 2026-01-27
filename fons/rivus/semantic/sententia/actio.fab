@@ -22,11 +22,7 @@ functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
         casu ReddeSententia ut rd {
             # Resolve return value if present
             si nonnihil rd.valor {
-                varia valorTypus = r.expressia(rd.valor)
-
-                si nonnihil a.currentFunctioReditus {
-                    valorTypus = r.check(rd.valor, a.currentFunctioReditus qua SemanticTypus)
-                }
+                varia valorTypus = nonnihil a.currentFunctioReditus sic r.check(rd.valor, a.currentFunctioReditus qua SemanticTypus) secus r.synthesize(rd.valor)
 
                 # Check against function return type
                 si nonnihil a.currentFunctioReditus {
@@ -54,7 +50,7 @@ functio analyzeIace(Resolvitor r, Sententia iaceStmt) -> vacuum {
     discerne iaceStmt {
         casu IaceSententia ut i {
             # Resolve thrown expression
-            r.expressia(i.argumentum)
+            r.synthesize(i.argumentum)
         }
         casu _ tacet
     }
@@ -71,7 +67,7 @@ functio analyzeScribe(Resolvitor r, Sententia scribeStmt) -> vacuum {
         casu ScribeSententia ut s {
             # Resolve all arguments
             itera ex s.argumenta fixum arg {
-                r.expressia(arg)
+                r.synthesize(arg)
             }
         }
         casu _ tacet
@@ -88,11 +84,11 @@ functio analyzeAdfirma(Resolvitor r, Sententia adfirmaStmt) -> vacuum {
     discerne adfirmaStmt {
         casu AdfirmaSententia ut adf {
             # Resolve condition
-            r.expressia(adf.condicio)
+            r.synthesize(adf.condicio)
 
             # Resolve message if present
             si nonnihil adf.nuntius {
-                r.expressia(adf.nuntius)
+                r.synthesize(adf.nuntius)
             }
         }
         casu _ tacet

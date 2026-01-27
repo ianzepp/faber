@@ -167,7 +167,7 @@ functio analyzeSententia(Resolvitor r, Sententia stmt) -> vacuum {
 
         # Expression statement
         casu ExpressiaSententia ut e {
-            r.expressia(e.expressia)
+            r.synthesize(e.expressia)
         }
 
         # Rumpe/Perge - no analysis needed

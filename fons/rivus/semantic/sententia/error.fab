@@ -69,7 +69,7 @@ functio analyzeFac(Resolvitor r, Sententia facStmt) -> vacuum {
 
             # Analyze condition
             si nonnihil f.condicio {
-                r.expressia(f.condicio qua Expressia)
+                r.synthesize(f.condicio qua Expressia)
             }
 
             # Analyze catch clause if present
@@ -111,7 +111,7 @@ functio analyzeCura(Resolvitor r, Sententia curaStmt) -> vacuum {
             # Analyze resource expression
             varia resourceTypus = IGNOTUM
             si nonnihil c.res {
-                resourceTypus = r.expressia(c.res qua Expressia)
+                resourceTypus = r.synthesize(c.res qua Expressia)
             }
 
             # Enter scope for resource binding

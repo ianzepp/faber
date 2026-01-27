@@ -27,7 +27,7 @@ functio analyzeSi(Resolvitor r, Sententia siStmt) -> vacuum {
     discerne siStmt {
         casu SiSententia ut s {
             # Analyze condition
-            r.expressia(s.condicio)
+            r.synthesize(s.condicio)
 
             # Analyze consequent in its own block scope
             a.intraScopum(ScopusSpecies.Massa)
@@ -67,7 +67,7 @@ functio analyzeDum(Resolvitor r, Sententia dumStmt) -> vacuum {
     discerne dumStmt {
         casu DumSententia ut d {
             # Analyze condition
-            r.expressia(d.condicio)
+            r.synthesize(d.condicio)
 
             # Analyze body in its own block scope
             a.intraScopum(ScopusSpecies.Massa)
@@ -86,7 +86,7 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
     discerne iteratioStmt {
         casu IteratioSententia ut i {
             # Analyze source expression
-            fixum sourceTypus = r.expressia(i.iterabile)
+            fixum sourceTypus = r.synthesize(i.iterabile)
 
             # Enter block scope for loop variable
             a.intraScopum(ScopusSpecies.Massa)
@@ -183,7 +183,7 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
     discerne eligeStmt {
         casu EligeSententia ut e {
             # Analyze discriminant
-            r.expressia(e.discriminans)
+            r.synthesize(e.discriminans)
 
             # Analyze each case in its own scope
             itera ex e.casus fixum casus {
@@ -194,7 +194,7 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
                 }
 
                 # Analyze case test
-                r.expressia(casus.condicio)
+                r.synthesize(casus.condicio)
 
                 # Analyze case body in its own block scope
                 a.intraScopum(ScopusSpecies.Massa)
@@ -228,7 +228,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
         casu DiscerneSententia ut d {
             # Analyze all discriminants
             itera ex d.discriminantes fixum disc {
-                r.expressia(disc)
+                r.synthesize(disc)
             }
 
             # Analyze each variant case
@@ -249,7 +249,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                     # Get discriminant type for this pattern position
                     varia discriminantTypus = IGNOTUM
                     si patternIndex < d.discriminantes.longitudo() {
-                        discriminantTypus = r.expressia(d.discriminantes[patternIndex])
+                        discriminantTypus = r.synthesize(d.discriminantes[patternIndex])
                     }
 
                     # Get variant type by resolving DiscretioNomen.VariantNomen
@@ -347,7 +347,7 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                 }
                 sin non habetWildcardCasu {
                     # Resolve discriminant type name
-                    fixum discriminantTypus = r.expressia(d.discriminantes[0])
+                    fixum discriminantTypus = r.synthesize(d.discriminantes[0])
                     varia discretioNomen = nihil qua si textus
                     discerne discriminantTypus {
                         casu Usitatum ut u {
@@ -420,7 +420,7 @@ functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) -> vacuum {
             # Analyze each guard clause
             itera ex c.clausulae fixum clausula {
                 # Analyze condition
-                r.expressia(clausula.condicio)
+                r.synthesize(clausula.condicio)
 
                 # Analyze body in its own block scope
                 a.intraScopum(ScopusSpecies.Massa)

@@ -106,11 +106,11 @@ functio resolveSeries(Resolvitor r, Expressia seriesExpr) -> SemanticTypus {
             }
 
             # Resolve first element to infer type
-            fixum primumTypus = r.expressia(s.elementa.primus())
+            fixum primumTypus = r.synthesize(s.elementa.primus())
 
             # Resolve all other elements
             itera ex s.elementa fixum elem {
-                r.expressia(elem)
+                r.synthesize(elem)
             }
 
             redde genericumTypus("lista", [primumTypus], falsum)
@@ -132,7 +132,7 @@ functio resolveObiectum(Resolvitor r, Expressia obiectumExpr) -> SemanticTypus {
         casu ObiectumExpressia ut o {
             # Resolve each property value
             itera ex o.proprietates fixum prop {
-                r.expressia(prop.valor)
+                r.synthesize(prop.valor)
             }
 
             # Object literals have unknown structural type for now

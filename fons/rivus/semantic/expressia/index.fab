@@ -97,7 +97,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Postfix new expression ({ ... } novum Type)
         casu PostfixNovumExpressia ut p {
-            r.expressia(p.expressia)
+            r.synthesize(p.expressia)
             redde usitatumTypus(p.scopus.nomen, falsum)
         }
 
@@ -118,8 +118,8 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Bit shift expression (x dextratum 3 -> x >> 3)
         casu TranslatioExpressia ut t {
-            r.expressia(t.expressia)
-            r.expressia(t.quantitas)
+            r.synthesize(t.expressia)
+            r.synthesize(t.quantitas)
             redde NUMERUS
         }
 
@@ -133,7 +133,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         # Spread element (...items)
         casu DispersioElementum ut d {
             # Spread expands an iterable - resolve the argument type
-            redde r.expressia(d.argumentum)
+            redde r.synthesize(d.argumentum)
         }
 
         # Object literal { key: value }
@@ -168,7 +168,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Type cast (expr qua Type)
         casu QuaExpressia ut q {
-            r.expressia(q.expressia)
+            r.synthesize(q.expressia)
             # Resolve target type annotation and return it
             fixum targetTypus = resolveTypusAnnotatio(r, q.scopus)
             redde targetTypus
@@ -176,7 +176,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Native type construction ([] innatum lista<T>, {} innatum tabula<K,V>)
         casu InnatumExpressia ut i {
-            r.expressia(i.expressia)
+            r.synthesize(i.expressia)
             fixum targetTypus = resolveTypusAnnotatio(r, i.scopus)
             redde targetTypus
         }
@@ -189,7 +189,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         # Format string (scriptum)
         casu ScriptumExpressia ut s {
             itera ex s.argumenta fixum arg {
-                r.expressia(arg)
+                r.synthesize(arg)
             }
             redde TEXTUS
         }
@@ -207,13 +207,13 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         # Collection DSL (ab items activus, ab items prima 5)
         casu AbExpressia ut abExpr {
             # WHY: Filtering doesn't change element type, only reduces collection.
-            fixum fonsTypus = r.expressia(abExpr.fons)
+            fixum fonsTypus = r.synthesize(abExpr.fons)
 
             # Resolve filter condition if present (ubi form)
             si nonnihil abExpr.filtrum {
                 fixum filtrum = abExpr.filtrum
                 si filtrum.habetUbi {
-                    r.expressia(filtrum.condicio)
+                    r.synthesize(filtrum.condicio)
                 }
             }
 
@@ -222,11 +222,11 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Type conversion (numeratum, fractatum, textatum, bivalentum)
         casu ConversioExpressia ut c {
-            r.expressia(c.expressia)
+            r.synthesize(c.expressia)
 
             # Resolve fallback if present
             si nonnihil c.fallback {
-                r.expressia(c.fallback qua Expressia)
+                r.synthesize(c.fallback qua Expressia)
             }
 
             # Resolve target type if present
@@ -327,20 +327,20 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                 }
 
                 casu MembrumExpressia ut m {
-                    fixum dexterTypus = r.expressia(assign.dexter)
+                    fixum dexterTypus = r.synthesize(assign.dexter)
                     # TODO: Resolve member types once genus metadata exists.
-                    r.expressia(m.obiectum)
+                    r.synthesize(m.obiectum)
                     # WHY: Only resolve property for computed (indexed) access.
                     # For dot access (obj.field), property is a field name, not a variable.
                     si m.computatum {
-                        r.expressia(m.proprietas)
+                        r.synthesize(m.proprietas)
                     }
                     redde dexterTypus
                 }
                 casu _ tacet
             }
 
-            redde r.expressia(assign.dexter)
+            redde r.synthesize(assign.dexter)
         }
         casu _ tacet
     }

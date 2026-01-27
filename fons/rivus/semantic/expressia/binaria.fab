@@ -26,8 +26,8 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
 
     discerne binariaExpr {
         casu BinariaExpressia ut b {
-            fixum sinisterTypus = r.expressia(b.sinister)
-            fixum dexterTypus = r.expressia(b.dexter)
+            fixum sinisterTypus = r.synthesize(b.sinister)
+            fixum dexterTypus = r.synthesize(b.dexter)
 
             # Arithmetic operators: +, -, *, /, %
             si estArithmeticum(b.signum) {

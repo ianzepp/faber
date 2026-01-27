@@ -238,7 +238,7 @@ functio analyzeDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuum {
     discerne stmt {
         casu DestructuraSententia ut d {
             # Analyze the source expression to get its type
-            fixum fonsTypus = r.expressia(d.fons)
+            fixum fonsTypus = r.synthesize(d.fons)
 
             # Determine mutability from species (fixum vs varia)
             fixum mutabilis = d.species == VariaGenus.Varia aut d.species == VariaGenus.Variandum
@@ -269,7 +269,7 @@ functio analyzeSeriesDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuu
     discerne stmt {
         casu SeriesDestructuraSententia ut s {
             # Analyze the source expression to get its type
-            fixum fonsTypus = r.expressia(s.fons)
+            fixum fonsTypus = r.synthesize(s.fons)
 
             # Determine mutability from species (fixum vs varia)
             fixum mutabilis = s.species == VariaGenus.Varia aut s.species == VariaGenus.Variandum
