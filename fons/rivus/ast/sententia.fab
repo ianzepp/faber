@@ -325,14 +325,17 @@ discretio Sententia {
         si Visibilitas visibilitas  # @ publica annotation for module-level export
     }
 
-    # Import declaration
-    # Example: ex norma importa scribe, lege
+    # Import declaration (single import per statement)
+    # Example: importa ex "path" privata T
+    # Example: importa ex "path" publica T ut alias
+    # Example: importa ex "path" privata * ut namespace
     ImportaSententia {
         Locus locus
         textus fons              # source path/module
-        lista<ImportaSpecificator> specificatores
+        si textus importatum       # original name (nil for wildcard *)
+        textus locale            # local binding name
         bivalens totum           # true for wildcard *
-        si textus totumAlias       # WHY: optional alias for * ut name
+        bivalens publica         # true for re-export (publica), false for private import
     }
 
     # Destructure declaration

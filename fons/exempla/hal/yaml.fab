@@ -2,8 +2,8 @@
 #
 # Demonstrates YAML serialization using the yaml HAL module.
 
-§ ex "../../norma/hal/consolum" importa consolum
-§ ex "../../norma/hal/yaml" importa yaml
+importa ex "../../norma/hal/consolum" privata consolum
+importa ex "../../norma/hal/yaml" privata yaml
 
 incipit {
     consolum.fundeLineam("=== YAML Demo ===\n")

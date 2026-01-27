@@ -216,7 +216,9 @@ ordo VerbumId {
     Optiones       # CLI options bundle modifier
     Argumenta      # CLI arguments binding for incipit/incipiet
     Publicus
+    Publica
     Privatus
+    Privata
     Generis
     Implet
     Sub

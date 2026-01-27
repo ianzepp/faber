@@ -68,6 +68,8 @@ ordo ParserErrorCodice {
     ExpectaturIncipit = "P054",
     ExpectaturIncipiet = "P055",
     ExpectaturClausura = "P056",
+    ExpectaturVisibilitas = "P058",
+    ExpectaturUt = "P059",
 
     # Module/source errors (P050-P059)
     ExpectaturModulusNomen = "P050",
@@ -279,6 +281,12 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
         }
         casu ParserErrorCodice.ExpectaturClausura {
             redde creoNuntium("Expected 'clausura'", "Closure: clausura x: x * 2")
+        }
+        casu ParserErrorCodice.ExpectaturVisibilitas {
+            redde creoNuntium("Expected 'privata' or 'publica'", "Imports require visibility: importa ex 'path' privata T")
+        }
+        casu ParserErrorCodice.ExpectaturUt {
+            redde creoNuntium("Expected 'ut'", "Wildcard imports require alias: importa ex 'path' privata * ut ns")
         }
 
         # Module/source errors

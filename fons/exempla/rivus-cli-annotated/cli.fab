@@ -16,13 +16,13 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Commands
-§ ex "./cli/commands/emit" importa emitCommand
-§ ex "./cli/commands/build" importa buildCommand
-§ ex "./cli/commands/parse" importa parseCommand
-§ ex "./cli/commands/check" importa checkCommand
-§ ex "./cli/commands/test" importa testCommand
-§ ex "./cli/commands/fetch" importa mandatumArcessere
-§ ex "./cli/commands/run" importa mandatumCurrere
+importa ex "./cli/commands/emit" privata emitCommand
+importa ex "./cli/commands/build" privata buildCommand
+importa ex "./cli/commands/parse" privata parseCommand
+importa ex "./cli/commands/check" privata checkCommand
+importa ex "./cli/commands/test" privata testCommand
+importa ex "./cli/commands/fetch" privata mandatumArcessere
+importa ex "./cli/commands/run" privata mandatumCurrere
 
 @ cli "rivus"
 @ versio "0.1.0"

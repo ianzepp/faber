@@ -94,7 +94,7 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
         }
 
         casu ImportaSententia ut s {
-            redde genImporta(g, s.fons qua textus, s.specificatores qua lista<ImportaSpecificator>, s.totum qua bivalens, s.totumAlias)
+            redde genImporta(g, s.fons qua textus, s.importatum, s.locale qua textus, s.totum qua bivalens, s.publica qua bivalens)
         }
 
         casu DestructuraSententia ut s {

@@ -7,15 +7,17 @@
 # See: https://github.com/ianzepp/faber/issues/293
 
 # =============================================================================
-# § importa - Module Imports (NEW SYNTAX)
+# importa - Module Imports (NEW SYNTAX per issue #304)
 # =============================================================================
-# Old: § ex "./path" importa foo, bar ut baz
-# New: § importa ex "./path" foo, bar ut baz
+# Syntax: importa ex "<path>" privata|publica <name> [ut <alias>]
+# Syntax: importa ex "<path>" privata|publica * ut <alias>  (wildcard)
 
-§ importa ex "./types" Numerus, Textus
-§ importa ex "./utils" auxilium ut aux, formata
-§ importa ex "./constants" *
-§ importa ex "./config" * ut cfg
+importa ex "./types" privata Numerus
+importa ex "./types" privata Textus
+importa ex "./utils" privata auxilium ut aux
+importa ex "./utils" privata formata
+importa ex "./constants" privata * ut constants
+importa ex "./config" privata * ut cfg
 
 # =============================================================================
 # § sectio - File Sections

@@ -249,6 +249,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
         }
 
         # Import declaration - resolve module and register symbols
+        # New single-import syntax: importa ex "path" privata|publica T [ut alias]
         casu ImportaSententia ut imp {
             # Skip norma imports (handled by intrinsics)
             si estNormaImportum(imp.fons) {
@@ -277,29 +278,30 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                         si nihil modulus {
                             a.error(scriptum("Module not found: § (resolved from §)", resolvedPath, imp.fons), imp.locus)
                         } secus {
-                            # Named imports: ex "alias:path" importa foo, bar
-                            ex imp.specificatores fixum spec {
-                                si nonnihil modulus.exporta[spec.importatum] {
-                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
+                            # Single named import
+                            si nonnihil imp.importatum {
+                                fixum importatum = imp.importatum qua textus
+                                si nonnihil modulus.exporta[importatum] {
+                                    fixum exportum = modulus.exporta[importatum] qua ModulusExportum
                                     a.definie({
-                                        nomen: spec.locale,
+                                        nomen: imp.locale,
                                         semanticTypus: exportum.typus,
                                         species: exportum.species,
                                         mutabilis: falsum,
-                                        locus: spec.locus
+                                        locus: imp.locus
                                     } novum Symbolum)
 
-                                    si nonnihil modulus.discretiones[spec.importatum] {
-                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
+                                    si nonnihil modulus.discretiones[importatum] {
+                                        a.discretioIndex[imp.locale] = modulus.discretiones[importatum] qua DiscretioDeclInfo
                                     }
 
                                     # Import variant types for discretio
-                                    fixum prefix = spec.importatum + "."
+                                    fixum prefix = importatum + "."
                                     ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
-                                            fixum qualNomen = scriptum("§.§", spec.locale, suffix)
+                                            fixum qualNomen = scriptum("§.§", imp.locale, suffix)
 
                                             si nihil a.scopus.symbola[qualNomen] {
                                                 a.definie({
@@ -313,7 +315,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                                         }
                                     }
                                 } secus {
-                                    a.error(scriptum("'§' is not exported from '§'", spec.importatum, imp.fons), spec.locus)
+                                    a.error(scriptum("'§' is not exported from '§'", importatum, imp.fons), imp.locus)
                                 }
                             }
                         }
@@ -336,18 +338,16 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                     si nihil modulus {
                         a.error(scriptum("Module not found: §", imp.fons), imp.locus)
                     } secus {
-                        # Wildcard import: ex "./x" importa * ut alias
+                        # Wildcard import: importa ex "path" privata * ut alias
                         si imp.totum {
-                            si nonnihil imp.totumAlias {
-                                # Define namespace alias
-                                a.definie({
-                                    nomen: imp.totumAlias qua textus,
-                                    semanticTypus: IGNOTUM,
-                                    species: SymbolumSpecies.Variabilis,
-                                    mutabilis: falsum,
-                                    locus: imp.locus
-                                } novum Symbolum)
-                            }
+                            # Define namespace alias
+                            a.definie({
+                                nomen: imp.locale,
+                                semanticTypus: IGNOTUM,
+                                species: SymbolumSpecies.Variabilis,
+                                mutabilis: falsum,
+                                locus: imp.locus
+                            } novum Symbolum)
                             # Also add all individual exports to scope
                             ex modulus.exporta.claves() fixum nomen {
                                 fixum exportum = modulus.exporta[nomen] qua ModulusExportum
@@ -360,34 +360,32 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                                 } novum Symbolum)
                             }
                         } secus {
-                            # Named imports: ex "./x" importa foo, bar ut b
-                            ex imp.specificatores fixum spec {
-                                si nonnihil modulus.exporta[spec.importatum] {
-                                    fixum exportum = modulus.exporta[spec.importatum] qua ModulusExportum
+                            # Single named import: importa ex "path" privata T [ut alias]
+                            si nonnihil imp.importatum {
+                                fixum importatum = imp.importatum qua textus
+                                si nonnihil modulus.exporta[importatum] {
+                                    fixum exportum = modulus.exporta[importatum] qua ModulusExportum
                                     a.definie({
-                                        nomen: spec.locale,  # Use local alias if provided
+                                        nomen: imp.locale,
                                         semanticTypus: exportum.typus,
                                         species: exportum.species,
                                         mutabilis: falsum,
-                                        locus: spec.locus
+                                        locus: imp.locus
                                     } novum Symbolum)
 
-                                    # Record discretio metadata under the local alias, if present.
-                                    si nonnihil modulus.discretiones[spec.importatum] {
-                                        a.discretioIndex[spec.locale] = modulus.discretiones[spec.importatum] qua DiscretioDeclInfo
+                                    # Record discretio metadata under the local alias
+                                    si nonnihil modulus.discretiones[importatum] {
+                                        a.discretioIndex[imp.locale] = modulus.discretiones[importatum] qua DiscretioDeclInfo
                                     }
 
-                                    # WHY: If a discretio type is imported by name, also import its
-                                    # variant types as `LocalName.VariansNomen` so `discerne` can
-                                    # resolve bindings and enable norma translations.
-                                    fixum prefix = spec.importatum + "."
+                                    # Import variant types for discretio
+                                    fixum prefix = importatum + "."
                                     ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
                                             fixum exportum = modulus.exporta[nomen] qua ModulusExportum
                                             fixum suffix = nomen.slice(prefix.length)
-                                            fixum qualNomen = scriptum("§.§", spec.locale, suffix)
+                                            fixum qualNomen = scriptum("§.§", imp.locale, suffix)
 
-                                            # Avoid duplicate definitions if multiple imports overlap.
                                             si nihil a.scopus.symbola[qualNomen] {
                                                 a.definie({
                                                     nomen: qualNomen,
@@ -400,7 +398,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                                         }
                                     }
                                 } secus {
-                                    a.error(scriptum("'§' is not exported from '§'", spec.importatum, imp.fons), spec.locus)
+                                    a.error(scriptum("'§' is not exported from '§'", importatum, imp.fons), imp.locus)
                                 }
                             }
                         }

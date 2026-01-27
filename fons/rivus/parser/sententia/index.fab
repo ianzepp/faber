@@ -91,31 +91,21 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum sym = p.specta(0)
 
-    # Section annotation prefix (§) - may be build config or sectional import
+    # Section annotation prefix (§) - file-level build configuration only
+    # NOTE: § import syntax is deprecated; use: importa ex "path" privata|publica T
     si sym.species === SymbolumGenus.Sectio {
         fixum nextSym = p.specta(1)
 
-        # New syntax: § importa ex (STRING|IDENT) bindings
+        # Deprecation error for old import syntax
         si (nextSym.species === SymbolumGenus.Verbum) && (nextSym.verbumId === VerbumId.Importa) {
-            fixum exSym = p.specta(2)
-            si (exSym.species === SymbolumGenus.Verbum) && (exSym.verbumId === VerbumId.Ex) {
-                fixum sourceSym = p.specta(3)
-                si (sourceSym.species === SymbolumGenus.Nomen) || (sourceSym.species === SymbolumGenus.Textus) {
-                    p.procede() # consume §
-                    p.procede() # consume importa
-                    redde parseImportaSententia(r)
-                }
-            }
+            p.renuncia(ParserErrorCodice.ErrorGeneralis, "§ import syntax is deprecated; use: importa ex \"path\" privata|publica T")
         }
-
-        # Legacy syntax: § ex (STRING|IDENT) importa bindings
         si (nextSym.species === SymbolumGenus.Verbum) && (nextSym.verbumId === VerbumId.Ex) {
             fixum sourceSym = p.specta(2)
             si (sourceSym.species === SymbolumGenus.Nomen) || (sourceSym.species === SymbolumGenus.Textus) {
                 fixum importaSym = p.specta(3)
                 si (importaSym.species === SymbolumGenus.Verbum) && (importaSym.verbumId === VerbumId.Importa) {
-                    p.procede() # consume §
-                    redde parseImportaSententia(r)
+                    p.renuncia(ParserErrorCodice.ErrorGeneralis, "§ ex ... importa syntax is deprecated; use: importa ex \"path\" privata|publica T")
                 }
             }
         }
@@ -446,6 +436,11 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         }
         si verbumId === VerbumId.Typus {
             redde parseTypusAliasDeclaratio(r)
+        }
+
+        # Import declaration (new syntax: importa ex "path" privata|publica T)
+        si verbumId === VerbumId.Importa {
+            redde parseImportaSententia(r)
         }
 
         # Pattern matching and flow control

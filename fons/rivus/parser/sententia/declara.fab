@@ -894,30 +894,23 @@ functio parseVariansCampusNominatus(in Resolvitor r) -> VariansCampus {
 # IMPORT DECLARATIONS
 # ============================================================================
 
-# Parse import declaration
+# Parse import declaration (new verb-first syntax per issue #304)
 #
-# GRAMMAR (new):
-#   importaDecl := 'ex' (STRING | IDENT) specifiers
-# GRAMMAR (legacy):
-#   importaDecl := 'ex' (STRING | IDENT) 'importa' specifiers
-#
-# The caller determines which syntax is used:
-#   - New syntax: § importa ex "path" bindings (importa already consumed)
-#   - Legacy syntax: § ex "path" importa bindings (starts with 'ex')
-#
-#   specifiers := specifier (',' specifier)*
-#   specifier := IDENT ('ut' IDENT)?
-#              | '*' ('ut' IDENT)?
-#              | 'ceteri' IDENT
+# GRAMMAR:
+#   importaDecl := 'importa' 'ex' (STRING | IDENT) ('privata' | 'publica') (IDENT | '*') ('ut' IDENT)?
 #
 # Examples:
-#   ex "norma/mathesis" importa sinus, cosinus
-#   ex norma importa scribe ut s
-#   ex "./utils" importa * ut utils
+#   importa ex "path" privata T
+#   importa ex "path" privata T ut alias
+#   importa ex "path" publica T           (re-export)
+#   importa ex "path" privata * ut ns     (wildcard)
 @ publica
 functio parseImportaSententia(in Resolvitor r) -> Sententia {
     fixum p = r.parser()
     fixum locus = p.locusActualis()
+
+    # Consume 'importa'
+    p.expectaVerbum("importa", ParserErrorCodice.ExpectaturImporta)
 
     # Consume 'ex'
     p.expectaVerbum("ex", ParserErrorCodice.ExpectaturEx)
@@ -932,52 +925,45 @@ functio parseImportaSententia(in Resolvitor r) -> Sententia {
         fons = fonsSym.valor
     }
 
-    # Optional 'importa' - for new syntax it's already consumed, for legacy it's here
-    p.congruetVerbum("importa")
+    # Require explicit visibility: privata or publica
+    varia publica = falsum
+    si p.congruetVerbum("publica") {
+        publica = verum
+    } sin p.congruetVerbum("privata") {
+        publica = falsum
+    } secus {
+        p.renuncia(ParserErrorCodice.ExpectaturVisibilitas, "expected 'privata' or 'publica' after import path")
+    }
 
-    # Check for wildcard import: * or * ut alias
+    # Parse imported name or wildcard
     varia totum = falsum
-    varia totumAlias = nihil qua si textus
-    varia specificatores = [] innatum lista<ImportaSpecificator>
+    varia importatum = nihil qua si textus
+    varia locale = ""
 
     si p.congruet(SymbolumGenus.Stella) {
+        # Wildcard import: * ut alias (alias required)
         totum = verum
-        si p.probaVerbum("ut") {
-            p.procede()
-            fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            totumAlias = aliasSym.valor
-        }
+        p.expectaVerbum("ut", ParserErrorCodice.ExpectaturUt)
+        fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        locale = aliasSym.valor
     } secus {
-        # Parse named specifiers
-        fac {
-            fixum specLocus = p.locusActualis()
+        # Named import: T [ut alias]
+        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        importatum = nomenSym.valor
+        locale = nomenSym.valor
 
-            fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            fixum importatum = nomenSym.valor
-            varia locale = importatum
-
-            # Optional alias: ut localName
-            si p.probaVerbum("ut") {
-                p.procede()
-                fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-                locale = aliasSym.valor
-            }
-
-            specificatores.appende({
-                locus: specLocus,
-                importatum: importatum,
-                locale: locale,
-                residuum: falsum
-            } novum ImportaSpecificator)
-
-        } dum p.congruet(SymbolumGenus.Coma)
+        si p.congruetVerbum("ut") {
+            fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            locale = aliasSym.valor
+        }
     }
 
     redde finge ImportaSententia {
         locus: locus,
         fons: fons,
-        specificatores: specificatores,
+        importatum: importatum,
+        locale: locale,
         totum: totum,
-        totumAlias: totumAlias
+        publica: publica
     } qua Sententia
 }

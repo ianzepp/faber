@@ -103,7 +103,9 @@ functio verbumFaberId(textus v) -> si VerbumId {
         casu "optiones" reddit VerbumId.Optiones
         casu "argumenta" reddit VerbumId.Argumenta
         casu "publicus" reddit VerbumId.Publicus
+        casu "publica" reddit VerbumId.Publica
         casu "privatus" reddit VerbumId.Privatus
+        casu "privata" reddit VerbumId.Privata
         casu "generis" reddit VerbumId.Generis
         casu "implet" reddit VerbumId.Implet
         casu "sub" reddit VerbumId.Sub
@@ -258,6 +260,7 @@ functio estVerbumGeneris(textus v) -> bivalens {
     elige v {
         casu "functio" reddit verum      # method declaration
         casu "privatus" reddit verum     # visibility modifier
+        casu "privata" reddit verum      # visibility modifier (feminine)
         casu "protectus" reddit verum    # visibility modifier
         casu "generis" reddit verum      # static modifier
         casu "abstractus" reddit verum   # abstract modifier

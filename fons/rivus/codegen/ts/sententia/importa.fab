@@ -1,11 +1,12 @@
 # TypeScript Statement Generator - Import and Destructuring
 #
-# TRANSFORMS:
-#   ex "fs" importa readFile       -> import { readFile } from "fs";
-#   ex "fs" importa *              -> import "fs";  (side-effect only)
-#   ex "fs" importa * ut fs        -> import * as fs from "fs";
-#   ex obj importa { a, b }        -> const { a, b } = obj;
-#   ex arr importa [a, , b]        -> const [a, , b] = arr;
+# TRANSFORMS (new syntax):
+#   importa ex "fs" privata readFile          -> import { readFile } from "fs";
+#   importa ex "fs" privata readFile ut rf    -> import { readFile as rf } from "fs";
+#   importa ex "fs" privata * ut fs           -> import * as fs from "fs";
+#   importa ex "fs" publica readFile          -> export { readFile } from "fs";
+#   ex obj fixum { a, b }                     -> const { a, b } = obj;
+#   fixum [a, , b] = arr                      -> const [a, , b] = arr;
 
 importa ex "../../../ast/sententia" privata ImportaSpecificator
 importa ex "../../../ast/sententia" privata VariaGenus
@@ -19,7 +20,7 @@ importa ex "../../../semantic/modulus" privata estNormaImportum
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genImporta(in TsGenerator g, de textus fons, de lista<ImportaSpecificator> specificatores, bivalens totum, de ignotum totumAlias) -> textus {
+functio genImporta(in TsGenerator g, de textus fons, si de textus importatum, de textus locale, bivalens totum, bivalens publica) -> textus {
     # Skip norma imports (norma/ prefix) - they are compiler intrinsics, not real modules
     si estNormaImportum(fons) {
         redde ""
@@ -34,24 +35,36 @@ functio genImporta(in TsGenerator g, de textus fons, de lista<ImportaSpecificato
         }
     }
 
+    varia lines = [] innatum lista<textus>
+
+    # Wildcard import: * ut alias
     si totum {
-        si nonnihil totumAlias {
-            redde scriptum("§import * as § from \"§\";", g.ind(), totumAlias qua textus, importPath)
+        lines.appende(scriptum("§import * as § from \"§\";", g.ind(), locale, importPath))
+        si publica {
+            lines.appende(scriptum("§export { § };", g.ind(), locale))
         }
-        # No alias - side-effect import only
-        redde scriptum("§import \"§\";", g.ind(), importPath)
+        redde lines.coniunge("\n")
     }
 
-    varia specs = [] innatum lista<textus>
-    ex specificatores fixum spec {
-        si spec.importatum == spec.locale {
-            specs.appende(spec.importatum)
+    # Named import with optional alias
+    si nonnihil importatum {
+        si importatum == locale {
+            lines.appende(scriptum("§import { § } from \"§\";", g.ind(), importatum, importPath))
+            si publica {
+                lines.appende(scriptum("§export { § };", g.ind(), locale))
+            }
         } secus {
-            specs.appende(scriptum("§ as §", spec.importatum, spec.locale))
+            lines.appende(scriptum("§import { § as § } from \"§\";", g.ind(), importatum, locale, importPath))
+            si publica {
+                # Re-export under original name
+                lines.appende(scriptum("§export { § as § };", g.ind(), locale, importatum))
+            }
         }
+        redde lines.coniunge("\n")
     }
 
-    redde scriptum("§import { § } from \"§\";", g.ind(), specs.coniunge(", "), importPath)
+    # Fallback (shouldn't happen with valid AST)
+    redde scriptum("§import \"§\";", g.ind(), importPath)
 }
 
 @ publica

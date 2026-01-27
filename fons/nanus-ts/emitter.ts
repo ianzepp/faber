@@ -348,8 +348,9 @@ function emitStmt(stmt: Stmt, indent = ''): string {
                 const spec = stmt.imported === stmt.local ? stmt.imported : `${stmt.imported} as ${stmt.local}`;
                 lines.push(`${indent}import { ${spec} } from "${importPath}";`);
                 if (stmt.publica) {
-                    // Re-export uses original name, not alias
-                    lines.push(`${indent}export { ${stmt.imported} };`);
+                    // Re-export under original name (if aliased, need to re-alias back)
+                    const exportSpec = stmt.imported === stmt.local ? stmt.local : `${stmt.local} as ${stmt.imported}`;
+                    lines.push(`${indent}export { ${exportSpec} };`);
                 }
             }
 

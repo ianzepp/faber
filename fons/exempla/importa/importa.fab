@@ -1,31 +1,42 @@
 # Import statements (importa)
 #
-# ex <source> importa <names>           - named imports
-# ex <source> importa <name> ut <alias> - import with alias
-# ex <source> importa * ut <alias>      - wildcard import with alias
+# importa ex <source> privata <name>           - named imports
+# importa ex <source> privata <name> ut <alias> - import with alias
+# importa ex <source> privata * ut <alias>      - wildcard import with alias
 
 # Named imports
-§ ex "lodash" importa map
-§ ex "@hono/hono" importa Hono, Context
-§ ex "utils" importa helper ut h
-§ ex "db" importa connect, query ut q, close
+importa ex "lodash" privata map
+importa ex "@hono/hono" privata Hono
+importa ex "@hono/hono" privata Context
+importa ex "utils" privata helper ut h
+importa ex "db" privata connect
+importa ex "db" privata query ut q
+importa ex "db" privata close
 
 # Wildcard import (alias required for TypeScript target)
-§ ex "@std/crypto" importa * ut crypto
+importa ex "@std/crypto" privata * ut crypto
 
 # Multiple imports from different sources
-§ ex "@oak/oak" importa Application
-§ ex "std/path" importa join, resolve
+importa ex "@oak/oak" privata Application
+importa ex "std/path" privata join
+importa ex "std/path" privata resolve
 
 # Relative imports (commented out - modules don't exist in exempla)
-# ex "./utils" importa helper
-# ex "../shared/utils" importa formatter
+# importa ex "./utils" privata helper
+# importa ex "../shared/utils" privata formatter
 
 # Many named items
-§ ex "helpers" importa a, b, c, d, e, f
+importa ex "helpers" privata a
+importa ex "helpers" privata b
+importa ex "helpers" privata c
+importa ex "helpers" privata d
+importa ex "helpers" privata e
+importa ex "helpers" privata f
 
 # Multiple aliases
-§ ex "mod" importa foo ut f, bar ut b, baz ut z
+importa ex "mod" privata foo ut f
+importa ex "mod" privata bar ut b
+importa ex "mod" privata baz ut z
 
 incipit {
     scribe "Import statements are declarations at module scope"

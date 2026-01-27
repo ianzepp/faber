@@ -299,27 +299,23 @@ functio genVaria(in GlyphGenerator g, de VariaSententia s) -> textus {
 functio genImporta(in GlyphGenerator g, de ImportaSententia s) -> textus {
     fixum quote = glyphDelimiter("\"")
     fixum importaGlyph = glyphKeyword("importa")
+    fixum visibilitas = (s.publica qua bivalens) sic glyphKeyword("publica") secus glyphKeyword("privata")
 
+    # Wildcard import: importa ex "path" privata * ut alias
     si s.totum qua bivalens {
-        si nonnihil s.totumAlias {
-            redde scriptum("§§ § §§§ § § § §", g.ind(), glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, importaGlyph, "*", glyphKeyword("ut"), encodeBraille(s.totumAlias))
-        }
-        redde scriptum("§§ § §§§ § *", g.ind(), glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, importaGlyph)
+        redde scriptum("§§ § §§§ § * § §", g.ind(), importaGlyph, glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, visibilitas, glyphKeyword("ut"), encodeBraille(s.locale))
     }
 
-    varia specs = [] innatum lista<textus>
-    fixum comma = glyphPunctuation(",")
-    ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
-        si spec.residuum qua bivalens {
-            specs.appende(scriptum("§ §", glyphKeyword("ceteri"), encodeBraille(spec.locale)))
-        } sin spec.importatum != spec.locale {
-            specs.appende(scriptum("§ § §", encodeBraille(spec.importatum), glyphKeyword("ut"), encodeBraille(spec.locale)))
-        } secus {
-            specs.appende(encodeBraille(spec.importatum))
+    # Named import: importa ex "path" privata T [ut alias]
+    si nonnihil s.importatum {
+        si s.importatum != s.locale {
+            redde scriptum("§§ § §§§ § § § §", g.ind(), importaGlyph, glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, visibilitas, encodeBraille(s.importatum qua textus), glyphKeyword("ut"), encodeBraille(s.locale))
         }
+        redde scriptum("§§ § §§§ § §", g.ind(), importaGlyph, glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, visibilitas, encodeBraille(s.importatum qua textus))
     }
 
-    redde scriptum("§§ § §§§ § §", g.ind(), glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, importaGlyph, specs.coniunge(comma + " "))
+    # Fallback
+    redde scriptum("§§ § §§§ § _", g.ind(), importaGlyph, glyphKeyword("ex"), quote, encodeBraille(s.fons), quote, visibilitas)
 }
 
 functio genDestructura(in GlyphGenerator g, de DestructuraSententia s) -> textus {
@@ -1098,19 +1094,19 @@ functio genTempta(in GlyphGenerator g, de TemptaSententia s) -> textus {
     redde result
 }
 
-functio genCape(in GlyphGenerator g, de CapeClausula cape) -> textus {
+functio genCape(in GlyphGenerator g, de CapeClausula c) -> textus {
     fixum lb = glyphDelimiter("{")
     fixum rb = glyphDelimiter("}")
 
     g.intraProfundum()
-    fixum body = genMassa(g, (cape.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (c.corpus qua MassaSententia).corpus qua lista<Sententia>)
     g.exiProfundum()
 
     si body == "" {
-        redde scriptum("§ § §§", glyphKeyword("cape"), encodeBraille(cape.param), lb, rb)
+        redde scriptum("§ § §§", glyphKeyword("cape"), encodeBraille(c.param), lb, rb)
     }
 
-    redde scriptum("§ § §\n§\n§§", glyphKeyword("cape"), encodeBraille(cape.param), lb, body, g.ind(), rb)
+    redde scriptum("§ § §\n§\n§§", glyphKeyword("cape"), encodeBraille(c.param), lb, body, g.ind(), rb)
 }
 
 functio genIace(in GlyphGenerator g, de IaceSententia s) -> textus {

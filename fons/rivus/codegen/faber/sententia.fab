@@ -293,26 +293,23 @@ functio genVaria(in FaberGenerator g, de VariaSententia s) -> textus {
 
 functio genImporta(in FaberGenerator g, de ImportaSententia s) -> textus {
     # New syntax: importa ex "path" privata|publica T [ut alias]
-    # Wildcards require alias: importa ex "path" privata * ut alias
+    fixum visibilitas = (s.publica qua bivalens) sic "publica" secus "privata"
+
+    # Wildcard import: importa ex "path" privata * ut alias
     si s.totum qua bivalens {
-        si nonnihil s.totumAlias {
-            redde scriptum("§importa ex \"§\" privata * ut §", g.ind(), s.fons, s.totumAlias)
-        }
-        # Wildcard without alias not allowed in new syntax, but emit for round-trip
-        redde scriptum("§importa ex \"§\" privata * ut _", g.ind(), s.fons)
+        redde scriptum("§importa ex \"§\" § * ut §", g.ind(), s.fons, visibilitas, s.locale)
     }
 
-    # One import per line
-    varia lines = [] innatum lista<textus>
-    ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
-        si spec.importatum != spec.locale {
-            lines.appende(scriptum("§importa ex \"§\" privata § ut §", g.ind(), s.fons, spec.importatum, spec.locale))
-        } secus {
-            lines.appende(scriptum("§importa ex \"§\" privata §", g.ind(), s.fons, spec.importatum))
+    # Named import: importa ex "path" privata T [ut alias]
+    si nonnihil s.importatum {
+        si s.importatum != s.locale {
+            redde scriptum("§importa ex \"§\" § § ut §", g.ind(), s.fons, visibilitas, s.importatum, s.locale)
         }
+        redde scriptum("§importa ex \"§\" § §", g.ind(), s.fons, visibilitas, s.importatum)
     }
 
-    redde lines.coniunge("\n")
+    # Fallback (shouldn't happen)
+    redde scriptum("§importa ex \"§\" § _", g.ind(), s.fons, visibilitas)
 }
 
 functio genDestructura(in FaberGenerator g, de DestructuraSententia s) -> textus {
@@ -1007,16 +1004,16 @@ functio genTempta(in FaberGenerator g, de TemptaSententia s) -> textus {
     redde result
 }
 
-functio genCape(in FaberGenerator g, de CapeClausula cape) -> textus {
+functio genCape(in FaberGenerator g, de CapeClausula c) -> textus {
     g.intraProfundum()
-    fixum body = genMassa(g, (cape.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (c.corpus qua MassaSententia).corpus qua lista<Sententia>)
     g.exiProfundum()
 
     si body == "" {
-        redde scriptum("cape § {}", cape.param)
+        redde scriptum("cape § {}", c.param)
     }
 
-    redde scriptum("cape § {\n§\n§}", cape.param, body, g.ind())
+    redde scriptum("cape § {\n§\n§}", c.param, body, g.ind())
 }
 
 functio genIace(in FaberGenerator g, de IaceSententia s) -> textus {

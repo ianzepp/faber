@@ -2,7 +2,7 @@
 #
 # Demonstrates console input/output using the consolum HAL module.
 
-§ ex "../../norma/hal/consolum" importa consolum
+importa ex "../../norma/hal/consolum" privata consolum
 
 incipit {
     consolum.fundeLineam("=== Console I/O Demo ===\n")
