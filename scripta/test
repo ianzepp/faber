@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Run test suite for faber compiler
+# Run test suite for nanus compiler
 #
-# This runs unit tests for the faber TypeScript compiler and excludes
+# This runs unit tests for the nanus TypeScript compiler and excludes
 # rivus bootstrap tests (which require compiled artifacts).
 #
 # Usage: ./scripta/test [bun test options]
 #
 # Examples:
-#   ./scripta/test                    # Run all faber tests
+#   ./scripta/test                    # Run all nanus tests
 #   ./scripta/test -t "lexer"         # Run lexer tests only
 #   ./scripta/test --timeout 10000    # Run with longer timeout
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-bun test fons/faber-ts fons/proba/faber.test.ts "$@"
+bun test fons/nanus-ts "$@"

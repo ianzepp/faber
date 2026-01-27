@@ -19,9 +19,9 @@ See `EBNF.md` for the formal specification, `fons/grammatica/*.md` for prose tut
 functio adde(T elem) -> vacuum
 ```
 
-**Build pipeline:**
-1. `fons/norma/*.fab` → `bun run build:norma` → `norma.<target>.gen.ts` (for faber) and `norma.gen.fab` (for rivus)
-2. Codegen calls `getNormaTranslation(target, type, method)` to get the translation
+**How it works:**
+1. `fons/norma/*.fab` define stdlib methods with `@ verte` annotations
+2. Codegen looks up translations via the norma registry
 3. Method calls like `myList.adde(x)` become `myList.push(x)` in TypeScript output
 
 **Runtime libraries** for targets that need them live in `fons/subsidia/`:
@@ -33,20 +33,11 @@ functio adde(T elem) -> vacuum
 
 ```
 fons/                   # Source code ("fons" = source/spring)
-├── faber-ts/           # Reference compiler (TypeScript)
-│   ├── codegen/        # Code generators by target
-│   │   ├── norma.<target>.gen.ts  # Generated stdlib (per target)
-│   │   ├── shared/     # Shared codegen utilities
-│   │   ├── ts/         # TypeScript codegen
-│   │   │   ├── expressions/
-│   │   │   ├── statements/
-│   │   │   └── preamble/
-│   │   └── ...         # py, rs, cpp, zig, fab, go
-│   ├── lexicon/        # Lexer definitions
-│   ├── tokenizer/      # Tokenizer implementation
-│   ├── parser/         # Parser and AST
-│   └── semantic/       # Type checking and analysis
-├── rivus/              # Bootstrap compiler (Faber source)
+├── nanus-ts/           # Minimal bootstrap compiler (TypeScript)
+├── nanus-go/           # Minimal bootstrap compiler (Go)
+├── nanus-py/           # Minimal bootstrap compiler (Python)
+├── nanus-rs/           # Minimal bootstrap compiler (Rust)
+├── rivus/              # Self-hosted compiler (Faber source)
 │   ├── ast/            # AST type definitions (.fab)
 │   ├── cli/            # CLI entry point (.fab)
 │   ├── lexicon/        # Lexer modules (.fab)
@@ -153,22 +144,23 @@ bun run test:rivus                          # Run tests against rivus
 - Parser has infinite loop on some inputs - investigation needed
 - Tests may hang (use Ctrl+C to interrupt)
 
-### Faber CLI (Bootstrap Compiler)
+### Nanus CLI (Bootstrap Compiler)
 
-The TypeScript implementation at `opus/bin/faber`. **Primary purpose: compile rivus.**
+Minimal compilers in multiple languages at `opus/bin/nanus-*`. **Primary purpose: compile rivus.**
 
 ```
-./opus/bin/faber compile <file.fab>         # TS (default)
-./opus/bin/faber run <file.fab>             # Compile & execute (TS only)
-./opus/bin/faber check <file.fab>           # Validate syntax
+./opus/bin/nanus-ts emit < file.fab         # Emit TypeScript
+./opus/bin/nanus-go emit < file.fab         # Emit Go
+./opus/bin/nanus-py emit < file.fab         # Emit Python
+./opus/bin/nanus-rs emit < file.fab         # Emit Rust
 ```
 
-**When to use Faber:**
+**When to use Nanus:**
 
-- Building rivus (`bun run build:rivus` uses faber internally)
+- Building rivus (`bun run build:rivus` uses nanus-ts internally)
 - Fallback when rivus has bugs
 
-**Language backports to faber should be limited** - new features go in rivus first.
+**Nanus compilers are intentionally minimal** - new features go in rivus.
 
 ### Development
 
@@ -180,7 +172,7 @@ bun run test:report                   # Run tests with DB tracking + feature mat
 bun run test:report -- --compiler rivus --targets ts
 bun run test:report -- --verify       # With target verification (compile/run)
 bun run test:report -- --feature si   # Filter by feature name
-bun run lint                          # Lint TS source (fons/faber-ts)
+bun run lint                          # Lint TS source (fons/nanus-ts)
 bun run lint:fix                      # Lint with auto-fix
 bun run sanity                        # Verify test coverage
 ```
@@ -206,8 +198,8 @@ Database location: `opus/proba/results.db` (recreated each run)
 ### Build
 
 ```
-bun run build:faber-ts                   # Build faber executable to opus/bin/faber
-bun run build:rivus                   # Build rivus (bootstrap) to opus/rivus/fons/ts/
+bun run build:nanus-ts                # Build nanus-ts executable to opus/bin/nanus-ts
+bun run build:rivus                   # Build rivus (via nanus-ts) to opus/rivus/fons/ts/
 bun run build:rivus -- -t zig         # Build rivus to opus/rivus/fons/zig/
 bun run exempla                       # Compile fons/exempla/*.fab to opus/
 bun run exempla -- -t all             # Compile to all targets

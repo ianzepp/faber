@@ -287,5 +287,5 @@ The compiler will report all incompatibilities before attempting codegen. Fix th
 ## Related
 
 - Design document: `consilia/capabilities.md`
-- Implementation: `fons/faber-ts/codegen/capabilities.ts`, `validator.ts`, `feature-detector.ts`
+- Implementation: `fons/rivus/codegen/` (target-specific modules)
 - Tests: `fons/proba/capabilities/`

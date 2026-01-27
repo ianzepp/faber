@@ -1,4 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "include": ["fons/faber-ts"]
-}

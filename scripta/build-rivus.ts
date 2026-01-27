@@ -1,19 +1,19 @@
 #!/usr/bin/env bun
 /**
- * Build rivus (bootstrap compiler) from fons/rivus/ using faber-ts or nanus.
+ * Build rivus (bootstrap compiler) from fons/rivus/ using nanus.
  *
  * Uses the specified compiler to compile all .fab files in parallel.
  * Output target is derived from the compiler (e.g., nanus-go emits Go code).
  *
- * Requires: bun run build:faber-ts (or build:nanus-ts, build:nanus-go, build:nanus-rs, build:nanus-py) first
+ * Requires: bun run build:nanus-ts (or build:nanus-go, build:nanus-rs, build:nanus-py) first
  *
  * Usage:
- *   bun scripta/build-rivus.ts                    # uses faber-ts -> TypeScript
+ *   bun scripta/build-rivus.ts                    # uses nanus-ts -> TypeScript
  *   bun scripta/build-rivus.ts -c nanus-ts        # -> TypeScript
  *   bun scripta/build-rivus.ts -c nanus-go        # -> Go
  *   bun scripta/build-rivus.ts -c nanus-rs        # -> Rust
  *   bun scripta/build-rivus.ts -c nanus-py        # -> Python
- *   bun scripta/build-rivus.ts -c faber-ts --no-typecheck
+ *   bun scripta/build-rivus.ts -c nanus-ts --no-typecheck
  */
 
 import { Glob } from 'bun';
@@ -27,7 +27,7 @@ import { $ } from 'bun';
 
 type Target = 'ts' | 'go' | 'rs' | 'py';
 
-const BOOTSTRAP_COMPILERS = ['faber-ts', 'nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
+const BOOTSTRAP_COMPILERS = ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
 
 const TARGET_SUFFIX: Record<Target, string> = {
     'ts': '-ts',
@@ -50,7 +50,7 @@ function deriveTarget(compiler: string): Target {
 
 /**
  * Validate compiler name. Accepts:
- * - Bootstrap compilers: faber-ts, nanus-ts, nanus-go, nanus-rs, nanus-py
+ * - Bootstrap compilers: nanus-ts, nanus-go, nanus-rs, nanus-py
  * - Self-hosted compilers: rivus-nanus-ts, rivus-nanus-py, rivus-rivus-nanus-ts, etc.
  */
 function isValidCompiler(compiler: string): boolean {
@@ -63,7 +63,7 @@ function isValidCompiler(compiler: string): boolean {
 // CONFIGURATION
 // =============================================================================
 
-let compiler = 'faber-ts';
+let compiler = 'nanus-ts';
 let skipTypecheck = false;
 
 /**
@@ -254,8 +254,8 @@ async function buildExecutableTs(): Promise<void> {
     await $`bun build ${join(OUTPUT, 'cli.ts')} --compile --outfile=${outExe}`.quiet();
     await $`bash -c 'rm -f .*.bun-build 2>/dev/null || true'`.quiet();
 
-    // faber-ts is the primary compiler, symlink rivus -> rivus-faber-ts
-    if (compiler === 'faber-ts') {
+    // nanus-ts is the primary compiler, symlink rivus -> rivus-nanus-ts
+    if (compiler === 'nanus-ts') {
         const symlinkPath = join(binDir, 'rivus');
         try { await unlink(symlinkPath); } catch { /* ignore */ }
         await symlink(exeName, symlinkPath);
