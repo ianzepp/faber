@@ -30,6 +30,7 @@ genus SolumStatus {
 
 @ subsidia ts "../../norma-ts/hal/solum.ts"
 @ subsidia rs "../../norma-rs/hal/solum.rs"
+@ subsidia go "../../norma-go/hal/solum/solum.go"
 pactum solum {
     # =========================================================================
     # READING - Text

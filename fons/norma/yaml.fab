@@ -12,6 +12,7 @@
 
 @ subsidia ts "../norma-ts/yaml.ts"
 @ subsidia rs "../norma-rs/yaml.rs"
+@ subsidia go "../norma-go/yaml/yaml.go"
 pactum yaml {
     # =========================================================================
     # SERIALIZATION
