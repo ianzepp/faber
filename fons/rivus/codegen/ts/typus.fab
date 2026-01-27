@@ -30,7 +30,7 @@ functio mappaNomenTypi(de textus nomen) -> textus {
 
         # Collections
         casu "lista" reddit "Array"
-        casu "tabula" reddit "Map"
+        casu "tabula" reddit "Record"
         casu "copia" reddit "Set"
 
         # Async

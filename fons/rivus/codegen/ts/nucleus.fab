@@ -200,7 +200,7 @@ functio resolveNormaHal(de textus importPath, si de textus viaFons) -> si textus
         j += 1
     }
 
-    redde prefix + "norma/hal/" + moduleName
+    redde prefix + "norma/" + moduleName
 }
 
 # =============================================================================

@@ -680,7 +680,7 @@ functio genInnatumTabula(in TsGenerator g, de InnatumExpressia e) -> textus {
         casu _ tacet
     }
 
-    redde scriptum("new Map<§, §>()", keyType, valueType)
+    redde scriptum("({} as Record<§, §>)", keyType, valueType)
 }
 
 functio genTabulaEntries(in TsGenerator g, de ObiectumExpressia obj, de textus keyType, de textus valueType) -> textus {
@@ -688,9 +688,9 @@ functio genTabulaEntries(in TsGenerator g, de ObiectumExpressia obj, de textus k
     itera ex (obj.proprietates qua lista<ObiectumProprietas>) fixum prop {
         fixum key = genMapKey(g, prop.clavis)
         fixum val = genExpressia(g, prop.valor)
-        entries.appende(scriptum("[§, §]", key, val))
+        entries.appende(scriptum("§: §", key, val))
     }
-    redde scriptum("new Map<§, §>([§])", keyType, valueType, entries.coniunge(", "))
+    redde scriptum("({ § } as Record<§, §>)", entries.coniunge(", "), keyType, valueType)
 }
 
 functio genMapKey(in TsGenerator g, de Expressia clavis) -> textus {
