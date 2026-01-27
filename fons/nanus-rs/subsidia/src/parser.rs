@@ -192,8 +192,9 @@ impl Parser {
                 "varia" | "fixum" | "figendum" | "variandum" => {
                     return self.parse_varia(publica, externa)
                 }
-                "ex" => return self.parse_ex_stmt(publica),
+                "ex" => return self.parse_ex_stmt(),
                 "de" => return self.parse_de_stmt(),
+                "itera" => return self.parse_itera_stmt(),
                 "functio" => return self.parse_functio(publica, futura, externa),
                 "genus" => return self.parse_genus(publica, false),
                 "abstractus" => {
@@ -423,48 +424,46 @@ impl Parser {
         })
     }
 
-    fn parse_ex_stmt(&mut self, _publica: bool) -> Result<Stmt, CompileError> {
-        let locus = self.peek(0).locus;
-        self.expect(TOKEN_KEYWORD, Some("ex"))?;
-        let expr = self.parse_expr(0)?;
-
-        if self.check(TOKEN_KEYWORD, Some("fixum")) || self.check(TOKEN_KEYWORD, Some("varia")) {
-            self.advance();
-            let binding = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-            let corpus = Box::new(self.parse_massa()?);
-            return Ok(Stmt::Iteratio {
-                locus,
-                species: "Ex".to_string(),
-                binding,
-                iter: expr,
-                corpus,
-                asynca: false,
-            });
-        }
-
-        Err(self.error("destructuring not supported in nanus"))
+    fn parse_ex_stmt(&mut self) -> Result<Stmt, CompileError> {
+        Err(self.error("standalone 'ex' not supported; use 'itera ex' for loops"))
     }
 
     fn parse_de_stmt(&mut self) -> Result<Stmt, CompileError> {
+        Err(self.error("standalone 'de' not supported; use 'itera de' for loops"))
+    }
+
+    fn parse_itera_stmt(&mut self) -> Result<Stmt, CompileError> {
         let locus = self.peek(0).locus;
-        self.expect(TOKEN_KEYWORD, Some("de"))?;
-        let expr = self.parse_expr(0)?;
+        self.expect(TOKEN_KEYWORD, Some("itera"))?;
 
-        if self.check(TOKEN_KEYWORD, Some("fixum")) || self.check(TOKEN_KEYWORD, Some("varia")) {
+        // Expect 'ex' (for-of) or 'de' (for-in)
+        let species = if self.check(TOKEN_KEYWORD, Some("ex")) {
             self.advance();
-            let binding = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-            let corpus = Box::new(self.parse_massa()?);
-            return Ok(Stmt::Iteratio {
-                locus,
-                species: "De".to_string(),
-                binding,
-                iter: expr,
-                corpus,
-                asynca: false,
-            });
-        }
+            "Ex".to_string()
+        } else if self.check(TOKEN_KEYWORD, Some("de")) {
+            self.advance();
+            "De".to_string()
+        } else {
+            return Err(self.error("expected 'ex' or 'de' after 'itera'"));
+        };
 
-        Err(self.error("expected fixum or varia after de expression"))
+        let iter = self.parse_expr(0)?;
+
+        if !self.check(TOKEN_KEYWORD, Some("fixum")) && !self.check(TOKEN_KEYWORD, Some("varia")) {
+            return Err(self.error("expected 'fixum' or 'varia' after iteration expression"));
+        }
+        self.advance();
+        let binding = self.expect(TOKEN_IDENTIFIER, None)?.valor;
+        let corpus = Box::new(self.parse_massa()?);
+
+        Ok(Stmt::Iteratio {
+            locus,
+            species,
+            binding,
+            iter,
+            corpus,
+            asynca: false,
+        })
     }
 
     fn parse_functio(

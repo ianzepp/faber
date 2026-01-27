@@ -75,13 +75,16 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
             iter,
             corpus,
             asynca,
+            species,
             ..
         } => {
-            let prefix = if *asynca { "cede " } else { "" };
+            let async_prefix = if *asynca { "cede " } else { "" };
+            let kw = if species == "Ex" { "ex" } else { "de" };
             format!(
-                "{}{}ex {} fixum {} {}",
+                "{}{}itera {} {} fixum {} {}",
                 indent,
-                prefix,
+                async_prefix,
+                kw,
                 emit_expr(iter),
                 binding,
                 emit_stmt(corpus, indent)

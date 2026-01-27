@@ -53,6 +53,7 @@ impl<'a> Lexer<'a> {
             "discerne",
             "custodi",
             "de",
+            "itera",
             "in",
             "pro",
             "omnia",
