@@ -16,6 +16,7 @@
 @ subsidia ts "../../norma-ts/hal/consolum.ts"
 @ subsidia rs "../../norma-rs/hal/consolum.rs"
 @ subsidia go "../../norma-go/hal/consolum/consolum.go"
+@ subsidia py "../../norma-py/hal/consolum.py"
 pactum consolum {
     # =========================================================================
     # STDIN - Bytes

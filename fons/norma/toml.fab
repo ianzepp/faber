@@ -13,6 +13,7 @@
 @ subsidia ts "../norma-ts/toml.ts"
 @ subsidia rs "../norma-rs/toml.rs"
 @ subsidia go "../norma-go/toml/toml.go"
+@ subsidia py "../norma-py/toml.py"
 pactum toml {
     # =========================================================================
     # SERIALIZATION

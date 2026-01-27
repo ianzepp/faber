@@ -390,9 +390,24 @@ class PyEmitter:
 
     def _importa(self, s: StmtImporta, indent: str) -> str:
         """Emit an import statement."""
-        # Skip norma: imports (stdlib not available for Python target)
+        # Handle norma: imports (stdlib)
         if s.fons.startswith("norma:"):
-            return f"{indent}# skipped: norma import ({s.fons})"
+            path = s.fons[6:]  # strip "norma:"
+            module = "norma_py." + path.replace("/", ".").replace("-", "_")
+            if s.totum:
+                return f"{indent}import {module} as {s.local}"
+            if s.imported:
+                if s.imported != s.local:
+                    spec = f"{s.imported} as {s.local}"
+                else:
+                    spec = s.imported
+                return f"{indent}from {module} import {spec}"
+            # Import the module itself (e.g., "from norma_py import json")
+            parts = module.rsplit(".", 1)
+            if len(parts) == 2:
+                return f"{indent}from {parts[0]} import {parts[1]}"
+            return f"{indent}import {module}"
+
         module = s.fons.replace("/", ".").replace("-", "_")
         if s.totum:
             return f"{indent}import {module} as {s.local}"

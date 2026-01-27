@@ -13,6 +13,7 @@
 
 @ subsidia ts "../../norma-ts/hal/arca.ts"
 @ subsidia rs "../../norma-rs/hal/arca.rs"
+@ subsidia py "../../norma-py/hal/arca.py"
 pactum arca {
     # =========================================================================
     # CONNECTION

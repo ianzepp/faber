@@ -12,6 +12,7 @@
 @ subsidia ts "../norma-ts/json.ts"
 @ subsidia rs "../norma-rs/json.rs"
 @ subsidia go "../norma-go/json/json.go"
+@ subsidia py "../norma-py/json.py"
 pactum json {
     # =========================================================================
     # SERIALIZATION
