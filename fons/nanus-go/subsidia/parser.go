@@ -218,6 +218,8 @@ func (p *Parser) parseStmt() Stmt {
 			return p.parseProbandum()
 		case "proba":
 			return p.parseProba()
+		case "importa":
+			return p.parseImporta()
 		}
 	}
 
@@ -236,48 +238,13 @@ func (p *Parser) parseSectio() Stmt {
 	}
 	keyword := p.advance().Valor
 	switch keyword {
-	case "importa":
-		return p.parseSectioImporta()
+	case "importa", "ex":
+		panic(p.error("§ import syntax is deprecated; use: importa ex \"path\" privata|publica T"))
 	case "sectio":
 		return p.parseSectioSectio()
-	case "ex":
-		return p.parseSectioExLegacy()
 	default:
 		panic(p.error("unknown § keyword: " + keyword))
 	}
-}
-
-// New syntax: § importa ex "path" bindings
-func (p *Parser) parseSectioImporta() Stmt {
-	locus := p.peek(0).Locus
-	p.expect(TokenKeyword, "ex")
-	fons := p.expect(TokenTextus).Valor
-
-	// Check for wildcard import: * or * ut alias
-	if p.match(TokenOperator, "*") != nil {
-		var alias *string
-		if p.match(TokenKeyword, "ut") != nil {
-			name := p.expect(TokenIdentifier).Valor
-			alias = &name
-		}
-		return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: []ImportSpec{}, Totum: true, Alias: alias}
-	}
-
-	specs := []ImportSpec{}
-	for {
-		loc := p.peek(0).Locus
-		imported := p.expect(TokenIdentifier).Valor
-		local := imported
-		if p.match(TokenKeyword, "ut") != nil {
-			local = p.expect(TokenIdentifier).Valor
-		}
-		specs = append(specs, ImportSpec{Locus: loc, Imported: imported, Local: local})
-		if p.match(TokenPunctuator, ",") == nil {
-			break
-		}
-	}
-
-	return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: specs, Totum: false, Alias: nil}
 }
 
 // § sectio "name" - file section marker (ignored in nanus, but parsed)
@@ -287,37 +254,38 @@ func (p *Parser) parseSectioSectio() Stmt {
 	return &StmtExpressia{Tag: "Expressia", Locus: locus, Expr: &ExprLittera{Tag: "Littera", Locus: locus, Species: LitteraNihil, Valor: "null"}}
 }
 
-// Legacy syntax: § ex "path" importa bindings
-func (p *Parser) parseSectioExLegacy() Stmt {
+// Parse: importa ex "path" privata|publica T [ut alias]
+func (p *Parser) parseImporta() Stmt {
 	locus := p.peek(0).Locus
-	fons := p.expect(TokenTextus).Valor
 	p.expect(TokenKeyword, "importa")
+	p.expect(TokenKeyword, "ex")
+	fons := p.expect(TokenTextus).Valor
 
-	// Check for wildcard import: * or * ut alias
+	// Require explicit visibility: privata or publica
+	var publica bool
+	if p.match(TokenKeyword, "publica") != nil {
+		publica = true
+	} else if p.match(TokenKeyword, "privata") != nil {
+		publica = false
+	} else {
+		panic(p.error("expected 'privata' or 'publica' after import path"))
+	}
+
+	// Wildcard import: * ut alias (alias required)
 	if p.match(TokenOperator, "*") != nil {
-		var alias *string
-		if p.match(TokenKeyword, "ut") != nil {
-			name := p.expect(TokenIdentifier).Valor
-			alias = &name
-		}
-		return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: []ImportSpec{}, Totum: true, Alias: alias}
+		p.expect(TokenKeyword, "ut")
+		local := p.expect(TokenIdentifier).Valor
+		return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Imported: nil, Local: local, Totum: true, Publica: publica}
 	}
 
-	specs := []ImportSpec{}
-	for {
-		loc := p.peek(0).Locus
-		imported := p.expect(TokenIdentifier).Valor
-		local := imported
-		if p.match(TokenKeyword, "ut") != nil {
-			local = p.expect(TokenIdentifier).Valor
-		}
-		specs = append(specs, ImportSpec{Locus: loc, Imported: imported, Local: local})
-		if p.match(TokenPunctuator, ",") == nil {
-			break
-		}
+	// Named import: T [ut alias]
+	imported := p.expect(TokenIdentifier).Valor
+	local := imported
+	if p.match(TokenKeyword, "ut") != nil {
+		local = p.expect(TokenIdentifier).Valor
 	}
 
-	return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Specs: specs, Totum: false, Alias: nil}
+	return &StmtImporta{Tag: "Importa", Locus: locus, Fons: fons, Imported: &imported, Local: local, Totum: false, Publica: publica}
 }
 
 // Dispatch @ annotations based on keyword. Returns (publica, futura, externa).

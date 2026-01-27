@@ -357,12 +357,13 @@ type StmtDiscretio struct {
 }
 
 type StmtImporta struct {
-	Tag   string       `json:"tag"`
-	Locus Locus        `json:"locus"`
-	Fons  string       `json:"fons"`
-	Specs []ImportSpec `json:"specs"`
-	Totum bool         `json:"totum"`
-	Alias *string      `json:"alias"`
+	Tag      string  `json:"tag"`
+	Locus    Locus   `json:"locus"`
+	Fons     string  `json:"fons"`
+	Imported *string `json:"imported"`
+	Local    string  `json:"local"`
+	Totum    bool    `json:"totum"`
+	Publica  bool    `json:"publica"`
 }
 
 type StmtTypusAlias struct {
