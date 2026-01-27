@@ -9,7 +9,7 @@ from nodes import (
     ExprNomen, ExprEgo, ExprLittera, ExprBinaria, ExprUnaria, ExprAssignatio,
     ExprVocatio, ExprMembrum, ExprCondicio, ExprSeries, ExprObiectum, ExprClausura,
     ExprNovum, ExprQua, ExprInnatum, ExprCede, ExprFinge, ExprScriptum, ExprAmbitus,
-    ExprPostfixNovum,
+    ExprPostfixNovum, ExprConversio,
     TypusNomen, TypusGenericus, TypusFunctio, TypusNullabilis, TypusUnio, TypusLitteralis,
     LitteraSpecies, VariaSpecies,
 )
@@ -19,11 +19,13 @@ from scope import SemanticContext
 
 PY_BINARY_OPS = {
     "et": "and",
+    "&&": "and",
     "aut": "or",
+    "||": "or",
     "==": "==",
     "!=": "!=",
-    "===": "is",
-    "!==": "is not",
+    "===": "==",
+    "!==": "!=",
 }
 
 PY_UNARY_OPS = {
@@ -49,6 +51,20 @@ PY_TYPE_MAP = {
     "tabula": "dict",
     "copia": "set",
 }
+
+
+PY_RESERVED = {
+    "False", "None", "True", "and", "as", "assert", "async", "await",
+    "break", "class", "continue", "def", "del", "elif", "else", "except",
+    "finally", "for", "from", "global", "if", "import", "in", "is",
+    "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+    "while", "with", "yield",
+}
+
+
+def py_name(name: str) -> str:
+    """Escape Python reserved words by appending underscore."""
+    return f"{name}_" if name in PY_RESERVED else name
 
 
 class PyEmitter:
@@ -207,18 +223,19 @@ class PyEmitter:
 
     def _varia(self, s: StmtVaria, indent: str) -> str:
         """Emit a variable declaration."""
+        name = py_name(s.nomen)
         if s.externa:
-            return f"{indent}# extern: {s.nomen}"
+            return f"{indent}# extern: {name}"
 
         typ_ann = ""
         if s.typus:
             typ_ann = f": {self._typus(s.typus)}"
 
         if s.valor:
-            return f"{indent}{s.nomen}{typ_ann} = {self._expr(s.valor)}"
+            return f"{indent}{name}{typ_ann} = {self._expr(s.valor)}"
         if typ_ann:
-            return f"{indent}{s.nomen}{typ_ann} = None"
-        return f"{indent}{s.nomen} = None"
+            return f"{indent}{name}{typ_ann} = None"
+        return f"{indent}{name} = None"
 
     def _functio(self, s: StmtFunctio, indent: str) -> str:
         """Emit a function definition."""
@@ -263,11 +280,12 @@ class PyEmitter:
             return "\n".join(lines)
 
         for c in s.campi:
+            field_name = py_name(c.nomen)
             typ = self._typus(c.typus) if c.typus else "Any"
             if c.valor:
-                lines.append(f"{inner}{c.nomen}: {typ} = {self._expr(c.valor)}")
+                lines.append(f"{inner}{field_name}: {typ} = {self._expr(c.valor)}")
             else:
-                lines.append(f"{inner}{c.nomen}: {typ}")
+                lines.append(f"{inner}{field_name}: {typ}")
 
         for m in s.methodi:
             if isinstance(m, StmtFunctio):
@@ -372,6 +390,9 @@ class PyEmitter:
 
     def _importa(self, s: StmtImporta, indent: str) -> str:
         """Emit an import statement."""
+        # Skip norma: imports (stdlib not available for Python target)
+        if s.fons.startswith("norma:"):
+            return f"{indent}# skipped: norma import ({s.fons})"
         module = s.fons.replace("/", ".").replace("-", "_")
         if s.totum:
             return f"{indent}import {module} as {s.local}"
@@ -396,12 +417,16 @@ class PyEmitter:
         lines = []
         lines.append(f"{indent}if {self._expr(s.cond)}:")
         lines.append(self._stmt(s.cons, indent + self.indent_char))
-        if s.alt:
-            if isinstance(s.alt, StmtSi):
-                lines.append(f"{indent}el" + self._si(s.alt, "")[len(indent):])
+        alt = s.alt
+        while alt:
+            if isinstance(alt, StmtSi):
+                lines.append(f"{indent}elif {self._expr(alt.cond)}:")
+                lines.append(self._stmt(alt.cons, indent + self.indent_char))
+                alt = alt.alt
             else:
                 lines.append(f"{indent}else:")
-                lines.append(self._stmt(s.alt, indent + self.indent_char))
+                lines.append(self._stmt(alt, indent + self.indent_char))
+                break
         return "\n".join(lines)
 
     def _dum(self, s: StmtDum, indent: str) -> str:
@@ -424,10 +449,11 @@ class PyEmitter:
     def _iteratio(self, s: StmtIteratio, indent: str) -> str:
         """Emit a for loop."""
         lines = []
+        binding = py_name(s.binding)
         if s.asynca:
-            lines.append(f"{indent}async for {s.binding} in {self._expr(s.iter)}:")
+            lines.append(f"{indent}async for {binding} in {self._expr(s.iter)}:")
         else:
-            lines.append(f"{indent}for {s.binding} in {self._expr(s.iter)}:")
+            lines.append(f"{indent}for {binding} in {self._expr(s.iter)}:")
         lines.append(self._stmt(s.corpus, indent + self.indent_char))
         return "\n".join(lines)
 
@@ -460,11 +486,10 @@ class PyEmitter:
                 if p.wildcard:
                     patterns.append("_")
                 else:
-                    pat = p.variant
-                    if p.bindings:
-                        pat += "(" + ", ".join(p.bindings) + ")"
+                    bindings_str = ", ".join(py_name(b) for b in p.bindings) if p.bindings else ""
+                    pat = f"{p.variant}({bindings_str})"
                     if p.alias:
-                        pat += f" as {p.alias}"
+                        pat += f" as {py_name(p.alias)}"
                     patterns.append(pat)
             lines.append(f"{inner}case {', '.join(patterns)}:")
             lines.append(self._stmt(c.corpus, inner + self.indent_char))
@@ -542,7 +567,7 @@ class PyEmitter:
 
         match e:
             case ExprNomen():
-                return e.valor
+                return py_name(e.valor)
 
             case ExprEgo():
                 return "self"
@@ -637,7 +662,7 @@ class PyEmitter:
                 if prop == "ultimus":
                     return f"{obj}[-1]"
 
-                return f"{obj}.{prop}"
+                return f"{obj}.{py_name(prop)}"
 
             case ExprCondicio():
                 return f"({self._expr(e.cons)} if {self._expr(e.cond)} else {self._expr(e.alt)})"
@@ -704,8 +729,15 @@ class PyEmitter:
 
             case ExprScriptum():
                 template = e.template.replace("§", "{}")
+                # Escape for Python string literal
+                escaped = (template
+                    .replace("\\", "\\\\")
+                    .replace("'", "\\'")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r")
+                    .replace("\t", "\\t"))
                 args = ", ".join(self._expr(a) for a in e.args)
-                return f'f"{template}".format({args})'
+                return f"'{escaped}'.format({args})"
 
             case ExprAmbitus():
                 start = self._expr(e.start)
@@ -713,6 +745,23 @@ class PyEmitter:
                 if e.inclusive:
                     return f"range({start}, {end} + 1)"
                 return f"range({start}, {end})"
+
+            case ExprConversio():
+                inner = self._expr(e.expr)
+                match e.species:
+                    case "numeratum":
+                        conv = f"int({inner})"
+                    case "fractatum":
+                        conv = f"float({inner})"
+                    case "textatum":
+                        conv = f"str({inner})"
+                    case "bivalentum":
+                        conv = f"bool({inner})"
+                    case _:
+                        conv = inner
+                if e.fallback:
+                    return f"({conv} if {inner} is not None else {self._expr(e.fallback)})"
+                return conv
 
             case _:
                 return "# unknown expr"
@@ -752,7 +801,7 @@ class PyEmitter:
     def _param(self, p: Param) -> str:
         """Emit a parameter."""
         typ = self._typus(p.typus) if p.typus else ""
-        name = p.nomen
+        name = py_name(p.nomen)
         if p.rest:
             name = f"*{name}"
 
