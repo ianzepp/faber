@@ -448,12 +448,16 @@ pub struct MatchArm {
 pub enum Pattern {
     Wildcard(Span),
     Ident(Ident, Option<PatternBind>),
+    Literal(Literal, Span),
 }
 
 #[derive(Debug)]
 pub enum PatternBind {
-    Alias(Ident),            // ut NAME
-    Destructure(Vec<Ident>), // pro NAME, NAME (deprecated)
+    Alias(Ident), // ut NAME
+    Bindings {
+        mutability: Mutability,
+        names: Vec<Ident>,
+    },
 }
 
 #[derive(Debug)]

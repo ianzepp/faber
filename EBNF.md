@@ -279,9 +279,9 @@ defaultCase  := 'ceterum' (blockStmt | statement | inlineReturn)
 discerneStmt := 'discerne' 'omnia'? discriminants '{' variantCase* defaultCase? '}'
 discriminants := expression (',' expression)*
 variantCase  := 'casu' patterns (blockStmt | 'ergo' statement | inlineReturn)
-patterns     := pattern (',' pattern)*
-pattern      := '_' | (IDENTIFIER patternBind?)
-patternBind  := ('ut' IDENTIFIER) | ('pro' IDENTIFIER (',' IDENTIFIER)*)  # NOTE: 'pro' deprecated, use 'ut'
+patterns     := pattern ((',' | 'et') pattern)*
+pattern      := '_' | literal | (IDENTIFIER patternBind?)
+patternBind  := ('ut' IDENTIFIER) | (('fixum' | 'varia') IDENTIFIER (',' IDENTIFIER)*)
 ```
 
 ### Guards
