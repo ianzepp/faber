@@ -753,6 +753,7 @@ impl Parser {
 
             // Collection DSL
             TokenKind::Ab => {
+                self.advance();
                 return self.parse_ab_expr();
             }
 

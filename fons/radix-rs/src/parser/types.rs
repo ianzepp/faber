@@ -1,6 +1,6 @@
 //! Type annotation parsing
 
-use super::{Parser, ParseError, ParseErrorKind};
+use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
 use crate::syntax::*;
 

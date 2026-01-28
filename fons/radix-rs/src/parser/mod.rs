@@ -1,21 +1,22 @@
 //! Recursive descent parser for Faber
 
 mod decl;
-mod stmt;
+mod error;
 mod expr;
 mod pattern;
+mod stmt;
 mod types;
-mod error;
 
 pub use error::{ParseError, ParseErrorKind};
 
-use crate::lexer::{Token, TokenKind, Span, Symbol, LexResult};
+use crate::lexer::{Interner, LexResult, Span, Symbol, Token, TokenKind};
 use crate::syntax::*;
 
 /// Parse result
 pub struct ParseResult {
     pub program: Option<Program>,
     pub errors: Vec<ParseError>,
+    pub interner: Interner,
 }
 
 impl ParseResult {
@@ -38,11 +39,14 @@ pub fn parse(lex_result: LexResult) -> ParseResult {
                     span: e.span,
                 })
                 .collect(),
+            interner: lex_result.interner,
         };
     }
 
     let mut parser = Parser::new(lex_result.tokens);
-    parser.parse_program()
+    let mut result = parser.parse_program();
+    result.interner = lex_result.interner;
+    result
 }
 
 /// Parser state
@@ -66,14 +70,25 @@ impl Parser {
     /// Parse the entire program
     pub fn parse_program(&mut self) -> ParseResult {
         let start = self.current_span();
+        let mut directives = Vec::new();
         let mut stmts = Vec::new();
 
         while !self.is_at_end() {
-            match self.parse_statement() {
-                Ok(stmt) => stmts.push(stmt),
-                Err(e) => {
-                    self.errors.push(e);
-                    self.synchronize();
+            if self.check(&TokenKind::Section) {
+                match self.parse_directive_decl() {
+                    Ok(directive) => directives.push(directive),
+                    Err(e) => {
+                        self.errors.push(e);
+                        self.synchronize();
+                    }
+                }
+            } else {
+                match self.parse_statement() {
+                    Ok(stmt) => stmts.push(stmt),
+                    Err(e) => {
+                        self.errors.push(e);
+                        self.synchronize();
+                    }
                 }
             }
         }
@@ -82,8 +97,13 @@ impl Parser {
         let span = start.merge(end);
 
         ParseResult {
-            program: Some(Program { stmts, span }),
+            program: Some(Program {
+                directives,
+                stmts,
+                span,
+            }),
             errors: std::mem::take(&mut self.errors),
+            interner: Interner::new(),
         }
     }
 
@@ -254,7 +274,7 @@ impl Parser {
     fn parse_ident(&mut self) -> Result<Ident, ParseError> {
         let token = self.advance();
         match &token.kind {
-            TokenKind::Ident(sym) => Ok(Ident {
+            TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident {
                 name: *sym,
                 span: token.span,
             }),
@@ -268,12 +288,13 @@ impl Parser {
 
     /// Try to parse an identifier if present
     fn try_parse_ident(&mut self) -> Option<Ident> {
-        if let TokenKind::Ident(sym) = self.peek().kind {
-            let span = self.peek().span;
-            self.advance();
-            Some(Ident { name: sym, span })
-        } else {
-            None
+        match self.peek().kind {
+            TokenKind::Ident(sym) | TokenKind::Underscore(sym) => {
+                let span = self.peek().span;
+                self.advance();
+                Some(Ident { name: sym, span })
+            }
+            _ => None,
         }
     }
 

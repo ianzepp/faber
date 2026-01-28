@@ -1,6 +1,6 @@
 //! Pattern parsing for match expressions
 
-use super::{Parser, ParseError, ParseErrorKind};
+use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
 use crate::syntax::*;
 
@@ -20,6 +20,7 @@ impl Parser {
                 || self.check_keyword(TokenKind::Iacit)
                 || self.check_keyword(TokenKind::Moritor)
                 || self.check_keyword(TokenKind::Tacet)
+                || self.check_keyword(TokenKind::Ergo)
             {
                 break;
             }
@@ -30,10 +31,13 @@ impl Parser {
 
     /// Parse a single pattern
     fn parse_pattern(&mut self) -> Result<Pattern, ParseError> {
-        // Wildcard
+        if let TokenKind::Underscore(_) = self.peek().kind {
+            let span = self.peek().span;
+            self.advance();
+            return Ok(Pattern::Wildcard(span));
+        }
+        // Identifier pattern
         if let TokenKind::Ident(sym) = self.peek().kind {
-            // Check if it's underscore (wildcard)
-            // We'd need to check the actual symbol value
             let span = self.peek().span;
             let ident = self.parse_ident()?;
 
@@ -49,9 +53,7 @@ impl Parser {
                         break;
                     }
                     // Check if we're at end of pattern list
-                    if self.check(&TokenKind::LBrace)
-                        || self.check_keyword(TokenKind::Reddit)
-                    {
+                    if self.check(&TokenKind::LBrace) || self.check_keyword(TokenKind::Reddit) {
                         break;
                     }
                 }

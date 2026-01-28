@@ -12,9 +12,7 @@ impl Parser {
 
         let kind = match self.peek().kind {
             // Declarations
-            TokenKind::Fixum | TokenKind::Varia => {
-                self.parse_var_decl()?
-            }
+            TokenKind::Fixum | TokenKind::Varia => self.parse_var_decl()?,
             TokenKind::Functio => self.parse_func_decl()?,
             TokenKind::Genus => self.parse_class_decl()?,
             TokenKind::Pactum => self.parse_interface_decl()?,
@@ -22,7 +20,12 @@ impl Parser {
             TokenKind::Ordo => self.parse_enum_decl()?,
             TokenKind::Discretio => self.parse_union_decl()?,
             TokenKind::Importa => self.parse_import_decl()?,
-            TokenKind::Section => self.parse_directive_decl()?,
+            TokenKind::Section => {
+                return Err(self.error(
+                    ParseErrorKind::InvalidDirective,
+                    "directives must appear at file scope",
+                ));
+            }
             TokenKind::Probandum => self.parse_test_decl()?,
             TokenKind::Abstractus => self.parse_abstract_class_decl()?,
 
@@ -63,10 +66,12 @@ impl Parser {
 
             // Annotations (for following declaration)
             TokenKind::At => {
-                let _annotations = self.parse_annotations()?;
-                // For now, just parse next statement
-                // TODO: attach annotations
-                return self.parse_statement();
+                let annotations = self.parse_annotations()?;
+                let mut stmt = self.parse_statement()?;
+                if let StmtKind::Func(func) = &mut stmt.kind {
+                    func.annotations = annotations;
+                }
+                return Ok(stmt);
             }
 
             // Expression statement
@@ -569,7 +574,7 @@ impl Parser {
     }
 
     /// Parse directive
-    fn parse_directive_decl(&mut self) -> Result<StmtKind, ParseError> {
+    fn parse_directive_decl(&mut self) -> Result<DirectiveDecl, ParseError> {
         let start = self.current_span();
         self.expect(&TokenKind::Section, "expected '§'")?;
 
@@ -591,7 +596,7 @@ impl Parser {
         }
 
         let span = start.merge(self.previous_span());
-        Ok(StmtKind::Directive(DirectiveDecl { name, args, span }))
+        Ok(DirectiveDecl { name, args, span })
     }
 
     /// Parse test declaration
@@ -747,26 +752,38 @@ impl Parser {
     }
 
     fn parse_annotation_kind(&mut self) -> Result<AnnotationKind, ParseError> {
-        // Check for known annotation keywords
-        if self.eat_keyword(TokenKind::Innatum) {
-            let mappings = self.parse_target_mappings()?;
-            return Ok(AnnotationKind::Innatum(mappings));
+        let name = self.parse_ident()?;
+        let mut args = Vec::new();
+
+        while self.is_annotation_arg() {
+            args.push(self.advance().clone());
         }
 
-        // For now, just parse as simple identifier list
-        let mut idents = Vec::new();
-        while let Some(ident) = self.try_parse_ident() {
-            idents.push(ident);
+        Ok(AnnotationKind::Statement(AnnotationStmt { name, args }))
+    }
+
+    fn is_annotation_arg(&self) -> bool {
+        if self.check(&TokenKind::At) {
+            return false;
         }
 
-        if idents.is_empty() {
-            return Err(self.error(
-                ParseErrorKind::InvalidAnnotation,
-                "expected annotation name",
-            ));
-        }
-
-        Ok(AnnotationKind::Simple(idents))
+        matches!(
+            self.peek().kind,
+            TokenKind::Ident(_)
+                | TokenKind::Underscore(_)
+                | TokenKind::String(_)
+                | TokenKind::Integer(_)
+                | TokenKind::Float(_)
+                | TokenKind::Comma
+                | TokenKind::LParen
+                | TokenKind::RParen
+                | TokenKind::Arrow
+                | TokenKind::Lt
+                | TokenKind::Gt
+                | TokenKind::Colon
+                | TokenKind::Dot
+                | TokenKind::Eq
+        )
     }
 
     fn parse_target_mappings(&mut self) -> Result<Vec<TargetMapping>, ParseError> {

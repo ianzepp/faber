@@ -19,14 +19,25 @@ fn render_one(diag: &Diagnostic, sources: &[(String, String)]) {
         Severity::Info => ReportKind::Advice,
     };
 
+    let message = if let Some(code) = diag.code {
+        format!("[{}] {}", code, diag.message)
+    } else {
+        diag.message.clone()
+    };
+
     // Find the source for this file
-    let source = sources.iter()
+    let source = sources
+        .iter()
         .find(|(name, _)| name == &diag.file)
         .map(|(_, content)| content.as_str())
         .unwrap_or("");
 
-    let mut builder = Report::build(kind, &diag.file, diag.span.map(|s| s.start as usize).unwrap_or(0))
-        .with_message(&diag.message);
+    let mut builder = Report::build(
+        kind,
+        &diag.file,
+        diag.span.map(|s| s.start as usize).unwrap_or(0),
+    )
+    .with_message(message);
 
     if let Some(span) = diag.span {
         let color = match diag.severity {
@@ -38,7 +49,7 @@ fn render_one(diag: &Diagnostic, sources: &[(String, String)]) {
         builder = builder.with_label(
             Label::new((&diag.file, span.start as usize..span.end as usize))
                 .with_color(color)
-                .with_message(&diag.message)
+                .with_message(&diag.message),
         );
     }
 
@@ -63,7 +74,11 @@ pub fn render_plain(diag: &Diagnostic) -> String {
         diag.file.clone()
     };
 
-    let mut output = format!("{}: {}: {}", severity, location, diag.message);
+    let mut output = if let Some(code) = diag.code {
+        format!("{}[{}]: {}: {}", severity, code, location, diag.message)
+    } else {
+        format!("{}: {}: {}", severity, location, diag.message)
+    };
 
     if let Some(line) = &diag.source_line {
         output.push_str(&format!("\n  | {}", line));

@@ -1,12 +1,12 @@
 //! Lexer for Faber source code
 
-mod token;
 mod cursor;
 mod scan;
+mod token;
 
-pub use token::{Token, TokenKind, Span, Symbol};
 pub use cursor::Cursor;
-pub use scan::{Lexer, Interner};
+pub use scan::{Interner, Lexer};
+pub use token::{Span, Symbol, Token, TokenKind};
 
 /// Lex source code into tokens
 pub fn lex(source: &str) -> LexResult {
@@ -17,6 +17,7 @@ pub fn lex(source: &str) -> LexResult {
 pub struct LexResult {
     pub tokens: Vec<Token>,
     pub errors: Vec<LexError>,
+    pub interner: Interner,
 }
 
 impl LexResult {

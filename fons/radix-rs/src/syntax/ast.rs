@@ -1,6 +1,6 @@
 //! Abstract Syntax Tree node definitions
 
-use crate::lexer::{Span, Symbol};
+use crate::lexer::{Span, Symbol, Token};
 
 /// Unique node identifier
 pub type NodeId = u32;
@@ -8,6 +8,7 @@ pub type NodeId = u32;
 /// Root of the AST
 #[derive(Debug)]
 pub struct Program {
+    pub directives: Vec<DirectiveDecl>,
     pub stmts: Vec<Stmt>,
     pub span: Span,
 }
@@ -41,8 +42,6 @@ pub enum StmtKind {
     Union(UnionDecl),
     /// Import statement
     Import(ImportDecl),
-    /// Directive: § ...
-    Directive(DirectiveDecl),
     /// Test suite: probandum
     Test(TestDecl),
     /// Block: { ... }
@@ -125,9 +124,9 @@ pub struct TypeParam {
 
 #[derive(Debug)]
 pub struct Param {
-    pub optional: bool,       // si
-    pub mode: ParamMode,      // de/in/ex
-    pub rest: bool,           // ceteri
+    pub optional: bool,  // si
+    pub mode: ParamMode, // de/in/ex
+    pub rest: bool,      // ceteri
     pub ty: TypeExpr,
     pub name: Ident,
     pub alias: Option<Ident>, // ut NAME
@@ -138,10 +137,10 @@ pub struct Param {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ParamMode {
     #[default]
-    Owned,    // (none) - take ownership
-    Ref,      // de - borrow
-    MutRef,   // in - mutable borrow
-    Move,     // ex - explicit move
+    Owned, // (none) - take ownership
+    Ref,    // de - borrow
+    MutRef, // in - mutable borrow
+    Move,   // ex - explicit move
 }
 
 #[derive(Debug)]
@@ -185,8 +184,8 @@ pub enum ClassMemberKind {
 
 #[derive(Debug)]
 pub struct FieldDecl {
-    pub is_static: bool,   // generis
-    pub is_bound: bool,    // nexum
+    pub is_static: bool, // generis
+    pub is_bound: bool,  // nexum
     pub ty: TypeExpr,
     pub name: Ident,
     pub init: Option<Box<Expr>>,
@@ -311,10 +310,10 @@ pub struct SetupBlock {
 
 #[derive(Debug, Clone, Copy)]
 pub enum SetupKind {
-    Before,      // praepara
-    BeforeAll,   // praeparabit
-    After,       // postpara
-    AfterAll,    // postparabit
+    Before,    // praepara
+    BeforeAll, // praeparabit
+    After,     // postpara
+    AfterAll,  // postparabit
 }
 
 #[derive(Debug)]
@@ -453,8 +452,8 @@ pub enum Pattern {
 
 #[derive(Debug)]
 pub enum PatternBind {
-    Alias(Ident),             // ut NAME
-    Destructure(Vec<Ident>),  // pro NAME, NAME (deprecated)
+    Alias(Ident),            // ut NAME
+    Destructure(Vec<Ident>), // pro NAME, NAME (deprecated)
 }
 
 #[derive(Debug)]
@@ -576,10 +575,10 @@ pub struct EndpointBinding {
 
 #[derive(Debug, Clone, Copy)]
 pub enum EndpointVerb {
-    Fit,    // sync singular
-    Fiet,   // async singular
-    Fiunt,  // sync plural
-    Fient,  // async plural
+    Fit,   // sync singular
+    Fiet,  // async singular
+    Fiunt, // sync plural
+    Fient, // async plural
 }
 
 // =============================================================================
@@ -952,9 +951,9 @@ pub struct CollectionTransform {
 
 #[derive(Debug, Clone, Copy)]
 pub enum TransformKind {
-    First,  // prima
-    Last,   // ultima
-    Sum,    // summa
+    First, // prima
+    Last,  // ultima
+    Sum,   // summa
 }
 
 #[derive(Debug)]
@@ -1011,7 +1010,7 @@ pub enum ComptimeBody {
 
 #[derive(Debug)]
 pub struct TypeExpr {
-    pub nullable: bool,    // si
+    pub nullable: bool,         // si
     pub mode: Option<TypeMode>, // de/in
     pub kind: TypeExprKind,
     pub span: Span,
@@ -1051,8 +1050,8 @@ pub struct Annotation {
 
 #[derive(Debug)]
 pub enum AnnotationKind {
-    /// Simple annotation: @ NAME+
-    Simple(Vec<Ident>),
+    /// Annotation as a statement with args
+    Statement(AnnotationStmt),
     /// @ innatum TARGET STRING, ...
     Innatum(Vec<TargetMapping>),
     /// @ subsidia TARGET STRING, ...
@@ -1087,6 +1086,12 @@ pub enum AnnotationKind {
     Protecta,
     /// @ privata
     Privata,
+}
+
+#[derive(Debug)]
+pub struct AnnotationStmt {
+    pub name: Ident,
+    pub args: Vec<Token>,
 }
 
 #[derive(Debug)]

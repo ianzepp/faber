@@ -50,6 +50,7 @@ pub struct Symbol(pub u32);
 pub enum TokenKind {
     // === Identifiers and literals ===
     Ident(Symbol),
+    Underscore(Symbol),
     Integer(i64),
     Float(f64),
     String(Symbol),
@@ -231,40 +232,40 @@ pub enum TokenKind {
     Section,   // §
 
     // === Operators ===
-    Plus,      // +
-    Minus,     // -
-    Star,      // *
-    Slash,     // /
-    Percent,   // %
-    Amp,       // &
-    Pipe,      // |
-    Caret,     // ^
-    Tilde,     // ~
-    Bang,      // !
-    Question,  // ?
+    Plus,     // +
+    Minus,    // -
+    Star,     // *
+    Slash,    // /
+    Percent,  // %
+    Amp,      // &
+    Pipe,     // |
+    Caret,    // ^
+    Tilde,    // ~
+    Bang,     // !
+    Question, // ?
 
     // === Comparison ===
-    Eq,        // =
-    EqEq,      // ==
-    EqEqEq,    // ===
-    BangEq,    // !=
-    BangEqEq,  // !==
-    Lt,        // <
-    Gt,        // >
-    LtEq,      // <=
-    GtEq,      // >=
+    Eq,       // =
+    EqEq,     // ==
+    EqEqEq,   // ===
+    BangEq,   // !=
+    BangEqEq, // !==
+    Lt,       // <
+    Gt,       // >
+    LtEq,     // <=
+    GtEq,     // >=
 
     // === Compound assignment ===
-    PlusEq,    // +=
-    MinusEq,   // -=
-    StarEq,    // *=
-    SlashEq,   // /=
-    AmpEq,     // &=
-    PipeEq,    // |=
+    PlusEq,  // +=
+    MinusEq, // -=
+    StarEq,  // *=
+    SlashEq, // /=
+    AmpEq,   // &=
+    PipeEq,  // |=
 
     // === Logical ===
-    AmpAmp,    // &&
-    PipePipe,  // ||
+    AmpAmp,   // &&
+    PipePipe, // ||
 
     // === Optional chaining ===
     QuestionDot,     // ?.
@@ -275,7 +276,7 @@ pub enum TokenKind {
     BangParen,       // !(
 
     // === Range ===
-    DotDot,    // ..
+    DotDot, // ..
 
     // === Comments ===
     LineComment(Symbol),
@@ -293,23 +294,116 @@ impl TokenKind {
         use TokenKind::*;
         matches!(
             self,
-            Fixum | Varia | Functio | Genus | Pactum
-                | Typus | Ordo | Discretio | Importa | Probandum | Proba
-                | Abstractus | Generis | Nexum | Publica | Privata | Protecta
-                | Prae | Ceteri | Immutata | Iacit | Curata | Errata | Exitus | Optiones
-                | Si | Sic | Sin | Secus | Dum | Itera | Elige | Casu | Ceterum
-                | Discerne | Custodi | Fac | Ergo | Redde | Reddit | Rumpe | Perge | Tacet
-                | Tempta | Cape | Demum | Iace | Mori | Moritor | Adfirma
-                | Futura | Cursor | Cede | Clausura | Verum | Falsum | Nihil
-                | Et | Aut | Non | Vel | Est | Ego | Novum | Finge | Sub | Implet
-                | Qua | Innatum | Numeratum | Fractatum | Textatum | Bivalentum
-                | Sinistratum | Dextratum | Scribe | Vide | Mone
-                | Incipit | Incipiet | Cura | Arena | Ad
-                | Ex | De | In | Ut | Pro | Omnia | Sparge
-                | Praefixum | Scriptum | Lege | Lineam | Sed
-                | Ante | Usque | Per | Intra | Inter
-                | Ab | Ubi | Prima | Ultima | Summa
-                | Nulla | Nonnulla | Nonnihil | Negativum | Positivum
+            Fixum
+                | Varia
+                | Functio
+                | Genus
+                | Pactum
+                | Typus
+                | Ordo
+                | Discretio
+                | Importa
+                | Probandum
+                | Proba
+                | Abstractus
+                | Generis
+                | Nexum
+                | Publica
+                | Privata
+                | Protecta
+                | Prae
+                | Ceteri
+                | Immutata
+                | Iacit
+                | Curata
+                | Errata
+                | Exitus
+                | Optiones
+                | Si
+                | Sic
+                | Sin
+                | Secus
+                | Dum
+                | Itera
+                | Elige
+                | Casu
+                | Ceterum
+                | Discerne
+                | Custodi
+                | Fac
+                | Ergo
+                | Redde
+                | Reddit
+                | Rumpe
+                | Perge
+                | Tacet
+                | Tempta
+                | Cape
+                | Demum
+                | Iace
+                | Mori
+                | Moritor
+                | Adfirma
+                | Futura
+                | Cursor
+                | Cede
+                | Clausura
+                | Verum
+                | Falsum
+                | Nihil
+                | Et
+                | Aut
+                | Non
+                | Vel
+                | Est
+                | Ego
+                | Novum
+                | Finge
+                | Sub
+                | Implet
+                | Qua
+                | Innatum
+                | Numeratum
+                | Fractatum
+                | Textatum
+                | Bivalentum
+                | Sinistratum
+                | Dextratum
+                | Scribe
+                | Vide
+                | Mone
+                | Incipit
+                | Incipiet
+                | Cura
+                | Arena
+                | Ad
+                | Ex
+                | De
+                | In
+                | Ut
+                | Pro
+                | Omnia
+                | Sparge
+                | Praefixum
+                | Scriptum
+                | Lege
+                | Lineam
+                | Sed
+                | Ante
+                | Usque
+                | Per
+                | Intra
+                | Inter
+                | Ab
+                | Ubi
+                | Prima
+                | Ultima
+                | Summa
+                | Nulla
+                | Nonnulla
+                | Nonnihil
+                | Negativum
+                | Positivum
         )
     }
 
