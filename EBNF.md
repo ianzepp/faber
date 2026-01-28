@@ -258,12 +258,13 @@ inlineReturn := 'reddit' expression | 'iacit' expression | 'moritor' expression 
 
 ```ebnf
 whileStmt  := 'dum' expression (blockStmt | 'ergo' statement | inlineReturn) ('cape' IDENTIFIER blockStmt)?
-iteraStmt  := 'itera' ('ex' | 'de') expression ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
+iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expression)?) ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
 ```
 
 - `dum` = while
 - `itera ex...fixum`/`itera ex...varia` = for-of (values)
 - `itera de...fixum`/`itera de...varia` = for-in (keys)
+- `itera pro range ('per' step)? fixum/varia i` = range iteration (e.g. `itera pro 0..10 per 2 fixum i { scribe i }`)
 
 ### Switch/Match
 
@@ -522,6 +523,7 @@ facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)? ('dum' expression
 - Creates scope, optionally with catch or do-while
 
 ---
+
 ## Target-Specific Features
 
 Not all Faber features are supported across all compilation targets. Some features are currently limited to specific targets:
@@ -560,6 +562,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `dum`                         | while               |
 |                     | `itera ex...fixum`            | for-of (values)     |
 |                     | `itera de...fixum`            | for-in (keys)       |
+|                     | `itera pro...fixum`           | range iteration     |
 |                     | `elige` / `casu`              | switch / case       |
 |                     | `discerne`                    | pattern match       |
 |                     | `custodi`                     | guard               |
@@ -604,6 +607,6 @@ Not all Faber features are supported across all compilation targets. Some featur
 
 1. **Type-first parameters**: `functio f(numerus x)` NOT `functio f(x: numerus)`
 2. **Type-first declarations**: `fixum textus name` NOT `fixum name: textus`
-3. **For-of loops**: `itera ex collection fixum item { }` (verb-first, collection, then binding)
+3. **Iteration loops**: `itera ex/de/pro collection/range fixum/varia item { }` (verb-first, source, then binding)
 4. **Parentheses around conditions are valid but not idiomatic**: prefer `si x > 0 { }` or `si positivum x { }` over `si (x > 0) { }`
 5. **Output keywords are statements**, not functions — `scribe x` works, `scribe(x)` also works (parentheses group the expression), but `scribe` is not a callable value
