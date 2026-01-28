@@ -15,7 +15,7 @@ pub struct HirId(pub u32);
 #[derive(Debug)]
 pub struct HirProgram {
     pub items: Vec<HirItem>,
-    pub entry: Option<HirId>,
+    pub entry: Option<HirBlock>,
 }
 
 /// Top-level item
@@ -105,10 +105,10 @@ pub struct HirMethod {
 
 #[derive(Debug, Clone, Copy)]
 pub enum HirReceiver {
-    None,    // static
-    Ref,     // &self
-    MutRef,  // &mut self
-    Owned,   // self
+    None,   // static
+    Ref,    // &self
+    MutRef, // &mut self
+    Owned,  // self
 }
 
 /// Enum definition
@@ -289,10 +289,24 @@ pub enum HirLiteral {
 
 #[derive(Debug, Clone, Copy)]
 pub enum HirBinOp {
-    Add, Sub, Mul, Div, Mod,
-    Eq, NotEq, Lt, Gt, LtEq, GtEq,
-    And, Or,
-    BitAnd, BitOr, BitXor, Shl, Shr,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    Eq,
+    NotEq,
+    Lt,
+    Gt,
+    LtEq,
+    GtEq,
+    And,
+    Or,
+    BitAnd,
+    BitOr,
+    BitXor,
+    Shl,
+    Shr,
 }
 
 #[derive(Debug, Clone, Copy)]

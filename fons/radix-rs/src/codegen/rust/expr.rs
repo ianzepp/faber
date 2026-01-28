@@ -260,7 +260,11 @@ fn generate_pattern(pattern: &HirPattern, w: &mut CodeWriter) {
     }
 }
 
-fn generate_block(block: &HirBlock, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+fn generate_block(
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.writeln("{");
     w.indented(|w| {
         for stmt in &block.stmts {

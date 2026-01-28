@@ -1,12 +1,13 @@
 //! Semantic analysis
 //!
 //! Multi-pass semantic analysis:
-//! 1. Collect - gather all declarations
+//! 1. Collect - gather all top-level declarations
 //! 2. Resolve - resolve names to definitions
-//! 3. Typecheck - bidirectional type inference
-//! 4. Borrow - ownership/borrowing analysis (for Rust target)
-//! 5. Exhaustive - pattern match exhaustiveness
-//! 6. Lint - warnings and suggestions
+//! 3. Lower - build resolved HIR from the AST
+//! 4. Typecheck - bidirectional type inference
+//! 5. Borrow - ownership/borrowing analysis (for Rust target)
+//! 6. Exhaustive - pattern match exhaustiveness
+//! 7. Lint - warnings and suggestions
 
 mod error;
 pub mod passes;
@@ -83,29 +84,46 @@ pub fn analyze(program: &Program, config: &PassConfig) -> SemanticResult {
         };
     }
 
-    // Lower to HIR
-    let hir = crate::hir::lower(program, &resolver);
+    // Pass 3: Lower to HIR
+    let (hir, lower_errors) = crate::hir::lower(program, &resolver);
 
-    // Pass 3: Type checking
+    // Add lowering errors
+    for err in lower_errors {
+        errors.push(SemanticError::new(
+            SemanticErrorKind::LoweringError,
+            err.message,
+            err.span,
+        ));
+    }
+
+    if !errors.is_empty() {
+        return SemanticResult {
+            hir: None,
+            types,
+            errors,
+        };
+    }
+
+    // Pass 4: Type checking
     if let Err(e) = passes::typecheck::typecheck(&hir, &resolver, &mut types) {
         errors.extend(e);
     }
 
-    // Pass 4: Borrow analysis (conditional)
+    // Pass 5: Borrow analysis (conditional)
     if config.borrow_analysis {
         if let Err(e) = passes::borrow::analyze(&hir, &resolver, &types) {
             errors.extend(e);
         }
     }
 
-    // Pass 5: Exhaustiveness checking (conditional)
+    // Pass 6: Exhaustiveness checking (conditional)
     if config.exhaustiveness {
         if let Err(e) = passes::exhaustive::check(&hir, &types) {
             errors.extend(e);
         }
     }
 
-    // Pass 6: Linting (conditional)
+    // Pass 7: Linting (conditional)
     if config.lint {
         if let Err(e) = passes::lint::lint(&hir, &resolver, &types) {
             errors.extend(e);

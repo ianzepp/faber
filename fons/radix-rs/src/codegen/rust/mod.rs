@@ -1,14 +1,14 @@
 //! Rust code generation
 
 mod decl;
-mod stmt;
 mod expr;
+mod stmt;
 mod types;
 
-use super::{Codegen, CodegenError, CodeWriter};
-use crate::hir::{HirProgram, HirItem, HirItemKind};
+use super::{CodeWriter, Codegen, CodegenError};
+use crate::hir::{HirItem, HirItemKind, HirProgram};
 use crate::semantic::TypeTable;
-use crate::{RustOutput, CrateDep};
+use crate::{CrateDep, RustOutput};
 
 /// Rust code generator
 pub struct RustCodegen {
@@ -67,11 +67,7 @@ impl RustCodegen {
 impl Codegen for RustCodegen {
     type Output = RustOutput;
 
-    fn generate(
-        &self,
-        hir: &HirProgram,
-        types: &TypeTable,
-    ) -> Result<RustOutput, CodegenError> {
+    fn generate(&self, hir: &HirProgram, types: &TypeTable) -> Result<RustOutput, CodegenError> {
         let mut w = CodeWriter::new();
 
         self.generate_prelude(&mut w);
@@ -82,7 +78,7 @@ impl Codegen for RustCodegen {
         }
 
         // Generate main if there's an entry point
-        if let Some(_entry) = hir.entry {
+        if hir.entry.is_some() {
             w.writeln("fn main() {");
             w.indented(|w| {
                 w.writeln("// Entry point");

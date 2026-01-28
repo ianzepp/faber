@@ -1,6 +1,6 @@
 //! Rust type generation
 
-use crate::semantic::{Type, TypeTable, Primitive, Mutability, TypeId};
+use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
 
 /// Convert a Faber type to Rust syntax
 pub fn type_to_rust(type_id: TypeId, types: &TypeTable) -> String {
@@ -52,21 +52,18 @@ pub fn type_to_rust(type_id: TypeId, types: &TypeTable) -> String {
             "dyn TodoTrait".to_owned()
         }
 
-        Type::Alias(_def_id, resolved) => {
-            type_to_rust(*resolved, types)
-        }
+        Type::Alias(_def_id, resolved) => type_to_rust(*resolved, types),
 
         Type::Func(sig) => {
-            let params: Vec<String> = sig.params.iter()
+            let params: Vec<String> = sig
+                .params
+                .iter()
                 .map(|p| type_to_rust(p.ty, types))
                 .collect();
             let ret = type_to_rust(sig.ret, types);
 
             if sig.is_async {
-                format!(
-                    "impl Future<Output = {}>",
-                    ret
-                )
+                format!("impl Future<Output = {}>", ret)
             } else {
                 format!("fn({}) -> {}", params.join(", "), ret)
             }
@@ -79,15 +76,11 @@ pub fn type_to_rust(type_id: TypeId, types: &TypeTable) -> String {
 
         Type::Applied(base, args) => {
             let base_str = type_to_rust(*base, types);
-            let args_str: Vec<String> = args.iter()
-                .map(|a| type_to_rust(*a, types))
-                .collect();
+            let args_str: Vec<String> = args.iter().map(|a| type_to_rust(*a, types)).collect();
             format!("{}<{}>", base_str, args_str.join(", "))
         }
 
-        Type::Infer(_) => {
-            "_".to_owned()
-        }
+        Type::Infer(_) => "_".to_owned(),
 
         Type::Union(variants) => {
             // Rust doesn't have ad-hoc union types, use enum or trait object
@@ -99,9 +92,7 @@ pub fn type_to_rust(type_id: TypeId, types: &TypeTable) -> String {
             }
         }
 
-        Type::Error => {
-            "/* error */".to_owned()
-        }
+        Type::Error => "/* error */".to_owned(),
     }
 }
 
@@ -111,10 +102,11 @@ fn primitive_to_rust(prim: Primitive) -> String {
         Primitive::Numerus => "i64",
         Primitive::Fractus => "f64",
         Primitive::Bivalens => "bool",
-        Primitive::Nihil => "()",  // or Option::None
+        Primitive::Nihil => "()", // or Option::None
         Primitive::Vacuum => "()",
         Primitive::Numquam => "!",
         Primitive::Ignotum => "Box<dyn std::any::Any>",
         Primitive::Octeti => "Vec<u8>",
-    }.to_owned()
+    }
+    .to_owned()
 }

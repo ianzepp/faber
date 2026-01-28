@@ -16,6 +16,7 @@ fn main() {
     match command.as_str() {
         "lex" => cmd_lex(&args[2..]),
         "parse" => cmd_parse(&args[2..]),
+        "hir" => cmd_hir(&args[2..]),
         "check" => cmd_check(&args[2..]),
         "emit" => cmd_emit(&args[2..]),
         "help" | "--help" | "-h" => print_usage(),
@@ -35,6 +36,7 @@ fn print_usage() {
     eprintln!("Commands:");
     eprintln!("  lex <file>              Tokenize and output JSON");
     eprintln!("  parse <file>            Parse and output AST as JSON");
+    eprintln!("  hir <file>              Lower AST to HIR and output as JSON");
     eprintln!("  check <file>            Run semantic analysis");
     eprintln!("  emit [-t target] <file> Compile to target (rust, faber)");
     eprintln!();
@@ -164,6 +166,100 @@ fn cmd_parse(args: &[String]) {
     println!("}}");
 
     if !parse_result.success() {
+        std::process::exit(1);
+    }
+}
+
+fn cmd_hir(args: &[String]) {
+    let (name, source) = read_source(args);
+
+    // Phase 1: Lexing
+    let lex_result = radix::lexer::lex(&source);
+    if !lex_result.success() {
+        eprintln!("lexer errors:");
+        for err in &lex_result.errors {
+            eprintln!("  {}: {}", err.span.start, err.message);
+        }
+        std::process::exit(1);
+    }
+
+    // Phase 2: Parsing
+    let parse_result = radix::parser::parse(lex_result);
+    if !parse_result.success() {
+        eprintln!("parser errors:");
+        for err in &parse_result.errors {
+            eprintln!("  {}: {}", err.span.start, err.message);
+        }
+        std::process::exit(1);
+    }
+
+    let program = parse_result.program.unwrap();
+
+    // Phase 3: Name resolution (needed for HIR lowering)
+    let mut resolver = radix::semantic::Resolver::new();
+    let mut types = radix::semantic::TypeTable::new();
+
+    // Collect declarations
+    if let Err(e) = radix::semantic::passes::collect::collect(&program, &mut resolver, &mut types) {
+        eprintln!("collection errors:");
+        for err in e {
+            eprintln!("  {:?}: {}", err.kind, err.message);
+        }
+        std::process::exit(1);
+    }
+
+    // Resolve names
+    if let Err(e) = radix::semantic::passes::resolve::resolve(&program, &mut resolver, &mut types) {
+        eprintln!("resolution errors:");
+        for err in e {
+            eprintln!("  {:?}: {}", err.kind, err.message);
+        }
+        std::process::exit(1);
+    }
+
+    // Phase 4: Lower to HIR
+    let (hir, errors) = radix::hir::lower(&program, &resolver);
+
+    // Output as JSON
+    println!("{{");
+    println!("  \"file\": \"{}\",", escape_json(&name));
+    println!("  \"success\": {},", errors.is_empty());
+    println!("  \"items\": {},", hir.items.len());
+    println!("  \"hir\": [");
+
+    for (i, item) in hir.items.iter().enumerate() {
+        let comma = if i + 1 < hir.items.len() { "," } else { "" };
+        let kind = format!("{:?}", item.kind);
+        let kind_name = kind.split('(').next().unwrap_or(&kind);
+        println!(
+            "    {{ \"id\": {:?}, \"def_id\": {:?}, \"kind\": \"{}\", \"span\": [{}, {}] }}{}",
+            item.id.0,
+            item.def_id.0,
+            kind_name,
+            item.span.start,
+            item.span.end,
+            comma
+        );
+    }
+
+    println!("  ],");
+    println!("  \"errors\": [");
+
+    for (i, err) in errors.iter().enumerate() {
+        let comma = if i + 1 < errors.len() { "," } else { "" };
+        println!(
+            "    {{ \"message\": \"{}\", \"span\": [{}, {}] }}{}",
+            escape_json(&err.message),
+            err.span.start,
+            err.span.end,
+            comma
+        );
+    }
+
+    println!("  ]");
+    println!("}}");
+
+    if !errors.is_empty() {
         std::process::exit(1);
     }
 }

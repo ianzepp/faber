@@ -5,19 +5,16 @@
 //! - Implicit returns are made explicit
 //! - ergo/reddit syntax is desugared to blocks
 //! - Method calls are normalized
+//! - Entry blocks are stored directly on the program
 
-mod nodes;
 mod lower;
+mod nodes;
 
+pub use lower::{lower, LowerError};
 pub use nodes::{
-    DefId, HirId, HirProgram, HirItem, HirItemKind,
-    HirFunction, HirTypeParam, HirParam, HirParamMode,
-    HirStruct, HirField, HirMethod, HirReceiver,
-    HirEnum, HirVariant, HirVariantField,
-    HirInterface, HirInterfaceMethod,
-    HirTypeAlias, HirConst, HirImport, HirImportItem,
-    HirBlock, HirStmt, HirStmtKind, HirLocal,
-    HirExpr, HirExprKind, HirLiteral, HirBinOp, HirUnOp, HirRefKind,
-    HirMatchArm, HirPattern,
+    DefId, HirBinOp, HirBlock, HirConst, HirEnum, HirExpr, HirExprKind, HirField, HirFunction,
+    HirId, HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem, HirItemKind,
+    HirLiteral, HirLocal, HirMatchArm, HirMethod, HirParam, HirParamMode, HirPattern, HirProgram,
+    HirReceiver, HirRefKind, HirStmt, HirStmtKind, HirStruct, HirTypeAlias, HirTypeParam, HirUnOp,
+    HirVariant, HirVariantField,
 };
-pub use lower::lower;

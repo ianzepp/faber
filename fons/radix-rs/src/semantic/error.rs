@@ -40,6 +40,7 @@ pub enum SemanticErrorKind {
     DuplicateDefinition,
     ImportNotFound,
     CircularDependency,
+    LoweringError,
 
     // Type errors
     TypeMismatch,

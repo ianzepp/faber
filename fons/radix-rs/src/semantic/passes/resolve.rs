@@ -1,7 +1,6 @@
 //! Pass 2: Name resolution
 //!
-//! Resolves all identifiers to their definitions. Builds
-//! the HIR as a side effect.
+//! Resolves all identifiers to their definitions.
 
 use crate::semantic::{Resolver, SemanticError, TypeTable};
 use crate::syntax::Program;

@@ -194,6 +194,10 @@ pub fn semantic_spec(kind: SemanticErrorKind) -> DiagnosticSpec {
             code: "SEM007",
             help: Some("break the cycle between modules"),
         },
+        SemanticErrorKind::LoweringError => DiagnosticSpec {
+            code: "SEM008",
+            help: Some("fix the AST construct for lowering"),
+        },
         SemanticErrorKind::TypeMismatch => DiagnosticSpec {
             code: "SEM010",
             help: Some("make the expression type match the expected type"),
