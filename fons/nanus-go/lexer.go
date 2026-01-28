@@ -47,7 +47,7 @@ var punctuators = map[byte]struct{}{
 
 var operators = []string{
 	// Multi-char first (greedy match)
-	"===", "!==", "==", "!=", "<=", ">=", "&&", "||", "??",
+	"===", "!==", "==", "!=", "<=", ">=", "??",
 	"+=", "-=", "*=", "/=",
 	"->", "..",
 	// Single-char
