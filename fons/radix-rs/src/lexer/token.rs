@@ -120,6 +120,7 @@ pub enum TokenKind {
     Futura,
     Cursor,
     Cede,
+    Clausura,
 
     // === Keywords: Boolean/null ===
     Verum,
@@ -300,7 +301,7 @@ impl TokenKind {
                 | Si | Sin | Secus | Dum | Itera | Elige | Casu | Ceterum
                 | Discerne | Custodi | Fac | Ergo | Redde | Reddit | Rumpe | Perge | Tacet
                 | Tempta | Cape | Demum | Iace | Mori | Moritor | Adfirma
-                | Futura | Cursor | Cede | Verum | Falsum | Nihil
+                | Futura | Cursor | Cede | Clausura | Verum | Falsum | Nihil
                 | Et | Aut | Non | Vel | Est | Ego | Novum | Finge | Sub | Implet
                 | Qua | Innatum | Numeratum | Fractatum | Textatum | Bivalentum
                 | Sinistratum | Dextratum | Scribe | Vide | Mone

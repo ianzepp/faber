@@ -710,8 +710,7 @@ impl Parser {
             }
 
             // Closure
-            TokenKind::Casu => {
-                // 'clausura' keyword check would go here
+            TokenKind::Clausura => {
                 return self.parse_closure_expr();
             }
 
@@ -809,10 +808,54 @@ impl Parser {
 
     fn parse_closure_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
-        // Would parse 'clausura' keyword and params
+        self.expect_keyword(TokenKind::Clausura, "expected 'clausura'")?;
 
-        // Placeholder - would need actual implementation
-        Err(self.error(ParseErrorKind::InvalidExpression, "closure parsing not implemented"))
+        // Parse parameters: type name, type name, ...
+        let mut params = Vec::new();
+        loop {
+            // Check for end of params (-> or :)
+            if self.check(&TokenKind::Arrow) || self.check(&TokenKind::Colon) {
+                break;
+            }
+
+            let param_start = self.current_span();
+            let ty = self.parse_type()?;
+            let name = self.parse_ident()?;
+            let param_span = param_start.merge(self.previous_span());
+            params.push(ClosureParam {
+                ty,
+                name,
+                span: param_span,
+            });
+
+            if !self.eat(&TokenKind::Comma) {
+                break;
+            }
+        }
+
+        // Optional return type
+        let ret = if self.eat(&TokenKind::Arrow) {
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
+
+        // Body: either `: expr` or `{ block }`
+        let body = if self.eat(&TokenKind::Colon) {
+            ClosureBody::Expr(Box::new(self.parse_expression()?))
+        } else if self.check(&TokenKind::LBrace) {
+            ClosureBody::Block(self.parse_block()?)
+        } else {
+            return Err(self.error(ParseErrorKind::Expected, "expected ':' or '{' after closure parameters"));
+        };
+
+        let span = start.merge(self.previous_span());
+        let id = self.next_id();
+        Ok(Expr {
+            id,
+            kind: ExprKind::Closure(ClosureExpr { params, ret, body }),
+            span,
+        })
     }
 
     fn parse_collection_expr(&mut self) -> Result<Expr, ParseError> {

@@ -648,6 +648,7 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "futura" => TokenKind::Futura,
         "cursor" => TokenKind::Cursor,
         "cede" => TokenKind::Cede,
+        "clausura" => TokenKind::Clausura,
 
         // Boolean/null
         "verum" => TokenKind::Verum,
