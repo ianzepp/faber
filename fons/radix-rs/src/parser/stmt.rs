@@ -425,7 +425,15 @@ impl Parser {
             return Err(self.error(ParseErrorKind::Expected, "expected 'fixum' or 'varia'"));
         };
 
-        let ty = self.try_parse_type()?;
+        // Check: is this "name {" (no type) or "type name {" (with type)?
+        let ty = if matches!(self.peek().kind, TokenKind::Ident(_))
+            && matches!(self.peek_at(1).kind, TokenKind::LBrace)
+        {
+            None
+        } else {
+            Some(self.parse_type()?)
+        };
+
         let binding = self.parse_ident()?;
         let body = self.parse_block()?;
         let catch = self.try_parse_catch()?;
