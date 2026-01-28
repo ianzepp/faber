@@ -24,12 +24,12 @@ pub fn lower_stmt(lowerer: &mut Lowerer, stmt: &Stmt) -> HirStmt {
     let kind = match &stmt.kind {
         StmtKind::Var(decl) => lowerer.lower_var_stmt(decl),
         StmtKind::Expr(expr) => lowerer.lower_expr_stmt(expr),
-        StmtKind::If(if_stmt) => lowerer.lower_si(if_stmt),
-        StmtKind::While(while_stmt) => lowerer.lower_dum(while_stmt),
-        StmtKind::Iter(iter_stmt) => lowerer.lower_itera(iter_stmt),
-        StmtKind::Return(ret) => lowerer.lower_redde(ret),
-        StmtKind::Break(_) => HirStmtKind::Break,
-        StmtKind::Continue(_) => HirStmtKind::Continue,
+        StmtKind::Si(if_stmt) => lowerer.lower_si(if_stmt),
+        StmtKind::Dum(while_stmt) => lowerer.lower_dum(while_stmt),
+        StmtKind::Itera(iter_stmt) => lowerer.lower_itera(iter_stmt),
+        StmtKind::Redde(ret) => lowerer.lower_redde(ret),
+        StmtKind::Rumpe(_) => HirStmtKind::Rumpe,
+        StmtKind::Perge(_) => HirStmtKind::Perge,
         StmtKind::Block(block) => {
             let block = lowerer.lower_block(block);
             HirStmtKind::Expr(HirExpr {
@@ -62,26 +62,26 @@ impl<'a> Lowerer<'a> {
     }
 
     /// Lower si (if) statement
-    fn lower_si(&mut self, if_stmt: &crate::syntax::IfStmt) -> HirStmtKind {
+    fn lower_si(&mut self, if_stmt: &crate::syntax::SiStmt) -> HirStmtKind {
         self.error("if statement lowering not implemented");
         HirStmtKind::Expr(error_expr(self, self.current_span))
     }
 
     /// Lower dum (while) statement
-    fn lower_dum(&mut self, while_stmt: &crate::syntax::WhileStmt) -> HirStmtKind {
+    fn lower_dum(&mut self, while_stmt: &crate::syntax::DumStmt) -> HirStmtKind {
         self.error("while statement lowering not implemented");
         HirStmtKind::Expr(error_expr(self, self.current_span))
     }
 
     /// Lower itera (for) statement
-    fn lower_itera(&mut self, iter_stmt: &crate::syntax::IterStmt) -> HirStmtKind {
+    fn lower_itera(&mut self, iter_stmt: &crate::syntax::IteraStmt) -> HirStmtKind {
         self.error("for statement lowering not implemented");
         HirStmtKind::Expr(error_expr(self, self.current_span))
     }
 
     /// Lower redde (return) statement
-    fn lower_redde(&mut self, ret: &crate::syntax::ReturnStmt) -> HirStmtKind {
+    fn lower_redde(&mut self, ret: &crate::syntax::ReddeStmt) -> HirStmtKind {
         let value = ret.value.as_ref().map(|e| self.lower_expr(e));
-        HirStmtKind::Return(value)
+        HirStmtKind::Redde(value)
     }
 }

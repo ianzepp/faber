@@ -202,9 +202,9 @@ pub struct HirStmt {
 pub enum HirStmtKind {
     Local(HirLocal),
     Expr(HirExpr),
-    Return(Option<HirExpr>),
-    Break,
-    Continue,
+    Redde(Option<HirExpr>),
+    Rumpe,
+    Perge,
 }
 
 #[derive(Debug)]
@@ -245,15 +245,15 @@ pub enum HirExprKind {
     /// Block expression
     Block(HirBlock),
     /// If expression
-    If(Box<HirExpr>, HirBlock, Option<HirBlock>),
+    Si(Box<HirExpr>, HirBlock, Option<HirBlock>),
     /// Match expression
-    Match(Box<HirExpr>, Vec<HirMatchArm>),
+    Discerne(Box<HirExpr>, Vec<HirCasuArm>),
     /// Loop (while true)
     Loop(HirBlock),
     /// While loop
-    While(Box<HirExpr>, HirBlock),
+    Dum(Box<HirExpr>, HirBlock),
     /// For loop
-    For(DefId, Box<HirExpr>, HirBlock),
+    Itera(DefId, Box<HirExpr>, HirBlock),
     /// Assignment
     Assign(Box<HirExpr>, Box<HirExpr>),
     /// Compound assignment
@@ -265,11 +265,11 @@ pub enum HirExprKind {
     /// Tuple (for multiple return, etc)
     Tuple(Vec<HirExpr>),
     /// Closure
-    Closure(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
+    Clausura(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
     /// Await
-    Await(Box<HirExpr>),
+    Cede(Box<HirExpr>),
     /// Type cast
-    Cast(Box<HirExpr>, TypeId),
+    Qua(Box<HirExpr>, TypeId),
     /// Reference
     Ref(HirRefKind, Box<HirExpr>),
     /// Dereference
@@ -323,7 +323,7 @@ pub enum HirRefKind {
 }
 
 #[derive(Debug)]
-pub struct HirMatchArm {
+pub struct HirCasuArm {
     pub pattern: HirPattern,
     pub guard: Option<HirExpr>,
     pub body: HirExpr,

@@ -35,8 +35,8 @@ pub enum ParseErrorKind {
     MissingCondition,
     MissingBlock,
     InvalidPattern,
-    InvalidMatchArm,
-    InvalidCaseValue,
+    InvalidCasuArm,
+    InvalidCasuValue,
 
     // Expressions
     InvalidExpression,

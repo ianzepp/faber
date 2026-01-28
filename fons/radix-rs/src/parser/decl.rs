@@ -27,8 +27,8 @@ impl Parser {
                 ));
             }
             TokenKind::Ex => self.parse_extract_stmt()?,
-            TokenKind::Probandum => self.parse_test_decl()?,
-            TokenKind::Proba => StmtKind::TestCase(self.parse_test_case()?),
+            TokenKind::Probandum => self.parse_probandum_decl()?,
+            TokenKind::Proba => StmtKind::Proba(self.parse_proba_case()?),
             TokenKind::Abstractus => self.parse_abstract_class_decl()?,
 
             // Control flow
@@ -667,7 +667,7 @@ impl Parser {
     }
 
     /// Parse test declaration
-    fn parse_test_decl(&mut self) -> Result<StmtKind, ParseError> {
+    fn parse_probandum_decl(&mut self) -> Result<StmtKind, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Probandum, "expected 'probandum'")?;
 
@@ -675,15 +675,15 @@ impl Parser {
 
         self.expect(&TokenKind::LBrace, "expected '{'")?;
 
-        let body = self.parse_test_body()?;
+        let body = self.parse_probandum_body()?;
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
         let span = start.merge(self.previous_span());
-        Ok(StmtKind::Test(TestDecl { name, body, span }))
+        Ok(StmtKind::Probandum(ProbandumDecl { name, body, span }))
     }
 
-    fn parse_test_body(&mut self) -> Result<TestBody, ParseError> {
+    fn parse_probandum_body(&mut self) -> Result<ProbandumBody, ParseError> {
         let mut setup = Vec::new();
         let mut tests = Vec::new();
         let mut nested = Vec::new();
@@ -698,51 +698,51 @@ impl Parser {
                 let kind = match self.peek().kind {
                     TokenKind::Praepara => {
                         self.advance();
-                        SetupKind::Before
+                        PraeparaKind::Praepara
                     }
                     TokenKind::Praeparabit => {
                         self.advance();
-                        SetupKind::BeforeAll
+                        PraeparaKind::Praeparabit
                     }
                     TokenKind::Postpara => {
                         self.advance();
-                        SetupKind::After
+                        PraeparaKind::Postpara
                     }
                     TokenKind::Postparabit => {
                         self.advance();
-                        SetupKind::AfterAll
+                        PraeparaKind::Postparabit
                     }
                     _ => unreachable!(),
                 };
                 let all = self.eat_keyword(TokenKind::Omnia);
                 let body = self.parse_block()?;
                 let span = start.merge(self.previous_span());
-                setup.push(SetupBlock {
+                setup.push(PraeparaBlock {
                     kind,
                     all,
                     body,
                     span,
                 });
             } else if self.check_keyword(TokenKind::Probandum) {
-                if let StmtKind::Test(test) = self.parse_test_decl()? {
+                if let StmtKind::Probandum(test) = self.parse_probandum_decl()? {
                     nested.push(test);
                 }
             } else if self.check_keyword(TokenKind::Proba) {
-                let case = self.parse_test_case()?;
+                let case = self.parse_proba_case()?;
                 tests.push(case);
             } else {
                 return Err(self.error(ParseErrorKind::Expected, "expected test case or setup"));
             }
         }
 
-        Ok(TestBody {
+        Ok(ProbandumBody {
             setup,
             tests,
             nested,
         })
     }
 
-    fn parse_test_case(&mut self) -> Result<TestCase, ParseError> {
+    fn parse_proba_case(&mut self) -> Result<ProbaCase, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Proba, "expected 'proba'")?;
 
@@ -752,38 +752,38 @@ impl Parser {
         loop {
             if self.eat_keyword(TokenKind::Omitte) {
                 let reason = self.parse_string()?;
-                modifiers.push(TestModifier::Skip(reason));
+                modifiers.push(ProbaModifier::Omitte(reason));
             } else if self.eat_keyword(TokenKind::Futurum) {
                 let reason = self.parse_string()?;
-                modifiers.push(TestModifier::Future(reason));
+                modifiers.push(ProbaModifier::Futurum(reason));
             } else if self.eat_keyword(TokenKind::Solum) {
-                modifiers.push(TestModifier::Only);
+                modifiers.push(ProbaModifier::Solum);
             } else if self.eat_keyword(TokenKind::Tag) {
                 let tag = self.parse_string()?;
-                modifiers.push(TestModifier::Tag(tag));
+                modifiers.push(ProbaModifier::Tag(tag));
             } else if self.eat_keyword(TokenKind::Temporis) {
                 if let TokenKind::Integer(n) = self.peek().kind {
                     self.advance();
-                    modifiers.push(TestModifier::Timeout(n));
+                    modifiers.push(ProbaModifier::Temporis(n));
                 }
             } else if self.eat_keyword(TokenKind::Metior) {
-                modifiers.push(TestModifier::Bench);
+                modifiers.push(ProbaModifier::Metior);
             } else if self.eat_keyword(TokenKind::Repete) {
                 if let TokenKind::Integer(n) = self.peek().kind {
                     self.advance();
-                    modifiers.push(TestModifier::Repeat(n));
+                    modifiers.push(ProbaModifier::Repete(n));
                 }
             } else if self.eat_keyword(TokenKind::Fragilis) {
                 if let TokenKind::Integer(n) = self.peek().kind {
                     self.advance();
-                    modifiers.push(TestModifier::Flaky(n));
+                    modifiers.push(ProbaModifier::Fragilis(n));
                 }
             } else if self.eat_keyword(TokenKind::Requirit) {
                 let req = self.parse_string()?;
-                modifiers.push(TestModifier::Requires(req));
+                modifiers.push(ProbaModifier::Requirit(req));
             } else if self.eat_keyword(TokenKind::SolumIn) {
                 let env = self.parse_string()?;
-                modifiers.push(TestModifier::OnlyIn(env));
+                modifiers.push(ProbaModifier::SolumIn(env));
             } else {
                 break;
             }
@@ -793,7 +793,7 @@ impl Parser {
         let body = self.parse_block()?;
 
         let span = start.merge(self.previous_span());
-        Ok(TestCase {
+        Ok(ProbaCase {
             modifiers,
             name,
             body,

@@ -55,7 +55,7 @@ impl<'a> Lowerer<'a> {
             self.current_span = stmt.span;
 
             match &stmt.kind {
-                StmtKind::Entry(entry_stmt) => {
+                StmtKind::Incipit(entry_stmt) => {
                     // Entry point gets special treatment
                     let block = self.lower_ergo_body(&entry_stmt.body);
                     entry = Some(block);
@@ -102,7 +102,7 @@ impl<'a> Lowerer<'a> {
             StmtKind::Interface(decl) => self.lower_pactum(stmt, decl),
             StmtKind::TypeAlias(decl) => self.lower_typus(stmt, decl),
             StmtKind::Import(decl) => self.lower_importa(stmt, decl),
-            // TODO: Handle Test and TestCase appropriately
+            // TODO: Handle Probandum and Proba appropriately
             _ => {
                 // For now, skip non-item statements at top level
                 // They might be test cases or other constructs handled differently
@@ -140,17 +140,17 @@ impl<'a> Lowerer<'a> {
         let (kind, span) = match ret {
             crate::syntax::InlineReturn::Reddit(expr) => {
                 let expr_hir = self.lower_expr(expr);
-                (HirStmtKind::Return(Some(expr_hir)), expr.span)
+                (HirStmtKind::Redde(Some(expr_hir)), expr.span)
             }
             crate::syntax::InlineReturn::Iacit(expr) => {
                 let expr_hir = self.lower_expr(expr);
-                (HirStmtKind::Return(Some(expr_hir)), expr.span)
+                (HirStmtKind::Redde(Some(expr_hir)), expr.span)
             }
             crate::syntax::InlineReturn::Moritor(expr) => {
                 let expr_hir = self.lower_expr(expr);
-                (HirStmtKind::Return(Some(expr_hir)), expr.span)
+                (HirStmtKind::Redde(Some(expr_hir)), expr.span)
             }
-            crate::syntax::InlineReturn::Tacet => (HirStmtKind::Return(None), self.current_span),
+            crate::syntax::InlineReturn::Tacet => (HirStmtKind::Redde(None), self.current_span),
         };
         HirStmt { id, kind, span }
     }

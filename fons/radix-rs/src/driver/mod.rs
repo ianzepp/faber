@@ -114,9 +114,9 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                 }
             }
         }
-        StmtKind::Test(test) => scan_test_for_rust_warnings(test, file, diagnostics),
-        StmtKind::TestCase(test) => scan_block_for_rust_warnings(&test.body, file, diagnostics),
-        StmtKind::If(if_stmt) => {
+        StmtKind::Probandum(test) => scan_test_for_rust_warnings(test, file, diagnostics),
+        StmtKind::Proba(test) => scan_block_for_rust_warnings(&test.body, file, diagnostics),
+        StmtKind::Si(if_stmt) => {
             scan_if_body_for_rust_warnings(&if_stmt.then, file, diagnostics);
             if let Some(catch) = &if_stmt.catch {
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
@@ -125,19 +125,19 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                 scan_else_for_rust_warnings(else_, file, diagnostics);
             }
         }
-        StmtKind::While(while_stmt) => {
+        StmtKind::Dum(while_stmt) => {
             scan_if_body_for_rust_warnings(&while_stmt.body, file, diagnostics);
             if let Some(catch) = &while_stmt.catch {
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
             }
         }
-        StmtKind::Iter(iter_stmt) => {
+        StmtKind::Itera(iter_stmt) => {
             scan_if_body_for_rust_warnings(&iter_stmt.body, file, diagnostics);
             if let Some(catch) = &iter_stmt.catch {
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
             }
         }
-        StmtKind::Switch(switch_stmt) => {
+        StmtKind::Elige(switch_stmt) => {
             for case in &switch_stmt.cases {
                 scan_if_body_for_rust_warnings(&case.body, file, diagnostics);
             }
@@ -148,7 +148,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
             }
         }
-        StmtKind::Match(match_stmt) => {
+        StmtKind::Discerne(match_stmt) => {
             for arm in &match_stmt.arms {
                 scan_if_body_for_rust_warnings(&arm.body, file, diagnostics);
             }
@@ -156,7 +156,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                 scan_if_body_for_rust_warnings(&default.body, file, diagnostics);
             }
         }
-        StmtKind::Guard(guard_stmt) => {
+        StmtKind::Custodi(guard_stmt) => {
             for clause in &guard_stmt.clauses {
                 scan_if_body_for_rust_warnings(&clause.body, file, diagnostics);
             }
@@ -167,7 +167,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
             }
         }
-        StmtKind::Try(try_stmt) => {
+        StmtKind::Tempta(try_stmt) => {
             scan_block_for_rust_warnings(&try_stmt.body, file, diagnostics);
             if let Some(catch) = &try_stmt.catch {
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
@@ -176,11 +176,11 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                 scan_block_for_rust_warnings(finally, file, diagnostics);
             }
         }
-        StmtKind::Entry(entry) => {
+        StmtKind::Incipit(entry) => {
             scan_if_body_for_rust_warnings(&entry.body, file, diagnostics);
         }
-        StmtKind::Resource(resource) => {
-            if matches!(resource.kind, Some(ResourceKind::Arena)) {
+        StmtKind::Cura(resource) => {
+            if matches!(resource.kind, Some(CuraKind::Arena)) {
                 let spec =
                     crate::diagnostics::semantic_spec(crate::semantic::SemanticErrorKind::Warning(
                         crate::semantic::WarningKind::TargetNoop,
@@ -199,7 +199,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
             }
         }
-        StmtKind::Endpoint(endpoint) => {
+        StmtKind::Ad(endpoint) => {
             if let Some(body) = &endpoint.body {
                 scan_block_for_rust_warnings(body, file, diagnostics);
             }
@@ -225,9 +225,9 @@ fn scan_if_body_for_rust_warnings(body: &IfBody, file: &str, diagnostics: &mut V
     }
 }
 
-fn scan_else_for_rust_warnings(else_: &ElseClause, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+fn scan_else_for_rust_warnings(else_: &SecusClause, file: &str, diagnostics: &mut Vec<Diagnostic>) {
     match else_ {
-        ElseClause::If(stmt) => {
+        SecusClause::Sin(stmt) => {
             scan_if_body_for_rust_warnings(&stmt.then, file, diagnostics);
             if let Some(catch) = &stmt.catch {
                 scan_block_for_rust_warnings(&catch.body, file, diagnostics);
@@ -236,13 +236,17 @@ fn scan_else_for_rust_warnings(else_: &ElseClause, file: &str, diagnostics: &mut
                 scan_else_for_rust_warnings(else_clause, file, diagnostics);
             }
         }
-        ElseClause::Block(block) => scan_block_for_rust_warnings(block, file, diagnostics),
-        ElseClause::Stmt(stmt) => scan_stmt_for_rust_warnings(stmt, file, diagnostics),
-        ElseClause::InlineReturn(_) => {}
+        SecusClause::Block(block) => scan_block_for_rust_warnings(block, file, diagnostics),
+        SecusClause::Stmt(stmt) => scan_stmt_for_rust_warnings(stmt, file, diagnostics),
+        SecusClause::InlineReturn(_) => {}
     }
 }
 
-fn scan_test_for_rust_warnings(test: &TestDecl, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+fn scan_test_for_rust_warnings(
+    test: &ProbandumDecl,
+    file: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
     for setup in &test.body.setup {
         scan_block_for_rust_warnings(&setup.body, file, diagnostics);
     }

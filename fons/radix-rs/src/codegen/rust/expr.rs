@@ -81,7 +81,7 @@ pub fn generate_expr(
             });
             w.write("}");
         }
-        HirExprKind::If(cond, then, else_) => {
+        HirExprKind::Si(cond, then, else_) => {
             w.write("if ");
             generate_expr(cond, types, w)?;
             w.write(" ");
@@ -91,7 +91,7 @@ pub fn generate_expr(
                 generate_block(else_block, types, w)?;
             }
         }
-        HirExprKind::Match(scrutinee, arms) => {
+        HirExprKind::Discerne(scrutinee, arms) => {
             w.write("match ");
             generate_expr(scrutinee, types, w)?;
             w.writeln(" {");
@@ -113,13 +113,13 @@ pub fn generate_expr(
             w.write("loop ");
             generate_block(block, types, w)?;
         }
-        HirExprKind::While(cond, block) => {
+        HirExprKind::Dum(cond, block) => {
             w.write("while ");
             generate_expr(cond, types, w)?;
             w.write(" ");
             generate_block(block, types, w)?;
         }
-        HirExprKind::For(_binding, iter, block) => {
+        HirExprKind::Itera(_binding, iter, block) => {
             w.write("for var in ");
             generate_expr(iter, types, w)?;
             w.write(" ");
@@ -171,7 +171,7 @@ pub fn generate_expr(
             }
             w.write(")");
         }
-        HirExprKind::Closure(params, _ret, body) => {
+        HirExprKind::Clausura(params, _ret, body) => {
             w.write("|");
             for (i, _param) in params.iter().enumerate() {
                 if i > 0 {
@@ -183,11 +183,11 @@ pub fn generate_expr(
             w.write("| ");
             generate_expr(body, types, w)?;
         }
-        HirExprKind::Await(expr) => {
+        HirExprKind::Cede(expr) => {
             generate_expr(expr, types, w)?;
             w.write(".await");
         }
-        HirExprKind::Cast(expr, ty) => {
+        HirExprKind::Qua(expr, ty) => {
             generate_expr(expr, types, w)?;
             w.write(" as ");
             w.write(&type_to_rust(*ty, types));

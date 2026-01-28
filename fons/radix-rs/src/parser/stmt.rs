@@ -19,13 +19,13 @@ impl Parser {
         let else_ = if self.eat_keyword(TokenKind::Secus) {
             Some(self.parse_secus_stmt()?)
         } else if self.eat_keyword(TokenKind::Sin) {
-            // else-if chain: sin <cond> { } is shorthand for secus si <cond> { }
-            Some(ElseClause::If(Box::new(self.parse_sin_stmt()?)))
+            // else-if chain: sin <cond> { }
+            Some(SecusClause::Sin(Box::new(self.parse_sin_stmt()?)))
         } else {
             None
         };
 
-        Ok(StmtKind::If(IfStmt {
+        Ok(StmtKind::Si(SiStmt {
             cond,
             then,
             catch,
@@ -34,7 +34,7 @@ impl Parser {
     }
 
     /// Parse sin statement - sin already consumed
-    fn parse_sin_stmt(&mut self) -> Result<IfStmt, ParseError> {
+    fn parse_sin_stmt(&mut self) -> Result<SiStmt, ParseError> {
         let cond = Box::new(self.parse_expression()?);
         let then = self.parse_ergo_body()?;
         let catch = self.try_parse_cape_stmt()?;
@@ -42,12 +42,12 @@ impl Parser {
         let else_ = if self.eat_keyword(TokenKind::Secus) {
             Some(self.parse_secus_stmt()?)
         } else if self.eat_keyword(TokenKind::Sin) {
-            Some(ElseClause::If(Box::new(self.parse_sin_stmt()?)))
+            Some(SecusClause::Sin(Box::new(self.parse_sin_stmt()?)))
         } else {
             None
         };
 
-        Ok(IfStmt {
+        Ok(SiStmt {
             cond,
             then,
             catch,
@@ -81,37 +81,35 @@ impl Parser {
         }
     }
 
-    fn parse_secus_stmt(&mut self) -> Result<ElseClause, ParseError> {
+    fn parse_secus_stmt(&mut self) -> Result<SecusClause, ParseError> {
         if self.check_keyword(TokenKind::Si) {
-            if let StmtKind::If(nested) = self.parse_si_stmt()? {
-                Ok(ElseClause::If(Box::new(nested)))
-            } else {
-                unreachable!()
-            }
-        } else if self.check(&TokenKind::LBrace) {
-            Ok(ElseClause::Block(self.parse_block()?))
+            return Err(self.error(ParseErrorKind::Expected, "use 'sin' for else-if"));
+        }
+
+        if self.check(&TokenKind::LBrace) {
+            Ok(SecusClause::Block(self.parse_block()?))
         } else if self.eat_keyword(TokenKind::Reddit) {
-            Ok(ElseClause::InlineReturn(InlineReturn::Reddit(Box::new(
+            Ok(SecusClause::InlineReturn(InlineReturn::Reddit(Box::new(
                 self.parse_expression()?,
             ))))
         } else if self.eat_keyword(TokenKind::Iacit) {
-            Ok(ElseClause::InlineReturn(InlineReturn::Iacit(Box::new(
+            Ok(SecusClause::InlineReturn(InlineReturn::Iacit(Box::new(
                 self.parse_expression()?,
             ))))
         } else if self.eat_keyword(TokenKind::Moritor) {
-            Ok(ElseClause::InlineReturn(InlineReturn::Moritor(Box::new(
+            Ok(SecusClause::InlineReturn(InlineReturn::Moritor(Box::new(
                 self.parse_expression()?,
             ))))
         } else if self.eat_keyword(TokenKind::Tacet) {
-            Ok(ElseClause::InlineReturn(InlineReturn::Tacet))
+            Ok(SecusClause::InlineReturn(InlineReturn::Tacet))
         } else if self.eat_keyword(TokenKind::Ergo) {
-            Ok(ElseClause::Stmt(Box::new(self.parse_statement()?)))
+            Ok(SecusClause::Stmt(Box::new(self.parse_statement()?)))
         } else {
             let id = self.next_id();
             let start = self.current_span();
             let kind = self.parse_expr_stmt()?;
             let span = start.merge(self.previous_span());
-            Ok(ElseClause::Stmt(Box::new(Stmt {
+            Ok(SecusClause::Stmt(Box::new(Stmt {
                 id,
                 kind,
                 span,
@@ -128,7 +126,7 @@ impl Parser {
         let body = self.parse_ergo_body()?;
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::While(WhileStmt { cond, body, catch }))
+        Ok(StmtKind::Dum(DumStmt { cond, body, catch }))
     }
 
     /// Parse iteration loop
@@ -136,11 +134,11 @@ impl Parser {
         self.expect_keyword(TokenKind::Itera, "expected 'itera'")?;
 
         let mode = if self.eat_keyword(TokenKind::Ex) {
-            IterMode::Values
+            IteraMode::Ex
         } else if self.eat_keyword(TokenKind::De) {
-            IterMode::Keys
+            IteraMode::De
         } else if self.eat_keyword(TokenKind::Pro) {
-            IterMode::Range
+            IteraMode::Pro
         } else {
             return Err(self.error(ParseErrorKind::Expected, "expected 'ex', 'de', or 'pro'"));
         };
@@ -159,7 +157,7 @@ impl Parser {
         let body = self.parse_ergo_body()?;
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Iter(IterStmt {
+        Ok(StmtKind::Itera(IteraStmt {
             mode,
             iterable,
             mutability,
@@ -186,12 +184,12 @@ impl Parser {
                 let value = Box::new(self.parse_expression()?);
                 let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
-                cases.push(SwitchCase { value, body, span });
+                cases.push(CasuCase { value, body, span });
             } else if self.eat_keyword(TokenKind::Ceterum) {
                 let start = self.current_span();
                 let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
-                default = Some(SwitchDefault { body, span });
+                default = Some(CeterumDefault { body, span });
                 break;
             } else {
                 return Err(self.error(ParseErrorKind::Expected, "expected 'casu' or 'ceterum'"));
@@ -202,7 +200,7 @@ impl Parser {
 
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Switch(SwitchStmt {
+        Ok(StmtKind::Elige(EligeStmt {
             expr,
             cases,
             default,
@@ -240,7 +238,7 @@ impl Parser {
                 let patterns = self.parse_patterns()?;
                 let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
-                arms.push(MatchArm {
+                arms.push(CasuArm {
                     patterns,
                     body,
                     span,
@@ -249,7 +247,7 @@ impl Parser {
                 let start = self.current_span();
                 let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
-                default = Some(SwitchDefault { body, span });
+                default = Some(CeterumDefault { body, span });
                 break;
             } else {
                 return Err(self.error(ParseErrorKind::Expected, "expected 'casu' or 'ceterum'"));
@@ -258,7 +256,7 @@ impl Parser {
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
-        Ok(StmtKind::Match(MatchStmt {
+        Ok(StmtKind::Discerne(DiscerneStmt {
             exhaustive,
             subjects,
             arms,
@@ -279,12 +277,12 @@ impl Parser {
             let cond = Box::new(self.parse_expression()?);
             let body = self.parse_ergo_body()?;
             let span = start.merge(self.previous_span());
-            clauses.push(GuardClause { cond, body, span });
+            clauses.push(CustodiClause { cond, body, span });
         }
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
-        Ok(StmtKind::Guard(GuardStmt { clauses }))
+        Ok(StmtKind::Custodi(CustodiStmt { clauses }))
     }
 
     /// Parse fac statement
@@ -321,35 +319,35 @@ impl Parser {
             None
         };
 
-        Ok(StmtKind::Return(ReturnStmt { value }))
+        Ok(StmtKind::Redde(ReddeStmt { value }))
     }
 
     /// Parse break statement
     pub(super) fn parse_rumpe_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let span = self.current_span();
         self.expect_keyword(TokenKind::Rumpe, "expected 'rumpe'")?;
-        Ok(StmtKind::Break(BreakStmt { span }))
+        Ok(StmtKind::Rumpe(RumpeStmt { span }))
     }
 
     /// Parse continue statement
     pub(super) fn parse_perge_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let span = self.current_span();
         self.expect_keyword(TokenKind::Perge, "expected 'perge'")?;
-        Ok(StmtKind::Continue(ContinueStmt { span }))
+        Ok(StmtKind::Perge(PergeStmt { span }))
     }
 
     /// Parse throw statement
     pub(super) fn parse_iace_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Iace, "expected 'iace'")?;
         let value = Box::new(self.parse_expression()?);
-        Ok(StmtKind::Throw(ThrowStmt { value }))
+        Ok(StmtKind::Iace(IaceStmt { value }))
     }
 
     /// Parse panic statement
     pub(super) fn parse_mori_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Mori, "expected 'mori'")?;
         let value = Box::new(self.parse_expression()?);
-        Ok(StmtKind::Panic(PanicStmt { value }))
+        Ok(StmtKind::Mori(MoriStmt { value }))
     }
 
     /// Parse try statement
@@ -365,7 +363,7 @@ impl Parser {
             None
         };
 
-        Ok(StmtKind::Try(TryStmt {
+        Ok(StmtKind::Tempta(TemptaStmt {
             body,
             catch,
             finally,
@@ -384,17 +382,17 @@ impl Parser {
             None
         };
 
-        Ok(StmtKind::Assert(AssertStmt { cond, message }))
+        Ok(StmtKind::Adfirma(AdfirmaStmt { cond, message }))
     }
 
     /// Parse output statement
     pub(super) fn parse_scribe_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let kind = if self.eat_keyword(TokenKind::Scribe) {
-            OutputKind::Log
+            ScribeKind::Scribe
         } else if self.eat_keyword(TokenKind::Vide) {
-            OutputKind::Debug
+            ScribeKind::Vide
         } else if self.eat_keyword(TokenKind::Mone) {
-            OutputKind::Warn
+            ScribeKind::Mone
         } else {
             unreachable!()
         };
@@ -407,7 +405,7 @@ impl Parser {
             }
         }
 
-        Ok(StmtKind::Output(OutputStmt { kind, args }))
+        Ok(StmtKind::Scribe(ScribeStmt { kind, args }))
     }
 
     /// Parse entry statement
@@ -434,7 +432,7 @@ impl Parser {
 
         let body = self.parse_ergo_body()?;
 
-        Ok(StmtKind::Entry(EntryStmt {
+        Ok(StmtKind::Incipit(IncipitStmt {
             is_async,
             body,
             args,
@@ -447,7 +445,7 @@ impl Parser {
         self.expect_keyword(TokenKind::Cura, "expected 'cura'")?;
 
         let kind = if self.eat_keyword(TokenKind::Arena) {
-            Some(ResourceKind::Arena)
+            Some(CuraKind::Arena)
         } else {
             None // 'page' would go here too
         };
@@ -456,7 +454,7 @@ impl Parser {
         if self.check(&TokenKind::LBrace) {
             let body = self.parse_block()?;
             let catch = self.try_parse_cape_stmt()?;
-            return Ok(StmtKind::Resource(ResourceStmt {
+            return Ok(StmtKind::Cura(CuraStmt {
                 kind,
                 init: None,
                 mutability: Mutability::Immutable,
@@ -498,7 +496,7 @@ impl Parser {
         let body = self.parse_block()?;
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Resource(ResourceStmt {
+        Ok(StmtKind::Cura(CuraStmt {
             kind,
             init,
             mutability,
@@ -529,7 +527,7 @@ impl Parser {
 
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Endpoint(EndpointStmt {
+        Ok(StmtKind::Ad(AdStmt {
             path,
             args,
             binding,
@@ -573,7 +571,7 @@ impl Parser {
             } else {
                 None
             };
-            fields.push(ExtractField { name, alias });
+            fields.push(ExField { name, alias });
 
             if !self.eat(&TokenKind::Comma) {
                 break;
@@ -581,7 +579,7 @@ impl Parser {
         }
 
         let span = start.merge(self.previous_span());
-        Ok(StmtKind::Extract(ExtractStmt {
+        Ok(StmtKind::Ex(ExStmt {
             source,
             mutability,
             fields,
@@ -590,7 +588,7 @@ impl Parser {
         }))
     }
 
-    fn try_parse_endpoint_binding(&mut self) -> Result<Option<EndpointBinding>, ParseError> {
+    fn try_parse_endpoint_binding(&mut self) -> Result<Option<AdBinding>, ParseError> {
         if !self.eat(&TokenKind::Arrow) {
             return Ok(None);
         }
@@ -610,7 +608,7 @@ impl Parser {
             None
         };
 
-        Ok(Some(EndpointBinding {
+        Ok(Some(AdBinding {
             verb: EndpointVerb::Fit,
             ty,
             name,
@@ -625,7 +623,7 @@ impl Parser {
     }
 
     /// Try to parse catch clause
-    fn try_parse_cape_stmt(&mut self) -> Result<Option<CatchClause>, ParseError> {
+    fn try_parse_cape_stmt(&mut self) -> Result<Option<CapeClause>, ParseError> {
         if !self.eat_keyword(TokenKind::Cape) {
             return Ok(None);
         }
@@ -635,7 +633,7 @@ impl Parser {
         let body = self.parse_block()?;
         let span = start.merge(self.previous_span());
 
-        Ok(Some(CatchClause {
+        Ok(Some(CapeClause {
             binding,
             body,
             span,

@@ -46,51 +46,51 @@ pub enum StmtKind {
     /// Import statement
     Import(ImportDecl),
     /// Test suite: probandum
-    Test(TestDecl),
+    Probandum(ProbandumDecl),
     /// Test case: proba
-    TestCase(TestCase),
+    Proba(ProbaCase),
     /// Extract: ex <expr> fixum|varia <fields>
-    Extract(ExtractStmt),
+    Ex(ExStmt),
     /// Block: { ... }
     Block(BlockStmt),
     /// Expression statement
     Expr(ExprStmt),
     /// If statement
-    If(IfStmt),
+    Si(SiStmt),
     /// While loop: dum
-    While(WhileStmt),
+    Dum(DumStmt),
     /// For loop: itera
-    Iter(IterStmt),
+    Itera(IteraStmt),
     /// Switch: elige
-    Switch(SwitchStmt),
+    Elige(EligeStmt),
     /// Pattern match: discerne
-    Match(MatchStmt),
+    Discerne(DiscerneStmt),
     /// Guard: custodi
-    Guard(GuardStmt),
+    Custodi(CustodiStmt),
     /// Scoped block: fac
     Fac(FacStmt),
     /// Return: redde
-    Return(ReturnStmt),
+    Redde(ReddeStmt),
     /// Break: rumpe
-    Break(BreakStmt),
+    Rumpe(RumpeStmt),
     /// Continue: perge
-    Continue(ContinueStmt),
+    Perge(PergeStmt),
     /// Throw: iace
-    Throw(ThrowStmt),
+    Iace(IaceStmt),
     /// Panic: mori
-    Panic(PanicStmt),
+    Mori(MoriStmt),
     /// Try/catch: tempta
-    Try(TryStmt),
+    Tempta(TemptaStmt),
     /// Assert: adfirma
-    Assert(AssertStmt),
+    Adfirma(AdfirmaStmt),
     /// Output: scribe/vide/mone
-    Output(OutputStmt),
+    Scribe(ScribeStmt),
     /// Entry point: incipit/incipiet
-    Entry(EntryStmt),
+    Incipit(IncipitStmt),
     /// Resource management: cura
-    Resource(ResourceStmt),
+    Cura(CuraStmt),
     /// Endpoint: ad
-    Endpoint(EndpointStmt),
+    Ad(AdStmt),
 }
 
 // =============================================================================
@@ -305,55 +305,55 @@ pub enum DirectiveArg {
 }
 
 #[derive(Debug)]
-pub struct TestDecl {
+pub struct ProbandumDecl {
     pub name: Symbol,
-    pub body: TestBody,
+    pub body: ProbandumBody,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct TestBody {
-    pub setup: Vec<SetupBlock>,
-    pub tests: Vec<TestCase>,
-    pub nested: Vec<TestDecl>,
+pub struct ProbandumBody {
+    pub setup: Vec<PraeparaBlock>,
+    pub tests: Vec<ProbaCase>,
+    pub nested: Vec<ProbandumDecl>,
 }
 
 #[derive(Debug)]
-pub struct SetupBlock {
-    pub kind: SetupKind,
+pub struct PraeparaBlock {
+    pub kind: PraeparaKind,
     pub all: bool,
     pub body: BlockStmt,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum SetupKind {
-    Before,    // praepara
-    BeforeAll, // praeparabit
-    After,     // postpara
-    AfterAll,  // postparabit
+pub enum PraeparaKind {
+    Praepara,
+    Praeparabit,
+    Postpara,
+    Postparabit,
 }
 
 #[derive(Debug)]
-pub struct TestCase {
-    pub modifiers: Vec<TestModifier>,
+pub struct ProbaCase {
+    pub modifiers: Vec<ProbaModifier>,
     pub name: Symbol,
     pub body: BlockStmt,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub enum TestModifier {
-    Skip(Symbol),
-    Future(Symbol),
-    Only,
+pub enum ProbaModifier {
+    Omitte(Symbol),
+    Futurum(Symbol),
+    Solum,
     Tag(Symbol),
-    Timeout(i64),
-    Bench,
-    Repeat(i64),
-    Flaky(i64),
-    Requires(Symbol),
-    OnlyIn(Symbol),
+    Temporis(i64),
+    Metior,
+    Repete(i64),
+    Fragilis(i64),
+    Requirit(Symbol),
+    SolumIn(Symbol),
 }
 
 // =============================================================================
@@ -372,11 +372,11 @@ pub struct ExprStmt {
 }
 
 #[derive(Debug)]
-pub struct IfStmt {
+pub struct SiStmt {
     pub cond: Box<Expr>,
     pub then: IfBody,
-    pub catch: Option<CatchClause>,
-    pub else_: Option<ElseClause>,
+    pub catch: Option<CapeClause>,
+    pub else_: Option<SecusClause>,
 }
 
 #[derive(Debug)]
@@ -395,68 +395,68 @@ pub enum InlineReturn {
 }
 
 #[derive(Debug)]
-pub enum ElseClause {
-    If(Box<IfStmt>),
+pub enum SecusClause {
+    Sin(Box<SiStmt>),
     Block(BlockStmt),
     Stmt(Box<Stmt>),
     InlineReturn(InlineReturn),
 }
 
 #[derive(Debug)]
-pub struct WhileStmt {
+pub struct DumStmt {
     pub cond: Box<Expr>,
     pub body: IfBody,
-    pub catch: Option<CatchClause>,
+    pub catch: Option<CapeClause>,
 }
 
 #[derive(Debug)]
-pub struct IterStmt {
-    pub mode: IterMode,
+pub struct IteraStmt {
+    pub mode: IteraMode,
     pub iterable: Box<Expr>,
     pub mutability: Mutability,
     pub binding: Ident,
     pub body: IfBody,
-    pub catch: Option<CatchClause>,
+    pub catch: Option<CapeClause>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum IterMode {
-    Values, // ex
-    Keys,   // de
-    Range,  // pro
+pub enum IteraMode {
+    Ex,
+    De,
+    Pro,
 }
 
 #[derive(Debug)]
-pub struct SwitchStmt {
+pub struct EligeStmt {
     pub expr: Box<Expr>,
-    pub cases: Vec<SwitchCase>,
-    pub default: Option<SwitchDefault>,
-    pub catch: Option<CatchClause>,
+    pub cases: Vec<CasuCase>,
+    pub default: Option<CeterumDefault>,
+    pub catch: Option<CapeClause>,
 }
 
 #[derive(Debug)]
-pub struct SwitchCase {
+pub struct CasuCase {
     pub value: Box<Expr>,
     pub body: IfBody,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct SwitchDefault {
+pub struct CeterumDefault {
     pub body: IfBody,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct MatchStmt {
+pub struct DiscerneStmt {
     pub exhaustive: bool, // omnia
     pub subjects: Vec<Expr>,
-    pub arms: Vec<MatchArm>,
-    pub default: Option<SwitchDefault>,
+    pub arms: Vec<CasuArm>,
+    pub default: Option<CeterumDefault>,
 }
 
 #[derive(Debug)]
-pub struct MatchArm {
+pub struct CasuArm {
     pub patterns: Vec<Pattern>,
     pub body: IfBody,
     pub span: Span,
@@ -487,12 +487,12 @@ pub enum PatternBind {
 }
 
 #[derive(Debug)]
-pub struct GuardStmt {
-    pub clauses: Vec<GuardClause>,
+pub struct CustodiStmt {
+    pub clauses: Vec<CustodiClause>,
 }
 
 #[derive(Debug)]
-pub struct GuardClause {
+pub struct CustodiClause {
     pub cond: Box<Expr>,
     pub body: IfBody,
     pub span: Span,
@@ -501,70 +501,70 @@ pub struct GuardClause {
 #[derive(Debug)]
 pub struct FacStmt {
     pub body: BlockStmt,
-    pub catch: Option<CatchClause>,
+    pub catch: Option<CapeClause>,
     pub while_: Option<Box<Expr>>,
 }
 
 #[derive(Debug)]
-pub struct ReturnStmt {
+pub struct ReddeStmt {
     pub value: Option<Box<Expr>>,
 }
 
 #[derive(Debug)]
-pub struct BreakStmt {
+pub struct RumpeStmt {
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct ContinueStmt {
+pub struct PergeStmt {
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct ThrowStmt {
+pub struct IaceStmt {
     pub value: Box<Expr>,
 }
 
 #[derive(Debug)]
-pub struct PanicStmt {
+pub struct MoriStmt {
     pub value: Box<Expr>,
 }
 
 #[derive(Debug)]
-pub struct TryStmt {
+pub struct TemptaStmt {
     pub body: BlockStmt,
-    pub catch: Option<CatchClause>,
+    pub catch: Option<CapeClause>,
     pub finally: Option<BlockStmt>,
 }
 
 #[derive(Debug)]
-pub struct CatchClause {
+pub struct CapeClause {
     pub binding: Ident,
     pub body: BlockStmt,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct AssertStmt {
+pub struct AdfirmaStmt {
     pub cond: Box<Expr>,
     pub message: Option<Box<Expr>>,
 }
 
 #[derive(Debug)]
-pub struct OutputStmt {
-    pub kind: OutputKind,
+pub struct ScribeStmt {
+    pub kind: ScribeKind,
     pub args: Vec<Expr>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum OutputKind {
-    Log,   // scribe
-    Debug, // vide
-    Warn,  // mone
+pub enum ScribeKind {
+    Scribe,
+    Vide,
+    Mone,
 }
 
 #[derive(Debug)]
-pub struct EntryStmt {
+pub struct IncipitStmt {
     pub is_async: bool, // incipiet vs incipit
     pub body: IfBody,
     pub args: Option<Ident>,
@@ -572,48 +572,48 @@ pub struct EntryStmt {
 }
 
 #[derive(Debug)]
-pub struct ExtractStmt {
+pub struct ExStmt {
     pub source: Box<Expr>,
     pub mutability: Mutability,
-    pub fields: Vec<ExtractField>,
+    pub fields: Vec<ExField>,
     pub rest: Option<Ident>,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct ExtractField {
+pub struct ExField {
     pub name: Ident,
     pub alias: Option<Ident>,
 }
 
 #[derive(Debug)]
-pub struct ResourceStmt {
-    pub kind: Option<ResourceKind>,
+pub struct CuraStmt {
+    pub kind: Option<CuraKind>,
     pub init: Option<Box<Expr>>,
     pub mutability: Mutability,
     pub ty: Option<TypeExpr>,
     pub binding: Ident,
     pub body: BlockStmt,
-    pub catch: Option<CatchClause>,
+    pub catch: Option<CapeClause>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum ResourceKind {
+pub enum CuraKind {
     Arena,
     Page,
 }
 
 #[derive(Debug)]
-pub struct EndpointStmt {
+pub struct AdStmt {
     pub path: Symbol,
     pub args: Vec<Argument>,
-    pub binding: Option<EndpointBinding>,
+    pub binding: Option<AdBinding>,
     pub body: Option<BlockStmt>,
-    pub catch: Option<CatchClause>,
+    pub catch: Option<CapeClause>,
 }
 
 #[derive(Debug)]
-pub struct EndpointBinding {
+pub struct AdBinding {
     pub verb: EndpointVerb,
     pub ty: Option<TypeExpr>,
     pub name: Ident,
@@ -664,35 +664,35 @@ pub enum ExprKind {
     /// Assignment
     Assign(AssignExpr),
     /// Type cast: qua
-    Cast(CastExpr),
+    Qua(QuaExpr),
     /// Native construction: innatum
-    Construct(ConstructExpr),
+    Innatum(InnatumExpr),
     /// New instance: novum
-    New(NewExpr),
+    Novum(NovumExpr),
     /// Variant construction: finge
-    Variant(VariantExpr),
+    Finge(FingeExpr),
     /// Closure: clausura
-    Closure(ClosureExpr),
+    Clausura(ClausuraExpr),
     /// Await: cede
-    Await(AwaitExpr),
+    Cede(CedeExpr),
     /// Array literal
     Array(ArrayExpr),
     /// Object literal
     Object(ObjectExpr),
     /// Range: x..y, x ante y, x usque y
-    Range(RangeExpr),
+    Intervallum(IntervallumExpr),
     /// Collection DSL: ab
-    Collection(CollectionExpr),
+    Ab(AbExpr),
     /// Type conversion: numeratum, fractatum, textatum, bivalentum
-    Conversion(ConversionExpr),
+    Conversio(ConversioExpr),
     /// Interpolated script: scriptum
-    Script(ScriptExpr),
+    Scriptum(ScriptumExpr),
     /// Read input: lege
-    Read(ReadExpr),
+    Lege(LegeExpr),
     /// Regex literal: sed
-    Regex(RegexExpr),
+    Sed(SedExpr),
     /// Comptime expression: praefixum(expr)
-    Comptime(ComptimeExpr),
+    Praefixum(PraefixumExpr),
     /// Self reference
     Ego(Span),
     /// Parenthesized expression
@@ -863,66 +863,66 @@ pub enum AssignOp {
 }
 
 #[derive(Debug)]
-pub struct CastExpr {
+pub struct QuaExpr {
     pub expr: Box<Expr>,
     pub ty: TypeExpr,
 }
 
 #[derive(Debug)]
-pub struct ConstructExpr {
+pub struct InnatumExpr {
     pub expr: Box<Expr>,
     pub ty: TypeExpr,
 }
 
 #[derive(Debug)]
-pub struct NewExpr {
+pub struct NovumExpr {
     pub ty: Ident,
     pub args: Option<Vec<Argument>>,
-    pub init: Option<NewInit>,
+    pub init: Option<NovumInit>,
 }
 
 #[derive(Debug)]
-pub enum NewInit {
+pub enum NovumInit {
     Object(Vec<ObjectField>),
     From(Box<Expr>), // de
 }
 
 #[derive(Debug)]
-pub struct VariantExpr {
+pub struct FingeExpr {
     pub variant: Ident,
-    pub fields: Vec<VariantFieldInit>,
+    pub fields: Vec<FingeFieldInit>,
     pub cast: Option<Ident>, // qua
 }
 
 #[derive(Debug)]
-pub struct VariantFieldInit {
+pub struct FingeFieldInit {
     pub name: Ident,
     pub value: Box<Expr>,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct ClosureExpr {
-    pub params: Vec<ClosureParam>,
+pub struct ClausuraExpr {
+    pub params: Vec<ClausuraParam>,
     pub ret: Option<TypeExpr>,
-    pub body: ClosureBody,
+    pub body: ClausuraBody,
 }
 
 #[derive(Debug)]
-pub struct ClosureParam {
+pub struct ClausuraParam {
     pub ty: TypeExpr,
     pub name: Ident,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub enum ClosureBody {
+pub enum ClausuraBody {
     Expr(Box<Expr>),
     Block(BlockStmt),
 }
 
 #[derive(Debug)]
-pub struct AwaitExpr {
+pub struct CedeExpr {
     pub expr: Box<Expr>,
 }
 
@@ -958,7 +958,7 @@ pub enum ObjectKey {
 }
 
 #[derive(Debug)]
-pub struct RangeExpr {
+pub struct IntervallumExpr {
     pub start: Box<Expr>,
     pub end: Box<Expr>,
     pub step: Option<Box<Expr>>,
@@ -973,7 +973,7 @@ pub enum RangeKind {
 }
 
 #[derive(Debug)]
-pub struct CollectionExpr {
+pub struct AbExpr {
     pub source: Box<Expr>,
     pub filter: Option<CollectionFilter>,
     pub transforms: Vec<CollectionTransform>,
@@ -1006,35 +1006,35 @@ pub enum TransformKind {
 }
 
 #[derive(Debug)]
-pub struct ConversionExpr {
+pub struct ConversioExpr {
     pub expr: Box<Expr>,
-    pub kind: ConversionKind,
+    pub kind: ConversioKind,
     pub type_params: Vec<TypeExpr>,
     pub fallback: Option<Box<Expr>>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum ConversionKind {
-    ToInt,    // numeratum
-    ToFloat,  // fractatum
-    ToString, // textatum
-    ToBool,   // bivalentum
+pub enum ConversioKind {
+    Numeratum,
+    Fractatum,
+    Textatum,
+    Bivalentum,
 }
 
 #[derive(Debug)]
-pub struct ScriptExpr {
+pub struct ScriptumExpr {
     pub template: Symbol,
     pub args: Vec<Expr>,
 }
 
 #[derive(Debug)]
-pub struct ReadExpr {
+pub struct LegeExpr {
     pub line: bool, // lineam
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub struct RegexExpr {
+pub struct SedExpr {
     pub pattern: Symbol,
     pub flags: Option<Symbol>,
     pub span: Span,
@@ -1043,12 +1043,12 @@ pub struct RegexExpr {
 #[derive(Debug)]
 /// Comptime expression: praefixum(expr) - forces compile-time evaluation
 /// Maps to Zig's `comptime`
-pub struct ComptimeExpr {
-    pub body: ComptimeBody,
+pub struct PraefixumExpr {
+    pub body: PraefixumBody,
 }
 
 #[derive(Debug)]
-pub enum ComptimeBody {
+pub enum PraefixumBody {
     Block(BlockStmt),
     Expr(Box<Expr>),
 }

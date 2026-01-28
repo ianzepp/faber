@@ -20,7 +20,7 @@ pub fn generate_stmt(
             generate_expr(expr, types, w)?;
             w.writeln(";");
         }
-        HirStmtKind::Return(value) => {
+        HirStmtKind::Redde(value) => {
             if let Some(expr) = value {
                 w.write("return ");
                 generate_expr(expr, types, w)?;
@@ -29,10 +29,10 @@ pub fn generate_stmt(
                 w.writeln("return;");
             }
         }
-        HirStmtKind::Break => {
+        HirStmtKind::Rumpe => {
             w.writeln("break;");
         }
-        HirStmtKind::Continue => {
+        HirStmtKind::Perge => {
             w.writeln("continue;");
         }
     }

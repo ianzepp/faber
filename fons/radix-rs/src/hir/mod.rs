@@ -12,9 +12,9 @@ mod nodes;
 
 pub use lower::{lower, LowerError};
 pub use nodes::{
-    DefId, HirBinOp, HirBlock, HirConst, HirEnum, HirExpr, HirExprKind, HirField, HirFunction,
-    HirId, HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem, HirItemKind,
-    HirLiteral, HirLocal, HirMatchArm, HirMethod, HirParam, HirParamMode, HirPattern, HirProgram,
+    DefId, HirBinOp, HirBlock, HirCasuArm, HirConst, HirEnum, HirExpr, HirExprKind, HirField,
+    HirFunction, HirId, HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem,
+    HirItemKind, HirLiteral, HirLocal, HirMethod, HirParam, HirParamMode, HirPattern, HirProgram,
     HirReceiver, HirRefKind, HirStmt, HirStmtKind, HirStruct, HirTypeAlias, HirTypeParam, HirUnOp,
     HirVariant, HirVariantField,
 };

@@ -21,13 +21,13 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         ExprKind::Member(member) => lowerer.lower_membrum(member),
         ExprKind::Index(index) => lowerer.lower_index(index),
         ExprKind::Assign(assign) => lowerer.lower_assign(assign),
-        ExprKind::Await(await_expr) => lowerer.lower_cede(await_expr),
+        ExprKind::Cede(cede_expr) => lowerer.lower_cede(cede_expr),
         ExprKind::Array(array) => lowerer.lower_serie(array),
         ExprKind::Object(obj) => lowerer.lower_objectum(obj),
-        ExprKind::Cast(cast) => lowerer.lower_qua(cast),
-        ExprKind::New(new) => lowerer.lower_novum(new),
-        ExprKind::Closure(closure) => lowerer.lower_clausura(closure),
-        ExprKind::Range(range) => lowerer.lower_intervallum(range),
+        ExprKind::Qua(cast) => lowerer.lower_qua(cast),
+        ExprKind::Novum(new) => lowerer.lower_novum(new),
+        ExprKind::Clausura(closure) => lowerer.lower_clausura(closure),
+        ExprKind::Intervallum(range) => lowerer.lower_intervallum(range),
         _ => {
             lowerer.error("unhandled expression kind in lowering");
             HirExprKind::Error
@@ -174,9 +174,9 @@ impl<'a> Lowerer<'a> {
     }
 
     /// Lower await expression (cede)
-    fn lower_cede(&mut self, await_expr: &crate::syntax::AwaitExpr) -> HirExprKind {
-        let expr = lower_expr(self, &await_expr.expr);
-        HirExprKind::Await(Box::new(expr))
+    fn lower_cede(&mut self, cede_expr: &crate::syntax::CedeExpr) -> HirExprKind {
+        let expr = lower_expr(self, &cede_expr.expr);
+        HirExprKind::Cede(Box::new(expr))
     }
 
     /// Lower array literal (serie)
@@ -209,26 +209,26 @@ impl<'a> Lowerer<'a> {
     }
 
     /// Lower cast expression (qua)
-    fn lower_qua(&mut self, cast: &crate::syntax::CastExpr) -> HirExprKind {
+    fn lower_qua(&mut self, cast: &crate::syntax::QuaExpr) -> HirExprKind {
         let expr = lower_expr(self, &cast.expr);
         // TODO: Resolve type and get TypeId
-        HirExprKind::Cast(Box::new(expr), crate::semantic::TypeId(0))
+        HirExprKind::Qua(Box::new(expr), crate::semantic::TypeId(0))
     }
 
     /// Lower new expression (novum)
-    fn lower_novum(&mut self, new: &crate::syntax::NewExpr) -> HirExprKind {
+    fn lower_novum(&mut self, new: &crate::syntax::NovumExpr) -> HirExprKind {
         self.error("new expression lowering not implemented");
         HirExprKind::Error
     }
 
     /// Lower closure (clausura)
-    fn lower_clausura(&mut self, closure: &crate::syntax::ClosureExpr) -> HirExprKind {
+    fn lower_clausura(&mut self, closure: &crate::syntax::ClausuraExpr) -> HirExprKind {
         self.error("closure lowering not implemented");
         HirExprKind::Error
     }
 
     /// Lower range expression (intervallum)
-    fn lower_intervallum(&mut self, range: &crate::syntax::RangeExpr) -> HirExprKind {
+    fn lower_intervallum(&mut self, range: &crate::syntax::IntervallumExpr) -> HirExprKind {
         self.error("range lowering not implemented");
         HirExprKind::Error
     }

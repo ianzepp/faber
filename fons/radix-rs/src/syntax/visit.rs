@@ -83,20 +83,20 @@ pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
         StmtKind::Expr(expr_stmt) => {
             visitor.visit_expr(&expr_stmt.expr);
         }
-        StmtKind::If(if_stmt) => {
+        StmtKind::Si(if_stmt) => {
             visitor.visit_expr(&if_stmt.cond);
             walk_if_body(visitor, &if_stmt.then);
         }
-        StmtKind::While(while_stmt) => {
+        StmtKind::Dum(while_stmt) => {
             visitor.visit_expr(&while_stmt.cond);
             walk_if_body(visitor, &while_stmt.body);
         }
-        StmtKind::Iter(iter_stmt) => {
+        StmtKind::Itera(iter_stmt) => {
             visitor.visit_expr(&iter_stmt.iterable);
             visitor.visit_ident(&iter_stmt.binding);
             walk_if_body(visitor, &iter_stmt.body);
         }
-        StmtKind::Extract(extract_stmt) => {
+        StmtKind::Ex(extract_stmt) => {
             visitor.visit_expr(&extract_stmt.source);
             for field in &extract_stmt.fields {
                 visitor.visit_ident(&field.name);
@@ -108,18 +108,18 @@ pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
                 visitor.visit_ident(rest);
             }
         }
-        StmtKind::Return(ret) => {
+        StmtKind::Redde(ret) => {
             if let Some(value) = &ret.value {
                 visitor.visit_expr(value);
             }
         }
-        StmtKind::TestCase(test) => {
+        StmtKind::Proba(test) => {
             visitor.visit_block(&test.body);
         }
-        StmtKind::Throw(throw) => {
+        StmtKind::Iace(throw) => {
             visitor.visit_expr(&throw.value);
         }
-        StmtKind::Panic(panic) => {
+        StmtKind::Mori(panic) => {
             visitor.visit_expr(&panic.value);
         }
         // Add other statement kinds as needed
@@ -178,7 +178,7 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
                 }
             }
         }
-        ExprKind::Closure(closure) => {
+        ExprKind::Clausura(closure) => {
             for param in &closure.params {
                 visitor.visit_type_expr(&param.ty);
             }
@@ -186,16 +186,16 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
                 visitor.visit_type_expr(ret);
             }
             match &closure.body {
-                ClosureBody::Expr(e) => visitor.visit_expr(e),
-                ClosureBody::Block(b) => visitor.visit_block(b),
+                ClausuraBody::Expr(e) => visitor.visit_expr(e),
+                ClausuraBody::Block(b) => visitor.visit_block(b),
             }
         }
-        ExprKind::Await(await_) => {
-            visitor.visit_expr(&await_.expr);
+        ExprKind::Cede(cede) => {
+            visitor.visit_expr(&cede.expr);
         }
-        ExprKind::Cast(cast) => {
-            visitor.visit_expr(&cast.expr);
-            visitor.visit_type_expr(&cast.ty);
+        ExprKind::Qua(qua) => {
+            visitor.visit_expr(&qua.expr);
+            visitor.visit_type_expr(&qua.ty);
         }
         ExprKind::Paren(inner) => {
             visitor.visit_expr(inner);

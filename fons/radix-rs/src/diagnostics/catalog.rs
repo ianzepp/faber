@@ -105,11 +105,11 @@ pub fn parse_spec(kind: ParseErrorKind) -> DiagnosticSpec {
             code: "PARSE023",
             help: Some("use '_' or an identifier pattern"),
         },
-        ParseErrorKind::InvalidMatchArm => DiagnosticSpec {
+        ParseErrorKind::InvalidCasuArm => DiagnosticSpec {
             code: "PARSE024",
             help: Some("use 'casu <pattern>' or 'ceterum'"),
         },
-        ParseErrorKind::InvalidCaseValue => DiagnosticSpec {
+        ParseErrorKind::InvalidCasuValue => DiagnosticSpec {
             code: "PARSE025",
             help: Some("use a valid case expression"),
         },
