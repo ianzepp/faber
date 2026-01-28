@@ -44,7 +44,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
 
         # Generic parameters
         si nonnihil f.generaParametra {
-            fixum gp = f.generaParametra qua lista<TypusParametrum>
+            fixum gp = f.generaParametra
             si gp.longitudo() > 0 {
                 varia names = [] innatum lista<textus>
                 itera ex gp fixum p {
@@ -152,7 +152,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
 
     # Generic parameters
     si nonnihil f.generaParametra {
-        fixum gp = f.generaParametra qua lista<TypusParametrum>
+        fixum gp = f.generaParametra
         si gp.longitudo() > 0 {
             varia names = [] innatum lista<textus>
             itera ex gp fixum p {
@@ -259,7 +259,7 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         # Check for exitus modifier to wrap body with exit code handling
         varia exitusNomen = nihil qua si textus
         si nonnihil f.modificatores {
-            fixum mods = f.modificatores qua lista<FunctioModificator>
+            fixum mods = f.modificatores
             itera ex mods fixum mod {
                 discerne mod {
                     casu ExitusModificator ut e {

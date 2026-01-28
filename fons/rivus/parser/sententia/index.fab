@@ -228,7 +228,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
                             p.tags = [] innatum lista<textus>
                         }
                         si positivum a.argumenta.longitudo() {
-                            (p.tags qua lista<textus>).appende(a.argumenta[0])
+                            p.tags.appende(a.argumenta[0])
                         }
                     }
                     si a.nomen == "temporis" {
@@ -276,7 +276,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
                             s.tags = [] innatum lista<textus>
                         }
                         si positivum a.argumenta.longitudo() {
-                            (s.tags qua lista<textus>).appende(a.argumenta[0])
+                            s.tags.appende(a.argumenta[0])
                         }
                     }
                 }

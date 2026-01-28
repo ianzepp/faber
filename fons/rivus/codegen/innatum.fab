@@ -11,7 +11,7 @@
 genus InnatumTranslation {
     si textus method
     si textus template
-    si lista<textus> params
+    lista<textus> params
 }
 
 # Get translation for a builtin type method

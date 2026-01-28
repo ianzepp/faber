@@ -55,9 +55,9 @@ importa ex "./annotatio" privata parseAnnotationes
 # ============================================================================
 
 # Parse post-parameter function modifiers
-functio parseFunctioModificatores(in Resolvitor r) -> si lista<FunctioModificator> {
+functio parseFunctioModificatores(in Resolvitor r) -> lista<FunctioModificator> {
     fixum p = r.parser()
-    varia modificatores = [] innatum lista<FunctioModificator>
+    varia lista<FunctioModificator> modificatores = []
 
     dum verum {
         si p.congruetVerbum("curata") {
@@ -89,10 +89,6 @@ functio parseFunctioModificatores(in Resolvitor r) -> si lista<FunctioModificato
         }
     }
 
-    si modificatores.longitudo() == 0 {
-        redde nihil
-    }
-
     redde modificatores
 }
 
@@ -121,12 +117,11 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters: either `prae typus T, U` or `<T, U>`
-    varia generaParametra = nihil qua si lista<TypusParametrum>
+    varia lista<TypusParametrum> generaParametra = []
     si p.probaVerbum("prae") {
         generaParametra = parseTypusParametra(r)
     } sin p.congruet(SymbolumGenus.Minor) {
         fixum nomina = parseGenericaNomina(r)
-        generaParametra = [] innatum lista<TypusParametrum>
         itera ex nomina fixum n {
             generaParametra.appende({ locus: locus, nomen: n } qua TypusParametrum)
         }
@@ -157,11 +152,11 @@ functio parseFunctioDeclaratio(in Resolvitor r) -> Sententia {
     }
 
     si parenGenera.longitudo() > 0 {
-        si nihil generaParametra {
+        si generaParametra.longitudo() == 0 {
             generaParametra = parenGenera
         } secus {
             itera ex parenGenera fixum g {
-                (generaParametra qua lista<TypusParametrum>).appende(g)
+                generaParametra.appende(g)
             }
         }
     }
@@ -239,7 +234,7 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters
-    varia generaParametra = nihil qua si lista<textus>
+    varia lista<textus> generaParametra = []
     si p.congruet(SymbolumGenus.Minor) {
         generaParametra = parseGenericaNomina(r)
     }
@@ -252,9 +247,8 @@ functio parseGenusDeclaratio(in Resolvitor r, bivalens abstractum) -> Sententia 
     }
 
     # Optional implements
-    varia implet = nihil qua si lista<textus>
+    varia lista<textus> implet = []
     si p.congruetVerbum("implet") {
-        implet = [] innatum lista<textus>
         fac {
             fixum ifaceSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
             implet.appende(ifaceSym.valor)
@@ -437,7 +431,7 @@ functio parsePactumDeclaratio(in Resolvitor r) -> Sententia {
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters
-    varia generaParametra = nihil qua si lista<textus>
+    varia lista<textus> generaParametra = []
     si p.congruet(SymbolumGenus.Minor) {
         generaParametra = parseGenericaNomina(r)
     }
@@ -596,7 +590,7 @@ functio parseDiscretioDeclaratio(in Resolvitor r) -> Sententia {
     fixum nomen = nomenSym.valor
 
     # Optional generic parameters
-    varia generaParametra = nihil qua si lista<textus>
+    varia lista<textus> generaParametra = []
     si p.congruet(SymbolumGenus.Minor) {
         generaParametra = parseGenericaNomina(r)
     }

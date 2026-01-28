@@ -110,11 +110,7 @@ genus Parser {
     # Consume pending comments buffer and return them
     # Called when creating AST node to attach as leading comments
     @ publica
-    functio consumeNotas() -> si lista<Nota> {
-        si ego.notaePendentes.longitudo() === 0 {
-            redde nihil
-        }
-
+    functio consumeNotas() -> lista<Nota> {
         # Take the pending list and replace with empty
         fixum notae = ego.notaePendentes
         ego.notaePendentes = []
@@ -122,11 +118,11 @@ genus Parser {
     }
 
     # Check for trailing comment on same line after current position
-    # Returns comment if found on same line as node, nil otherwise
+    # Returns comment if found on same line as node, empty list otherwise
     @ publica
-    functio colligeNotamTrahentem(numerus lineaNodi) -> si lista<Nota> {
+    functio colligeNotamTrahentem(numerus lineaNodi) -> lista<Nota> {
         si ego.index >= ego.symbola.longitudo() {
-            redde nihil
+            redde []
         }
 
         fixum s = ego.symbola[ego.index]
@@ -139,7 +135,7 @@ genus Parser {
             redde [ego.symbolumAdNotam(s)]
         }
 
-        redde nihil
+        redde []
     }
 
     # =========================================================================

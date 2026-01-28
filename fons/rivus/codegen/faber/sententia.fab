@@ -82,7 +82,7 @@ functio genSententiaContent(in FaberGenerator g, de Sententia stmt) -> textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
-            redde genMassa(g, s.corpus qua lista<Sententia>)
+            redde genMassa(g, s.corpus)
         }
 
         # Variable declarations
@@ -316,7 +316,7 @@ functio genDestructura(in FaberGenerator g, de DestructuraSententia s) -> textus
     fixum keyword = variaGenusKeyword(s.species qua VariaGenus)
 
     varia specs = [] innatum lista<textus>
-    itera ex (s.specificatores qua lista<ImportaSpecificator>) fixum spec {
+    itera ex s.specificatores fixum spec {
         si spec.residuum qua bivalens {
             specs.appende(scriptum("ceteri §", spec.locale))
         } sin spec.importatum != spec.locale {
@@ -333,7 +333,7 @@ functio genSeriesDestructura(in FaberGenerator g, de SeriesDestructuraSententia 
     fixum keyword = variaGenusKeyword(s.species qua VariaGenus)
 
     varia elems = [] innatum lista<textus>
-    itera ex (s.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+    itera ex s.elementa fixum elem {
         si elem.omissum qua bivalens {
             elems.appende("_")
         } sin elem.residuum qua bivalens {
@@ -390,36 +390,31 @@ functio genFunctio(in FaberGenerator g, de FunctioDeclaratio f) -> textus {
     }
 
     # Generic parameters
-    si nonnihil f.generaParametra {
-        fixum generics = f.generaParametra qua lista<TypusParametrum>
-        si generics.longitudo() > 0 {
-            varia gparams = [] innatum lista<textus>
-            itera ex generics fixum gp {
-                gparams.appende(gp.nomen)
-            }
-            result = scriptum("§ prae typus §", result, gparams.coniunge(", "))
+    si f.generaParametra.longitudo() > 0 {
+        varia gparams = [] innatum lista<textus>
+        itera ex f.generaParametra fixum gp {
+            gparams.appende(gp.nomen)
         }
+        result = scriptum("§ prae typus §", result, gparams.coniunge(", "))
     }
 
     # Parameters
     result = result + "("
     varia params = [] innatum lista<textus>
-    itera ex (f.parametra qua lista<Parametrum>) fixum p {
+    itera ex f.parametra fixum p {
         params.appende(genParametrum(g, p))
     }
     result = result + params.coniunge(", ") + ")"
 
     # Modifiers
-    si nonnihil f.modificatores {
-        itera ex (f.modificatores qua lista<FunctioModificator>) fixum mod {
-            discerne mod {
-                casu CurataModificator ut m { result = scriptum("§ curata §", result, m.nomen) }
-                casu ErrataModificator ut m { result = scriptum("§ errata §", result, m.nomen) }
-                casu ExitusModificator ut m { result = scriptum("§ exitus §", result, m.nomen) }
-                casu ImmutataModificator { result = result + " immutata" }
-                casu IacitModificator { result = result + " iacit" }
-                casu OptionesModificator ut m { result = scriptum("§ optiones §", result, m.nomen) }
-            }
+    itera ex f.modificatores fixum mod {
+        discerne mod {
+            casu CurataModificator ut m { result = scriptum("§ curata §", result, m.nomen) }
+            casu ErrataModificator ut m { result = scriptum("§ errata §", result, m.nomen) }
+            casu ExitusModificator ut m { result = scriptum("§ exitus §", result, m.nomen) }
+            casu ImmutataModificator { result = result + " immutata" }
+            casu IacitModificator { result = result + " iacit" }
+            casu OptionesModificator ut m { result = scriptum("§ optiones §", result, m.nomen) }
         }
     }
 
@@ -442,7 +437,7 @@ functio genFunctio(in FaberGenerator g, de FunctioDeclaratio f) -> textus {
     # Body
     si nonnihil f.corpus {
         g.intraProfundum()
-        fixum body = genMassa(g, (f.corpus qua MassaSententia).corpus qua lista<Sententia>)
+        fixum body = genMassa(g, (f.corpus qua MassaSententia).corpus)
         g.exiProfundum()
         si body == "" {
             result = result + " {}"
@@ -518,7 +513,7 @@ functio genGenus(in FaberGenerator g, de GenusDeclaratio s) -> textus {
 
     # Generic parameters
     si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra qua lista<textus>
+        fixum generics = s.generaParametra
         si generics.longitudo() > 0 {
             result = scriptum("§ prae typus §", result, generics.coniunge(", "))
         }
@@ -531,7 +526,7 @@ functio genGenus(in FaberGenerator g, de GenusDeclaratio s) -> textus {
 
     # Implements
     si nonnihil s.implet {
-        fixum interfaces = s.implet qua lista<textus>
+        fixum interfaces = s.implet
         si interfaces.longitudo() > 0 {
             result = scriptum("§ implet §", result, interfaces.coniunge(", "))
         }
@@ -542,7 +537,7 @@ functio genGenus(in FaberGenerator g, de GenusDeclaratio s) -> textus {
     g.intraProfundum()
 
     # Fields
-    itera ex (s.campi qua lista<CampusDeclaratio>) fixum campo {
+    itera ex s.campi fixum campo {
         result = result + "\n" + genCampus(g, campo)
     }
 
@@ -552,7 +547,7 @@ functio genGenus(in FaberGenerator g, de GenusDeclaratio s) -> textus {
     }
 
     # Methods
-    itera ex (s.methodi qua lista<FunctioDeclaratio>) fixum methodus {
+    itera ex s.methodi fixum methodus {
         result = result + "\n\n" + genFunctio(g, methodus)
     }
 
@@ -603,7 +598,7 @@ functio genPactum(in FaberGenerator g, de PactumDeclaratio s) -> textus {
 
     # Generic parameters
     si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra qua lista<textus>
+        fixum generics = s.generaParametra
         si generics.longitudo() > 0 {
             result = scriptum("§ prae typus §", result, generics.coniunge(", "))
         }
@@ -613,7 +608,7 @@ functio genPactum(in FaberGenerator g, de PactumDeclaratio s) -> textus {
 
     g.intraProfundum()
 
-    itera ex (s.methodi qua lista<PactumMethodus>) fixum methodus {
+    itera ex s.methodi fixum methodus {
         result = result + "\n" + genPactumMethodus(g, methodus)
     }
 
@@ -626,7 +621,7 @@ functio genPactumMethodus(in FaberGenerator g, de PactumMethodus m) -> textus {
     varia result = g.ind() + "functio " + m.nomen + "("
 
     varia params = [] innatum lista<textus>
-    itera ex (m.parametra qua lista<Parametrum>) fixum p {
+    itera ex m.parametra fixum p {
         params.appende(genParametrum(g, p))
     }
     result = result + params.coniunge(", ") + ")"
@@ -674,7 +669,7 @@ functio genOrdo(in FaberGenerator g, de OrdoDeclaratio s) -> textus {
     g.intraProfundum()
 
     varia members = [] innatum lista<textus>
-    itera ex (s.membra qua lista<OrdoMembrum>) fixum membrum {
+    itera ex s.membra fixum membrum {
         si nonnihil membrum.valor {
             members.appende(scriptum("§§ = §", g.ind(), membrum.nomen, membrum.valor))
         } secus {
@@ -707,7 +702,7 @@ functio genDiscretio(in FaberGenerator g, de DiscretioDeclaratio s) -> textus {
 
     # Generic parameters
     si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra qua lista<textus>
+        fixum generics = s.generaParametra
         si generics.longitudo() > 0 {
             result = scriptum("§ prae typus §", result, generics.coniunge(", "))
         }
@@ -717,7 +712,7 @@ functio genDiscretio(in FaberGenerator g, de DiscretioDeclaratio s) -> textus {
 
     g.intraProfundum()
 
-    itera ex (s.variantes qua lista<VariansDeclaratio>) fixum variante {
+    itera ex s.variantes fixum variante {
         result = result + "\n" + genVariante(g, variante)
     }
 
@@ -727,7 +722,7 @@ functio genDiscretio(in FaberGenerator g, de DiscretioDeclaratio s) -> textus {
 }
 
 functio genVariante(in FaberGenerator g, de VariansDeclaratio v) -> textus {
-    fixum campi = v.campi qua lista<VariansCampus>
+    fixum campi = v.campi
 
     si campi.longitudo() == 0 {
         redde g.ind() + v.nomen
@@ -752,7 +747,7 @@ functio genSi(in FaberGenerator g, de SiSententia s) -> textus {
     discerne s.consequens {
         casu MassaSententia ut m {
             g.intraProfundum()
-            fixum body = genMassa(g, m.corpus qua lista<Sententia>)
+            fixum body = genMassa(g, m.corpus)
             g.exiProfundum()
             si body == "" {
                 result = result + "{}"
@@ -778,7 +773,7 @@ functio genSi(in FaberGenerator g, de SiSententia s) -> textus {
             }
             casu MassaSententia ut m {
                 g.intraProfundum()
-                fixum body = genMassa(g, (m qua MassaSententia).corpus qua lista<Sententia>)
+                fixum body = genMassa(g, (m qua MassaSententia).corpus)
                 g.exiProfundum()
                 si body == "" {
                     result = result + " secus {}"
@@ -795,7 +790,7 @@ functio genSi(in FaberGenerator g, de SiSententia s) -> textus {
 
 functio genDum(in FaberGenerator g, de DumSententia s) -> textus {
     g.intraProfundum()
-    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     varia result = ""
@@ -825,7 +820,7 @@ functio genIteratio(in FaberGenerator g, de IteratioSententia s) -> textus {
         casu Nomen ut n { binding = n.valor }
         casu Series ut ser {
             varia elems = [] innatum lista<textus>
-            itera ex (ser.elementa qua lista<SeriesDestructuraElementum>) fixum elem {
+            itera ex ser.elementa fixum elem {
                 si elem.omissum qua bivalens {
                     elems.appende("_")
                 } sin elem.residuum qua bivalens {
@@ -839,7 +834,7 @@ functio genIteratio(in FaberGenerator g, de IteratioSententia s) -> textus {
     }
 
     g.intraProfundum()
-    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     varia result = ""
@@ -861,9 +856,9 @@ functio genElige(in FaberGenerator g, de EligeSententia s) -> textus {
 
     g.intraProfundum()
 
-    itera ex (s.casus qua lista<EligeCasus>) fixum caso {
+    itera ex s.casus fixum caso {
         g.intraProfundum()
-        fixum body = genMassa(g, (caso.consequens qua MassaSententia).corpus qua lista<Sententia>)
+        fixum body = genMassa(g, (caso.consequens qua MassaSententia).corpus)
         g.exiProfundum()
 
         si body == "" {
@@ -875,7 +870,7 @@ functio genElige(in FaberGenerator g, de EligeSententia s) -> textus {
 
     si nonnihil s.praedefinitum {
         g.intraProfundum()
-        fixum body = genMassa(g, (s.praedefinitum qua MassaSententia).corpus qua lista<Sententia>)
+        fixum body = genMassa(g, (s.praedefinitum qua MassaSententia).corpus)
         g.exiProfundum()
 
         si body == "" {
@@ -896,7 +891,7 @@ functio genElige(in FaberGenerator g, de EligeSententia s) -> textus {
 
 functio genDiscerne(in FaberGenerator g, de DiscerneSententia s) -> textus {
     varia discriminantes = [] innatum lista<textus>
-    itera ex (s.discriminantes qua lista<Expressia>) fixum d {
+    itera ex s.discriminantes fixum d {
         discriminantes.appende(genExpressia(g, d))
     }
 
@@ -905,7 +900,7 @@ functio genDiscerne(in FaberGenerator g, de DiscerneSententia s) -> textus {
 
     g.intraProfundum()
 
-    itera ex (s.casus qua lista<VariansCasus>) fixum caso {
+    itera ex s.casus fixum caso {
         result = result + "\n" + genVariansCasus(g, caso)
     }
 
@@ -916,12 +911,12 @@ functio genDiscerne(in FaberGenerator g, de DiscerneSententia s) -> textus {
 
 functio genVariansCasus(in FaberGenerator g, de VariansCasus caso) -> textus {
     varia patterns = [] innatum lista<textus>
-    itera ex (caso.exemplaria qua lista<VariansExemplar>) fixum exemplar {
+    itera ex caso.exemplaria fixum exemplar {
         patterns.appende(genVariansExemplar(exemplar))
     }
 
     g.intraProfundum()
-    fixum body = genMassa(g, (caso.consequens qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (caso.consequens qua MassaSententia).corpus)
     g.exiProfundum()
 
     si body == "" {
@@ -942,8 +937,8 @@ functio genVariansExemplar(de VariansExemplar exemplar) -> textus {
         result = scriptum("§ ut §", result, exemplar.alias)
     }
 
-    si (exemplar.vincula qua lista<textus>).longitudo() > 0 {
-        result = scriptum("§ pro §", result, (exemplar.vincula qua lista<textus>).coniunge(", "))
+    si exemplar.vincula.longitudo() > 0 {
+        result = scriptum("§ pro §", result, exemplar.vincula.coniunge(", "))
     }
 
     redde result
@@ -954,9 +949,9 @@ functio genCustodi(in FaberGenerator g, de CustodiSententia s) -> textus {
 
     g.intraProfundum()
 
-    itera ex (s.clausulae qua lista<CustodiClausula>) fixum clausula {
+    itera ex s.clausulae fixum clausula {
         g.intraProfundum()
-        fixum body = genMassa(g, (clausula.consequens qua MassaSententia).corpus qua lista<Sententia>)
+        fixum body = genMassa(g, (clausula.consequens qua MassaSententia).corpus)
         g.exiProfundum()
 
         si body == "" {
@@ -977,7 +972,7 @@ functio genCustodi(in FaberGenerator g, de CustodiSententia s) -> textus {
 
 functio genTempta(in FaberGenerator g, de TemptaSententia s) -> textus {
     g.intraProfundum()
-    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     varia result = ""
@@ -993,7 +988,7 @@ functio genTempta(in FaberGenerator g, de TemptaSententia s) -> textus {
 
     si nonnihil s.demum {
         g.intraProfundum()
-        fixum demumBody = genMassa(g, (s.demum qua MassaSententia).corpus qua lista<Sententia>)
+        fixum demumBody = genMassa(g, (s.demum qua MassaSententia).corpus)
         g.exiProfundum()
 
         si demumBody == "" {
@@ -1008,7 +1003,7 @@ functio genTempta(in FaberGenerator g, de TemptaSententia s) -> textus {
 
 functio genCape(in FaberGenerator g, de CapeClausula c) -> textus {
     g.intraProfundum()
-    fixum body = genMassa(g, (c.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (c.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     si body == "" {
@@ -1025,7 +1020,7 @@ functio genIace(in FaberGenerator g, de IaceSententia s) -> textus {
 
 functio genFac(in FaberGenerator g, de FacSententia s) -> textus {
     g.intraProfundum()
-    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     varia result = ""
@@ -1069,7 +1064,7 @@ functio genScribe(in FaberGenerator g, de ScribeSententia s) -> textus {
     }
 
     varia args = [] innatum lista<textus>
-    itera ex (s.argumenta qua lista<Expressia>) fixum arg {
+    itera ex s.argumenta fixum arg {
         args.appende(genExpressia(g, arg))
     }
 
@@ -1087,7 +1082,7 @@ functio genIncipit(in FaberGenerator g, de IncipitSententia s) -> textus {
         result = scriptum("§ ergo §", result, genSententia(g, s.ergo qua Sententia).sectio(g.ind().longitudo(), -1))
     } sin nonnihil s.corpus {
         g.intraProfundum()
-        fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+        fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
         g.exiProfundum()
 
         si body == "" {
@@ -1111,7 +1106,7 @@ functio genIncipiet(in FaberGenerator g, de IncipietSententia s) -> textus {
         result = scriptum("§ ergo §", result, genSententia(g, s.ergo qua Sententia).sectio(g.ind().longitudo(), -1))
     } sin nonnihil s.corpus {
         g.intraProfundum()
-        fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+        fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
         g.exiProfundum()
 
         si body == "" {
@@ -1152,7 +1147,7 @@ functio genCura(in FaberGenerator g, de CuraSententia s) -> textus {
 
     # Body
     g.intraProfundum()
-    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     si body == "" {
@@ -1173,7 +1168,7 @@ functio genAd(in FaberGenerator g, de AdSententia s) -> textus {
 
     # Arguments
     varia args = [] innatum lista<textus>
-    itera ex (s.argumenta qua lista<Expressia>) fixum arg {
+    itera ex s.argumenta fixum arg {
         args.appende(genExpressia(g, arg))
     }
     si args.longitudo() > 0 {
@@ -1205,7 +1200,7 @@ functio genAd(in FaberGenerator g, de AdSententia s) -> textus {
     # Body
     si nonnihil s.corpus {
         g.intraProfundum()
-        fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+        fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
         g.exiProfundum()
 
         si body == "" {
@@ -1243,7 +1238,7 @@ functio genProbandum(in FaberGenerator g, de ProbandumSententia s) -> textus {
     }
 
     si nonnihil s.tags {
-        itera ex (s.tags qua lista<textus>) fixum tag {
+        itera ex s.tags fixum tag {
             result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
         }
     }
@@ -1252,7 +1247,7 @@ functio genProbandum(in FaberGenerator g, de ProbandumSententia s) -> textus {
 
     g.intraProfundum()
 
-    itera ex (s.corpus qua lista<Sententia>) fixum stmt {
+    itera ex s.corpus fixum stmt {
         result = result + "\n" + genSententia(g, stmt)
     }
 
@@ -1289,7 +1284,7 @@ functio genProba(in FaberGenerator g, de ProbaSententia s) -> textus {
     }
 
     si nonnihil s.tags {
-        itera ex (s.tags qua lista<textus>) fixum tag {
+        itera ex s.tags fixum tag {
             result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
         }
     }
@@ -1321,7 +1316,7 @@ functio genProba(in FaberGenerator g, de ProbaSententia s) -> textus {
     result = scriptum("§proba \"§\"", result, s.nomen)
 
     g.intraProfundum()
-    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     si body == "" {
@@ -1343,7 +1338,7 @@ functio genPraepara(in FaberGenerator g, de PraeparaMassa s) -> textus {
     }
 
     g.intraProfundum()
-    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus qua lista<Sententia>)
+    fixum body = genMassa(g, (s.corpus qua MassaSententia).corpus)
     g.exiProfundum()
 
     si body == "" {

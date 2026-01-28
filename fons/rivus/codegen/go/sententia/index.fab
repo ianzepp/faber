@@ -44,7 +44,7 @@ functio genSententia(in GoGenerator g, de Sententia stmt) -> textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
-            redde genMassa(g, s.corpus qua lista<Sententia>)
+            redde genMassa(g, s.corpus)
         }
 
         # Function declaration
@@ -68,12 +68,12 @@ functio genSententia(in GoGenerator g, de Sententia stmt) -> textus {
         }
 
         casu DiscretioDeclaratio ut d {
-            redde genDiscretio(g, d.nomen qua textus, d.variantes qua lista<VariansDeclaratio>, d.generaParametra, d.visibilitas)
+            redde genDiscretio(g, d.nomen qua textus, d.variantes, d.generaParametra, d.visibilitas)
         }
 
         # Actions
         casu ScribeSententia ut s {
-            redde genScribe(g, s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>)
+            redde genScribe(g, s.gradus, s.argumenta)
         }
 
         casu AdfirmaSententia ut s {
@@ -139,11 +139,11 @@ functio genSententia(in GoGenerator g, de Sententia stmt) -> textus {
         }
 
         casu EligeSententia ut s {
-            redde genElige(g, s.discriminans qua Expressia, s.casus qua lista<EligeCasus>, s.praedefinitum, s.cape)
+            redde genElige(g, s.discriminans qua Expressia, s.casus, s.praedefinitum, s.cape)
         }
 
         casu DiscerneSententia ut s {
-            redde genDiscerne(g, s.discriminantes qua lista<Expressia>, s.casus qua lista<VariansCasus>)
+            redde genDiscerne(g, s.discriminantes, s.casus)
         }
 
         # Fail on unimplemented statement types

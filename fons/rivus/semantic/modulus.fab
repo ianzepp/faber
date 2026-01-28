@@ -139,7 +139,7 @@ functio resolveTypusShallow(de TypusAnnotatio annotatio) -> SemanticTypus {
     # Generic types: lista<T>, tabula<K,V>, etc.
     varia resolvedParametri = [] innatum lista<SemanticTypus>
     si nonnihil annotatio.typusParametra {
-        itera ex (annotatio.typusParametra qua lista<TypusParametrum>) fixum p {
+        itera ex annotatio.typusParametra fixum p {
             discerne p {
                 casu Typus ut tp {
                     resolvedParametri.appende(resolveTypusShallow(tp.adnotatio))

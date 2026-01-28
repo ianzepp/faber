@@ -38,12 +38,12 @@ discretio TypusParametrum {
 genus TypusAnnotatio {
     Locus locus
     textus nomen                            # type name
-    si lista<TypusParametrum> typusParametra  # generic type parameters
+    lista<TypusParametrum> typusParametra   # generic type parameters
     bivalens nullabilis                     # true if T? syntax
-    si lista<TypusAnnotatio> unio             # union members for unio<A, B>
+    lista<TypusAnnotatio> unio              # union members for unio<A, B>
     bivalens compendiumSeries               # true if T[] shorthand
     si textus praepositio                     # de (borrowed) or in (mutable)
-    si lista<TypusAnnotatio> parametra        # function type parameters
+    lista<TypusAnnotatio> parametra         # function type parameters
     si TypusAnnotatio reditus                 # function return type
 }
 
@@ -57,12 +57,12 @@ functio typusSimplicis(de textus nomen, de Locus locus) -> TypusAnnotatio {
     redde {
         locus: locus,
         nomen: nomen,
-        typusParametra: nihil,
+        typusParametra: [],
         nullabilis: falsum,
-        unio: nihil,
+        unio: [],
         compendiumSeries: falsum,
         praepositio: nihil,
-        parametra: nihil,
+        parametra: [],
         reditus: nihil
     } novum TypusAnnotatio
 }
@@ -73,12 +73,12 @@ functio typusNullabilis(de textus nomen, de Locus locus) -> TypusAnnotatio {
     redde {
         locus: locus,
         nomen: nomen,
-        typusParametra: nihil,
+        typusParametra: [],
         nullabilis: verum,
-        unio: nihil,
+        unio: [],
         compendiumSeries: falsum,
         praepositio: nihil,
-        parametra: nihil,
+        parametra: [],
         reditus: nihil
     } novum TypusAnnotatio
 }
@@ -91,10 +91,10 @@ functio typusGenericus(de textus nomen, de lista<TypusParametrum> parametra, de 
         nomen: nomen,
         typusParametra: parametra,
         nullabilis: falsum,
-        unio: nihil,
+        unio: [],
         compendiumSeries: falsum,
         praepositio: nihil,
-        parametra: nihil,
+        parametra: [],
         reditus: nihil
     } novum TypusAnnotatio
 }

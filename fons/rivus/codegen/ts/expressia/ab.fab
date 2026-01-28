@@ -33,7 +33,7 @@ functio genAbExpressia(de Expressia fons, bivalens negata, in TsGenerator g, si 
     # No filter case: just apply transforms
     si nihil filtrum {
         si nonnihil gradus {
-            redde applicaCatenaGradus(fonsTxt, gradus qua lista<CatenaGradus>, g)
+            redde applicaCatenaGradus(fonsTxt, gradus, g)
         }
         redde fonsTxt
     }
@@ -67,7 +67,7 @@ functio genAbExpressia(de Expressia fons, bivalens negata, in TsGenerator g, si 
 
     # Apply transforms
     si nonnihil gradus {
-        result = applicaCatenaGradus(result, gradus qua lista<CatenaGradus>, g)
+        result = applicaCatenaGradus(result, gradus, g)
     }
 
     redde result

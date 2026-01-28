@@ -85,24 +85,24 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
-            redde genMassa(g, s.corpus qua lista<Sententia>)
+            redde genMassa(g, s.corpus)
         }
 
         # Variable declarations
         casu VariaSententia ut s {
-            redde genVaria(g, s.species qua VariaGenus, s.nomen qua textus, s.typus, s.valor, s.externa qua bivalens, s.visibilitas)
+            redde genVaria(g, s.species, s.nomen, s.typus, s.valor, s.externa, s.visibilitas)
         }
 
         casu ImportaSententia ut s {
-            redde genImporta(g, s.fons qua textus, s.importatum, s.locale qua textus, s.totum qua bivalens, s.publica qua bivalens)
+            redde genImporta(g, s.fons, s.importatum, s.locale, s.totum, s.publica)
         }
 
         casu DestructuraSententia ut s {
-            redde genDestructura(g, s.fons, s.species qua VariaGenus, s.specificatores qua lista<ImportaSpecificator>)
+            redde genDestructura(g, s.fons, s.species, s.specificatores)
         }
 
         casu SeriesDestructuraSententia ut s {
-            redde genSeriesDestructura(g, s.elementa qua lista<SeriesDestructuraElementum>, s.fons, s.species qua VariaGenus)
+            redde genSeriesDestructura(g, s.elementa, s.fons, s.species)
         }
 
         # Function declaration
@@ -116,24 +116,24 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
         }
 
         casu PactumDeclaratio ut s {
-            redde genPactum(g, s.nomen qua textus, s.generaParametra, s.methodi qua lista<PactumMethodus>, s.visibilitas)
+            redde genPactum(g, s.nomen, s.generaParametra, s.methodi, s.visibilitas)
         }
 
         casu TypusAliasDeclaratio ut s {
-            redde genTypusAlias(g, s.nomen qua textus, s.typus novum TypusAnnotatio, s.scopusNomen, s.visibilitas)
+            redde genTypusAlias(g, s.nomen, s.typus novum TypusAnnotatio, s.scopusNomen, s.visibilitas)
         }
 
         casu OrdoDeclaratio ut s {
-            redde genOrdo(g, s.nomen qua textus, s.membra qua lista<OrdoMembrum>, s.visibilitas)
+            redde genOrdo(g, s.nomen, s.membra, s.visibilitas)
         }
 
         casu DiscretioDeclaratio ut s {
-            redde genDiscretio(g, s.nomen qua textus, s.generaParametra, s.variantes qua lista<VariansDeclaratio>, s.visibilitas)
+            redde genDiscretio(g, s.nomen, s.generaParametra, s.variantes, s.visibilitas)
         }
 
         # Control flow
         casu SiSententia ut s {
-            redde genSi(g, s.condicio, s.consequens qua Sententia, s.alternans, s.cape)
+            redde genSi(g, s.condicio, s.consequens, s.alternans, s.cape)
         }
 
         casu DumSententia ut s {
@@ -141,19 +141,19 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
         }
 
         casu IteratioSententia ut s {
-            redde genIteratio(g, s.species qua IteratioGenus, s.variabilis, s.iterabile, s.corpus, s.asynca qua bivalens, s.mutabilis qua bivalens, s.cape)
+            redde genIteratio(g, s.species, s.variabilis, s.iterabile, s.corpus, s.asynca, s.mutabilis, s.cape)
         }
 
         casu EligeSententia ut s {
-            redde genElige(g, s.discriminans, s.casus qua lista<EligeCasus>, s.praedefinitum, s.cape)
+            redde genElige(g, s.discriminans, s.casus, s.praedefinitum, s.cape)
         }
 
         casu DiscerneSententia ut s {
-            redde genDiscerne(g, s.discriminantes, s.casus qua lista<VariansCasus>)
+            redde genDiscerne(g, s.discriminantes, s.casus)
         }
 
         casu CustodiSententia ut s {
-            redde genCustodi(g, s.clausulae qua lista<CustodiClausula>)
+            redde genCustodi(g, s.clausulae)
         }
 
         # Error handling
@@ -162,7 +162,7 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
         }
 
         casu IaceSententia ut s {
-            redde genIace(g, s.fatale qua bivalens, s.argumentum)
+            redde genIace(g, s.fatale, s.argumentum)
         }
 
         casu FacSententia ut s {
@@ -175,7 +175,7 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
 
         # Actions
         casu ScribeSententia ut s {
-            redde genScribe(g, s.gradus qua ScribeGradus, s.argumenta qua lista<Expressia>)
+            redde genScribe(g, s.gradus, s.argumenta)
         }
 
         casu ReddeSententia ut s {
@@ -207,7 +207,7 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
         }
 
         casu CuraSententia ut s {
-            redde genCura(g, s.curatorSpecies, s.res, s.vinculum qua textus, s.corpus, s.asynca qua bivalens, s.mutabilis qua bivalens, s.cape)
+            redde genCura(g, s.curatorSpecies, s.res, s.vinculum, s.corpus, s.asynca, s.mutabilis, s.cape)
         }
 
         casu AdSententia {
@@ -219,21 +219,21 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
             si g.stripTests {
                 redde ""
             }
-            redde genProbandum(g, s.nomen qua textus, s.corpus qua lista<Sententia>, s.ompitur, s.ratioOmissionis, s.solum, s.tags)
+            redde genProbandum(g, s.nomen, s.corpus, s.ompitur, s.ratioOmissionis, s.solum, s.tags)
         }
 
         casu ProbaSententia ut s {
             si g.stripTests {
                 redde ""
             }
-            redde genProba(g, s.nomen qua textus, s.modificator, s.corpus, s.ratioModificatoris, s.solum, s.tags, s.temporis, s.metior, s.repete, s.fragilis, s.requirit, s.solumIn)
+            redde genProba(g, s.nomen, s.modificator, s.corpus, s.ratioModificatoris, s.solum, s.tags, s.temporis, s.metior, s.repete, s.fragilis, s.requirit, s.solumIn)
         }
 
         casu PraeparaMassa ut s {
             si g.stripTests {
                 redde ""
             }
-            redde genPraepara(g, s.tempus qua PraeparaTempus, s.asynca qua bivalens, s.omnia qua bivalens, s.corpus)
+            redde genPraepara(g, s.tempus, s.asynca, s.omnia, s.corpus)
         }
     }
 

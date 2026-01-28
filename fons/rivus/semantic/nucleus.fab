@@ -262,12 +262,16 @@ genus Analyzator {
     }
 
     @ publica
-    functio formaeMorphologiae(de textus recipiens, de textus radix) -> si lista<textus> {
+    functio formaeMorphologiae(de textus recipiens, de textus radix) -> lista<textus> {
         fixum perRecipiens = ego.morphologiaRegistra[recipiens]
         si nihil perRecipiens {
-            redde nihil
+            redde []
         }
-        redde perRecipiens[radix]
+        fixum formae = perRecipiens[radix]
+        si nihil formae {
+            redde []
+        }
+        redde formae
     }
 
     @ publica

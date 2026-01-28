@@ -60,7 +60,7 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
                     r.sententia(m.valor)
                     discerne m.valor {
                         casu MassaSententia ut body {
-                            fixum corpusLista = body.corpus qua lista<Sententia>
+                            fixum corpusLista = body.corpus
                             si corpusLista.longitudo() > 0 {
                                 fixum ult = corpusLista[corpusLista.longitudo() - 1]
                                 discerne ult {

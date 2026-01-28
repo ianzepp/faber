@@ -58,7 +58,7 @@ functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
 
     # Handle generic types
     si nonnihil adnotatio.typusParametra {
-        fixum parametra = adnotatio.typusParametra qua lista<TypusParametrum>
+        fixum parametra = adnotatio.typusParametra
         si parametra.longitudo() > 0 {
             # lista<T> -> []T
             si adnotatio.nomen == "lista" {

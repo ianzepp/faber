@@ -36,18 +36,18 @@ genus Nota {
 @ publica
 genus NodusRadix {
     Locus locus
-    si lista<Nota> notaePrae      # leading comments
-    si lista<Nota> notaePost      # trailing comments
+    lista<Nota> notaePrae         # leading comments
+    lista<Nota> notaePost         # trailing comments
 }
 
 # Root node of the AST - represents an entire source file
 @ publica
 genus Programma {
     Locus locus
-    si lista<Nota> notaePrae
-    si lista<Nota> notaePost
+    lista<Nota> notaePrae
+    lista<Nota> notaePost
     lista<Sententia> corpus             # body of statements
-    si lista<SectioAnnotatio> sectiones   # file-level § directives
+    lista<SectioAnnotatio> sectiones    # file-level § directives
 }
 
 # ============================================================================

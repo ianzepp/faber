@@ -22,7 +22,7 @@ functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) -> textus {
 
     # Handle type parameters
     si nonnihil typ.typusParametra {
-        fixum params = typ.typusParametra qua lista<TypusParametrum>
+        fixum params = typ.typusParametra
         si params.longitudo() > 0 {
             varia paramTexti = [] innatum lista<textus>
             itera ex params fixum param {

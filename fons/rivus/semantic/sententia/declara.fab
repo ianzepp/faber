@@ -49,7 +49,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     # Function type: (T, U) -> V
     si annotatio.nomen == "" et nonnihil annotatio.parametra et nonnihil annotatio.reditus {
         varia paramTypi = [] innatum lista<SemanticTypus>
-        itera ex (annotatio.parametra qua lista<TypusAnnotatio>) fixum param {
+        itera ex annotatio.parametra fixum param {
             paramTypi.appende(resolveTypusAnnotatio(r, param))
         }
         fixum reditusTypus = resolveTypusAnnotatio(r, annotatio.reditus novum TypusAnnotatio)
@@ -59,7 +59,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     # Union type: unio<A, B>
     si nonnihil annotatio.unio {
         varia typi = [] innatum lista<SemanticTypus>
-        itera ex (annotatio.unio qua lista<TypusAnnotatio>) fixum t {
+        itera ex annotatio.unio fixum t {
             typi.appende(resolveTypusAnnotatio(r, t))
         }
         si annotatio.nullabilis {
@@ -71,7 +71,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     # Generic types: lista<T>, tabula<K,V>, etc.
     varia resolvedParametri = [] innatum lista<SemanticTypus>
     si nonnihil annotatio.typusParametra {
-        itera ex (annotatio.typusParametra qua lista<TypusParametrum>) fixum p {
+        itera ex annotatio.typusParametra fixum p {
             discerne p {
                 casu Typus ut tp {
                     resolvedParametri.appende(resolveTypusAnnotatio(r, tp.adnotatio))
@@ -129,7 +129,7 @@ functio validateFunctioModificatores(Resolvitor r, si lista<FunctioModificator> 
     fixum a = r.analyzator()
     varia visa = {} innatum tabula<textus, bivalens>
 
-    itera ex (modificatores qua lista<FunctioModificator>) fixum m {
+    itera ex modificatores fixum m {
         discerne m {
             casu CurataModificator ut mod {
                 si nonnihil visa["curata"] {

@@ -111,11 +111,10 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # -------------------------------------------------------------------------
     # Parse optional type parameters: <T, U, ...>
     # -------------------------------------------------------------------------
-    varia typusParametra = nihil qua si lista<TypusParametrum>
+    varia lista<TypusParametrum> typusParametra = []
 
     si p.congruet(SymbolumGenus.Minor) {
-        typusParametra = [] innatum lista<TypusParametrum>
-        fixum parametra = typusParametra qua lista<TypusParametrum>
+        fixum parametra = typusParametra
 
         # Parse first type parameter
         si p.proba(SymbolumGenus.Numerus) {
@@ -169,7 +168,7 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # Union types use type parameters as union members
     # -------------------------------------------------------------------------
     si nomen === "unio" et nonnihil typusParametra {
-        fixum parametra = typusParametra qua lista<TypusParametrum>
+        fixum parametra = typusParametra
         si parametra.longitudo() == 0 {
             redde {
                 locus: locus,

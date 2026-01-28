@@ -278,13 +278,13 @@ functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) 
             discerne expected {
                 casu Genericum ut g {
                     si g.nomen == "lista" et g.parametri.longitudo() == 1 {
-                        si (s.elementa qua lista<Expressia>).longitudo() == 0 {
+                        si s.elementa.longitudo() == 0 {
                             redde expected
                         }
 
                         # Check each element against the expected element type.
                         fixum elemExpected = g.parametri.primus()
-                        itera ex (s.elementa qua lista<Expressia>) fixum elem {
+                        itera ex s.elementa fixum elem {
                             r.check(elem, elemExpected)
                         }
 

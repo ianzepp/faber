@@ -7,7 +7,7 @@
 genus VerteTranslation {
     si textus method
     si textus template
-    si lista<textus> params
+    lista<textus> params
 }
 
 # Registry data structure (type inferred)

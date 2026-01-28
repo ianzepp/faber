@@ -46,7 +46,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
         }
 
         casu LitteraExemplar ut e {
-            redde genLitteraExemplar(g, e.partes qua lista<textus>, e.expressiae qua lista<Expressia>)
+            redde genLitteraExemplar(g, e.partes, e.expressiae)
         }
 
         casu LitteraRegex ut e {
@@ -133,7 +133,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
                     discerne m.valor {
                         casu MassaSententia ut body {
                             g.intraProfundum()
-                            fixum rendered = genMassa(g, body.corpus qua lista<Sententia>)
+                            fixum rendered = genMassa(g, body.corpus)
                             g.exiProfundum()
                             fixum lb = glyphDelimiter("{")
                             fixum rb = glyphDelimiter("}")
@@ -154,7 +154,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
         # Calls and member access
         casu VocatioExpressia ut e {
             varia args = [] innatum lista<textus>
-            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
             fixum vocatum = genExpressia(g, e.vocatum)
@@ -192,7 +192,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
 
         casu NovumExpressia ut e {
             varia args = [] innatum lista<textus>
-            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
             fixum vocatum = genExpressia(g, e.vocatum)
@@ -214,7 +214,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
 
         casu ScriptumExpressia ut e {
             varia args = [] innatum lista<textus>
-            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
             fixum quote = glyphDelimiter("\"")
@@ -241,7 +241,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
         # Collections
         casu SeriesExpressia ut e {
             varia items = [] innatum lista<textus>
-            itera ex (e.elementa qua lista<Expressia>) fixum elem {
+            itera ex e.elementa fixum elem {
                 items.appende(genExpressia(g, elem))
             }
             fixum lb = glyphDelimiter("[")
@@ -251,7 +251,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
         }
 
         casu ObiectumExpressia ut e {
-            redde genObiectum(g, e.proprietates qua lista<ObiectumProprietas>)
+            redde genObiectum(g, e.proprietates)
         }
 
         casu DispersioElementum ut e {
@@ -261,7 +261,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
         # Clausura
         casu ClausuraExpressia ut e {
             varia params = [] innatum lista<textus>
-            itera ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
+            itera ex e.parametra fixum p {
                 si nonnihil p.typus {
                     params.appende(scriptum("§ §", genTypus(g, p.typus qua TypusAnnotatio), encodeBraille(p.nomen)))
                 } secus {
@@ -279,7 +279,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
                     discerne m.valor {
                         casu MassaSententia ut body {
                             g.intraProfundum()
-                            fixum rendered = genMassa(g, body.corpus qua lista<Sententia>)
+                            fixum rendered = genMassa(g, body.corpus)
                             g.exiProfundum()
                             fixum lb = glyphDelimiter("{")
                             fixum rb = glyphDelimiter("}")
@@ -301,7 +301,7 @@ functio genExpressia(in GlyphGenerator g, de Expressia expr) -> textus {
         # Discretio construction
         casu FingeExpressia ut e {
             varia props = [] innatum lista<textus>
-            itera ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
+            itera ex e.campi fixum campo {
                 fixum key = genExpressia(g, campo.clavis)
                 fixum val = genExpressia(g, campo.valor)
                 fixum colon = glyphPunctuation(":")
@@ -436,7 +436,7 @@ functio genAbExpressia(in GlyphGenerator g, de AbExpressia e) -> textus {
 
     si nonnihil e.gradus {
         fixum comma = glyphPunctuation(",")
-        itera ex (e.gradus qua lista<CatenaGradus>) fixum step {
+        itera ex e.gradus fixum step {
             result = scriptum("§§ §", result, comma, genCatenaGradus(g, step))
         }
     }

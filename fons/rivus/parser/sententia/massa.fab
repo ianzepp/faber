@@ -111,15 +111,11 @@ functio parseProgramma(in Resolvitor r) -> Programma {
         corpus.appende(r.sententia())
     }
 
-    # Extract accumulated § directives from parser
-    varia sectiones = nihil qua si lista<SectioAnnotatio>
-    si p.sectiones.longitudo() > 0 {
-        sectiones = p.sectiones
-    }
-
     redde {
         locus: locus,
         corpus: corpus,
-        sectiones: sectiones
+        notaePrae: [],
+        notaePost: [],
+        sectiones: p.sectiones
     } novum Programma
 }

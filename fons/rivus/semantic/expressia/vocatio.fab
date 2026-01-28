@@ -74,8 +74,8 @@ functio resolveVocatio(Resolvitor r, Expressia vocatioExpr) -> SemanticTypus {
                                             # the stem is actually declared for this receiver.
                                             si nonnihil formae {
                                                 fixum forma = formaExFlagga(parsed.flagga)
-                                                si non estFormaPermissa(formae qua lista<textus>, forma) {
-                                                    fixum err = morphologiaFormaNonPermissaError(n.valor, parsed.radix, forma, receiver, formae qua lista<textus>)
+                                                si non estFormaPermissa(formae, forma) {
+                                                    fixum err = morphologiaFormaNonPermissaError(n.valor, parsed.radix, forma, receiver, formae)
                                                     r.analyzator().error(err.textus, n.locus, err.auxilium)
                                                 } secus {
                                                     v.morphologia = {

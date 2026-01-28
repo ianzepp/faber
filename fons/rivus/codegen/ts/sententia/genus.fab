@@ -52,7 +52,7 @@ functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
 
     # Generics
     si nonnihil s.generaParametra {
-        fixum gp = s.generaParametra qua lista<textus>
+        fixum gp = s.generaParametra
         si gp.longitudo() > 0 {
             result = scriptum("§<§>", result, gp.coniunge(", "))
         }
@@ -65,7 +65,7 @@ functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
 
     # Implements
     si nonnihil s.implet {
-        fixum impl = s.implet qua lista<textus>
+        fixum impl = s.implet
         si impl.longitudo() > 0 {
             result = scriptum("§ implements §", result, impl.coniunge(", "))
         }

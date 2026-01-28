@@ -33,7 +33,7 @@ functio genGenus(in GoGenerator g, de GenusDeclaratio s) -> textus {
 
     # Generic parameters (Go 1.18+)
     si nonnihil s.generaParametra {
-        fixum gp = s.generaParametra qua lista<textus>
+        fixum gp = s.generaParametra
         si gp.longitudo() > 0 {
             varia params = [] innatum lista<textus>
             itera ex gp fixum p {
@@ -110,7 +110,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
 
             # Generic parameters
             si nonnihil f.generaParametra {
-                fixum gp = f.generaParametra qua lista<TypusParametrum>
+                fixum gp = f.generaParametra
                 si gp.longitudo() > 0 {
                     varia names = [] innatum lista<textus>
                     itera ex gp fixum p {
@@ -122,7 +122,7 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
 
             # Parameters
             varia params = [] innatum lista<textus>
-            itera ex (f.parametra qua lista<Parametrum>) fixum param {
+            itera ex f.parametra fixum param {
                 params.appende(genParametrum(g, param))
             }
             result = scriptum("§(§)", result, params.coniunge(", "))

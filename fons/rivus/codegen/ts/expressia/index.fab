@@ -65,7 +65,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         }
 
         casu LitteraExemplar ut e {
-            redde genLitteraExemplar(g, e.partes qua lista<textus>, e.expressiae qua lista<Expressia>)
+            redde genLitteraExemplar(g, e.partes, e.expressiae)
         }
 
         casu LitteraRegex ut e {
@@ -219,7 +219,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         # Calls and member access
         casu VocatioExpressia ut e {
             varia args = [] innatum lista<textus>
-            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
 
@@ -247,7 +247,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
 
                                         # Template-based translation
                                         si nonnihil translation.template et nonnihil translation.params {
-                                            redde applyInnatumTemplate(translation.template qua textus, translation.params qua lista<textus>, obj, args)
+                                            redde applyInnatumTemplate(translation.template qua textus, translation.params, obj, args)
                                         }
                                     }
 
@@ -315,7 +315,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
 
         casu NovumExpressia ut e {
             varia args = [] innatum lista<textus>
-            itera ex (e.argumenta qua lista<Expressia>) fixum arg {
+            itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
             # WHY: novum supports optional override object as a final argument.
@@ -340,7 +340,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         }
 
         casu ScriptumExpressia ut e {
-            redde genScriptum(g, e.exemplar qua textus, e.argumenta qua lista<Expressia>)
+            redde genScriptum(g, e.exemplar qua textus, e.argumenta)
         }
 
         casu LegeExpressia ut e {
@@ -359,14 +359,14 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         # Collections
         casu SeriesExpressia ut e {
             varia items = [] innatum lista<textus>
-            itera ex (e.elementa qua lista<Expressia>) fixum elem {
+            itera ex e.elementa fixum elem {
                 items.appende(genExpressia(g, elem))
             }
             redde scriptum("[§]", items.coniunge(", "))
         }
 
         casu ObiectumExpressia ut e {
-            redde genObiectum(g, e.proprietates qua lista<ObiectumProprietas>)
+            redde genObiectum(g, e.proprietates)
         }
 
         casu DispersioElementum ut e {
@@ -376,7 +376,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
         # Clausura
         casu ClausuraExpressia ut e {
             varia params = [] innatum lista<textus>
-            itera ex (e.parametra qua lista<ClausuraParametrum>) fixum p {
+            itera ex e.parametra fixum p {
                 si nonnihil p.typus {
                     params.appende(scriptum("§: §", p.nomen, genTypus(g, p.typus novum TypusAnnotatio)))
                 } secus {
@@ -414,7 +414,7 @@ functio genExpressia(in TsGenerator g, de Expressia expr) -> textus {
             # finge Click { x: 10 } qua Event -> { tag: 'Click', x: 10 } as Event
             varia props = [] innatum lista<textus>
             props.appende(scriptum("tag: '§'", e.variansNomen))
-            itera ex (e.campi qua lista<ObiectumProprietas>) fixum campo {
+            itera ex e.campi fixum campo {
                 fixum key = genExpressia(g, campo.clavis)
                 fixum val = genExpressia(g, campo.valor)
                 props.appende(scriptum("§: §", key, val))
@@ -659,7 +659,7 @@ functio genTabulaAssignatioMembrum(in TsGenerator g, de AssignatioExpressia e, d
 functio extractTypusParam(in TsGenerator g, numerus index, si de lista<TypusParametrum> params) -> textus {
     si nihil params { redde "unknown" }
 
-    fixum paramLista = params qua lista<TypusParametrum>
+    fixum paramLista = params
     si paramLista.longitudo() <= index { redde "unknown" }
 
     discerne paramLista[index] {
@@ -678,7 +678,7 @@ functio genInnatumTabula(in TsGenerator g, de InnatumExpressia e) -> textus {
     # Non-empty object literal -> Map with entries
     discerne e.expressia {
         casu ObiectumExpressia ut obj {
-            si (obj.proprietates qua lista<ObiectumProprietas>).longitudo() > 0 {
+            si obj.proprietates.longitudo() > 0 {
                 redde genTabulaEntries(g, obj, keyType, valueType)
             }
         }
@@ -690,7 +690,7 @@ functio genInnatumTabula(in TsGenerator g, de InnatumExpressia e) -> textus {
 
 functio genTabulaEntries(in TsGenerator g, de ObiectumExpressia obj, de textus keyType, de textus valueType) -> textus {
     varia entries = [] innatum lista<textus>
-    itera ex (obj.proprietates qua lista<ObiectumProprietas>) fixum prop {
+    itera ex obj.proprietates fixum prop {
         fixum key = genMapKey(g, prop.clavis)
         fixum val = genExpressia(g, prop.valor)
         entries.appende(scriptum("§: §", key, val))
@@ -712,7 +712,7 @@ functio genInnatumLista(in TsGenerator g, de InnatumExpressia e) -> textus {
     # Non-empty array -> pass through
     discerne e.expressia {
         casu SeriesExpressia ut arr {
-            si (arr.elementa qua lista<Expressia>).longitudo() > 0 {
+            si arr.elementa.longitudo() > 0 {
                 redde genExpressia(g, e.expressia)
             }
         }
