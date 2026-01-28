@@ -57,11 +57,10 @@ functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
     }
 
     # Handle generic types
-    si nonnihil adnotatio.typusParametra {
+    si nonnulla adnotatio.typusParametra {
         fixum parametra = adnotatio.typusParametra
-        si parametra.longitudo() > 0 {
-            # lista<T> -> []T
-            si adnotatio.nomen == "lista" {
+        # lista<T> -> []T
+        si adnotatio.nomen == "lista" {
                 varia elemType = "interface{}"
                 discerne parametra[0] {
                     casu Typus ut t {
@@ -105,7 +104,6 @@ functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
                     casu _ tacet
                 }
                 redde scriptum("map[§]struct{}", elemType)
-            }
         }
     }
 

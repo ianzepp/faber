@@ -426,16 +426,14 @@ functio genFunctio(in GlyphGenerator g, de FunctioDeclaratio f) -> textus {
     result = result + params.coniunge(comma + " ") + rp
 
     # Modifiers
-    si nonnihil f.modificatores {
-        itera ex f.modificatores fixum mod {
-            discerne mod {
-                casu CurataModificator ut m { result = scriptum("§ § §", result, encodeBraille("curata"), encodeBraille(m.nomen)) }
-                casu ErrataModificator ut m { result = scriptum("§ § §", result, encodeBraille("errata"), encodeBraille(m.nomen)) }
-                casu ExitusModificator ut m { result = scriptum("§ § §", result, encodeBraille("exitus"), encodeBraille(m.nomen)) }
-                casu ImmutataModificator { result = result + " " + encodeBraille("immutata") }
-                casu IacitModificator { result = result + " " + glyphKeyword("iacit") }
-                casu OptionesModificator ut m { result = scriptum("§ § §", result, encodeBraille("optiones"), encodeBraille(m.nomen)) }
-            }
+    itera ex f.modificatores fixum mod {
+        discerne mod {
+            casu CurataModificator ut m { result = scriptum("§ § §", result, encodeBraille("curata"), encodeBraille(m.nomen)) }
+            casu ErrataModificator ut m { result = scriptum("§ § §", result, encodeBraille("errata"), encodeBraille(m.nomen)) }
+            casu ExitusModificator ut m { result = scriptum("§ § §", result, encodeBraille("exitus"), encodeBraille(m.nomen)) }
+            casu ImmutataModificator { result = result + " " + encodeBraille("immutata") }
+            casu IacitModificator { result = result + " " + glyphKeyword("iacit") }
+            casu OptionesModificator ut m { result = scriptum("§ § §", result, encodeBraille("optiones"), encodeBraille(m.nomen)) }
         }
     }
 
@@ -536,15 +534,12 @@ functio genGenus(in GlyphGenerator g, de GenusDeclaratio s) -> textus {
     result = result + glyphKeyword("genus") + " " + encodeBraille(s.nomen)
 
     # Generic parameters
-    si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra
-        si generics.longitudo() > 0 {
-            varia gparams = [] innatum lista<textus>
-            itera ex generics fixum gp {
-                gparams.appende(encodeBraille(gp))
-            }
-            result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
+    si nonnulla s.generaParametra {
+        varia gparams = [] innatum lista<textus>
+        itera ex s.generaParametra fixum gp {
+            gparams.appende(encodeBraille(gp))
         }
+        result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
     }
 
     # Extends
@@ -553,15 +548,12 @@ functio genGenus(in GlyphGenerator g, de GenusDeclaratio s) -> textus {
     }
 
     # Implements
-    si nonnihil s.implet {
-        fixum interfaces = s.implet
-        si interfaces.longitudo() > 0 {
-            varia impls = [] innatum lista<textus>
-            itera ex interfaces fixum iface {
-                impls.appende(encodeBraille(iface))
-            }
-            result = scriptum("§ § §", result, glyphKeyword("implet"), impls.coniunge(comma + " "))
+    si nonnulla s.implet {
+        varia impls = [] innatum lista<textus>
+        itera ex s.implet fixum iface {
+            impls.appende(encodeBraille(iface))
         }
+        result = scriptum("§ § §", result, glyphKeyword("implet"), impls.coniunge(comma + " "))
     }
 
     result = result + " " + lb
@@ -635,15 +627,12 @@ functio genPactum(in GlyphGenerator g, de PactumDeclaratio s) -> textus {
     result = result + glyphKeyword("pactum") + " " + encodeBraille(s.nomen)
 
     # Generic parameters
-    si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra
-        si generics.longitudo() > 0 {
-            varia gparams = [] innatum lista<textus>
-            itera ex generics fixum gp {
-                gparams.appende(encodeBraille(gp))
-            }
-            result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
+    si nonnulla s.generaParametra {
+        varia gparams = [] innatum lista<textus>
+        itera ex s.generaParametra fixum gp {
+            gparams.appende(encodeBraille(gp))
         }
+        result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
     }
 
     result = result + " " + lb
@@ -755,15 +744,12 @@ functio genDiscretio(in GlyphGenerator g, de DiscretioDeclaratio s) -> textus {
     result = result + glyphKeyword("discretio") + " " + encodeBraille(s.nomen)
 
     # Generic parameters
-    si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra
-        si generics.longitudo() > 0 {
-            varia gparams = [] innatum lista<textus>
-            itera ex generics fixum gp {
-                gparams.appende(encodeBraille(gp))
-            }
-            result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
+    si nonnulla s.generaParametra {
+        varia gparams = [] innatum lista<textus>
+        itera ex s.generaParametra fixum gp {
+            gparams.appende(encodeBraille(gp))
         }
+        result = scriptum("§ § § §", result, glyphKeyword("prae"), encodeBraille("typus"), gparams.coniunge(comma + " "))
     }
 
     result = result + " " + lb
@@ -1361,10 +1347,8 @@ functio genProbandum(in GlyphGenerator g, de ProbandumSententia s) -> textus {
         result = result + anno + " " + encodeBraille("solum") + "\n" + g.ind()
     }
 
-    si nonnihil s.tags {
-        itera ex s.tags fixum tag {
-            result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
-        }
+    itera ex s.tags fixum tag {
+        result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
     }
 
     result = scriptum("§§ §§§ §", result, glyphKeyword("probandum"), quote, encodeBraille(s.nomen), quote, lb)
@@ -1411,10 +1395,8 @@ functio genProba(in GlyphGenerator g, de ProbaSententia s) -> textus {
         result = result + anno + " " + encodeBraille("solum") + "\n" + g.ind()
     }
 
-    si nonnihil s.tags {
-        itera ex s.tags fixum tag {
-            result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
-        }
+    itera ex s.tags fixum tag {
+        result = scriptum("§§ § §§§\n§", result, anno, encodeBraille("tag"), quote, encodeBraille(tag), quote, g.ind())
     }
 
     si nonnihil s.temporis {

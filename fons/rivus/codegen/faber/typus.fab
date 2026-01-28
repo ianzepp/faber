@@ -21,22 +21,19 @@ functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) -> textus {
     }
 
     # Handle type parameters
-    si nonnihil typ.typusParametra {
-        fixum params = typ.typusParametra
-        si params.longitudo() > 0 {
-            varia paramTexti = [] innatum lista<textus>
-            itera ex params fixum param {
-                discerne param {
-                    casu Typus ut t {
-                        paramTexti.appende(genTypus(g, t.adnotatio))
-                    }
-                    casu _ {
-                        paramTexti.appende("ignotum")
-                    }
+    si nonnulla typ.typusParametra {
+        varia paramTexti = [] innatum lista<textus>
+        itera ex typ.typusParametra fixum param {
+            discerne param {
+                casu Typus ut t {
+                    paramTexti.appende(genTypus(g, t.adnotatio))
+                }
+                casu _ {
+                    paramTexti.appende("ignotum")
                 }
             }
-            result = scriptum("§<§>", result, paramTexti.coniunge(", "))
         }
+        result = scriptum("§<§>", result, paramTexti.coniunge(", "))
     }
 
     redde result

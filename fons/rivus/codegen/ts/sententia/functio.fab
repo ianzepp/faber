@@ -258,16 +258,13 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
 
         # Check for exitus modifier to wrap body with exit code handling
         varia exitusNomen = nihil qua si textus
-        si nonnihil f.modificatores {
-            fixum mods = f.modificatores
-            itera ex mods fixum mod {
-                discerne mod {
-                    casu ExitusModificator ut e {
-                        exitusNomen = e.nomen
-                        rumpe
-                    }
-                    casu _ tacet
+        itera ex f.modificatores fixum mod {
+            discerne mod {
+                casu ExitusModificator ut e {
+                    exitusNomen = e.nomen
+                    rumpe
                 }
+                casu _ tacet
             }
         }
 

@@ -32,15 +32,12 @@ functio genGenus(in GoGenerator g, de GenusDeclaratio s) -> textus {
     varia header = scriptum("§type §", g.ind(), typeName)
 
     # Generic parameters (Go 1.18+)
-    si nonnihil s.generaParametra {
-        fixum gp = s.generaParametra
-        si gp.longitudo() > 0 {
-            varia params = [] innatum lista<textus>
-            itera ex gp fixum p {
-                params.appende(scriptum("§ any", p))
-            }
-            header = scriptum("§[§]", header, params.coniunge(", "))
+    si nonnulla s.generaParametra {
+        varia params = [] innatum lista<textus>
+        itera ex s.generaParametra fixum p {
+            params.appende(scriptum("§ any", p))
         }
+        header = scriptum("§[§]", header, params.coniunge(", "))
     }
 
     varia lines = [] innatum lista<textus>
@@ -109,15 +106,12 @@ functio genGenusMethod(in GoGenerator g, de textus typeName, de Sententia method
             varia result = scriptum("§func (this *§) §", g.ind(), typeName, methodName)
 
             # Generic parameters
-            si nonnihil f.generaParametra {
-                fixum gp = f.generaParametra
-                si gp.longitudo() > 0 {
-                    varia names = [] innatum lista<textus>
-                    itera ex gp fixum p {
-                        names.appende(scriptum("§ any", p.nomen))
-                    }
-                    result = scriptum("§[§]", result, names.coniunge(", "))
+            si nonnulla f.generaParametra {
+                varia names = [] innatum lista<textus>
+                itera ex f.generaParametra fixum p {
+                    names.appende(scriptum("§ any", p.nomen))
                 }
+                result = scriptum("§[§]", result, names.coniunge(", "))
             }
 
             # Parameters

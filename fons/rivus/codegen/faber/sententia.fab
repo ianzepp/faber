@@ -512,11 +512,8 @@ functio genGenus(in FaberGenerator g, de GenusDeclaratio s) -> textus {
     result = result + "genus " + s.nomen
 
     # Generic parameters
-    si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra
-        si generics.longitudo() > 0 {
-            result = scriptum("§ prae typus §", result, generics.coniunge(", "))
-        }
+    si nonnulla s.generaParametra {
+        result = scriptum("§ prae typus §", result, s.generaParametra.coniunge(", "))
     }
 
     # Extends
@@ -525,11 +522,8 @@ functio genGenus(in FaberGenerator g, de GenusDeclaratio s) -> textus {
     }
 
     # Implements
-    si nonnihil s.implet {
-        fixum interfaces = s.implet
-        si interfaces.longitudo() > 0 {
-            result = scriptum("§ implet §", result, interfaces.coniunge(", "))
-        }
+    si nonnulla s.implet {
+        result = scriptum("§ implet §", result, s.implet.coniunge(", "))
     }
 
     result = result + " {"
@@ -597,11 +591,8 @@ functio genPactum(in FaberGenerator g, de PactumDeclaratio s) -> textus {
     result = result + "pactum " + s.nomen
 
     # Generic parameters
-    si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra
-        si generics.longitudo() > 0 {
-            result = scriptum("§ prae typus §", result, generics.coniunge(", "))
-        }
+    si nonnulla s.generaParametra {
+        result = scriptum("§ prae typus §", result, s.generaParametra.coniunge(", "))
     }
 
     result = result + " {"
@@ -701,11 +692,8 @@ functio genDiscretio(in FaberGenerator g, de DiscretioDeclaratio s) -> textus {
     result = result + "discretio " + s.nomen
 
     # Generic parameters
-    si nonnihil s.generaParametra {
-        fixum generics = s.generaParametra
-        si generics.longitudo() > 0 {
-            result = scriptum("§ prae typus §", result, generics.coniunge(", "))
-        }
+    si nonnulla s.generaParametra {
+        result = scriptum("§ prae typus §", result, s.generaParametra.coniunge(", "))
     }
 
     result = result + " {"
@@ -1237,10 +1225,8 @@ functio genProbandum(in FaberGenerator g, de ProbandumSententia s) -> textus {
         result = result + "@ solum\n" + g.ind()
     }
 
-    si nonnihil s.tags {
-        itera ex s.tags fixum tag {
-            result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
-        }
+    itera ex s.tags fixum tag {
+        result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
     }
 
     result = scriptum("§probandum \"§\" {", result, s.nomen)
@@ -1283,10 +1269,8 @@ functio genProba(in FaberGenerator g, de ProbaSententia s) -> textus {
         result = result + "@ solum\n" + g.ind()
     }
 
-    si nonnihil s.tags {
-        itera ex s.tags fixum tag {
-            result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
-        }
+    itera ex s.tags fixum tag {
+        result = scriptum("§@ tag \"§\"\n§", result, tag, g.ind())
     }
 
     si nonnihil s.temporis {

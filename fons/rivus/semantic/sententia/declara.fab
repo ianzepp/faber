@@ -57,7 +57,7 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
     }
 
     # Union type: unio<A, B>
-    si nonnihil annotatio.unio {
+    si nonnulla annotatio.unio {
         varia typi = [] innatum lista<SemanticTypus>
         itera ex annotatio.unio fixum t {
             typi.appende(resolveTypusAnnotatio(r, t))
@@ -70,17 +70,15 @@ functio resolveTypusAnnotatio(Resolvitor r, TypusAnnotatio annotatio) -> Semanti
 
     # Generic types: lista<T>, tabula<K,V>, etc.
     varia resolvedParametri = [] innatum lista<SemanticTypus>
-    si nonnihil annotatio.typusParametra {
-        itera ex annotatio.typusParametra fixum p {
-            discerne p {
-                casu Typus ut tp {
-                    resolvedParametri.appende(resolveTypusAnnotatio(r, tp.adnotatio))
-                }
-                casu Littera {
-                    # EDGE: Numeric literal type params are not needed for self-host yet.
-                    r.analyzator().moneIgnotum("type parameter literal resolves to ignotum (numeric literal type params not supported)", annotatio.locus)
-                    resolvedParametri.appende(IGNOTUM)
-                }
+    itera ex annotatio.typusParametra fixum p {
+        discerne p {
+            casu Typus ut tp {
+                resolvedParametri.appende(resolveTypusAnnotatio(r, tp.adnotatio))
+            }
+            casu Littera {
+                # EDGE: Numeric literal type params are not needed for self-host yet.
+                r.analyzator().moneIgnotum("type parameter literal resolves to ignotum (numeric literal type params not supported)", annotatio.locus)
+                resolvedParametri.appende(IGNOTUM)
             }
         }
     }

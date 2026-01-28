@@ -34,11 +34,8 @@ functio genPactum(in TsGenerator g, de textus nomen, de ignotum generaParametra,
 
     result = scriptum("§interface §", result, nomen)
 
-    si nonnihil generaParametra {
-        fixum gp = generaParametra qua lista<textus>
-        si gp.longitudo() > 0 {
-            result = scriptum("§<§>", result, gp.coniunge(", "))
-        }
+    si nonnulla generaParametra {
+        result = scriptum("§<§>", result, (generaParametra qua lista<textus>).coniunge(", "))
     }
 
     result = scriptum("§ {\n", result)

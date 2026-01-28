@@ -165,7 +165,7 @@ functio genProba(
     si nonnihil solum et solum {
         entry["only"] = verum
     }
-    si nonnihil tags et tags.longitudo() > 0 {
+    si nonnulla tags {
         entry["tags"] = tags
     }
     si nonnihil temporis {

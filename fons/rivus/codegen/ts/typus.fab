@@ -87,19 +87,16 @@ functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
     # Build result with generics
     varia result = base
 
-    si nonnihil adnotatio.typusParametra {
-        fixum parametra = adnotatio.typusParametra
-        si parametra.longitudo() > 0 {
-            varia params = [] innatum lista<textus>
-            itera ex parametra fixum param {
-                fixum paramStr = genTypusParametrum(g, param)
-                si nonnihil paramStr {
-                    params.appende(paramStr qua textus)
-                }
+    si nonnulla adnotatio.typusParametra {
+        varia params = [] innatum lista<textus>
+        itera ex adnotatio.typusParametra fixum param {
+            fixum paramStr = genTypusParametrum(g, param)
+            si nonnihil paramStr {
+                params.appende(paramStr qua textus)
             }
-            si params.longitudo() > 0 {
-                result = scriptum("§<§>", result, params.coniunge(", "))
-            }
+        }
+        si params.longitudo() > 0 {
+            result = scriptum("§<§>", result, params.coniunge(", "))
         }
     }
 
@@ -109,15 +106,12 @@ functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
     }
 
     # Handle union types
-    si nonnihil adnotatio.unio {
-        fixum unioTypi = adnotatio.unio
-        si unioTypi.longitudo() > 0 {
-            varia parts = [] innatum lista<textus>
-            itera ex unioTypi fixum u {
-                parts.appende(genTypus(g, u))
-            }
-            result = parts.coniunge(" | ")
+    si nonnulla adnotatio.unio {
+        varia parts = [] innatum lista<textus>
+        itera ex adnotatio.unio fixum u {
+            parts.appende(genTypus(g, u))
         }
+        result = parts.coniunge(" | ")
     }
 
     redde result
