@@ -679,6 +679,21 @@ impl Parser {
                 ExprKind::Ego(span)
             }
 
+            // Builtin: scriptum("template", args...)
+            TokenKind::Scriptum => {
+                return self.parse_script_expr();
+            }
+
+            // Builtin: lege / lineam
+            TokenKind::Lege | TokenKind::Lineam => {
+                return self.parse_read_expr();
+            }
+
+            // Builtin: praefixum(expr)
+            TokenKind::Praefixum => {
+                return self.parse_prefix_expr();
+            }
+
             // Identifier
             TokenKind::Ident(_) => {
                 let ident = self.parse_ident()?;
@@ -1034,5 +1049,69 @@ impl Parser {
 
         self.expect(&TokenKind::Gt, "expected '>'")?;
         Ok(args)
+    }
+
+    /// Parse scriptum("template", args...)
+    fn parse_script_expr(&mut self) -> Result<Expr, ParseError> {
+        let start = self.current_span();
+        self.expect_keyword(TokenKind::Scriptum, "expected 'scriptum'")?;
+        self.expect(&TokenKind::LParen, "expected '(' after 'scriptum'")?;
+
+        // First arg is the template string
+        let template = self.parse_string()?;
+
+        // Remaining args
+        let mut args = Vec::new();
+        while self.eat(&TokenKind::Comma) {
+            args.push(self.parse_expression()?);
+        }
+
+        self.expect(&TokenKind::RParen, "expected ')'")?;
+
+        let span = start.merge(self.previous_span());
+        let id = self.next_id();
+        Ok(Expr {
+            id,
+            kind: ExprKind::Script(ScriptExpr { template, args }),
+            span,
+        })
+    }
+
+    /// Parse lege / lineam
+    fn parse_read_expr(&mut self) -> Result<Expr, ParseError> {
+        let start = self.current_span();
+        let line = if self.eat_keyword(TokenKind::Lineam) {
+            true
+        } else {
+            self.expect_keyword(TokenKind::Lege, "expected 'lege' or 'lineam'")?;
+            false
+        };
+
+        let span = start.merge(self.previous_span());
+        let id = self.next_id();
+        Ok(Expr {
+            id,
+            kind: ExprKind::Read(ReadExpr { line, span }),
+            span,
+        })
+    }
+
+    /// Parse praefixum(expr)
+    fn parse_prefix_expr(&mut self) -> Result<Expr, ParseError> {
+        let start = self.current_span();
+        self.expect_keyword(TokenKind::Praefixum, "expected 'praefixum'")?;
+        self.expect(&TokenKind::LParen, "expected '(' after 'praefixum'")?;
+
+        let body = PrefixBody::Expr(Box::new(self.parse_expression()?));
+
+        self.expect(&TokenKind::RParen, "expected ')'")?;
+
+        let span = start.merge(self.previous_span());
+        let id = self.next_id();
+        Ok(Expr {
+            id,
+            kind: ExprKind::Prefix(PrefixExpr { body }),
+            span,
+        })
     }
 }
