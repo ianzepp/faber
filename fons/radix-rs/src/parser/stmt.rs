@@ -55,13 +55,9 @@ impl Parser {
             ))))
         } else if self.eat_keyword(TokenKind::Tacet) {
             Ok(IfBody::InlineReturn(InlineReturn::Tacet))
-        } else if self.eat_keyword(TokenKind::Casu) {
-            // "ergo" style - single statement
-            let id = self.next_id();
-            let start = self.current_span();
-            let kind = self.parse_expr_stmt()?;
-            let span = start.merge(self.previous_span());
-            Ok(IfBody::Ergo(Box::new(Stmt { id, kind, span })))
+        } else if self.eat_keyword(TokenKind::Ergo) {
+            // "ergo" style - single statement treated as block
+            Ok(IfBody::Ergo(Box::new(self.parse_statement()?)))
         } else {
             Err(self.error(ParseErrorKind::MissingBlock, "expected block or 'ergo'"))
         }
@@ -90,6 +86,8 @@ impl Parser {
             ))))
         } else if self.eat_keyword(TokenKind::Tacet) {
             Ok(ElseClause::InlineReturn(InlineReturn::Tacet))
+        } else if self.eat_keyword(TokenKind::Ergo) {
+            Ok(ElseClause::Stmt(Box::new(self.parse_statement()?)))
         } else {
             let id = self.next_id();
             let start = self.current_span();

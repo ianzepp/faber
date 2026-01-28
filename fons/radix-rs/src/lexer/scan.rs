@@ -626,6 +626,7 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "discerne" => TokenKind::Discerne,
         "custodi" => TokenKind::Custodi,
         "fac" => TokenKind::Fac,
+        "ergo" => TokenKind::Ergo,
 
         // Transfer
         "redde" => TokenKind::Redde,

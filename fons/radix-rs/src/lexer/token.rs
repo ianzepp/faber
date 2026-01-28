@@ -98,6 +98,7 @@ pub enum TokenKind {
     Discerne,
     Custodi,
     Fac,
+    Ergo,
 
     // === Keywords: Transfer ===
     Redde,
@@ -297,7 +298,7 @@ impl TokenKind {
                 | Abstractus | Generis | Nexum | Publica | Privata | Protecta
                 | Prae | Ceteri | Immutata | Iacit | Curata | Errata | Exitus | Optiones
                 | Si | Sin | Secus | Dum | Itera | Elige | Casu | Ceterum
-                | Discerne | Custodi | Fac | Redde | Reddit | Rumpe | Perge | Tacet
+                | Discerne | Custodi | Fac | Ergo | Redde | Reddit | Rumpe | Perge | Tacet
                 | Tempta | Cape | Demum | Iace | Mori | Moritor | Adfirma
                 | Futura | Cursor | Cede | Verum | Falsum | Nihil
                 | Et | Aut | Non | Vel | Est | Ego | Novum | Finge | Sub | Implet
