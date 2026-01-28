@@ -1,26 +1,26 @@
 //! Statement parsing
 
-use super::{Parser, ParseError, ParseErrorKind};
-use crate::lexer::{TokenKind, Symbol, Span};
+use super::{ParseError, ParseErrorKind, Parser};
+use crate::lexer::{Span, Symbol, TokenKind};
 use crate::syntax::*;
 
 impl Parser {
-    /// Parse if statement
-    pub(super) fn parse_if_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    /// Parse si statement
+    pub(super) fn parse_si_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Si, "expected 'si'")?;
 
         let cond = Box::new(self.parse_expression()?);
-        let then = self.parse_if_body()?;
+        let then = self.parse_ergo_body()?;
 
         // Optional catch clause
-        let catch = self.try_parse_catch()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         // Optional else clause
         let else_ = if self.eat_keyword(TokenKind::Secus) {
-            Some(self.parse_else_clause()?)
+            Some(self.parse_secus_stmt()?)
         } else if self.eat_keyword(TokenKind::Sin) {
             // else-if chain: sin <cond> { } is shorthand for secus si <cond> { }
-            Some(ElseClause::If(Box::new(self.parse_sin_chain()?)))
+            Some(ElseClause::If(Box::new(self.parse_sin_stmt()?)))
         } else {
             None
         };
@@ -33,16 +33,16 @@ impl Parser {
         }))
     }
 
-    /// Parse sin (else-if) chain - sin already consumed
-    fn parse_sin_chain(&mut self) -> Result<IfStmt, ParseError> {
+    /// Parse sin statement - sin already consumed
+    fn parse_sin_stmt(&mut self) -> Result<IfStmt, ParseError> {
         let cond = Box::new(self.parse_expression()?);
-        let then = self.parse_if_body()?;
-        let catch = self.try_parse_catch()?;
+        let then = self.parse_ergo_body()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         let else_ = if self.eat_keyword(TokenKind::Secus) {
-            Some(self.parse_else_clause()?)
+            Some(self.parse_secus_stmt()?)
         } else if self.eat_keyword(TokenKind::Sin) {
-            Some(ElseClause::If(Box::new(self.parse_sin_chain()?)))
+            Some(ElseClause::If(Box::new(self.parse_sin_stmt()?)))
         } else {
             None
         };
@@ -56,7 +56,7 @@ impl Parser {
     }
 
     /// Parse if body (block, ergo, or inline return)
-    fn parse_if_body(&mut self) -> Result<IfBody, ParseError> {
+    fn parse_ergo_body(&mut self) -> Result<IfBody, ParseError> {
         if self.check(&TokenKind::LBrace) {
             Ok(IfBody::Block(self.parse_block()?))
         } else if self.eat_keyword(TokenKind::Reddit) {
@@ -81,9 +81,9 @@ impl Parser {
         }
     }
 
-    fn parse_else_clause(&mut self) -> Result<ElseClause, ParseError> {
+    fn parse_secus_stmt(&mut self) -> Result<ElseClause, ParseError> {
         if self.check_keyword(TokenKind::Si) {
-            if let StmtKind::If(nested) = self.parse_if_stmt()? {
+            if let StmtKind::If(nested) = self.parse_si_stmt()? {
                 Ok(ElseClause::If(Box::new(nested)))
             } else {
                 unreachable!()
@@ -116,18 +116,18 @@ impl Parser {
     }
 
     /// Parse while loop
-    pub(super) fn parse_while_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_dum_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Dum, "expected 'dum'")?;
 
         let cond = Box::new(self.parse_expression()?);
-        let body = self.parse_if_body()?;
-        let catch = self.try_parse_catch()?;
+        let body = self.parse_ergo_body()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         Ok(StmtKind::While(WhileStmt { cond, body, catch }))
     }
 
     /// Parse iteration loop
-    pub(super) fn parse_iter_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_itera_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Itera, "expected 'itera'")?;
 
         let mode = if self.eat_keyword(TokenKind::Ex) {
@@ -151,8 +151,8 @@ impl Parser {
         };
 
         let binding = self.parse_ident()?;
-        let body = self.parse_if_body()?;
-        let catch = self.try_parse_catch()?;
+        let body = self.parse_ergo_body()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         Ok(StmtKind::Iter(IterStmt {
             mode,
@@ -165,7 +165,7 @@ impl Parser {
     }
 
     /// Parse switch statement
-    pub(super) fn parse_switch_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_elige_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Elige, "expected 'elige'")?;
 
         let expr = Box::new(self.parse_expression()?);
@@ -179,12 +179,12 @@ impl Parser {
             if self.eat_keyword(TokenKind::Casu) {
                 let start = self.current_span();
                 let value = Box::new(self.parse_expression()?);
-                let body = self.parse_if_body()?;
+                let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
                 cases.push(SwitchCase { value, body, span });
             } else if self.eat_keyword(TokenKind::Ceterum) {
                 let start = self.current_span();
-                let body = self.parse_if_body()?;
+                let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
                 default = Some(SwitchDefault { body, span });
                 break;
@@ -195,7 +195,7 @@ impl Parser {
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
-        let catch = self.try_parse_catch()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         Ok(StmtKind::Switch(SwitchStmt {
             expr,
@@ -206,7 +206,7 @@ impl Parser {
     }
 
     /// Parse match statement
-    pub(super) fn parse_match_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_discerne_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Discerne, "expected 'discerne'")?;
 
         let exhaustive = self.eat_keyword(TokenKind::Omnia);
@@ -233,7 +233,7 @@ impl Parser {
             if self.eat_keyword(TokenKind::Casu) {
                 let start = self.current_span();
                 let patterns = self.parse_patterns()?;
-                let body = self.parse_if_body()?;
+                let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
                 arms.push(MatchArm {
                     patterns,
@@ -242,7 +242,7 @@ impl Parser {
                 });
             } else if self.eat_keyword(TokenKind::Ceterum) {
                 let start = self.current_span();
-                let body = self.parse_if_body()?;
+                let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
                 default = Some(SwitchDefault { body, span });
                 break;
@@ -262,7 +262,7 @@ impl Parser {
     }
 
     /// Parse guard statement
-    pub(super) fn parse_guard_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_custodi_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Custodi, "expected 'custodi'")?;
         self.expect(&TokenKind::LBrace, "expected '{'")?;
 
@@ -272,7 +272,7 @@ impl Parser {
             self.expect_keyword(TokenKind::Si, "expected 'si'")?;
             let start = self.current_span();
             let cond = Box::new(self.parse_expression()?);
-            let body = self.parse_if_body()?;
+            let body = self.parse_ergo_body()?;
             let span = start.merge(self.previous_span());
             clauses.push(GuardClause { cond, body, span });
         }
@@ -287,7 +287,7 @@ impl Parser {
         self.expect_keyword(TokenKind::Fac, "expected 'fac'")?;
 
         let body = self.parse_block()?;
-        let catch = self.try_parse_catch()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         let while_ = if self.eat_keyword(TokenKind::Dum) {
             Some(Box::new(self.parse_expression()?))
@@ -303,7 +303,7 @@ impl Parser {
     }
 
     /// Parse return statement
-    pub(super) fn parse_return_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_redde_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Redde, "expected 'redde'")?;
 
         // Check for value - if next token could start expression
@@ -320,39 +320,39 @@ impl Parser {
     }
 
     /// Parse break statement
-    pub(super) fn parse_break_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_rumpe_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let span = self.current_span();
         self.expect_keyword(TokenKind::Rumpe, "expected 'rumpe'")?;
         Ok(StmtKind::Break(BreakStmt { span }))
     }
 
     /// Parse continue statement
-    pub(super) fn parse_continue_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_perge_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let span = self.current_span();
         self.expect_keyword(TokenKind::Perge, "expected 'perge'")?;
         Ok(StmtKind::Continue(ContinueStmt { span }))
     }
 
     /// Parse throw statement
-    pub(super) fn parse_throw_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_iace_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Iace, "expected 'iace'")?;
         let value = Box::new(self.parse_expression()?);
         Ok(StmtKind::Throw(ThrowStmt { value }))
     }
 
     /// Parse panic statement
-    pub(super) fn parse_panic_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_mori_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Mori, "expected 'mori'")?;
         let value = Box::new(self.parse_expression()?);
         Ok(StmtKind::Panic(PanicStmt { value }))
     }
 
     /// Parse try statement
-    pub(super) fn parse_try_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_tempta_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Tempta, "expected 'tempta'")?;
 
         let body = self.parse_block()?;
-        let catch = self.try_parse_catch()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         let finally = if self.eat_keyword(TokenKind::Demum) {
             Some(self.parse_block()?)
@@ -368,7 +368,7 @@ impl Parser {
     }
 
     /// Parse assert statement
-    pub(super) fn parse_assert_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_adfirma_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Adfirma, "expected 'adfirma'")?;
 
         let cond = Box::new(self.parse_expression()?);
@@ -383,7 +383,7 @@ impl Parser {
     }
 
     /// Parse output statement
-    pub(super) fn parse_output_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_scribe_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let kind = if self.eat_keyword(TokenKind::Scribe) {
             OutputKind::Log
         } else if self.eat_keyword(TokenKind::Vide) {
@@ -406,7 +406,7 @@ impl Parser {
     }
 
     /// Parse entry statement
-    pub(super) fn parse_entry_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_incipit_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let is_async = if self.eat_keyword(TokenKind::Incipit) {
             false
         } else if self.eat_keyword(TokenKind::Incipiet) {
@@ -415,13 +415,13 @@ impl Parser {
             unreachable!()
         };
 
-        let body = self.parse_if_body()?;
+        let body = self.parse_ergo_body()?;
 
         Ok(StmtKind::Entry(EntryStmt { is_async, body }))
     }
 
     /// Parse resource statement
-    pub(super) fn parse_resource_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_cura_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Cura, "expected 'cura'")?;
 
         let kind = if self.eat_keyword(TokenKind::Arena) {
@@ -433,7 +433,7 @@ impl Parser {
         // Check for anonymous scope: cura arena { } without binding
         if self.check(&TokenKind::LBrace) {
             let body = self.parse_block()?;
-            let catch = self.try_parse_catch()?;
+            let catch = self.try_parse_cape_stmt()?;
             return Ok(StmtKind::Resource(ResourceStmt {
                 kind,
                 init: None,
@@ -474,7 +474,7 @@ impl Parser {
 
         let binding = self.parse_ident()?;
         let body = self.parse_block()?;
-        let catch = self.try_parse_catch()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         Ok(StmtKind::Resource(ResourceStmt {
             kind,
@@ -488,7 +488,7 @@ impl Parser {
     }
 
     /// Parse endpoint statement
-    pub(super) fn parse_endpoint_stmt(&mut self) -> Result<StmtKind, ParseError> {
+    pub(super) fn parse_ad_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Ad, "expected 'ad'")?;
 
         let path = self.parse_string()?;
@@ -505,7 +505,7 @@ impl Parser {
             None
         };
 
-        let catch = self.try_parse_catch()?;
+        let catch = self.try_parse_cape_stmt()?;
 
         Ok(StmtKind::Endpoint(EndpointStmt {
             path,
@@ -550,7 +550,7 @@ impl Parser {
     }
 
     /// Try to parse catch clause
-    fn try_parse_catch(&mut self) -> Result<Option<CatchClause>, ParseError> {
+    fn try_parse_cape_stmt(&mut self) -> Result<Option<CatchClause>, ParseError> {
         if !self.eat_keyword(TokenKind::Cape) {
             return Ok(None);
         }

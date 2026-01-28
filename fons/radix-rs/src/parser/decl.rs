@@ -1,6 +1,6 @@
 //! Declaration parsing
 
-use super::{Parser, ParseError, ParseErrorKind};
+use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
 use crate::syntax::*;
 
@@ -27,36 +27,36 @@ impl Parser {
             TokenKind::Abstractus => self.parse_abstract_class_decl()?,
 
             // Control flow
-            TokenKind::Si => self.parse_if_stmt()?,
-            TokenKind::Dum => self.parse_while_stmt()?,
-            TokenKind::Itera => self.parse_iter_stmt()?,
-            TokenKind::Elige => self.parse_switch_stmt()?,
-            TokenKind::Discerne => self.parse_match_stmt()?,
-            TokenKind::Custodi => self.parse_guard_stmt()?,
+            TokenKind::Si => self.parse_si_stmt()?,
+            TokenKind::Dum => self.parse_dum_stmt()?,
+            TokenKind::Itera => self.parse_itera_stmt()?,
+            TokenKind::Elige => self.parse_elige_stmt()?,
+            TokenKind::Discerne => self.parse_discerne_stmt()?,
+            TokenKind::Custodi => self.parse_custodi_stmt()?,
             TokenKind::Fac => self.parse_fac_stmt()?,
 
             // Transfer
-            TokenKind::Redde => self.parse_return_stmt()?,
-            TokenKind::Rumpe => self.parse_break_stmt()?,
-            TokenKind::Perge => self.parse_continue_stmt()?,
-            TokenKind::Iace => self.parse_throw_stmt()?,
-            TokenKind::Mori => self.parse_panic_stmt()?,
+            TokenKind::Redde => self.parse_redde_stmt()?,
+            TokenKind::Rumpe => self.parse_rumpe_stmt()?,
+            TokenKind::Perge => self.parse_perge_stmt()?,
+            TokenKind::Iace => self.parse_iace_stmt()?,
+            TokenKind::Mori => self.parse_mori_stmt()?,
 
             // Error handling
-            TokenKind::Tempta => self.parse_try_stmt()?,
-            TokenKind::Adfirma => self.parse_assert_stmt()?,
+            TokenKind::Tempta => self.parse_tempta_stmt()?,
+            TokenKind::Adfirma => self.parse_adfirma_stmt()?,
 
             // Output
-            TokenKind::Scribe | TokenKind::Vide | TokenKind::Mone => self.parse_output_stmt()?,
+            TokenKind::Scribe | TokenKind::Vide | TokenKind::Mone => self.parse_scribe_stmt()?,
 
             // Entry points
-            TokenKind::Incipit | TokenKind::Incipiet => self.parse_entry_stmt()?,
+            TokenKind::Incipit | TokenKind::Incipiet => self.parse_incipit_stmt()?,
 
             // Resource management
-            TokenKind::Cura => self.parse_resource_stmt()?,
+            TokenKind::Cura => self.parse_cura_stmt()?,
 
             // Endpoint
-            TokenKind::Ad => self.parse_endpoint_stmt()?,
+            TokenKind::Ad => self.parse_ad_stmt()?,
 
             // Block
             TokenKind::LBrace => StmtKind::Block(self.parse_block()?),
@@ -768,7 +768,10 @@ impl Parser {
         }
 
         if idents.is_empty() {
-            return Err(self.error(ParseErrorKind::InvalidAnnotation, "expected annotation name"));
+            return Err(self.error(
+                ParseErrorKind::InvalidAnnotation,
+                "expected annotation name",
+            ));
         }
 
         Ok(AnnotationKind::Simple(idents))
