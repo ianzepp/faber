@@ -406,6 +406,7 @@ pub struct IterStmt {
 pub enum IterMode {
     Values, // ex
     Keys,   // de
+    Range,  // pro
 }
 
 #[derive(Debug)]

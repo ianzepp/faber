@@ -19,12 +19,8 @@ impl Parser {
         let else_ = if self.eat_keyword(TokenKind::Secus) {
             Some(self.parse_else_clause()?)
         } else if self.eat_keyword(TokenKind::Sin) {
-            // else-if chain
-            if let StmtKind::If(nested) = self.parse_if_stmt()? {
-                Some(ElseClause::If(Box::new(nested)))
-            } else {
-                unreachable!()
-            }
+            // else-if chain: sin <cond> { } is shorthand for secus si <cond> { }
+            Some(ElseClause::If(Box::new(self.parse_sin_chain()?)))
         } else {
             None
         };
@@ -35,6 +31,28 @@ impl Parser {
             catch,
             else_,
         }))
+    }
+
+    /// Parse sin (else-if) chain - sin already consumed
+    fn parse_sin_chain(&mut self) -> Result<IfStmt, ParseError> {
+        let cond = Box::new(self.parse_expression()?);
+        let then = self.parse_if_body()?;
+        let catch = self.try_parse_catch()?;
+
+        let else_ = if self.eat_keyword(TokenKind::Secus) {
+            Some(self.parse_else_clause()?)
+        } else if self.eat_keyword(TokenKind::Sin) {
+            Some(ElseClause::If(Box::new(self.parse_sin_chain()?)))
+        } else {
+            None
+        };
+
+        Ok(IfStmt {
+            cond,
+            then,
+            catch,
+            else_,
+        })
     }
 
     /// Parse if body (block, ergo, or inline return)
@@ -116,8 +134,10 @@ impl Parser {
             IterMode::Values
         } else if self.eat_keyword(TokenKind::De) {
             IterMode::Keys
+        } else if self.eat_keyword(TokenKind::Pro) {
+            IterMode::Range
         } else {
-            return Err(self.error(ParseErrorKind::Expected, "expected 'ex' or 'de'"));
+            return Err(self.error(ParseErrorKind::Expected, "expected 'ex', 'de', or 'pro'"));
         };
 
         let iterable = Box::new(self.parse_expression()?);
