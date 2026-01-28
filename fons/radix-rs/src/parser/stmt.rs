@@ -1,7 +1,7 @@
 //! Statement parsing
 
 use super::{Parser, ParseError, ParseErrorKind};
-use crate::lexer::TokenKind;
+use crate::lexer::{TokenKind, Symbol, Span};
 use crate::syntax::*;
 
 impl Parser {
@@ -429,6 +429,24 @@ impl Parser {
         } else {
             None // 'page' would go here too
         };
+
+        // Check for anonymous scope: cura arena { } without binding
+        if self.check(&TokenKind::LBrace) {
+            let body = self.parse_block()?;
+            let catch = self.try_parse_catch()?;
+            return Ok(StmtKind::Resource(ResourceStmt {
+                kind,
+                init: None,
+                mutability: Mutability::Immutable,
+                ty: None,
+                binding: Ident {
+                    name: Symbol(0), // anonymous
+                    span: Span::default(),
+                },
+                body,
+                catch,
+            }));
+        }
 
         let init = if !self.check_keyword(TokenKind::Fixum) && !self.check_keyword(TokenKind::Varia)
         {
