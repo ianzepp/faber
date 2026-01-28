@@ -213,7 +213,9 @@ fn cmd_hir(args: &[String]) {
     }
 
     // Resolve names
-    if let Err(e) = radix::semantic::passes::resolve::resolve(&program, &mut resolver, &mut types) {
+    if let Err(e) =
+        radix::semantic::passes::resolve::resolve(&program, &mut resolver, &interner, &mut types)
+    {
         eprintln!("resolution errors:");
         for err in e {
             eprintln!("  {:?}: {}", err.kind, err.message);

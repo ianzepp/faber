@@ -78,6 +78,15 @@ pub fn collect(
                     decl.name.span,
                     SymbolKind::Enum,
                 );
+                for member in &decl.members {
+                    define_symbol(
+                        resolver,
+                        &mut errors,
+                        member.name.name,
+                        member.name.span,
+                        SymbolKind::Variant,
+                    );
+                }
             }
             StmtKind::Union(decl) => {
                 define_symbol(
@@ -87,6 +96,15 @@ pub fn collect(
                     decl.name.span,
                     SymbolKind::Enum,
                 );
+                for variant in &decl.variants {
+                    define_symbol(
+                        resolver,
+                        &mut errors,
+                        variant.name.name,
+                        variant.name.span,
+                        SymbolKind::Variant,
+                    );
+                }
             }
             StmtKind::Import(decl) => match &decl.kind {
                 crate::syntax::ImportKind::Named { name, alias } => {

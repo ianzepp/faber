@@ -12,9 +12,7 @@ Rust implementation of the Faber compiler pipeline used by the `radix` crate.
 
 ## Known TODO items
 
-- Collect pass: add enum variants and class members to the symbol table.
-- Resolve pass: validate type names with the interner, including primitives.
-- Resolve pass: resolve variant paths in patterns and `finge` constructors.
+- Resolve pass: add namespaced lookup for enum variants and class members.
 - Type lowering: wire type alias resolution and generic arity checks.
 - Type checking: implement bidirectional inference for expressions and statements.
 - Borrow analysis: implement ownership tracking for Rust target diagnostics.

@@ -72,7 +72,7 @@ pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> S
     }
 
     // Pass 2: Resolve names
-    if let Err(e) = passes::resolve::resolve(program, &mut resolver, &mut types) {
+    if let Err(e) = passes::resolve::resolve(program, &mut resolver, interner, &mut types) {
         errors.extend(e);
     }
 
