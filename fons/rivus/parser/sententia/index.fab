@@ -98,14 +98,14 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         fixum nextSym = p.specta(1)
 
         # Deprecation error for old import syntax
-        si (nextSym.species === SymbolumGenus.Verbum) && (nextSym.verbumId === VerbumId.Importa) {
+        si (nextSym.species === SymbolumGenus.Verbum) et (nextSym.verbumId === VerbumId.Importa) {
             p.renuncia(ParserErrorCodice.ErrorGeneralis, "§ import syntax is deprecated; use: importa ex \"path\" privata|publica T")
         }
-        si (nextSym.species === SymbolumGenus.Verbum) && (nextSym.verbumId === VerbumId.Ex) {
+        si (nextSym.species === SymbolumGenus.Verbum) et (nextSym.verbumId === VerbumId.Ex) {
             fixum sourceSym = p.specta(2)
-            si (sourceSym.species === SymbolumGenus.Nomen) || (sourceSym.species === SymbolumGenus.Textus) {
+            si (sourceSym.species === SymbolumGenus.Nomen) aut (sourceSym.species === SymbolumGenus.Textus) {
                 fixum importaSym = p.specta(3)
-                si (importaSym.species === SymbolumGenus.Verbum) && (importaSym.verbumId === VerbumId.Importa) {
+                si (importaSym.species === SymbolumGenus.Verbum) et (importaSym.verbumId === VerbumId.Importa) {
                     p.renuncia(ParserErrorCodice.ErrorGeneralis, "§ ex ... importa syntax is deprecated; use: importa ex \"path\" privata|publica T")
                 }
             }

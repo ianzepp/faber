@@ -357,13 +357,13 @@ functio symbolumVerbumId(de textus verbum, de VerbumId verbumId, de Locus locus)
 # Check if token is a specific keyword (surface spelling)
 @ publica
 functio estVerbum(de Symbolum sym, de textus verbum) -> bivalens {
-    redde sym.species == SymbolumGenus.Verbum && sym.verbum == verbum
+    redde sym.species == SymbolumGenus.Verbum et sym.verbum == verbum
 }
 
 # Check if token is a specific keyword (canonical identity)
 @ publica
 functio estVerbumId(de Symbolum sym, de VerbumId verbumId) -> bivalens {
-    redde sym.species == SymbolumGenus.Verbum && sym.verbumId == verbumId
+    redde sym.species == SymbolumGenus.Verbum et sym.verbumId == verbumId
 }
 
 # Check if token is EOF
