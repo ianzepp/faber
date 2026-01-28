@@ -111,7 +111,12 @@ impl Parser {
             let start = self.current_span();
             let kind = self.parse_expr_stmt()?;
             let span = start.merge(self.previous_span());
-            Ok(ElseClause::Stmt(Box::new(Stmt { id, kind, span })))
+            Ok(ElseClause::Stmt(Box::new(Stmt {
+                id,
+                kind,
+                span,
+                annotations: Vec::new(),
+            })))
         }
     }
 

@@ -1,6 +1,6 @@
 # Arena allocator scope
 #
-# cura arena fit <identifier> { <body> }
+# cura arena <identifier> { <body> }
 #
 # Arena allocators provide fast allocation with bulk deallocation.
 # All memory is freed when the scope exits.

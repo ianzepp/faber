@@ -22,7 +22,10 @@ pub struct Stmt {
     pub id: NodeId,
     pub kind: StmtKind,
     pub span: Span,
+    pub annotations: Vec<Annotation>,
 }
+
+pub type AnnotatedStmt = Stmt;
 
 #[derive(Debug)]
 pub enum StmtKind {

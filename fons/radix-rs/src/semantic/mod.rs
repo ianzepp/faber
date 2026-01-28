@@ -8,18 +8,18 @@
 //! 5. Exhaustive - pattern match exhaustiveness
 //! 6. Lint - warnings and suggestions
 
-mod types;
-mod scope;
 mod error;
 pub mod passes;
+mod scope;
+mod types;
 
-pub use types::{Type, TypeTable, Primitive, TypeId, Mutability, FuncSig, ParamType, ParamMode};
-pub use scope::{Scope, ScopeId, ScopeKind, Symbol, SymbolKind, Resolver};
-pub use error::{SemanticError, SemanticErrorKind};
+pub use error::{SemanticError, SemanticErrorKind, WarningKind};
+pub use scope::{Resolver, Scope, ScopeId, ScopeKind, Symbol, SymbolKind};
+pub use types::{FuncSig, Mutability, ParamMode, ParamType, Primitive, Type, TypeId, TypeTable};
 
-use crate::syntax::Program;
-use crate::hir::HirProgram;
 use crate::codegen::Target;
+use crate::hir::HirProgram;
+use crate::syntax::Program;
 
 /// Semantic analysis result
 pub struct SemanticResult {

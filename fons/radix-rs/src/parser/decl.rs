@@ -64,13 +64,11 @@ impl Parser {
             // Block
             TokenKind::LBrace => StmtKind::Block(self.parse_block()?),
 
-            // Annotations (for following declaration)
+            // Annotations (for following statement)
             TokenKind::At => {
                 let annotations = self.parse_annotations()?;
                 let mut stmt = self.parse_statement()?;
-                if let StmtKind::Func(func) = &mut stmt.kind {
-                    func.annotations = annotations;
-                }
+                stmt.annotations = annotations;
                 return Ok(stmt);
             }
 
@@ -79,7 +77,12 @@ impl Parser {
         };
 
         let span = start.merge(self.previous_span());
-        Ok(Stmt { id, kind, span })
+        Ok(Stmt {
+            id,
+            kind,
+            span,
+            annotations: Vec::new(),
+        })
     }
 
     /// Parse variable declaration
@@ -574,7 +577,7 @@ impl Parser {
     }
 
     /// Parse directive
-    fn parse_directive_decl(&mut self) -> Result<DirectiveDecl, ParseError> {
+    pub(super) fn parse_directive_decl(&mut self) -> Result<DirectiveDecl, ParseError> {
         let start = self.current_span();
         self.expect(&TokenKind::Section, "expected '§'")?;
 

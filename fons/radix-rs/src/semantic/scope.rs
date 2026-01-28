@@ -1,8 +1,8 @@
 //! Scope and symbol table
 
+use super::types::TypeId;
 use crate::hir::DefId;
 use crate::lexer::{Span, Symbol as LexSymbol};
-use super::types::TypeId;
 use rustc_hash::FxHashMap;
 
 /// Scope ID

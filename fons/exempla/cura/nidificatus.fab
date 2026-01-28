@@ -1,6 +1,6 @@
 # Nested allocator scopes
 #
-# cura arena fit <outer> { cura arena fit <inner> { } }
+# cura arena <outer> { cura arena <inner> { } }
 #
 # Allocator scopes can nest. Inner scopes free before outer scopes.
 

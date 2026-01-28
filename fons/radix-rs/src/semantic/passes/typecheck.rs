@@ -3,7 +3,7 @@
 //! Bidirectional type inference and checking.
 
 use crate::hir::HirProgram;
-use crate::semantic::{Resolver, TypeTable, SemanticError};
+use crate::semantic::{Resolver, SemanticError, TypeTable};
 
 /// Type check the HIR
 pub fn typecheck(

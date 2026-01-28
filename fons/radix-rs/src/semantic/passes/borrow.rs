@@ -4,7 +4,7 @@
 //! Only runs when targeting Rust.
 
 use crate::hir::HirProgram;
-use crate::semantic::{Resolver, TypeTable, SemanticError};
+use crate::semantic::{Resolver, SemanticError, TypeTable};
 
 /// Analyze borrowing and ownership
 pub fn analyze(

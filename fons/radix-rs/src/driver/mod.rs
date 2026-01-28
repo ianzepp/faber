@@ -182,7 +182,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
             if matches!(resource.kind, Some(ResourceKind::Arena)) {
                 let spec =
                     crate::diagnostics::semantic_spec(crate::semantic::SemanticErrorKind::Warning(
-                        crate::semantic::error::WarningKind::TargetNoop,
+                        crate::semantic::WarningKind::TargetNoop,
                     ));
                 let mut diag = Diagnostic::warning("cura arena has no effect for Rust targets")
                     .with_code(spec.code)

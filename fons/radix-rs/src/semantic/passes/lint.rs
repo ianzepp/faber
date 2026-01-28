@@ -3,8 +3,8 @@
 //! Produces warnings for common issues.
 
 use crate::hir::HirProgram;
-use crate::semantic::{Resolver, TypeTable, SemanticError, SemanticErrorKind, error::WarningKind};
 use crate::lexer::Span;
+use crate::semantic::{error::WarningKind, Resolver, SemanticError, SemanticErrorKind, TypeTable};
 
 /// Run lint checks
 pub fn lint(

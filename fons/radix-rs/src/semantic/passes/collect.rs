@@ -4,8 +4,8 @@
 //! creating DefIds for each named item. Does not look inside
 //! function bodies.
 
+use crate::semantic::{Resolver, SemanticError, TypeTable};
 use crate::syntax::Program;
-use crate::semantic::{Resolver, TypeTable, SemanticError};
 
 /// Collect all declarations from the program
 pub fn collect(

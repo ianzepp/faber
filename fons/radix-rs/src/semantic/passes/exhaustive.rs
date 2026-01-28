@@ -3,13 +3,10 @@
 //! Verifies that pattern matches cover all cases.
 
 use crate::hir::HirProgram;
-use crate::semantic::{TypeTable, SemanticError};
+use crate::semantic::{SemanticError, TypeTable};
 
 /// Check pattern match exhaustiveness
-pub fn check(
-    _hir: &HirProgram,
-    _types: &TypeTable,
-) -> Result<(), Vec<SemanticError>> {
+pub fn check(_hir: &HirProgram, _types: &TypeTable) -> Result<(), Vec<SemanticError>> {
     // TODO: Implement exhaustiveness checking
     //
     // For each `discerne` (match) expression:

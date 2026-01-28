@@ -2,7 +2,7 @@
 
 use crate::lexer::LexErrorKind;
 use crate::parser::ParseErrorKind;
-use crate::semantic::{error::WarningKind, SemanticErrorKind};
+use crate::semantic::{SemanticErrorKind, WarningKind};
 
 #[derive(Debug, Clone, Copy)]
 pub struct DiagnosticSpec {

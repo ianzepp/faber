@@ -4,23 +4,24 @@
 
 incipit {
     # Basic endpoint dispatch with sync handler
-    ad "fasciculus:lege" ("hello.txt") fit textus pro content {
+    ad "fasciculus:lege" ("hello.txt") -> textus pro content {
         scribe scriptum("File contents: §", content)
     }
 
     # Async endpoint dispatch
-    ad "caelum:pete" ("https://api.example.com/data") fiet objectum pro response {
+    @ futura
+    ad "caelum:pete" ("https://api.example.com/data") -> objectum pro response {
         fixum data = cede response.json()
         scribe data
     }
 
     # Multiple arguments
-    ad "processus:executa" ("ls", "-la") fiunt textus pro output {
+    ad "processus:executa" ("ls", "-la") -> textus pro output {
         scribe output
     }
 
     # Complex dispatch with error handling
-    #ad "rete:connecta" ("127.0.0.1", 8080) fit rete.Socket pro socket {
+    #ad "rete:connecta" ("127.0.0.1", 8080) -> rete.Socket pro socket {
     #    scribe "Connected successfully"
     #    socket.claude()
     #} cape err {

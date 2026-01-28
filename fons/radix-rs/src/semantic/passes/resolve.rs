@@ -3,8 +3,8 @@
 //! Resolves all identifiers to their definitions. Builds
 //! the HIR as a side effect.
 
+use crate::semantic::{Resolver, SemanticError, TypeTable};
 use crate::syntax::Program;
-use crate::semantic::{Resolver, TypeTable, SemanticError};
 
 /// Resolve all names in the program
 pub fn resolve(
