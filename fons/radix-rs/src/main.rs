@@ -46,15 +46,16 @@ fn print_usage() {
 fn read_source(args: &[String]) -> (String, String) {
     if args.is_empty() || args[0] == "-" {
         let mut source = String::new();
-        io::stdin().read_to_string(&mut source).expect("failed to read stdin");
+        io::stdin()
+            .read_to_string(&mut source)
+            .expect("failed to read stdin");
         ("<stdin>".to_owned(), source)
     } else {
         let path = PathBuf::from(&args[0]);
-        let source = std::fs::read_to_string(&path)
-            .unwrap_or_else(|e| {
-                eprintln!("error: cannot read '{}': {}", path.display(), e);
-                std::process::exit(1);
-            });
+        let source = std::fs::read_to_string(&path).unwrap_or_else(|e| {
+            eprintln!("error: cannot read '{}': {}", path.display(), e);
+            std::process::exit(1);
+        });
         (args[0].clone(), source)
     }
 }
@@ -138,11 +139,7 @@ fn cmd_parse(args: &[String]) {
             let kind_name = kind.split('(').next().unwrap_or(&kind);
             println!(
                 "    {{ \"id\": {}, \"kind\": \"{}\", \"span\": [{}, {}] }}{}",
-                stmt.id,
-                kind_name,
-                stmt.span.start,
-                stmt.span.end,
-                comma
+                stmt.id, kind_name, stmt.span.start, stmt.span.end, comma
             );
         }
 
@@ -153,7 +150,11 @@ fn cmd_parse(args: &[String]) {
 
     println!("  \"errors\": [");
     for (i, err) in parse_result.errors.iter().enumerate() {
-        let comma = if i + 1 < parse_result.errors.len() { "," } else { "" };
+        let comma = if i + 1 < parse_result.errors.len() {
+            ","
+        } else {
+            ""
+        };
         println!(
             "    {{ \"message\": \"{}\", \"span\": [{}, {}] }}{}",
             escape_json(&err.message),
@@ -193,7 +194,10 @@ fn cmd_hir(args: &[String]) {
         std::process::exit(1);
     }
 
-    let program = parse_result.program.unwrap();
+    let radix::parser::ParseResult {
+        program, interner, ..
+    } = parse_result;
+    let program = program.unwrap();
 
     // Phase 3: Name resolution (needed for HIR lowering)
     let mut resolver = radix::semantic::Resolver::new();
@@ -218,7 +222,7 @@ fn cmd_hir(args: &[String]) {
     }
 
     // Phase 4: Lower to HIR
-    let (hir, errors) = radix::hir::lower(&program, &resolver);
+    let (hir, errors) = radix::hir::lower(&program, &resolver, &mut types, &interner);
 
     // Output as JSON
     println!("{{");
@@ -233,12 +237,7 @@ fn cmd_hir(args: &[String]) {
         let kind_name = kind.split('(').next().unwrap_or(&kind);
         println!(
             "    {{ \"id\": {:?}, \"def_id\": {:?}, \"kind\": \"{}\", \"span\": [{}, {}] }}{}",
-            item.id.0,
-            item.def_id.0,
-            kind_name,
-            item.span.start,
-            item.span.end,
-            comma
+            item.id.0, item.def_id.0, kind_name, item.span.start, item.span.end, comma
         );
     }
 
@@ -283,9 +282,12 @@ fn cmd_check(args: &[String]) {
         std::process::exit(1);
     }
 
-    let program = parse_result.program.unwrap();
+    let radix::parser::ParseResult {
+        program, interner, ..
+    } = parse_result;
+    let program = program.unwrap();
     let pass_config = radix::semantic::PassConfig::for_target(radix::codegen::Target::Rust);
-    let semantic_result = radix::semantic::analyze(&program, &pass_config);
+    let semantic_result = radix::semantic::analyze(&program, &pass_config, &interner);
 
     for err in &semantic_result.errors {
         let prefix = if err.is_error() { "error" } else { "warning" };

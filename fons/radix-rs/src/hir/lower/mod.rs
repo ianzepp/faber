@@ -12,14 +12,18 @@ mod types;
 use super::{
     HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirItemKind, HirProgram, HirStmt, HirStmtKind,
 };
-use crate::lexer::{Span, Symbol};
-use crate::semantic::Resolver;
+use crate::lexer::{Interner, Span, Symbol};
+use crate::semantic::{Resolver, TypeTable};
 use crate::syntax::{Program, Stmt, StmtKind};
 
 /// Lowerer state for AST to HIR transformation
 pub struct Lowerer<'a> {
     /// Resolver for name resolution
     resolver: &'a Resolver,
+    /// Type table for interning types
+    types: &'a mut TypeTable,
+    /// Interner for resolving symbols
+    interner: &'a Interner,
     /// Next HIR ID to assign
     next_id: u32,
     /// Next synthetic DefId to assign
@@ -39,9 +43,11 @@ pub struct LowerError {
 
 impl<'a> Lowerer<'a> {
     /// Create a new lowerer with the given resolver
-    pub fn new(resolver: &'a Resolver) -> Self {
+    pub fn new(resolver: &'a Resolver, types: &'a mut TypeTable, interner: &'a Interner) -> Self {
         Self {
             resolver,
+            types,
+            interner,
             next_id: 0,
             next_def_id: 1_000_000,
             errors: Vec::new(),
@@ -204,8 +210,13 @@ impl<'a> Lowerer<'a> {
 ///
 /// This is performed after name resolution, so the resolver
 /// is passed in to provide DefId mappings.
-pub fn lower(program: &Program, resolver: &Resolver) -> (HirProgram, Vec<LowerError>) {
-    let mut lowerer = Lowerer::new(resolver);
+pub fn lower(
+    program: &Program,
+    resolver: &Resolver,
+    types: &mut TypeTable,
+    interner: &Interner,
+) -> (HirProgram, Vec<LowerError>) {
+    let mut lowerer = Lowerer::new(resolver, types, interner);
     let hir = lowerer.lower_program(program);
     let errors = lowerer.take_errors();
     (hir, errors)

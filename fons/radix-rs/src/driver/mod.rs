@@ -44,7 +44,10 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         };
     }
 
-    let program = parse_result.program.unwrap();
+    let parser::ParseResult {
+        program, interner, ..
+    } = parse_result;
+    let program = program.unwrap();
 
     if session.config.target == Target::Rust {
         diagnostics.extend(collect_rust_noop_warnings(&program, name));
@@ -52,7 +55,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
 
     // Phase 3: Semantic analysis
     let pass_config = PassConfig::for_target(session.config.target);
-    let semantic_result = semantic::analyze(&program, &pass_config);
+    let semantic_result = semantic::analyze(&program, &pass_config, &interner);
 
     for err in &semantic_result.errors {
         diagnostics.push(Diagnostic::from_semantic_error(name, source, err));

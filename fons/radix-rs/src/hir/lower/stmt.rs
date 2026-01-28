@@ -54,8 +54,31 @@ pub fn lower_stmt(lowerer: &mut Lowerer, stmt: &Stmt) -> HirStmt {
 impl<'a> Lowerer<'a> {
     /// Lower variable declaration statement
     fn lower_var_stmt(&mut self, decl: &crate::syntax::VarDecl) -> HirStmtKind {
-        self.error("variable declaration lowering not implemented");
-        HirStmtKind::Expr(error_expr(self, self.current_span))
+        let name = match &decl.binding {
+            crate::syntax::BindingPattern::Ident(ident) => ident.name,
+            crate::syntax::BindingPattern::Wildcard(span) => {
+                self.current_span = *span;
+                self.error("wildcard bindings are not lowered yet");
+                return HirStmtKind::Expr(error_expr(self, *span));
+            }
+            crate::syntax::BindingPattern::Array { span, .. } => {
+                self.current_span = *span;
+                self.error("array bindings are not lowered yet");
+                return HirStmtKind::Expr(error_expr(self, *span));
+            }
+        };
+
+        let def_id = self.def_id_for(name);
+        let ty = decl.ty.as_ref().map(|ty| self.lower_type(ty));
+        let init = decl.init.as_ref().map(|expr| self.lower_expr(expr));
+
+        HirStmtKind::Local(crate::hir::HirLocal {
+            def_id,
+            name,
+            ty,
+            init,
+            mutable: decl.mutability == crate::syntax::Mutability::Mutable,
+        })
     }
 
     /// Lower expression statement

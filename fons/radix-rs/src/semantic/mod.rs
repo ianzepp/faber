@@ -20,6 +20,7 @@ pub use types::{FuncSig, Mutability, ParamMode, ParamType, Primitive, Type, Type
 
 use crate::codegen::Target;
 use crate::hir::HirProgram;
+use crate::lexer::Interner;
 use crate::syntax::Program;
 
 /// Semantic analysis result
@@ -60,7 +61,7 @@ impl PassConfig {
 }
 
 /// Run semantic analysis on a program
-pub fn analyze(program: &Program, config: &PassConfig) -> SemanticResult {
+pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> SemanticResult {
     let mut errors = Vec::new();
     let mut types = TypeTable::new();
     let mut resolver = Resolver::new();
@@ -85,7 +86,7 @@ pub fn analyze(program: &Program, config: &PassConfig) -> SemanticResult {
     }
 
     // Pass 3: Lower to HIR
-    let (hir, lower_errors) = crate::hir::lower(program, &resolver);
+    let (hir, lower_errors) = crate::hir::lower(program, &resolver, &mut types, interner);
 
     // Add lowering errors
     for err in lower_errors {
