@@ -199,6 +199,13 @@ impl Parser {
         }
     }
 
+    /// Check if this is a simple variable declaration without type annotation.
+    /// Pattern: identifier followed by '='
+    fn is_simple_var_decl(&self) -> bool {
+        matches!(self.peek().kind, TokenKind::Ident(_))
+            && matches!(self.peek_at(1).kind, TokenKind::Eq)
+    }
+
     /// Create an error at current position
     fn error(&self, kind: ParseErrorKind, message: &str) -> ParseError {
         ParseError {

@@ -99,8 +99,14 @@ impl Parser {
             _ => unreachable!(),
         };
 
-        // Optional type annotation (type-first)
-        let ty = self.try_parse_type()?;
+        // Check: is this "name =" (no type) or "type... name =" (with type)?
+        let ty = if self.is_simple_var_decl() {
+            // Pattern: fixum name = ...
+            None
+        } else {
+            // Pattern: fixum [type-annotation] name = ...
+            Some(self.parse_type()?)
+        };
 
         // Name
         let name = self.parse_ident()?;
