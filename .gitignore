@@ -48,3 +48,6 @@ __pycache__/
 # Build artifacts
 # lib/norma/
 fons/nanus-go/nanus-go
+
+# Rust build files
+**/target/

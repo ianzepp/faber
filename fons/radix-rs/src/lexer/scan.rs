@@ -137,6 +137,9 @@ impl<'a> Lexer<'a> {
                 }
             }
 
+            // Hash comment (# ... newline)
+            '#' => return self.scan_hash_comment(start),
+
             // Slash or comment
             '/' => {
                 if self.cursor.eat('/') {
@@ -231,8 +234,11 @@ impl<'a> Lexer<'a> {
                 }
             }
 
-            // String literals
-            '"' => return self.scan_string(start),
+            // String literals (double or single quoted)
+            '"' | '\'' => return self.scan_string(start, c),
+
+            // Template literals (backtick)
+            '`' => return self.scan_template(start),
 
             // Numbers
             '0'..='9' => return self.scan_number(start, c),
@@ -272,6 +278,18 @@ impl<'a> Lexer<'a> {
         self.tokens.push(Token::new(kind, Span::new(start, self.cursor.pos())));
     }
 
+    fn scan_hash_comment(&mut self, start: u32) {
+        self.cursor.eat_while(|c| c != '\n');
+
+        let text = self.cursor.slice(start + 1, self.cursor.pos());
+        let sym = self.interner.intern(text.trim());
+
+        self.tokens.push(Token::new(
+            TokenKind::LineComment(sym),
+            Span::new(start, self.cursor.pos()),
+        ));
+    }
+
     fn scan_block_comment(&mut self, start: u32) {
         let mut depth = 1;
 
@@ -299,9 +317,16 @@ impl<'a> Lexer<'a> {
         ));
     }
 
-    fn scan_string(&mut self, start: u32) {
-        // Check for triple-quoted string
-        let is_triple = self.cursor.eat('"') && self.cursor.eat('"');
+    fn scan_string(&mut self, start: u32, quote: char) {
+        // Check for triple-quoted string (only for double quotes)
+        // Use peek to avoid consuming quotes if not a triple
+        let is_triple = quote == '"'
+            && self.cursor.peek() == Some('"')
+            && self.cursor.peek_next() == Some('"');
+        if is_triple {
+            self.cursor.advance();
+            self.cursor.advance();
+        }
 
         loop {
             match self.cursor.peek() {
@@ -317,16 +342,16 @@ impl<'a> Lexer<'a> {
                     self.errors.push(LexError {
                         kind: LexErrorKind::UnterminatedString,
                         span: Span::new(start, self.cursor.pos()),
-                        message: "unterminated string literal (newline in single-quoted string)"
+                        message: "unterminated string literal (newline in string)"
                             .to_owned(),
                     });
                     break;
                 }
                 Some('\\') => {
                     self.cursor.advance();
-                    self.cursor.advance(); // Skip escaped char
+                    self.cursor.advance();
                 }
-                Some('"') => {
+                Some(c) if c == quote => {
                     self.cursor.advance();
                     if is_triple {
                         if self.cursor.eat('"') && self.cursor.eat('"') {
@@ -353,6 +378,65 @@ impl<'a> Lexer<'a> {
 
         self.tokens.push(Token::new(
             TokenKind::String(sym),
+            Span::new(start, self.cursor.pos()),
+        ));
+    }
+
+    fn scan_template(&mut self, start: u32) {
+        let mut terminated = false;
+
+        loop {
+            match self.cursor.peek() {
+                None => {
+                    self.errors.push(LexError {
+                        kind: LexErrorKind::UnterminatedString,
+                        span: Span::new(start, self.cursor.pos()),
+                        message: "unterminated template literal".to_owned(),
+                    });
+                    break;
+                }
+                Some('\\') => {
+                    self.cursor.advance();
+                    self.cursor.advance();
+                }
+                Some('$') if self.cursor.peek_next() == Some('{') => {
+                    self.cursor.advance();
+                    self.cursor.advance();
+                    let mut depth = 1;
+                    while depth > 0 && !self.cursor.is_eof() {
+                        match self.cursor.advance() {
+                            Some('{') => depth += 1,
+                            Some('}') => depth -= 1,
+                            _ => {}
+                        }
+                    }
+                }
+                Some('`') => {
+                    self.cursor.advance();
+                    terminated = true;
+                    break;
+                }
+                _ => {
+                    self.cursor.advance();
+                }
+            }
+        }
+
+        let content_start = start + 1;
+        let content_end = if terminated {
+            self.cursor.pos().saturating_sub(1)
+        } else {
+            self.cursor.pos()
+        };
+        let text = if content_end > content_start {
+            self.cursor.slice(content_start, content_end)
+        } else {
+            ""
+        };
+        let sym = self.interner.intern(text);
+
+        self.tokens.push(Token::new(
+            TokenKind::TemplateString(sym),
             Span::new(start, self.cursor.pos()),
         ));
     }
