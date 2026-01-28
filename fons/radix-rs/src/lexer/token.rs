@@ -161,6 +161,7 @@ pub enum TokenKind {
     // === Keywords: Entry points ===
     Incipit,
     Incipiet,
+    Argumenta,
     Cura,
     Arena,
     Ad,
@@ -374,6 +375,7 @@ impl TokenKind {
                 | Mone
                 | Incipit
                 | Incipiet
+                | Argumenta
                 | Cura
                 | Arena
                 | Ad

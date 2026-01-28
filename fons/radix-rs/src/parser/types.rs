@@ -49,7 +49,13 @@ impl Parser {
         }
 
         // Named type
-        let name = self.parse_ident()?;
+        let name = if self.check_keyword(TokenKind::Nihil) {
+            let span = self.peek().span;
+            self.advance();
+            self.keyword_ident("nihil", span)
+        } else {
+            self.parse_ident()?
+        };
 
         // Type parameters
         let params = if self.eat(&TokenKind::Lt) {

@@ -14,6 +14,7 @@ statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pac
              | eligeStmt | discerneStmt | guardStmt | curaStmt
              | tryStmt | returnStmt | breakStmt | continueStmt | throwStmt
              | assertStmt | outputStmt | adStmt | incipitStmt
+             | extractStmt
              | probandumDecl | probaStmt | blockStmt | exprStmt
 blockStmt   := '{' statement* '}'
 ```
@@ -298,6 +299,15 @@ curaStmt    := 'cura' curatorKind? expression? ('fixum' | 'varia') typeAnnotatio
 curatorKind := 'arena' | 'page'
 ```
 
+### Destructuring Extraction
+
+```ebnf
+extractStmt   := 'ex' expression ('fixum' | 'varia') extractFields
+extractFields := extractField (',' extractField)* (',' restField)? | restField
+extractField  := IDENTIFIER ('ut' IDENTIFIER)?
+restField     := 'ceteri' IDENTIFIER
+```
+
 ### Control Transfer
 
 ```ebnf
@@ -482,8 +492,7 @@ functio deploy(
 
 ```ebnf
 adStmt        := 'ad' STRING '(' argumentList ')' adBinding? blockStmt? catchClause?
-adBinding     := adBindingVerb typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
-adBindingVerb := 'fit' | 'fiet' | 'fiunt' | 'fient'
+adBinding     := '->' typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
 ```
 
 **Note:** `ad` statement is parsed but codegen is not yet implemented. See `consilia/futura/ad.md`.

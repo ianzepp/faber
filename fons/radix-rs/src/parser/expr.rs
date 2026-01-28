@@ -439,12 +439,64 @@ impl Parser {
     fn parse_unary(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
 
+        if self.check_keyword(TokenKind::Verum)
+            && self.can_start_prefix_operand(&self.peek_at(1).kind)
+        {
+            self.advance();
+            let operand = Box::new(self.parse_unary()?);
+            let span = start.merge(self.previous_span());
+            let id = self.next_id();
+            return Ok(Expr {
+                id,
+                kind: ExprKind::Unary(UnaryExpr {
+                    op: UnOp::IsTrue,
+                    operand,
+                }),
+                span,
+            });
+        }
+
+        if self.check_keyword(TokenKind::Falsum)
+            && self.can_start_prefix_operand(&self.peek_at(1).kind)
+        {
+            self.advance();
+            let operand = Box::new(self.parse_unary()?);
+            let span = start.merge(self.previous_span());
+            let id = self.next_id();
+            return Ok(Expr {
+                id,
+                kind: ExprKind::Unary(UnaryExpr {
+                    op: UnOp::IsFalse,
+                    operand,
+                }),
+                span,
+            });
+        }
+
+        if self.check_keyword(TokenKind::Nihil)
+            && self.can_start_prefix_operand(&self.peek_at(1).kind)
+        {
+            self.advance();
+            let operand = Box::new(self.parse_unary()?);
+            let span = start.merge(self.previous_span());
+            let id = self.next_id();
+            return Ok(Expr {
+                id,
+                kind: ExprKind::Unary(UnaryExpr {
+                    op: UnOp::IsNil,
+                    operand,
+                }),
+                span,
+            });
+        }
+
         let op = match self.peek().kind {
             TokenKind::Minus => Some(UnOp::Neg),
             TokenKind::Tilde => Some(UnOp::BitNot),
             TokenKind::Non => Some(UnOp::Not),
             TokenKind::Nulla => Some(UnOp::IsNull),
             TokenKind::Nonnulla => Some(UnOp::IsNotNull),
+            TokenKind::Nonnihil => Some(UnOp::IsNotNil),
             TokenKind::Negativum => Some(UnOp::IsNeg),
             TokenKind::Positivum => Some(UnOp::IsPos),
             _ => None,
@@ -488,6 +540,45 @@ impl Parser {
         self.parse_postfix()
     }
 
+    fn can_start_expression(&self, kind: &TokenKind) -> bool {
+        matches!(
+            kind,
+            TokenKind::Ident(_)
+                | TokenKind::Underscore(_)
+                | TokenKind::Integer(_)
+                | TokenKind::Float(_)
+                | TokenKind::String(_)
+                | TokenKind::TemplateString(_)
+                | TokenKind::Verum
+                | TokenKind::Falsum
+                | TokenKind::Nihil
+                | TokenKind::Ego
+                | TokenKind::LParen
+                | TokenKind::LBracket
+                | TokenKind::LBrace
+                | TokenKind::Scriptum
+                | TokenKind::Clausura
+                | TokenKind::Ab
+                | TokenKind::Praefixum
+                | TokenKind::Sed
+                | TokenKind::Lege
+                | TokenKind::Novum
+                | TokenKind::Finge
+                | TokenKind::Non
+                | TokenKind::Minus
+                | TokenKind::Tilde
+                | TokenKind::Nulla
+                | TokenKind::Nonnulla
+                | TokenKind::Negativum
+                | TokenKind::Positivum
+                | TokenKind::Cede
+        )
+    }
+
+    fn can_start_prefix_operand(&self, kind: &TokenKind) -> bool {
+        self.can_start_expression(kind) && !matches!(kind, TokenKind::LBrace)
+    }
+
     /// Postfix operations (cast, call, member, index)
     fn parse_postfix(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
@@ -512,7 +603,7 @@ impl Parser {
             } else if self.check(&TokenKind::Dot) {
                 // Member access
                 self.advance();
-                let member = self.parse_ident()?;
+                let member = self.parse_member_ident()?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
                 expr = Expr {
@@ -541,7 +632,7 @@ impl Parser {
             } else if self.check(&TokenKind::QuestionDot) {
                 // Optional member
                 self.advance();
-                let member = self.parse_ident()?;
+                let member = self.parse_member_ident()?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
                 expr = Expr {
@@ -717,7 +808,7 @@ impl Parser {
             }
 
             // Identifier
-            TokenKind::Ident(_) => {
+            TokenKind::Ident(_) | TokenKind::Tag => {
                 let ident = self.parse_ident()?;
                 ExprKind::Ident(ident)
             }
@@ -945,10 +1036,7 @@ impl Parser {
                 break;
             };
 
-            let arg = if !self.check(&TokenKind::Comma)
-                && !self.check(&TokenKind::RBrace)
-                && !self.is_at_end()
-            {
+            let arg = if self.can_start_expression(&self.peek().kind) {
                 Some(Box::new(self.parse_expression()?))
             } else {
                 None

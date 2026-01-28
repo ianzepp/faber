@@ -43,10 +43,8 @@ pub fn parse(lex_result: LexResult) -> ParseResult {
         };
     }
 
-    let mut parser = Parser::new(lex_result.tokens);
-    let mut result = parser.parse_program();
-    result.interner = lex_result.interner;
-    result
+    let mut parser = Parser::new(lex_result.tokens, lex_result.interner);
+    parser.parse_program()
 }
 
 /// Parser state
@@ -55,15 +53,17 @@ pub struct Parser {
     pos: usize,
     errors: Vec<ParseError>,
     next_node_id: NodeId,
+    interner: Interner,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<Token>, interner: Interner) -> Self {
         Self {
             tokens,
             pos: 0,
             errors: Vec::new(),
             next_node_id: 0,
+            interner,
         }
     }
 
@@ -103,7 +103,7 @@ impl Parser {
                 span,
             }),
             errors: std::mem::take(&mut self.errors),
-            interner: Interner::new(),
+            interner: std::mem::replace(&mut self.interner, Interner::new()),
         }
     }
 
@@ -222,8 +222,9 @@ impl Parser {
     /// Check if this is a simple variable declaration without type annotation.
     /// Pattern: identifier followed by '='
     fn is_simple_var_decl(&self) -> bool {
-        matches!(self.peek().kind, TokenKind::Ident(_))
-            && matches!(self.peek_at(1).kind, TokenKind::Eq)
+        matches!(self.peek().kind, TokenKind::LBracket)
+            || (matches!(self.peek().kind, TokenKind::Ident(_))
+                && matches!(self.peek_at(1).kind, TokenKind::Eq))
     }
 
     /// Create an error at current position
@@ -273,17 +274,36 @@ impl Parser {
     /// Parse an identifier
     fn parse_ident(&mut self) -> Result<Ident, ParseError> {
         let token = self.advance();
-        match &token.kind {
-            TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident {
-                name: *sym,
-                span: token.span,
-            }),
+        let span = token.span;
+        match token.kind {
+            TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident { name: sym, span }),
+            TokenKind::Tag => Ok(self.keyword_ident("tag", span)),
             _ => Err(ParseError {
                 kind: ParseErrorKind::Expected,
                 message: "expected identifier".to_owned(),
-                span: token.span,
+                span,
             }),
         }
+    }
+
+    fn parse_member_ident(&mut self) -> Result<Ident, ParseError> {
+        let token = self.advance();
+        let span = token.span;
+        match token.kind {
+            TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident { name: sym, span }),
+            TokenKind::Cape => Ok(self.keyword_ident("cape", span)),
+            TokenKind::Inter => Ok(self.keyword_ident("inter", span)),
+            _ => Err(ParseError {
+                kind: ParseErrorKind::Expected,
+                message: "expected identifier".to_owned(),
+                span,
+            }),
+        }
+    }
+
+    fn keyword_ident(&mut self, name: &str, span: Span) -> Ident {
+        let sym = self.interner.intern(name);
+        Ident { name: sym, span }
     }
 
     /// Try to parse an identifier if present

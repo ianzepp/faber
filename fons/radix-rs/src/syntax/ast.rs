@@ -47,6 +47,10 @@ pub enum StmtKind {
     Import(ImportDecl),
     /// Test suite: probandum
     Test(TestDecl),
+    /// Test case: proba
+    TestCase(TestCase),
+    /// Extract: ex <expr> fixum|varia <fields>
+    Extract(ExtractStmt),
     /// Block: { ... }
     Block(BlockStmt),
     /// Expression statement
@@ -98,8 +102,19 @@ pub struct VarDecl {
     pub mutability: Mutability,
     pub is_await: bool,
     pub ty: Option<TypeExpr>,
-    pub name: Ident,
+    pub binding: BindingPattern,
     pub init: Option<Box<Expr>>,
+}
+
+#[derive(Debug)]
+pub enum BindingPattern {
+    Ident(Ident),
+    Wildcard(Span),
+    Array {
+        elements: Vec<BindingPattern>,
+        rest: Option<Ident>,
+        span: Span,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -552,6 +567,23 @@ pub enum OutputKind {
 pub struct EntryStmt {
     pub is_async: bool, // incipiet vs incipit
     pub body: IfBody,
+    pub args: Option<Ident>,
+    pub exitus: Option<Box<Expr>>,
+}
+
+#[derive(Debug)]
+pub struct ExtractStmt {
+    pub source: Box<Expr>,
+    pub mutability: Mutability,
+    pub fields: Vec<ExtractField>,
+    pub rest: Option<Ident>,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub struct ExtractField {
+    pub name: Ident,
+    pub alias: Option<Ident>,
 }
 
 #[derive(Debug)]
@@ -743,6 +775,8 @@ pub enum UnOp {
     IsNotNil,  // nonnihil
     IsNeg,     // negativum
     IsPos,     // positivum
+    IsTrue,    // verum
+    IsFalse,   // falsum
 }
 
 #[derive(Debug)]

@@ -746,6 +746,7 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         // Entry points
         "incipit" => TokenKind::Incipit,
         "incipiet" => TokenKind::Incipiet,
+        "argumenta" => TokenKind::Argumenta,
         "cura" => TokenKind::Cura,
         "arena" => TokenKind::Arena,
         "ad" => TokenKind::Ad,

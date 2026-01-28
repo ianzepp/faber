@@ -39,7 +39,7 @@ pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
             if let Some(ty) = &decl.ty {
                 visitor.visit_type_expr(ty);
             }
-            visitor.visit_ident(&decl.name);
+            walk_binding_pattern(visitor, &decl.binding);
             if let Some(init) = &decl.init {
                 visitor.visit_expr(init);
             }
@@ -96,10 +96,25 @@ pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
             visitor.visit_ident(&iter_stmt.binding);
             walk_if_body(visitor, &iter_stmt.body);
         }
+        StmtKind::Extract(extract_stmt) => {
+            visitor.visit_expr(&extract_stmt.source);
+            for field in &extract_stmt.fields {
+                visitor.visit_ident(&field.name);
+                if let Some(alias) = &field.alias {
+                    visitor.visit_ident(alias);
+                }
+            }
+            if let Some(rest) = &extract_stmt.rest {
+                visitor.visit_ident(rest);
+            }
+        }
         StmtKind::Return(ret) => {
             if let Some(value) = &ret.value {
                 visitor.visit_expr(value);
             }
+        }
+        StmtKind::TestCase(test) => {
+            visitor.visit_block(&test.body);
         }
         StmtKind::Throw(throw) => {
             visitor.visit_expr(&throw.value);
@@ -190,6 +205,21 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
     }
 }
 
+fn walk_binding_pattern<V: Visitor>(visitor: &mut V, pattern: &BindingPattern) {
+    match pattern {
+        BindingPattern::Ident(ident) => visitor.visit_ident(ident),
+        BindingPattern::Wildcard(_) => {}
+        BindingPattern::Array { elements, rest, .. } => {
+            for element in elements {
+                walk_binding_pattern(visitor, element);
+            }
+            if let Some(rest) = rest {
+                visitor.visit_ident(rest);
+            }
+        }
+    }
+}
+
 pub fn walk_type_expr<V: Visitor>(visitor: &mut V, ty: &TypeExpr) {
     match &ty.kind {
         TypeExprKind::Named(name, params) => {
@@ -220,13 +250,11 @@ fn walk_if_body<V: Visitor>(visitor: &mut V, body: &IfBody) {
     match body {
         IfBody::Block(block) => visitor.visit_block(block),
         IfBody::Ergo(stmt) => visitor.visit_stmt(stmt),
-        IfBody::InlineReturn(ret) => {
-            match ret {
-                InlineReturn::Reddit(e) | InlineReturn::Iacit(e) | InlineReturn::Moritor(e) => {
-                    visitor.visit_expr(e);
-                }
-                InlineReturn::Tacet => {}
+        IfBody::InlineReturn(ret) => match ret {
+            InlineReturn::Reddit(e) | InlineReturn::Iacit(e) | InlineReturn::Moritor(e) => {
+                visitor.visit_expr(e);
             }
-        }
+            InlineReturn::Tacet => {}
+        },
     }
 }

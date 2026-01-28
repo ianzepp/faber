@@ -115,6 +115,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
             }
         }
         StmtKind::Test(test) => scan_test_for_rust_warnings(test, file, diagnostics),
+        StmtKind::TestCase(test) => scan_block_for_rust_warnings(&test.body, file, diagnostics),
         StmtKind::If(if_stmt) => {
             scan_if_body_for_rust_warnings(&if_stmt.then, file, diagnostics);
             if let Some(catch) = &if_stmt.catch {

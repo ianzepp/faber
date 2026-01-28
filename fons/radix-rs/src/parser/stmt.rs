@@ -420,9 +420,26 @@ impl Parser {
             unreachable!()
         };
 
+        let args = if self.eat_keyword(TokenKind::Argumenta) {
+            Some(self.parse_ident()?)
+        } else {
+            None
+        };
+
+        let exitus = if self.eat_keyword(TokenKind::Exitus) {
+            Some(Box::new(self.parse_expression()?))
+        } else {
+            None
+        };
+
         let body = self.parse_ergo_body()?;
 
-        Ok(StmtKind::Entry(EntryStmt { is_async, body }))
+        Ok(StmtKind::Entry(EntryStmt {
+            is_async,
+            body,
+            args,
+            exitus,
+        }))
     }
 
     /// Parse resource statement
@@ -521,15 +538,68 @@ impl Parser {
         }))
     }
 
-    fn try_parse_endpoint_binding(&mut self) -> Result<Option<EndpointBinding>, ParseError> {
-        let verb = if self.eat_keyword(TokenKind::Casu) {
-            // Using 'casu' as placeholder - actual verbs would be fit/fiet/fiunt/fient
-            EndpointVerb::Fit
+    /// Parse extract statement
+    pub(super) fn parse_extract_stmt(&mut self) -> Result<StmtKind, ParseError> {
+        let start = self.current_span();
+        self.expect_keyword(TokenKind::Ex, "expected 'ex'")?;
+
+        let source = Box::new(self.parse_expression()?);
+
+        let mutability = if self.eat_keyword(TokenKind::Fixum) {
+            Mutability::Immutable
+        } else if self.eat_keyword(TokenKind::Varia) {
+            Mutability::Mutable
         } else {
-            return Ok(None);
+            return Err(self.error(ParseErrorKind::Expected, "expected 'fixum' or 'varia'"));
         };
 
-        let ty = self.try_parse_type()?;
+        let mut fields = Vec::new();
+        let mut rest = None;
+
+        loop {
+            if self.eat_keyword(TokenKind::Ceteri) {
+                if rest.is_some() {
+                    return Err(
+                        self.error(ParseErrorKind::Expected, "rest pattern already specified")
+                    );
+                }
+                rest = Some(self.parse_ident()?);
+                break;
+            }
+
+            let name = self.parse_ident()?;
+            let alias = if self.eat_keyword(TokenKind::Ut) {
+                Some(self.parse_ident()?)
+            } else {
+                None
+            };
+            fields.push(ExtractField { name, alias });
+
+            if !self.eat(&TokenKind::Comma) {
+                break;
+            }
+        }
+
+        let span = start.merge(self.previous_span());
+        Ok(StmtKind::Extract(ExtractStmt {
+            source,
+            mutability,
+            fields,
+            rest,
+            span,
+        }))
+    }
+
+    fn try_parse_endpoint_binding(&mut self) -> Result<Option<EndpointBinding>, ParseError> {
+        if !self.eat(&TokenKind::Arrow) {
+            return Ok(None);
+        }
+
+        let ty = if self.check_keyword(TokenKind::Pro) {
+            None
+        } else {
+            Some(self.parse_type()?)
+        };
 
         self.expect_keyword(TokenKind::Pro, "expected 'pro'")?;
         let name = self.parse_ident()?;
@@ -541,7 +611,7 @@ impl Parser {
         };
 
         Ok(Some(EndpointBinding {
-            verb,
+            verb: EndpointVerb::Fit,
             ty,
             name,
             alias,

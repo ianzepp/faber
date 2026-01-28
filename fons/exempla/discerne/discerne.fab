@@ -3,7 +3,7 @@
 # discerne <value> {
 #     casu <Variant> { <body> }
 #     casu <Variant> ut <alias> { <body> }
-#     casu <Variant> pro <bindings> { <body> }
+#     casu <Variant> fixum <bindings> { <body> }
 # }
 
 # Define discretio (tagged union) types
@@ -30,10 +30,10 @@ functio describe_status(Status s) -> textus {
 
 functio handle_event(Event e) -> nihil {
     discerne e {
-        casu Click pro x, y {
+        casu Click fixum x, y {
             scribe "Clicked at:", x, y
         }
-        casu Keypress pro key {
+        casu Keypress fixum key {
             scribe "Key:", key
         }
         casu Quit {

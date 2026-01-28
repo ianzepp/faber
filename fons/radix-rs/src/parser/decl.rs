@@ -26,7 +26,9 @@ impl Parser {
                     "directives must appear at file scope",
                 ));
             }
+            TokenKind::Ex => self.parse_extract_stmt()?,
             TokenKind::Probandum => self.parse_test_decl()?,
+            TokenKind::Proba => StmtKind::TestCase(self.parse_test_case()?),
             TokenKind::Abstractus => self.parse_abstract_class_decl()?,
 
             // Control flow
@@ -100,7 +102,9 @@ impl Parser {
         };
 
         // Check: is this "name =" (no type) or "type... name =" (with type)?
-        let ty = if self.is_simple_var_decl() {
+        let ty = if self.check(&TokenKind::LBracket) {
+            None
+        } else if self.is_simple_var_decl() {
             // Pattern: fixum name = ...
             None
         } else {
@@ -108,8 +112,8 @@ impl Parser {
             Some(self.parse_type()?)
         };
 
-        // Name
-        let name = self.parse_ident()?;
+        // Binding pattern
+        let binding = self.parse_binding_pattern()?;
 
         // Optional initializer
         let init = if self.eat(&TokenKind::Eq) {
@@ -122,9 +126,69 @@ impl Parser {
             mutability,
             is_await,
             ty,
-            name,
+            binding,
             init,
         }))
+    }
+
+    fn parse_binding_pattern(&mut self) -> Result<BindingPattern, ParseError> {
+        if let TokenKind::LBracket = self.peek().kind {
+            return self.parse_array_binding_pattern();
+        }
+
+        if let TokenKind::Underscore(_) = self.peek().kind {
+            let span = self.peek().span;
+            self.advance();
+            return Ok(BindingPattern::Wildcard(span));
+        }
+
+        let ident = self.parse_ident()?;
+        Ok(BindingPattern::Ident(ident))
+    }
+
+    fn parse_array_binding_pattern(&mut self) -> Result<BindingPattern, ParseError> {
+        let start = self.current_span();
+        self.expect(&TokenKind::LBracket, "expected '['")?;
+
+        let mut elements = Vec::new();
+        let mut rest = None;
+
+        while !self.check(&TokenKind::RBracket) && !self.is_at_end() {
+            if self.eat_keyword(TokenKind::Ceteri) {
+                if rest.is_some() {
+                    return Err(
+                        self.error(ParseErrorKind::Expected, "rest pattern already specified")
+                    );
+                }
+                let name = self.parse_ident()?;
+                rest = Some(name);
+                break;
+            }
+
+            let element = if let TokenKind::Underscore(_) = self.peek().kind {
+                let span = self.peek().span;
+                self.advance();
+                BindingPattern::Wildcard(span)
+            } else if let TokenKind::LBracket = self.peek().kind {
+                self.parse_array_binding_pattern()?
+            } else {
+                BindingPattern::Ident(self.parse_ident()?)
+            };
+
+            elements.push(element);
+
+            if !self.eat(&TokenKind::Comma) {
+                break;
+            }
+        }
+
+        self.expect(&TokenKind::RBracket, "expected ']' after pattern")?;
+        let span = start.merge(self.previous_span());
+        Ok(BindingPattern::Array {
+            elements,
+            rest,
+            span,
+        })
     }
 
     /// Parse function declaration
