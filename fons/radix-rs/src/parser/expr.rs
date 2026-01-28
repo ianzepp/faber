@@ -1,6 +1,6 @@
 //! Expression parsing with precedence climbing
 
-use super::{Parser, ParseError, ParseErrorKind};
+use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
 use crate::syntax::*;
 
@@ -698,17 +698,22 @@ impl Parser {
 
             // Builtin: scriptum("template", args...)
             TokenKind::Scriptum => {
-                return self.parse_script_expr();
+                return self.parse_scriptum_expr();
             }
 
             // Builtin: lege / lineam
             TokenKind::Lege | TokenKind::Lineam => {
-                return self.parse_read_expr();
+                return self.parse_lege_expr();
             }
 
-            // Builtin: praefixum(expr)
+            // Comptime expression: praefixum(expr)
             TokenKind::Praefixum => {
-                return self.parse_prefix_expr();
+                return self.parse_praefixum_expr();
+            }
+
+            // Regex literal: sed "pattern"
+            TokenKind::Sed => {
+                return self.parse_sed_expr();
             }
 
             // Identifier
@@ -743,12 +748,12 @@ impl Parser {
 
             // Closure
             TokenKind::Clausura => {
-                return self.parse_closure_expr();
+                return self.parse_clausura_expr();
             }
 
             // Collection DSL
             TokenKind::Ab => {
-                return self.parse_collection_expr();
+                return self.parse_ab_expr();
             }
 
             _ => {
@@ -838,7 +843,7 @@ impl Parser {
         })
     }
 
-    fn parse_closure_expr(&mut self) -> Result<Expr, ParseError> {
+    fn parse_clausura_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Clausura, "expected 'clausura'")?;
 
@@ -878,7 +883,10 @@ impl Parser {
         } else if self.check(&TokenKind::LBrace) {
             ClosureBody::Block(self.parse_block()?)
         } else {
-            return Err(self.error(ParseErrorKind::Expected, "expected ':' or '{' after closure parameters"));
+            return Err(self.error(
+                ParseErrorKind::Expected,
+                "expected ':' or '{' after closure parameters",
+            ));
         };
 
         let span = start.merge(self.previous_span());
@@ -890,20 +898,31 @@ impl Parser {
         })
     }
 
-    fn parse_collection_expr(&mut self) -> Result<Expr, ParseError> {
+    fn parse_ab_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
-        self.expect_keyword(TokenKind::Ab, "expected 'ab'")?;
+        // Note: 'ab' token already consumed by caller in parse_primary
 
-        let source = Box::new(self.parse_expression()?);
+        // Parse source - use postfix to avoid recursion through ab
+        let source = Box::new(self.parse_postfix()?);
 
-        let filter = if self.eat_keyword(TokenKind::Ubi) {
-            let negated = self.eat_keyword(TokenKind::Non);
-            let cond = Box::new(self.parse_expression()?);
-            Some(CollectionFilter {
-                negated,
-                kind: CollectionFilterKind::Condition(cond),
-            })
+        // Check for optional filter after source expression
+        let filter = if matches!(self.peek().kind, TokenKind::Comma | TokenKind::RBrace)
+            || self.is_at_end()
+        {
+            // No filter - go straight to transforms
+            None
+        } else if self.eat_keyword(TokenKind::Non) {
+            // Negated property: non activus
+            if let Some(ident) = self.try_parse_ident() {
+                Some(CollectionFilter {
+                    negated: true,
+                    kind: CollectionFilterKind::Property(ident),
+                })
+            } else {
+                None
+            }
         } else if let Some(ident) = self.try_parse_ident() {
+            // Property filter: activus
             Some(CollectionFilter {
                 negated: false,
                 kind: CollectionFilterKind::Property(ident),
@@ -960,7 +979,11 @@ impl Parser {
             let spread = self.eat_keyword(TokenKind::Sparge);
             let value = Box::new(self.parse_expression()?);
             let span = start.merge(self.previous_span());
-            args.push(Argument { spread, value, span });
+            args.push(Argument {
+                spread,
+                value,
+                span,
+            });
 
             if !self.eat(&TokenKind::Comma) {
                 break;
@@ -1069,7 +1092,7 @@ impl Parser {
     }
 
     /// Parse scriptum("template", args...)
-    fn parse_script_expr(&mut self) -> Result<Expr, ParseError> {
+    fn parse_scriptum_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Scriptum, "expected 'scriptum'")?;
         self.expect(&TokenKind::LParen, "expected '(' after 'scriptum'")?;
@@ -1095,7 +1118,7 @@ impl Parser {
     }
 
     /// Parse lege / lineam
-    fn parse_read_expr(&mut self) -> Result<Expr, ParseError> {
+    fn parse_lege_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let line = if self.eat_keyword(TokenKind::Lineam) {
             true
@@ -1113,13 +1136,14 @@ impl Parser {
         })
     }
 
-    /// Parse praefixum(expr)
-    fn parse_prefix_expr(&mut self) -> Result<Expr, ParseError> {
+    /// Parse comptime expression: praefixum(expr)
+    /// Maps to Zig's `comptime` - forces compile-time evaluation of the expression.
+    fn parse_praefixum_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Praefixum, "expected 'praefixum'")?;
         self.expect(&TokenKind::LParen, "expected '(' after 'praefixum'")?;
 
-        let body = PrefixBody::Expr(Box::new(self.parse_expression()?));
+        let body = ComptimeBody::Expr(Box::new(self.parse_expression()?));
 
         self.expect(&TokenKind::RParen, "expected ')'")?;
 
@@ -1127,7 +1151,33 @@ impl Parser {
         let id = self.next_id();
         Ok(Expr {
             id,
-            kind: ExprKind::Prefix(PrefixExpr { body }),
+            kind: ExprKind::Comptime(ComptimeExpr { body }),
+            span,
+        })
+    }
+
+    /// Parse regex literal: sed "pattern" [flags]
+    fn parse_sed_expr(&mut self) -> Result<Expr, ParseError> {
+        let start = self.current_span();
+        self.expect_keyword(TokenKind::Sed, "expected 'sed'")?;
+
+        let pattern = self.parse_string()?;
+        let flags = if let TokenKind::Ident(sym) = self.peek().kind {
+            self.advance();
+            Some(sym)
+        } else {
+            None
+        };
+
+        let span = start.merge(self.previous_span());
+        let id = self.next_id();
+        Ok(Expr {
+            id,
+            kind: ExprKind::Regex(RegexExpr {
+                pattern,
+                flags,
+                span,
+            }),
             span,
         })
     }

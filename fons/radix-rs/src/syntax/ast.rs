@@ -645,8 +645,8 @@ pub enum ExprKind {
     Read(ReadExpr),
     /// Regex literal: sed
     Regex(RegexExpr),
-    /// Prefix expression: praefixum
-    Prefix(PrefixExpr),
+    /// Comptime expression: praefixum(expr)
+    Comptime(ComptimeExpr),
     /// Self reference
     Ego(Span),
     /// Parenthesized expression
@@ -993,12 +993,14 @@ pub struct RegexExpr {
 }
 
 #[derive(Debug)]
-pub struct PrefixExpr {
-    pub body: PrefixBody,
+/// Comptime expression: praefixum(expr) - forces compile-time evaluation
+/// Maps to Zig's `comptime`
+pub struct ComptimeExpr {
+    pub body: ComptimeBody,
 }
 
 #[derive(Debug)]
-pub enum PrefixBody {
+pub enum ComptimeBody {
     Block(BlockStmt),
     Expr(Box<Expr>),
 }
