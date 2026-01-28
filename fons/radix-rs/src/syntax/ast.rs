@@ -449,6 +449,14 @@ pub enum Pattern {
     Wildcard(Span),
     Ident(Ident, Option<PatternBind>),
     Literal(Literal, Span),
+    Path(PathPattern),
+}
+
+#[derive(Debug)]
+pub struct PathPattern {
+    pub segments: Vec<Ident>,
+    pub bind: Option<PatternBind>,
+    pub span: Span,
 }
 
 #[derive(Debug)]

@@ -43,67 +43,74 @@ impl Parser {
         if let Some(literal) = self.try_parse_pattern_literal() {
             return Ok(literal);
         }
-        // Identifier pattern
-        if let TokenKind::Ident(sym) = self.peek().kind {
-            let span = self.peek().span;
-            let ident = self.parse_ident()?;
+        // Identifier or path pattern
+        if let TokenKind::Ident(_) = self.peek().kind {
+            let start = self.current_span();
+            let mut segments = Vec::new();
+            segments.push(self.parse_ident()?);
+            while self.eat(&TokenKind::Dot) {
+                segments.push(self.parse_ident()?);
+            }
 
-            // Check for binding: ut NAME
-            let bind = if self.eat_keyword(TokenKind::Ut) {
-                let alias = self.parse_ident()?;
-                Some(PatternBind::Alias(alias))
-            } else if self.eat_keyword(TokenKind::Fixum) {
-                let mut names = Vec::new();
-                loop {
-                    names.push(self.parse_ident()?);
-                    if !self.eat(&TokenKind::Comma) {
-                        break;
-                    }
-                    if self.check(&TokenKind::LBrace)
-                        || self.check_keyword(TokenKind::Reddit)
-                        || self.check_keyword(TokenKind::Iacit)
-                        || self.check_keyword(TokenKind::Moritor)
-                        || self.check_keyword(TokenKind::Tacet)
-                        || self.check_keyword(TokenKind::Ergo)
-                        || self.check_keyword(TokenKind::Et)
-                    {
-                        break;
-                    }
-                }
-                Some(PatternBind::Bindings {
-                    mutability: Mutability::Immutable,
-                    names,
-                })
-            } else if self.eat_keyword(TokenKind::Varia) {
-                let mut names = Vec::new();
-                loop {
-                    names.push(self.parse_ident()?);
-                    if !self.eat(&TokenKind::Comma) {
-                        break;
-                    }
-                    if self.check(&TokenKind::LBrace)
-                        || self.check_keyword(TokenKind::Reddit)
-                        || self.check_keyword(TokenKind::Iacit)
-                        || self.check_keyword(TokenKind::Moritor)
-                        || self.check_keyword(TokenKind::Tacet)
-                        || self.check_keyword(TokenKind::Ergo)
-                        || self.check_keyword(TokenKind::Et)
-                    {
-                        break;
-                    }
-                }
-                Some(PatternBind::Bindings {
-                    mutability: Mutability::Mutable,
-                    names,
-                })
-            } else {
-                None
-            };
+            let bind = self.parse_pattern_bind()?;
 
-            return Ok(Pattern::Ident(ident, bind));
+            if segments.len() == 1 {
+                return Ok(Pattern::Ident(segments.remove(0), bind));
+            }
+
+            let span = start.merge(self.previous_span());
+            return Ok(Pattern::Path(PathPattern {
+                segments,
+                bind,
+                span,
+            }));
         }
 
         Err(self.error(ParseErrorKind::InvalidPattern, "expected pattern"))
+    }
+
+    fn parse_pattern_bind(&mut self) -> Result<Option<PatternBind>, ParseError> {
+        let bind = if self.eat_keyword(TokenKind::Ut) {
+            let alias = self.parse_ident()?;
+            Some(PatternBind::Alias(alias))
+        } else if self.eat_keyword(TokenKind::Fixum) {
+            let names = self.parse_pattern_bind_list()?;
+            Some(PatternBind::Bindings {
+                mutability: Mutability::Immutable,
+                names,
+            })
+        } else if self.eat_keyword(TokenKind::Varia) {
+            let names = self.parse_pattern_bind_list()?;
+            Some(PatternBind::Bindings {
+                mutability: Mutability::Mutable,
+                names,
+            })
+        } else {
+            None
+        };
+
+        Ok(bind)
+    }
+
+    fn parse_pattern_bind_list(&mut self) -> Result<Vec<Ident>, ParseError> {
+        let mut names = Vec::new();
+        loop {
+            names.push(self.parse_ident()?);
+            if !self.eat(&TokenKind::Comma) {
+                break;
+            }
+            if self.check(&TokenKind::LBrace)
+                || self.check_keyword(TokenKind::Reddit)
+                || self.check_keyword(TokenKind::Iacit)
+                || self.check_keyword(TokenKind::Moritor)
+                || self.check_keyword(TokenKind::Tacet)
+                || self.check_keyword(TokenKind::Ergo)
+                || self.check_keyword(TokenKind::Et)
+            {
+                break;
+            }
+        }
+        Ok(names)
     }
 
     fn try_parse_pattern_literal(&mut self) -> Option<Pattern> {
