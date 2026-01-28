@@ -85,6 +85,7 @@ pub enum WarningKind {
     UnnecessaryCast,
     DeprecatedFeature,
     ShadowedVariable,
+    TargetNoop,
 }
 
 impl std::fmt::Display for SemanticError {

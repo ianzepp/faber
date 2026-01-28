@@ -312,5 +312,9 @@ fn warning_spec(kind: WarningKind) -> DiagnosticSpec {
             code: "WARN007",
             help: Some("rename one of the variables"),
         },
+        WarningKind::TargetNoop => DiagnosticSpec {
+            code: "WARN008",
+            help: Some("remove the construct or gate it by target"),
+        },
     }
 }

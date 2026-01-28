@@ -14,7 +14,8 @@ pub struct SourceFile {
 impl SourceFile {
     /// Create from path and content
     pub fn new(path: PathBuf, content: String) -> Self {
-        let name = path.file_name()
+        let name = path
+            .file_name()
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_else(|| "<unknown>".to_owned());
 
@@ -43,7 +44,8 @@ impl SourceFile {
 
     /// Convert byte offset to line and column
     pub fn offset_to_line_col(&self, offset: u32) -> (u32, u32) {
-        let line = self.line_starts
+        let line = self
+            .line_starts
             .partition_point(|&start| start <= offset)
             .saturating_sub(1);
 
@@ -57,7 +59,9 @@ impl SourceFile {
     pub fn line_content(&self, line: u32) -> Option<&str> {
         let line_idx = line.saturating_sub(1) as usize;
         let start = *self.line_starts.get(line_idx)? as usize;
-        let end = self.line_starts.get(line_idx + 1)
+        let end = self
+            .line_starts
+            .get(line_idx + 1)
             .map(|&e| e as usize)
             .unwrap_or(self.content.len());
 
