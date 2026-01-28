@@ -17,8 +17,6 @@ importa ex "./annotatio" privata Annotatio
 ordo VariaGenus {
     Varia       # mutable: let
     Fixum       # immutable: const
-    Figendum    # immutable async: const x = await ...
-    Variandum   # mutable async: let x = await ...
 }
 
 # Visibility level for members

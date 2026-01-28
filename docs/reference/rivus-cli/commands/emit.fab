@@ -66,7 +66,7 @@ functio emitCommand(
         }
     }
 
-    figendum source = hauriSource(input)
+    fixum source = cede hauriSource(input)
 
     # Collect errors for potential JSON output
     varia errores = [] innatum lista<tabula<textus, ignotum>>
@@ -144,7 +144,7 @@ functio emitCommand(
     }
 
     # Load manifest sectiones if provided
-    figendum manifestSectiones = loadManifestSectiones(manifest)
+    fixum manifestSectiones = cede loadManifestSectiones(manifest)
 
     # Semantic analysis
     fixum viaIngressus = estStdin sic nihil secus solum.absolve(input qua textus)

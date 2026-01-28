@@ -310,34 +310,6 @@
       - "'cede' requires"
 
 # =============================================================================
-# Semantic Errors - S010 Await Outside Async
-# =============================================================================
-
-- name: S010 figendum in sync function
-  source: 'functio bad() -> vacuum { figendum x = 1 }'
-  errata:
-      - 'Semantic errors'
-      - "'figendum' requires an async function context"
-
-- name: S010 variandum in sync function
-  source: 'functio bad() -> vacuum { variandum x = 1 }'
-  errata:
-      - 'Semantic errors'
-      - "'variandum' requires an async function context"
-
-- name: S010 figendum in generator (not async)
-  source: 'functio bad() fiunt numerus { figendum x = 1 }'
-  errata:
-      - 'Semantic errors'
-      - "'figendum' requires an async function context"
-
-- name: S010 figendum at top level
-  source: 'figendum x = 1'
-  errata:
-      - 'Semantic errors'
-      - "'figendum' requires"
-
-# =============================================================================
 # Semantic Errors - S017 Non-Exhaustive Match
 # =============================================================================
 

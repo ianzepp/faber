@@ -297,7 +297,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         fixum verbumId = sym.verbumId
 
         # Variable declarations
-        si verbumId inter [VerbumId.Varia, VerbumId.Fixum, VerbumId.Figendum, VerbumId.Variandum] {
+        si verbumId inter [VerbumId.Varia, VerbumId.Fixum] {
             redde parseVariaSententia(r)
         }
 
@@ -364,7 +364,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
             dum i < 32 et non p.estFinis() {
                 fixum s = p.specta(i)
                 si s.species === SymbolumGenus.Verbum {
-                    si s.verbumId inter [VerbumId.Fixum, VerbumId.Varia, VerbumId.Figendum, VerbumId.Variandum] {
+                    si s.verbumId inter [VerbumId.Fixum, VerbumId.Varia] {
                         # Found binding keyword - check what follows: IDENT then { or ,?
                         fixum afterIdent = p.specta(i + 2)
                         si afterIdent.species === SymbolumGenus.UncusSin {

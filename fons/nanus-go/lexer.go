@@ -8,7 +8,7 @@ import (
 
 var keywords = map[string]struct{}{
 	// Declarations
-	"varia": {}, "fixum": {}, "figendum": {}, "variandum": {},
+	"varia": {}, "fixum": {},
 	"functio": {}, "genus": {}, "pactum": {}, "ordo": {}, "discretio": {}, "typus": {},
 	"ex": {}, "importa": {}, "ut": {},
 	// Modifiers

@@ -178,7 +178,7 @@ functio test(
     si bivalens dryRun,
     si bivalens solo
 ) exitus code -> vacuum {
-    figendum result = testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solo)
+    fixum result = cede testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solo)
     code = result
 }
 

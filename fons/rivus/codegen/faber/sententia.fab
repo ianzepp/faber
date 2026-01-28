@@ -272,8 +272,6 @@ functio genVaria(in FaberGenerator g, de VariaSententia s) -> textus {
     elige s.species qua VariaGenus {
         casu VariaGenus.Varia { result = result + "varia " }
         casu VariaGenus.Fixum { result = result + "fixum " }
-        casu VariaGenus.Figendum { result = result + "figendum " }
-        casu VariaGenus.Variandum { result = result + "variandum " }
     }
 
     result = result + s.nomen
@@ -350,8 +348,6 @@ functio variaGenusKeyword(de VariaGenus species) -> textus {
     elige species {
         casu VariaGenus.Varia { redde "varia" }
         casu VariaGenus.Fixum { redde "fixum" }
-        casu VariaGenus.Figendum { redde "figendum" }
-        casu VariaGenus.Variandum { redde "variandum" }
     }
     redde "fixum"
 }

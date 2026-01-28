@@ -14,8 +14,6 @@ const KEYWORDS = new Set([
     // Declarations
     'varia',
     'fixum',
-    'figendum',
-    'variandum',
     'functio',
     'genus',
     'pactum',

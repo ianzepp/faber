@@ -102,13 +102,7 @@ def _massa(s: StmtMassa, indent: str) -> str:
 
 def _varia(s: StmtVaria, indent: str) -> str:
     """Emit a variable declaration."""
-    match s.species:
-        case VariaSpecies.FIXUM:
-            keyword = "fixum"
-        case VariaSpecies.FIGENDUM:
-            keyword = "figendum"
-        case _:
-            keyword = "varia"
+    keyword = "fixum" if s.species == VariaSpecies.FIXUM else "varia"
     if s.typus:
         code = f"{indent}{keyword} {_typus(s.typus)} {s.nomen}"
     else:

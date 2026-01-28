@@ -25,13 +25,12 @@ blockStmt   := '{' statement* '}'
 ### Variables
 
 ```ebnf
-varDecl      := ('fixum' | 'varia' | 'figendum' | 'variandum') typeAnnotation? IDENTIFIER ('=' expression)?
+varDecl      := ('fixum' | 'varia') typeAnnotation? IDENTIFIER ('=' expression)?
 arrayDestruct := ('fixum' | 'varia') arrayPattern '=' expression
 objectDestruct := ('fixum' | 'varia') objectPattern '=' expression
 ```
 
 - `fixum` = const, `varia` = let
-- `figendum`/`variandum` = const/let with await
 
 ### Functions
 

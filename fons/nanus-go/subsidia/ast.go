@@ -276,10 +276,8 @@ type Stmt interface {
 type VariaSpecies string
 
 const (
-	VariaVaria     VariaSpecies = "Varia"
-	VariaFixum     VariaSpecies = "Fixum"
-	VariaFigendum  VariaSpecies = "Figendum"
-	VariaVariandum VariaSpecies = "Variandum"
+	VariaVaria VariaSpecies = "Varia"
+	VariaFixum VariaSpecies = "Fixum"
 )
 
 type StmtMassa struct {

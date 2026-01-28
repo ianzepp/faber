@@ -55,7 +55,7 @@ functio compileFile(
     si bivalens jsonOutput,
     si lista<SectioAnnotatio>? manifestSectiones
 ) -> CompileResultatum? {
-    figendum source = solum.lege(filePath)
+    fixum source = cede solum.lege(filePath)
 
     # Lexical analysis
     fixum lexResult = lexare(source)
@@ -201,10 +201,10 @@ functio buildCommand(
     }
 
     # Load manifest sectiones if provided
-    figendum manifestSectiones = loadManifestSectiones(manifest)
+    fixum manifestSectiones = cede loadManifestSectiones(manifest)
 
     # Compile entry file
-    figendum entryResult = compileFile(entryPath, input, errores, jsonOutput, manifestSectiones)
+    fixum entryResult = cede compileFile(entryPath, input, errores, jsonOutput, manifestSectiones)
 
     si nihil entryResult {
         si jsonOutput {

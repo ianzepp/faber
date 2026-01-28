@@ -112,12 +112,10 @@ Keywords for declaring variables, types, and structures:
 
 ### Variables
 
-| Verbum      | Meaning     | Usage                   |
-| ----------- | ----------- | ----------------------- |
-| `varia`     | let         | Mutable binding         |
-| `fixum`     | const       | Immutable binding       |
-| `figendum`  | const await | Immutable async binding |
-| `variandum` | let await   | Mutable async binding   |
+| Verbum  | Meaning | Usage             |
+| ------- | ------- | ----------------- |
+| `varia` | let     | Mutable binding   |
+| `fixum` | const   | Immutable binding |
 
 ### Functions and Instantiation
 

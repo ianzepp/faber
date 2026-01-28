@@ -116,8 +116,6 @@ functio glyphKeyword(de textus token) -> textus {
         # Declarations
         casu "fixum" { redde "\u2261" }       # Identical/immutable
         casu "varia" { redde "\u2254" }       # Definition
-        casu "figendum" { redde "\u2AE2" }    # Const + await
-        casu "variandum" { redde "\u2AE4" }   # Let + await
         casu "functio" { redde "\u222B" }     # Integral
         casu "typus" { redde "\u22B7" }       # Image of
         casu "ordo" { redde "\u229E" }        # Boxed plus

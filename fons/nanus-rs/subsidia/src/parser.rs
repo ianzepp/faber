@@ -189,7 +189,7 @@ impl Parser {
         let tok = self.peek(0);
         if tok.tag == TOKEN_KEYWORD {
             match tok.valor.as_str() {
-                "varia" | "fixum" | "figendum" | "variandum" => {
+                "varia" | "fixum" => {
                     return self.parse_varia(publica, externa)
                 }
                 "ex" => return self.parse_ex_stmt(),
@@ -369,8 +369,6 @@ impl Parser {
         let locus = self.peek(0).locus;
         let kw = self.advance().valor;
         let species = match kw.as_str() {
-            "figendum" => VariaSpecies::Figendum,
-            "variandum" => VariaSpecies::Variandum,
             "fixum" => VariaSpecies::Fixum,
             _ => VariaSpecies::Varia,
         };
@@ -1292,8 +1290,6 @@ impl Parser {
                 | "typus"
                 | "varia"
                 | "fixum"
-                | "figendum"
-                | "variandum"
                 | "incipit"
                 | "probandum"
                 | "proba"
@@ -1323,8 +1319,6 @@ impl Parser {
                 | "typus"
                 | "varia"
                 | "fixum"
-                | "figendum"
-                | "variandum"
                 | "incipit"
                 | "probandum"
         )

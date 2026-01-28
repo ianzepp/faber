@@ -64,7 +64,7 @@ functio checkCommand(
         }
     }
 
-    figendum source = hauriSource(input)
+    fixum source = cede hauriSource(input)
 
     # Collect all errors across phases
     varia errores = [] innatum lista<tabula<textus, ignotum>>
@@ -129,7 +129,7 @@ functio checkCommand(
     # Semantic analysis (only if we have a valid AST)
     si nonnihil parseResult.programma {
         # Load manifest sectiones if provided
-        figendum manifestSectiones = loadManifestSectiones(manifest)
+        fixum manifestSectiones = cede loadManifestSectiones(manifest)
 
         fixum viaIngressus = estStdin sic nihil secus solum.absolve(input qua textus)
         fixum semResult = analyze(parseResult.programma qua Programma, viaIngressus, manifestSectiones)

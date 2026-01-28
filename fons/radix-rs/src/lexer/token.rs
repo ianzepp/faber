@@ -58,8 +58,6 @@ pub enum TokenKind {
     // === Keywords: Declarations ===
     Fixum,
     Varia,
-    Figendum,
-    Variandum,
     Functio,
     Genus,
     Pactum,
@@ -295,7 +293,7 @@ impl TokenKind {
         use TokenKind::*;
         matches!(
             self,
-            Fixum | Varia | Figendum | Variandum | Functio | Genus | Pactum
+            Fixum | Varia | Functio | Genus | Pactum
                 | Typus | Ordo | Discretio | Importa | Probandum | Proba
                 | Abstractus | Generis | Nexum | Publica | Privata | Protecta
                 | Prae | Ceteri | Immutata | Iacit | Curata | Errata | Exitus | Optiones

@@ -550,8 +550,7 @@ functio genPraefixumMassa(in TsGenerator g, de lista<Sententia> corpus) -> textu
 functio genPraefixumSententia(in TsGenerator g, de Sententia stmt) -> textus {
     discerne stmt {
         casu VariaSententia ut s {
-            fixum keyword = (s.species == VariaGenus.Fixum aut s.species == VariaGenus.Figendum) sic "const" secus "let"
-            fixum asyncPrefix = (s.species == VariaGenus.Figendum aut s.species == VariaGenus.Variandum) sic "await " secus ""
+            fixum keyword = s.species == VariaGenus.Fixum sic "const" secus "let"
             varia result = scriptum("§§ §", g.ind(), keyword, s.nomen)
 
             si nonnihil s.typus {

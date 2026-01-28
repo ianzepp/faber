@@ -69,8 +69,7 @@ functio genImporta(in TsGenerator g, de textus fons, si de textus importatum, de
 
 @ publica
 functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, de lista<ImportaSpecificator> specificatores) -> textus {
-    fixum keyword = (species == VariaGenus.Fixum aut species == VariaGenus.Figendum) sic "const" secus "let"
-    fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
+    fixum keyword = species == VariaGenus.Fixum sic "const" secus "let"
 
     varia specs = [] innatum lista<textus>
     itera ex specificatores fixum spec {
@@ -83,13 +82,12 @@ functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, 
         }
     }
 
-    redde scriptum("§§ { § } = §§;", g.ind(), keyword, specs.coniunge(", "), asyncPrefix, genExpressia(g, fons))
+    redde scriptum("§§ { § } = §;", g.ind(), keyword, specs.coniunge(", "), genExpressia(g, fons))
 }
 
 @ publica
 functio genSeriesDestructura(in TsGenerator g, de lista<SeriesDestructuraElementum> elementa, de Expressia fons, VariaGenus species) -> textus {
-    fixum keyword = (species == VariaGenus.Fixum aut species == VariaGenus.Figendum) sic "const" secus "let"
-    fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
+    fixum keyword = species == VariaGenus.Fixum sic "const" secus "let"
 
     varia items = [] innatum lista<textus>
     itera ex elementa fixum elem {

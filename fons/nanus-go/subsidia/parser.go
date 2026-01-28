@@ -160,7 +160,7 @@ func (p *Parser) parseStmt() Stmt {
 	tok := p.peek(0)
 	if tok.Tag == TokenKeyword {
 		switch tok.Valor {
-		case "varia", "fixum", "figendum", "variandum":
+		case "varia", "fixum":
 			return p.parseVaria(publica, externa)
 		case "ex":
 			return p.parseExStmt()
@@ -334,13 +334,8 @@ func (p *Parser) parseVaria(publica bool, externa bool) Stmt {
 	locus := p.peek(0).Locus
 	kw := p.advance().Valor
 	species := VariaVaria
-	switch kw {
-	case "figendum":
-		species = VariaFigendum
-	case "fixum":
+	if kw == "fixum" {
 		species = VariaFixum
-	case "variandum":
-		species = VariaVariandum
 	}
 
 	var typus Typus
@@ -1005,7 +1000,7 @@ func (p *Parser) isStatementKeyword() bool {
 		"si": {}, "sin": {}, "secus": {}, "dum": {}, "fac": {}, "ex": {}, "de": {}, "in": {}, "elige": {}, "discerne": {}, "custodi": {},
 		"tempta": {}, "cape": {}, "demum": {}, "redde": {}, "rumpe": {}, "perge": {}, "iace": {}, "mori": {},
 		"scribe": {}, "vide": {}, "mone": {}, "adfirma": {}, "functio": {}, "genus": {}, "pactum": {}, "ordo": {},
-		"discretio": {}, "varia": {}, "fixum": {}, "figendum": {}, "variandum": {}, "incipit": {}, "probandum": {}, "proba": {},
+		"discretio": {}, "varia": {}, "fixum": {}, "incipit": {}, "probandum": {}, "proba": {},
 		"casu": {}, "ceterum": {}, "reddit": {}, "ergo": {}, "tacet": {}, "iacit": {}, "moritor": {}, "typus": {}, "abstractus": {},
 	}
 	_, ok := stmtKeywords[kw]
@@ -1019,7 +1014,7 @@ func (p *Parser) isDeclarationKeyword() bool {
 	kw := p.peek(0).Valor
 	declKeywords := map[string]struct{}{
 		"functio": {}, "genus": {}, "pactum": {}, "ordo": {}, "discretio": {}, "typus": {},
-		"varia": {}, "fixum": {}, "figendum": {}, "variandum": {}, "incipit": {}, "probandum": {}, "abstractus": {},
+		"varia": {}, "fixum": {}, "incipit": {}, "probandum": {}, "abstractus": {},
 	}
 	_, ok := declKeywords[kw]
 	return ok

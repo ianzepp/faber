@@ -31,8 +31,7 @@ functio genVaria(in TsGenerator g, VariaGenus species, de textus nomen, de ignot
         redde scriptum("§;", result)
     }
 
-    fixum keyword = (species == VariaGenus.Fixum aut species == VariaGenus.Figendum) sic "const" secus "let"
-    fixum asyncPrefix = (species == VariaGenus.Figendum aut species == VariaGenus.Variandum) sic "await " secus ""
+    fixum keyword = species == VariaGenus.Fixum sic "const" secus "let"
 
     # Module-level: export when public (not inside class)
     varia exportPrefix = ""

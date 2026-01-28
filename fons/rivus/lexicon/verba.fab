@@ -79,8 +79,6 @@ functio verbumFaberId(textus v) -> si VerbumId {
         # ---- Declarations ----
         casu "varia" reddit VerbumId.Varia
         casu "fixum" reddit VerbumId.Fixum
-        casu "figendum" reddit VerbumId.Figendum
-        casu "variandum" reddit VerbumId.Variandum
         casu "functio" reddit VerbumId.Functio
         casu "novum" reddit VerbumId.Novum
         casu "finge" reddit VerbumId.Finge
@@ -204,8 +202,6 @@ functio estVerbumSententiae(textus v) -> bivalens {
         casu "functio" reddit verum
         casu "varia" reddit verum
         casu "fixum" reddit verum
-        casu "figendum" reddit verum
-        casu "variandum" reddit verum
         casu "typus" reddit verum
         casu "ordo" reddit verum
         casu "genus" reddit verum

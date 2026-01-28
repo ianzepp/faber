@@ -43,8 +43,6 @@ class LitteraSpecies(str, Enum):
 class VariaSpecies(str, Enum):
     VARIA = "Varia"
     FIXUM = "Fixum"
-    FIGENDUM = "Figendum"
-    VARIANDUM = "Variandum"
 
 
 # Type nodes

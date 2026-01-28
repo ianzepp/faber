@@ -24,10 +24,10 @@
 @ futura
 functio hauriSource(textus? inputFile) -> textus {
     si nihil inputFile aut inputFile == "-" {
-        figendum result = cede consolum.hauriOmnia()
+        fixum result = cede consolum.hauriOmnia()
         redde result
     }
-    figendum result = cede solum.lege(inputFile)
+    fixum result = cede solum.lege(inputFile)
     redde result
 }
 
@@ -115,7 +115,7 @@ functio loadManifestSectiones(textus? manifestPath) -> lista<SectioAnnotatio>? {
         iace novum Error(scriptum("Manifest not found: §", manifestPath))
     }
 
-    figendum content = solum.lege(manifestPath)
+    fixum content = cede solum.lege(manifestPath)
 
     fixum lexResult = lexare(content)
     si positivum lexResult.errores.longitudo() {

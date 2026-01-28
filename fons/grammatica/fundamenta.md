@@ -34,12 +34,12 @@ When your program needs to perform asynchronous operations at the top level, use
 
 ```fab
 incipiet {
-    figendum data = fetchData()
+    fixum data = cede fetchData()
     scribe data
 }
 ```
 
-Inside an `incipiet` block, you can use `figendum` and `variandum` (the async binding forms) directly, or use `cede` (yield/await) with regular bindings.
+Inside an `incipiet` block, you can use `cede` (yield/await) with regular bindings to await async operations.
 
 ## Variables
 
@@ -94,25 +94,6 @@ count = 100
 status = "complete"
 running = verum
 ```
-
-### Async Bindings: figendum and variandum
-
-Faber provides async-aware binding forms that combine declaration with awaiting. These use the Latin gerundive, a verbal adjective expressing necessity or obligation.
-
-`figendum` means "that which must be fixed." It declares an immutable binding whose value comes from an asynchronous operation:
-
-```fab
-figendum result = fetchData()
-```
-
-`variandum` means "that which must be varied." It declares a mutable binding from an async source:
-
-```fab
-variandum data = loadConfig()
-data = transform(data)
-```
-
-These forms are syntactic conveniences equivalent to using `cede` (await) with regular bindings, but they make the async nature visible at declaration time.
 
 ## Literals
 

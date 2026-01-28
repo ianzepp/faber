@@ -154,7 +154,7 @@ function emitMassa(corpus: Stmt[], indent: string): string {
 function emitVaria(stmt: Stmt & { tag: 'Varia' }, indent: string): string {
     const pub = stmt.publica ? '@ publica\n' + indent : '';
     const ext = stmt.externa ? '@ externa\n' + indent : '';
-    const kw = stmt.species === 'Fixum' ? 'fixum' : stmt.species === 'Figendum' ? 'figendum' : 'varia';
+    const kw = stmt.species === 'Fixum' ? 'fixum' : 'varia';
     const typ = stmt.typus ? `: ${emitTypus(stmt.typus)}` : '';
     const val = stmt.valor ? ` = ${emitExpr(stmt.valor)}` : '';
     return `${ext}${pub}${indent}${kw} ${stmt.nomen}${typ}${val}`;

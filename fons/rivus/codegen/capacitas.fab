@@ -31,7 +31,7 @@ ordo Sustentatio {
 # Control flow capabilities
 @ publica
 genus ControlFlowCapacitas {
-    Sustentatio asyncFunctio        # futura / figendum
+    Sustentatio asyncFunctio        # futura
     Sustentatio generatorFunctio    # cursor / fiunt
     Sustentatio asyncGenerator      # futura cursor / fient
 }

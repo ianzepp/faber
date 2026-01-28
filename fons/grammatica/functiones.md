@@ -218,17 +218,6 @@ functio fetchData() -> textus { redde "data" }
 
 …but participates in the Responsum protocol.
 
-### Gerundive Declarations
-
-The gerundive forms `figendum` and `variandum` provide implicit await:
-
-```fab
-figendum data = fetchData(url)   # immutable, implicit await
-variandum result = fetchInitial() # mutable, implicit await
-```
-
-These are equivalent to `fixum x = cede y()` and `varia x = cede y()`. The gerundive signals futurity: the value will be fixed/varied once the operation completes. If the right-hand side is synchronous, it passes through unchanged.
-
 ## Generator Functions
 
 ### The `@ cursor` Annotation

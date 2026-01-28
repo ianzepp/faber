@@ -206,7 +206,7 @@ function emitStmt(stmt: Stmt, indent = ''): string {
 
         case 'Varia': {
             const decl = stmt.externa ? 'declare ' : '';
-            const kw = stmt.species === 'Varia' || stmt.species === 'Variandum' ? 'let' : 'const';
+            const kw = stmt.species === 'Varia' ? 'let' : 'const';
             // For externa with ignotum type, use 'any' for usability (allows property access)
             let typ = '';
             if (stmt.typus) {

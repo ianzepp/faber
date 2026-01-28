@@ -1,4 +1,4 @@
-# Variable declarations - varia, fixum, figendum, variandum
+# Variable declarations - varia, fixum
 # Maps Faber variable syntax to target-language equivalents
 #
 # Syntax:
@@ -6,8 +6,6 @@
 #   fixum name = value           -- immutable binding
 #   varia Type name = value      -- typed mutable
 #   fixum Type name = value      -- typed immutable
-#   figendum name = asyncCall()  -- immutable + await
-#   variandum name = asyncCall() -- mutable + await
 #   fixum [a, b, c] = array      -- array destructuring
 #   fixum [a, ceteri rest] = arr -- array destructuring with rest
 #   fixum [_, b, _] = arr        -- array destructuring with skips
@@ -87,44 +85,6 @@
           - 'const name: []const u8 = "Marcus";'
       fab:
           - 'fixum textus name = "Marcus"'
-
-# =============================================================================
-# Async Variable Declarations (figendum/variandum)
-# =============================================================================
-
-# Immutable async binding
-- name: immutable async binding (figendum)
-  source: 'figendum data = fetchData()'
-  expect:
-      ts:
-          - 'const data = await fetchData();'
-      py:
-          - 'data = await fetchData()'
-      rs:
-          - 'let data = fetchData().await;'
-      cpp:
-          - 'auto data = fetchData();'
-      zig:
-          - 'const data = fetchData();'
-      fab:
-          - 'figendum data = fetchData()'
-
-# Mutable async binding
-- name: mutable async binding (variandum)
-  source: 'variandum result = getResult()'
-  expect:
-      ts:
-          - 'let result = await getResult();'
-      py:
-          - 'result = await getResult()'
-      rs:
-          - 'let mut result = getResult().await;'
-      cpp:
-          - 'auto result = getResult();'
-      zig:
-          - 'const result = getResult();'
-      fab:
-          - 'variandum result = getResult()'
 
 # =============================================================================
 # Array Destructuring

@@ -25,7 +25,6 @@ impl<'a> Lexer<'a> {
             // Declarations
             "varia",
             "fixum",
-            "figendum",
             "functio",
             "genus",
             "pactum",

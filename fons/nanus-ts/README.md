@@ -32,7 +32,7 @@ Design principles:
 ## Status
 
 Work in progress. Currently handles:
-- Variable declarations (`varia`, `fixum`, `figendum`)
+- Variable declarations (`varia`, `fixum`)
 - Functions (sync and async)
 - Classes (`genus`), interfaces (`pactum`), enums (`ordo`), tagged unions (`discretio`)
 - Control flow (`si`, `dum`, `ex..fixum`, `elige`, `discerne`)

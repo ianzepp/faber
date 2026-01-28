@@ -420,8 +420,8 @@ impl<'a> RsEmitter<'a> {
             let vis = if *publica { "pub " } else { "" };
             let is_module_level = indent.is_empty();
             let kw = match (species, is_module_level) {
-                (VariaSpecies::Fixum | VariaSpecies::Figendum, true) => "static",
-                (VariaSpecies::Fixum | VariaSpecies::Figendum, false) => "let",
+                (VariaSpecies::Fixum, true) => "static",
+                (VariaSpecies::Fixum, false) => "let",
                 (_, true) => "static mut",
                 (_, false) => "let mut",
             };

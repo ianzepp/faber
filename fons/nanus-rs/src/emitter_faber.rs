@@ -203,7 +203,6 @@ fn emit_varia(stmt: &Stmt, indent: &str) -> String {
         }
         let keyword = match species {
             VariaSpecies::Fixum => "fixum",
-            VariaSpecies::Figendum => "figendum",
             _ => "varia",
         };
         result.push_str(&format!("{}{} {}", indent, keyword, nomen));

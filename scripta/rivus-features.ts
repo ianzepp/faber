@@ -14,7 +14,7 @@ type Counts = Map<string, number>;
 
 const FEATURES: Record<string, string[]> = {
     'Declarations': [
-        'varia', 'fixum', 'figendum', 'variandum',
+        'varia', 'fixum',
         'functio', 'functio async', 'functio*', 'functio async*', 'functio abstracta', 'structor',
         'genus', 'genus abstractum', 'genus sub', 'genus implet',
         'ordo', 'discretio', 'pactum', 'typus',
@@ -92,7 +92,7 @@ function walkAndCount(node: unknown, counts: Counts): void {
         switch (tag) {
             case 'VariaSententia': {
                 const species = obj.species as number;
-                const names = ['varia', 'fixum', 'figendum', 'variandum'];
+                const names = ['varia', 'fixum'];
                 inc(counts, names[species] || `varia[${species}]`);
                 break;
             }

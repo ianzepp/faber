@@ -80,7 +80,7 @@ functio testCommand(
         }
     }
 
-    figendum source = hauriSource(input)
+    fixum source = cede hauriSource(input)
 
     # Collect errors for potential JSON output
     varia errores = [] innatum lista<tabula<textus, ignotum>>
@@ -208,7 +208,7 @@ functio testCommand(
             stderr: "inherit"
         })
 
-        figendum exitCode = proc.exited
+        fixum exitCode = cede proc.exited
 
         # Cleanup temp file
         cede solum.dele(tempFile)

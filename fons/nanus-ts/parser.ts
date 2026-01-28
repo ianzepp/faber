@@ -162,8 +162,6 @@ export class Parser {
             switch (tok.valor) {
                 case 'varia':
                 case 'fixum':
-                case 'figendum':
-                case 'variandum':
                     return this.parseVaria(publica, externa);
                 case 'ex':
                     return this.parseExStmt(publica);
@@ -359,7 +357,7 @@ export class Parser {
     private parseVaria(publica: boolean, externa: boolean = false): Stmt {
         const locus = this.peek().locus;
         const kw = this.advance().valor;
-        const species: VariaSpecies = kw === 'varia' ? 'Varia' : kw === 'figendum' ? 'Figendum' : kw === 'variandum' ? 'Variandum' : 'Fixum';
+        const species: VariaSpecies = kw === 'varia' ? 'Varia' : 'Fixum';
 
         // Handle type-first syntax: varia <type> <name> = value
         // vs name-first syntax: varia <name> = value
@@ -998,7 +996,6 @@ export class Parser {
             'discretio',
             'varia',
             'fixum',
-            'figendum',
             'incipit',
             'probandum',
             'proba',
@@ -1017,7 +1014,7 @@ export class Parser {
     private isDeclarationKeyword(): boolean {
         if (!this.check('Keyword')) return false;
         const kw = this.peek().valor;
-        const DECL_KEYWORDS = new Set(['functio', 'genus', 'pactum', 'ordo', 'discretio', 'varia', 'fixum', 'figendum', 'incipit', 'probandum']);
+        const DECL_KEYWORDS = new Set(['functio', 'genus', 'pactum', 'ordo', 'discretio', 'varia', 'fixum', 'incipit', 'probandum']);
         return DECL_KEYWORDS.has(kw);
     }
 

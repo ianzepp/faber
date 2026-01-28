@@ -3,15 +3,13 @@
 # Variable declarations, destructuring patterns, and related constructs.
 #
 # GRAMMAR:
-#   varDecl := ('varia' | 'fixum' | 'figendum' | 'variandum') typeAnnotation? IDENTIFIER ('=' expression)?
+#   varDecl := ('varia' | 'fixum') typeAnnotation? IDENTIFIER ('=' expression)?
 #   arrayPattern := '[' arrayPatternElement (',' arrayPatternElement)* ']'
 #   objectPattern := '{' patternProperty (',' patternProperty)* '}'
 #
 # LATIN VOCABULARY:
 # - varia = variable (let it vary)
 # - fixum = fixed (const)
-# - figendum = to be fixed (const + await)
-# - variandum = to be varied (let + await)
 # - ceteri = the rest (rest pattern)
 # - omissum = omitted/skipped (placeholder _)
 
@@ -67,8 +65,8 @@ functio parseNomenVelVerbum(in Resolvitor r) -> textus {
 
 # Parse destructure declaration
 #
-# GRAMMAR: destruct := 'ex' expr (fixum|varia|figendum|variandum) spec (',' spec)*
-#          | 'ex' expr (fixum|varia|figendum|variandum) '[' pattern ']' ('{' block '}' | '=' expr)
+# GRAMMAR: destruct := 'ex' expr (fixum|varia) spec (',' spec)*
+#          | 'ex' expr (fixum|varia) '[' pattern ']' ('{' block '}' | '=' expr)
 # spec := IDENT ('ut' IDENT)? | 'ceteri' IDENT
 @ publica
 functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
@@ -84,8 +82,6 @@ functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
     elige verbum {
         casu "fixum" { species = VariaGenus.Fixum }
         casu "varia" { species = VariaGenus.Varia }
-        casu "figendum" { species = VariaGenus.Figendum }
-        casu "variandum" { species = VariaGenus.Variandum }
     }
     p.procede()
 
@@ -103,8 +99,8 @@ functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
                 cape = parseCapeClausula(r)
             }
 
-            fixum asynca = species == VariaGenus.Figendum aut species == VariaGenus.Variandum
-            fixum mutabilis = species == VariaGenus.Varia aut species == VariaGenus.Variandum
+            fixum asynca = falsum
+            fixum mutabilis = species == VariaGenus.Varia
             varia variabilis = nihil qua si IteratioVariabilis
             variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
 
@@ -219,7 +215,7 @@ functio parseSeriesDestructura(in Resolvitor r) -> lista<SeriesDestructuraElemen
 
 # Parse variable declaration
 #
-# GRAMMAR: varDecl := ('varia'|'fixum'|'figendum'|'variandum') type? name ('=' expr)?
+# GRAMMAR: varDecl := ('varia'|'fixum') type? name ('=' expr)?
 #
 # Supports:
 # - Type inference: fixum x = 42
@@ -237,8 +233,6 @@ functio parseVariaSententia(in Resolvitor r) -> Sententia {
     elige verbum {
         casu "varia" { species = VariaGenus.Varia }
         casu "fixum" { species = VariaGenus.Fixum }
-        casu "figendum" { species = VariaGenus.Figendum }
-        casu "variandum" { species = VariaGenus.Variandum }
     }
 
     # Consume the keyword

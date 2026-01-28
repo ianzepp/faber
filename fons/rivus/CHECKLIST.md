@@ -65,8 +65,6 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | ---------------------------- | :--------: | :-: | :----: | :--: | :---: |
 | `varia` (mutable)            | ● | ● | ○ | ○ | ○ |
 | `fixum` (immutable)          | ● | ● | ○ | ○ | ○ |
-| `figendum` (async immutable) | ● | ○ | ○ | ○ | ○ |
-| `variandum` (async mutable)  | ● | ○ | ○ | ○ | ○ |
 | Type annotations             | ● | ● | ○ | ○ | ○ |
 | Object destructuring         | ● | ○ | ○ | ○ | ○ |
 | Array destructuring          | ● | ○ | ○ | ○ | ○ |

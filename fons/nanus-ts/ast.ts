@@ -107,7 +107,7 @@ export type Stmt =
     | { tag: 'TypusAlias'; locus: Locus; nomen: string; typus: Typus; publica: boolean }
     | { tag: 'In'; locus: Locus; expr: Expr; corpus: Stmt };
 
-export type VariaSpecies = 'Varia' | 'Fixum' | 'Figendum' | 'Variandum';
+export type VariaSpecies = 'Varia' | 'Fixum';
 
 export interface Param {
     locus: Locus;

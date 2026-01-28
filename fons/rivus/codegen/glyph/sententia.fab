@@ -277,8 +277,6 @@ functio genVaria(in GlyphGenerator g, de VariaSententia s) -> textus {
     elige s.species qua VariaGenus {
         casu VariaGenus.Varia { result = result + glyphKeyword("varia") + " " }
         casu VariaGenus.Fixum { result = result + glyphKeyword("fixum") + " " }
-        casu VariaGenus.Figendum { result = result + glyphKeyword("figendum") + " " }
-        casu VariaGenus.Variandum { result = result + glyphKeyword("variandum") + " " }
     }
 
     result = result + encodeBraille(s.nomen)
@@ -360,8 +358,6 @@ functio variaGenusKeyword(de VariaGenus species) -> textus {
     elige species {
         casu VariaGenus.Varia { redde glyphKeyword("varia") }
         casu VariaGenus.Fixum { redde glyphKeyword("fixum") }
-        casu VariaGenus.Figendum { redde glyphKeyword("figendum") }
-        casu VariaGenus.Variandum { redde glyphKeyword("variandum") }
     }
     redde glyphKeyword("fixum")
 }

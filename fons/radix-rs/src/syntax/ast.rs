@@ -102,8 +102,8 @@ pub struct VarDecl {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mutability {
-    Immutable, // fixum, figendum
-    Mutable,   // varia, variandum
+    Immutable, // fixum
+    Mutable,   // varia
 }
 
 #[derive(Debug)]

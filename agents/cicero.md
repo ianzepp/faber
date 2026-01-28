@@ -80,7 +80,7 @@ Before proposing new syntax, consult these authoritative sources:
 
 **Return Verbs (fio):** `fit` (sync), `fiet` (async), `fiunt` (generator), `fient` (async generator)
 
-**Bindings:** `fixum` (const), `varia` (let), `figendum` (const await), `variandum` (let await)
+**Bindings:** `fixum` (const), `varia` (let)
 
 **Control:** `si/sin/secus` (if/elif/else), `dum` (while), `ex...pro` (for-of), `elige/casu` (switch/case), `discerne` (match)
 

@@ -56,7 +56,7 @@ functio mandatumCurrere(
     # Load manifest sectiones
     varia manifestSectiones = nihil qua lista<SectioAnnotatio>?
     tempta {
-        figendum lectum = loadManifestSectiones(manifestPath)
+        fixum lectum = cede loadManifestSectiones(manifestPath)
         manifestSectiones = lectum
     } cape err {
         si jsonOutput {
@@ -133,7 +133,7 @@ functio mandatumCurrere(
     }
 
     # Compile script
-    figendum source = solum.lege(scriptPath)
+    fixum source = cede solum.lege(scriptPath)
 
     # Lexical analysis
     fixum lexResult = lexare(source)
@@ -252,7 +252,7 @@ functio mandatumCurrere(
             stdin: "inherit"
         })
 
-        figendum exitCode = proc.exited
+        fixum exitCode = cede proc.exited
 
         # Cleanup temp file
         cede solum.dele(tempFile)

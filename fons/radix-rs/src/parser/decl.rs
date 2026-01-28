@@ -12,7 +12,7 @@ impl Parser {
 
         let kind = match self.peek().kind {
             // Declarations
-            TokenKind::Fixum | TokenKind::Varia | TokenKind::Figendum | TokenKind::Variandum => {
+            TokenKind::Fixum | TokenKind::Varia => {
                 self.parse_var_decl()?
             }
             TokenKind::Functio => self.parse_func_decl()?,
@@ -87,14 +87,6 @@ impl Parser {
             TokenKind::Varia => {
                 self.advance();
                 (Mutability::Mutable, false)
-            }
-            TokenKind::Figendum => {
-                self.advance();
-                (Mutability::Immutable, true)
-            }
-            TokenKind::Variandum => {
-                self.advance();
-                (Mutability::Mutable, true)
             }
             _ => unreachable!(),
         };

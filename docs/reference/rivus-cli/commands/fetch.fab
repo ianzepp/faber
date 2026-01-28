@@ -56,7 +56,7 @@ functio mandatumArcessere(
     # Load manifest sectiones
     varia manifestSectiones = nihil qua lista<SectioAnnotatio>?
     tempta {
-        figendum lectum = loadManifestSectiones(manifest)
+        fixum lectum = cede loadManifestSectiones(manifest)
         manifestSectiones = lectum
     } cape err {
         si jsonOutput {
@@ -118,7 +118,7 @@ functio mandatumArcessere(
 
         # Resolve ref to commit SHA
         fixum ghRef = novum GithubReferentia { dominus: dominus, repo: repo, ref: ref }
-        figendum sha = resolveReferentiam(ghRef)
+        fixum sha = cede resolveReferentiam(ghRef)
 
         si nihil sha {
             si jsonOutput {
@@ -155,7 +155,7 @@ functio mandatumArcessere(
             scribe "  Downloading §...", sha
         }
 
-        figendum tarball = deferTarball(dominus, repo, sha qua textus)
+        fixum tarball = cede deferTarball(dominus, repo, sha qua textus)
 
         si nihil tarball {
             si jsonOutput {

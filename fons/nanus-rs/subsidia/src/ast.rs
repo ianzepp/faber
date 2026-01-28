@@ -49,8 +49,6 @@ impl Default for LitteraSpecies {
 pub enum VariaSpecies {
     Varia,
     Fixum,
-    Figendum,
-    Variandum,
 }
 
 impl Default for VariaSpecies {

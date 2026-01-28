@@ -100,14 +100,9 @@ func fabMassa(s *subsidia.StmtMassa, indent string) string {
 }
 
 func fabVaria(s *subsidia.StmtVaria, indent string) string {
-	var keyword string
-	switch s.Species {
-	case subsidia.VariaFixum:
+	keyword := "varia"
+	if s.Species == subsidia.VariaFixum {
 		keyword = "fixum"
-	case subsidia.VariaFigendum:
-		keyword = "figendum"
-	default:
-		keyword = "varia"
 	}
 	code := indent + keyword + " " + s.Nomen
 	if s.Typus != nil {

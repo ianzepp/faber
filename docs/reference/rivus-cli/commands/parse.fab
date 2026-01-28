@@ -47,7 +47,7 @@ functio parseCommand(
         }
     }
 
-    figendum source = hauriSource(input)
+    fixum source = cede hauriSource(input)
 
     # Lexical analysis
     fixum lexResult = lexare(source)

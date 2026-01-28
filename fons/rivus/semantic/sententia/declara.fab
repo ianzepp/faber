@@ -208,14 +208,8 @@ functio analyzeVariaDeclaratio(Resolvitor r, Sententia variaStmt) -> vacuum {
                 }
             }
 
-            si (v.species == VariaGenus.Figendum aut v.species == VariaGenus.Variandum) et non a.currentFunctioAsync {
-                fixum keyword = (v.species == VariaGenus.Figendum) sic "figendum" secus "variandum"
-                fixum err = awaitOutsideAsyncError(keyword)
-                a.error(err.textus, v.locus, err.auxilium)
-            }
-
             # Define in symbol table
-            fixum mutabilis = (v.species == VariaGenus.Varia aut v.species == VariaGenus.Variandum)
+            fixum mutabilis = v.species == VariaGenus.Varia
             a.definie({
                 nomen: v.nomen,
                 semanticTypus: resolvedTypus,
@@ -239,7 +233,7 @@ functio analyzeDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuum {
             fixum fonsTypus = r.synthesize(d.fons)
 
             # Determine mutability from species (fixum vs varia)
-            fixum mutabilis = d.species == VariaGenus.Varia aut d.species == VariaGenus.Variandum
+            fixum mutabilis = d.species == VariaGenus.Varia
 
             # Register each binding from the specificatores
             itera ex d.specificatores fixum spec {
@@ -270,7 +264,7 @@ functio analyzeSeriesDestructuraSententia(Resolvitor r, Sententia stmt) -> vacuu
             fixum fonsTypus = r.synthesize(s.fons)
 
             # Determine mutability from species (fixum vs varia)
-            fixum mutabilis = s.species == VariaGenus.Varia aut s.species == VariaGenus.Variandum
+            fixum mutabilis = s.species == VariaGenus.Varia
 
             # Register each binding from the elementa
             itera ex s.elementa fixum elem {

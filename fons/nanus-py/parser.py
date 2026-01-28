@@ -119,7 +119,7 @@ class Parser:
         tok = self.peek()
         if tok.tag == TokenTag.KEYWORD:
             match tok.valor:
-                case "varia" | "fixum" | "figendum" | "variandum":
+                case "varia" | "fixum":
                     return self.parse_varia(publica, externa)
                 case "ex":
                     return self.parse_ex_stmt()
@@ -275,13 +275,7 @@ class Parser:
     def parse_varia(self, publica: bool, externa: bool) -> Stmt:
         locus = self.peek().locus
         kw = self.advance().valor
-        species = VariaSpecies.VARIA
-        if kw == "figendum":
-            species = VariaSpecies.FIGENDUM
-        elif kw == "fixum":
-            species = VariaSpecies.FIXUM
-        elif kw == "variandum":
-            species = VariaSpecies.VARIANDUM
+        species = VariaSpecies.VARIA if kw == "varia" else VariaSpecies.FIXUM
 
         typus: Typus = None
 
@@ -828,7 +822,7 @@ class Parser:
             "si", "sin", "secus", "dum", "fac", "ex", "de", "in", "elige", "discerne", "custodi",
             "tempta", "cape", "demum", "redde", "rumpe", "perge", "iace", "mori",
             "scribe", "vide", "mone", "adfirma", "functio", "genus", "pactum", "ordo",
-            "discretio", "varia", "fixum", "figendum", "variandum", "incipit", "probandum", "proba",
+            "discretio", "varia", "fixum", "incipit", "probandum", "proba",
             "casu", "ceterum", "reddit", "ergo", "tacet", "iacit", "moritor", "typus", "abstractus",
         }
         return kw in stmt_keywords
@@ -839,7 +833,7 @@ class Parser:
         kw = self.peek().valor
         decl_keywords = {
             "functio", "genus", "pactum", "ordo", "discretio", "typus",
-            "varia", "fixum", "figendum", "variandum", "incipit", "probandum", "abstractus",
+            "varia", "fixum", "incipit", "probandum", "abstractus",
         }
         return kw in decl_keywords
 

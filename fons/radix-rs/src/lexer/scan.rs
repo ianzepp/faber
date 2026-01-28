@@ -586,8 +586,6 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         // Declarations
         "fixum" => TokenKind::Fixum,
         "varia" => TokenKind::Varia,
-        "figendum" => TokenKind::Figendum,
-        "variandum" => TokenKind::Variandum,
         "functio" => TokenKind::Functio,
         "genus" => TokenKind::Genus,
         "pactum" => TokenKind::Pactum,
