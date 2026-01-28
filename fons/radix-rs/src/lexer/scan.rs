@@ -5,6 +5,24 @@ use super::token::{Span, Symbol, Token, TokenKind};
 use super::{LexError, LexErrorKind, LexResult};
 use rustc_hash::FxHashMap;
 
+/// Lexer mode - determines which keyword table is active
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LexerMode {
+    /// Normal mode - statement keywords active
+    Normal,
+    /// Annotation mode - after `@` on current line
+    Annotation,
+    /// Section mode - after `§` on current line
+    Section,
+}
+
+impl LexerMode {
+    /// Check if mode should reset on newline
+    fn is_line_based(self) -> bool {
+        matches!(self, Self::Annotation | Self::Section)
+    }
+}
+
 /// String interner for symbols
 pub struct Interner {
     map: FxHashMap<String, Symbol>,
@@ -47,6 +65,8 @@ pub struct Lexer<'a> {
     interner: Interner,
     tokens: Vec<Token>,
     errors: Vec<LexError>,
+    mode: LexerMode,
+    current_line: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -57,6 +77,8 @@ impl<'a> Lexer<'a> {
             interner: Interner::new(),
             tokens: Vec::new(),
             errors: Vec::new(),
+            mode: LexerMode::Normal,
+            current_line: 1,
         }
     }
 
@@ -81,9 +103,18 @@ impl<'a> Lexer<'a> {
             return;
         };
 
+        // Check for newline and reset mode if needed
+        if c == '\n' {
+            self.current_line += 1;
+            if self.mode.is_line_based() {
+                self.mode = LexerMode::Normal;
+            }
+            return;
+        }
+
         let kind = match c {
-            // Whitespace - skip
-            ' ' | '\t' | '\r' | '\n' => return,
+            // Whitespace - skip (except newline handled above)
+            ' ' | '\t' | '\r' => return,
 
             // Single-character punctuation
             '(' => TokenKind::LParen,
@@ -96,8 +127,14 @@ impl<'a> Lexer<'a> {
             ':' => TokenKind::Colon,
             ';' => TokenKind::Semicolon,
             '~' => TokenKind::Tilde,
-            '@' => TokenKind::At,
-            '§' => TokenKind::Section,
+            '@' => {
+                self.mode = LexerMode::Annotation;
+                TokenKind::At
+            }
+            '§' => {
+                self.mode = LexerMode::Section;
+                TokenKind::Section
+            }
 
             // Dot or range
             '.' => {
@@ -568,7 +605,11 @@ impl<'a> Lexer<'a> {
         self.cursor.eat_while(is_ident_continue);
 
         let text = self.cursor.slice(start, self.cursor.pos());
-        let kind = keyword_or_ident(text, &mut self.interner);
+        let kind = match self.mode {
+            LexerMode::Normal => keyword_or_ident(text, &mut self.interner),
+            LexerMode::Annotation => annotation_keyword_or_ident(text, &mut self.interner),
+            LexerMode::Section => section_keyword_or_ident(text, &mut self.interner),
+        };
         self.tokens.push(Token::new(kind, Span::new(start, self.cursor.pos())));
     }
 }
@@ -581,6 +622,7 @@ fn is_ident_continue(c: char) -> bool {
     c.is_alphanumeric() || c == '_'
 }
 
+/// Normal mode keywords - statements and expressions
 fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     match text {
         // Declarations
@@ -643,11 +685,9 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "moritor" => TokenKind::Moritor,
         "adfirma" => TokenKind::Adfirma,
 
-        // Async
-        "futura" => TokenKind::Futura,
-        "cursor" => TokenKind::Cursor,
-        "cede" => TokenKind::Cede,
+        // Closures
         "clausura" => TokenKind::Clausura,
+        "cede" => TokenKind::Cede,
 
         // Boolean/null
         "verum" => TokenKind::Verum,
@@ -746,4 +786,58 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         // Identifier
         _ => TokenKind::Ident(interner.intern(text)),
     }
+}
+
+
+/// Annotation mode keywords - words after @
+fn annotation_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
+    match text {
+        // Stdlib annotations
+        "innatum" => TokenKind::Innatum,
+        "subsidia" => TokenKind::Ident(interner.intern(text)),
+        "radix" => TokenKind::Ident(interner.intern(text)),
+        "verte" => TokenKind::Ident(interner.intern(text)),
+        "externa" => TokenKind::Ident(interner.intern(text)),
+
+        // Visibility
+        "publica" => TokenKind::Publica,
+        "privata" => TokenKind::Privata,
+        "protecta" => TokenKind::Protecta,
+        "publicus" => TokenKind::Ident(interner.intern(text)),
+        "privatus" => TokenKind::Ident(interner.intern(text)),
+        "protectus" => TokenKind::Ident(interner.intern(text)),
+
+        // Async/generator markers
+        "futura" => TokenKind::Futura,
+        "cursor" => TokenKind::Cursor,
+        "cede" => TokenKind::Cede,
+
+        // Testing annotations
+        "tag" => TokenKind::Tag,
+        "temporis" => TokenKind::Temporis,
+        "metior" => TokenKind::Metior,
+        "repete" => TokenKind::Ident(interner.intern(text)),
+        "fragilis" => TokenKind::Fragilis,
+        "solum" => TokenKind::Solum,
+        "omitte" => TokenKind::Omitte,
+
+        // CLI annotations
+        "imperia" => TokenKind::Ident(interner.intern(text)),
+        "optio" => TokenKind::Ident(interner.intern(text)),
+        "brevis" => TokenKind::Ident(interner.intern(text)),
+        "longum" => TokenKind::Ident(interner.intern(text)),
+        "bivalens" => TokenKind::Ident(interner.intern(text)),
+        "descriptio" => TokenKind::Ident(interner.intern(text)),
+        "operandus" => TokenKind::Ident(interner.intern(text)),
+        "ceteri" => TokenKind::Ceteri,
+
+        // All other identifiers pass through unchanged
+        _ => TokenKind::Ident(interner.intern(text)),
+    }
+}
+
+/// Section mode keywords - words after § (no reserved keywords)
+fn section_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
+    // Section keywords are not reserved - they become Ident tokens
+    TokenKind::Ident(interner.intern(text))
 }
