@@ -88,6 +88,7 @@ pub enum TokenKind {
 
     // === Keywords: Control flow ===
     Si,
+    Sic,
     Sin,
     Secus,
     Dum,
@@ -298,7 +299,7 @@ impl TokenKind {
                 | Typus | Ordo | Discretio | Importa | Probandum | Proba
                 | Abstractus | Generis | Nexum | Publica | Privata | Protecta
                 | Prae | Ceteri | Immutata | Iacit | Curata | Errata | Exitus | Optiones
-                | Si | Sin | Secus | Dum | Itera | Elige | Casu | Ceterum
+                | Si | Sic | Sin | Secus | Dum | Itera | Elige | Casu | Ceterum
                 | Discerne | Custodi | Fac | Ergo | Redde | Reddit | Rumpe | Perge | Tacet
                 | Tempta | Cape | Demum | Iace | Mori | Moritor | Adfirma
                 | Futura | Cursor | Cede | Clausura | Verum | Falsum | Nihil

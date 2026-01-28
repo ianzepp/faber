@@ -616,6 +616,7 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
 
         // Control flow
         "si" => TokenKind::Si,
+        "sic" => TokenKind::Sic,
         "sin" => TokenKind::Sin,
         "secus" => TokenKind::Secus,
         "dum" => TokenKind::Dum,

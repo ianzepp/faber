@@ -69,7 +69,24 @@ impl Parser {
             });
         }
 
-        // sic secus style - would need to be handled
+        // sic secus style
+        if self.eat_keyword(TokenKind::Sic) {
+            let then = Box::new(self.parse_expression()?);
+            self.expect_keyword(TokenKind::Secus, "expected 'secus' after 'sic'")?;
+            let else_ = Box::new(self.parse_ternary()?);
+            let span = start.merge(self.previous_span());
+            let id = self.next_id();
+            return Ok(Expr {
+                id,
+                kind: ExprKind::Ternary(TernaryExpr {
+                    cond: Box::new(cond),
+                    then,
+                    else_,
+                    style: TernaryStyle::SicSecus,
+                }),
+                span,
+            });
+        }
 
         Ok(cond)
     }
