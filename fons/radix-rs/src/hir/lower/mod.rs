@@ -22,6 +22,8 @@ pub struct Lowerer<'a> {
     resolver: &'a Resolver,
     /// Next HIR ID to assign
     next_id: u32,
+    /// Next synthetic DefId to assign
+    next_def_id: u32,
     /// Collected errors during lowering
     errors: Vec<LowerError>,
     /// Current span for error reporting
@@ -41,6 +43,7 @@ impl<'a> Lowerer<'a> {
         Self {
             resolver,
             next_id: 0,
+            next_def_id: 1_000_000,
             errors: Vec::new(),
             current_span: Span::default(),
         }
@@ -81,6 +84,20 @@ impl<'a> Lowerer<'a> {
         let id = self.next_id;
         self.next_id += 1;
         HirId(id)
+    }
+
+    /// Generate a fresh DefId (synthetic, for lowering only)
+    pub(super) fn next_def_id(&mut self) -> crate::hir::DefId {
+        let id = self.next_def_id;
+        self.next_def_id += 1;
+        crate::hir::DefId(id)
+    }
+
+    /// Resolve a DefId or generate a synthetic one
+    pub(super) fn def_id_for(&mut self, name: Symbol) -> crate::hir::DefId {
+        self.resolver
+            .lookup(name)
+            .unwrap_or_else(|| self.next_def_id())
     }
 
     /// Record an error
