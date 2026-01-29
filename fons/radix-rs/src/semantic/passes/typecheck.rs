@@ -37,6 +37,9 @@ struct TypeChecker<'a> {
     variant_parent: FxHashMap<DefId, DefId>,
     current_return: Option<TypeId>,
     inferred_return: Option<TypeId>,
+    next_infer: u32,
+    infer_ids: FxHashMap<crate::semantic::InferVar, TypeId>,
+    substitutions: FxHashMap<crate::semantic::InferVar, TypeId>,
     error_type: TypeId,
 }
 
@@ -72,6 +75,9 @@ impl<'a> TypeChecker<'a> {
             variant_parent: FxHashMap::default(),
             current_return: None,
             inferred_return: None,
+            next_infer: 0,
+            infer_ids: FxHashMap::default(),
+            substitutions: FxHashMap::default(),
             error_type,
         }
     }
@@ -127,7 +133,7 @@ impl<'a> TypeChecker<'a> {
                 optional: false,
             })
             .collect();
-        let ret = func.ret_ty.unwrap_or(self.unknown_type());
+        let ret = func.ret_ty.unwrap_or_else(|| self.fresh_infer());
         FuncSig {
             params,
             ret,
@@ -142,7 +148,191 @@ impl<'a> TypeChecker<'a> {
         }
 
         if let Some(entry) = &mut hir.entry {
-            self.check_block(entry);
+            self.check_block(entry, None);
+        }
+
+        self.finalize_hir(hir);
+    }
+
+    fn finalize_hir(&mut self, hir: &mut HirProgram) {
+        for item in &mut hir.items {
+            self.finalize_item(item);
+        }
+
+        if let Some(entry) = &mut hir.entry {
+            self.finalize_block(entry);
+        }
+    }
+
+    fn finalize_item(&mut self, item: &mut HirItem) {
+        match &mut item.kind {
+            HirItemKind::Function(func) => self.finalize_function(func),
+            HirItemKind::Const(const_item) => {
+                if let Some(ty) = const_item.ty {
+                    let resolved = self.resolve_type(ty);
+                    if self.is_infer(resolved) {
+                        self.error(
+                            SemanticErrorKind::MissingTypeAnnotation,
+                            "cannot infer constant type",
+                            const_item.value.span,
+                        );
+                    }
+                    const_item.ty = Some(resolved);
+                }
+                self.finalize_expr(&mut const_item.value);
+            }
+            HirItemKind::Struct(struct_item) => {
+                for method in &mut struct_item.methods {
+                    self.finalize_function(&mut method.func);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn finalize_function(&mut self, func: &mut HirFunction) {
+        if let Some(ret) = func.ret_ty {
+            let resolved = self.resolve_type(ret);
+            if self.is_infer(resolved) {
+                let span = func.body.as_ref().map(|body| body.span).unwrap_or_default();
+                self.error(
+                    SemanticErrorKind::MissingTypeAnnotation,
+                    "cannot infer return type",
+                    span,
+                );
+            }
+            func.ret_ty = Some(resolved);
+        }
+
+        if let Some(body) = &mut func.body {
+            self.finalize_block(body);
+        }
+    }
+
+    fn finalize_block(&mut self, block: &mut HirBlock) {
+        for stmt in &mut block.stmts {
+            self.finalize_stmt(stmt);
+        }
+        if let Some(expr) = &mut block.expr {
+            self.finalize_expr(expr);
+        }
+    }
+
+    fn finalize_stmt(&mut self, stmt: &mut HirStmt) {
+        match &mut stmt.kind {
+            HirStmtKind::Local(local) => {
+                if let Some(ty) = local.ty {
+                    let resolved = self.resolve_type(ty);
+                    if self.is_infer(resolved) {
+                        self.error(
+                            SemanticErrorKind::MissingTypeAnnotation,
+                            "cannot infer variable type",
+                            local
+                                .init
+                                .as_ref()
+                                .map(|expr| expr.span)
+                                .unwrap_or_default(),
+                        );
+                    }
+                    local.ty = Some(resolved);
+                }
+                if let Some(init) = &mut local.init {
+                    self.finalize_expr(init);
+                }
+            }
+            HirStmtKind::Expr(expr) => self.finalize_expr(expr),
+            HirStmtKind::Redde(value) => {
+                if let Some(expr) = value {
+                    self.finalize_expr(expr);
+                }
+            }
+            HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+        }
+    }
+
+    fn finalize_expr(&mut self, expr: &mut HirExpr) {
+        let resolved = expr.ty.map(|ty| self.resolve_type(ty));
+        if let Some(ty) = resolved {
+            if self.is_infer(ty) {
+                self.error(
+                    SemanticErrorKind::MissingTypeAnnotation,
+                    "cannot infer expression type",
+                    expr.span,
+                );
+            } else {
+                expr.ty = Some(ty);
+            }
+        }
+
+        match &mut expr.kind {
+            HirExprKind::Binary(_, lhs, rhs) => {
+                self.finalize_expr(lhs);
+                self.finalize_expr(rhs);
+            }
+            HirExprKind::Unary(_, operand) => self.finalize_expr(operand),
+            HirExprKind::Call(callee, args) => {
+                self.finalize_expr(callee);
+                for arg in args {
+                    self.finalize_expr(arg);
+                }
+            }
+            HirExprKind::MethodCall(receiver, _, args) => {
+                self.finalize_expr(receiver);
+                for arg in args {
+                    self.finalize_expr(arg);
+                }
+            }
+            HirExprKind::Field(object, _) => self.finalize_expr(object),
+            HirExprKind::Index(object, index) => {
+                self.finalize_expr(object);
+                self.finalize_expr(index);
+            }
+            HirExprKind::Block(block) => self.finalize_block(block),
+            HirExprKind::Si(cond, then_block, else_block) => {
+                self.finalize_expr(cond);
+                self.finalize_block(then_block);
+                if let Some(block) = else_block {
+                    self.finalize_block(block);
+                }
+            }
+            HirExprKind::Discerne(scrutinee, arms) => {
+                self.finalize_expr(scrutinee);
+                for arm in arms {
+                    if let Some(guard) = &mut arm.guard {
+                        self.finalize_expr(guard);
+                    }
+                    self.finalize_expr(&mut arm.body);
+                }
+            }
+            HirExprKind::Loop(block) => self.finalize_block(block),
+            HirExprKind::Dum(cond, block) => {
+                self.finalize_expr(cond);
+                self.finalize_block(block);
+            }
+            HirExprKind::Itera(_, iter, block) => {
+                self.finalize_expr(iter);
+                self.finalize_block(block);
+            }
+            HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
+                self.finalize_expr(lhs);
+                self.finalize_expr(rhs);
+            }
+            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) => {
+                for element in elements {
+                    self.finalize_expr(element);
+                }
+            }
+            HirExprKind::Struct(_, fields) => {
+                for (_, value) in fields {
+                    self.finalize_expr(value);
+                }
+            }
+            HirExprKind::Clausura(_, _, body) => self.finalize_expr(body),
+            HirExprKind::Cede(expr)
+            | HirExprKind::Qua(expr, _)
+            | HirExprKind::Ref(_, expr)
+            | HirExprKind::Deref(expr) => self.finalize_expr(expr),
+            HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
         }
     }
 
@@ -163,13 +353,12 @@ impl<'a> TypeChecker<'a> {
         let value_ty = self.check_expr(&mut const_item.value);
 
         let ty = if let Some(annotated) = const_item.ty {
-            if !self.types.assignable(value_ty, annotated) {
-                self.error(
-                    SemanticErrorKind::TypeMismatch,
-                    "constant value does not match annotation",
-                    const_item.value.span,
-                );
-            }
+            self.unify(
+                value_ty,
+                annotated,
+                const_item.value.span,
+                "constant value does not match annotation",
+            );
             annotated
         } else {
             value_ty
@@ -192,7 +381,7 @@ impl<'a> TypeChecker<'a> {
         self.inferred_return = None;
 
         if let Some(body) = &mut func.body {
-            self.check_block(body);
+            self.check_block(body, None);
         }
 
         let inferred = self.inferred_return.take();
@@ -209,13 +398,13 @@ impl<'a> TypeChecker<'a> {
         self.pop_scope();
     }
 
-    fn check_block(&mut self, block: &mut HirBlock) -> TypeId {
+    fn check_block(&mut self, block: &mut HirBlock, expected: Option<TypeId>) -> TypeId {
         self.push_scope();
         for stmt in &mut block.stmts {
             self.check_stmt(stmt);
         }
         let ty = if let Some(expr) = &mut block.expr {
-            self.check_expr(expr)
+            self.check_expr_with_expected(expr, expected)
         } else {
             self.vacuum_type()
         };
@@ -237,14 +426,13 @@ impl<'a> TypeChecker<'a> {
     fn check_local(&mut self, local: &mut HirLocal) {
         let inferred = match (&local.ty, &mut local.init) {
             (Some(ty), Some(init)) => {
-                let init_ty = self.check_expr(init);
-                if !self.types.assignable(init_ty, *ty) {
-                    self.error(
-                        SemanticErrorKind::TypeMismatch,
-                        "initializer does not match annotation",
-                        init.span,
-                    );
-                }
+                let init_ty = self.check_expr_with_expected(init, Some(*ty));
+                self.unify(
+                    init_ty,
+                    *ty,
+                    init.span,
+                    "initializer does not match annotation",
+                );
                 *ty
             }
             (Some(ty), None) => *ty,
@@ -259,7 +447,7 @@ impl<'a> TypeChecker<'a> {
                         .map(|expr| expr.span)
                         .unwrap_or_default(),
                 );
-                self.unknown_type()
+                self.fresh_infer()
             }
         };
 
@@ -272,38 +460,39 @@ impl<'a> TypeChecker<'a> {
 
     fn check_return(&mut self, value: Option<&mut HirExpr>, span: crate::lexer::Span) {
         let value_ty = match value {
-            Some(expr) => self.check_expr(expr),
+            Some(expr) => {
+                if let Some(expected) = self.current_return {
+                    self.check_expr_with_expected(expr, Some(expected))
+                } else {
+                    self.check_expr(expr)
+                }
+            }
             None => self.vacuum_type(),
         };
 
         if let Some(expected) = self.current_return {
-            if !self.types.assignable(value_ty, expected) {
-                self.error(
-                    SemanticErrorKind::TypeMismatch,
-                    "return type does not match function signature",
-                    span,
-                );
-            }
+            self.unify(
+                value_ty,
+                expected,
+                span,
+                "return type does not match function signature",
+            );
             return;
         }
 
         match self.inferred_return {
             None => self.inferred_return = Some(value_ty),
             Some(existing) => {
-                if !self.types.assignable(value_ty, existing)
-                    && !self.types.assignable(existing, value_ty)
-                {
-                    self.error(
-                        SemanticErrorKind::TypeMismatch,
-                        "incompatible return types",
-                        span,
-                    );
-                }
+                self.unify(value_ty, existing, span, "incompatible return types");
             }
         }
     }
 
     fn check_expr(&mut self, expr: &mut HirExpr) -> TypeId {
+        self.check_expr_with_expected(expr, None)
+    }
+
+    fn check_expr_with_expected(&mut self, expr: &mut HirExpr, expected: Option<TypeId>) -> TypeId {
         let ty = match &mut expr.kind {
             HirExprKind::Path(def_id) => self.check_path(*def_id, expr.span),
             HirExprKind::Literal(lit) => self.literal_type(lit),
@@ -315,32 +504,32 @@ impl<'a> TypeChecker<'a> {
             }
             HirExprKind::Field(object, name) => self.check_field(object, *name),
             HirExprKind::Index(object, index) => self.check_index(object, index),
-            HirExprKind::Block(block) => self.check_block(block),
+            HirExprKind::Block(block) => self.check_block(block, expected),
             HirExprKind::Si(cond, then_block, else_block) => {
-                self.check_if(cond, then_block, else_block.as_mut())
+                self.check_if(cond, then_block, else_block.as_mut(), expected)
             }
-            HirExprKind::Discerne(scrutinee, arms) => self.check_match(scrutinee, arms),
+            HirExprKind::Discerne(scrutinee, arms) => self.check_match(scrutinee, arms, expected),
             HirExprKind::Loop(block) => {
-                self.check_block(block);
+                self.check_block(block, None);
                 self.vacuum_type()
             }
             HirExprKind::Dum(cond, block) => {
                 self.check_condition(cond);
-                self.check_block(block);
+                self.check_block(block, None);
                 self.vacuum_type()
             }
             HirExprKind::Itera(_binding, iter, block) => {
                 self.check_expr(iter);
-                self.check_block(block);
+                self.check_block(block, None);
                 self.vacuum_type()
             }
             HirExprKind::Assign(target, value) => self.check_assign(target, value),
             HirExprKind::AssignOp(op, target, value) => self.check_assign_op(*op, target, value),
-            HirExprKind::Array(elements) => self.check_array(elements, expr.span),
+            HirExprKind::Array(elements) => self.check_array(elements, expr.span, expected),
             HirExprKind::Struct(def_id, fields) => self.check_struct_literal(*def_id, fields),
             HirExprKind::Tuple(items) => self.check_tuple(items),
             HirExprKind::Clausura(params, ret, body) => {
-                self.check_closure(params, ret.as_mut(), body)
+                self.check_closure(params, ret.as_mut(), body, expected)
             }
             HirExprKind::Cede(inner) => self.check_expr(inner),
             HirExprKind::Qua(inner, target) => self.check_cast(inner, *target),
@@ -356,7 +545,12 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Error => self.error_type,
         };
 
-        expr.ty = Some(ty);
+        let ty = if let Some(expected) = expected {
+            self.unify(ty, expected, expr.span, "expression type mismatch")
+        } else {
+            ty
+        };
+        expr.ty = Some(self.resolve_type(ty));
         ty
     }
 
@@ -390,14 +584,7 @@ impl<'a> TypeChecker<'a> {
                 self.numeric_bin(lhs_ty, rhs_ty, lhs.span)
             }
             HirBinOp::Eq | HirBinOp::NotEq => {
-                if !self.types.assignable(lhs_ty, rhs_ty) && !self.types.assignable(rhs_ty, lhs_ty)
-                {
-                    self.error(
-                        SemanticErrorKind::InvalidOperandTypes,
-                        "incompatible operands",
-                        lhs.span,
-                    );
-                }
+                self.unify(lhs_ty, rhs_ty, lhs.span, "incompatible operands");
                 self.bool_type()
             }
             HirBinOp::Lt | HirBinOp::Gt | HirBinOp::LtEq | HirBinOp::GtEq => {
@@ -435,6 +622,14 @@ impl<'a> TypeChecker<'a> {
         let operand_ty = self.check_expr(operand);
         match op {
             crate::hir::HirUnOp::Neg => {
+                if self.is_infer(self.resolve_type(operand_ty)) {
+                    return self.unify(
+                        operand_ty,
+                        self.numerus_type(),
+                        operand.span,
+                        "numeric operand required",
+                    );
+                }
                 if !self.is_numeric(operand_ty) {
                     self.error(
                         SemanticErrorKind::InvalidOperandTypes,
@@ -445,6 +640,15 @@ impl<'a> TypeChecker<'a> {
                 operand_ty
             }
             crate::hir::HirUnOp::Not => {
+                if self.is_infer(self.resolve_type(operand_ty)) {
+                    self.unify(
+                        operand_ty,
+                        self.bool_type(),
+                        operand.span,
+                        "boolean operand required",
+                    );
+                    return self.bool_type();
+                }
                 if !self.is_bool(operand_ty) {
                     self.error(
                         SemanticErrorKind::InvalidOperandTypes,
@@ -455,6 +659,15 @@ impl<'a> TypeChecker<'a> {
                 self.bool_type()
             }
             crate::hir::HirUnOp::BitNot => {
+                if self.is_infer(self.resolve_type(operand_ty)) {
+                    self.unify(
+                        operand_ty,
+                        self.numerus_type(),
+                        operand.span,
+                        "integer operand required",
+                    );
+                    return self.numerus_type();
+                }
                 if !self.is_integer(operand_ty) {
                     self.error(
                         SemanticErrorKind::InvalidOperandTypes,
@@ -470,25 +683,26 @@ impl<'a> TypeChecker<'a> {
     fn check_call(&mut self, callee: &mut HirExpr, args: &mut [HirExpr]) -> TypeId {
         let callee_ty = self.check_expr(callee);
 
-        let sig = match self.types.get(self.resolve_alias(callee_ty)) {
-            Type::Func(sig) => Some(sig.clone()),
-            _ => None,
-        };
+        let resolved = self.resolve_type(callee_ty);
+        if let Some(sig) = self.function_signature_from_type(resolved) {
+            self.check_call_args(&sig, args, callee.span);
+            return self.resolve_type(sig.ret);
+        }
 
-        let sig = match sig {
-            Some(sig) => sig,
-            None => {
-                self.error(
-                    SemanticErrorKind::NotCallable,
-                    "callee is not callable",
-                    callee.span,
-                );
-                return self.error_type;
-            }
-        };
+        if self.is_infer(resolved) {
+            let sig = self.build_call_signature(args);
+            let func_ty = self.types.function(sig.clone());
+            self.unify(resolved, func_ty, callee.span, "callee is not callable");
+            self.check_call_args(&sig, args, callee.span);
+            return sig.ret;
+        }
 
-        self.check_call_args(&sig, args, callee.span);
-        sig.ret
+        self.error(
+            SemanticErrorKind::NotCallable,
+            "callee is not callable",
+            callee.span,
+        );
+        self.error_type
     }
 
     fn check_method_call(
@@ -535,13 +749,7 @@ impl<'a> TypeChecker<'a> {
 
         for (arg, param) in args.iter_mut().zip(sig.params.iter()) {
             let arg_ty = self.check_expr(arg);
-            if !self.types.assignable(arg_ty, param.ty) {
-                self.error(
-                    SemanticErrorKind::TypeMismatch,
-                    "argument type mismatch",
-                    arg.span,
-                );
-            }
+            self.unify(arg_ty, param.ty, arg.span, "argument type mismatch");
         }
     }
 
@@ -575,7 +783,7 @@ impl<'a> TypeChecker<'a> {
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
         let obj_ty = self.check_expr(object);
         let idx_ty = self.check_expr(index);
-        match self.types.get(self.resolve_alias(obj_ty)) {
+        match self.types.get(self.resolve_type(obj_ty)) {
             Type::Array(elem) => {
                 if !self.is_integer(idx_ty) {
                     self.error(
@@ -587,13 +795,7 @@ impl<'a> TypeChecker<'a> {
                 *elem
             }
             Type::Map(key, value) => {
-                if !self.types.assignable(idx_ty, *key) {
-                    self.error(
-                        SemanticErrorKind::InvalidOperandTypes,
-                        "map index type mismatch",
-                        index.span,
-                    );
-                }
+                self.unify(idx_ty, *key, index.span, "map index type mismatch");
                 *value
             }
             _ => {
@@ -612,11 +814,12 @@ impl<'a> TypeChecker<'a> {
         cond: &mut HirExpr,
         then_block: &mut HirBlock,
         else_block: Option<&mut HirBlock>,
+        expected: Option<TypeId>,
     ) -> TypeId {
         self.check_condition(cond);
-        let then_ty = self.check_block(then_block);
+        let then_ty = self.check_block(then_block, expected);
         let else_ty = else_block
-            .map(|block| self.check_block(block))
+            .map(|block| self.check_block(block, expected))
             .unwrap_or_else(|| self.vacuum_type());
 
         self.common_type(then_ty, else_ty, cond.span)
@@ -624,6 +827,15 @@ impl<'a> TypeChecker<'a> {
 
     fn check_condition(&mut self, cond: &mut HirExpr) {
         let cond_ty = self.check_expr(cond);
+        if self.is_infer(self.resolve_type(cond_ty)) {
+            self.unify(
+                cond_ty,
+                self.bool_type(),
+                cond.span,
+                "condition must be bivalens",
+            );
+            return;
+        }
         if !self.is_bool(cond_ty) {
             self.error(
                 SemanticErrorKind::InvalidOperandTypes,
@@ -633,7 +845,12 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn check_match(&mut self, scrutinee: &mut HirExpr, arms: &mut [HirCasuArm]) -> TypeId {
+    fn check_match(
+        &mut self,
+        scrutinee: &mut HirExpr,
+        arms: &mut [HirCasuArm],
+        expected: Option<TypeId>,
+    ) -> TypeId {
         let scrutinee_ty = self.check_expr(scrutinee);
         let mut result_ty = None;
 
@@ -643,7 +860,7 @@ impl<'a> TypeChecker<'a> {
             if let Some(guard) = &mut arm.guard {
                 self.check_condition(guard);
             }
-            let body_ty = self.check_expr(&mut arm.body);
+            let body_ty = self.check_expr_with_expected(&mut arm.body, expected);
             result_ty = Some(match result_ty {
                 None => body_ty,
                 Some(existing) => self.common_type(existing, body_ty, arm.span),
@@ -662,15 +879,7 @@ impl<'a> TypeChecker<'a> {
             }
             HirPattern::Literal(lit) => {
                 let lit_ty = self.literal_type(lit);
-                if !self.types.assignable(lit_ty, expected)
-                    && !self.types.assignable(expected, lit_ty)
-                {
-                    self.error(
-                        SemanticErrorKind::TypeMismatch,
-                        "pattern type mismatch",
-                        span,
-                    );
-                }
+                self.unify(lit_ty, expected, span, "pattern type mismatch");
             }
             HirPattern::Variant(variant_def, patterns) => {
                 let Some(parent) = self.variant_parent.get(variant_def).copied() else {
@@ -713,14 +922,8 @@ impl<'a> TypeChecker<'a> {
 
     fn check_assign(&mut self, target: &mut HirExpr, value: &mut HirExpr) -> TypeId {
         let target_ty = self.check_lvalue(target);
-        let value_ty = self.check_expr(value);
-        if !self.types.assignable(value_ty, target_ty) {
-            self.error(
-                SemanticErrorKind::TypeMismatch,
-                "assignment type mismatch",
-                value.span,
-            );
-        }
+        let value_ty = self.check_expr_with_expected(value, Some(target_ty));
+        self.unify(value_ty, target_ty, value.span, "assignment type mismatch");
         target_ty
     }
 
@@ -790,19 +993,36 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn check_array(&mut self, elements: &mut [HirExpr], span: crate::lexer::Span) -> TypeId {
+    fn check_array(
+        &mut self,
+        elements: &mut [HirExpr],
+        span: crate::lexer::Span,
+        expected: Option<TypeId>,
+    ) -> TypeId {
+        let expected_elem = expected.and_then(|ty| match self.types.get(self.resolve_type(ty)) {
+            Type::Array(inner) => Some(*inner),
+            _ => None,
+        });
+
         if elements.is_empty() {
+            if let Some(inner) = expected_elem {
+                return self.types.array(inner);
+            }
             self.error(
                 SemanticErrorKind::MissingTypeAnnotation,
                 "empty array needs type annotation",
                 span,
             );
-            return self.types.array(self.unknown_type());
+            return self.types.array(self.fresh_infer());
         }
 
         let mut element_ty = None;
         for element in elements {
-            let ty = self.check_expr(element);
+            let ty = if let Some(expected) = expected_elem {
+                self.check_expr_with_expected(element, Some(expected))
+            } else {
+                self.check_expr(element)
+            };
             element_ty = Some(match element_ty {
                 None => ty,
                 Some(existing) => self.common_type(existing, ty, element.span),
@@ -810,7 +1030,7 @@ impl<'a> TypeChecker<'a> {
         }
 
         self.types
-            .array(element_ty.unwrap_or_else(|| self.unknown_type()))
+            .array(element_ty.unwrap_or_else(|| self.fresh_infer()))
     }
 
     fn check_struct_literal(
@@ -840,13 +1060,12 @@ impl<'a> TypeChecker<'a> {
                 continue;
             };
             let value_ty = self.check_expr(value);
-            if !self.types.assignable(value_ty, *field_ty) {
-                self.error(
-                    SemanticErrorKind::TypeMismatch,
-                    "field initializer type mismatch",
-                    value.span,
-                );
-            }
+            self.unify(
+                value_ty,
+                *field_ty,
+                value.span,
+                "field initializer type mismatch",
+            );
         }
 
         self.types.intern(Type::Struct(def_id))
@@ -865,23 +1084,34 @@ impl<'a> TypeChecker<'a> {
         params: &mut Vec<HirParam>,
         ret: Option<&mut TypeId>,
         body: &mut HirExpr,
+        expected: Option<TypeId>,
     ) -> TypeId {
+        let expected_sig = expected.and_then(|ty| self.function_signature_from_type(ty));
+
         self.push_scope();
-        for param in params.iter() {
+        for (idx, param) in params.iter().enumerate() {
             let mutable = matches!(param.mode, HirParamMode::MutRef);
+            if let Some(sig) = &expected_sig {
+                if let Some(expected_param) = sig.params.get(idx) {
+                    self.unify(
+                        param.ty,
+                        expected_param.ty,
+                        param.span,
+                        "closure parameter type mismatch",
+                    );
+                }
+            }
             self.insert_binding(param.def_id, param.ty, mutable);
         }
 
-        let body_ty = self.check_expr(body);
+        let expected_ret = ret
+            .as_ref()
+            .copied()
+            .or_else(|| expected_sig.as_ref().map(|sig| sig.ret));
+        let body_ty = self.check_expr_with_expected(body, expected_ret);
         let ret_ty = match ret {
             Some(ty) => {
-                if !self.types.assignable(body_ty, *ty) {
-                    self.error(
-                        SemanticErrorKind::TypeMismatch,
-                        "closure return type mismatch",
-                        body.span,
-                    );
-                }
+                self.unify(body_ty, *ty, body.span, "closure return type mismatch");
                 *ty
             }
             None => body_ty,
@@ -907,6 +1137,9 @@ impl<'a> TypeChecker<'a> {
 
     fn check_cast(&mut self, expr: &mut HirExpr, target: TypeId) -> TypeId {
         let expr_ty = self.check_expr(expr);
+        if self.is_infer(self.resolve_type(target)) {
+            return self.unify(expr_ty, target, expr.span, "invalid cast");
+        }
         if !self.types.assignable(expr_ty, target) && !self.types.assignable(target, expr_ty) {
             self.error(SemanticErrorKind::InvalidCast, "invalid cast", expr.span);
         }
@@ -915,7 +1148,7 @@ impl<'a> TypeChecker<'a> {
 
     fn check_deref(&mut self, expr: &mut HirExpr, span: crate::lexer::Span) -> TypeId {
         let expr_ty = self.check_expr(expr);
-        match self.types.get(self.resolve_alias(expr_ty)) {
+        match self.types.get(self.resolve_type(expr_ty)) {
             Type::Ref(_, inner) => *inner,
             _ => {
                 self.error(
@@ -929,6 +1162,14 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn numeric_bin(&mut self, lhs: TypeId, rhs: TypeId, span: crate::lexer::Span) -> TypeId {
+        let lhs_resolved = self.resolve_type(lhs);
+        let rhs_resolved = self.resolve_type(rhs);
+        if self.is_infer(lhs_resolved) {
+            self.unify(lhs, self.numerus_type(), span, "numeric operands required");
+        }
+        if self.is_infer(rhs_resolved) {
+            self.unify(rhs, self.numerus_type(), span, "numeric operands required");
+        }
         if !self.is_numeric(lhs) || !self.is_numeric(rhs) {
             self.error(
                 SemanticErrorKind::InvalidOperandTypes,
@@ -946,11 +1187,16 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn common_type(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span) -> TypeId {
-        if self.types.assignable(a, b) {
-            return b;
+        let left = self.resolve_type(a);
+        let right = self.resolve_type(b);
+        if self.types.assignable(left, right) {
+            return right;
         }
-        if self.types.assignable(b, a) {
-            return a;
+        if self.types.assignable(right, left) {
+            return left;
+        }
+        if self.is_numeric(left) && self.is_numeric(right) {
+            return self.numeric_bin(left, right, span);
         }
         self.error(SemanticErrorKind::TypeMismatch, "incompatible types", span);
         self.error_type
@@ -967,7 +1213,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn struct_def_from_type(&self, ty: TypeId) -> Option<DefId> {
-        match self.types.get(self.resolve_alias(ty)) {
+        match self.types.get(self.resolve_type(ty)) {
             Type::Struct(def_id) => Some(*def_id),
             Type::Ref(_, inner) => self.struct_def_from_type(*inner),
             Type::Applied(base, _) => self.struct_def_from_type(*base),
@@ -976,7 +1222,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn enum_def_from_type(&self, ty: TypeId) -> Option<DefId> {
-        match self.types.get(self.resolve_alias(ty)) {
+        match self.types.get(self.resolve_type(ty)) {
             Type::Enum(def_id) => Some(*def_id),
             Type::Applied(base, _) => self.enum_def_from_type(*base),
             _ => None,
@@ -993,27 +1239,198 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    fn fresh_infer(&mut self) -> TypeId {
+        let var = crate::semantic::InferVar(self.next_infer);
+        self.next_infer += 1;
+        let id = self.types.intern(Type::Infer(var));
+        self.infer_ids.insert(var, id);
+        id
+    }
+
+    fn resolve_type(&self, ty: TypeId) -> TypeId {
+        let mut current = ty;
+        loop {
+            if let Some(infer) = self.infer_var_of(current) {
+                if let Some(subst) = self.substitutions.get(&infer) {
+                    current = *subst;
+                    continue;
+                }
+            }
+            match self.types.get(current) {
+                Type::Alias(_, resolved) => current = *resolved,
+                _ => return current,
+            }
+        }
+    }
+
+    fn infer_var_of(&self, ty: TypeId) -> Option<crate::semantic::InferVar> {
+        match self.types.get(ty) {
+            Type::Infer(var) => Some(*var),
+            _ => None,
+        }
+    }
+
+    fn is_infer(&self, ty: TypeId) -> bool {
+        self.infer_var_of(ty).is_some()
+    }
+
+    fn function_signature_from_type(&self, ty: TypeId) -> Option<FuncSig> {
+        match self.types.get(self.resolve_type(ty)) {
+            Type::Func(sig) => Some(sig.clone()),
+            _ => None,
+        }
+    }
+
+    fn build_call_signature(&mut self, args: &mut [HirExpr]) -> FuncSig {
+        let params = args
+            .iter_mut()
+            .map(|arg| ParamType {
+                ty: self.check_expr(arg),
+                mode: ParamMode::Owned,
+                optional: false,
+            })
+            .collect();
+        FuncSig {
+            params,
+            ret: self.fresh_infer(),
+            is_async: false,
+            is_generator: false,
+        }
+    }
+
+    fn unify(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span, message: &str) -> TypeId {
+        let left = self.resolve_type(a);
+        let right = self.resolve_type(b);
+        if left == right {
+            return left;
+        }
+
+        if let Some(var) = self.infer_var_of(left) {
+            return self.bind_infer(var, right, span, message);
+        }
+        if let Some(var) = self.infer_var_of(right) {
+            return self.bind_infer(var, left, span, message);
+        }
+
+        match (self.types.get(left), self.types.get(right)) {
+            (Type::Primitive(Primitive::Numerus), Type::Primitive(Primitive::Fractus))
+            | (Type::Primitive(Primitive::Fractus), Type::Primitive(Primitive::Numerus)) => {
+                return self.fractus_type();
+            }
+            (Type::Primitive(a), Type::Primitive(b)) if a == b => return left,
+            (Type::Array(a), Type::Array(b)) => {
+                let inner = self.unify(*a, *b, span, message);
+                return self.types.array(inner);
+            }
+            (Type::Map(ka, va), Type::Map(kb, vb)) => {
+                let key = self.unify(*ka, *kb, span, message);
+                let value = self.unify(*va, *vb, span, message);
+                return self.types.map(key, value);
+            }
+            (Type::Set(a), Type::Set(b)) => {
+                let inner = self.unify(*a, *b, span, message);
+                return self.types.set(inner);
+            }
+            (Type::Option(a), Type::Option(b)) => {
+                let inner = self.unify(*a, *b, span, message);
+                return self.types.option(inner);
+            }
+            (Type::Ref(ma, a), Type::Ref(mb, b)) if ma == mb => {
+                let inner = self.unify(*a, *b, span, message);
+                return self.types.reference(*ma, inner);
+            }
+            (Type::Func(sig_a), Type::Func(sig_b)) => {
+                if sig_a.params.len() != sig_b.params.len() {
+                    self.error(SemanticErrorKind::WrongArity, message, span);
+                    return self.error_type;
+                }
+                for (param_a, param_b) in sig_a.params.iter().zip(sig_b.params.iter()) {
+                    self.unify(param_a.ty, param_b.ty, span, message);
+                }
+                let ret = self.unify(sig_a.ret, sig_b.ret, span, message);
+                return self.types.function(FuncSig {
+                    params: sig_a.params.clone(),
+                    ret,
+                    is_async: sig_a.is_async || sig_b.is_async,
+                    is_generator: sig_a.is_generator || sig_b.is_generator,
+                });
+            }
+            _ => {
+                if self.types.assignable(left, right) || self.types.assignable(right, left) {
+                    return right;
+                }
+            }
+        }
+
+        self.error(SemanticErrorKind::TypeMismatch, message, span);
+        self.error_type
+    }
+
+    fn bind_infer(
+        &mut self,
+        var: crate::semantic::InferVar,
+        ty: TypeId,
+        span: crate::lexer::Span,
+        message: &str,
+    ) -> TypeId {
+        let resolved = self.resolve_type(ty);
+        if let Some(existing) = self.substitutions.get(&var) {
+            return self.unify(*existing, resolved, span, message);
+        }
+
+        if self.occurs_in(var, resolved) {
+            self.error(SemanticErrorKind::TypeMismatch, message, span);
+            return self.error_type;
+        }
+
+        self.substitutions.insert(var, resolved);
+        resolved
+    }
+
+    fn occurs_in(&self, var: crate::semantic::InferVar, ty: TypeId) -> bool {
+        let resolved = self.resolve_type(ty);
+        if let Some(found) = self.infer_var_of(resolved) {
+            return found == var;
+        }
+        match self.types.get(resolved) {
+            Type::Array(inner) | Type::Option(inner) | Type::Ref(_, inner) => {
+                self.occurs_in(var, *inner)
+            }
+            Type::Set(inner) => self.occurs_in(var, *inner),
+            Type::Map(key, value) => self.occurs_in(var, *key) || self.occurs_in(var, *value),
+            Type::Func(sig) => {
+                sig.params.iter().any(|param| self.occurs_in(var, param.ty))
+                    || self.occurs_in(var, sig.ret)
+            }
+            Type::Applied(base, args) => {
+                self.occurs_in(var, *base) || args.iter().any(|arg| self.occurs_in(var, *arg))
+            }
+            Type::Union(types) => types.iter().any(|inner| self.occurs_in(var, *inner)),
+            _ => false,
+        }
+    }
+
     fn is_numeric(&self, ty: TypeId) -> bool {
         self.is_integer(ty) || self.is_fractus(ty)
     }
 
     fn is_integer(&self, ty: TypeId) -> bool {
         matches!(
-            self.types.get(self.resolve_alias(ty)),
+            self.types.get(self.resolve_type(ty)),
             Type::Primitive(Primitive::Numerus)
         )
     }
 
     fn is_fractus(&self, ty: TypeId) -> bool {
         matches!(
-            self.types.get(self.resolve_alias(ty)),
+            self.types.get(self.resolve_type(ty)),
             Type::Primitive(Primitive::Fractus)
         )
     }
 
     fn is_bool(&self, ty: TypeId) -> bool {
         matches!(
-            self.types.get(self.resolve_alias(ty)),
+            self.types.get(self.resolve_type(ty)),
             Type::Primitive(Primitive::Bivalens)
         )
     }
@@ -1040,10 +1457,6 @@ impl<'a> TypeChecker<'a> {
 
     fn vacuum_type(&mut self) -> TypeId {
         self.types.primitive(Primitive::Vacuum)
-    }
-
-    fn unknown_type(&mut self) -> TypeId {
-        self.types.primitive(Primitive::Ignotum)
     }
 
     fn push_scope(&mut self) {
