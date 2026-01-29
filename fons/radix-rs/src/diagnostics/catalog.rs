@@ -198,6 +198,10 @@ pub fn semantic_spec(kind: SemanticErrorKind) -> DiagnosticSpec {
             code: "SEM008",
             help: Some("fix the AST construct for lowering"),
         },
+        SemanticErrorKind::ShadowedVariable => DiagnosticSpec {
+            code: "SEM055",
+            help: Some("rename one of the variables"),
+        },
         SemanticErrorKind::TypeMismatch => DiagnosticSpec {
             code: "SEM010",
             help: Some("make the expression type match the expected type"),
@@ -312,12 +316,8 @@ fn warning_spec(kind: WarningKind) -> DiagnosticSpec {
             code: "WARN006",
             help: Some("replace the deprecated feature"),
         },
-        WarningKind::ShadowedVariable => DiagnosticSpec {
-            code: "WARN007",
-            help: Some("rename one of the variables"),
-        },
         WarningKind::TargetNoop => DiagnosticSpec {
-            code: "WARN008",
+            code: "WARN007",
             help: Some("remove the construct or gate it by target"),
         },
     }

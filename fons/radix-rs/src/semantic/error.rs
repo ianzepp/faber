@@ -41,6 +41,7 @@ pub enum SemanticErrorKind {
     ImportNotFound,
     CircularDependency,
     LoweringError,
+    ShadowedVariable,
 
     // Type errors
     TypeMismatch,
@@ -85,7 +86,6 @@ pub enum WarningKind {
     UnreachableCode,
     UnnecessaryCast,
     DeprecatedFeature,
-    ShadowedVariable,
     TargetNoop,
 }
 

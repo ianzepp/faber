@@ -26,13 +26,17 @@ pub fn lint(
         warnings.push(warning);
     }
 
+    let mut errors = ctx.errors;
+
     // Convert warnings to errors (with warning kind)
-    let errors: Vec<SemanticError> = warnings
+    let mut warnings: Vec<SemanticError> = warnings
         .into_iter()
         .map(|(kind, msg, span): (WarningKind, String, Span)| {
             SemanticError::new(SemanticErrorKind::Warning(kind), msg, span)
         })
         .collect();
+
+    errors.append(&mut warnings);
 
     if errors.is_empty() {
         Ok(())
@@ -44,6 +48,7 @@ pub fn lint(
 struct LintContext<'a> {
     types: &'a TypeTable,
     warnings: Vec<(WarningKind, String, Span)>,
+    errors: Vec<SemanticError>,
     used: FxHashSet<crate::hir::DefId>,
     defs: Vec<(crate::hir::DefId, Span, WarningKind)>,
     imports: Vec<(crate::hir::DefId, Span)>,
@@ -56,6 +61,7 @@ impl<'a> LintContext<'a> {
         Self {
             types,
             warnings: Vec::new(),
+            errors: Vec::new(),
             used: FxHashSet::default(),
             defs: Vec::new(),
             imports: Vec::new(),
@@ -311,9 +317,9 @@ impl<'a> LintContext<'a> {
         for scope in self.scope.iter().rev() {
             if let Some(existing) = scope.get(&name) {
                 if existing != &def_id {
-                    self.warnings.push((
-                        WarningKind::ShadowedVariable,
-                        "shadowed variable".to_owned(),
+                    self.errors.push(SemanticError::new(
+                        SemanticErrorKind::ShadowedVariable,
+                        "shadowed variable",
                         span,
                     ));
                 }
@@ -482,7 +488,7 @@ mod tests {
         let errors = result.unwrap_err();
         assert!(errors
             .iter()
-            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::ShadowedVariable)));
+            .any(|err| err.kind == SemanticErrorKind::ShadowedVariable));
     }
 
     #[test]
