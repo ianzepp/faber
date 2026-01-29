@@ -14,11 +14,11 @@ use rustc_hash::FxHashSet;
 pub fn lint(
     hir: &HirProgram,
     _resolver: &Resolver,
-    _types: &TypeTable,
+    types: &TypeTable,
 ) -> Result<(), Vec<SemanticError>> {
     let mut warnings = Vec::new();
 
-    let mut ctx = LintContext::new();
+    let mut ctx = LintContext::new(types);
     ctx.collect_items(hir);
     ctx.check_program(hir);
 
@@ -41,22 +41,26 @@ pub fn lint(
     }
 }
 
-struct LintContext {
+struct LintContext<'a> {
+    types: &'a TypeTable,
     warnings: Vec<(WarningKind, String, Span)>,
     used: FxHashSet<crate::hir::DefId>,
     defs: Vec<(crate::hir::DefId, Span, WarningKind)>,
     imports: Vec<(crate::hir::DefId, Span)>,
     functions: Vec<(crate::hir::DefId, Span)>,
+    scope: Vec<rustc_hash::FxHashMap<crate::lexer::Symbol, crate::hir::DefId>>,
 }
 
-impl LintContext {
-    fn new() -> Self {
+impl<'a> LintContext<'a> {
+    fn new(types: &'a TypeTable) -> Self {
         Self {
+            types,
             warnings: Vec::new(),
             used: FxHashSet::default(),
             defs: Vec::new(),
             imports: Vec::new(),
             functions: Vec::new(),
+            scope: Vec::new(),
         }
     }
 
@@ -85,7 +89,7 @@ impl LintContext {
         }
 
         if let Some(entry) = &hir.entry {
-            self.check_block(entry);
+            self.check_block(entry, false);
         }
 
         for (def_id, span, kind) in &self.defs {
@@ -124,22 +128,27 @@ impl LintContext {
                     self.check_function(&method.func);
                 }
             }
-            HirItemKind::Const(const_item) => self.check_expr(&const_item.value),
+            HirItemKind::Const(const_item) => self.check_expr(&const_item.value, false),
             _ => {}
         }
     }
 
     fn check_function(&mut self, func: &HirFunction) {
+        self.push_scope();
         for param in &func.params {
             self.defs
                 .push((param.def_id, param.span, WarningKind::UnusedVariable));
+            self.check_shadowing(param.name, param.def_id, param.span);
+            self.insert_name(param.name, param.def_id);
         }
         if let Some(body) = &func.body {
-            self.check_block(body);
+            self.check_block(body, false);
         }
+        self.pop_scope();
     }
 
-    fn check_block(&mut self, block: &HirBlock) {
+    fn check_block(&mut self, block: &HirBlock, in_loop: bool) {
+        self.push_scope();
         let mut terminated = false;
         for stmt in &block.stmts {
             if terminated {
@@ -150,23 +159,26 @@ impl LintContext {
                 ));
                 continue;
             }
-            self.check_stmt(stmt);
-            if matches!(stmt.kind, HirStmtKind::Redde(_)) {
+            self.check_stmt(stmt, in_loop);
+            if matches!(stmt.kind, HirStmtKind::Redde(_))
+                || (in_loop && matches!(stmt.kind, HirStmtKind::Rumpe | HirStmtKind::Perge))
+            {
                 terminated = true;
             }
         }
         if let Some(expr) = &block.expr {
-            self.check_expr(expr);
+            self.check_expr(expr, in_loop);
         }
+        self.pop_scope();
     }
 
-    fn check_stmt(&mut self, stmt: &HirStmt) {
+    fn check_stmt(&mut self, stmt: &HirStmt, in_loop: bool) {
         match &stmt.kind {
             HirStmtKind::Local(local) => self.check_local(local),
-            HirStmtKind::Expr(expr) => self.check_expr(expr),
+            HirStmtKind::Expr(expr) => self.check_expr(expr, in_loop),
             HirStmtKind::Redde(value) => {
                 if let Some(expr) = value {
-                    self.check_expr(expr);
+                    self.check_expr(expr, in_loop);
                 }
             }
             HirStmtKind::Rumpe | HirStmtKind::Perge => {}
@@ -183,90 +195,145 @@ impl LintContext {
                 .unwrap_or_default(),
             WarningKind::UnusedVariable,
         ));
+        self.check_shadowing(
+            local.name,
+            local.def_id,
+            local
+                .init
+                .as_ref()
+                .map(|expr| expr.span)
+                .unwrap_or_default(),
+        );
+        self.insert_name(local.name, local.def_id);
         if let Some(init) = &local.init {
-            self.check_expr(init);
+            self.check_expr(init, false);
         }
     }
 
-    fn check_expr(&mut self, expr: &HirExpr) {
+    fn check_expr(&mut self, expr: &HirExpr, in_loop: bool) {
         match &expr.kind {
             HirExprKind::Path(def_id) => {
                 self.used.insert(*def_id);
             }
             HirExprKind::Binary(_, lhs, rhs) => {
-                self.check_expr(lhs);
-                self.check_expr(rhs);
+                self.check_expr(lhs, in_loop);
+                self.check_expr(rhs, in_loop);
             }
-            HirExprKind::Unary(_, operand) => self.check_expr(operand),
+            HirExprKind::Unary(_, operand) => self.check_expr(operand, in_loop),
             HirExprKind::Call(callee, args) => {
-                self.check_expr(callee);
+                self.check_expr(callee, in_loop);
                 for arg in args {
-                    self.check_expr(arg);
+                    self.check_expr(arg, in_loop);
                 }
             }
             HirExprKind::MethodCall(receiver, _name, args) => {
-                self.check_expr(receiver);
+                self.check_expr(receiver, in_loop);
                 for arg in args {
-                    self.check_expr(arg);
+                    self.check_expr(arg, in_loop);
                 }
             }
-            HirExprKind::Field(object, _) => self.check_expr(object),
+            HirExprKind::Field(object, _) => self.check_expr(object, in_loop),
             HirExprKind::Index(object, index) => {
-                self.check_expr(object);
-                self.check_expr(index);
+                self.check_expr(object, in_loop);
+                self.check_expr(index, in_loop);
             }
-            HirExprKind::Block(block) => self.check_block(block),
+            HirExprKind::Block(block) => self.check_block(block, in_loop),
             HirExprKind::Si(cond, then_block, else_block) => {
-                self.check_expr(cond);
-                self.check_block(then_block);
+                self.check_expr(cond, in_loop);
+                self.check_block(then_block, in_loop);
                 if let Some(block) = else_block {
-                    self.check_block(block);
+                    self.check_block(block, in_loop);
                 }
             }
             HirExprKind::Discerne(scrutinee, arms) => {
-                self.check_expr(scrutinee);
+                self.check_expr(scrutinee, in_loop);
                 for arm in arms {
                     if let Some(guard) = &arm.guard {
-                        self.check_expr(guard);
+                        self.check_expr(guard, in_loop);
                     }
-                    self.check_expr(&arm.body);
+                    self.check_expr(&arm.body, in_loop);
                 }
             }
-            HirExprKind::Loop(block) => self.check_block(block),
+            HirExprKind::Loop(block) => self.check_block(block, true),
             HirExprKind::Dum(cond, block) => {
-                self.check_expr(cond);
-                self.check_block(block);
+                self.check_expr(cond, in_loop);
+                self.check_block(block, true);
             }
             HirExprKind::Itera(_, iter, block) => {
-                self.check_expr(iter);
-                self.check_block(block);
+                self.check_expr(iter, in_loop);
+                self.check_block(block, true);
             }
             HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
-                self.check_expr(lhs);
-                self.check_expr(rhs);
+                self.check_expr(lhs, in_loop);
+                self.check_expr(rhs, in_loop);
             }
             HirExprKind::Array(elements) => {
                 for element in elements {
-                    self.check_expr(element);
+                    self.check_expr(element, in_loop);
                 }
             }
             HirExprKind::Struct(_, fields) => {
                 for (_, value) in fields {
-                    self.check_expr(value);
+                    self.check_expr(value, in_loop);
                 }
             }
             HirExprKind::Tuple(elements) => {
                 for element in elements {
-                    self.check_expr(element);
+                    self.check_expr(element, in_loop);
                 }
             }
-            HirExprKind::Clausura(_, _, body) => self.check_expr(body),
-            HirExprKind::Cede(expr)
-            | HirExprKind::Qua(expr, _)
-            | HirExprKind::Ref(_, expr)
-            | HirExprKind::Deref(expr) => self.check_expr(expr),
+            HirExprKind::Clausura(_, _, body) => self.check_expr(body, in_loop),
+            HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
+                self.check_expr(expr, in_loop)
+            }
+            HirExprKind::Qua(inner, target) => {
+                self.check_expr(inner, in_loop);
+                if let Some(inner_ty) = inner.ty {
+                    if inner_ty == *target {
+                        self.warnings.push((
+                            WarningKind::UnnecessaryCast,
+                            "unnecessary cast".to_owned(),
+                            expr.span,
+                        ));
+                    }
+                }
+            }
             HirExprKind::Literal(_) | HirExprKind::Error => {}
         }
+    }
+
+    fn check_shadowing(
+        &mut self,
+        name: crate::lexer::Symbol,
+        def_id: crate::hir::DefId,
+        span: Span,
+    ) {
+        for scope in self.scope.iter().rev() {
+            if let Some(existing) = scope.get(&name) {
+                if existing != &def_id {
+                    self.warnings.push((
+                        WarningKind::ShadowedVariable,
+                        "shadowed variable".to_owned(),
+                        span,
+                    ));
+                }
+                break;
+            }
+        }
+    }
+
+    fn insert_name(&mut self, name: crate::lexer::Symbol, def_id: crate::hir::DefId) {
+        if let Some(scope) = self.scope.last_mut() {
+            scope.insert(name, def_id);
+        }
+    }
+
+    fn push_scope(&mut self) {
+        self.scope.push(rustc_hash::FxHashMap::default());
+    }
+
+    fn pop_scope(&mut self) {
+        self.scope.pop();
     }
 }
 
@@ -275,6 +342,7 @@ mod tests {
     use super::*;
     use crate::hir::{HirExpr, HirExprKind, HirLiteral, HirProgram, HirStmt, HirStmtKind};
     use crate::lexer::Span;
+    use crate::semantic::Primitive;
 
     fn span() -> Span {
         Span::default()
@@ -373,5 +441,129 @@ mod tests {
         assert!(errors
             .iter()
             .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnusedImport)));
+    }
+
+    #[test]
+    fn warns_on_shadowed_variable() {
+        let program = HirProgram {
+            items: Vec::new(),
+            entry: Some(HirBlock {
+                stmts: vec![
+                    HirStmt {
+                        id: crate::hir::HirId(1),
+                        kind: HirStmtKind::Local(HirLocal {
+                            def_id: crate::hir::DefId(1),
+                            name: crate::lexer::Symbol(1),
+                            ty: None,
+                            init: Some(lit_expr()),
+                            mutable: false,
+                        }),
+                        span: span(),
+                    },
+                    HirStmt {
+                        id: crate::hir::HirId(2),
+                        kind: HirStmtKind::Local(HirLocal {
+                            def_id: crate::hir::DefId(2),
+                            name: crate::lexer::Symbol(1),
+                            ty: None,
+                            init: Some(lit_expr()),
+                            mutable: false,
+                        }),
+                        span: span(),
+                    },
+                ],
+                expr: None,
+                span: span(),
+            }),
+        };
+
+        let result = lint(&program, &Resolver::new(), &TypeTable::new());
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::ShadowedVariable)));
+    }
+
+    #[test]
+    fn warns_on_unnecessary_cast() {
+        let mut types = TypeTable::new();
+        let numerus = types.primitive(Primitive::Numerus);
+        let program = HirProgram {
+            items: Vec::new(),
+            entry: Some(HirBlock {
+                stmts: vec![HirStmt {
+                    id: crate::hir::HirId(1),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: crate::hir::HirId(2),
+                        kind: HirExprKind::Qua(
+                            Box::new(HirExpr {
+                                id: crate::hir::HirId(3),
+                                kind: HirExprKind::Literal(HirLiteral::Int(1)),
+                                ty: Some(numerus),
+                                span: span(),
+                            }),
+                            numerus,
+                        ),
+                        ty: Some(numerus),
+                        span: span(),
+                    }),
+                    span: span(),
+                }],
+                expr: None,
+                span: span(),
+            }),
+        };
+
+        let result = lint(&program, &Resolver::new(), &types);
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnnecessaryCast)));
+    }
+
+    #[test]
+    fn warns_on_unreachable_after_break() {
+        let loop_block = HirBlock {
+            stmts: vec![
+                HirStmt {
+                    id: crate::hir::HirId(1),
+                    kind: HirStmtKind::Rumpe,
+                    span: span(),
+                },
+                HirStmt {
+                    id: crate::hir::HirId(2),
+                    kind: HirStmtKind::Expr(lit_expr()),
+                    span: span(),
+                },
+            ],
+            expr: None,
+            span: span(),
+        };
+        let program = HirProgram {
+            items: Vec::new(),
+            entry: Some(HirBlock {
+                stmts: vec![HirStmt {
+                    id: crate::hir::HirId(3),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: crate::hir::HirId(4),
+                        kind: HirExprKind::Loop(loop_block),
+                        ty: None,
+                        span: span(),
+                    }),
+                    span: span(),
+                }],
+                expr: None,
+                span: span(),
+            }),
+        };
+
+        let result = lint(&program, &Resolver::new(), &TypeTable::new());
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnreachableCode)));
     }
 }
