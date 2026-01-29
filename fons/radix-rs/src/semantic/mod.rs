@@ -86,7 +86,7 @@ pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> S
     }
 
     // Pass 3: Lower to HIR
-    let (hir, lower_errors) = crate::hir::lower(program, &resolver, &mut types, interner);
+    let (mut hir, lower_errors) = crate::hir::lower(program, &resolver, &mut types, interner);
 
     // Add lowering errors
     for err in lower_errors {
@@ -106,7 +106,7 @@ pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> S
     }
 
     // Pass 4: Type checking
-    if let Err(e) = passes::typecheck::typecheck(&hir, &resolver, &mut types) {
+    if let Err(e) = passes::typecheck::typecheck(&mut hir, &resolver, &mut types) {
         errors.extend(e);
     }
 

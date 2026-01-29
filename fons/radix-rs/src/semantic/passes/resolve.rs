@@ -2,9 +2,11 @@
 //!
 //! Resolves all identifiers to their definitions.
 
+use crate::hir::DefId;
 use crate::lexer::Interner;
 use crate::semantic::{
-    Resolver, ScopeKind, SemanticError, SemanticErrorKind, Symbol, SymbolKind, TypeTable,
+    FuncSig, Mutability, ParamMode, ParamType, Resolver, ScopeKind, SemanticError,
+    SemanticErrorKind, Symbol, SymbolKind, TypeId, TypeTable,
 };
 use crate::syntax::{
     BindingPattern, BlockStmt, ClausuraBody, DiscerneStmt, Expr, ExprKind, IfBody, Pattern,
@@ -16,13 +18,34 @@ pub fn resolve(
     program: &Program,
     resolver: &mut Resolver,
     interner: &Interner,
-    _types: &mut TypeTable,
+    types: &mut TypeTable,
 ) -> Result<(), Vec<SemanticError>> {
     let mut errors = Vec::new();
+    let mut aliases = Vec::new();
+
+    for stmt in &program.stmts {
+        if let StmtKind::TypeAlias(decl) = &stmt.kind {
+            let Some(def_id) = resolver.lookup(decl.name.name) else {
+                errors.push(SemanticError::new(
+                    SemanticErrorKind::LoweringError,
+                    "missing symbol for type alias",
+                    stmt.span,
+                ));
+                continue;
+            };
+            aliases.push(AliasEntry {
+                def_id,
+                ty: &decl.ty,
+                span: stmt.span,
+            });
+        }
+    }
 
     for stmt in &program.stmts {
         resolve_stmt(resolver, interner, stmt, &mut errors);
     }
+
+    resolve_alias_types(&aliases, resolver, interner, types, &mut errors);
 
     if errors.is_empty() {
         Ok(())
@@ -1082,5 +1105,501 @@ fn define_symbol(
             "duplicate definition",
             span,
         ));
+    }
+}
+
+struct AliasEntry<'a> {
+    def_id: DefId,
+    ty: &'a TypeExpr,
+    span: crate::lexer::Span,
+}
+
+enum TypeLowerError {
+    UnresolvedAlias(DefId),
+    Error(String),
+}
+
+fn resolve_alias_types(
+    aliases: &[AliasEntry<'_>],
+    resolver: &mut Resolver,
+    interner: &Interner,
+    types: &mut TypeTable,
+    errors: &mut Vec<SemanticError>,
+) {
+    let mut pending: Vec<&AliasEntry<'_>> = aliases.iter().collect();
+
+    while !pending.is_empty() {
+        let mut next_pending = Vec::new();
+        let mut progress = false;
+
+        for alias in pending {
+            match lower_type_expr(alias.ty, resolver, interner, types) {
+                Ok(type_id) => {
+                    if let Some(symbol) = resolver.get_symbol_mut(alias.def_id) {
+                        symbol.ty = Some(type_id);
+                    } else {
+                        errors.push(SemanticError::new(
+                            SemanticErrorKind::LoweringError,
+                            "missing symbol for type alias",
+                            alias.span,
+                        ));
+                    }
+                    progress = true;
+                }
+                Err(TypeLowerError::UnresolvedAlias(_)) => {
+                    next_pending.push(alias);
+                }
+                Err(TypeLowerError::Error(message)) => errors.push(SemanticError::new(
+                    SemanticErrorKind::LoweringError,
+                    message,
+                    alias.ty.span,
+                )),
+            }
+        }
+
+        if !progress {
+            for alias in next_pending {
+                errors.push(SemanticError::new(
+                    SemanticErrorKind::CircularDependency,
+                    "type alias cycle",
+                    alias.ty.span,
+                ));
+            }
+            break;
+        }
+
+        pending = next_pending;
+    }
+}
+
+fn lower_type_expr(
+    ty: &TypeExpr,
+    resolver: &Resolver,
+    interner: &Interner,
+    types: &mut TypeTable,
+) -> Result<TypeId, TypeLowerError> {
+    let mut ty_id = match &ty.kind {
+        TypeExprKind::Named(name, params) => {
+            lower_named_type(name, params, resolver, interner, types)?
+        }
+        TypeExprKind::Array(inner) => {
+            let inner_id = lower_type_expr(inner, resolver, interner, types)?;
+            types.array(inner_id)
+        }
+        TypeExprKind::Func(func) => {
+            let params = func
+                .params
+                .iter()
+                .map(|param| {
+                    lower_type_expr(param, resolver, interner, types).map(|ty| ParamType {
+                        ty,
+                        mode: ParamMode::Owned,
+                        optional: false,
+                    })
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let ret = lower_type_expr(&func.ret, resolver, interner, types)?;
+            types.function(FuncSig {
+                params,
+                ret,
+                is_async: false,
+                is_generator: false,
+            })
+        }
+    };
+
+    if let Some(mode) = ty.mode {
+        let mutability = match mode {
+            crate::syntax::TypeMode::Ref => Mutability::Immutable,
+            crate::syntax::TypeMode::MutRef => Mutability::Mutable,
+        };
+        ty_id = types.reference(mutability, ty_id);
+    }
+
+    if ty.nullable {
+        ty_id = types.option(ty_id);
+    }
+
+    Ok(ty_id)
+}
+
+fn lower_named_type(
+    name: &crate::syntax::Ident,
+    params: &[TypeExpr],
+    resolver: &Resolver,
+    interner: &Interner,
+    types: &mut TypeTable,
+) -> Result<TypeId, TypeLowerError> {
+    let name_str = interner.resolve(name.name);
+
+    if let Some(prim) = primitive_from_name(name_str) {
+        if !params.is_empty() {
+            return Err(TypeLowerError::Error(
+                "primitive type cannot accept parameters".to_owned(),
+            ));
+        }
+        return Ok(types.primitive(prim));
+    }
+
+    if let Some(collection_id) = lower_collection_type(name_str, params, resolver, interner, types)?
+    {
+        return Ok(collection_id);
+    }
+
+    let Some(def_id) = resolver.lookup(name.name) else {
+        return Err(TypeLowerError::Error("unknown type name".to_owned()));
+    };
+
+    let Some(symbol) = resolver.get_symbol(def_id) else {
+        return Err(TypeLowerError::Error(
+            "missing type symbol information".to_owned(),
+        ));
+    };
+
+    let base = match symbol.kind {
+        crate::semantic::SymbolKind::Struct => types.intern(crate::semantic::Type::Struct(def_id)),
+        crate::semantic::SymbolKind::Enum => types.intern(crate::semantic::Type::Enum(def_id)),
+        crate::semantic::SymbolKind::Interface => {
+            types.intern(crate::semantic::Type::Interface(def_id))
+        }
+        crate::semantic::SymbolKind::TypeAlias => match symbol.ty {
+            Some(resolved) => types.intern(crate::semantic::Type::Alias(def_id, resolved)),
+            None => return Err(TypeLowerError::UnresolvedAlias(def_id)),
+        },
+        crate::semantic::SymbolKind::TypeParam => {
+            types.intern(crate::semantic::Type::Param(symbol.name))
+        }
+        _ => {
+            return Err(TypeLowerError::Error(
+                "type name does not refer to a type".to_owned(),
+            ))
+        }
+    };
+
+    if params.is_empty() {
+        return Ok(base);
+    }
+
+    let args = params
+        .iter()
+        .map(|param| lower_type_expr(param, resolver, interner, types))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(types.intern(crate::semantic::Type::Applied(base, args)))
+}
+
+fn lower_collection_type(
+    name: &str,
+    params: &[TypeExpr],
+    resolver: &Resolver,
+    interner: &Interner,
+    types: &mut TypeTable,
+) -> Result<Option<TypeId>, TypeLowerError> {
+    let result = match name {
+        "lista" => {
+            if params.len() != 1 {
+                return Err(TypeLowerError::Error(
+                    "lista requires one type parameter".to_owned(),
+                ));
+            }
+            let inner = lower_type_expr(&params[0], resolver, interner, types)?;
+            Some(types.array(inner))
+        }
+        "tabula" => {
+            if params.len() != 2 {
+                return Err(TypeLowerError::Error(
+                    "tabula requires two type parameters".to_owned(),
+                ));
+            }
+            let key = lower_type_expr(&params[0], resolver, interner, types)?;
+            let value = lower_type_expr(&params[1], resolver, interner, types)?;
+            Some(types.map(key, value))
+        }
+        "copia" => {
+            if params.len() != 1 {
+                return Err(TypeLowerError::Error(
+                    "copia requires one type parameter".to_owned(),
+                ));
+            }
+            let inner = lower_type_expr(&params[0], resolver, interner, types)?;
+            Some(types.set(inner))
+        }
+        _ => None,
+    };
+    Ok(result)
+}
+
+fn primitive_from_name(name: &str) -> Option<crate::semantic::Primitive> {
+    match name {
+        "textus" => Some(crate::semantic::Primitive::Textus),
+        "numerus" => Some(crate::semantic::Primitive::Numerus),
+        "fractus" => Some(crate::semantic::Primitive::Fractus),
+        "bivalens" => Some(crate::semantic::Primitive::Bivalens),
+        "nihil" => Some(crate::semantic::Primitive::Nihil),
+        "vacuum" => Some(crate::semantic::Primitive::Vacuum),
+        "numquam" => Some(crate::semantic::Primitive::Numquam),
+        "ignotum" => Some(crate::semantic::Primitive::Ignotum),
+        "octeti" => Some(crate::semantic::Primitive::Octeti),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::{Span, Symbol};
+    use crate::semantic::passes::collect;
+    use crate::semantic::Primitive;
+    use crate::syntax::{
+        BlockStmt, CasuArm, DiscerneStmt, EnumDecl, EnumMember, Expr, ExprKind, ExprStmt, FuncDecl,
+        PathPattern, Program, ReddeStmt, Stmt, StmtKind, TypeAliasDecl, TypeExpr, TypeExprKind,
+    };
+
+    fn ident(interner: &mut Interner, name: &str) -> crate::syntax::Ident {
+        crate::syntax::Ident {
+            name: interner.intern(name),
+            span: Span::default(),
+        }
+    }
+
+    fn ident_sym(sym: Symbol) -> crate::syntax::Ident {
+        crate::syntax::Ident {
+            name: sym,
+            span: Span::default(),
+        }
+    }
+
+    fn stmt(kind: StmtKind) -> Stmt {
+        Stmt {
+            id: 0,
+            kind,
+            span: Span::default(),
+            annotations: Vec::new(),
+        }
+    }
+
+    fn program(stmts: Vec<Stmt>) -> Program {
+        Program {
+            directives: Vec::new(),
+            stmts,
+            span: Span::default(),
+        }
+    }
+
+    fn named_type(name: crate::syntax::Ident) -> TypeExpr {
+        TypeExpr {
+            nullable: false,
+            mode: None,
+            kind: TypeExprKind::Named(name, Vec::new()),
+            span: Span::default(),
+        }
+    }
+
+    #[test]
+    fn reports_undefined_variable_in_expression() {
+        let mut interner = Interner::new();
+        let expr = Expr {
+            id: 0,
+            kind: ExprKind::Ident(ident(&mut interner, "missing")),
+            span: Span::default(),
+        };
+        let program = program(vec![stmt(StmtKind::Expr(ExprStmt {
+            expr: Box::new(expr),
+        }))]);
+
+        let mut resolver = Resolver::new();
+        let mut types = TypeTable::new();
+        let _ = collect::collect(&program, &mut resolver, &mut types);
+        let result = resolve(&program, &mut resolver, &interner, &mut types);
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::UndefinedVariable));
+    }
+
+    #[test]
+    fn reports_return_outside_function() {
+        let program = program(vec![stmt(StmtKind::Redde(ReddeStmt { value: None }))]);
+        let mut interner = Interner::new();
+
+        let mut resolver = Resolver::new();
+        let mut types = TypeTable::new();
+        let _ = collect::collect(&program, &mut resolver, &mut types);
+        let result = resolve(&program, &mut resolver, &interner, &mut types);
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::ReturnOutsideFunction));
+    }
+
+    #[test]
+    fn resolves_type_alias_to_builtin() {
+        let mut interner = Interner::new();
+        let alias_sym = interner.intern("Numeri");
+        let alias = TypeAliasDecl {
+            name: ident_sym(alias_sym),
+            ty: named_type(ident(&mut interner, "numerus")),
+        };
+        let program = program(vec![stmt(StmtKind::TypeAlias(alias))]);
+
+        let mut resolver = Resolver::new();
+        let mut types = TypeTable::new();
+        let _ = collect::collect(&program, &mut resolver, &mut types);
+        let result = resolve(&program, &mut resolver, &interner, &mut types);
+        assert!(result.is_ok());
+
+        let def_id = resolver.lookup(alias_sym).expect("alias def");
+        let symbol = resolver.get_symbol(def_id).expect("alias symbol");
+        assert_eq!(symbol.ty, Some(types.primitive(Primitive::Numerus)));
+    }
+
+    #[test]
+    fn reports_type_alias_cycle() {
+        let mut interner = Interner::new();
+        let a_sym = interner.intern("A");
+        let b_sym = interner.intern("B");
+        let alias_a = TypeAliasDecl {
+            name: ident_sym(a_sym),
+            ty: named_type(ident_sym(b_sym)),
+        };
+        let alias_b = TypeAliasDecl {
+            name: ident_sym(b_sym),
+            ty: named_type(ident_sym(a_sym)),
+        };
+        let program = program(vec![
+            stmt(StmtKind::TypeAlias(alias_a)),
+            stmt(StmtKind::TypeAlias(alias_b)),
+        ]);
+
+        let mut resolver = Resolver::new();
+        let mut types = TypeTable::new();
+        let _ = collect::collect(&program, &mut resolver, &mut types);
+        let result = resolve(&program, &mut resolver, &interner, &mut types);
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::CircularDependency));
+    }
+
+    #[test]
+    fn reports_non_variant_pattern() {
+        let mut interner = Interner::new();
+        let foo_sym = interner.intern("Foo");
+        let func = FuncDecl {
+            name: ident_sym(foo_sym),
+            type_params: Vec::new(),
+            params: Vec::new(),
+            modifiers: Vec::new(),
+            ret: None,
+            body: Some(BlockStmt {
+                stmts: Vec::new(),
+                span: Span::default(),
+            }),
+            annotations: Vec::new(),
+        };
+        let match_stmt = DiscerneStmt {
+            exhaustive: false,
+            subjects: vec![Expr {
+                id: 1,
+                kind: ExprKind::Literal(crate::syntax::Literal::Integer(1)),
+                span: Span::default(),
+            }],
+            arms: vec![CasuArm {
+                patterns: vec![Pattern::Path(PathPattern {
+                    segments: vec![ident_sym(foo_sym)],
+                    bind: None,
+                    span: Span::default(),
+                })],
+                body: crate::syntax::IfBody::Block(BlockStmt {
+                    stmts: Vec::new(),
+                    span: Span::default(),
+                }),
+                span: Span::default(),
+            }],
+            default: None,
+        };
+        let program = program(vec![
+            stmt(StmtKind::Func(func)),
+            stmt(StmtKind::Discerne(match_stmt)),
+        ]);
+
+        let mut resolver = Resolver::new();
+        let mut types = TypeTable::new();
+        let _ = collect::collect(&program, &mut resolver, &mut types);
+        let result = resolve(&program, &mut resolver, &interner, &mut types);
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::UndefinedVariable));
+    }
+
+    #[test]
+    fn allows_variant_patterns_from_collected_enum() {
+        let mut interner = Interner::new();
+        let enum_name = ident(&mut interner, "Color");
+        let red_sym = interner.intern("Red");
+        let red = EnumMember {
+            name: ident_sym(red_sym),
+            value: None,
+            span: Span::default(),
+        };
+        let enum_decl = EnumDecl {
+            name: enum_name,
+            members: vec![red],
+        };
+
+        let match_stmt = DiscerneStmt {
+            exhaustive: false,
+            subjects: vec![Expr {
+                id: 1,
+                kind: ExprKind::Literal(crate::syntax::Literal::Integer(1)),
+                span: Span::default(),
+            }],
+            arms: vec![CasuArm {
+                patterns: vec![Pattern::Path(PathPattern {
+                    segments: vec![ident_sym(red_sym)],
+                    bind: None,
+                    span: Span::default(),
+                })],
+                body: crate::syntax::IfBody::Block(BlockStmt {
+                    stmts: Vec::new(),
+                    span: Span::default(),
+                }),
+                span: Span::default(),
+            }],
+            default: None,
+        };
+
+        let program = program(vec![
+            stmt(StmtKind::Enum(enum_decl)),
+            stmt(StmtKind::Discerne(match_stmt)),
+        ]);
+
+        let mut resolver = Resolver::new();
+        let mut types = TypeTable::new();
+        let _ = collect::collect(&program, &mut resolver, &mut types);
+        let result = resolve(&program, &mut resolver, &interner, &mut types);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn reports_break_outside_loop() {
+        let program = program(vec![stmt(StmtKind::Rumpe(crate::syntax::RumpeStmt {
+            span: Span::default(),
+        }))]);
+        let mut interner = Interner::new();
+
+        let mut resolver = Resolver::new();
+        let mut types = TypeTable::new();
+        let _ = collect::collect(&program, &mut resolver, &mut types);
+        let result = resolve(&program, &mut resolver, &interner, &mut types);
+        assert!(result.is_err());
+        let errors = result.unwrap_err();
+        assert!(errors
+            .iter()
+            .any(|err| err.kind == SemanticErrorKind::BreakOutsideLoop));
     }
 }
