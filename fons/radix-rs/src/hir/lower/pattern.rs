@@ -47,6 +47,30 @@ pub fn lower_pattern(lowerer: &mut Lowerer, pattern: &Pattern) -> HirPattern {
 
 fn lower_ident_pattern(lowerer: &mut Lowerer, ident: &crate::syntax::Ident, bind: Option<&PatternBind>) -> HirPattern {
     lowerer.current_span = ident.span;
+    if let Some(def_id) = lowerer.resolver.lookup(ident.name) {
+        if matches!(
+            lowerer
+                .resolver
+                .get_symbol(def_id)
+                .map(|symbol| symbol.kind),
+            Some(crate::semantic::SymbolKind::Variant)
+        ) {
+            return match bind {
+                None => HirPattern::Variant(def_id, Vec::new()),
+                Some(PatternBind::Alias(_)) => {
+                    lowerer.error("pattern alias bindings are not lowered yet");
+                    HirPattern::Variant(def_id, Vec::new())
+                }
+                Some(PatternBind::Bindings { mutability, names }) => {
+                    if *mutability == Mutability::Mutable {
+                        lowerer.error("mutable pattern bindings are not lowered yet");
+                    }
+                    HirPattern::Variant(def_id, lower_bindings(lowerer, names))
+                }
+            };
+        }
+    }
+
     let def_id = lowerer.next_def_id();
     lowerer.bind_local(ident.name, def_id);
 

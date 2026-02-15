@@ -542,8 +542,11 @@ impl Parser {
 
         let kind = if self.eat_keyword(TokenKind::Arena) {
             Some(CuraKind::Arena)
+        } else if matches!(self.peek().kind, TokenKind::Ident(sym) if self.interner.resolve(sym) == "page") {
+            self.advance();
+            Some(CuraKind::Page)
         } else {
-            None // 'page' would go here too
+            None
         };
 
         // Check for anonymous scope: cura arena { } without binding

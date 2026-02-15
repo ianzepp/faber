@@ -99,3 +99,74 @@ incipit {
     assert!(result.success());
     assert!(matches!(result.output, Some(crate::Output::Rust(_))));
 }
+
+#[test]
+fn compile_accepts_array_and_ex_destructuring_bindings() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum xs = [1, 2]
+  fixum [a, b] = xs
+  scribe a
+  scribe b
+
+  fixum person = { name: "Marcus", age: 1 }
+  ex person fixum name
+  scribe name
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+}
+
+#[test]
+fn compile_accepts_param_alias_binding() {
+    let session = session(Target::Rust);
+    let source = r#"functio greet(textus name, si bivalens formal ut f) -> vacuum {
+  si f {
+    scribe name
+  }
+}
+
+incipit {
+  greet("A", verum)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+}
+
+#[test]
+fn import_alias_usage_no_longer_reports_unknown_identifier() {
+    let session = session(Target::Rust);
+    let source = r#"importa ex "../../norma/hal/consolum" privata consolum
+
+incipit {
+  consolum.fundeLineam("x")
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown identifier")));
+}
+
+#[test]
+fn ab_property_filter_no_longer_reports_unknown_identifier() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum users = [{ activus: verum }]
+  fixum active = ab users activus
+  scribe active
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown identifier")));
+}

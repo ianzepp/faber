@@ -262,7 +262,7 @@ impl<'a> Lowerer<'a> {
         match body {
             crate::syntax::IfBody::Block(block) => self.lower_block(block),
             crate::syntax::IfBody::Ergo(stmt) => {
-                let stmts = vec![self.lower_stmt(stmt)];
+                let stmts = stmt::lower_stmt_expanded(self, stmt);
                 HirBlock { stmts, expr: None, span: self.current_span }
             }
             crate::syntax::IfBody::InlineReturn(ret) => {
@@ -300,17 +300,11 @@ impl<'a> Lowerer<'a> {
         self.push_scope();
 
         for stmt in &block.stmts {
-            let hir_stmt = self.lower_stmt(stmt);
-            stmts.push(hir_stmt);
+            stmts.extend(stmt::lower_stmt_expanded(self, stmt));
         }
         self.pop_scope();
 
         HirBlock { stmts, expr: None, span: block.span }
-    }
-
-    /// Lower a statement (delegates to stmt.rs)
-    fn lower_stmt(&mut self, stmt: &Stmt) -> HirStmt {
-        stmt::lower_stmt(self, stmt)
     }
 
     /// Lower an expression (delegates to expr.rs)

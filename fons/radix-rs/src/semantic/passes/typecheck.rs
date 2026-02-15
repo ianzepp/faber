@@ -641,6 +641,13 @@ impl<'a> TypeChecker<'a> {
             return self.types.intern(Type::Enum(parent));
         }
 
+        if matches!(
+            self.resolver.get_symbol(def_id).map(|symbol| symbol.kind),
+            Some(crate::semantic::SymbolKind::Module)
+        ) {
+            return self.types.primitive(Primitive::Ignotum);
+        }
+
         self.error(SemanticErrorKind::UndefinedVariable, "unknown identifier", span);
         self.error_type
     }

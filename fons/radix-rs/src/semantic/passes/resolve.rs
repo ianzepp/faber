@@ -115,10 +115,11 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
             }
             for param in &decl.params {
                 resolve_type(resolver, interner, &param.ty, errors);
+                let binding_name = param.alias.as_ref().unwrap_or(&param.name);
                 define_symbol(
                     resolver,
-                    param.name.name,
-                    param.name.span,
+                    binding_name.name,
+                    binding_name.span,
                     SymbolKind::Param,
                     param.mode == crate::syntax::ParamMode::MutRef,
                     errors,
@@ -126,6 +127,9 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                 if let Some(default) = &param.default {
                     resolve_expr(resolver, interner, default, errors);
                 }
+            }
+            for ident in modifier_bindings(&decl.modifiers) {
+                define_symbol(resolver, ident.name, ident.span, SymbolKind::Local, true, errors);
             }
             if let Some(ret) = &decl.ret {
                 resolve_type(resolver, interner, ret, errors);
@@ -168,10 +172,11 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                         }
                         for param in &method.params {
                             resolve_type(resolver, interner, &param.ty, errors);
+                            let binding_name = param.alias.as_ref().unwrap_or(&param.name);
                             define_symbol(
                                 resolver,
-                                param.name.name,
-                                param.name.span,
+                                binding_name.name,
+                                binding_name.span,
                                 SymbolKind::Param,
                                 param.mode == crate::syntax::ParamMode::MutRef,
                                 errors,
@@ -179,6 +184,9 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                             if let Some(default) = &param.default {
                                 resolve_expr(resolver, interner, default, errors);
                             }
+                        }
+                        for ident in modifier_bindings(&method.modifiers) {
+                            define_symbol(resolver, ident.name, ident.span, SymbolKind::Local, true, errors);
                         }
                         if let Some(ret) = &method.ret {
                             resolve_type(resolver, interner, ret, errors);
@@ -806,15 +814,7 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
                     crate::syntax::CollectionFilterKind::Condition(expr) => {
                         resolve_expr(resolver, interner, expr, errors)
                     }
-                    crate::syntax::CollectionFilterKind::Property(ident) => {
-                        if resolver.lookup(ident.name).is_none() {
-                            errors.push(SemanticError::new(
-                                SemanticErrorKind::UndefinedVariable,
-                                "unknown identifier",
-                                ident.span,
-                            ));
-                        }
-                    }
+                    crate::syntax::CollectionFilterKind::Property(_ident) => {}
                 }
             }
             for transform in &expr.transforms {
@@ -1196,6 +1196,20 @@ fn primitive_from_name(name: &str) -> Option<crate::semantic::Primitive> {
         "octeti" => Some(crate::semantic::Primitive::Octeti),
         _ => None,
     }
+}
+
+fn modifier_bindings(modifiers: &[crate::syntax::FuncModifier]) -> Vec<&crate::syntax::Ident> {
+    let mut out = Vec::new();
+    for modifier in modifiers {
+        match modifier {
+            crate::syntax::FuncModifier::Curata(ident)
+            | crate::syntax::FuncModifier::Errata(ident)
+            | crate::syntax::FuncModifier::Optiones(ident) => out.push(ident),
+            crate::syntax::FuncModifier::Exitus(crate::syntax::ExitusValue::Name(ident)) => out.push(ident),
+            _ => {}
+        }
+    }
+    out
 }
 
 #[cfg(test)]

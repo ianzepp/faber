@@ -92,9 +92,10 @@ impl<'a> Lowerer<'a> {
         let mut params = Vec::new();
         for param in &decl.params {
             let param_def_id = self.next_def_id();
+            let binding_name = param.alias.as_ref().unwrap_or(&param.name);
             params.push(HirParam {
                 def_id: param_def_id,
-                name: param.name.name,
+                name: binding_name.name,
                 ty: self.lower_type(&param.ty),
                 mode: lower_param_mode(param.mode),
                 span: param.span,
@@ -106,8 +107,33 @@ impl<'a> Lowerer<'a> {
         for param in &params {
             self.bind_local(param.name, param.def_id);
         }
+        let mut modifier_locals = Vec::new();
+        for ident in modifier_bindings(&decl.modifiers) {
+            let def_id = self.next_def_id();
+            self.bind_local(ident.name, def_id);
+            modifier_locals.push((def_id, ident.name, ident.span));
+        }
         let body = decl.body.as_ref().map(|body| self.lower_block(body));
         self.pop_scope();
+        let body = body.map(|mut body| {
+            for (def_id, name, span) in modifier_locals.into_iter().rev() {
+                body.stmts.insert(
+                    0,
+                    crate::hir::HirStmt {
+                        id: self.next_hir_id(),
+                        kind: crate::hir::HirStmtKind::Local(crate::hir::HirLocal {
+                            def_id,
+                            name,
+                            ty: None,
+                            init: Some(error_expr(self, span)),
+                            mutable: true,
+                        }),
+                        span,
+                    },
+                );
+            }
+            body
+        });
 
         let func = HirFunction {
             name: decl.name.name,
@@ -152,9 +178,10 @@ impl<'a> Lowerer<'a> {
                     let mut params = Vec::new();
                     for param in &method.params {
                         let param_def_id = self.next_def_id();
+                        let binding_name = param.alias.as_ref().unwrap_or(&param.name);
                         params.push(HirParam {
                             def_id: param_def_id,
-                            name: param.name.name,
+                            name: binding_name.name,
                             ty: self.lower_type(&param.ty),
                             mode: lower_param_mode(param.mode),
                             span: param.span,
@@ -165,8 +192,33 @@ impl<'a> Lowerer<'a> {
                     for param in &params {
                         self.bind_local(param.name, param.def_id);
                     }
+                    let mut modifier_locals = Vec::new();
+                    for ident in modifier_bindings(&method.modifiers) {
+                        let def_id = self.next_def_id();
+                        self.bind_local(ident.name, def_id);
+                        modifier_locals.push((def_id, ident.name, ident.span));
+                    }
                     let body = method.body.as_ref().map(|block| self.lower_block(block));
                     self.pop_scope();
+                    let body = body.map(|mut body| {
+                        for (def_id, name, span) in modifier_locals.into_iter().rev() {
+                            body.stmts.insert(
+                                0,
+                                crate::hir::HirStmt {
+                                    id: self.next_hir_id(),
+                                    kind: crate::hir::HirStmtKind::Local(crate::hir::HirLocal {
+                                        def_id,
+                                        name,
+                                        ty: None,
+                                        init: Some(error_expr(self, span)),
+                                        mutable: true,
+                                    }),
+                                    span,
+                                },
+                            );
+                        }
+                        body
+                    });
 
                     let func = HirFunction {
                         name: method.name.name,
@@ -351,4 +403,18 @@ impl<'a> Lowerer<'a> {
             span: stmt.span,
         })
     }
+}
+
+fn modifier_bindings(modifiers: &[crate::syntax::FuncModifier]) -> Vec<&crate::syntax::Ident> {
+    let mut out = Vec::new();
+    for modifier in modifiers {
+        match modifier {
+            crate::syntax::FuncModifier::Curata(ident)
+            | crate::syntax::FuncModifier::Errata(ident)
+            | crate::syntax::FuncModifier::Optiones(ident) => out.push(ident),
+            crate::syntax::FuncModifier::Exitus(crate::syntax::ExitusValue::Name(ident)) => out.push(ident),
+            _ => {}
+        }
+    }
+    out
 }

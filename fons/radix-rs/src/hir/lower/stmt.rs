@@ -69,7 +69,94 @@ pub fn lower_stmt(lowerer: &mut Lowerer, stmt: &Stmt) -> HirStmt {
     HirStmt { id, kind, span }
 }
 
+/// Lower a statement to one or more HIR statements.
+pub fn lower_stmt_expanded(lowerer: &mut Lowerer, stmt: &Stmt) -> Vec<HirStmt> {
+    match &stmt.kind {
+        StmtKind::Var(decl) if matches!(&decl.binding, crate::syntax::BindingPattern::Array { .. }) => {
+            lowerer.lower_array_destructure_stmt(decl)
+        }
+        StmtKind::Ex(stmt) => lowerer.lower_ex_stmt(stmt),
+        _ => vec![lower_stmt(lowerer, stmt)],
+    }
+}
+
 impl<'a> Lowerer<'a> {
+    fn lower_array_destructure_stmt(&mut self, decl: &crate::syntax::VarDecl) -> Vec<HirStmt> {
+        let mut names = Vec::new();
+        Self::collect_binding_names(&decl.binding, &mut names);
+        let mut out = Vec::new();
+
+        for (name, name_span) in names {
+            let def_id = self.next_def_id();
+            self.bind_local(name, def_id);
+            out.push(HirStmt {
+                id: self.next_hir_id(),
+                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                    def_id,
+                    name,
+                    ty: None,
+                    init: Some(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: name_span }),
+                    mutable: decl.mutability == crate::syntax::Mutability::Mutable,
+                }),
+                span: name_span,
+            });
+        }
+
+        if let Some(init) = &decl.init {
+            out.push(HirStmt {
+                id: self.next_hir_id(),
+                kind: HirStmtKind::Expr(self.lower_expr(init)),
+                span: init.span,
+            });
+        }
+
+        out
+    }
+
+    fn lower_ex_stmt(&mut self, stmt: &crate::syntax::ExStmt) -> Vec<HirStmt> {
+        let mut out = Vec::new();
+        let source = self.lower_expr(&stmt.source);
+
+        for field in &stmt.fields {
+            let name = field
+                .alias
+                .as_ref()
+                .map(|ident| ident.name)
+                .unwrap_or(field.name.name);
+            let def_id = self.next_def_id();
+            self.bind_local(name, def_id);
+            let local = crate::hir::HirLocal {
+                def_id,
+                name,
+                ty: None,
+                init: Some(HirExpr {
+                    id: self.next_hir_id(),
+                    kind: HirExprKind::Error,
+                    ty: None,
+                    span: field.name.span,
+                }),
+                mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
+            };
+            out.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Local(local), span: field.name.span });
+        }
+
+        if let Some(rest) = &stmt.rest {
+            let def_id = self.next_def_id();
+            self.bind_local(rest.name, def_id);
+            let local = crate::hir::HirLocal {
+                def_id,
+                name: rest.name,
+                ty: None,
+                init: Some(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: rest.span }),
+                mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
+            };
+            out.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Local(local), span: rest.span });
+        }
+
+        out.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Expr(source), span: self.current_span });
+        out
+    }
+
     /// Lower variable declaration statement
     fn lower_var_stmt(&mut self, decl: &crate::syntax::VarDecl) -> HirStmtKind {
         match &decl.binding {
@@ -95,45 +182,8 @@ impl<'a> Lowerer<'a> {
                 HirStmtKind::Expr(init)
             }
             crate::syntax::BindingPattern::Array { span, .. } => {
-                let mut names = Vec::new();
-                Self::collect_binding_names(&decl.binding, &mut names);
-                let mut stmts = Vec::new();
-
-                for (name, name_span) in names {
-                    let def_id = self.next_def_id();
-                    self.bind_local(name, def_id);
-                    stmts.push(HirStmt {
-                        id: self.next_hir_id(),
-                        kind: HirStmtKind::Local(crate::hir::HirLocal {
-                            def_id,
-                            name,
-                            ty: None,
-                            init: Some(HirExpr {
-                                id: self.next_hir_id(),
-                                kind: HirExprKind::Error,
-                                ty: None,
-                                span: name_span,
-                            }),
-                            mutable: decl.mutability == crate::syntax::Mutability::Mutable,
-                        }),
-                        span: name_span,
-                    });
-                }
-
-                if let Some(init) = &decl.init {
-                    stmts.push(HirStmt {
-                        id: self.next_hir_id(),
-                        kind: HirStmtKind::Expr(self.lower_expr(init)),
-                        span: init.span,
-                    });
-                }
-
-                HirStmtKind::Expr(HirExpr {
-                    id: self.next_hir_id(),
-                    kind: HirExprKind::Block(HirBlock { stmts, expr: None, span: *span }),
-                    ty: None,
-                    span: *span,
-                })
+                self.error("array destructuring should be expanded before statement lowering");
+                HirStmtKind::Expr(error_expr(self, *span))
             }
         }
     }
@@ -345,53 +395,9 @@ impl<'a> Lowerer<'a> {
         })
     }
 
-    fn lower_ex(&mut self, stmt: &crate::syntax::ExStmt) -> HirStmtKind {
-        let mut stmts = Vec::new();
-        let source = self.lower_expr(&stmt.source);
-
-        for field in &stmt.fields {
-            let name = field
-                .alias
-                .as_ref()
-                .map(|ident| ident.name)
-                .unwrap_or(field.name.name);
-            let def_id = self.next_def_id();
-            self.bind_local(name, def_id);
-            let local = crate::hir::HirLocal {
-                def_id,
-                name,
-                ty: None,
-                init: Some(HirExpr {
-                    id: self.next_hir_id(),
-                    kind: HirExprKind::Error,
-                    ty: None,
-                    span: field.name.span,
-                }),
-                mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
-            };
-            stmts.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Local(local), span: field.name.span });
-        }
-
-        if let Some(rest) = &stmt.rest {
-            let def_id = self.next_def_id();
-            self.bind_local(rest.name, def_id);
-            let local = crate::hir::HirLocal {
-                def_id,
-                name: rest.name,
-                ty: None,
-                init: Some(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: rest.span }),
-                mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
-            };
-            stmts.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Local(local), span: rest.span });
-        }
-
-        stmts.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Expr(source), span: self.current_span });
-        HirStmtKind::Expr(HirExpr {
-            id: self.next_hir_id(),
-            kind: HirExprKind::Block(HirBlock { stmts, expr: None, span: self.current_span }),
-            ty: None,
-            span: self.current_span,
-        })
+    fn lower_ex(&mut self, _stmt: &crate::syntax::ExStmt) -> HirStmtKind {
+        self.error("ex destructuring should be expanded before statement lowering");
+        HirStmtKind::Expr(error_expr(self, self.current_span))
     }
 
     fn lower_custodi(&mut self, stmt: &crate::syntax::CustodiStmt) -> HirStmtKind {
@@ -560,7 +566,7 @@ impl<'a> Lowerer<'a> {
             }
             crate::syntax::SecusClause::Block(block) => self.lower_block(block),
             crate::syntax::SecusClause::Stmt(stmt) => {
-                HirBlock { stmts: vec![self.lower_stmt(stmt)], expr: None, span: stmt.span }
+                HirBlock { stmts: lower_stmt_expanded(self, stmt), expr: None, span: stmt.span }
             }
             crate::syntax::SecusClause::InlineReturn(ret) => {
                 let stmt = self.lower_inline_return(ret);
