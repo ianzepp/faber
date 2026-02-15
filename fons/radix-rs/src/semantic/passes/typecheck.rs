@@ -1488,9 +1488,11 @@ impl<'a> TypeChecker<'a> {
                     self.check_expr(source);
                 }
             }
-            (Type::Map(_key_ty, value_ty), Some(entries)) => {
+            (Type::Map(key_ty, value_ty), Some(entries)) => {
+                let mut inferred_values = Vec::new();
                 for (_, value) in entries {
                     let value_ty_actual = self.check_expr(value);
+                    inferred_values.push(self.resolve_type(value_ty_actual));
                     let value_resolved = self.resolve_type(value_ty);
                     if self.is_infer(value_resolved)
                         || matches!(self.types.get(value_resolved), Type::Primitive(Primitive::Ignotum))
@@ -1499,6 +1501,14 @@ impl<'a> TypeChecker<'a> {
                         continue;
                     }
                     self.unify(value_ty_actual, value_ty, value.span, "map value type mismatch");
+                }
+                if self.is_infer(self.resolve_type(value_ty)) {
+                    let inferred_value_ty = match inferred_values.as_slice() {
+                        [] => value_ty,
+                        [single] => *single,
+                        _ => self.types.intern(Type::Union(inferred_values)),
+                    };
+                    return self.types.map(key_ty, inferred_value_ty);
                 }
             }
             _ => {

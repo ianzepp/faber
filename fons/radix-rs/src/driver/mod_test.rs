@@ -319,6 +319,31 @@ fn ab_property_filter_no_longer_reports_unknown_identifier() {
 }
 
 #[test]
+fn ab_pipeline_from_object_member_no_longer_leaves_infer_types() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum users = [
+    { nomen: "Marcus", activus: verum, aetas: 25 },
+    { nomen: "Julia", activus: falsum, aetas: 30 }
+  ]
+  fixum data = { users: users }
+  fixum active = ab data.users activus
+  scribe active
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer variable type")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
+}
+
+#[test]
 fn compile_lowers_scriptum_without_stub_diagnostic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
