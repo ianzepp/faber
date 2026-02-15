@@ -207,8 +207,11 @@ impl<'a> Lowerer<'a> {
         let variants = decl
             .members
             .iter()
-            .map(|member| {
-                HirVariant { def_id: self.next_def_id(), name: member.name.name, fields: Vec::new(), span: member.span }
+            .map(|member| HirVariant {
+                def_id: self.next_def_id(),
+                name: member.name.name,
+                fields: Vec::new(),
+                span: member.span,
             })
             .collect();
 
@@ -310,11 +313,7 @@ impl<'a> Lowerer<'a> {
                 alias: alias.as_ref().map(|ident| ident.name),
             }],
             crate::syntax::ImportKind::Wildcard { alias } => {
-                vec![HirImportItem {
-                    def_id: self.next_def_id(),
-                    name: alias.name,
-                    alias: Some(alias.name),
-                }]
+                vec![HirImportItem { def_id: self.next_def_id(), name: alias.name, alias: Some(alias.name) }]
             }
         };
 

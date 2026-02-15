@@ -1,4 +1,4 @@
-use crate::{Compiler, Config, Diagnostic, CompileResult};
+use crate::{CompileResult, Compiler, Config, Diagnostic};
 use std::path::Path;
 
 #[test]

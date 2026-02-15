@@ -238,11 +238,9 @@ fn warning_spec(kind: WarningKind) -> DiagnosticSpec {
         WarningKind::UnusedMoveParam => {
             DiagnosticSpec { code: "WARN009", help: Some("change 'ex' to 'de' if ownership transfer is unnecessary") }
         }
-        WarningKind::ExplicitIgnotumAnnotation => {
-            DiagnosticSpec {
-                code: "WARN010",
-                help: Some("prefer a concrete type annotation to keep type-checking precise"),
-            }
-        }
+        WarningKind::ExplicitIgnotumAnnotation => DiagnosticSpec {
+            code: "WARN010",
+            help: Some("prefer a concrete type annotation to keep type-checking precise"),
+        },
     }
 }

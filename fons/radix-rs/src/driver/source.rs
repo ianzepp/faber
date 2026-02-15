@@ -55,7 +55,7 @@ impl SourceFile {
             .map(|&e| e as usize)
             .unwrap_or(self.content.len());
 
-        Some(&self.content[start..end].trim_end_matches('\n'))
+        Some(self.content[start..end].trim_end_matches('\n'))
     }
 }
 

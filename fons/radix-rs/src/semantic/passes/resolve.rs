@@ -578,7 +578,7 @@ fn resolve_discerne(
     resolver.exit_scope();
 }
 
-fn resolve_pattern(resolver: &mut Resolver, interner: &Interner, pattern: &Pattern, errors: &mut Vec<SemanticError>) {
+fn resolve_pattern(resolver: &mut Resolver, _interner: &Interner, pattern: &Pattern, errors: &mut Vec<SemanticError>) {
     match pattern {
         Pattern::Wildcard(_) => {}
         Pattern::Literal(_, _) => {}
@@ -957,6 +957,7 @@ struct AliasEntry<'a> {
     span: crate::lexer::Span,
 }
 
+#[allow(dead_code)]
 enum TypeLowerError {
     UnresolvedAlias(DefId),
     Error(String),

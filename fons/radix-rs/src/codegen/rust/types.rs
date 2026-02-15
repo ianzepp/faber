@@ -38,13 +38,9 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
             }
         }
 
-        Type::Struct(def_id) => {
-            codegen.resolve_def(*def_id).to_owned()
-        }
+        Type::Struct(def_id) => codegen.resolve_def(*def_id).to_owned(),
 
-        Type::Enum(def_id) => {
-            codegen.resolve_def(*def_id).to_owned()
-        }
+        Type::Enum(def_id) => codegen.resolve_def(*def_id).to_owned(),
 
         Type::Interface(def_id) => {
             format!("dyn {}", codegen.resolve_def(*def_id))
@@ -70,13 +66,14 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
             }
         }
 
-        Type::Param(name) => {
-            codegen.resolve_symbol(*name).to_owned()
-        }
+        Type::Param(name) => codegen.resolve_symbol(*name).to_owned(),
 
         Type::Applied(base, args) => {
             let base_str = type_to_rust(codegen, *base, types);
-            let args_str: Vec<String> = args.iter().map(|a| type_to_rust(codegen, *a, types)).collect();
+            let args_str: Vec<String> = args
+                .iter()
+                .map(|a| type_to_rust(codegen, *a, types))
+                .collect();
             format!("{}<{}>", base_str, args_str.join(", "))
         }
 

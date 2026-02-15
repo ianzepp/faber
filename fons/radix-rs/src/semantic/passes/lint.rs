@@ -3,7 +3,7 @@
 //! Produces warnings for common issues.
 
 use crate::hir::{
-    HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirImportItem, HirItem, HirItemKind, HirLocal, HirProgram,
+    HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirItem, HirItemKind, HirLocal, HirProgram,
     HirStmt, HirStmtKind,
 };
 use crate::lexer::Span;

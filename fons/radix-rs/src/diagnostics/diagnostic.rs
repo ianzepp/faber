@@ -125,7 +125,9 @@ impl Diagnostic {
             spec.help.map(|h| h.to_owned())
         };
 
-        let mut diag = Self {
+        
+
+        Self {
             severity,
             message: err.message.clone(),
             code: Some(spec.code),
@@ -133,9 +135,7 @@ impl Diagnostic {
             span: Some(err.span),
             source_line: Some(line),
             help,
-        };
-
-        diag
+        }
     }
 
     /// Create codegen error

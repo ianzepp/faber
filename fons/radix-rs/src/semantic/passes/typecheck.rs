@@ -25,6 +25,7 @@ struct StructInfo {
 }
 
 struct TypeChecker<'a> {
+    #[allow(dead_code)]
     resolver: &'a Resolver,
     types: &'a mut TypeTable,
     errors: Vec<SemanticError>,
@@ -967,6 +968,7 @@ impl<'a> TypeChecker<'a> {
         self.types.array(elem_ty)
     }
 
+    #[allow(clippy::ptr_arg)]
     fn check_struct_literal(&mut self, def_id: DefId, fields: &mut Vec<(Symbol, HirExpr)>) -> TypeId {
         let field_types = match self.structs.get(&def_id) {
             Some(info) => info.fields.clone(),
@@ -1003,6 +1005,7 @@ impl<'a> TypeChecker<'a> {
         self.types.intern(Type::Union(types))
     }
 
+    #[allow(clippy::ptr_arg)]
     fn check_closure(
         &mut self,
         params: &mut Vec<HirParam>,
@@ -1139,6 +1142,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    #[allow(dead_code)]
     fn resolve_alias(&self, ty: TypeId) -> TypeId {
         let mut current = ty;
         loop {

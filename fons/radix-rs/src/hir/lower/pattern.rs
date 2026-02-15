@@ -95,11 +95,13 @@ pub fn lower_literal(lowerer: &mut Lowerer, lit: &Literal, span: Span) -> HirPat
 
 impl<'a> Lowerer<'a> {
     /// Lower omissis (wildcard) pattern
+    #[allow(dead_code)]
     pub fn lower_omissis(&mut self) -> HirPattern {
         HirPattern::Wildcard
     }
 
     /// Lower nomen (identifier) pattern
+    #[allow(dead_code)]
     pub fn lower_nomen_pattern(&mut self, ident: &crate::syntax::Ident) -> HirPattern {
         let def_id = self.next_def_id();
         self.bind_local(ident.name, def_id);

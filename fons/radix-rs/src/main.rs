@@ -298,7 +298,11 @@ fn cmd_check(args: &[String]) {
     let mut downgraded = 0usize;
     for err in &semantic_result.errors {
         let downgraded_error = permissive && err.kind.is_permissive_check_downgrade();
-        let prefix = if err.is_error() && !downgraded_error { "error" } else { "warning" };
+        let prefix = if err.is_error() && !downgraded_error {
+            "error"
+        } else {
+            "warning"
+        };
         eprintln!("{}:{}:{}: {}", prefix, name, err.span.start, err.message);
         if err.is_error() {
             if downgraded_error {
@@ -389,12 +393,7 @@ mod tests {
             .expect("clock")
             .as_nanos();
         let mut path = std::env::temp_dir();
-        path.push(format!(
-            "radix-main-test-{}-{}-{}.fab",
-            label,
-            std::process::id(),
-            nanos
-        ));
+        path.push(format!("radix-main-test-{}-{}-{}.fab", label, std::process::id(), nanos));
         path
     }
 

@@ -35,12 +35,10 @@ pub fn generate_stmt(
                     generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
                 }
                 w.writeln(";");
+            } else if in_failable_fn && !in_entry {
+                w.writeln("return Ok(());");
             } else {
-                if in_failable_fn && !in_entry {
-                    w.writeln("return Ok(());");
-                } else {
-                    w.writeln("return;");
-                }
+                w.writeln("return;");
             }
         }
         HirStmtKind::Rumpe => {

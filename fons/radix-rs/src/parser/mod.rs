@@ -89,7 +89,7 @@ impl Parser {
         ParseResult {
             program: Some(Program { directives, stmts, span }),
             errors: std::mem::take(&mut self.errors),
-            interner: std::mem::replace(&mut self.interner, Interner::new()),
+            interner: std::mem::take(&mut self.interner),
         }
     }
 

@@ -367,6 +367,7 @@ impl<'a> BorrowChecker<'a> {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn root_def_id(&self, expr: &HirExpr) -> Option<DefId> {
         match &expr.kind {
             HirExprKind::Path(def_id) => Some(*def_id),
@@ -380,14 +381,14 @@ impl<'a> BorrowChecker<'a> {
     fn ensure_state(&mut self, def_id: DefId) {
         self.states
             .entry(def_id)
-            .or_insert_with(BorrowState::default);
+            .or_default();
     }
 
     fn read_use(&mut self, def_id: DefId, span: crate::lexer::Span) {
         let state = self
             .states
             .entry(def_id)
-            .or_insert_with(BorrowState::default);
+            .or_default();
         if state.moved {
             self.error(SemanticErrorKind::UseAfterMove, "use after move", span);
             return;
@@ -412,7 +413,7 @@ impl<'a> BorrowChecker<'a> {
         let state = self
             .states
             .entry(def_id)
-            .or_insert_with(BorrowState::default);
+            .or_default();
         if state.moved {
             self.error(SemanticErrorKind::UseAfterMove, "use after move", span);
             return;
@@ -429,7 +430,7 @@ impl<'a> BorrowChecker<'a> {
         let state = self
             .states
             .entry(def_id)
-            .or_insert_with(BorrowState::default);
+            .or_default();
         if state.moved {
             self.error(SemanticErrorKind::UseAfterMove, "use after move", span);
             return;
@@ -445,7 +446,7 @@ impl<'a> BorrowChecker<'a> {
         let state = self
             .states
             .entry(def_id)
-            .or_insert_with(BorrowState::default);
+            .or_default();
         if state.moved {
             self.error(SemanticErrorKind::BorrowOfMoved, "borrow of moved value", span);
             return;
@@ -468,7 +469,7 @@ impl<'a> BorrowChecker<'a> {
         let state = self
             .states
             .entry(def_id)
-            .or_insert_with(BorrowState::default);
+            .or_default();
         if state.moved {
             self.error(SemanticErrorKind::BorrowOfMoved, "borrow of moved value", span);
             return;

@@ -1,11 +1,12 @@
 //! Type annotation parsing
 
-use super::{ParseError, ParseErrorKind, Parser};
+use super::{ParseError, Parser};
 use crate::lexer::TokenKind;
 use crate::syntax::*;
 
 impl Parser {
     /// Try to parse a type annotation (returns None if not a type)
+    #[allow(dead_code)]
     pub(super) fn try_parse_type(&mut self) -> Result<Option<TypeExpr>, ParseError> {
         // Check for type modifiers or type name
         if self.check_keyword(TokenKind::Si)

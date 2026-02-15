@@ -57,6 +57,7 @@ fn render_one(diag: &Diagnostic, sources: &[(String, String)]) {
 }
 
 /// Simple text rendering (no colors)
+#[allow(dead_code)]
 pub fn render_plain(diag: &Diagnostic) -> String {
     let severity = match diag.severity {
         Severity::Error => "error",

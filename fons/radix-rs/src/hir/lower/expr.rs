@@ -130,11 +130,7 @@ impl<'a> Lowerer<'a> {
         let cond = lower_expr(self, &ternary.cond);
         let then_expr = lower_expr(self, &ternary.then);
         let else_expr = lower_expr(self, &ternary.else_);
-        HirExprKind::Si(
-            Box::new(cond),
-            self.expr_block(then_expr),
-            Some(self.expr_block(else_expr)),
-        )
+        HirExprKind::Si(Box::new(cond), self.expr_block(then_expr), Some(self.expr_block(else_expr)))
     }
 
     /// Lower call expression (vocare)
@@ -249,12 +245,9 @@ impl<'a> Lowerer<'a> {
             let value = match &field.value {
                 Some(value) => lower_expr(self, value),
                 None => match &field.key {
-                    crate::syntax::ObjectKey::Ident(ident) => HirExpr {
-                        id: self.next_hir_id(),
-                        kind: self.lower_nomen(ident),
-                        ty: None,
-                        span: ident.span,
-                    },
+                    crate::syntax::ObjectKey::Ident(ident) => {
+                        HirExpr { id: self.next_hir_id(), kind: self.lower_nomen(ident), ty: None, span: ident.span }
+                    }
                     _ => HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span },
                 },
             };
@@ -287,7 +280,9 @@ impl<'a> Lowerer<'a> {
                         };
                         let value = match &field.value {
                             Some(value) => lower_expr(self, value),
-                            None => HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span },
+                            None => {
+                                HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span }
+                            }
                         };
                         fields.push((name, value));
                     }

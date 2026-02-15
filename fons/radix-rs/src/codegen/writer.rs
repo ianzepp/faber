@@ -1,6 +1,5 @@
 //! Code writer with indentation support
 
-use std::fmt::Write;
 
 /// Indentation-aware code writer
 pub struct CodeWriter {

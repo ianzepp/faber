@@ -766,6 +766,7 @@ impl Parser {
         )
     }
 
+    #[allow(dead_code)]
     fn parse_target_mappings(&mut self) -> Result<Vec<TargetMapping>, ParseError> {
         let mut mappings = Vec::new();
 

@@ -833,17 +833,8 @@ impl Parser {
             None
         } else if self.eat_keyword(TokenKind::Non) {
             // Negated property: non activus
-            if let Some(ident) = self.try_parse_ident() {
-                Some(CollectionFilter { negated: true, kind: CollectionFilterKind::Property(ident) })
-            } else {
-                None
-            }
-        } else if let Some(ident) = self.try_parse_ident() {
-            // Property filter: activus
-            Some(CollectionFilter { negated: false, kind: CollectionFilterKind::Property(ident) })
-        } else {
-            None
-        };
+            self.try_parse_ident().map(|ident| CollectionFilter { negated: true, kind: CollectionFilterKind::Property(ident) })
+        } else { self.try_parse_ident().map(|ident| CollectionFilter { negated: false, kind: CollectionFilterKind::Property(ident) }) };
 
         let mut transforms = Vec::new();
         while self.eat(&TokenKind::Comma) {

@@ -60,6 +60,8 @@ fn rust_target_reports_cura_arena_noop_warning() {
     let result = compile(&session, "test.fab", source);
 
     assert!(result.diagnostics.iter().any(|d| {
-        !d.is_error() && d.message.contains("cura arena has no effect for Rust targets")
+        !d.is_error()
+            && d.message
+                .contains("cura arena has no effect for Rust targets")
     }));
 }

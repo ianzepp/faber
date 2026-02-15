@@ -271,19 +271,16 @@ fn reports_de_passed_to_in_position() {
     let result = analyze(&program, &Resolver::new(), &types);
     assert!(result.is_err());
     let errors = result.unwrap_err();
-    assert!(errors.iter().any(|err| err.kind == SemanticErrorKind::ModeMismatch));
+    assert!(errors
+        .iter()
+        .any(|err| err.kind == SemanticErrorKind::ModeMismatch));
 }
 
 #[test]
 fn warns_when_in_parameter_is_never_mutated() {
     let mut types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
-    let read = HirExpr {
-        id: crate::hir::HirId(1),
-        kind: HirExprKind::Path(DefId(1)),
-        ty: Some(numerus),
-        span: span(),
-    };
+    let read = HirExpr { id: crate::hir::HirId(1), kind: HirExprKind::Path(DefId(1)), ty: Some(numerus), span: span() };
 
     let program = HirProgram {
         items: vec![HirItem {
@@ -325,12 +322,7 @@ fn warns_when_in_parameter_is_never_mutated() {
 fn warns_when_ex_parameter_is_never_consumed() {
     let mut types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
-    let read = HirExpr {
-        id: crate::hir::HirId(1),
-        kind: HirExprKind::Path(DefId(1)),
-        ty: Some(numerus),
-        span: span(),
-    };
+    let read = HirExpr { id: crate::hir::HirId(1), kind: HirExprKind::Path(DefId(1)), ty: Some(numerus), span: span() };
 
     let program = HirProgram {
         items: vec![HirItem {

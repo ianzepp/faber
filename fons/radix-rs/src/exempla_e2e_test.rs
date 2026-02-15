@@ -98,11 +98,7 @@ fn exempla_rust_e2e() {
 
         if !rustc.status.success() {
             let stderr = String::from_utf8_lossy(&rustc.stderr).trim().to_owned();
-            results.push(E2eResult {
-                path: file.clone(),
-                passed: false,
-                reason: format!("rustc failed: {stderr}"),
-            });
+            results.push(E2eResult { path: file.clone(), passed: false, reason: format!("rustc failed: {stderr}") });
             continue;
         }
 
@@ -121,11 +117,7 @@ fn exempla_rust_e2e() {
 
         if !run.status.success() {
             let stderr = String::from_utf8_lossy(&run.stderr).trim().to_owned();
-            results.push(E2eResult {
-                path: file.clone(),
-                passed: false,
-                reason: format!("binary failed: {stderr}"),
-            });
+            results.push(E2eResult { path: file.clone(), passed: false, reason: format!("binary failed: {stderr}") });
             continue;
         }
 
@@ -141,11 +133,7 @@ fn exempla_rust_e2e() {
             }
         }
 
-        results.push(E2eResult {
-            path: file.clone(),
-            passed: true,
-            reason: String::new(),
-        });
+        results.push(E2eResult { path: file.clone(), passed: true, reason: String::new() });
     }
 
     let pass_count = results.iter().filter(|r| r.passed).count();

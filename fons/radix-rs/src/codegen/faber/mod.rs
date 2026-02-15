@@ -955,6 +955,7 @@ impl FaberCodegen {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn collect_pattern_names(&self, names: &mut FxHashMap<DefId, Symbol>, pattern: &HirPattern) {
         match pattern {
             HirPattern::Wildcard => {}

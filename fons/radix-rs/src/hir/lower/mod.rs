@@ -9,7 +9,7 @@ mod pattern;
 mod stmt;
 mod types;
 
-use super::{HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirItemKind, HirProgram, HirStmt, HirStmtKind};
+use super::{HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirProgram, HirStmt, HirStmtKind};
 use crate::lexer::{Interner, Span, Symbol};
 use crate::semantic::{Resolver, TypeTable};
 use crate::syntax::{Program, Stmt, StmtKind};
@@ -125,11 +125,7 @@ impl<'a> Lowerer<'a> {
                 .first()
                 .map(|stmt| stmt.span)
                 .unwrap_or_else(Span::default);
-            entry = Some(HirBlock {
-                stmts: implicit_entry_stmts,
-                expr: None,
-                span,
-            });
+            entry = Some(HirBlock { stmts: implicit_entry_stmts, expr: None, span });
         }
 
         HirProgram { items, entry }

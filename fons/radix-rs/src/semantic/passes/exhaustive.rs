@@ -3,7 +3,7 @@
 //! Verifies that pattern matches cover all cases.
 
 use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirItem, HirItemKind, HirPattern, HirProgram, HirStmt,
+    DefId, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirItemKind, HirPattern, HirProgram, HirStmt,
     HirStmtKind,
 };
 use crate::semantic::{SemanticError, SemanticErrorKind, Type, TypeId, TypeTable};
@@ -216,7 +216,7 @@ fn check_match(
 
     for arm in arms {
         let is_guarded = arm.guard.is_some();
-        let is_catchall = matches!(arm.pattern, HirPattern::Wildcard | HirPattern::Binding(_, _));
+        let _is_catchall = matches!(arm.pattern, HirPattern::Wildcard | HirPattern::Binding(_, _));
 
         if has_catchall {
             errors.push(SemanticError::new(
@@ -229,15 +229,14 @@ fn check_match(
 
         match &arm.pattern {
             HirPattern::Variant(def_id, _) => {
-                if !is_guarded {
-                    if !covered.insert(*def_id) {
+                if !is_guarded
+                    && !covered.insert(*def_id) {
                         errors.push(SemanticError::new(
                             SemanticErrorKind::DuplicatePattern,
                             "duplicate pattern",
                             arm.span,
                         ));
                     }
-                }
             }
             HirPattern::Wildcard | HirPattern::Binding(_, _) => {
                 if !is_guarded {
