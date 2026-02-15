@@ -102,6 +102,8 @@ pub fn generate(
     types: &TypeTable,
     interner: &Interner,
 ) -> Result<crate::Output, CodegenError> {
+    reject_hir_errors(hir)?;
+
     match target {
         Target::Rust => {
             let gen = rust::RustCodegen::new(hir, interner);
@@ -113,5 +115,161 @@ pub fn generate(
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::Faber(output))
         }
+    }
+}
+
+fn reject_hir_errors(hir: &HirProgram) -> Result<(), CodegenError> {
+    if let Some(span) = find_error_expr_in_program(hir) {
+        return Err(CodegenError {
+            message: format!(
+                "cannot generate code from HIR containing error expressions at span {}..{}",
+                span.start, span.end
+            ),
+        });
+    }
+    Ok(())
+}
+
+fn find_error_expr_in_program(hir: &HirProgram) -> Option<crate::lexer::Span> {
+    for item in &hir.items {
+        if let Some(span) = find_error_expr_in_item(item) {
+            return Some(span);
+        }
+    }
+
+    if let Some(entry) = &hir.entry {
+        return find_error_expr_in_block(entry);
+    }
+
+    None
+}
+
+fn find_error_expr_in_item(item: &crate::hir::HirItem) -> Option<crate::lexer::Span> {
+    match &item.kind {
+        crate::hir::HirItemKind::Function(func) => func.body.as_ref().and_then(find_error_expr_in_block),
+        crate::hir::HirItemKind::Struct(struct_item) => {
+            for field in &struct_item.fields {
+                if let Some(init) = &field.init {
+                    if let Some(span) = find_error_expr_in_expr(init) {
+                        return Some(span);
+                    }
+                }
+            }
+            for method in &struct_item.methods {
+                if let Some(body) = &method.func.body {
+                    if let Some(span) = find_error_expr_in_block(body) {
+                        return Some(span);
+                    }
+                }
+            }
+            None
+        }
+        crate::hir::HirItemKind::Const(const_item) => find_error_expr_in_expr(&const_item.value),
+        _ => None,
+    }
+}
+
+fn find_error_expr_in_block(block: &crate::hir::HirBlock) -> Option<crate::lexer::Span> {
+    for stmt in &block.stmts {
+        if let Some(span) = find_error_expr_in_stmt(stmt) {
+            return Some(span);
+        }
+    }
+
+    block
+        .expr
+        .as_ref()
+        .and_then(|expr| find_error_expr_in_expr(expr))
+}
+
+fn find_error_expr_in_stmt(stmt: &crate::hir::HirStmt) -> Option<crate::lexer::Span> {
+    match &stmt.kind {
+        crate::hir::HirStmtKind::Local(local) => local.init.as_ref().and_then(find_error_expr_in_expr),
+        crate::hir::HirStmtKind::Expr(expr) => find_error_expr_in_expr(expr),
+        crate::hir::HirStmtKind::Redde(expr) => expr.as_ref().and_then(find_error_expr_in_expr),
+        crate::hir::HirStmtKind::Rumpe | crate::hir::HirStmtKind::Perge => None,
+    }
+}
+
+fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::Span> {
+    use crate::hir::{HirCollectionFilterKind, HirExprKind, HirOptionalChainKind};
+
+    match &expr.kind {
+        HirExprKind::Error => Some(expr.span),
+        HirExprKind::Path(_) | HirExprKind::Literal(_) => None,
+        HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
+            find_error_expr_in_expr(lhs).or_else(|| find_error_expr_in_expr(rhs))
+        }
+        HirExprKind::Unary(_, inner)
+        | HirExprKind::Field(inner, _)
+        | HirExprKind::Panic(inner)
+        | HirExprKind::Throw(inner)
+        | HirExprKind::Cede(inner)
+        | HirExprKind::Qua(inner, _)
+        | HirExprKind::Ref(_, inner)
+        | HirExprKind::Deref(inner) => find_error_expr_in_expr(inner),
+        HirExprKind::Call(callee, args) | HirExprKind::MethodCall(callee, _, args) => {
+            find_error_expr_in_expr(callee).or_else(|| args.iter().find_map(find_error_expr_in_expr))
+        }
+        HirExprKind::Index(object, index) => find_error_expr_in_expr(object).or_else(|| find_error_expr_in_expr(index)),
+        HirExprKind::OptionalChain(object, chain) => find_error_expr_in_expr(object).or_else(|| match chain {
+            HirOptionalChainKind::Member(_) => None,
+            HirOptionalChainKind::Index(index) => find_error_expr_in_expr(index),
+            HirOptionalChainKind::Call(args) => args.iter().find_map(find_error_expr_in_expr),
+        }),
+        HirExprKind::Ab { source, filter, transforms } => find_error_expr_in_expr(source)
+            .or_else(|| {
+                filter.as_ref().and_then(|filter| match &filter.kind {
+                    HirCollectionFilterKind::Condition(condition) => find_error_expr_in_expr(condition),
+                    HirCollectionFilterKind::Property(_) => None,
+                })
+            })
+            .or_else(|| {
+                transforms.iter().find_map(|transform| {
+                    transform
+                        .arg
+                        .as_ref()
+                        .and_then(|arg| find_error_expr_in_expr(arg))
+                })
+            }),
+        HirExprKind::Block(block) | HirExprKind::Loop(block) => find_error_expr_in_block(block),
+        HirExprKind::Si(cond, then_block, else_block) => find_error_expr_in_expr(cond)
+            .or_else(|| find_error_expr_in_block(then_block))
+            .or_else(|| else_block.as_ref().and_then(find_error_expr_in_block)),
+        HirExprKind::Discerne(scrutinee, arms) => find_error_expr_in_expr(scrutinee).or_else(|| {
+            arms.iter().find_map(|arm| {
+                arm.guard
+                    .as_ref()
+                    .and_then(find_error_expr_in_expr)
+                    .or_else(|| find_error_expr_in_expr(&arm.body))
+            })
+        }),
+        HirExprKind::Dum(cond, block) => find_error_expr_in_expr(cond).or_else(|| find_error_expr_in_block(block)),
+        HirExprKind::Itera(_, _, iter, block) => {
+            find_error_expr_in_expr(iter).or_else(|| find_error_expr_in_block(block))
+        }
+        HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            elements.iter().find_map(find_error_expr_in_expr)
+        }
+        HirExprKind::Struct(_, fields) => fields
+            .iter()
+            .find_map(|(_, value)| find_error_expr_in_expr(value)),
+        HirExprKind::Scriptum(_, args) => args.iter().find_map(find_error_expr_in_expr),
+        HirExprKind::Adfirma(cond, message) => find_error_expr_in_expr(cond).or_else(|| {
+            message
+                .as_ref()
+                .and_then(|message| find_error_expr_in_expr(message))
+        }),
+        HirExprKind::Tempta { body, catch, finally } => find_error_expr_in_block(body)
+            .or_else(|| catch.as_ref().and_then(find_error_expr_in_block))
+            .or_else(|| finally.as_ref().and_then(find_error_expr_in_block)),
+        HirExprKind::Clausura(_, _, body) => find_error_expr_in_expr(body),
+        HirExprKind::Innatum { source, map_entries, .. } => find_error_expr_in_expr(source).or_else(|| {
+            map_entries.as_ref().and_then(|entries| {
+                entries
+                    .iter()
+                    .find_map(|(_, value)| find_error_expr_in_expr(value))
+            })
+        }),
     }
 }

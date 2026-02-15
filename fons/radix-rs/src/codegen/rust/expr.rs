@@ -769,7 +769,12 @@ pub fn generate_expr(
             generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Error => {
-            w.write("todo!(\"error\")");
+            return Err(CodegenError {
+                message: format!(
+                    "cannot generate Rust for HIR error expression at span {}..{}",
+                    expr.span.start, expr.span.end
+                ),
+            });
         }
     }
     Ok(())

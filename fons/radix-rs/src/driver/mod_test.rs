@@ -70,6 +70,22 @@ fn incipit_argumenta_reports_unsupported_lowering_error() {
 }
 
 #[test]
+fn unsupported_expression_kind_reports_lowering_error() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum x = lege
+  scribe x
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("unsupported expression kind in lowering")));
+}
+
+#[test]
 fn rust_target_reports_cura_arena_noop_warning() {
     let session = session(Target::Rust);
     let source = "incipit {\n  cura arena fixum mem {\n  }\n}";

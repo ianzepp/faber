@@ -47,7 +47,7 @@
 //!   but may produce cascading errors if types remain unresolved
 
 use crate::hir::{
-    DefId, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral,
+    DefId, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirId, HirItem, HirItemKind, HirLiteral,
     HirLocal, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct,
 };
 use crate::lexer::Symbol;
@@ -55,7 +55,7 @@ use crate::semantic::{
     types::InferVar, FuncSig, ParamMode, ParamType, Primitive, Resolver, SemanticError, SemanticErrorKind, Type,
     TypeId, TypeTable,
 };
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 #[derive(Clone, Copy)]
 struct BindingInfo {
@@ -85,6 +85,7 @@ struct TypeChecker<'a> {
     next_infer: u32,
     infer_ids: FxHashMap<InferVar, TypeId>,
     substitutions: FxHashMap<InferVar, TypeId>,
+    errored_exprs: FxHashSet<HirId>,
     error_type: TypeId,
 }
 
@@ -120,6 +121,7 @@ impl<'a> TypeChecker<'a> {
             next_infer: 0,
             infer_ids: FxHashMap::default(),
             substitutions: FxHashMap::default(),
+            errored_exprs: FxHashSet::default(),
             error_type,
         }
     }
@@ -682,7 +684,16 @@ impl<'a> TypeChecker<'a> {
                 self.types.reference(mutability, inner_ty)
             }
             HirExprKind::Deref(inner) => self.check_deref(inner, expr.span),
-            HirExprKind::Error => self.error_type,
+            HirExprKind::Error => {
+                if self.errored_exprs.insert(expr.id) {
+                    self.error(
+                        SemanticErrorKind::LoweringError,
+                        "invalid expression produced during lowering",
+                        expr.span,
+                    );
+                }
+                self.error_type
+            }
         };
 
         let ty = if let Some(expected) = expected {

@@ -922,7 +922,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                     }],
                     expr: Some(Box::new(HirExpr {
                         id: HirId(350),
-                        kind: HirExprKind::Error,
+                        kind: HirExprKind::Literal(HirLiteral::Nil),
                         ty: Some(err_ty),
                         span: span(),
                     })),
@@ -951,11 +951,44 @@ fn expr_codegen_handles_control_flow_and_operators() {
     assert!(code.contains(" as i64"));
     assert!(code.contains("&mut "));
     assert!(code.contains("*ptr"));
-    assert!(code.contains("todo!(\"error\")"));
     assert!(code.contains("\"N\""));
     assert!(code.contains("println!(\"{} {}\", \"N\", 3)"));
     assert!(code.contains("assert!(true, \"{}\", \"N\")"));
     assert!(code.contains("panic!(\"{}\", \"N\")"));
+}
+
+#[test]
+fn codegen_rejects_hir_error_nodes_for_all_targets() {
+    let interner = Interner::new();
+    let types = TypeTable::new();
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: HirId(1),
+                kind: HirStmtKind::Expr(HirExpr { id: HirId(2), kind: HirExprKind::Error, ty: None, span: span() }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let rust_error = match codegen::generate(Target::Rust, &program, &types, &interner) {
+        Ok(_) => panic!("expected rust codegen error"),
+        Err(error) => error,
+    };
+    assert!(rust_error
+        .message
+        .contains("HIR containing error expressions"));
+
+    let faber_error = match codegen::generate(Target::Faber, &program, &types, &interner) {
+        Ok(_) => panic!("expected faber codegen error"),
+        Err(error) => error,
+    };
+    assert!(faber_error
+        .message
+        .contains("HIR containing error expressions"));
 }
 
 #[test]

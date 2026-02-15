@@ -73,7 +73,10 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         ExprKind::Praefixum(praefixum) => lowerer.lower_praefixum(praefixum),
         ExprKind::Ego(span) => lowerer.lower_ego(*span),
         ExprKind::Paren(expr) => lower_expr(lowerer, expr).kind,
-        _ => HirExprKind::Error,
+        _ => {
+            lowerer.error("unsupported expression kind in lowering");
+            HirExprKind::Error
+        }
     };
 
     HirExpr { id, kind, ty: None, span }
