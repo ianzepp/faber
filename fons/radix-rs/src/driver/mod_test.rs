@@ -67,6 +67,19 @@ fn rust_target_reports_cura_arena_noop_warning() {
 }
 
 #[test]
+fn warning_only_semantic_diagnostics_still_emit_output() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum unused = 1
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+    assert!(result.diagnostics.iter().any(|d| !d.is_error()));
+    assert!(result.diagnostics.iter().all(|d| !d.is_error()));
+}
+
+#[test]
 fn compile_accepts_textus_concatenation_and_compound_add() {
     let session = session(Target::Rust);
     let source = r#"incipit {
@@ -254,12 +267,13 @@ fn import_alias_usage_no_longer_reports_unknown_identifier() {
     let session = session(Target::Rust);
     let source = r#"importa ex "../../norma/hal/consolum" privata consolum
 
-incipit {
+    incipit {
   consolum.fundeLineam("x")
 }"#;
     let result = compile(&session, "test.fab", source);
 
-    assert!(!result.success());
+    assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+    assert!(result.diagnostics.iter().all(|d| !d.is_error()));
     assert!(result
         .diagnostics
         .iter()

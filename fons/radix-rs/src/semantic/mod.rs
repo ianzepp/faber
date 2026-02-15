@@ -65,7 +65,7 @@ pub struct SemanticResult {
 
 impl SemanticResult {
     pub fn success(&self) -> bool {
-        self.hir.is_some() && self.errors.is_empty()
+        self.hir.is_some() && !self.errors.iter().any(|err| err.is_error())
     }
 }
 
