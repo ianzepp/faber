@@ -7,6 +7,7 @@ mod types;
 
 use super::{CodeWriter, Codegen, CodegenError};
 use crate::hir::{HirItem, HirItemKind, HirProgram};
+use crate::lexer::Interner;
 use crate::semantic::TypeTable;
 use crate::{CrateDep, RustOutput};
 
@@ -67,7 +68,12 @@ impl RustCodegen {
 impl Codegen for RustCodegen {
     type Output = RustOutput;
 
-    fn generate(&self, hir: &HirProgram, types: &TypeTable) -> Result<RustOutput, CodegenError> {
+    fn generate(
+        &self,
+        hir: &HirProgram,
+        types: &TypeTable,
+        _interner: &Interner,
+    ) -> Result<RustOutput, CodegenError> {
         let mut w = CodeWriter::new();
 
         self.generate_prelude(&mut w);

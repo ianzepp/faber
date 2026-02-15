@@ -9,8 +9,8 @@ use crate::hir::{
 };
 use crate::lexer::Symbol;
 use crate::semantic::{
-    FuncSig, ParamMode, ParamType, Primitive, Resolver, SemanticError, SemanticErrorKind, Type,
-    TypeId, TypeTable,
+    types::InferVar, FuncSig, ParamMode, ParamType, Primitive, Resolver, SemanticError,
+    SemanticErrorKind, Type, TypeId, TypeTable,
 };
 use rustc_hash::FxHashMap;
 
@@ -38,8 +38,8 @@ struct TypeChecker<'a> {
     current_return: Option<TypeId>,
     inferred_return: Option<TypeId>,
     next_infer: u32,
-    infer_ids: FxHashMap<crate::semantic::InferVar, TypeId>,
-    substitutions: FxHashMap<crate::semantic::InferVar, TypeId>,
+    infer_ids: FxHashMap<InferVar, TypeId>,
+    substitutions: FxHashMap<InferVar, TypeId>,
     error_type: TypeId,
 }
 
@@ -623,9 +623,10 @@ impl<'a> TypeChecker<'a> {
         match op {
             crate::hir::HirUnOp::Neg => {
                 if self.is_infer(self.resolve_type(operand_ty)) {
+                    let numerus = self.numerus_type();
                     return self.unify(
                         operand_ty,
-                        self.numerus_type(),
+                        numerus,
                         operand.span,
                         "numeric operand required",
                     );
@@ -641,9 +642,10 @@ impl<'a> TypeChecker<'a> {
             }
             crate::hir::HirUnOp::Not => {
                 if self.is_infer(self.resolve_type(operand_ty)) {
+                    let bivalens = self.bool_type();
                     self.unify(
                         operand_ty,
-                        self.bool_type(),
+                        bivalens,
                         operand.span,
                         "boolean operand required",
                     );
@@ -660,9 +662,10 @@ impl<'a> TypeChecker<'a> {
             }
             crate::hir::HirUnOp::BitNot => {
                 if self.is_infer(self.resolve_type(operand_ty)) {
+                    let numerus = self.numerus_type();
                     self.unify(
                         operand_ty,
-                        self.numerus_type(),
+                        numerus,
                         operand.span,
                         "integer operand required",
                     );
@@ -725,7 +728,7 @@ impl<'a> TypeChecker<'a> {
             return self.error_type;
         };
 
-        let Some(sig) = info.methods.get(&name) else {
+        let Some(sig) = info.methods.get(&name).cloned() else {
             self.error(
                 SemanticErrorKind::UndefinedMember,
                 "unknown method",
@@ -734,7 +737,7 @@ impl<'a> TypeChecker<'a> {
             return self.error_type;
         };
 
-        self.check_call_args(sig, args, receiver.span);
+        self.check_call_args(&sig, args, receiver.span);
         sig.ret
     }
 
@@ -768,7 +771,8 @@ impl<'a> TypeChecker<'a> {
             return self.error_type;
         };
 
-        let Some(ty) = info.fields.get(&name) else {
+        let field_ty = info.fields.get(&name).copied();
+        let Some(field_ty) = field_ty else {
             self.error(
                 SemanticErrorKind::UndefinedMember,
                 "unknown field",
@@ -777,14 +781,21 @@ impl<'a> TypeChecker<'a> {
             return self.error_type;
         };
 
-        *ty
+        field_ty
     }
 
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
         let obj_ty = self.check_expr(object);
         let idx_ty = self.check_expr(index);
-        match self.types.get(self.resolve_type(obj_ty)) {
-            Type::Array(elem) => {
+        let resolved = self.resolve_type(obj_ty);
+        let kind = match self.types.get(resolved) {
+            Type::Array(elem) => Some((Some(*elem), None, None)),
+            Type::Map(key, value) => Some((None, Some(*key), Some(*value))),
+            _ => None,
+        };
+
+        match kind {
+            Some((Some(elem), None, None)) => {
                 if !self.is_integer(idx_ty) {
                     self.error(
                         SemanticErrorKind::InvalidOperandTypes,
@@ -792,11 +803,11 @@ impl<'a> TypeChecker<'a> {
                         index.span,
                     );
                 }
-                *elem
+                elem
             }
-            Type::Map(key, value) => {
-                self.unify(idx_ty, *key, index.span, "map index type mismatch");
-                *value
+            Some((None, Some(key), Some(value))) => {
+                self.unify(idx_ty, key, index.span, "map index type mismatch");
+                value
             }
             _ => {
                 self.error(
@@ -828,12 +839,8 @@ impl<'a> TypeChecker<'a> {
     fn check_condition(&mut self, cond: &mut HirExpr) {
         let cond_ty = self.check_expr(cond);
         if self.is_infer(self.resolve_type(cond_ty)) {
-            self.unify(
-                cond_ty,
-                self.bool_type(),
-                cond.span,
-                "condition must be bivalens",
-            );
+            let bivalens = self.bool_type();
+            self.unify(cond_ty, bivalens, cond.span, "condition must be bivalens");
             return;
         }
         if !self.is_bool(cond_ty) {
@@ -964,13 +971,13 @@ impl<'a> TypeChecker<'a> {
                     return binding.ty;
                 }
 
-                if let Some(ty) = self.consts.get(def_id) {
+                if let Some(ty) = self.consts.get(def_id).copied() {
                     self.error(
                         SemanticErrorKind::ImmutableAssignment,
                         "assignment to constant",
                         target.span,
                     );
-                    return *ty;
+                    return ty;
                 }
 
                 self.error(
@@ -1013,7 +1020,8 @@ impl<'a> TypeChecker<'a> {
                 "empty array needs type annotation",
                 span,
             );
-            return self.types.array(self.fresh_infer());
+            let infer = self.fresh_infer();
+            return self.types.array(infer);
         }
 
         let mut element_ty = None;
@@ -1029,8 +1037,8 @@ impl<'a> TypeChecker<'a> {
             });
         }
 
-        self.types
-            .array(element_ty.unwrap_or_else(|| self.fresh_infer()))
+        let elem_ty = element_ty.unwrap_or_else(|| self.fresh_infer());
+        self.types.array(elem_ty)
     }
 
     fn check_struct_literal(
@@ -1038,20 +1046,23 @@ impl<'a> TypeChecker<'a> {
         def_id: DefId,
         fields: &mut Vec<(Symbol, HirExpr)>,
     ) -> TypeId {
-        let Some(info) = self.structs.get(&def_id) else {
-            self.error(
-                SemanticErrorKind::UndefinedType,
-                "unknown struct",
-                fields
-                    .first()
-                    .map(|(_, expr)| expr.span)
-                    .unwrap_or_default(),
-            );
-            return self.error_type;
+        let field_types = match self.structs.get(&def_id) {
+            Some(info) => info.fields.clone(),
+            None => {
+                self.error(
+                    SemanticErrorKind::UndefinedType,
+                    "unknown struct",
+                    fields
+                        .first()
+                        .map(|(_, expr)| expr.span)
+                        .unwrap_or_default(),
+                );
+                return self.error_type;
+            }
         };
 
         for (name, value) in fields.iter_mut() {
-            let Some(field_ty) = info.fields.get(name) else {
+            let Some(field_ty) = field_types.get(name).copied() else {
                 self.error(
                     SemanticErrorKind::UndefinedMember,
                     "unknown field",
@@ -1062,7 +1073,7 @@ impl<'a> TypeChecker<'a> {
             let value_ty = self.check_expr(value);
             self.unify(
                 value_ty,
-                *field_ty,
+                field_ty,
                 value.span,
                 "field initializer type mismatch",
             );
@@ -1106,7 +1117,7 @@ impl<'a> TypeChecker<'a> {
 
         let expected_ret = ret
             .as_ref()
-            .copied()
+            .map(|ty| **ty)
             .or_else(|| expected_sig.as_ref().map(|sig| sig.ret));
         let body_ty = self.check_expr_with_expected(body, expected_ret);
         let ret_ty = match ret {
@@ -1164,11 +1175,14 @@ impl<'a> TypeChecker<'a> {
     fn numeric_bin(&mut self, lhs: TypeId, rhs: TypeId, span: crate::lexer::Span) -> TypeId {
         let lhs_resolved = self.resolve_type(lhs);
         let rhs_resolved = self.resolve_type(rhs);
-        if self.is_infer(lhs_resolved) {
-            self.unify(lhs, self.numerus_type(), span, "numeric operands required");
-        }
-        if self.is_infer(rhs_resolved) {
-            self.unify(rhs, self.numerus_type(), span, "numeric operands required");
+        if self.is_infer(lhs_resolved) || self.is_infer(rhs_resolved) {
+            let numerus = self.numerus_type();
+            if self.is_infer(lhs_resolved) {
+                self.unify(lhs, numerus, span, "numeric operands required");
+            }
+            if self.is_infer(rhs_resolved) {
+                self.unify(rhs, numerus, span, "numeric operands required");
+            }
         }
         if !self.is_numeric(lhs) || !self.is_numeric(rhs) {
             self.error(
@@ -1240,7 +1254,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn fresh_infer(&mut self) -> TypeId {
-        let var = crate::semantic::InferVar(self.next_infer);
+        let var = InferVar(self.next_infer);
         self.next_infer += 1;
         let id = self.types.intern(Type::Infer(var));
         self.infer_ids.insert(var, id);
@@ -1263,7 +1277,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn infer_var_of(&self, ty: TypeId) -> Option<crate::semantic::InferVar> {
+    fn infer_var_of(&self, ty: TypeId) -> Option<InferVar> {
         match self.types.get(ty) {
             Type::Infer(var) => Some(*var),
             _ => None,
@@ -1312,32 +1326,35 @@ impl<'a> TypeChecker<'a> {
             return self.bind_infer(var, left, span, message);
         }
 
-        match (self.types.get(left), self.types.get(right)) {
+        let left_ty = self.types.get(left).clone();
+        let right_ty = self.types.get(right).clone();
+
+        match (left_ty, right_ty) {
             (Type::Primitive(Primitive::Numerus), Type::Primitive(Primitive::Fractus))
             | (Type::Primitive(Primitive::Fractus), Type::Primitive(Primitive::Numerus)) => {
                 return self.fractus_type();
             }
             (Type::Primitive(a), Type::Primitive(b)) if a == b => return left,
             (Type::Array(a), Type::Array(b)) => {
-                let inner = self.unify(*a, *b, span, message);
+                let inner = self.unify(a, b, span, message);
                 return self.types.array(inner);
             }
             (Type::Map(ka, va), Type::Map(kb, vb)) => {
-                let key = self.unify(*ka, *kb, span, message);
-                let value = self.unify(*va, *vb, span, message);
+                let key = self.unify(ka, kb, span, message);
+                let value = self.unify(va, vb, span, message);
                 return self.types.map(key, value);
             }
             (Type::Set(a), Type::Set(b)) => {
-                let inner = self.unify(*a, *b, span, message);
+                let inner = self.unify(a, b, span, message);
                 return self.types.set(inner);
             }
             (Type::Option(a), Type::Option(b)) => {
-                let inner = self.unify(*a, *b, span, message);
+                let inner = self.unify(a, b, span, message);
                 return self.types.option(inner);
             }
             (Type::Ref(ma, a), Type::Ref(mb, b)) if ma == mb => {
-                let inner = self.unify(*a, *b, span, message);
-                return self.types.reference(*ma, inner);
+                let inner = self.unify(a, b, span, message);
+                return self.types.reference(ma, inner);
             }
             (Type::Func(sig_a), Type::Func(sig_b)) => {
                 if sig_a.params.len() != sig_b.params.len() {
@@ -1368,7 +1385,7 @@ impl<'a> TypeChecker<'a> {
 
     fn bind_infer(
         &mut self,
-        var: crate::semantic::InferVar,
+        var: InferVar,
         ty: TypeId,
         span: crate::lexer::Span,
         message: &str,
@@ -1387,7 +1404,7 @@ impl<'a> TypeChecker<'a> {
         resolved
     }
 
-    fn occurs_in(&self, var: crate::semantic::InferVar, ty: TypeId) -> bool {
+    fn occurs_in(&self, var: InferVar, ty: TypeId) -> bool {
         let resolved = self.resolve_type(ty);
         if let Some(found) = self.infer_var_of(resolved) {
             return found == var;

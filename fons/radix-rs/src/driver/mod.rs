@@ -76,6 +76,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         session.config.target,
         &hir,
         &semantic_result.types,
+        &interner,
         crate_name,
     ) {
         Ok(output) => CompileResult {

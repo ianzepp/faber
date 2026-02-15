@@ -69,12 +69,14 @@ fn resolve_stmt(
             if let Some(init) = &decl.init {
                 resolve_expr(resolver, interner, init, errors);
             }
-            define_binding_pattern(
-                resolver,
-                &decl.binding,
-                decl.mutability == crate::syntax::Mutability::Mutable,
-                errors,
-            );
+            if !matches!(resolver.current().kind, ScopeKind::Global) {
+                define_binding_pattern(
+                    resolver,
+                    &decl.binding,
+                    decl.mutability == crate::syntax::Mutability::Mutable,
+                    errors,
+                );
+            }
         }
         StmtKind::Func(decl) => {
             resolver.enter_scope(ScopeKind::Function);

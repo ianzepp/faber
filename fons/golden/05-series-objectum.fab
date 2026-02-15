@@ -3,6 +3,6 @@
 fixum lista = [1, 2, 3]
 fixum tabula = { a: 1, b: 2 }
 
-scribe lista.longitudo
+scribe lista.longitudo()
 scribe tabula.a
 scribe { x: 1, y: 2 }
