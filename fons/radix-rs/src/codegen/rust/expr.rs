@@ -22,7 +22,8 @@ use super::super::CodeWriter;
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
-use crate::semantic::{Primitive, Type, TypeTable};
+use crate::lexer::Symbol;
+use crate::semantic::{Primitive, Type, TypeId, TypeTable};
 
 /// Generate a Rust expression.
 ///
@@ -680,6 +681,82 @@ pub fn generate_expr(
             w.write(" as ");
             w.write(&type_to_rust(codegen, *ty, types));
         }
+        HirExprKind::Innatum { source, target, map_entries } => match types.get(*target) {
+            Type::Array(elem) => {
+                if let HirExprKind::Array(elements) = &source.kind {
+                    if elements.is_empty() {
+                        w.write("Vec::<");
+                        w.write(&type_to_rust(codegen, *elem, types));
+                        w.write(">::new()");
+                    } else {
+                        w.write("vec![");
+                        for (i, elem_expr) in elements.iter().enumerate() {
+                            if i > 0 {
+                                w.write(", ");
+                            }
+                            generate_expr(
+                                codegen,
+                                elem_expr,
+                                types,
+                                w,
+                                in_failable_fn,
+                                in_entry,
+                                suppress_error_propagation,
+                            )?;
+                        }
+                        w.write("]");
+                    }
+                } else {
+                    w.write("Vec::<");
+                    w.write(&type_to_rust(codegen, *elem, types));
+                    w.write(">::new()");
+                }
+            }
+            Type::Map(key_ty, value_ty) => {
+                if let Some(entries) = map_entries {
+                    let suffix = expr.id.0;
+                    let map_name = format!("__faber_innatum_map_{}", suffix);
+                    w.writeln("{");
+                    w.indented(|w| {
+                        w.write("let mut ");
+                        w.write(&map_name);
+                        w.write(" = std::collections::HashMap::<");
+                        w.write(&type_to_rust(codegen, *key_ty, types));
+                        w.write(", ");
+                        w.write(&type_to_rust(codegen, *value_ty, types));
+                        w.writeln(">::new();");
+                        for (key, value) in entries {
+                            w.write(&map_name);
+                            w.write(".insert(");
+                            write_innatum_map_key(codegen, types, *key, *key_ty, w);
+                            w.write(", ");
+                            let _ = generate_expr(
+                                codegen,
+                                value,
+                                types,
+                                w,
+                                in_failable_fn,
+                                in_entry,
+                                suppress_error_propagation,
+                            );
+                            w.writeln(");");
+                        }
+                        w.write(&map_name);
+                        w.newline();
+                    });
+                    w.write("}");
+                } else {
+                    w.write("std::collections::HashMap::<");
+                    w.write(&type_to_rust(codegen, *key_ty, types));
+                    w.write(", ");
+                    w.write(&type_to_rust(codegen, *value_ty, types));
+                    w.write(">::new()");
+                }
+            }
+            _ => {
+                generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            }
+        },
         HirExprKind::Ref(kind, expr) => {
             match kind {
                 HirRefKind::Shared => w.write("&"),
@@ -856,4 +933,30 @@ fn rust_format_template(template: &str) -> String {
         }
     }
     out
+}
+
+fn write_innatum_map_key(
+    codegen: &RustCodegen<'_>,
+    types: &TypeTable,
+    key: Symbol,
+    key_ty: TypeId,
+    w: &mut CodeWriter,
+) {
+    if matches!(types.get(key_ty), Type::Primitive(Primitive::Textus)) {
+        w.write("\"");
+        for ch in codegen.resolve_symbol(key).chars() {
+            match ch {
+                '\\' => w.write("\\\\"),
+                '"' => w.write("\\\""),
+                '\n' => w.write("\\n"),
+                '\r' => w.write("\\r"),
+                '\t' => w.write("\\t"),
+                _ => w.write(&ch.to_string()),
+            }
+        }
+        w.write("\".to_string()");
+        return;
+    }
+
+    w.write(codegen.resolve_symbol(key));
 }

@@ -247,6 +247,14 @@ fn check_expr(
         HirExprKind::Cede(expr) | HirExprKind::Qua(expr, _) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
             check_expr(expr, types, enum_variants, errors)
         }
+        HirExprKind::Innatum { source, map_entries, .. } => {
+            check_expr(source, types, enum_variants, errors);
+            if let Some(entries) = map_entries {
+                for (_, value) in entries {
+                    check_expr(value, types, enum_variants, errors);
+                }
+            }
+        }
         HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
     }
 }

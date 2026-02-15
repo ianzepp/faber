@@ -420,6 +420,14 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirExprKind::Clausura(_, _, body) => self.finalize_expr(body),
+            HirExprKind::Innatum { source, map_entries, .. } => {
+                self.finalize_expr(source);
+                if let Some(entries) = map_entries {
+                    for (_, value) in entries {
+                        self.finalize_expr(value);
+                    }
+                }
+            }
             HirExprKind::Cede(expr)
             | HirExprKind::Qua(expr, _)
             | HirExprKind::Ref(_, expr)
@@ -658,6 +666,9 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Clausura(params, ret, body) => self.check_closure(params, ret.as_mut(), body, expected),
             HirExprKind::Cede(inner) => self.check_expr(inner),
             HirExprKind::Qua(inner, target) => self.check_cast(inner, *target),
+            HirExprKind::Innatum { source, target, map_entries } => {
+                self.check_innatum(source, *target, map_entries.as_mut(), expr.span)
+            }
             HirExprKind::Ref(kind, inner) => {
                 let inner_ty = self.check_expr(inner);
                 let mutability = match kind {
@@ -902,6 +913,13 @@ impl<'a> TypeChecker<'a> {
             return sig.ret;
         }
 
+        if matches!(self.types.get(resolved), Type::Primitive(Primitive::Ignotum)) {
+            for arg in args {
+                self.check_expr(arg);
+            }
+            return self.types.primitive(Primitive::Ignotum);
+        }
+
         self.error(SemanticErrorKind::NotCallable, "callee is not callable", callee.span);
         self.error_type
     }
@@ -1075,6 +1093,13 @@ impl<'a> TypeChecker<'a> {
             self.unify(resolved, func_ty, span, "callee is not callable");
             self.check_call_args(&sig, args, span);
             return sig.ret;
+        }
+
+        if matches!(self.types.get(resolved), Type::Primitive(Primitive::Ignotum)) {
+            for arg in args {
+                self.check_expr(arg);
+            }
+            return self.types.primitive(Primitive::Ignotum);
         }
 
         for arg in args {
@@ -1368,10 +1393,41 @@ impl<'a> TypeChecker<'a> {
         if self.is_infer(self.resolve_type(target)) {
             return self.unify(expr_ty, target, expr.span, "invalid cast");
         }
-        if !self.types.assignable(expr_ty, target) && !self.types.assignable(target, expr_ty) {
-            self.error(SemanticErrorKind::InvalidCast, "invalid cast", expr.span);
-        }
         target
+    }
+
+    fn check_innatum(
+        &mut self,
+        source: &mut HirExpr,
+        target: TypeId,
+        map_entries: Option<&mut Vec<(Symbol, HirExpr)>>,
+        span: crate::lexer::Span,
+    ) -> TypeId {
+        let target_resolved = self.resolve_type(target);
+        match (self.types.get(target_resolved).clone(), map_entries) {
+            (Type::Array(elem_ty), _) => {
+                if let HirExprKind::Array(elements) = &mut source.kind {
+                    for element in elements {
+                        let element_ty = self.check_expr(element);
+                        self.unify(element_ty, elem_ty, element.span, "array element type mismatch");
+                    }
+                } else {
+                    self.check_expr(source);
+                }
+            }
+            (Type::Map(_key_ty, value_ty), Some(entries)) => {
+                for (_, value) in entries {
+                    let value_ty_actual = self.check_expr(value);
+                    self.unify(value_ty_actual, value_ty, value.span, "map value type mismatch");
+                }
+            }
+            _ => {
+                self.check_expr(source);
+            }
+        }
+
+        let _ = span;
+        target_resolved
     }
 
     fn check_deref(&mut self, expr: &mut HirExpr, span: crate::lexer::Span) -> TypeId {

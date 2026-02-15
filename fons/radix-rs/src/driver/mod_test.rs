@@ -695,3 +695,68 @@ fn conversio_type_params_no_longer_report_unknown_type() {
         .iter()
         .all(|d| !d.message.contains("unknown type")));
 }
+
+#[test]
+fn qua_innatum_vel_no_longer_report_invalid_cast() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum data = 42
+  fixum asText = data qua textus
+  fixum parsed = "invalid" numeratum vel 0
+  fixum cache = { alice: 95, bob: 87 } innatum tabula<textus, numerus>
+  fixum items = [] innatum lista<textus>
+  scribe asText, parsed, cache, items
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("invalid cast")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("empty array needs type annotation")));
+}
+
+#[test]
+fn rust_output_emits_innatum_construction_and_coalesce_unwrap() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum si textus name = nihil
+  fixum display = name vel "Anonymous"
+  fixum cache = { alice: 95 } innatum tabula<textus, numerus>
+  fixum items = [] innatum lista<textus>
+  scribe display, cache, items
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".unwrap_or("));
+    assert!(output
+        .code
+        .contains("std::collections::HashMap::<String, i64>::new()"));
+    assert!(output.code.contains(".insert(\"alice\".to_string(), 95)"));
+    assert!(output.code.contains("Vec::<String>::new()"));
+}
+
+#[test]
+fn ignotum_callee_no_longer_reports_not_callable() {
+    let session = session(Target::Rust);
+    let source = r#"functio invoke(ignotum callee) -> ignotum {
+  redde callee(1)
+}
+
+incipit {
+  scribe invoke
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("callee is not callable")));
+}

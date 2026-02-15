@@ -355,6 +355,12 @@ pub enum HirExprKind {
     Cede(Box<HirExpr>),
     /// Type cast
     Qua(Box<HirExpr>, TypeId),
+    /// Native construction (innatum)
+    Innatum {
+        source: Box<HirExpr>,
+        target: TypeId,
+        map_entries: Option<Vec<(Symbol, HirExpr)>>,
+    },
     /// Reference
     Ref(HirRefKind, Box<HirExpr>),
     /// Dereference

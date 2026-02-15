@@ -368,6 +368,14 @@ impl<'a> LintContext<'a> {
                     }
                 }
             }
+            HirExprKind::Innatum { source, map_entries, .. } => {
+                self.check_expr(source, in_loop);
+                if let Some(entries) = map_entries {
+                    for (_, value) in entries {
+                        self.check_expr(value, in_loop);
+                    }
+                }
+            }
             HirExprKind::Literal(_) | HirExprKind::Error => {}
         }
     }

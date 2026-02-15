@@ -344,6 +344,14 @@ impl<'a> BorrowChecker<'a> {
             }
             HirExprKind::Cede(expr) => self.check_expr(expr),
             HirExprKind::Qua(expr, _) => self.check_expr(expr),
+            HirExprKind::Innatum { source, map_entries, .. } => {
+                self.check_expr(source);
+                if let Some(entries) = map_entries {
+                    for (_, value) in entries {
+                        self.check_expr(value);
+                    }
+                }
+            }
             HirExprKind::Ref(kind, inner) => match self.root_def_id(inner) {
                 Some(def_id) => match kind {
                     crate::hir::HirRefKind::Shared => self.borrow_shared(def_id, expr.span),

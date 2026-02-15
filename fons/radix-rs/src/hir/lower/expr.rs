@@ -268,9 +268,45 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_innatum(&mut self, innatum: &crate::syntax::InnatumExpr) -> HirExprKind {
-        let expr = lower_expr(self, &innatum.expr);
         let target = self.lower_type(&innatum.ty);
-        HirExprKind::Qua(Box::new(expr), target)
+        match &innatum.expr.kind {
+            crate::syntax::ExprKind::Object(object) => {
+                let mut entries = Vec::new();
+                for field in &object.fields {
+                    let key = match &field.key {
+                        crate::syntax::ObjectKey::Ident(ident) => ident.name,
+                        crate::syntax::ObjectKey::String(string) => *string,
+                        _ => continue,
+                    };
+                    let value = match &field.value {
+                        Some(value) => lower_expr(self, value),
+                        None => HirExpr {
+                            id: self.next_hir_id(),
+                            kind: HirExprKind::Path(match self.lookup_name(key) {
+                                Some(def_id) => def_id,
+                                None => {
+                                    self.error("undefined shorthand key in innatum object");
+                                    return HirExprKind::Error;
+                                }
+                            }),
+                            ty: None,
+                            span: field.span,
+                        },
+                    };
+                    entries.push((key, value));
+                }
+
+                HirExprKind::Innatum {
+                    source: Box::new(lower_expr(self, &innatum.expr)),
+                    target,
+                    map_entries: Some(entries),
+                }
+            }
+            _ => {
+                let source = lower_expr(self, &innatum.expr);
+                HirExprKind::Innatum { source: Box::new(source), target, map_entries: None }
+            }
+        }
     }
 
     /// Lower array literal (serie)
