@@ -75,6 +75,19 @@ pub enum SemanticErrorKind {
     Warning(WarningKind),
 }
 
+impl SemanticErrorKind {
+    pub fn is_permissive_check_downgrade(self) -> bool {
+        matches!(
+            self,
+            SemanticErrorKind::UndefinedVariable
+                | SemanticErrorKind::UndefinedType
+                | SemanticErrorKind::UndefinedFunction
+                | SemanticErrorKind::UndefinedMember
+                | SemanticErrorKind::ImportNotFound
+        )
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WarningKind {
     UnusedVariable,

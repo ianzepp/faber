@@ -37,7 +37,7 @@ fn print_usage() {
     eprintln!("  lex <file>              Tokenize and output JSON");
     eprintln!("  parse <file>            Parse and output AST as JSON");
     eprintln!("  hir <file>              Lower AST to HIR and output as JSON");
-    eprintln!("  check <file>            Run semantic analysis");
+    eprintln!("  check [--permissive] <file> Run semantic analysis");
     eprintln!("  emit [-t target] <file> Compile to target (rust, faber)");
     eprintln!();
     eprintln!("If no file is given, reads from stdin.");
@@ -258,7 +258,20 @@ fn cmd_hir(args: &[String]) {
 }
 
 fn cmd_check(args: &[String]) {
-    let (name, source) = read_source(args);
+    let mut permissive = false;
+    let mut file_args = Vec::new();
+    for arg in args {
+        match arg.as_str() {
+            "--permissive" => permissive = true,
+            _ if arg.starts_with('-') => {
+                eprintln!("unknown check option: {}", arg);
+                std::process::exit(1);
+            }
+            _ => file_args.push(arg.clone()),
+        }
+    }
+
+    let (name, source) = read_source(&file_args);
 
     let lex_result = radix::lexer::lex(&source);
     if !lex_result.success() {
@@ -281,12 +294,29 @@ fn cmd_check(args: &[String]) {
     let pass_config = radix::semantic::PassConfig::for_target(radix::codegen::Target::Rust);
     let semantic_result = radix::semantic::analyze(&program, &pass_config, &interner);
 
+    let mut fatal_errors = 0usize;
+    let mut downgraded = 0usize;
     for err in &semantic_result.errors {
-        let prefix = if err.is_error() { "error" } else { "warning" };
+        let downgraded_error = permissive && err.kind.is_permissive_check_downgrade();
+        let prefix = if err.is_error() && !downgraded_error { "error" } else { "warning" };
         eprintln!("{}:{}:{}: {}", prefix, name, err.span.start, err.message);
+        if err.is_error() {
+            if downgraded_error {
+                downgraded += 1;
+            } else {
+                fatal_errors += 1;
+            }
+        }
     }
 
-    if semantic_result.success() {
+    if permissive && downgraded > 0 {
+        eprintln!(
+            "warning:{}: downgraded {} unresolved/import-driven semantic error(s) in permissive mode",
+            name, downgraded
+        );
+    }
+
+    if semantic_result.success() || (permissive && fatal_errors == 0) {
         eprintln!("ok: {}", name);
     } else {
         std::process::exit(1);
