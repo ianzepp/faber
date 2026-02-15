@@ -207,3 +207,34 @@ fn warns_on_unreachable_after_break() {
         .iter()
         .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnreachableCode)));
 }
+
+#[test]
+fn warns_on_explicit_ignotum_annotation() {
+    let mut types = TypeTable::new();
+    let ignotum = types.primitive(Primitive::Ignotum);
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(1),
+                kind: HirStmtKind::Local(HirLocal {
+                    def_id: crate::hir::DefId(1),
+                    name: crate::lexer::Symbol(1),
+                    ty: Some(ignotum),
+                    init: None,
+                    mutable: false,
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let result = lint(&program, &Resolver::new(), &types);
+    assert!(result.is_err());
+    let errors = result.unwrap_err();
+    assert!(errors
+        .iter()
+        .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::ExplicitIgnotumAnnotation)));
+}

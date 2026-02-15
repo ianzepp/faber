@@ -16,7 +16,7 @@ mod types;
 
 pub use error::{SemanticError, SemanticErrorKind, WarningKind};
 pub use scope::{Resolver, Scope, ScopeId, ScopeKind, Symbol, SymbolKind};
-pub use types::{FuncSig, Mutability, ParamMode, ParamType, Primitive, Type, TypeId, TypeTable};
+pub use types::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeId, TypeTable};
 
 use crate::codegen::Target;
 use crate::hir::HirProgram;

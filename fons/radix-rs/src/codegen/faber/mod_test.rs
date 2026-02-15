@@ -1,9 +1,10 @@
-use super::{Codegen, DefId, FaberCodegen, Interner, Primitive, TypeTable};
+use super::{Codegen, DefId, FaberCodegen, Interner, Primitive, Type, TypeTable};
 use crate::hir::{
     HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode, HirProgram,
     HirStmt, HirStmtKind,
 };
 use crate::lexer::Span;
+use crate::semantic::InferVar;
 
 fn span() -> Span {
     Span::default()
@@ -63,4 +64,35 @@ fn emits_basic_function_and_entry() {
     assert!(output.code.contains("functio greet"));
     assert!(output.code.contains("incipit"));
     assert!(output.code.contains("redde \"salve\""));
+}
+
+#[test]
+fn renders_unresolved_infer_as_comment_marker() {
+    let mut interner = Interner::new();
+    let name = interner.intern("x");
+    let mut types = TypeTable::new();
+    let unresolved = types.intern(Type::Infer(InferVar(99)));
+
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(1),
+                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                    def_id: DefId(1),
+                    name,
+                    ty: Some(unresolved),
+                    init: None,
+                    mutable: false,
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("/* unresolved */ x"));
 }

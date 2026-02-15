@@ -375,7 +375,7 @@ impl FaberCodegen {
                 format!("{}<{}>", base_str, args_str.join(", "))
             }
 
-            Type::Infer(_) => "ignotum".to_owned(),
+            Type::Infer(_) => "/* unresolved */".to_owned(),
             Type::Union(_) => "unio".to_owned(),
             Type::Error => "/* error */".to_owned(),
         }

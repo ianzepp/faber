@@ -7,7 +7,7 @@ use crate::hir::{
     HirStmt, HirStmtKind,
 };
 use crate::lexer::Span;
-use crate::semantic::{error::WarningKind, Resolver, SemanticError, SemanticErrorKind, TypeTable};
+use crate::semantic::{error::WarningKind, Primitive, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable};
 use rustc_hash::FxHashSet;
 
 /// Run lint checks
@@ -138,6 +138,7 @@ impl<'a> LintContext<'a> {
                 .push((param.def_id, param.span, WarningKind::UnusedVariable));
             self.check_shadowing(param.name, param.def_id, param.span);
             self.insert_name(param.name, param.def_id);
+            self.warn_on_explicit_ignotum(param.ty, param.span);
         }
         if let Some(body) = &func.body {
             self.check_block(body, false);
@@ -181,25 +182,21 @@ impl<'a> LintContext<'a> {
     }
 
     fn check_local(&mut self, local: &HirLocal) {
+        let span = local
+            .init
+            .as_ref()
+            .map(|expr| expr.span)
+            .unwrap_or_default();
         self.defs.push((
             local.def_id,
-            local
-                .init
-                .as_ref()
-                .map(|expr| expr.span)
-                .unwrap_or_default(),
+            span,
             WarningKind::UnusedVariable,
         ));
-        self.check_shadowing(
-            local.name,
-            local.def_id,
-            local
-                .init
-                .as_ref()
-                .map(|expr| expr.span)
-                .unwrap_or_default(),
-        );
+        self.check_shadowing(local.name, local.def_id, span);
         self.insert_name(local.name, local.def_id);
+        if let Some(ty) = local.ty {
+            self.warn_on_explicit_ignotum(ty, span);
+        }
         if let Some(init) = &local.init {
             self.check_expr(init, false);
         }
@@ -321,6 +318,16 @@ impl<'a> LintContext<'a> {
 
     fn pop_scope(&mut self) {
         self.scope.pop();
+    }
+
+    fn warn_on_explicit_ignotum(&mut self, ty: crate::semantic::TypeId, span: Span) {
+        if matches!(self.types.get(ty), Type::Primitive(Primitive::Ignotum)) {
+            self.warnings.push((
+                WarningKind::ExplicitIgnotumAnnotation,
+                "explicit ignotum annotation disables precise type-checking".to_owned(),
+                span,
+            ));
+        }
     }
 }
 
