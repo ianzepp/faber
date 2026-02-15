@@ -339,3 +339,54 @@ fn cura_arena_anonymous_scope_no_longer_reports_infer_variable_error() {
         .iter()
         .all(|d| !d.message.contains("cannot infer variable type")));
 }
+
+#[test]
+fn compile_supports_extended_binary_operators() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum a = 1
+  fixum b = 2
+  fixum si numerus maybe = nihil
+
+  scribe a === b
+  scribe a !== b
+  scribe maybe est nihil
+  scribe a intra 0..3
+  scribe a inter [1, 2, 3]
+  scribe maybe vel 0
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unsupported binary operator")));
+}
+
+#[test]
+fn compile_supports_extended_unary_operators() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum flag = verum
+  fixum si textus maybe = nihil
+  fixum n = -3
+
+  scribe non flag
+  scribe nulla maybe
+  scribe nonnulla maybe
+  scribe nihil maybe
+  scribe nonnihil maybe
+  scribe negativum n
+  scribe positivum n
+  scribe verum flag
+  scribe falsum flag
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unsupported unary operator")));
+}

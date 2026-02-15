@@ -121,21 +121,24 @@ impl<'a> Lowerer<'a> {
             crate::syntax::BinOp::Mod => HirBinOp::Mod,
             crate::syntax::BinOp::Eq => HirBinOp::Eq,
             crate::syntax::BinOp::NotEq => HirBinOp::NotEq,
+            crate::syntax::BinOp::StrictEq => HirBinOp::StrictEq,
+            crate::syntax::BinOp::StrictNotEq => HirBinOp::StrictNotEq,
             crate::syntax::BinOp::Lt => HirBinOp::Lt,
             crate::syntax::BinOp::Gt => HirBinOp::Gt,
             crate::syntax::BinOp::LtEq => HirBinOp::LtEq,
             crate::syntax::BinOp::GtEq => HirBinOp::GtEq,
             crate::syntax::BinOp::And => HirBinOp::And,
             crate::syntax::BinOp::Or => HirBinOp::Or,
+            crate::syntax::BinOp::Coalesce => HirBinOp::Coalesce,
             crate::syntax::BinOp::BitAnd => HirBinOp::BitAnd,
             crate::syntax::BinOp::BitOr => HirBinOp::BitOr,
             crate::syntax::BinOp::BitXor => HirBinOp::BitXor,
             crate::syntax::BinOp::Shl => HirBinOp::Shl,
             crate::syntax::BinOp::Shr => HirBinOp::Shr,
-            _ => {
-                self.error("unsupported binary operator");
-                return HirExprKind::Error;
-            }
+            crate::syntax::BinOp::Is => HirBinOp::Is,
+            crate::syntax::BinOp::IsNot => HirBinOp::IsNot,
+            crate::syntax::BinOp::InRange => HirBinOp::InRange,
+            crate::syntax::BinOp::Between => HirBinOp::Between,
         };
 
         HirExprKind::Binary(op, Box::new(lhs), Box::new(rhs))
@@ -149,10 +152,14 @@ impl<'a> Lowerer<'a> {
             crate::syntax::UnOp::Neg => HirUnOp::Neg,
             crate::syntax::UnOp::Not => HirUnOp::Not,
             crate::syntax::UnOp::BitNot => HirUnOp::BitNot,
-            _ => {
-                self.error("unsupported unary operator");
-                return HirExprKind::Error;
-            }
+            crate::syntax::UnOp::IsNull => HirUnOp::IsNull,
+            crate::syntax::UnOp::IsNotNull => HirUnOp::IsNotNull,
+            crate::syntax::UnOp::IsNil => HirUnOp::IsNil,
+            crate::syntax::UnOp::IsNotNil => HirUnOp::IsNotNil,
+            crate::syntax::UnOp::IsNeg => HirUnOp::IsNeg,
+            crate::syntax::UnOp::IsPos => HirUnOp::IsPos,
+            crate::syntax::UnOp::IsTrue => HirUnOp::IsTrue,
+            crate::syntax::UnOp::IsFalse => HirUnOp::IsFalse,
         };
 
         HirExprKind::Unary(op, Box::new(operand))

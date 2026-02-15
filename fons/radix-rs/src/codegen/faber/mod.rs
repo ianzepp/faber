@@ -824,17 +824,24 @@ impl FaberCodegen {
             crate::hir::HirBinOp::Mod => "%",
             crate::hir::HirBinOp::Eq => "==",
             crate::hir::HirBinOp::NotEq => "!=",
+            crate::hir::HirBinOp::StrictEq => "===",
+            crate::hir::HirBinOp::StrictNotEq => "!==",
             crate::hir::HirBinOp::Lt => "<",
             crate::hir::HirBinOp::Gt => ">",
             crate::hir::HirBinOp::LtEq => "<=",
             crate::hir::HirBinOp::GtEq => ">=",
             crate::hir::HirBinOp::And => "et",
             crate::hir::HirBinOp::Or => "aut",
+            crate::hir::HirBinOp::Coalesce => "vel",
             crate::hir::HirBinOp::BitAnd => "&",
             crate::hir::HirBinOp::BitOr => "|",
             crate::hir::HirBinOp::BitXor => "^",
             crate::hir::HirBinOp::Shl => "<<",
             crate::hir::HirBinOp::Shr => ">>",
+            crate::hir::HirBinOp::Is => "est",
+            crate::hir::HirBinOp::IsNot => "non est",
+            crate::hir::HirBinOp::InRange => "intra",
+            crate::hir::HirBinOp::Between => "inter",
         }
     }
 
@@ -843,6 +850,14 @@ impl FaberCodegen {
             crate::hir::HirUnOp::Neg => "-",
             crate::hir::HirUnOp::Not => "non ",
             crate::hir::HirUnOp::BitNot => "~",
+            crate::hir::HirUnOp::IsNull => "nulla ",
+            crate::hir::HirUnOp::IsNotNull => "nonnulla ",
+            crate::hir::HirUnOp::IsNil => "nihil ",
+            crate::hir::HirUnOp::IsNotNil => "nonnihil ",
+            crate::hir::HirUnOp::IsNeg => "negativum ",
+            crate::hir::HirUnOp::IsPos => "positivum ",
+            crate::hir::HirUnOp::IsTrue => "verum ",
+            crate::hir::HirUnOp::IsFalse => "falsum ",
         }
     }
 

@@ -719,13 +719,55 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirBinOp::Sub | HirBinOp::Mul | HirBinOp::Div | HirBinOp::Mod => self.numeric_bin(lhs_ty, rhs_ty, lhs.span),
-            HirBinOp::Eq | HirBinOp::NotEq => {
+            HirBinOp::Eq
+            | HirBinOp::NotEq
+            | HirBinOp::StrictEq
+            | HirBinOp::StrictNotEq
+            | HirBinOp::Is
+            | HirBinOp::IsNot => {
                 self.unify(lhs_ty, rhs_ty, lhs.span, "incompatible operands");
                 self.bool_type()
             }
             HirBinOp::Lt | HirBinOp::Gt | HirBinOp::LtEq | HirBinOp::GtEq => {
                 self.numeric_bin(lhs_ty, rhs_ty, lhs.span);
                 self.bool_type()
+            }
+            HirBinOp::InRange => {
+                if self.is_infer(self.resolve_type(lhs_ty)) {
+                    let numerus = self.numerus_type();
+                    self.unify(lhs_ty, numerus, lhs.span, "range operand must be numeric");
+                }
+                if !self.is_numeric(lhs_ty) {
+                    self.error(
+                        SemanticErrorKind::InvalidOperandTypes,
+                        "range operand must be numeric",
+                        lhs.span,
+                    );
+                }
+                self.bool_type()
+            }
+            HirBinOp::Between => {
+                match self.types.get(self.resolve_type(rhs_ty)) {
+                    Type::Array(elem) | Type::Set(elem) => {
+                        self.unify(lhs_ty, *elem, lhs.span, "membership operand type mismatch");
+                    }
+                    Type::Map(key, _) => {
+                        self.unify(lhs_ty, *key, lhs.span, "membership operand type mismatch");
+                    }
+                    _ => {}
+                }
+                self.bool_type()
+            }
+            HirBinOp::Coalesce => {
+                let lhs_kind = self.types.get(self.resolve_type(lhs_ty)).clone();
+                match lhs_kind {
+                    Type::Option(inner) => {
+                        self.unify(rhs_ty, inner, rhs.span, "coalesce fallback type mismatch");
+                        inner
+                    }
+                    Type::Primitive(Primitive::Nihil) => rhs_ty,
+                    _ => self.common_type(lhs_ty, rhs_ty, lhs.span),
+                }
             }
             HirBinOp::And | HirBinOp::Or => {
                 if !self.is_bool(lhs_ty) || !self.is_bool(rhs_ty) {
@@ -776,6 +818,28 @@ impl<'a> TypeChecker<'a> {
                     self.error(SemanticErrorKind::InvalidOperandTypes, "integer operand required", operand.span);
                 }
                 self.numerus_type()
+            }
+            crate::hir::HirUnOp::IsNull
+            | crate::hir::HirUnOp::IsNotNull
+            | crate::hir::HirUnOp::IsNil
+            | crate::hir::HirUnOp::IsNotNil => self.bool_type(),
+            crate::hir::HirUnOp::IsNeg | crate::hir::HirUnOp::IsPos => {
+                if self.is_infer(self.resolve_type(operand_ty)) {
+                    let numerus = self.numerus_type();
+                    self.unify(operand_ty, numerus, operand.span, "numeric operand required");
+                } else if !self.is_numeric(operand_ty) {
+                    self.error(SemanticErrorKind::InvalidOperandTypes, "numeric operand required", operand.span);
+                }
+                self.bool_type()
+            }
+            crate::hir::HirUnOp::IsTrue | crate::hir::HirUnOp::IsFalse => {
+                if self.is_infer(self.resolve_type(operand_ty)) {
+                    let bivalens = self.bool_type();
+                    self.unify(operand_ty, bivalens, operand.span, "boolean operand required");
+                } else if !self.is_bool(operand_ty) {
+                    self.error(SemanticErrorKind::InvalidOperandTypes, "boolean operand required", operand.span);
+                }
+                self.bool_type()
             }
         }
     }

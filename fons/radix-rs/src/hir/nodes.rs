@@ -380,17 +380,24 @@ pub enum HirBinOp {
     Mod,
     Eq,
     NotEq,
+    StrictEq,
+    StrictNotEq,
     Lt,
     Gt,
     LtEq,
     GtEq,
     And,
     Or,
+    Coalesce,
     BitAnd,
     BitOr,
     BitXor,
     Shl,
     Shr,
+    Is,
+    IsNot,
+    InRange,
+    Between,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -398,6 +405,14 @@ pub enum HirUnOp {
     Neg,
     Not,
     BitNot,
+    IsNull,
+    IsNotNull,
+    IsNil,
+    IsNotNil,
+    IsNeg,
+    IsPos,
+    IsTrue,
+    IsFalse,
 }
 
 #[derive(Debug, Clone, Copy)]
