@@ -178,7 +178,7 @@ impl<'a> Lowerer<'a> {
         let value = self.lower_expr(&stmt.value);
         HirStmtKind::Expr(HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Panic(Box::new(value)),
+            kind: HirExprKind::Throw(Box::new(value)),
             ty: None,
             span: self.current_span,
         })
@@ -195,21 +195,15 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_tempta(&mut self, stmt: &crate::syntax::TemptaStmt) -> HirStmtKind {
-        let mut stmts = Vec::new();
-        for lowered in self.lower_block(&stmt.body).stmts {
-            stmts.push(lowered);
-        }
-        if let Some(catch) = &stmt.catch {
-            self.lower_cape_clause_stmts(catch, &mut stmts);
-        }
-        if let Some(finally) = &stmt.finally {
-            for lowered in self.lower_block(finally).stmts {
-                stmts.push(lowered);
-            }
-        }
+        let body = self.lower_block(&stmt.body);
+        let catch = stmt
+            .catch
+            .as_ref()
+            .map(|cape| self.lower_cape_clause_block(cape));
+        let finally = stmt.finally.as_ref().map(|block| self.lower_block(block));
         HirStmtKind::Expr(HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Block(HirBlock { stmts, expr: None, span: self.current_span }),
+            kind: HirExprKind::Tempta { body, catch, finally },
             ty: None,
             span: self.current_span,
         })
@@ -221,7 +215,9 @@ impl<'a> Lowerer<'a> {
             id: self.next_hir_id(),
             kind: HirExprKind::Adfirma(
                 Box::new(cond),
-                stmt.message.as_ref().map(|message| Box::new(self.lower_expr(message))),
+                stmt.message
+                    .as_ref()
+                    .map(|message| Box::new(self.lower_expr(message))),
             ),
             ty: None,
             span: self.current_span,
@@ -231,7 +227,12 @@ impl<'a> Lowerer<'a> {
     fn lower_scribe(&mut self, stmt: &crate::syntax::ScribeStmt) -> HirStmtKind {
         let _ = stmt.kind;
         let args = stmt.args.iter().map(|arg| self.lower_expr(arg)).collect();
-        HirStmtKind::Expr(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Scribe(args), ty: None, span: self.current_span })
+        HirStmtKind::Expr(HirExpr {
+            id: self.next_hir_id(),
+            kind: HirExprKind::Scribe(args),
+            ty: None,
+            span: self.current_span,
+        })
     }
 
     fn lower_incipit_stmt(&mut self, stmt: &crate::syntax::IncipitStmt) -> HirStmtKind {
@@ -306,7 +307,11 @@ impl<'a> Lowerer<'a> {
 
     fn lower_ad(&mut self, stmt: &crate::syntax::AdStmt) -> HirStmtKind {
         // STUB: lowered as tuple placeholder [args..., body?]; needs dedicated annotation/directive HIR node.
-        let mut items: Vec<HirExpr> = stmt.args.iter().map(|arg| self.lower_expr(&arg.value)).collect();
+        let mut items: Vec<HirExpr> = stmt
+            .args
+            .iter()
+            .map(|arg| self.lower_expr(&arg.value))
+            .collect();
         if let Some(body) = &stmt.body {
             items.push(HirExpr {
                 id: self.next_hir_id(),
@@ -328,14 +333,23 @@ impl<'a> Lowerer<'a> {
         let source = self.lower_expr(&stmt.source);
 
         for field in &stmt.fields {
-            let name = field.alias.as_ref().map(|ident| ident.name).unwrap_or(field.name.name);
+            let name = field
+                .alias
+                .as_ref()
+                .map(|ident| ident.name)
+                .unwrap_or(field.name.name);
             let def_id = self.next_def_id();
             self.bind_local(name, def_id);
             let local = crate::hir::HirLocal {
                 def_id,
                 name,
                 ty: None,
-                init: Some(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.name.span }),
+                init: Some(HirExpr {
+                    id: self.next_hir_id(),
+                    kind: HirExprKind::Error,
+                    ty: None,
+                    span: field.name.span,
+                }),
                 mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
             };
             stmts.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Local(local), span: field.name.span });
@@ -371,11 +385,7 @@ impl<'a> Lowerer<'a> {
 
         let mut expr = HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Si(
-                Box::new(self.lower_expr(&first.cond)),
-                self.lower_ergo_body(&first.body),
-                None,
-            ),
+            kind: HirExprKind::Si(Box::new(self.lower_expr(&first.cond)), self.lower_ergo_body(&first.body), None),
             ty: None,
             span: first.span,
         };
@@ -386,11 +396,7 @@ impl<'a> Lowerer<'a> {
                 kind: HirExprKind::Si(
                     Box::new(self.lower_expr(&clause.cond)),
                     self.lower_ergo_body(&clause.body),
-                    Some(HirBlock {
-                        stmts: Vec::new(),
-                        expr: Some(Box::new(expr)),
-                        span: clause.span,
-                    }),
+                    Some(HirBlock { stmts: Vec::new(), expr: Some(Box::new(expr)), span: clause.span }),
                 ),
                 ty: None,
                 span: clause.span,
@@ -406,7 +412,10 @@ impl<'a> Lowerer<'a> {
             // STUB: fac { body } dum cond currently lowers to trailing while-with-empty-body placeholder.
             block.expr = Some(Box::new(HirExpr {
                 id: self.next_hir_id(),
-                kind: HirExprKind::Dum(Box::new(self.lower_expr(cond)), HirBlock { stmts: Vec::new(), expr: None, span: cond.span }),
+                kind: HirExprKind::Dum(
+                    Box::new(self.lower_expr(cond)),
+                    HirBlock { stmts: Vec::new(), expr: None, span: cond.span },
+                ),
                 ty: None,
                 span: cond.span,
             }));
@@ -414,7 +423,12 @@ impl<'a> Lowerer<'a> {
         if let Some(catch) = &stmt.catch {
             self.lower_cape_clause_stmts(catch, &mut block.stmts);
         }
-        HirStmtKind::Expr(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Block(block), ty: None, span: self.current_span })
+        HirStmtKind::Expr(HirExpr {
+            id: self.next_hir_id(),
+            kind: HirExprKind::Block(block),
+            ty: None,
+            span: self.current_span,
+        })
     }
 
     fn lower_elige(&mut self, elige_stmt: &crate::syntax::EligeStmt) -> HirStmtKind {
@@ -565,10 +579,16 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_cape_clause_stmts(&mut self, catch: &crate::syntax::CapeClause, out: &mut Vec<HirStmt>) {
+        let block = self.lower_cape_clause_block(catch);
+        out.extend(block.stmts);
+    }
+
+    fn lower_cape_clause_block(&mut self, catch: &crate::syntax::CapeClause) -> HirBlock {
         self.push_scope();
         let catch_def_id = self.next_def_id();
         self.bind_local(catch.binding.name, catch_def_id);
-        out.push(HirStmt {
+        let mut stmts = Vec::new();
+        stmts.push(HirStmt {
             id: self.next_hir_id(),
             kind: HirStmtKind::Local(crate::hir::HirLocal {
                 def_id: catch_def_id,
@@ -585,8 +605,9 @@ impl<'a> Lowerer<'a> {
             span: catch.binding.span,
         });
         for lowered in self.lower_block(&catch.body).stmts {
-            out.push(lowered);
+            stmts.push(lowered);
         }
         self.pop_scope();
+        HirBlock { stmts, expr: None, span: catch.span }
     }
 }

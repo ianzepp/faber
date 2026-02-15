@@ -270,6 +270,14 @@ pub enum HirExprKind {
     Adfirma(Box<HirExpr>, Option<Box<HirExpr>>),
     /// Panic/throw statement expression
     Panic(Box<HirExpr>),
+    /// Recoverable throw expression (`iace`)
+    Throw(Box<HirExpr>),
+    /// try/catch/finally expression
+    Tempta {
+        body: HirBlock,
+        catch: Option<HirBlock>,
+        finally: Option<HirBlock>,
+    },
     /// Closure
     Clausura(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
     /// Await

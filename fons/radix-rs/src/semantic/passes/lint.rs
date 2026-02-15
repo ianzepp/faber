@@ -187,11 +187,8 @@ impl<'a> LintContext<'a> {
             .as_ref()
             .map(|expr| expr.span)
             .unwrap_or_default();
-        self.defs.push((
-            local.def_id,
-            span,
-            WarningKind::UnusedVariable,
-        ));
+        self.defs
+            .push((local.def_id, span, WarningKind::UnusedVariable));
         self.check_shadowing(local.name, local.def_id, span);
         self.insert_name(local.name, local.def_id);
         if let Some(ty) = local.ty {
@@ -285,7 +282,16 @@ impl<'a> LintContext<'a> {
                     self.check_expr(message, in_loop);
                 }
             }
-            HirExprKind::Panic(value) => self.check_expr(value, in_loop),
+            HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.check_expr(value, in_loop),
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.check_block(body, in_loop);
+                if let Some(catch) = catch {
+                    self.check_block(catch, in_loop);
+                }
+                if let Some(finally) = finally {
+                    self.check_block(finally, in_loop);
+                }
+            }
             HirExprKind::Clausura(_, _, body) => self.check_expr(body, in_loop),
             HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
                 self.check_expr(expr, in_loop)

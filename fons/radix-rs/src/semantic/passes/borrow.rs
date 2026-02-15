@@ -246,7 +246,16 @@ impl<'a> BorrowChecker<'a> {
                     self.check_expr(message);
                 }
             }
-            HirExprKind::Panic(value) => self.check_expr(value),
+            HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.check_expr(value),
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.check_block(body);
+                if let Some(catch) = catch {
+                    self.check_block(catch);
+                }
+                if let Some(finally) = finally {
+                    self.check_block(finally);
+                }
+            }
             HirExprKind::Clausura(params, _, body) => {
                 self.push_scope();
                 for param in params {

@@ -179,7 +179,16 @@ fn check_expr(
                 check_expr(message, types, enum_variants, errors);
             }
         }
-        HirExprKind::Panic(value) => check_expr(value, types, enum_variants, errors),
+        HirExprKind::Panic(value) | HirExprKind::Throw(value) => check_expr(value, types, enum_variants, errors),
+        HirExprKind::Tempta { body, catch, finally } => {
+            check_block(body, types, enum_variants, errors);
+            if let Some(catch) = catch {
+                check_block(catch, types, enum_variants, errors);
+            }
+            if let Some(finally) = finally {
+                check_block(finally, types, enum_variants, errors);
+            }
+        }
         HirExprKind::Clausura(_, _, body) => check_expr(body, types, enum_variants, errors),
         HirExprKind::Cede(expr) | HirExprKind::Qua(expr, _) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
             check_expr(expr, types, enum_variants, errors)

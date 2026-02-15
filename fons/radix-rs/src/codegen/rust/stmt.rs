@@ -12,22 +12,35 @@ pub fn generate_stmt(
     stmt: &HirStmt,
     types: &TypeTable,
     w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     match &stmt.kind {
         HirStmtKind::Local(local) => {
-            generate_local(codegen, local, types, w)?;
+            generate_local(codegen, local, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirStmtKind::Expr(expr) => {
-            generate_expr(codegen, expr, types, w)?;
+            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.writeln(";");
         }
         HirStmtKind::Redde(value) => {
             if let Some(expr) = value {
                 w.write("return ");
-                generate_expr(codegen, expr, types, w)?;
+                if in_failable_fn && !in_entry {
+                    w.write("Ok(");
+                    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(")");
+                } else {
+                    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                }
                 w.writeln(";");
             } else {
-                w.writeln("return;");
+                if in_failable_fn && !in_entry {
+                    w.writeln("return Ok(());");
+                } else {
+                    w.writeln("return;");
+                }
             }
         }
         HirStmtKind::Rumpe => {
@@ -45,6 +58,9 @@ fn generate_local(
     local: &HirLocal,
     types: &TypeTable,
     w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     w.write("let ");
     if local.mutable {
@@ -59,7 +75,7 @@ fn generate_local(
 
     if let Some(init) = &local.init {
         w.write(" = ");
-        generate_expr(codegen, init, types, w)?;
+        generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
 
     w.writeln(";");

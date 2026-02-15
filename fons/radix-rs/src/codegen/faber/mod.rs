@@ -624,6 +624,23 @@ impl FaberCodegen {
                 w.write("mori ");
                 self.write_expr(value, types, names, interner, w);
             }
+            HirExprKind::Throw(value) => {
+                w.write("iace ");
+                self.write_expr(value, types, names, interner, w);
+            }
+            HirExprKind::Tempta { body, catch, finally } => {
+                w.writeln("{");
+                w.indented(|w| {
+                    self.write_block(body, types, names, interner, w);
+                    if let Some(catch) = catch {
+                        self.write_block(catch, types, names, interner, w);
+                    }
+                    if let Some(finally) = finally {
+                        self.write_block(finally, types, names, interner, w);
+                    }
+                });
+                w.write("}");
+            }
             HirExprKind::Clausura(params, ret, body) => {
                 w.write("clausura(");
                 for (idx, param) in params.iter().enumerate() {
@@ -917,7 +934,12 @@ impl FaberCodegen {
                     self.collect_expr_names(names, message);
                 }
             }
-            HirExprKind::Panic(value) => self.collect_expr_names(names, value),
+            HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.collect_expr_names(names, value),
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.collect_block_names(names, Some(body));
+                self.collect_block_names(names, catch.as_ref());
+                self.collect_block_names(names, finally.as_ref());
+            }
             HirExprKind::Struct(_, fields) => {
                 for (_, value) in fields {
                     self.collect_expr_names(names, value);

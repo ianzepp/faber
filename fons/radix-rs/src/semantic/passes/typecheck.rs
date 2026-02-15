@@ -310,7 +310,16 @@ impl<'a> TypeChecker<'a> {
                     self.finalize_expr(message);
                 }
             }
-            HirExprKind::Panic(value) => self.finalize_expr(value),
+            HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.finalize_expr(value),
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.finalize_block(body);
+                if let Some(catch) = catch {
+                    self.finalize_block(catch);
+                }
+                if let Some(finally) = finally {
+                    self.finalize_block(finally);
+                }
+            }
             HirExprKind::Struct(_, fields) => {
                 for (_, value) in fields {
                     self.finalize_expr(value);
@@ -530,6 +539,20 @@ impl<'a> TypeChecker<'a> {
             }
             HirExprKind::Panic(value) => {
                 self.check_expr(value);
+                self.vacuum_type()
+            }
+            HirExprKind::Throw(value) => {
+                self.check_expr(value);
+                self.vacuum_type()
+            }
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.check_block(body, None);
+                if let Some(catch) = catch {
+                    self.check_block(catch, None);
+                }
+                if let Some(finally) = finally {
+                    self.check_block(finally, None);
+                }
                 self.vacuum_type()
             }
             HirExprKind::Clausura(params, ret, body) => self.check_closure(params, ret.as_mut(), body, expected),

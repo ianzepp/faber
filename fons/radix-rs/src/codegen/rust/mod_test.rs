@@ -1,8 +1,8 @@
 use crate::codegen::{self, Target};
 use crate::hir::{
     DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId, HirImport, HirImportItem,
-    HirInterface, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind,
-    HirStruct, HirTypeAlias, HirVariant, HirVariantField,
+    HirInterface, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt,
+    HirStmtKind, HirStruct, HirTypeAlias, HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
@@ -122,21 +122,14 @@ fn emits_usage_driven_and_importa_use_statements() {
                 def_id: DefId(10),
                 kind: HirItemKind::Import(HirImport {
                     path,
-                    items: vec![HirImportItem {
-                        def_id: DefId(11),
-                        name,
-                        alias: Some(alias_name),
-                    }],
+                    items: vec![HirImportItem { def_id: DefId(11), name, alias: Some(alias_name) }],
                 }),
                 span: span(),
             },
             HirItem {
                 id: HirId(12),
                 def_id: DefId(12),
-                kind: HirItemKind::TypeAlias(HirTypeAlias {
-                    name: interner.intern("Tab"),
-                    ty: map_ty,
-                }),
+                kind: HirItemKind::TypeAlias(HirTypeAlias { name: interner.intern("Tab"), ty: map_ty }),
                 span: span(),
             },
         ],
@@ -167,12 +160,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
     let match_expr = HirExpr {
         id: HirId(20),
         kind: HirExprKind::Discerne(
-            Box::new(HirExpr {
-                id: HirId(21),
-                kind: HirExprKind::Path(DefId(40)),
-                ty: Some(numerus),
-                span: span(),
-            }),
+            Box::new(HirExpr { id: HirId(21), kind: HirExprKind::Path(DefId(40)), ty: Some(numerus), span: span() }),
             vec![HirCasuArm {
                 pattern: HirPattern::Variant(DefId(30), vec![HirPattern::Binding(DefId(41), bind_name)]),
                 guard: Some(HirExpr {
@@ -205,12 +193,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
                 span: span(),
             }],
             None,
-            Box::new(HirExpr {
-                id: HirId(25),
-                kind: HirExprKind::Path(DefId(42)),
-                ty: Some(numerus),
-                span: span(),
-            }),
+            Box::new(HirExpr { id: HirId(25), kind: HirExprKind::Path(DefId(42)), ty: Some(numerus), span: span() }),
         ),
         ty: None,
         span: span(),
@@ -259,16 +242,8 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
                                 }),
                                 span: span(),
                             },
-                            HirStmt {
-                                id: HirId(13),
-                                kind: HirStmtKind::Expr(match_expr),
-                                span: span(),
-                            },
-                            HirStmt {
-                                id: HirId(14),
-                                kind: HirStmtKind::Expr(closure_expr),
-                                span: span(),
-                            },
+                            HirStmt { id: HirId(13), kind: HirStmtKind::Expr(match_expr), span: span() },
+                            HirStmt { id: HirId(14), kind: HirStmtKind::Expr(closure_expr), span: span() },
                         ],
                         expr: None,
                         span: span(),
@@ -322,11 +297,7 @@ fn resolves_type_names_for_named_defs() {
             HirItem {
                 id: HirId(59),
                 def_id: DefId(72),
-                kind: HirItemKind::Enum(HirEnum {
-                    name: enum_name,
-                    type_params: Vec::new(),
-                    variants: Vec::new(),
-                }),
+                kind: HirItemKind::Enum(HirEnum { name: enum_name, type_params: Vec::new(), variants: Vec::new() }),
                 span: span(),
             },
             HirItem {
@@ -342,10 +313,7 @@ fn resolves_type_names_for_named_defs() {
             HirItem {
                 id: HirId(61),
                 def_id: DefId(73),
-                kind: HirItemKind::TypeAlias(HirTypeAlias {
-                    name: alias_name,
-                    ty: struct_ty,
-                }),
+                kind: HirItemKind::TypeAlias(HirTypeAlias { name: alias_name, ty: struct_ty }),
                 span: span(),
             },
             HirItem {
@@ -448,11 +416,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                     variants: vec![HirVariant {
                         def_id: DefId(5),
                         name: interner.intern("Case"),
-                        fields: vec![HirVariantField {
-                            name: method,
-                            ty: numerus,
-                            span: span(),
-                        }],
+                        fields: vec![HirVariantField { name: method, ty: numerus, span: span() }],
                         span: span(),
                     }],
                 }),
@@ -603,12 +567,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
             HirExpr {
                 id: HirId(305),
                 kind: HirExprKind::Call(
-                    Box::new(HirExpr {
-                        id: HirId(306),
-                        kind: HirExprKind::Path(DefId(1)),
-                        ty: None,
-                        span: span(),
-                    }),
+                    Box::new(HirExpr { id: HirId(306), kind: HirExprKind::Path(DefId(1)), ty: None, span: span() }),
                     vec![HirExpr {
                         id: HirId(307),
                         kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
@@ -622,12 +581,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
             HirExpr {
                 id: HirId(308),
                 kind: HirExprKind::MethodCall(
-                    Box::new(HirExpr {
-                        id: HirId(309),
-                        kind: HirExprKind::Path(DefId(2)),
-                        ty: None,
-                        span: span(),
-                    }),
+                    Box::new(HirExpr { id: HirId(309), kind: HirExprKind::Path(DefId(2)), ty: None, span: span() }),
                     method,
                     vec![HirExpr {
                         id: HirId(310),
@@ -978,7 +932,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
         span: span(),
     };
 
-    super::expr::generate_expr(&codegen, &expr, &types, &mut w).expect("expr codegen");
+    super::expr::generate_expr(&codegen, &expr, &types, &mut w, false, false, false).expect("expr codegen");
     let code = w.finish();
 
     assert!(code.contains("fn_name"));
@@ -1026,21 +980,13 @@ fn type_to_rust_covers_composite_and_special_cases() {
     let union_ty = types.intern(Type::Union(vec![numerus, textus]));
     let error_ty = types.intern(Type::Error);
     let sync_fn_ty = types.function(FuncSig {
-        params: vec![ParamType {
-            ty: numerus,
-            mode: ParamMode::Owned,
-            optional: false,
-        }],
+        params: vec![ParamType { ty: numerus, mode: ParamMode::Owned, optional: false }],
         ret: textus,
         is_async: false,
         is_generator: false,
     });
     let async_fn_ty = types.function(FuncSig {
-        params: vec![ParamType {
-            ty: numerus,
-            mode: ParamMode::Owned,
-            optional: false,
-        }],
+        params: vec![ParamType { ty: numerus, mode: ParamMode::Owned, optional: false }],
         ret: textus,
         is_async: true,
         is_generator: false,
@@ -1108,4 +1054,150 @@ fn type_to_rust_covers_composite_and_special_cases() {
     assert_eq!(super::types::type_to_rust(&codegen, union_empty_ty, &types), "!");
     assert_eq!(super::types::type_to_rust(&codegen, union_ty, &types), "Box<dyn std::any::Any>");
     assert_eq!(super::types::type_to_rust(&codegen, error_ty, &types), "/* error */");
+}
+
+#[test]
+fn emits_result_and_err_for_direct_iace() {
+    let mut interner = Interner::new();
+    let boom = interner.intern("boom");
+    let oops = interner.intern("oops");
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: HirId(900),
+            def_id: DefId(900),
+            kind: HirItemKind::Function(HirFunction {
+                name: boom,
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(numerus),
+                body: Some(HirBlock {
+                    stmts: vec![HirStmt {
+                        id: HirId(901),
+                        kind: HirStmtKind::Expr(HirExpr {
+                            id: HirId(902),
+                            kind: HirExprKind::Throw(Box::new(HirExpr {
+                                id: HirId(903),
+                                kind: HirExprKind::Literal(HirLiteral::String(oops)),
+                                ty: Some(types.primitive(Primitive::Textus)),
+                                span: span(),
+                            })),
+                            ty: None,
+                            span: span(),
+                        }),
+                        span: span(),
+                    }],
+                    expr: None,
+                    span: span(),
+                }),
+                is_async: false,
+                is_generator: false,
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let output = codegen::generate(Target::Rust, &program, &types, &interner).expect("rust codegen");
+    let crate::Output::Rust(rust) = output else {
+        panic!("expected rust output");
+    };
+
+    assert!(rust.code.contains("fn boom() -> Result<i64, String>"));
+    assert!(rust.code.contains("return Err(String::from(\"oops\"));"));
+}
+
+#[test]
+fn propagates_failable_calls_with_question_mark() {
+    let mut interner = Interner::new();
+    let callee = interner.intern("callee");
+    let caller = interner.intern("caller");
+    let oops = interner.intern("oops");
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+
+    let program = HirProgram {
+        items: vec![
+            HirItem {
+                id: HirId(910),
+                def_id: DefId(910),
+                kind: HirItemKind::Function(HirFunction {
+                    name: callee,
+                    type_params: Vec::new(),
+                    params: Vec::new(),
+                    ret_ty: Some(numerus),
+                    body: Some(HirBlock {
+                        stmts: vec![HirStmt {
+                            id: HirId(911),
+                            kind: HirStmtKind::Expr(HirExpr {
+                                id: HirId(912),
+                                kind: HirExprKind::Throw(Box::new(HirExpr {
+                                    id: HirId(913),
+                                    kind: HirExprKind::Literal(HirLiteral::String(oops)),
+                                    ty: Some(textus),
+                                    span: span(),
+                                })),
+                                ty: None,
+                                span: span(),
+                            }),
+                            span: span(),
+                        }],
+                        expr: None,
+                        span: span(),
+                    }),
+                    is_async: false,
+                    is_generator: false,
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: HirId(920),
+                def_id: DefId(920),
+                kind: HirItemKind::Function(HirFunction {
+                    name: caller,
+                    type_params: Vec::new(),
+                    params: Vec::new(),
+                    ret_ty: Some(numerus),
+                    body: Some(HirBlock {
+                        stmts: vec![HirStmt {
+                            id: HirId(921),
+                            kind: HirStmtKind::Redde(Some(HirExpr {
+                                id: HirId(922),
+                                kind: HirExprKind::Call(
+                                    Box::new(HirExpr {
+                                        id: HirId(923),
+                                        kind: HirExprKind::Path(DefId(910)),
+                                        ty: None,
+                                        span: span(),
+                                    }),
+                                    Vec::new(),
+                                ),
+                                ty: Some(numerus),
+                                span: span(),
+                            })),
+                            span: span(),
+                        }],
+                        expr: None,
+                        span: span(),
+                    }),
+                    is_async: false,
+                    is_generator: false,
+                }),
+                span: span(),
+            },
+        ],
+        entry: None,
+    };
+
+    let output = codegen::generate(Target::Rust, &program, &types, &interner).expect("rust codegen");
+    let crate::Output::Rust(rust) = output else {
+        panic!("expected rust output");
+    };
+
+    assert!(rust.code.contains("fn callee() -> Result<i64, String>"));
+    assert!(rust.code.contains("fn caller() -> Result<i64, String>"));
+    assert!(rust.code.contains("return Ok(callee()?);"));
 }

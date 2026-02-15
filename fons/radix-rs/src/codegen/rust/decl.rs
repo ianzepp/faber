@@ -8,10 +8,13 @@ use crate::semantic::TypeTable;
 
 pub fn generate_function(
     codegen: &RustCodegen<'_>,
+    def_id: DefId,
     func: &HirFunction,
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    let is_failable = codegen.is_failable_def(def_id);
+
     // Async modifier
     if func.is_async {
         w.write("async ");
@@ -45,7 +48,16 @@ pub fn generate_function(
     w.write(")");
 
     // Return type
-    if let Some(ret_ty) = func.ret_ty {
+    if is_failable {
+        w.write(" -> ");
+        w.write("Result<");
+        if let Some(ret_ty) = func.ret_ty {
+            w.write(&type_to_rust(codegen, ret_ty, types));
+        } else {
+            w.write("()");
+        }
+        w.write(", String>");
+    } else if let Some(ret_ty) = func.ret_ty {
         w.write(" -> ");
         w.write(&type_to_rust(codegen, ret_ty, types));
     }
@@ -53,7 +65,7 @@ pub fn generate_function(
     // Body
     if let Some(body) = &func.body {
         w.write(" ");
-        generate_block(codegen, body, types, w)?;
+        generate_block(codegen, body, types, w, is_failable, false, true)?;
     } else {
         w.write(";");
     }
@@ -104,7 +116,7 @@ pub fn generate_struct(
         w.writeln(" {");
         w.indented(|w| {
             for method in &s.methods {
-                let _ = generate_function(codegen, &method.func, types, w);
+                let _ = generate_function(codegen, method.def_id, &method.func, types, w);
             }
         });
         w.writeln("}");
@@ -233,7 +245,7 @@ pub fn generate_const(
         w.write("()");
     }
     w.write(" = ");
-    super::expr::generate_expr(codegen, &c.value, types, w)?;
+    super::expr::generate_expr(codegen, &c.value, types, w, false, false, false)?;
     w.writeln(";");
 
     Ok(())
@@ -244,16 +256,23 @@ fn generate_block(
     block: &HirBlock,
     types: &TypeTable,
     w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    wrap_tail_ok: bool,
 ) -> Result<(), CodegenError> {
     w.writeln("{");
     w.indented(|w| {
         for stmt in &block.stmts {
-            // TODO: Generate statement
-            let _ = super::stmt::generate_stmt(codegen, stmt, types, w);
+            let _ = super::stmt::generate_stmt(codegen, stmt, types, w, in_failable_fn, in_entry, false);
         }
         if let Some(expr) = &block.expr {
-            // TODO: Generate tail expression
-            let _ = super::expr::generate_expr(codegen, expr, types, w);
+            if wrap_tail_ok && in_failable_fn && !in_entry {
+                w.write("Ok(");
+                let _ = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
+                w.writeln(")");
+            } else {
+                let _ = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
+            }
         }
     });
     w.write("}");

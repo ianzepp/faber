@@ -11,6 +11,9 @@ pub fn generate_expr(
     expr: &HirExpr,
     types: &TypeTable,
     w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     match &expr.kind {
         HirExprKind::Path(def_id) => {
@@ -21,30 +24,44 @@ pub fn generate_expr(
         }
         HirExprKind::Binary(op, lhs, rhs) => {
             w.write("(");
-            generate_expr(codegen, lhs, types, w)?;
+            generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
             w.write(binop_to_rust(*op));
             w.write(" ");
-            generate_expr(codegen, rhs, types, w)?;
+            generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(")");
         }
         HirExprKind::Unary(op, operand) => {
             w.write(unop_to_rust(*op));
-            generate_expr(codegen, operand, types, w)?;
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Call(callee, args) => {
-            generate_expr(codegen, callee, types, w)?;
+            let is_failable_call =
+                matches!(&callee.kind, HirExprKind::Path(def_id) if codegen.is_failable_def(*def_id));
+            generate_expr(codegen, callee, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write("(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w)?;
+                generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write(")");
+            if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
+                w.write("?");
+            }
         }
         HirExprKind::MethodCall(receiver, method, args) => {
-            generate_expr(codegen, receiver, types, w)?;
+            let is_failable_call = codegen.is_failable_method_name(*method);
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
             w.write(".");
             w.write(codegen.resolve_symbol(*method));
             w.write("(");
@@ -52,56 +69,179 @@ pub fn generate_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w)?;
+                generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write(")");
+            if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
+                w.write("?");
+            }
         }
         HirExprKind::Field(obj, field) => {
-            generate_expr(codegen, obj, types, w)?;
+            generate_expr(codegen, obj, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(".");
             w.write(codegen.resolve_symbol(*field));
         }
         HirExprKind::Index(obj, idx) => {
-            generate_expr(codegen, obj, types, w)?;
+            generate_expr(codegen, obj, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write("[");
-            generate_expr(codegen, idx, types, w)?;
+            generate_expr(codegen, idx, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write("]");
         }
         HirExprKind::Block(block) => {
             w.writeln("{");
             w.indented(|w| {
                 for stmt in &block.stmts {
-                    let _ = super::stmt::generate_stmt(codegen, stmt, types, w);
+                    let _ = super::stmt::generate_stmt(
+                        codegen,
+                        stmt,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    );
                 }
                 if let Some(expr) = &block.expr {
-                    let _ = generate_expr(codegen, expr, types, w);
+                    let _ =
+                        generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                }
+            });
+            w.write("}");
+        }
+        HirExprKind::Tempta { body, catch, finally } => {
+            w.writeln("{");
+            w.indented(|w| {
+                for stmt in &body.stmts {
+                    let _ = super::stmt::generate_stmt(
+                        codegen,
+                        stmt,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation || catch.is_some(),
+                    );
+                }
+                if let Some(expr) = &body.expr {
+                    let _ = generate_expr(
+                        codegen,
+                        expr,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation || catch.is_some(),
+                    );
+                    w.writeln(";");
+                }
+                if let Some(catch) = catch {
+                    for stmt in &catch.stmts {
+                        let _ = super::stmt::generate_stmt(
+                            codegen,
+                            stmt,
+                            types,
+                            w,
+                            in_failable_fn,
+                            in_entry,
+                            suppress_error_propagation,
+                        );
+                    }
+                    if let Some(expr) = &catch.expr {
+                        let _ = generate_expr(
+                            codegen,
+                            expr,
+                            types,
+                            w,
+                            in_failable_fn,
+                            in_entry,
+                            suppress_error_propagation,
+                        );
+                        w.writeln(";");
+                    }
+                }
+                if let Some(finally) = finally {
+                    for stmt in &finally.stmts {
+                        let _ = super::stmt::generate_stmt(
+                            codegen,
+                            stmt,
+                            types,
+                            w,
+                            in_failable_fn,
+                            in_entry,
+                            suppress_error_propagation,
+                        );
+                    }
+                    if let Some(expr) = &finally.expr {
+                        let _ = generate_expr(
+                            codegen,
+                            expr,
+                            types,
+                            w,
+                            in_failable_fn,
+                            in_entry,
+                            suppress_error_propagation,
+                        );
+                        w.writeln(";");
+                    }
                 }
             });
             w.write("}");
         }
         HirExprKind::Si(cond, then, else_) => {
             w.write("if ");
-            generate_expr(codegen, cond, types, w)?;
+            generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
-            generate_block(codegen, then, types, w)?;
+            generate_block(codegen, then, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             if let Some(else_block) = else_ {
                 w.write(" else ");
-                generate_block(codegen, else_block, types, w)?;
+                generate_block(
+                    codegen,
+                    else_block,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
             }
         }
         HirExprKind::Discerne(scrutinee, arms) => {
             w.write("match ");
-            generate_expr(codegen, scrutinee, types, w)?;
+            generate_expr(
+                codegen,
+                scrutinee,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
             w.writeln(" {");
             w.indented(|w| {
                 for arm in arms {
                     generate_pattern(codegen, &arm.pattern, w);
                     if let Some(guard) = &arm.guard {
                         w.write(" if ");
-                        let _ = generate_expr(codegen, guard, types, w);
+                        let _ = generate_expr(
+                            codegen,
+                            guard,
+                            types,
+                            w,
+                            in_failable_fn,
+                            in_entry,
+                            suppress_error_propagation,
+                        );
                     }
                     w.write(" => ");
-                    let _ = generate_expr(codegen, &arm.body, types, w);
+                    let _ = generate_expr(
+                        codegen,
+                        &arm.body,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    );
                     w.writeln(",");
                 }
             });
@@ -109,33 +249,33 @@ pub fn generate_expr(
         }
         HirExprKind::Loop(block) => {
             w.write("loop ");
-            generate_block(codegen, block, types, w)?;
+            generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Dum(cond, block) => {
             w.write("while ");
-            generate_expr(codegen, cond, types, w)?;
+            generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
-            generate_block(codegen, block, types, w)?;
+            generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Itera(binding, iter, block) => {
             w.write("for ");
             w.write(codegen.resolve_def(*binding));
             w.write(" in ");
-            generate_expr(codegen, iter, types, w)?;
+            generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
-            generate_block(codegen, block, types, w)?;
+            generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Assign(target, value) => {
-            generate_expr(codegen, target, types, w)?;
+            generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" = ");
-            generate_expr(codegen, value, types, w)?;
+            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::AssignOp(op, target, value) => {
-            generate_expr(codegen, target, types, w)?;
+            generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
             w.write(binop_to_rust(*op));
             w.write("= ");
-            generate_expr(codegen, value, types, w)?;
+            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Array(elements) => {
             w.write("vec![");
@@ -143,7 +283,7 @@ pub fn generate_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, elem, types, w)?;
+                generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write("]");
         }
@@ -154,7 +294,8 @@ pub fn generate_expr(
                 for (name, value) in fields {
                     w.write(codegen.resolve_symbol(*name));
                     w.write(": ");
-                    let _ = generate_expr(codegen, value, types, w);
+                    let _ =
+                        generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
                     w.writeln(",");
                 }
             });
@@ -166,7 +307,7 @@ pub fn generate_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, elem, types, w)?;
+                generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write(")");
         }
@@ -180,24 +321,43 @@ pub fn generate_expr(
                 w.write("\"");
                 for arg in args {
                     w.write(", ");
-                    generate_expr(codegen, arg, types, w)?;
+                    generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
                 }
                 w.write(")");
             }
         }
         HirExprKind::Adfirma(cond, message) => {
             w.write("assert!(");
-            generate_expr(codegen, cond, types, w)?;
+            generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             if let Some(message) = message {
                 w.write(", \"{}\", ");
-                generate_expr(codegen, message, types, w)?;
+                generate_expr(codegen, message, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write(")");
         }
         HirExprKind::Panic(value) => {
             w.write("panic!(\"{}\", ");
-            generate_expr(codegen, value, types, w)?;
+            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(")");
+        }
+        HirExprKind::Throw(value) => {
+            if in_failable_fn && !in_entry && !suppress_error_propagation {
+                w.write("return Err(");
+                if matches!(value.kind, HirExprKind::Literal(HirLiteral::String(_))) {
+                    w.write("String::from(");
+                    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(")");
+                } else {
+                    w.write("format!(\"{}\", ");
+                    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(")");
+                }
+                w.write(")");
+            } else {
+                w.write("panic!(\"{}\", ");
+                generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write(")");
+            }
         }
         HirExprKind::Clausura(params, _ret, body) => {
             w.write("|");
@@ -208,14 +368,14 @@ pub fn generate_expr(
                 w.write(codegen.resolve_symbol(param.name));
             }
             w.write("| ");
-            generate_expr(codegen, body, types, w)?;
+            generate_expr(codegen, body, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Cede(expr) => {
-            generate_expr(codegen, expr, types, w)?;
+            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(".await");
         }
         HirExprKind::Qua(expr, ty) => {
-            generate_expr(codegen, expr, types, w)?;
+            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" as ");
             w.write(&type_to_rust(codegen, *ty, types));
         }
@@ -224,11 +384,11 @@ pub fn generate_expr(
                 HirRefKind::Shared => w.write("&"),
                 HirRefKind::Mutable => w.write("&mut "),
             }
-            generate_expr(codegen, expr, types, w)?;
+            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Deref(expr) => {
             w.write("*");
-            generate_expr(codegen, expr, types, w)?;
+            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Error => {
             w.write("todo!(\"error\")");
@@ -305,14 +465,25 @@ fn generate_block(
     block: &HirBlock,
     types: &TypeTable,
     w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     w.writeln("{");
     w.indented(|w| {
         for stmt in &block.stmts {
-            let _ = super::stmt::generate_stmt(codegen, stmt, types, w);
+            let _ = super::stmt::generate_stmt(
+                codegen,
+                stmt,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
         }
         if let Some(expr) = &block.expr {
-            let _ = generate_expr(codegen, expr, types, w);
+            let _ = generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
         }
     });
     w.write("}");

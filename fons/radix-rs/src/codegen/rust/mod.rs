@@ -6,26 +6,27 @@ mod stmt;
 mod types;
 
 use super::{CodeWriter, Codegen, CodegenError};
-use crate::hir::{DefId, HirBlock, HirExpr, HirExprKind, HirItem, HirItemKind, HirPattern, HirProgram, HirStmtKind};
+use crate::hir::{
+    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirPattern, HirProgram, HirStmtKind,
+};
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::TypeTable;
 use crate::RustOutput;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
-use rustc_hash::FxHashMap;
 
 /// Rust code generator
 pub struct RustCodegen<'a> {
     names: FxHashMap<DefId, Symbol>,
+    failable_defs: FxHashSet<DefId>,
     interner: &'a Interner,
 }
 
 impl<'a> RustCodegen<'a> {
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
-        let mut codegen = Self {
-            names: FxHashMap::default(),
-            interner,
-        };
+        let mut codegen = Self { names: FxHashMap::default(), failable_defs: FxHashSet::default(), interner };
         codegen.names = codegen.collect_names(hir);
+        codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen
     }
 
@@ -59,10 +60,20 @@ impl<'a> RustCodegen<'a> {
             .unwrap_or("unresolved_def")
     }
 
+    pub(super) fn is_failable_def(&self, def_id: DefId) -> bool {
+        self.failable_defs.contains(&def_id)
+    }
+
+    pub(super) fn is_failable_method_name(&self, method: Symbol) -> bool {
+        self.names
+            .iter()
+            .any(|(def_id, name)| *name == method && self.failable_defs.contains(def_id))
+    }
+
     fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
         match &item.kind {
             HirItemKind::Function(func) => {
-                decl::generate_function(self, func, types, w)?;
+                decl::generate_function(self, item.def_id, func, types, w)?;
             }
             HirItemKind::Struct(s) => {
                 decl::generate_struct(self, s, types, w)?;
@@ -243,6 +254,12 @@ impl<'a> RustCodegen<'a> {
                 }
             }
             HirExprKind::Panic(value) => self.collect_expr_names(names, value),
+            HirExprKind::Throw(value) => self.collect_expr_names(names, value),
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.collect_block_names(names, Some(body));
+                self.collect_block_names(names, catch.as_ref());
+                self.collect_block_names(names, finally.as_ref());
+            }
             HirExprKind::Struct(_, fields) => {
                 for (_, value) in fields {
                     self.collect_expr_names(names, value);
@@ -271,6 +288,192 @@ impl<'a> RustCodegen<'a> {
             }
             HirPattern::Literal(_) => {}
         }
+    }
+
+    fn collect_failable_functions(&self, hir: &HirProgram) -> FxHashSet<DefId> {
+        #[derive(Default)]
+        struct FnDeps {
+            direct_throw: bool,
+            calls: FxHashSet<DefId>,
+            method_calls: FxHashSet<Symbol>,
+        }
+
+        fn visit_block(block: &HirBlock, suppressed: bool, deps: &mut FnDeps) {
+            for stmt in &block.stmts {
+                match &stmt.kind {
+                    HirStmtKind::Local(local) => {
+                        if let Some(init) = &local.init {
+                            visit_expr(init, suppressed, deps);
+                        }
+                    }
+                    HirStmtKind::Expr(expr) => visit_expr(expr, suppressed, deps),
+                    HirStmtKind::Redde(value) => {
+                        if let Some(expr) = value {
+                            visit_expr(expr, suppressed, deps);
+                        }
+                    }
+                    HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+                }
+            }
+            if let Some(expr) = &block.expr {
+                visit_expr(expr, suppressed, deps);
+            }
+        }
+
+        fn visit_expr(expr: &HirExpr, suppressed: bool, deps: &mut FnDeps) {
+            match &expr.kind {
+                HirExprKind::Throw(value) => {
+                    if !suppressed {
+                        deps.direct_throw = true;
+                    }
+                    visit_expr(value, suppressed, deps);
+                }
+                HirExprKind::Call(callee, args) => {
+                    if !suppressed {
+                        if let HirExprKind::Path(def_id) = &callee.kind {
+                            deps.calls.insert(*def_id);
+                        }
+                    }
+                    visit_expr(callee, suppressed, deps);
+                    for arg in args {
+                        visit_expr(arg, suppressed, deps);
+                    }
+                }
+                HirExprKind::MethodCall(receiver, method, args) => {
+                    if !suppressed {
+                        deps.method_calls.insert(*method);
+                    }
+                    visit_expr(receiver, suppressed, deps);
+                    for arg in args {
+                        visit_expr(arg, suppressed, deps);
+                    }
+                }
+                HirExprKind::Tempta { body, catch, finally } => {
+                    let body_suppressed = suppressed || catch.is_some();
+                    visit_block(body, body_suppressed, deps);
+                    if let Some(catch_block) = catch {
+                        visit_block(catch_block, suppressed, deps);
+                    }
+                    if let Some(finally_block) = finally {
+                        visit_block(finally_block, suppressed, deps);
+                    }
+                }
+                HirExprKind::Binary(_, lhs, rhs)
+                | HirExprKind::Assign(lhs, rhs)
+                | HirExprKind::AssignOp(_, lhs, rhs) => {
+                    visit_expr(lhs, suppressed, deps);
+                    visit_expr(rhs, suppressed, deps);
+                }
+                HirExprKind::Unary(_, operand)
+                | HirExprKind::Cede(operand)
+                | HirExprKind::Qua(operand, _)
+                | HirExprKind::Ref(_, operand)
+                | HirExprKind::Deref(operand)
+                | HirExprKind::Panic(operand) => visit_expr(operand, suppressed, deps),
+                HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {
+                    visit_expr(object, suppressed, deps);
+                }
+                HirExprKind::Block(block) | HirExprKind::Loop(block) => {
+                    visit_block(block, suppressed, deps);
+                }
+                HirExprKind::Si(cond, then_block, else_block) => {
+                    visit_expr(cond, suppressed, deps);
+                    visit_block(then_block, suppressed, deps);
+                    if let Some(else_block) = else_block {
+                        visit_block(else_block, suppressed, deps);
+                    }
+                }
+                HirExprKind::Discerne(scrutinee, arms) => {
+                    visit_expr(scrutinee, suppressed, deps);
+                    for arm in arms {
+                        if let Some(guard) = &arm.guard {
+                            visit_expr(guard, suppressed, deps);
+                        }
+                        visit_expr(&arm.body, suppressed, deps);
+                    }
+                }
+                HirExprKind::Dum(cond, block) => {
+                    visit_expr(cond, suppressed, deps);
+                    visit_block(block, suppressed, deps);
+                }
+                HirExprKind::Itera(_, iter, block) => {
+                    visit_expr(iter, suppressed, deps);
+                    visit_block(block, suppressed, deps);
+                }
+                HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+                    for element in elements {
+                        visit_expr(element, suppressed, deps);
+                    }
+                }
+                HirExprKind::Adfirma(cond, message) => {
+                    visit_expr(cond, suppressed, deps);
+                    if let Some(message) = message {
+                        visit_expr(message, suppressed, deps);
+                    }
+                }
+                HirExprKind::Struct(_, fields) => {
+                    for (_, value) in fields {
+                        visit_expr(value, suppressed, deps);
+                    }
+                }
+                HirExprKind::Clausura(_, _, body) => visit_expr(body, suppressed, deps),
+                HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+            }
+        }
+
+        let mut fn_deps: FxHashMap<DefId, FnDeps> = FxHashMap::default();
+        let mut register_fn = |def_id: DefId, func: &HirFunction| {
+            let mut deps = FnDeps::default();
+            if let Some(body) = &func.body {
+                visit_block(body, false, &mut deps);
+            }
+            fn_deps.insert(def_id, deps);
+        };
+
+        for item in &hir.items {
+            match &item.kind {
+                HirItemKind::Function(func) => register_fn(item.def_id, func),
+                HirItemKind::Struct(strukt) => {
+                    for method in &strukt.methods {
+                        register_fn(method.def_id, &method.func);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        let mut failable = FxHashSet::default();
+        for (def_id, deps) in &fn_deps {
+            if deps.direct_throw {
+                failable.insert(*def_id);
+            }
+        }
+
+        let mut changed = true;
+        while changed {
+            changed = false;
+            for (def_id, deps) in &fn_deps {
+                if failable.contains(def_id) {
+                    continue;
+                }
+
+                let mut dependent_failable = deps.calls.iter().any(|callee| failable.contains(callee));
+                if !dependent_failable {
+                    dependent_failable = deps.method_calls.iter().any(|method| {
+                        self.names
+                            .iter()
+                            .any(|(callee_def, name)| name == method && failable.contains(callee_def))
+                    });
+                }
+
+                if dependent_failable {
+                    failable.insert(*def_id);
+                    changed = true;
+                }
+            }
+        }
+
+        failable
     }
 }
 
@@ -341,10 +544,10 @@ impl Codegen for RustCodegen<'_> {
             body.writeln("fn main() {");
             body.indented(|w| {
                 for stmt in &entry.stmts {
-                    let _ = stmt::generate_stmt(self, stmt, types, w);
+                    let _ = stmt::generate_stmt(self, stmt, types, w, false, true, false);
                 }
                 if let Some(expr) = &entry.expr {
-                    let _ = expr::generate_expr(self, expr, types, w);
+                    let _ = expr::generate_expr(self, expr, types, w, false, true, false);
                     w.writeln(";");
                 }
             });
@@ -359,9 +562,7 @@ impl Codegen for RustCodegen<'_> {
         self.generate_prelude(&mut w, &imports);
         w.write(&body_code);
 
-        Ok(RustOutput {
-            code: w.finish(),
-        })
+        Ok(RustOutput { code: w.finish() })
     }
 }
 
