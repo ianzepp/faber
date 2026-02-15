@@ -9,9 +9,7 @@ mod pattern;
 mod stmt;
 mod types;
 
-use super::{
-    HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirItemKind, HirProgram, HirStmt, HirStmtKind,
-};
+use super::{HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirItemKind, HirProgram, HirStmt, HirStmtKind};
 use crate::lexer::{Interner, Span, Symbol};
 use crate::semantic::{Resolver, TypeTable};
 use crate::syntax::{Program, Stmt, StmtKind};
@@ -108,10 +106,8 @@ impl<'a> Lowerer<'a> {
 
     /// Record an error
     fn error(&mut self, message: impl Into<String>) {
-        self.errors.push(LowerError {
-            message: message.into(),
-            span: self.current_span,
-        });
+        self.errors
+            .push(LowerError { message: message.into(), span: self.current_span });
     }
 
     /// Lower a statement to an item (top-level declarations)
@@ -140,19 +136,11 @@ impl<'a> Lowerer<'a> {
             crate::syntax::IfBody::Block(block) => self.lower_block(block),
             crate::syntax::IfBody::Ergo(stmt) => {
                 let stmts = vec![self.lower_stmt(stmt)];
-                HirBlock {
-                    stmts,
-                    expr: None,
-                    span: self.current_span,
-                }
+                HirBlock { stmts, expr: None, span: self.current_span }
             }
             crate::syntax::IfBody::InlineReturn(ret) => {
                 let stmt = self.lower_inline_return(ret);
-                HirBlock {
-                    stmts: vec![stmt],
-                    expr: None,
-                    span: self.current_span,
-                }
+                HirBlock { stmts: vec![stmt], expr: None, span: self.current_span }
             }
         }
     }
@@ -188,11 +176,7 @@ impl<'a> Lowerer<'a> {
             stmts.push(hir_stmt);
         }
 
-        HirBlock {
-            stmts,
-            expr: None,
-            span: block.span,
-        }
+        HirBlock { stmts, expr: None, span: block.span }
     }
 
     /// Lower a statement (delegates to stmt.rs)

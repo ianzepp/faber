@@ -8,12 +8,7 @@ use crate::lexer::Span;
 use crate::syntax::{Stmt, StmtKind};
 
 fn error_expr(lowerer: &mut Lowerer, span: Span) -> HirExpr {
-    HirExpr {
-        id: lowerer.next_hir_id(),
-        kind: HirExprKind::Error,
-        ty: None,
-        span,
-    }
+    HirExpr { id: lowerer.next_hir_id(), kind: HirExprKind::Error, ty: None, span }
 }
 
 /// Lower a statement
@@ -35,12 +30,7 @@ pub fn lower_stmt(lowerer: &mut Lowerer, stmt: &Stmt) -> HirStmt {
         StmtKind::Discerne(discerne_stmt) => lowerer.lower_discerne(discerne_stmt),
         StmtKind::Block(block) => {
             let block = lowerer.lower_block(block);
-            HirStmtKind::Expr(HirExpr {
-                id: lowerer.next_hir_id(),
-                kind: HirExprKind::Block(block),
-                ty: None,
-                span,
-            })
+            HirStmtKind::Expr(HirExpr { id: lowerer.next_hir_id(), kind: HirExprKind::Block(block), ty: None, span })
         }
         _ => {
             lowerer.error("unhandled statement kind in lowering");
@@ -154,9 +144,7 @@ impl<'a> Lowerer<'a> {
 
         for case in &elige_stmt.cases {
             let pattern = match &case.value.kind {
-                crate::syntax::ExprKind::Literal(lit) => {
-                    pattern::lower_literal(self, lit, case.span)
-                }
+                crate::syntax::ExprKind::Literal(lit) => pattern::lower_literal(self, lit, case.span),
                 _ => {
                     self.current_span = case.span;
                     self.error("elige case value must be a literal");
@@ -166,23 +154,13 @@ impl<'a> Lowerer<'a> {
 
             let block = self.lower_ergo_body(&case.body);
             let body = self.block_expr(block, case.span);
-            arms.push(HirCasuArm {
-                pattern,
-                guard: None,
-                body,
-                span: case.span,
-            });
+            arms.push(HirCasuArm { pattern, guard: None, body, span: case.span });
         }
 
         if let Some(default) = &elige_stmt.default {
             let block = self.lower_ergo_body(&default.body);
             let body = self.block_expr(block, default.span);
-            arms.push(HirCasuArm {
-                pattern: HirPattern::Wildcard,
-                guard: None,
-                body,
-                span: default.span,
-            });
+            arms.push(HirCasuArm { pattern: HirPattern::Wildcard, guard: None, body, span: default.span });
         }
 
         let expr = HirExpr {
@@ -205,12 +183,7 @@ impl<'a> Lowerer<'a> {
             many => {
                 self.error("discerne with multiple subjects lowered as tuple");
                 let items = many.iter().map(|expr| self.lower_expr(expr)).collect();
-                HirExpr {
-                    id: self.next_hir_id(),
-                    kind: HirExprKind::Tuple(items),
-                    ty: None,
-                    span: self.current_span,
-                }
+                HirExpr { id: self.next_hir_id(), kind: HirExprKind::Tuple(items), ty: None, span: self.current_span }
             }
         };
 
@@ -232,23 +205,13 @@ impl<'a> Lowerer<'a> {
 
             let block = self.lower_ergo_body(&arm.body);
             let body = self.block_expr(block, arm.span);
-            arms.push(HirCasuArm {
-                pattern,
-                guard: None,
-                body,
-                span: arm.span,
-            });
+            arms.push(HirCasuArm { pattern, guard: None, body, span: arm.span });
         }
 
         if let Some(default) = &discerne_stmt.default {
             let block = self.lower_ergo_body(&default.body);
             let body = self.block_expr(block, default.span);
-            arms.push(HirCasuArm {
-                pattern: HirPattern::Wildcard,
-                guard: None,
-                body,
-                span: default.span,
-            });
+            arms.push(HirCasuArm { pattern: HirPattern::Wildcard, guard: None, body, span: default.span });
         }
 
         let expr = HirExpr {
@@ -284,36 +247,21 @@ impl<'a> Lowerer<'a> {
                 self.block_expr_block(expr)
             }
             crate::syntax::SecusClause::Block(block) => self.lower_block(block),
-            crate::syntax::SecusClause::Stmt(stmt) => HirBlock {
-                stmts: vec![self.lower_stmt(stmt)],
-                expr: None,
-                span: stmt.span,
-            },
+            crate::syntax::SecusClause::Stmt(stmt) => {
+                HirBlock { stmts: vec![self.lower_stmt(stmt)], expr: None, span: stmt.span }
+            }
             crate::syntax::SecusClause::InlineReturn(ret) => {
                 let stmt = self.lower_inline_return(ret);
-                HirBlock {
-                    stmts: vec![stmt],
-                    expr: None,
-                    span: self.current_span,
-                }
+                HirBlock { stmts: vec![stmt], expr: None, span: self.current_span }
             }
         }
     }
 
     fn block_expr(&mut self, block: HirBlock, span: Span) -> HirExpr {
-        HirExpr {
-            id: self.next_hir_id(),
-            kind: HirExprKind::Block(block),
-            ty: None,
-            span,
-        }
+        HirExpr { id: self.next_hir_id(), kind: HirExprKind::Block(block), ty: None, span }
     }
 
     fn block_expr_block(&mut self, expr: HirExpr) -> HirBlock {
-        HirBlock {
-            stmts: Vec::new(),
-            expr: Some(Box::new(expr)),
-            span: self.current_span,
-        }
+        HirBlock { stmts: Vec::new(), expr: Some(Box::new(expr)), span: self.current_span }
     }
 }

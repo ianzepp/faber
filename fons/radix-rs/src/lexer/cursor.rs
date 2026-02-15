@@ -11,11 +11,7 @@ pub struct Cursor<'a> {
 
 impl<'a> Cursor<'a> {
     pub fn new(source: &'a str) -> Self {
-        Self {
-            source,
-            chars: source.chars(),
-            pos: 0,
-        }
+        Self { source, chars: source.chars(), pos: 0 }
     }
 
     /// Current byte position

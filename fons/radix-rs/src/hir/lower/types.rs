@@ -21,19 +21,11 @@ impl<'a> Lowerer<'a> {
                 let params = func
                     .params
                     .iter()
-                    .map(|param| ParamType {
-                        ty: self.lower_type(param),
-                        mode: ParamMode::Owned,
-                        optional: false,
-                    })
+                    .map(|param| ParamType { ty: self.lower_type(param), mode: ParamMode::Owned, optional: false })
                     .collect();
                 let ret = self.lower_type(&func.ret);
-                self.types.function(FuncSig {
-                    params,
-                    ret,
-                    is_async: false,
-                    is_generator: false,
-                })
+                self.types
+                    .function(FuncSig { params, ret, is_async: false, is_generator: false })
             }
         };
 
@@ -112,7 +104,8 @@ impl<'a> Lowerer<'a> {
                     self.error("lista requires one type parameter");
                     return Some(self.types.intern(Type::Error));
                 }
-                Some(self.types.array(self.lower_type(&params[0])))
+                let inner = self.lower_type(&params[0]);
+                Some(self.types.array(inner))
             }
             "tabula" => {
                 if params.len() != 2 {
@@ -128,7 +121,8 @@ impl<'a> Lowerer<'a> {
                     self.error("copia requires one type parameter");
                     return Some(self.types.intern(Type::Error));
                 }
-                Some(self.types.set(self.lower_type(&params[0])))
+                let inner = self.lower_type(&params[0]);
+                Some(self.types.set(inner))
             }
             _ => None,
         }

@@ -24,13 +24,7 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Self {
-            target: Target::Rust,
-            crate_name: None,
-            emit_comments: true,
-            stdlib_path: None,
-            strict: false,
-        }
+        Self { target: Target::Rust, crate_name: None, emit_comments: true, stdlib_path: None, strict: false }
     }
 }
 

@@ -4,18 +4,14 @@
 //! Only runs when targeting Rust.
 
 use crate::hir::{
-    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirProgram, HirStmt,
+    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirParamMode, HirProgram, HirStmt,
     HirStmtKind,
 };
-use crate::semantic::{ParamMode, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable};
+use crate::semantic::{ParamMode, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable, WarningKind};
 use rustc_hash::FxHashMap;
 
 /// Analyze borrowing and ownership
-pub fn analyze(
-    hir: &HirProgram,
-    _resolver: &Resolver,
-    types: &TypeTable,
-) -> Result<(), Vec<SemanticError>> {
+pub fn analyze(hir: &HirProgram, _resolver: &Resolver, types: &TypeTable) -> Result<(), Vec<SemanticError>> {
     let mut checker = BorrowChecker::new(types);
     checker.check_program(hir);
 
@@ -47,7 +43,19 @@ struct BorrowChecker<'a> {
     types: &'a TypeTable,
     states: FxHashMap<DefId, BorrowState>,
     scopes: Vec<BorrowScope>,
+    param_usage: FxHashMap<DefId, ParamUsage>,
     errors: Vec<SemanticError>,
+}
+
+#[derive(Clone, Copy)]
+struct ParamUsage {
+    mode: HirParamMode,
+    span: crate::lexer::Span,
+    mutated: bool,
+    passed_in_or_ex: bool,
+    passed_ex: bool,
+    returned: bool,
+    moved: bool,
 }
 
 impl<'a> BorrowChecker<'a> {
@@ -56,6 +64,7 @@ impl<'a> BorrowChecker<'a> {
             types,
             states: FxHashMap::default(),
             scopes: Vec::new(),
+            param_usage: FxHashMap::default(),
             errors: Vec::new(),
         }
     }
@@ -91,15 +100,29 @@ impl<'a> BorrowChecker<'a> {
         self.reset();
         for param in &func.params {
             self.ensure_state(param.def_id);
+            self.param_usage.insert(
+                param.def_id,
+                ParamUsage {
+                    mode: param.mode,
+                    span: param.span,
+                    mutated: false,
+                    passed_in_or_ex: false,
+                    passed_ex: false,
+                    returned: false,
+                    moved: false,
+                },
+            );
         }
         if let Some(body) = &func.body {
             self.check_block(body);
         }
+        self.emit_mode_lints();
     }
 
     fn reset(&mut self) {
         self.states.clear();
         self.scopes.clear();
+        self.param_usage.clear();
     }
 
     fn check_block(&mut self, block: &HirBlock) {
@@ -124,6 +147,11 @@ impl<'a> BorrowChecker<'a> {
             HirStmtKind::Expr(expr) => self.check_expr(expr),
             HirStmtKind::Redde(value) => {
                 if let Some(expr) = value {
+                    if let Some(def_id) = self.root_def_id(expr) {
+                        if let Some(usage) = self.param_usage.get_mut(&def_id) {
+                            usage.returned = true;
+                        }
+                    }
                     self.check_expr(expr);
                 }
             }
@@ -249,6 +277,25 @@ impl<'a> BorrowChecker<'a> {
         match sig {
             Some(sig) => {
                 for (arg, param) in args.iter().zip(sig.params.iter()) {
+                    if let Some(arg_def_id) = self.root_def_id(arg) {
+                        if let Some(arg_usage) = self.param_usage.get_mut(&arg_def_id) {
+                            if matches!(param.mode, ParamMode::MutRef | ParamMode::Move) {
+                                arg_usage.passed_in_or_ex = true;
+                            }
+                            if matches!(param.mode, ParamMode::Move) {
+                                arg_usage.passed_ex = true;
+                            }
+                            if matches!(arg_usage.mode, HirParamMode::Ref)
+                                && matches!(param.mode, ParamMode::MutRef | ParamMode::Move)
+                            {
+                                self.error(
+                                    SemanticErrorKind::ModeMismatch,
+                                    "cannot pass `de` parameter to `in` or `ex` position",
+                                    arg.span,
+                                );
+                            }
+                        }
+                    }
                     match param.mode {
                         ParamMode::Ref => self.borrow_from_expr(arg, BorrowKind::Shared),
                         ParamMode::MutRef => self.borrow_from_expr(arg, BorrowKind::Mutable),
@@ -325,15 +372,22 @@ impl<'a> BorrowChecker<'a> {
             return;
         }
         if state.mutable {
-            self.error(
-                SemanticErrorKind::MutableBorrowConflict,
-                "use while mutably borrowed",
-                span,
-            );
+            self.error(SemanticErrorKind::MutableBorrowConflict, "use while mutably borrowed", span);
         }
     }
 
     fn write_use(&mut self, def_id: DefId, span: crate::lexer::Span) {
+        if let Some(usage) = self.param_usage.get_mut(&def_id) {
+            if matches!(usage.mode, HirParamMode::Ref) {
+                self.error(
+                    SemanticErrorKind::AssignToImmutableBorrow,
+                    "cannot assign to `de` parameter",
+                    span,
+                );
+            } else if matches!(usage.mode, HirParamMode::MutRef) {
+                usage.mutated = true;
+            }
+        }
         let state = self
             .states
             .entry(def_id)
@@ -343,15 +397,14 @@ impl<'a> BorrowChecker<'a> {
             return;
         }
         if state.mutable || state.shared > 0 {
-            self.error(
-                SemanticErrorKind::MutableBorrowConflict,
-                "write while borrowed",
-                span,
-            );
+            self.error(SemanticErrorKind::MutableBorrowConflict, "write while borrowed", span);
         }
     }
 
     fn move_use(&mut self, def_id: DefId, span: crate::lexer::Span) {
+        if let Some(usage) = self.param_usage.get_mut(&def_id) {
+            usage.moved = true;
+        }
         let state = self
             .states
             .entry(def_id)
@@ -361,11 +414,7 @@ impl<'a> BorrowChecker<'a> {
             return;
         }
         if state.mutable || state.shared > 0 {
-            self.error(
-                SemanticErrorKind::CannotMoveOut,
-                "cannot move out while borrowed",
-                span,
-            );
+            self.error(SemanticErrorKind::CannotMoveOut, "cannot move out while borrowed", span);
             return;
         }
         state.moved = true;
@@ -377,11 +426,7 @@ impl<'a> BorrowChecker<'a> {
             .entry(def_id)
             .or_insert_with(BorrowState::default);
         if state.moved {
-            self.error(
-                SemanticErrorKind::BorrowOfMoved,
-                "borrow of moved value",
-                span,
-            );
+            self.error(SemanticErrorKind::BorrowOfMoved, "borrow of moved value", span);
             return;
         }
         if state.mutable {
@@ -404,11 +449,7 @@ impl<'a> BorrowChecker<'a> {
             .entry(def_id)
             .or_insert_with(BorrowState::default);
         if state.moved {
-            self.error(
-                SemanticErrorKind::BorrowOfMoved,
-                "borrow of moved value",
-                span,
-            );
+            self.error(SemanticErrorKind::BorrowOfMoved, "borrow of moved value", span);
             return;
         }
         if state.mutable || state.shared > 0 {
@@ -426,9 +467,7 @@ impl<'a> BorrowChecker<'a> {
     }
 
     fn push_scope(&mut self) {
-        self.scopes.push(BorrowScope {
-            borrows: Vec::new(),
-        });
+        self.scopes.push(BorrowScope { borrows: Vec::new() });
     }
 
     fn pop_scope(&mut self) {
@@ -453,195 +492,36 @@ impl<'a> BorrowChecker<'a> {
         self.errors
             .push(SemanticError::new(kind, message.to_owned(), span));
     }
+
+    fn emit_mode_lints(&mut self) {
+        let mut warnings = Vec::new();
+        for usage in self.param_usage.values() {
+            match usage.mode {
+                HirParamMode::MutRef => {
+                    if !usage.mutated && !usage.passed_in_or_ex {
+                        warnings.push(SemanticError::new(
+                            SemanticErrorKind::Warning(WarningKind::UnusedMutRefParam),
+                            "`in` parameter is never mutated; consider `de`",
+                            usage.span,
+                        ));
+                    }
+                }
+                HirParamMode::Move => {
+                    if !usage.passed_ex && !usage.returned && !usage.moved {
+                        warnings.push(SemanticError::new(
+                            SemanticErrorKind::Warning(WarningKind::UnusedMoveParam),
+                            "`ex` parameter is never consumed; consider `de`",
+                            usage.span,
+                        ));
+                    }
+                }
+                HirParamMode::Owned | HirParamMode::Ref => {}
+            }
+        }
+        self.errors.extend(warnings);
+    }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::hir::{
-        HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirParam,
-        HirParamMode, HirProgram, HirStmt, HirStmtKind,
-    };
-    use crate::lexer::Span;
-    use crate::semantic::{FuncSig, ParamType, Primitive};
-
-    fn span() -> Span {
-        Span::default()
-    }
-
-    fn lit_expr(id: u32) -> HirExpr {
-        HirExpr {
-            id: crate::hir::HirId(id),
-            kind: HirExprKind::Literal(HirLiteral::Int(1)),
-            ty: None,
-            span: span(),
-        }
-    }
-
-    #[test]
-    fn reports_use_after_move() {
-        let mut types = TypeTable::new();
-        let numerus = types.primitive(Primitive::Numerus);
-        let func_ty = types.function(FuncSig {
-            params: vec![ParamType {
-                ty: numerus,
-                mode: ParamMode::Move,
-                optional: false,
-            }],
-            ret: numerus,
-            is_async: false,
-            is_generator: false,
-        });
-
-        let call = HirExpr {
-            id: crate::hir::HirId(3),
-            kind: HirExprKind::Call(
-                Box::new(HirExpr {
-                    id: crate::hir::HirId(2),
-                    kind: HirExprKind::Path(DefId(20)),
-                    ty: Some(func_ty),
-                    span: span(),
-                }),
-                vec![HirExpr {
-                    id: crate::hir::HirId(4),
-                    kind: HirExprKind::Path(DefId(1)),
-                    ty: None,
-                    span: span(),
-                }],
-            ),
-            ty: None,
-            span: span(),
-        };
-
-        let program = HirProgram {
-            items: vec![HirItem {
-                id: crate::hir::HirId(0),
-                def_id: DefId(0),
-                kind: HirItemKind::Function(HirFunction {
-                    name: crate::lexer::Symbol(1),
-                    type_params: Vec::new(),
-                    params: vec![HirParam {
-                        def_id: DefId(1),
-                        name: crate::lexer::Symbol(2),
-                        ty: numerus,
-                        mode: HirParamMode::Owned,
-                        span: span(),
-                    }],
-                    ret_ty: None,
-                    body: Some(HirBlock {
-                        stmts: vec![
-                            HirStmt {
-                                id: crate::hir::HirId(1),
-                                kind: HirStmtKind::Expr(call),
-                                span: span(),
-                            },
-                            HirStmt {
-                                id: crate::hir::HirId(5),
-                                kind: HirStmtKind::Expr(HirExpr {
-                                    id: crate::hir::HirId(6),
-                                    kind: HirExprKind::Path(DefId(1)),
-                                    ty: None,
-                                    span: span(),
-                                }),
-                                span: span(),
-                            },
-                        ],
-                        expr: None,
-                        span: span(),
-                    }),
-                    is_async: false,
-                    is_generator: false,
-                }),
-                span: span(),
-            }],
-            entry: None,
-        };
-
-        let result = analyze(&program, &Resolver::new(), &types);
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::UseAfterMove));
-    }
-
-    #[test]
-    fn reports_mutable_borrow_conflict() {
-        let mut types = TypeTable::new();
-        let numerus = types.primitive(Primitive::Numerus);
-        let shared = HirExpr {
-            id: crate::hir::HirId(1),
-            kind: HirExprKind::Ref(
-                crate::hir::HirRefKind::Shared,
-                Box::new(HirExpr {
-                    id: crate::hir::HirId(2),
-                    kind: HirExprKind::Path(DefId(1)),
-                    ty: None,
-                    span: span(),
-                }),
-            ),
-            ty: None,
-            span: span(),
-        };
-        let mutable = HirExpr {
-            id: crate::hir::HirId(3),
-            kind: HirExprKind::Ref(
-                crate::hir::HirRefKind::Mutable,
-                Box::new(HirExpr {
-                    id: crate::hir::HirId(4),
-                    kind: HirExprKind::Path(DefId(1)),
-                    ty: None,
-                    span: span(),
-                }),
-            ),
-            ty: None,
-            span: span(),
-        };
-
-        let program = HirProgram {
-            items: vec![HirItem {
-                id: crate::hir::HirId(0),
-                def_id: DefId(0),
-                kind: HirItemKind::Function(HirFunction {
-                    name: crate::lexer::Symbol(1),
-                    type_params: Vec::new(),
-                    params: vec![HirParam {
-                        def_id: DefId(1),
-                        name: crate::lexer::Symbol(2),
-                        ty: numerus,
-                        mode: HirParamMode::Owned,
-                        span: span(),
-                    }],
-                    ret_ty: None,
-                    body: Some(HirBlock {
-                        stmts: vec![
-                            HirStmt {
-                                id: crate::hir::HirId(5),
-                                kind: HirStmtKind::Expr(shared),
-                                span: span(),
-                            },
-                            HirStmt {
-                                id: crate::hir::HirId(6),
-                                kind: HirStmtKind::Expr(mutable),
-                                span: span(),
-                            },
-                        ],
-                        expr: None,
-                        span: span(),
-                    }),
-                    is_async: false,
-                    is_generator: false,
-                }),
-                span: span(),
-            }],
-            entry: None,
-        };
-
-        let result = analyze(&program, &Resolver::new(), &types);
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::MutableBorrowConflict));
-    }
-}
+#[path = "borrow_test.rs"]
+mod tests;

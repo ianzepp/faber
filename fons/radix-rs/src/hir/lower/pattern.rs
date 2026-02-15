@@ -20,11 +20,7 @@ pub fn lower_pattern(lowerer: &mut Lowerer, pattern: &Pattern) -> HirPattern {
     }
 }
 
-fn lower_ident_pattern(
-    lowerer: &mut Lowerer,
-    ident: &crate::syntax::Ident,
-    bind: Option<&PatternBind>,
-) -> HirPattern {
+fn lower_ident_pattern(lowerer: &mut Lowerer, ident: &crate::syntax::Ident, bind: Option<&PatternBind>) -> HirPattern {
     lowerer.current_span = ident.span;
 
     match bind {

@@ -16,10 +16,7 @@ pub struct TypeTable {
 
 impl TypeTable {
     pub fn new() -> Self {
-        let mut table = Self {
-            types: Vec::new(),
-            primitives: FxHashMap::default(),
-        };
+        let mut table = Self { types: Vec::new(), primitives: FxHashMap::default() };
 
         // Pre-intern primitives
         for prim in [

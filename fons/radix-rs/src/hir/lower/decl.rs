@@ -4,23 +4,17 @@
 
 use super::Lowerer;
 use crate::hir::{
-    HirConst, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirImport, HirImportItem,
-    HirInterface, HirInterfaceMethod, HirItem, HirItemKind, HirMethod, HirParam, HirParamMode,
-    HirReceiver, HirStruct, HirTypeAlias, HirTypeParam, HirVariant, HirVariantField,
+    HirConst, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirImport, HirImportItem, HirInterface,
+    HirInterfaceMethod, HirItem, HirItemKind, HirMethod, HirParam, HirParamMode, HirReceiver, HirStruct, HirTypeAlias,
+    HirTypeParam, HirVariant, HirVariantField,
 };
 use crate::lexer::Span;
 use crate::syntax::{
-    ClassDecl, EnumDecl, FuncDecl, ImportDecl, InterfaceDecl, Stmt, TypeAliasDecl, UnionDecl,
-    VarDecl,
+    ClassDecl, EnumDecl, FuncDecl, ImportDecl, InterfaceDecl, Stmt, TypeAliasDecl, UnionDecl, VarDecl,
 };
 
 fn error_expr(lowerer: &mut Lowerer, span: Span) -> HirExpr {
-    HirExpr {
-        id: lowerer.next_hir_id(),
-        kind: HirExprKind::Error,
-        ty: None,
-        span,
-    }
+    HirExpr { id: lowerer.next_hir_id(), kind: HirExprKind::Error, ty: None, span }
 }
 
 fn lower_param_mode(mode: crate::syntax::ParamMode) -> HirParamMode {
@@ -74,11 +68,7 @@ impl<'a> Lowerer<'a> {
         let type_params = decl
             .type_params
             .iter()
-            .map(|param| HirTypeParam {
-                def_id: self.next_def_id(),
-                name: param.name.name,
-                span: param.span,
-            })
+            .map(|param| HirTypeParam { def_id: self.next_def_id(), name: param.name.name, span: param.span })
             .collect();
 
         let params = decl
@@ -106,12 +96,7 @@ impl<'a> Lowerer<'a> {
             is_generator: false,
         };
 
-        Some(HirItem {
-            id: self.next_hir_id(),
-            def_id,
-            kind: HirItemKind::Function(func),
-            span: stmt.span,
-        })
+        Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Function(func), span: stmt.span })
     }
 
     /// Lower gens (class) declaration
@@ -121,11 +106,7 @@ impl<'a> Lowerer<'a> {
         let type_params = decl
             .type_params
             .iter()
-            .map(|param| HirTypeParam {
-                def_id: self.next_def_id(),
-                name: param.name.name,
-                span: param.span,
-            })
+            .map(|param| HirTypeParam { def_id: self.next_def_id(), name: param.name.name, span: param.span })
             .collect();
 
         let mut fields = Vec::new();
@@ -204,21 +185,9 @@ impl<'a> Lowerer<'a> {
             })
             .collect();
 
-        let struct_item = HirStruct {
-            name: decl.name.name,
-            type_params,
-            fields,
-            methods,
-            extends,
-            implements,
-        };
+        let struct_item = HirStruct { name: decl.name.name, type_params, fields, methods, extends, implements };
 
-        Some(HirItem {
-            id: self.next_hir_id(),
-            def_id,
-            kind: HirItemKind::Struct(struct_item),
-            span: stmt.span,
-        })
+        Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Struct(struct_item), span: stmt.span })
     }
 
     /// Lower ordo (enum) declaration
@@ -233,27 +202,13 @@ impl<'a> Lowerer<'a> {
                     self.error("enum member values are not lowered yet");
                 }
 
-                HirVariant {
-                    def_id: self.next_def_id(),
-                    name: member.name.name,
-                    fields: Vec::new(),
-                    span: member.span,
-                }
+                HirVariant { def_id: self.next_def_id(), name: member.name.name, fields: Vec::new(), span: member.span }
             })
             .collect();
 
-        let enum_item = HirEnum {
-            name: decl.name.name,
-            type_params: Vec::new(),
-            variants,
-        };
+        let enum_item = HirEnum { name: decl.name.name, type_params: Vec::new(), variants };
 
-        Some(HirItem {
-            id: self.next_hir_id(),
-            def_id,
-            kind: HirItemKind::Enum(enum_item),
-            span: stmt.span,
-        })
+        Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Enum(enum_item), span: stmt.span })
     }
 
     /// Lower discretio (union) declaration
@@ -263,11 +218,7 @@ impl<'a> Lowerer<'a> {
         let type_params = decl
             .type_params
             .iter()
-            .map(|param| HirTypeParam {
-                def_id: self.next_def_id(),
-                name: param.name.name,
-                span: param.span,
-            })
+            .map(|param| HirTypeParam { def_id: self.next_def_id(), name: param.name.name, span: param.span })
             .collect();
 
         let variants = decl
@@ -284,27 +235,13 @@ impl<'a> Lowerer<'a> {
                     })
                     .collect();
 
-                HirVariant {
-                    def_id: self.next_def_id(),
-                    name: variant.name.name,
-                    fields,
-                    span: variant.span,
-                }
+                HirVariant { def_id: self.next_def_id(), name: variant.name.name, fields, span: variant.span }
             })
             .collect();
 
-        let enum_item = HirEnum {
-            name: decl.name.name,
-            type_params,
-            variants,
-        };
+        let enum_item = HirEnum { name: decl.name.name, type_params, variants };
 
-        Some(HirItem {
-            id: self.next_hir_id(),
-            def_id,
-            kind: HirItemKind::Enum(enum_item),
-            span: stmt.span,
-        })
+        Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Enum(enum_item), span: stmt.span })
     }
 
     /// Lower pactum (interface) declaration
@@ -314,11 +251,7 @@ impl<'a> Lowerer<'a> {
         let type_params = decl
             .type_params
             .iter()
-            .map(|param| HirTypeParam {
-                def_id: self.next_def_id(),
-                name: param.name.name,
-                span: param.span,
-            })
+            .map(|param| HirTypeParam { def_id: self.next_def_id(), name: param.name.name, span: param.span })
             .collect();
 
         let methods = decl
@@ -342,18 +275,9 @@ impl<'a> Lowerer<'a> {
             })
             .collect();
 
-        let interface = HirInterface {
-            name: decl.name.name,
-            type_params,
-            methods,
-        };
+        let interface = HirInterface { name: decl.name.name, type_params, methods };
 
-        Some(HirItem {
-            id: self.next_hir_id(),
-            def_id,
-            kind: HirItemKind::Interface(interface),
-            span: stmt.span,
-        })
+        Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Interface(interface), span: stmt.span })
     }
 
     /// Lower typus (type alias) declaration
@@ -364,10 +288,7 @@ impl<'a> Lowerer<'a> {
         Some(HirItem {
             id: self.next_hir_id(),
             def_id,
-            kind: HirItemKind::TypeAlias(HirTypeAlias {
-                name: decl.name.name,
-                ty,
-            }),
+            kind: HirItemKind::TypeAlias(HirTypeAlias { name: decl.name.name, ty }),
             span: stmt.span,
         })
     }
@@ -384,21 +305,14 @@ impl<'a> Lowerer<'a> {
             }],
             crate::syntax::ImportKind::Wildcard { alias } => {
                 self.error("wildcard imports are not lowered yet");
-                vec![HirImportItem {
-                    def_id: self.next_def_id(),
-                    name: alias.name,
-                    alias: None,
-                }]
+                vec![HirImportItem { def_id: self.next_def_id(), name: alias.name, alias: None }]
             }
         };
 
         Some(HirItem {
             id: self.next_hir_id(),
             def_id,
-            kind: HirItemKind::Import(HirImport {
-                path: decl.path,
-                items,
-            }),
+            kind: HirItemKind::Import(HirImport { path: decl.path, items }),
             span: stmt.span,
         })
     }

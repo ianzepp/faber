@@ -82,8 +82,7 @@ impl Diagnostic {
 
     /// Create from IO error
     pub fn io_error(path: &Path, err: std::io::Error) -> Self {
-        Self::error(format!("cannot read '{}': {}", path.display(), err))
-            .with_file(path.display().to_string())
+        Self::error(format!("cannot read '{}': {}", path.display(), err)).with_file(path.display().to_string())
     }
 
     /// Create from lex error

@@ -7,11 +7,7 @@ use super::CodegenError;
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
-pub fn generate_stmt(
-    stmt: &HirStmt,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_stmt(stmt: &HirStmt, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     match &stmt.kind {
         HirStmtKind::Local(local) => {
             generate_local(local, types, w)?;
@@ -39,11 +35,7 @@ pub fn generate_stmt(
     Ok(())
 }
 
-fn generate_local(
-    local: &HirLocal,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+fn generate_local(local: &HirLocal, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.write("let ");
     if local.mutable {
         w.write("mut ");

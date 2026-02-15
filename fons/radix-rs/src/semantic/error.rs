@@ -12,12 +12,7 @@ pub struct SemanticError {
 
 impl SemanticError {
     pub fn new(kind: SemanticErrorKind, message: impl Into<String>, span: Span) -> Self {
-        Self {
-            kind,
-            message: message.into(),
-            span,
-            help: None,
-        }
+        Self { kind, message: message.into(), span, help: None }
     }
 
     pub fn with_help(mut self, help: impl Into<String>) -> Self {
@@ -73,6 +68,8 @@ pub enum SemanticErrorKind {
     MutableBorrowConflict,
     CannotMoveOut,
     LifetimeMismatch,
+    AssignToImmutableBorrow,
+    ModeMismatch,
 
     // Warnings
     Warning(WarningKind),
@@ -87,6 +84,8 @@ pub enum WarningKind {
     UnnecessaryCast,
     DeprecatedFeature,
     TargetNoop,
+    UnusedMutRefParam,
+    UnusedMoveParam,
 }
 
 impl std::fmt::Display for SemanticError {

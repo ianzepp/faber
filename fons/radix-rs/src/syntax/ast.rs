@@ -480,10 +480,7 @@ pub struct PathPattern {
 #[derive(Debug)]
 pub enum PatternBind {
     Alias(Ident), // ut NAME
-    Bindings {
-        mutability: Mutability,
-        names: Vec<Ident>,
-    },
+    Bindings { mutability: Mutability, names: Vec<Ident> },
 }
 
 #[derive(Debug)]

@@ -26,10 +26,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         for err in &lex_result.errors {
             diagnostics.push(Diagnostic::from_lex_error(name, source, err));
         }
-        return CompileResult {
-            output: None,
-            diagnostics,
-        };
+        return CompileResult { output: None, diagnostics };
     }
 
     // Phase 2: Parsing
@@ -38,15 +35,10 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         for err in &parse_result.errors {
             diagnostics.push(Diagnostic::from_parse_error(name, source, err));
         }
-        return CompileResult {
-            output: None,
-            diagnostics,
-        };
+        return CompileResult { output: None, diagnostics };
     }
 
-    let parser::ParseResult {
-        program, interner, ..
-    } = parse_result;
+    let parser::ParseResult { program, interner, .. } = parse_result;
     let program = program.unwrap();
 
     if session.config.target == Target::Rust {
@@ -62,32 +54,18 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     }
 
     if !semantic_result.success() {
-        return CompileResult {
-            output: None,
-            diagnostics,
-        };
+        return CompileResult { output: None, diagnostics };
     }
 
     let hir = semantic_result.hir.unwrap();
 
     // Phase 4: Code generation
     let crate_name = session.config.crate_name.as_deref().unwrap_or("output");
-    match codegen::generate(
-        session.config.target,
-        &hir,
-        &semantic_result.types,
-        crate_name,
-    ) {
-        Ok(output) => CompileResult {
-            output: Some(output),
-            diagnostics,
-        },
+    match codegen::generate(session.config.target, &hir, &semantic_result.types, &interner, crate_name) {
+        Ok(output) => CompileResult { output: Some(output), diagnostics },
         Err(err) => {
             diagnostics.push(Diagnostic::codegen_error(&err.message));
-            CompileResult {
-                output: None,
-                diagnostics,
-            }
+            CompileResult { output: None, diagnostics }
         }
     }
 }
@@ -184,10 +162,9 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
         }
         StmtKind::Cura(resource) => {
             if matches!(resource.kind, Some(CuraKind::Arena)) {
-                let spec =
-                    crate::diagnostics::semantic_spec(crate::semantic::SemanticErrorKind::Warning(
-                        crate::semantic::WarningKind::TargetNoop,
-                    ));
+                let spec = crate::diagnostics::semantic_spec(crate::semantic::SemanticErrorKind::Warning(
+                    crate::semantic::WarningKind::TargetNoop,
+                ));
                 let mut diag = Diagnostic::warning("cura arena has no effect for Rust targets")
                     .with_code(spec.code)
                     .with_file(file)
@@ -245,11 +222,7 @@ fn scan_else_for_rust_warnings(else_: &SecusClause, file: &str, diagnostics: &mu
     }
 }
 
-fn scan_test_for_rust_warnings(
-    test: &ProbandumDecl,
-    file: &str,
-    diagnostics: &mut Vec<Diagnostic>,
-) {
+fn scan_test_for_rust_warnings(test: &ProbandumDecl, file: &str, diagnostics: &mut Vec<Diagnostic>) {
     for setup in &test.body.setup {
         scan_block_for_rust_warnings(&setup.body, file, diagnostics);
     }

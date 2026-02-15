@@ -150,11 +150,7 @@ fn cmd_parse(args: &[String]) {
 
     println!("  \"errors\": [");
     for (i, err) in parse_result.errors.iter().enumerate() {
-        let comma = if i + 1 < parse_result.errors.len() {
-            ","
-        } else {
-            ""
-        };
+        let comma = if i + 1 < parse_result.errors.len() { "," } else { "" };
         println!(
             "    {{ \"message\": \"{}\", \"span\": [{}, {}] }}{}",
             escape_json(&err.message),
@@ -194,9 +190,7 @@ fn cmd_hir(args: &[String]) {
         std::process::exit(1);
     }
 
-    let radix::parser::ParseResult {
-        program, interner, ..
-    } = parse_result;
+    let radix::parser::ParseResult { program, interner, .. } = parse_result;
     let program = program.unwrap();
 
     // Phase 3: Name resolution (needed for HIR lowering)
@@ -213,9 +207,7 @@ fn cmd_hir(args: &[String]) {
     }
 
     // Resolve names
-    if let Err(e) =
-        radix::semantic::passes::resolve::resolve(&program, &mut resolver, &interner, &mut types)
-    {
+    if let Err(e) = radix::semantic::passes::resolve::resolve(&program, &mut resolver, &interner, &mut types) {
         eprintln!("resolution errors:");
         for err in e {
             eprintln!("  {:?}: {}", err.kind, err.message);
@@ -284,9 +276,7 @@ fn cmd_check(args: &[String]) {
         std::process::exit(1);
     }
 
-    let radix::parser::ParseResult {
-        program, interner, ..
-    } = parse_result;
+    let radix::parser::ParseResult { program, interner, .. } = parse_result;
     let program = program.unwrap();
     let pass_config = radix::semantic::PassConfig::for_target(radix::codegen::Target::Rust);
     let semantic_result = radix::semantic::analyze(&program, &pass_config, &interner);

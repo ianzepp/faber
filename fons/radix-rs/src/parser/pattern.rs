@@ -59,11 +59,7 @@ impl Parser {
             }
 
             let span = start.merge(self.previous_span());
-            return Ok(Pattern::Path(PathPattern {
-                segments,
-                bind,
-                span,
-            }));
+            return Ok(Pattern::Path(PathPattern { segments, bind, span }));
         }
 
         Err(self.error(ParseErrorKind::InvalidPattern, "expected pattern"))
@@ -75,16 +71,10 @@ impl Parser {
             Some(PatternBind::Alias(alias))
         } else if self.eat_keyword(TokenKind::Fixum) {
             let names = self.parse_pattern_bind_list()?;
-            Some(PatternBind::Bindings {
-                mutability: Mutability::Immutable,
-                names,
-            })
+            Some(PatternBind::Bindings { mutability: Mutability::Immutable, names })
         } else if self.eat_keyword(TokenKind::Varia) {
             let names = self.parse_pattern_bind_list()?;
-            Some(PatternBind::Bindings {
-                mutability: Mutability::Mutable,
-                names,
-            })
+            Some(PatternBind::Bindings { mutability: Mutability::Mutable, names })
         } else {
             None
         };

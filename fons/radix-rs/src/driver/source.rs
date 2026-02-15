@@ -21,12 +21,7 @@ impl SourceFile {
 
         let line_starts = compute_line_starts(&content);
 
-        Self {
-            path,
-            name,
-            content,
-            line_starts,
-        }
+        Self { path, name, content, line_starts }
     }
 
     /// Create from just content (for inline compilation)
@@ -34,12 +29,7 @@ impl SourceFile {
         let name = name.into();
         let line_starts = compute_line_starts(&content);
 
-        Self {
-            path: PathBuf::new(),
-            name,
-            content,
-            line_starts,
-        }
+        Self { path: PathBuf::new(), name, content, line_starts }
     }
 
     /// Convert byte offset to line and column

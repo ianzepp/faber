@@ -6,11 +6,7 @@ use super::CodegenError;
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
-pub fn generate_expr(
-    expr: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     match &expr.kind {
         HirExprKind::Path(_def_id) => {
             // TODO: Resolve path to name
@@ -260,11 +256,7 @@ fn generate_pattern(pattern: &HirPattern, w: &mut CodeWriter) {
     }
 }
 
-fn generate_block(
-    block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+fn generate_block(block: &HirBlock, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.writeln("{");
     w.indented(|w| {
         for stmt in &block.stmts {

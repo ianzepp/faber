@@ -14,11 +14,7 @@ pub fn type_to_rust(type_id: TypeId, types: &TypeTable) -> String {
         }
 
         Type::Map(key, value) => {
-            format!(
-                "HashMap<{}, {}>",
-                type_to_rust(*key, types),
-                type_to_rust(*value, types)
-            )
+            format!("HashMap<{}, {}>", type_to_rust(*key, types), type_to_rust(*value, types))
         }
 
         Type::Set(elem) => {

@@ -31,10 +31,7 @@ pub struct Interner {
 
 impl Interner {
     pub fn new() -> Self {
-        Self {
-            map: FxHashMap::default(),
-            strings: Vec::new(),
-        }
+        Self { map: FxHashMap::default(), strings: Vec::new() }
     }
 
     pub fn intern(&mut self, s: &str) -> Symbol {
@@ -86,15 +83,9 @@ impl<'a> Lexer<'a> {
         while !self.cursor.is_eof() {
             self.scan_token();
         }
-        self.tokens.push(Token::new(
-            TokenKind::Eof,
-            Span::new(self.cursor.pos(), self.cursor.pos()),
-        ));
-        LexResult {
-            tokens: self.tokens,
-            errors: self.errors,
-            interner: self.interner,
-        }
+        self.tokens
+            .push(Token::new(TokenKind::Eof, Span::new(self.cursor.pos(), self.cursor.pos())));
+        LexResult { tokens: self.tokens, errors: self.errors, interner: self.interner }
     }
 
     fn scan_token(&mut self) {
@@ -324,10 +315,8 @@ impl<'a> Lexer<'a> {
         let text = self.cursor.slice(start + 1, self.cursor.pos());
         let sym = self.interner.intern(text.trim());
 
-        self.tokens.push(Token::new(
-            TokenKind::LineComment(sym),
-            Span::new(start, self.cursor.pos()),
-        ));
+        self.tokens
+            .push(Token::new(TokenKind::LineComment(sym), Span::new(start, self.cursor.pos())));
     }
 
     fn scan_block_comment(&mut self, start: u32) {
@@ -353,17 +342,14 @@ impl<'a> Lexer<'a> {
             .cursor
             .slice(start + 2, self.cursor.pos().saturating_sub(2));
         let sym = self.interner.intern(text);
-        self.tokens.push(Token::new(
-            TokenKind::BlockComment(sym),
-            Span::new(start, self.cursor.pos()),
-        ));
+        self.tokens
+            .push(Token::new(TokenKind::BlockComment(sym), Span::new(start, self.cursor.pos())));
     }
 
     fn scan_string(&mut self, start: u32, quote: char) {
         // Check for triple-quoted string (only for double quotes)
         // Use peek to avoid consuming quotes if not a triple
-        let is_triple =
-            quote == '"' && self.cursor.peek() == Some('"') && self.cursor.peek_next() == Some('"');
+        let is_triple = quote == '"' && self.cursor.peek() == Some('"') && self.cursor.peek_next() == Some('"');
         if is_triple {
             self.cursor.advance();
             self.cursor.advance();
@@ -416,10 +402,8 @@ impl<'a> Lexer<'a> {
         let text = self.cursor.slice(content_start, content_end);
         let sym = self.interner.intern(text);
 
-        self.tokens.push(Token::new(
-            TokenKind::String(sym),
-            Span::new(start, self.cursor.pos()),
-        ));
+        self.tokens
+            .push(Token::new(TokenKind::String(sym), Span::new(start, self.cursor.pos())));
     }
 
     fn scan_template(&mut self, start: u32) {
@@ -475,10 +459,8 @@ impl<'a> Lexer<'a> {
         };
         let sym = self.interner.intern(text);
 
-        self.tokens.push(Token::new(
-            TokenKind::TemplateString(sym),
-            Span::new(start, self.cursor.pos()),
-        ));
+        self.tokens
+            .push(Token::new(TokenKind::TemplateString(sym), Span::new(start, self.cursor.pos())));
     }
 
     fn scan_number(&mut self, start: u32, first: char) {
@@ -492,10 +474,8 @@ impl<'a> Lexer<'a> {
                     let clean: String = text.chars().filter(|&c| c != '_').collect();
                     match i64::from_str_radix(&clean, 16) {
                         Ok(n) => {
-                            self.tokens.push(Token::new(
-                                TokenKind::Integer(n),
-                                Span::new(start, self.cursor.pos()),
-                            ));
+                            self.tokens
+                                .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
                         }
                         Err(_) => {
                             self.errors.push(LexError {
@@ -514,10 +494,8 @@ impl<'a> Lexer<'a> {
                     let clean: String = text.chars().filter(|&c| c != '_').collect();
                     match i64::from_str_radix(&clean, 2) {
                         Ok(n) => {
-                            self.tokens.push(Token::new(
-                                TokenKind::Integer(n),
-                                Span::new(start, self.cursor.pos()),
-                            ));
+                            self.tokens
+                                .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
                         }
                         Err(_) => {
                             self.errors.push(LexError {
@@ -537,10 +515,8 @@ impl<'a> Lexer<'a> {
                     let clean: String = text.chars().filter(|&c| c != '_').collect();
                     match i64::from_str_radix(&clean, 8) {
                         Ok(n) => {
-                            self.tokens.push(Token::new(
-                                TokenKind::Integer(n),
-                                Span::new(start, self.cursor.pos()),
-                            ));
+                            self.tokens
+                                .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
                         }
                         Err(_) => {
                             self.errors.push(LexError {
@@ -559,8 +535,7 @@ impl<'a> Lexer<'a> {
         // Decimal number
         self.cursor.eat_while(|c| c.is_ascii_digit() || c == '_');
 
-        let is_float = if self.cursor.peek() == Some('.')
-            && self.cursor.peek_next().is_some_and(|c| c.is_ascii_digit())
+        let is_float = if self.cursor.peek() == Some('.') && self.cursor.peek_next().is_some_and(|c| c.is_ascii_digit())
         {
             self.cursor.advance(); // consume '.'
             self.cursor.eat_while(|c| c.is_ascii_digit() || c == '_');
@@ -585,10 +560,8 @@ impl<'a> Lexer<'a> {
         if is_float || has_exp {
             match clean.parse::<f64>() {
                 Ok(n) => {
-                    self.tokens.push(Token::new(
-                        TokenKind::Float(n),
-                        Span::new(start, self.cursor.pos()),
-                    ));
+                    self.tokens
+                        .push(Token::new(TokenKind::Float(n), Span::new(start, self.cursor.pos())));
                 }
                 Err(_) => {
                     self.errors.push(LexError {
@@ -601,10 +574,8 @@ impl<'a> Lexer<'a> {
         } else {
             match clean.parse::<i64>() {
                 Ok(n) => {
-                    self.tokens.push(Token::new(
-                        TokenKind::Integer(n),
-                        Span::new(start, self.cursor.pos()),
-                    ));
+                    self.tokens
+                        .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
                 }
                 Err(_) => {
                     self.errors.push(LexError {

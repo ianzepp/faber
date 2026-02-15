@@ -3,13 +3,12 @@
 //! Bidirectional type inference and checking.
 
 use crate::hir::{
-    DefId, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind,
-    HirLiteral, HirLocal, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind,
-    HirStruct,
+    DefId, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral,
+    HirLocal, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct,
 };
 use crate::lexer::Symbol;
 use crate::semantic::{
-    FuncSig, ParamMode, ParamType, Primitive, Resolver, SemanticError, SemanticErrorKind, Type,
+    types::InferVar, FuncSig, ParamMode, ParamType, Primitive, Resolver, SemanticError, SemanticErrorKind, Type,
     TypeId, TypeTable,
 };
 use rustc_hash::FxHashMap;
@@ -38,17 +37,13 @@ struct TypeChecker<'a> {
     current_return: Option<TypeId>,
     inferred_return: Option<TypeId>,
     next_infer: u32,
-    infer_ids: FxHashMap<crate::semantic::InferVar, TypeId>,
-    substitutions: FxHashMap<crate::semantic::InferVar, TypeId>,
+    infer_ids: FxHashMap<InferVar, TypeId>,
+    substitutions: FxHashMap<InferVar, TypeId>,
     error_type: TypeId,
 }
 
 /// Type check the HIR
-pub fn typecheck(
-    hir: &mut HirProgram,
-    resolver: &Resolver,
-    types: &mut TypeTable,
-) -> Result<(), Vec<SemanticError>> {
+pub fn typecheck(hir: &mut HirProgram, resolver: &Resolver, types: &mut TypeTable) -> Result<(), Vec<SemanticError>> {
     let mut checker = TypeChecker::new(resolver, types);
     checker.collect_items(hir);
     checker.check_program(hir);
@@ -127,19 +122,10 @@ impl<'a> TypeChecker<'a> {
         let params = func
             .params
             .iter()
-            .map(|param| ParamType {
-                ty: param.ty,
-                mode: param_mode_from_hir(param.mode),
-                optional: false,
-            })
+            .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: false })
             .collect();
         let ret = func.ret_ty.unwrap_or_else(|| self.fresh_infer());
-        FuncSig {
-            params,
-            ret,
-            is_async: func.is_async,
-            is_generator: func.is_generator,
-        }
+        FuncSig { params, ret, is_async: func.is_async, is_generator: func.is_generator }
     }
 
     fn check_program(&mut self, hir: &mut HirProgram) {
@@ -195,11 +181,7 @@ impl<'a> TypeChecker<'a> {
             let resolved = self.resolve_type(ret);
             if self.is_infer(resolved) {
                 let span = func.body.as_ref().map(|body| body.span).unwrap_or_default();
-                self.error(
-                    SemanticErrorKind::MissingTypeAnnotation,
-                    "cannot infer return type",
-                    span,
-                );
+                self.error(SemanticErrorKind::MissingTypeAnnotation, "cannot infer return type", span);
             }
             func.ret_ty = Some(resolved);
         }
@@ -427,12 +409,7 @@ impl<'a> TypeChecker<'a> {
         let inferred = match (&local.ty, &mut local.init) {
             (Some(ty), Some(init)) => {
                 let init_ty = self.check_expr_with_expected(init, Some(*ty));
-                self.unify(
-                    init_ty,
-                    *ty,
-                    init.span,
-                    "initializer does not match annotation",
-                );
+                self.unify(init_ty, *ty, init.span, "initializer does not match annotation");
                 *ty
             }
             (Some(ty), None) => *ty,
@@ -471,12 +448,7 @@ impl<'a> TypeChecker<'a> {
         };
 
         if let Some(expected) = self.current_return {
-            self.unify(
-                value_ty,
-                expected,
-                span,
-                "return type does not match function signature",
-            );
+            self.unify(value_ty, expected, span, "return type does not match function signature");
             return;
         }
 
@@ -499,9 +471,7 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Binary(op, lhs, rhs) => self.check_binary(*op, lhs, rhs),
             HirExprKind::Unary(op, operand) => self.check_unary(*op, operand),
             HirExprKind::Call(callee, args) => self.check_call(callee, args),
-            HirExprKind::MethodCall(receiver, name, args) => {
-                self.check_method_call(receiver, *name, args)
-            }
+            HirExprKind::MethodCall(receiver, name, args) => self.check_method_call(receiver, *name, args),
             HirExprKind::Field(object, name) => self.check_field(object, *name),
             HirExprKind::Index(object, index) => self.check_index(object, index),
             HirExprKind::Block(block) => self.check_block(block, expected),
@@ -528,9 +498,7 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Array(elements) => self.check_array(elements, expr.span, expected),
             HirExprKind::Struct(def_id, fields) => self.check_struct_literal(*def_id, fields),
             HirExprKind::Tuple(items) => self.check_tuple(items),
-            HirExprKind::Clausura(params, ret, body) => {
-                self.check_closure(params, ret.as_mut(), body, expected)
-            }
+            HirExprKind::Clausura(params, ret, body) => self.check_closure(params, ret.as_mut(), body, expected),
             HirExprKind::Cede(inner) => self.check_expr(inner),
             HirExprKind::Qua(inner, target) => self.check_cast(inner, *target),
             HirExprKind::Ref(kind, inner) => {
@@ -567,11 +535,7 @@ impl<'a> TypeChecker<'a> {
             return self.types.function(sig.clone());
         }
 
-        self.error(
-            SemanticErrorKind::UndefinedVariable,
-            "unknown identifier",
-            span,
-        );
+        self.error(SemanticErrorKind::UndefinedVariable, "unknown identifier", span);
         self.error_type
     }
 
@@ -593,25 +557,13 @@ impl<'a> TypeChecker<'a> {
             }
             HirBinOp::And | HirBinOp::Or => {
                 if !self.is_bool(lhs_ty) || !self.is_bool(rhs_ty) {
-                    self.error(
-                        SemanticErrorKind::InvalidOperandTypes,
-                        "boolean operands required",
-                        lhs.span,
-                    );
+                    self.error(SemanticErrorKind::InvalidOperandTypes, "boolean operands required", lhs.span);
                 }
                 self.bool_type()
             }
-            HirBinOp::BitAnd
-            | HirBinOp::BitOr
-            | HirBinOp::BitXor
-            | HirBinOp::Shl
-            | HirBinOp::Shr => {
+            HirBinOp::BitAnd | HirBinOp::BitOr | HirBinOp::BitXor | HirBinOp::Shl | HirBinOp::Shr => {
                 if !self.is_integer(lhs_ty) || !self.is_integer(rhs_ty) {
-                    self.error(
-                        SemanticErrorKind::InvalidOperandTypes,
-                        "integer operands required",
-                        lhs.span,
-                    );
+                    self.error(SemanticErrorKind::InvalidOperandTypes, "integer operands required", lhs.span);
                 }
                 self.numerus_type()
             }
@@ -623,57 +575,33 @@ impl<'a> TypeChecker<'a> {
         match op {
             crate::hir::HirUnOp::Neg => {
                 if self.is_infer(self.resolve_type(operand_ty)) {
-                    return self.unify(
-                        operand_ty,
-                        self.numerus_type(),
-                        operand.span,
-                        "numeric operand required",
-                    );
+                    let numerus = self.numerus_type();
+                    return self.unify(operand_ty, numerus, operand.span, "numeric operand required");
                 }
                 if !self.is_numeric(operand_ty) {
-                    self.error(
-                        SemanticErrorKind::InvalidOperandTypes,
-                        "numeric operand required",
-                        operand.span,
-                    );
+                    self.error(SemanticErrorKind::InvalidOperandTypes, "numeric operand required", operand.span);
                 }
                 operand_ty
             }
             crate::hir::HirUnOp::Not => {
                 if self.is_infer(self.resolve_type(operand_ty)) {
-                    self.unify(
-                        operand_ty,
-                        self.bool_type(),
-                        operand.span,
-                        "boolean operand required",
-                    );
+                    let bivalens = self.bool_type();
+                    self.unify(operand_ty, bivalens, operand.span, "boolean operand required");
                     return self.bool_type();
                 }
                 if !self.is_bool(operand_ty) {
-                    self.error(
-                        SemanticErrorKind::InvalidOperandTypes,
-                        "boolean operand required",
-                        operand.span,
-                    );
+                    self.error(SemanticErrorKind::InvalidOperandTypes, "boolean operand required", operand.span);
                 }
                 self.bool_type()
             }
             crate::hir::HirUnOp::BitNot => {
                 if self.is_infer(self.resolve_type(operand_ty)) {
-                    self.unify(
-                        operand_ty,
-                        self.numerus_type(),
-                        operand.span,
-                        "integer operand required",
-                    );
+                    let numerus = self.numerus_type();
+                    self.unify(operand_ty, numerus, operand.span, "integer operand required");
                     return self.numerus_type();
                 }
                 if !self.is_integer(operand_ty) {
-                    self.error(
-                        SemanticErrorKind::InvalidOperandTypes,
-                        "integer operand required",
-                        operand.span,
-                    );
+                    self.error(SemanticErrorKind::InvalidOperandTypes, "integer operand required", operand.span);
                 }
                 self.numerus_type()
             }
@@ -697,20 +625,11 @@ impl<'a> TypeChecker<'a> {
             return sig.ret;
         }
 
-        self.error(
-            SemanticErrorKind::NotCallable,
-            "callee is not callable",
-            callee.span,
-        );
+        self.error(SemanticErrorKind::NotCallable, "callee is not callable", callee.span);
         self.error_type
     }
 
-    fn check_method_call(
-        &mut self,
-        receiver: &mut HirExpr,
-        name: Symbol,
-        args: &mut [HirExpr],
-    ) -> TypeId {
+    fn check_method_call(&mut self, receiver: &mut HirExpr, name: Symbol, args: &mut [HirExpr]) -> TypeId {
         let receiver_ty = self.check_expr(receiver);
         let Some(struct_def) = self.struct_def_from_type(receiver_ty) else {
             self.error(
@@ -725,26 +644,18 @@ impl<'a> TypeChecker<'a> {
             return self.error_type;
         };
 
-        let Some(sig) = info.methods.get(&name) else {
-            self.error(
-                SemanticErrorKind::UndefinedMember,
-                "unknown method",
-                receiver.span,
-            );
+        let Some(sig) = info.methods.get(&name).cloned() else {
+            self.error(SemanticErrorKind::UndefinedMember, "unknown method", receiver.span);
             return self.error_type;
         };
 
-        self.check_call_args(sig, args, receiver.span);
+        self.check_call_args(&sig, args, receiver.span);
         sig.ret
     }
 
     fn check_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {
         if args.len() != sig.params.len() {
-            self.error(
-                SemanticErrorKind::WrongArity,
-                "wrong number of arguments",
-                span,
-            );
+            self.error(SemanticErrorKind::WrongArity, "wrong number of arguments", span);
         }
 
         for (arg, param) in args.iter_mut().zip(sig.params.iter()) {
@@ -768,23 +679,27 @@ impl<'a> TypeChecker<'a> {
             return self.error_type;
         };
 
-        let Some(ty) = info.fields.get(&name) else {
-            self.error(
-                SemanticErrorKind::UndefinedMember,
-                "unknown field",
-                object.span,
-            );
+        let field_ty = info.fields.get(&name).copied();
+        let Some(field_ty) = field_ty else {
+            self.error(SemanticErrorKind::UndefinedMember, "unknown field", object.span);
             return self.error_type;
         };
 
-        *ty
+        field_ty
     }
 
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
         let obj_ty = self.check_expr(object);
         let idx_ty = self.check_expr(index);
-        match self.types.get(self.resolve_type(obj_ty)) {
-            Type::Array(elem) => {
+        let resolved = self.resolve_type(obj_ty);
+        let kind = match self.types.get(resolved) {
+            Type::Array(elem) => Some((Some(*elem), None, None)),
+            Type::Map(key, value) => Some((None, Some(*key), Some(*value))),
+            _ => None,
+        };
+
+        match kind {
+            Some((Some(elem), None, None)) => {
                 if !self.is_integer(idx_ty) {
                     self.error(
                         SemanticErrorKind::InvalidOperandTypes,
@@ -792,11 +707,11 @@ impl<'a> TypeChecker<'a> {
                         index.span,
                     );
                 }
-                *elem
+                elem
             }
-            Type::Map(key, value) => {
-                self.unify(idx_ty, *key, index.span, "map index type mismatch");
-                *value
+            Some((None, Some(key), Some(value))) => {
+                self.unify(idx_ty, key, index.span, "map index type mismatch");
+                value
             }
             _ => {
                 self.error(
@@ -828,29 +743,16 @@ impl<'a> TypeChecker<'a> {
     fn check_condition(&mut self, cond: &mut HirExpr) {
         let cond_ty = self.check_expr(cond);
         if self.is_infer(self.resolve_type(cond_ty)) {
-            self.unify(
-                cond_ty,
-                self.bool_type(),
-                cond.span,
-                "condition must be bivalens",
-            );
+            let bivalens = self.bool_type();
+            self.unify(cond_ty, bivalens, cond.span, "condition must be bivalens");
             return;
         }
         if !self.is_bool(cond_ty) {
-            self.error(
-                SemanticErrorKind::InvalidOperandTypes,
-                "condition must be bivalens",
-                cond.span,
-            );
+            self.error(SemanticErrorKind::InvalidOperandTypes, "condition must be bivalens", cond.span);
         }
     }
 
-    fn check_match(
-        &mut self,
-        scrutinee: &mut HirExpr,
-        arms: &mut [HirCasuArm],
-        expected: Option<TypeId>,
-    ) -> TypeId {
+    fn check_match(&mut self, scrutinee: &mut HirExpr, arms: &mut [HirCasuArm], expected: Option<TypeId>) -> TypeId {
         let scrutinee_ty = self.check_expr(scrutinee);
         let mut result_ty = None;
 
@@ -883,21 +785,13 @@ impl<'a> TypeChecker<'a> {
             }
             HirPattern::Variant(variant_def, patterns) => {
                 let Some(parent) = self.variant_parent.get(variant_def).copied() else {
-                    self.error(
-                        SemanticErrorKind::UndefinedVariable,
-                        "unknown variant",
-                        span,
-                    );
+                    self.error(SemanticErrorKind::UndefinedVariable, "unknown variant", span);
                     return;
                 };
 
                 if let Some(expected_parent) = self.enum_def_from_type(expected) {
                     if expected_parent != parent {
-                        self.error(
-                            SemanticErrorKind::TypeMismatch,
-                            "variant does not match scrutinee type",
-                            span,
-                        );
+                        self.error(SemanticErrorKind::TypeMismatch, "variant does not match scrutinee type", span);
                     }
                 }
 
@@ -907,11 +801,7 @@ impl<'a> TypeChecker<'a> {
                     .cloned()
                     .unwrap_or_default();
                 if fields.len() != patterns.len() {
-                    self.error(
-                        SemanticErrorKind::WrongArity,
-                        "variant pattern arity mismatch",
-                        span,
-                    );
+                    self.error(SemanticErrorKind::WrongArity, "variant pattern arity mismatch", span);
                 }
                 for (sub, field_ty) in patterns.iter().zip(fields.iter()) {
                     self.check_pattern(sub, *field_ty, span);
@@ -927,12 +817,7 @@ impl<'a> TypeChecker<'a> {
         target_ty
     }
 
-    fn check_assign_op(
-        &mut self,
-        op: HirBinOp,
-        target: &mut HirExpr,
-        value: &mut HirExpr,
-    ) -> TypeId {
+    fn check_assign_op(&mut self, op: HirBinOp, target: &mut HirExpr, value: &mut HirExpr) -> TypeId {
         let target_ty = self.check_lvalue(target);
         let value_ty = self.check_expr(value);
         match op {
@@ -964,13 +849,9 @@ impl<'a> TypeChecker<'a> {
                     return binding.ty;
                 }
 
-                if let Some(ty) = self.consts.get(def_id) {
-                    self.error(
-                        SemanticErrorKind::ImmutableAssignment,
-                        "assignment to constant",
-                        target.span,
-                    );
-                    return *ty;
+                if let Some(ty) = self.consts.get(def_id).copied() {
+                    self.error(SemanticErrorKind::ImmutableAssignment, "assignment to constant", target.span);
+                    return ty;
                 }
 
                 self.error(
@@ -993,12 +874,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn check_array(
-        &mut self,
-        elements: &mut [HirExpr],
-        span: crate::lexer::Span,
-        expected: Option<TypeId>,
-    ) -> TypeId {
+    fn check_array(&mut self, elements: &mut [HirExpr], span: crate::lexer::Span, expected: Option<TypeId>) -> TypeId {
         let expected_elem = expected.and_then(|ty| match self.types.get(self.resolve_type(ty)) {
             Type::Array(inner) => Some(*inner),
             _ => None,
@@ -1013,7 +889,8 @@ impl<'a> TypeChecker<'a> {
                 "empty array needs type annotation",
                 span,
             );
-            return self.types.array(self.fresh_infer());
+            let infer = self.fresh_infer();
+            return self.types.array(infer);
         }
 
         let mut element_ty = None;
@@ -1029,43 +906,33 @@ impl<'a> TypeChecker<'a> {
             });
         }
 
-        self.types
-            .array(element_ty.unwrap_or_else(|| self.fresh_infer()))
+        let elem_ty = element_ty.unwrap_or_else(|| self.fresh_infer());
+        self.types.array(elem_ty)
     }
 
-    fn check_struct_literal(
-        &mut self,
-        def_id: DefId,
-        fields: &mut Vec<(Symbol, HirExpr)>,
-    ) -> TypeId {
-        let Some(info) = self.structs.get(&def_id) else {
-            self.error(
-                SemanticErrorKind::UndefinedType,
-                "unknown struct",
-                fields
-                    .first()
-                    .map(|(_, expr)| expr.span)
-                    .unwrap_or_default(),
-            );
-            return self.error_type;
+    fn check_struct_literal(&mut self, def_id: DefId, fields: &mut Vec<(Symbol, HirExpr)>) -> TypeId {
+        let field_types = match self.structs.get(&def_id) {
+            Some(info) => info.fields.clone(),
+            None => {
+                self.error(
+                    SemanticErrorKind::UndefinedType,
+                    "unknown struct",
+                    fields
+                        .first()
+                        .map(|(_, expr)| expr.span)
+                        .unwrap_or_default(),
+                );
+                return self.error_type;
+            }
         };
 
         for (name, value) in fields.iter_mut() {
-            let Some(field_ty) = info.fields.get(name) else {
-                self.error(
-                    SemanticErrorKind::UndefinedMember,
-                    "unknown field",
-                    value.span,
-                );
+            let Some(field_ty) = field_types.get(name).copied() else {
+                self.error(SemanticErrorKind::UndefinedMember, "unknown field", value.span);
                 continue;
             };
             let value_ty = self.check_expr(value);
-            self.unify(
-                value_ty,
-                *field_ty,
-                value.span,
-                "field initializer type mismatch",
-            );
+            self.unify(value_ty, field_ty, value.span, "field initializer type mismatch");
         }
 
         self.types.intern(Type::Struct(def_id))
@@ -1093,12 +960,7 @@ impl<'a> TypeChecker<'a> {
             let mutable = matches!(param.mode, HirParamMode::MutRef);
             if let Some(sig) = &expected_sig {
                 if let Some(expected_param) = sig.params.get(idx) {
-                    self.unify(
-                        param.ty,
-                        expected_param.ty,
-                        param.span,
-                        "closure parameter type mismatch",
-                    );
+                    self.unify(param.ty, expected_param.ty, param.span, "closure parameter type mismatch");
                 }
             }
             self.insert_binding(param.def_id, param.ty, mutable);
@@ -1106,7 +968,7 @@ impl<'a> TypeChecker<'a> {
 
         let expected_ret = ret
             .as_ref()
-            .copied()
+            .map(|ty| **ty)
             .or_else(|| expected_sig.as_ref().map(|sig| sig.ret));
         let body_ty = self.check_expr_with_expected(body, expected_ret);
         let ret_ty = match ret {
@@ -1122,11 +984,7 @@ impl<'a> TypeChecker<'a> {
         let sig = FuncSig {
             params: params
                 .iter()
-                .map(|param| ParamType {
-                    ty: param.ty,
-                    mode: param_mode_from_hir(param.mode),
-                    optional: false,
-                })
+                .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: false })
                 .collect(),
             ret: ret_ty,
             is_async: false,
@@ -1151,11 +1009,7 @@ impl<'a> TypeChecker<'a> {
         match self.types.get(self.resolve_type(expr_ty)) {
             Type::Ref(_, inner) => *inner,
             _ => {
-                self.error(
-                    SemanticErrorKind::InvalidOperandTypes,
-                    "deref requires reference",
-                    span,
-                );
+                self.error(SemanticErrorKind::InvalidOperandTypes, "deref requires reference", span);
                 self.error_type
             }
         }
@@ -1164,18 +1018,17 @@ impl<'a> TypeChecker<'a> {
     fn numeric_bin(&mut self, lhs: TypeId, rhs: TypeId, span: crate::lexer::Span) -> TypeId {
         let lhs_resolved = self.resolve_type(lhs);
         let rhs_resolved = self.resolve_type(rhs);
-        if self.is_infer(lhs_resolved) {
-            self.unify(lhs, self.numerus_type(), span, "numeric operands required");
-        }
-        if self.is_infer(rhs_resolved) {
-            self.unify(rhs, self.numerus_type(), span, "numeric operands required");
+        if self.is_infer(lhs_resolved) || self.is_infer(rhs_resolved) {
+            let numerus = self.numerus_type();
+            if self.is_infer(lhs_resolved) {
+                self.unify(lhs, numerus, span, "numeric operands required");
+            }
+            if self.is_infer(rhs_resolved) {
+                self.unify(rhs, numerus, span, "numeric operands required");
+            }
         }
         if !self.is_numeric(lhs) || !self.is_numeric(rhs) {
-            self.error(
-                SemanticErrorKind::InvalidOperandTypes,
-                "numeric operands required",
-                span,
-            );
+            self.error(SemanticErrorKind::InvalidOperandTypes, "numeric operands required", span);
             return self.error_type;
         }
 
@@ -1240,7 +1093,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn fresh_infer(&mut self) -> TypeId {
-        let var = crate::semantic::InferVar(self.next_infer);
+        let var = InferVar(self.next_infer);
         self.next_infer += 1;
         let id = self.types.intern(Type::Infer(var));
         self.infer_ids.insert(var, id);
@@ -1263,7 +1116,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn infer_var_of(&self, ty: TypeId) -> Option<crate::semantic::InferVar> {
+    fn infer_var_of(&self, ty: TypeId) -> Option<InferVar> {
         match self.types.get(ty) {
             Type::Infer(var) => Some(*var),
             _ => None,
@@ -1284,18 +1137,9 @@ impl<'a> TypeChecker<'a> {
     fn build_call_signature(&mut self, args: &mut [HirExpr]) -> FuncSig {
         let params = args
             .iter_mut()
-            .map(|arg| ParamType {
-                ty: self.check_expr(arg),
-                mode: ParamMode::Owned,
-                optional: false,
-            })
+            .map(|arg| ParamType { ty: self.check_expr(arg), mode: ParamMode::Owned, optional: false })
             .collect();
-        FuncSig {
-            params,
-            ret: self.fresh_infer(),
-            is_async: false,
-            is_generator: false,
-        }
+        FuncSig { params, ret: self.fresh_infer(), is_async: false, is_generator: false }
     }
 
     fn unify(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span, message: &str) -> TypeId {
@@ -1312,32 +1156,35 @@ impl<'a> TypeChecker<'a> {
             return self.bind_infer(var, left, span, message);
         }
 
-        match (self.types.get(left), self.types.get(right)) {
+        let left_ty = self.types.get(left).clone();
+        let right_ty = self.types.get(right).clone();
+
+        match (left_ty, right_ty) {
             (Type::Primitive(Primitive::Numerus), Type::Primitive(Primitive::Fractus))
             | (Type::Primitive(Primitive::Fractus), Type::Primitive(Primitive::Numerus)) => {
                 return self.fractus_type();
             }
             (Type::Primitive(a), Type::Primitive(b)) if a == b => return left,
             (Type::Array(a), Type::Array(b)) => {
-                let inner = self.unify(*a, *b, span, message);
+                let inner = self.unify(a, b, span, message);
                 return self.types.array(inner);
             }
             (Type::Map(ka, va), Type::Map(kb, vb)) => {
-                let key = self.unify(*ka, *kb, span, message);
-                let value = self.unify(*va, *vb, span, message);
+                let key = self.unify(ka, kb, span, message);
+                let value = self.unify(va, vb, span, message);
                 return self.types.map(key, value);
             }
             (Type::Set(a), Type::Set(b)) => {
-                let inner = self.unify(*a, *b, span, message);
+                let inner = self.unify(a, b, span, message);
                 return self.types.set(inner);
             }
             (Type::Option(a), Type::Option(b)) => {
-                let inner = self.unify(*a, *b, span, message);
+                let inner = self.unify(a, b, span, message);
                 return self.types.option(inner);
             }
             (Type::Ref(ma, a), Type::Ref(mb, b)) if ma == mb => {
-                let inner = self.unify(*a, *b, span, message);
-                return self.types.reference(*ma, inner);
+                let inner = self.unify(a, b, span, message);
+                return self.types.reference(ma, inner);
             }
             (Type::Func(sig_a), Type::Func(sig_b)) => {
                 if sig_a.params.len() != sig_b.params.len() {
@@ -1366,13 +1213,7 @@ impl<'a> TypeChecker<'a> {
         self.error_type
     }
 
-    fn bind_infer(
-        &mut self,
-        var: crate::semantic::InferVar,
-        ty: TypeId,
-        span: crate::lexer::Span,
-        message: &str,
-    ) -> TypeId {
+    fn bind_infer(&mut self, var: InferVar, ty: TypeId, span: crate::lexer::Span, message: &str) -> TypeId {
         let resolved = self.resolve_type(ty);
         if let Some(existing) = self.substitutions.get(&var) {
             return self.unify(*existing, resolved, span, message);
@@ -1387,24 +1228,19 @@ impl<'a> TypeChecker<'a> {
         resolved
     }
 
-    fn occurs_in(&self, var: crate::semantic::InferVar, ty: TypeId) -> bool {
+    fn occurs_in(&self, var: InferVar, ty: TypeId) -> bool {
         let resolved = self.resolve_type(ty);
         if let Some(found) = self.infer_var_of(resolved) {
             return found == var;
         }
         match self.types.get(resolved) {
-            Type::Array(inner) | Type::Option(inner) | Type::Ref(_, inner) => {
-                self.occurs_in(var, *inner)
-            }
+            Type::Array(inner) | Type::Option(inner) | Type::Ref(_, inner) => self.occurs_in(var, *inner),
             Type::Set(inner) => self.occurs_in(var, *inner),
             Type::Map(key, value) => self.occurs_in(var, *key) || self.occurs_in(var, *value),
             Type::Func(sig) => {
-                sig.params.iter().any(|param| self.occurs_in(var, param.ty))
-                    || self.occurs_in(var, sig.ret)
+                sig.params.iter().any(|param| self.occurs_in(var, param.ty)) || self.occurs_in(var, sig.ret)
             }
-            Type::Applied(base, args) => {
-                self.occurs_in(var, *base) || args.iter().any(|arg| self.occurs_in(var, *arg))
-            }
+            Type::Applied(base, args) => self.occurs_in(var, *base) || args.iter().any(|arg| self.occurs_in(var, *arg)),
             Type::Union(types) => types.iter().any(|inner| self.occurs_in(var, *inner)),
             _ => false,
         }
@@ -1415,24 +1251,15 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn is_integer(&self, ty: TypeId) -> bool {
-        matches!(
-            self.types.get(self.resolve_type(ty)),
-            Type::Primitive(Primitive::Numerus)
-        )
+        matches!(self.types.get(self.resolve_type(ty)), Type::Primitive(Primitive::Numerus))
     }
 
     fn is_fractus(&self, ty: TypeId) -> bool {
-        matches!(
-            self.types.get(self.resolve_type(ty)),
-            Type::Primitive(Primitive::Fractus)
-        )
+        matches!(self.types.get(self.resolve_type(ty)), Type::Primitive(Primitive::Fractus))
     }
 
     fn is_bool(&self, ty: TypeId) -> bool {
-        matches!(
-            self.types.get(self.resolve_type(ty)),
-            Type::Primitive(Primitive::Bivalens)
-        )
+        matches!(self.types.get(self.resolve_type(ty)), Type::Primitive(Primitive::Bivalens))
     }
 
     fn numerus_type(&mut self) -> TypeId {
@@ -1498,175 +1325,5 @@ fn param_mode_from_hir(mode: HirParamMode) -> ParamMode {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::hir::{
-        HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirLocal,
-        HirProgram, HirStmt, HirStmtKind, HirStruct, HirTypeParam,
-    };
-    use crate::lexer::Span;
-
-    fn span() -> Span {
-        Span::default()
-    }
-
-    fn literal_int(id: u32, value: i64) -> HirExpr {
-        HirExpr {
-            id: crate::hir::HirId(id),
-            kind: HirExprKind::Literal(HirLiteral::Int(value)),
-            ty: None,
-            span: span(),
-        }
-    }
-
-    #[test]
-    fn infers_function_return_type() {
-        let mut types = TypeTable::new();
-        let mut program = HirProgram {
-            items: vec![HirItem {
-                id: crate::hir::HirId(0),
-                def_id: DefId(0),
-                kind: HirItemKind::Function(HirFunction {
-                    name: crate::lexer::Symbol(1),
-                    type_params: Vec::new(),
-                    params: Vec::new(),
-                    ret_ty: None,
-                    body: Some(HirBlock {
-                        stmts: vec![HirStmt {
-                            id: crate::hir::HirId(1),
-                            kind: HirStmtKind::Redde(Some(literal_int(2, 42))),
-                            span: span(),
-                        }],
-                        expr: None,
-                        span: span(),
-                    }),
-                    is_async: false,
-                    is_generator: false,
-                }),
-                span: span(),
-            }],
-            entry: None,
-        };
-
-        let resolver = Resolver::new();
-        let result = typecheck(&mut program, &resolver, &mut types);
-        assert!(result.is_ok());
-
-        let item = &program.items[0];
-        let HirItemKind::Function(func) = &item.kind else {
-            panic!("expected function item");
-        };
-        assert_eq!(func.ret_ty, Some(types.primitive(Primitive::Numerus)));
-    }
-
-    #[test]
-    fn reports_initializer_type_mismatch() {
-        let mut types = TypeTable::new();
-        let textus = types.primitive(Primitive::Textus);
-        let mut program = HirProgram {
-            items: Vec::new(),
-            entry: Some(HirBlock {
-                stmts: vec![HirStmt {
-                    id: crate::hir::HirId(0),
-                    kind: HirStmtKind::Local(HirLocal {
-                        def_id: DefId(0),
-                        name: crate::lexer::Symbol(1),
-                        ty: Some(textus),
-                        init: Some(literal_int(1, 7)),
-                        mutable: false,
-                    }),
-                    span: span(),
-                }],
-                expr: None,
-                span: span(),
-            }),
-        };
-
-        let resolver = Resolver::new();
-        let result = typecheck(&mut program, &resolver, &mut types);
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::TypeMismatch));
-    }
-
-    #[test]
-    fn resolves_method_call_type() {
-        let mut types = TypeTable::new();
-        let numerus = types.primitive(Primitive::Numerus);
-        let struct_def = DefId(1);
-        let struct_ty = types.intern(Type::Struct(struct_def));
-        let method_name = crate::lexer::Symbol(3);
-        let local_name = crate::lexer::Symbol(2);
-
-        let mut program = HirProgram {
-            items: vec![HirItem {
-                id: crate::hir::HirId(0),
-                def_id: struct_def,
-                kind: HirItemKind::Struct(HirStruct {
-                    name: crate::lexer::Symbol(1),
-                    type_params: Vec::<HirTypeParam>::new(),
-                    fields: Vec::new(),
-                    methods: vec![crate::hir::HirMethod {
-                        def_id: DefId(2),
-                        func: HirFunction {
-                            name: method_name,
-                            type_params: Vec::new(),
-                            params: Vec::new(),
-                            ret_ty: Some(numerus),
-                            body: None,
-                            is_async: false,
-                            is_generator: false,
-                        },
-                        receiver: crate::hir::HirReceiver::None,
-                        span: span(),
-                    }],
-                    extends: None,
-                    implements: Vec::new(),
-                }),
-                span: span(),
-            }],
-            entry: Some(HirBlock {
-                stmts: vec![HirStmt {
-                    id: crate::hir::HirId(10),
-                    kind: HirStmtKind::Local(HirLocal {
-                        def_id: DefId(10),
-                        name: local_name,
-                        ty: Some(struct_ty),
-                        init: None,
-                        mutable: false,
-                    }),
-                    span: span(),
-                }],
-                expr: Some(Box::new(HirExpr {
-                    id: crate::hir::HirId(11),
-                    kind: HirExprKind::MethodCall(
-                        Box::new(HirExpr {
-                            id: crate::hir::HirId(12),
-                            kind: HirExprKind::Path(DefId(10)),
-                            ty: None,
-                            span: span(),
-                        }),
-                        method_name,
-                        Vec::new(),
-                    ),
-                    ty: None,
-                    span: span(),
-                })),
-                span: span(),
-            }),
-        };
-
-        let resolver = Resolver::new();
-        let result = typecheck(&mut program, &resolver, &mut types);
-        assert!(result.is_ok());
-
-        let entry_expr = program
-            .entry
-            .as_ref()
-            .and_then(|block| block.expr.as_ref())
-            .expect("expected entry expr");
-        assert_eq!(entry_expr.ty, Some(numerus));
-    }
-}
+#[path = "typecheck_test.rs"]
+mod tests;
