@@ -56,3 +56,7 @@ impl Session {
         Self { config }
     }
 }
+
+#[cfg(test)]
+#[path = "session_test.rs"]
+mod tests;

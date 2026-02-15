@@ -72,3 +72,7 @@ impl Compiler {
         driver::compile(&self.session, name, source)
     }
 }
+
+#[cfg(test)]
+#[path = "lib_test.rs"]
+mod tests;
