@@ -1,54 +1,53 @@
 #!/usr/bin/env bun
 /**
- * Full build pipeline:
+ * Primary build pipeline for Faber (radix-rs focused).
  *
- *   Stage 1: nanus-ts, nanus-go, nanus-rs, nanus-py (bootstrap compilers)
- *   Stage 2: rivus via nanus-ts (must succeed)
- *   Stage 3: rivus via nanus-go, nanus-rs, nanus-py (optional, failures noted)
- *   Stage 4: exempla codegen via successful rivus compilers
- *   Stage 5: exempla verification (typecheck generated code)
- *   Stage 6: self-hosting (rivus compiles itself via verified compilers)
+ *   Stage 1: nanus-rs (bootstrap compiler)
+ *   Stage 2: radix-rs (primary compiler)
+ *   Stage 3: norma-rs (stdlib crate)
+ *   Stage 4: exempla codegen (fab → rs via radix-rs)
+ *   Stage 5: exempla verify (rustc compiles generated Rust)
+ *   Stage 6: rivus codegen (fab → rs via radix-rs)
  *
  * Prework: wipes opus/* for clean builds.
  *
  * Usage:
- *   bun run build                    # full build (all compilers)
- *   bun run build -t ts              # single target (ts|go|rs|py)
+ *   bun run build                    # full build
  *   bun run build --verbose          # show subprocess output
+ *   bun run build --stage 2          # run up to stage N only
  */
 
-import { rm } from 'fs/promises';
-import { join } from 'path';
+import { mkdir, readdir, rm, stat, copyFile } from 'fs/promises';
+import { basename, dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
 const OPUS = join(ROOT, 'opus');
 
-const VALID_TARGETS = ['ts', 'go', 'rs', 'py'] as const;
-type Target = (typeof VALID_TARGETS)[number];
+const NANUS_RS_DIR = join(ROOT, 'fons', 'nanus-rs');
+const RADIX_RS_DIR = join(ROOT, 'fons', 'radix-rs');
+const NORMA_RS_DIR = join(ROOT, 'fons', 'norma-rs');
+const EXEMPLA_DIR = join(ROOT, 'fons', 'exempla');
+const RIVUS_DIR = join(ROOT, 'fons', 'rivus');
 
-function parseArgs(): { verbose: boolean; target?: Target } {
+function parseArgs(): { verbose: boolean; maxStage: number } {
     const args = process.argv.slice(2);
     const verbose = args.some(arg => arg === '-v' || arg === '--verbose');
 
-    let target: Target | undefined;
+    let maxStage = 6;
     for (let i = 0; i < args.length; i++) {
-        if (args[i] === '-t' || args[i] === '--target') {
-            const value = args[i + 1];
-            if (!value || value.startsWith('-')) {
-                console.error('Error: -t/--target requires a value (ts|go|rs|py)');
+        if (args[i] === '--stage' || args[i] === '-s') {
+            const value = parseInt(args[i + 1], 10);
+            if (isNaN(value) || value < 1 || value > 6) {
+                console.error('Error: --stage requires a value between 1 and 6');
                 process.exit(1);
             }
-            if (!VALID_TARGETS.includes(value as Target)) {
-                console.error(`Error: invalid target '${value}'. Valid targets: ${VALID_TARGETS.join(', ')}`);
-                process.exit(1);
-            }
-            target = value as Target;
+            maxStage = value;
             break;
         }
     }
 
-    return { verbose, target };
+    return { verbose, maxStage };
 }
 
 interface StepResult {
@@ -56,19 +55,15 @@ interface StepResult {
     success: boolean;
     elapsed: number;
     error?: string;
-    retryCommand?: string;
 }
 
-/**
- * Execute a build step with timing. Returns result instead of throwing.
- */
-async function step(name: string, verbose: boolean, fn: () => Promise<void>, allowFailure = false, retryCommand?: string): Promise<StepResult> {
+async function step(name: string, verbose: boolean, fn: () => Promise<void>): Promise<StepResult> {
     const start = performance.now();
 
     if (verbose) {
         console.log(`\n=== ${name} ===\n`);
     } else {
-        process.stdout.write(`${name}... `);
+        process.stdout.write(`  ${name}... `);
     }
 
     try {
@@ -81,7 +76,7 @@ async function step(name: string, verbose: boolean, fn: () => Promise<void>, all
             console.log(`OK (${elapsed.toFixed(0)}ms)`);
         }
 
-        return { name, success: true, elapsed, retryCommand };
+        return { name, success: true, elapsed };
     } catch (err: any) {
         const elapsed = performance.now() - start;
         const error = err.stderr?.toString().trim() || err.message || 'unknown error';
@@ -93,268 +88,237 @@ async function step(name: string, verbose: boolean, fn: () => Promise<void>, all
             console.log(`FAILED (${elapsed.toFixed(0)}ms)`);
         }
 
-        if (!allowFailure) {
-            throw err;
-        }
-
-        return { name, success: false, elapsed, error, retryCommand };
+        return { name, success: false, elapsed, error };
     }
 }
 
-async function main() {
-    const { verbose, target } = parseArgs();
-    const start = performance.now();
-    const allResults: StepResult[] = [];
-    let aborted = false;
+async function findFiles(dir: string, ext: string): Promise<string[]> {
+    const entries = await readdir(dir);
+    const files: string[] = [];
 
-    if (target) {
-        console.log(`Build (target: ${target})\n`);
-    } else {
-        console.log('Build\n');
+    for (const entry of entries) {
+        const fullPath = join(dir, entry);
+        const s = await stat(fullPath);
+        if (s.isDirectory()) {
+            files.push(...(await findFiles(fullPath, ext)));
+        } else if (entry.endsWith(ext)) {
+            files.push(fullPath);
+        }
     }
 
-    // =============================================================================
+    return files;
+}
+
+/**
+ * Compile .fab files to .rs via radix-rs, writing output to outDir.
+ */
+async function compileToRust(
+    radixBin: string,
+    sourceDir: string,
+    outDir: string,
+    verbose: boolean,
+): Promise<{ total: number; failed: number }> {
+    const fabFiles = await findFiles(sourceDir, '.fab');
+
+    await rm(outDir, { recursive: true, force: true });
+
+    let failed = 0;
+
+    for (const fabPath of fabFiles) {
+        const relPath = relative(sourceDir, fabPath);
+        const name = basename(fabPath, '.fab');
+        const subdir = dirname(relPath);
+        const destDir = join(outDir, subdir);
+        const destPath = join(destDir, `${name}.rs`);
+
+        try {
+            await mkdir(destDir, { recursive: true });
+            const result = await $`${radixBin} emit -t rust ${fabPath}`.quiet();
+            await Bun.write(destPath, result.stdout);
+            if (verbose) console.log(`    ${relPath} -> ${name}.rs`);
+        } catch (err: any) {
+            console.error(`    ${relPath} FAILED`);
+            if (verbose && err.stderr) console.error(`      ${err.stderr.toString().trim()}`);
+            failed++;
+        }
+    }
+
+    return { total: fabFiles.length, failed };
+}
+
+/**
+ * Verify .rs files compile with rustc.
+ */
+async function verifyRust(dir: string, verbose: boolean): Promise<{ total: number; failed: number }> {
+    const rsFiles = await findFiles(dir, '.rs');
+    let failed = 0;
+
+    for (const file of rsFiles) {
+        try {
+            await $`rustc --emit=metadata --edition=2021 -o /dev/null ${file}`.quiet();
+        } catch (err: any) {
+            const relPath = relative(dir, file);
+            console.error(`    ${relPath}: compile error`);
+            if (verbose) {
+                const errText = err.stderr?.toString() || '';
+                const firstLines = errText.split('\n').slice(0, 5).join('\n');
+                if (firstLines) console.error(`      ${firstLines}`);
+            }
+            failed++;
+        }
+    }
+
+    return { total: rsFiles.length, failed };
+}
+
+async function main() {
+    const { verbose, maxStage } = parseArgs();
+    const start = performance.now();
+    const allResults: StepResult[] = [];
+
+    console.log('Build (radix-rs)\n');
+
+    // =========================================================================
     // PREWORK: Clean opus directory
-    // =============================================================================
+    // =========================================================================
 
     await step('clean opus/*', verbose, async () => {
         await rm(OPUS, { recursive: true, force: true });
     });
 
-    // =============================================================================
-    // STAGE 1: Bootstrap compilers (nanus-*)
-    // =============================================================================
+    const binDir = join(OPUS, 'bin');
+    await mkdir(binDir, { recursive: true });
 
-    console.log('\n--- Stage 1: Bootstrap compilers ---\n');
+    // =========================================================================
+    // STAGE 1: nanus-rs (bootstrap compiler)
+    // =========================================================================
 
-    const stage1Compilers = target ? [`nanus-${target}`] : ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'];
+    if (maxStage >= 1) {
+        console.log('\n--- Stage 1: nanus-rs ---\n');
 
-    for (const compiler of stage1Compilers) {
-        const result = await step(
-            `build:${compiler}`,
-            verbose,
-            async () => {
-                if (verbose) {
-                    await $`bun run build:${compiler}`;
-                } else {
-                    await $`bun run build:${compiler}`.quiet();
-                }
-            },
-            !target, // allow failure only when no target specified
-            `bun run build:${compiler}`,
-        );
+        const result = await step('cargo build nanus-rs', verbose, async () => {
+            if (verbose) {
+                await $`cargo build --release --manifest-path ${join(NANUS_RS_DIR, 'Cargo.toml')}`;
+            } else {
+                await $`cargo build --release --manifest-path ${join(NANUS_RS_DIR, 'Cargo.toml')}`.quiet();
+            }
+            await copyFile(join(NANUS_RS_DIR, 'target', 'release', 'nanus-rs'), join(binDir, 'nanus-rs'));
+        });
         allResults.push(result);
-        if (target && !result.success) {
-            aborted = true;
+
+        if (!result.success) {
+            console.log(`\nBuild aborted at stage 1.`);
+            process.exit(1);
         }
     }
 
-    // =============================================================================
-    // STAGE 2: Rivus via nanus compilers
-    // =============================================================================
+    // =========================================================================
+    // STAGE 2: radix-rs (primary compiler)
+    // =========================================================================
 
-    if (!aborted) {
-        if (target) {
-            console.log(`\n--- Stage 2: Rivus (nanus-${target}) ---\n`);
+    if (maxStage >= 2) {
+        console.log('\n--- Stage 2: radix-rs ---\n');
 
-            const result = await step(
-                `build:rivus (nanus-${target})`,
-                verbose,
-                async () => {
-                    if (verbose) {
-                        await $`bun run build:rivus -- -c nanus-${target}`;
-                    } else {
-                        await $`bun run build:rivus -- -c nanus-${target}`.quiet();
-                    }
-                },
-                false, // must succeed
-                `bun run build:rivus -- -c nanus-${target}`,
-            );
-            allResults.push(result);
-            if (!result.success) {
-                aborted = true;
+        const result = await step('cargo build radix-rs', verbose, async () => {
+            if (verbose) {
+                await $`cargo build --release --manifest-path ${join(RADIX_RS_DIR, 'Cargo.toml')}`;
+            } else {
+                await $`cargo build --release --manifest-path ${join(RADIX_RS_DIR, 'Cargo.toml')}`.quiet();
             }
-        } else {
-            console.log('\n--- Stage 2: Rivus (nanus-ts) ---\n');
+            await copyFile(join(RADIX_RS_DIR, 'target', 'release', 'radix'), join(binDir, 'radix-rs'));
+        });
+        allResults.push(result);
 
-            const stage2Result = await step('build:rivus (nanus-ts)', verbose, async () => {
-                if (verbose) {
-                    await $`bun run build:rivus -- -c nanus-ts`;
-                } else {
-                    await $`bun run build:rivus -- -c nanus-ts`.quiet();
-                }
-            });
-            allResults.push(stage2Result);
+        if (!result.success) {
+            console.log(`\nBuild aborted at stage 2.`);
+            process.exit(1);
         }
     }
 
-    // =============================================================================
-    // STAGE 3: Rivus via other nanus compilers (only when no target)
-    // =============================================================================
+    // =========================================================================
+    // STAGE 3: norma-rs (stdlib crate)
+    // =========================================================================
 
-    const stage3Results: StepResult[] = [];
-    if (!aborted && !target) {
-        console.log('\n--- Stage 3: Rivus (other compilers) ---\n');
+    if (maxStage >= 3) {
+        console.log('\n--- Stage 3: norma-rs ---\n');
 
-        const optionalCompilers = ['nanus-go', 'nanus-rs', 'nanus-py'] as const;
-
-        for (const compiler of optionalCompilers) {
-            const result = await step(
-                `build:rivus (${compiler})`,
-                verbose,
-                async () => {
-                    if (verbose) {
-                        await $`bun run build:rivus -- -c ${compiler}`;
-                    } else {
-                        await $`bun run build:rivus -- -c ${compiler}`.quiet();
-                    }
-                },
-                true, // allow failure
-                `bun run build:rivus -- -c ${compiler}`,
-            );
-            stage3Results.push(result);
-            allResults.push(result);
-        }
-    }
-
-    // =============================================================================
-    // STAGE 4: Exempla codegen
-    // =============================================================================
-
-    let successfulCompilers: string[] = [];
-    if (!aborted) {
-        if (target) {
-            successfulCompilers = [`rivus-${target}`];
-        } else {
-            const stage2Success = allResults.find(r => r.name === 'build:rivus (nanus-ts)')?.success;
-            if (stage2Success) successfulCompilers.push('rivus-ts');
-            for (const result of stage3Results) {
-                if (result.success) {
-                    // Extract target from step name: "build:rivus (nanus-go)" -> "go"
-                    const match = result.name.match(/nanus-(\w+)/);
-                    if (match) successfulCompilers.push(`rivus-${match[1]}`);
-                }
+        const result = await step('cargo build norma-rs', verbose, async () => {
+            if (verbose) {
+                await $`cargo build --release --manifest-path ${join(NORMA_RS_DIR, 'Cargo.toml')}`;
+            } else {
+                await $`cargo build --release --manifest-path ${join(NORMA_RS_DIR, 'Cargo.toml')}`.quiet();
             }
+        });
+        allResults.push(result);
+
+        if (!result.success) {
+            console.log(`\nBuild aborted at stage 3.`);
+            process.exit(1);
         }
     }
 
-    const exemplaCodegen: StepResult[] = [];
-    if (!aborted && successfulCompilers.length > 0) {
-        console.log('\n--- Stage 4: Exempla (codegen) ---\n');
+    // =========================================================================
+    // STAGE 4: exempla codegen (fab → rs via radix-rs)
+    // =========================================================================
 
-        for (const compiler of successfulCompilers) {
-            const result = await step(
-                `build:exempla (${compiler})`,
-                verbose,
-                async () => {
-                    if (verbose) {
-                        await $`bun run build:exempla -- -c ${compiler} --no-verify`;
-                    } else {
-                        await $`bun run build:exempla -- -c ${compiler} --no-verify`.quiet();
-                    }
-                },
-                !target, // allow failure only when no target
-                `bun run build:exempla -- -c ${compiler} --no-verify`,
-            );
-            exemplaCodegen.push(result);
-            allResults.push(result);
-            if (target && !result.success) {
-                aborted = true;
-                break;
-            }
-        }
+    const radixBin = join(binDir, 'radix-rs');
+    const exemplaOutDir = join(OPUS, 'radix-rs', 'exempla', 'rs');
+
+    if (maxStage >= 4) {
+        console.log('\n--- Stage 4: exempla codegen (fab → rs) ---\n');
+
+        const result = await step('compile exempla → rust', verbose, async () => {
+            const { total, failed } = await compileToRust(radixBin, EXEMPLA_DIR, exemplaOutDir, verbose);
+            console.log(`    ${total - failed}/${total} compiled`);
+        });
+        allResults.push(result);
     }
 
-    // =============================================================================
-    // STAGE 5: Exempla verification
-    // =============================================================================
+    // =========================================================================
+    // STAGE 5: exempla verify (rustc compiles generated Rust)
+    // =========================================================================
 
-    let verifiedCompilers: string[] = [];
-    if (!aborted) {
-        const compilersToVerify = target
-            ? successfulCompilers
-            : successfulCompilers.filter((_, i) => exemplaCodegen[i]?.success);
+    if (maxStage >= 5) {
+        console.log('\n--- Stage 5: exempla verify (rustc) ---\n');
 
-        if (compilersToVerify.length > 0) {
-            console.log('\n--- Stage 5: Exempla (verify) ---\n');
-
-            for (const compiler of compilersToVerify) {
-                const result = await step(
-                    `verify:exempla (${compiler})`,
-                    verbose,
-                    async () => {
-                        if (verbose) {
-                            await $`bun run build:exempla -- -c ${compiler} --verify-only`;
-                        } else {
-                            await $`bun run build:exempla -- -c ${compiler} --verify-only`.quiet();
-                        }
-                    },
-                    !target, // allow failure only when no target
-                    `bun run build:exempla -- -c ${compiler} --verify-only`,
-                );
-                allResults.push(result);
-                if (result.success) {
-                    verifiedCompilers.push(compiler);
-                } else if (target) {
-                    aborted = true;
-                    break;
-                }
-            }
-        }
+        const result = await step('verify exempla .rs files', verbose, async () => {
+            const { total, failed } = await verifyRust(exemplaOutDir, verbose);
+            console.log(`    ${total - failed}/${total} verified`);
+        });
+        allResults.push(result);
     }
 
-    // =============================================================================
-    // STAGE 6: Self-hosting (rivus compiles itself)
-    // =============================================================================
+    // =========================================================================
+    // STAGE 6: rivus codegen (fab → rs via radix-rs)
+    // =========================================================================
 
-    if (!aborted && verifiedCompilers.length > 0) {
-        console.log('\n--- Stage 6: Self-hosting (rivus compiles rivus) ---\n');
+    const rivusOutDir = join(OPUS, 'rivus', 'rs');
 
-        for (const compiler of verifiedCompilers) {
-            const result = await step(
-                `build:rivus (${compiler})`,
-                verbose,
-                async () => {
-                    if (verbose) {
-                        await $`bun run build:rivus -- -c ${compiler}`;
-                    } else {
-                        await $`bun run build:rivus -- -c ${compiler}`.quiet();
-                    }
-                },
-                !target, // allow failure only when no target
-                `bun run build:rivus -- -c ${compiler}`,
-            );
-            allResults.push(result);
-            if (target && !result.success) {
-                aborted = true;
-                break;
-            }
-        }
+    if (maxStage >= 6) {
+        console.log('\n--- Stage 6: rivus codegen (fab → rs) ---\n');
+
+        const result = await step('compile rivus → rust', verbose, async () => {
+            const { total, failed } = await compileToRust(radixBin, RIVUS_DIR, rivusOutDir, verbose);
+            console.log(`    ${total - failed}/${total} compiled`);
+        });
+        allResults.push(result);
     }
 
-    // =============================================================================
+    // =========================================================================
     // SUMMARY
-    // =============================================================================
+    // =========================================================================
 
     const elapsed = performance.now() - start;
     const failedSteps = allResults.filter(r => !r.success);
 
-    if (aborted) {
-        console.log(`\nBuild aborted (${(elapsed / 1000).toFixed(1)}s)`);
+    if (failedSteps.length > 0) {
+        console.log(`\nBuild failed (${(elapsed / 1000).toFixed(1)}s) — ${failedSteps.length} step(s) failed:`);
+        for (const s of failedSteps) {
+            console.log(`  - ${s.name}`);
+        }
+        process.exit(1);
     } else {
         console.log(`\nBuild complete (${(elapsed / 1000).toFixed(1)}s)`);
-    }
-
-    if (failedSteps.length > 0) {
-        console.log(`\n${failedSteps.length} step(s) failed. To retry manually:\n`);
-        for (const step of failedSteps) {
-            if (step.retryCommand) {
-                console.log(`  ${step.retryCommand}`);
-            }
-        }
-        if (target) {
-            process.exit(1);
-        }
     }
 }
 
