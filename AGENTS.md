@@ -24,20 +24,31 @@ functio adde(T elem) -> vacuum
 2. Codegen looks up translations via the norma registry
 3. Method calls like `myList.adde(x)` become `myList.push(x)` in TypeScript output
 
-**Runtime libraries** for targets that need them live in `fons/subsidia/`:
-- `subsidia/zig/` - `Lista`, `Tabula`, `Copia` wrappers with Latin method names
-- `subsidia/cpp/` - Helper functions for complex operations
-- `subsidia/rs/` - Helper functions for complex operations
+**Runtime libraries** for targets that need them live in `fons/norma-{ts,go,py,rs}/`:
+- `norma-ts/` - TypeScript runtime (codex, json, toml, yaml, hal)
+- `norma-go/` - Go runtime (json, toml, yaml, hal)
+- `norma-py/` - Python runtime (json, toml, yaml, hal)
+- `norma-rs/` - Rust runtime (json, toml, yaml, hal)
 
 ## Project Layout
 
 ```
 fons/                   # Source code ("fons" = source/spring)
+├── radix-rs/           # Primary compiler (Rust, ~17k LOC)
+│   └── src/
+│       ├── lexer/      # Tokenization (Unicode XID, NFC)
+│       ├── parser/     # Recursive descent parser
+│       ├── syntax/     # AST definitions
+│       ├── hir/        # High-level IR + lowering
+│       ├── semantic/   # Type checking, borrow analysis, linting
+│       ├── codegen/    # Rust and Faber emitters
+│       ├── diagnostics/# Error reporting (ariadne)
+│       └── driver/     # Compilation orchestration
 ├── nanus-ts/           # Minimal bootstrap compiler (TypeScript)
 ├── nanus-go/           # Minimal bootstrap compiler (Go)
 ├── nanus-py/           # Minimal bootstrap compiler (Python)
 ├── nanus-rs/           # Minimal bootstrap compiler (Rust)
-├── rivus/              # Self-hosted compiler (Faber source)
+├── rivus/              # Self-hosted compiler (Faber source, deprioritized)
 │   ├── ast/            # AST type definitions (.fab)
 │   ├── cli/            # CLI entry point (.fab)
 │   ├── lexicon/        # Lexer modules (.fab)
@@ -47,53 +58,29 @@ fons/                   # Source code ("fons" = source/spring)
 │   └── codegen/        # Code generation (.fab)
 │       ├── norma.gen.fab  # Generated stdlib
 │       └── ts/, go/    # Target-specific codegen
-├── proba/              # Shared test suite (YAML specs)
+├── rivus-cli/          # Rivus CLI entry point
+├── proba/              # Shared test suite (YAML specs, ~75 files)
 │   ├── codegen/        # Codegen tests by target
 │   ├── capabilities/   # Feature capability tests
 │   ├── harness/        # Test runner infrastructure
 │   └── norma/          # Stdlib tests
-├── exempla/            # Example .fab programs
+├── exempla/            # Example .fab programs (~90 files)
+├── golden/             # Golden test outputs
 ├── grammatica/         # Language documentation (prose tutorials)
 ├── norma/              # Standard library definitions (@ verte annotations)
-└── subsidia/           # Runtime helpers (Zig, C++, Rust)
+├── norma-ts/           # TypeScript stdlib runtime
+├── norma-go/           # Go stdlib runtime
+├── norma-py/           # Python stdlib runtime
+└── norma-rs/           # Rust stdlib runtime
 
 opus/                   # Build outputs ("opus" = work/product)
-├── bin/                # Compiled executables (faber, rivus)
+├── bin/                # Compiled executables (nanus-*, radix-rs)
 ├── exempla/            # Compiled examples by target
 ├── proba/              # Test results database
 └── rivus/              # Compiled rivus by target
 
-agents/                 # Agent prompt definitions
 scripta/                # Build and utility scripts
 ```
-
-## Agents
-
-Standalone agent runner at `~/.local/bin/agent`. Runs agents as separate Claude processes in worktrees.
-
-```bash
-agent personas list                  # Show available personas
-agent jobs list                      # Show running/completed jobs
-agent run "goal"                     # Run with default persona
-agent run --persona opifex "goal"    # Run with specific persona
-agent run -i 102 "fix the bug"       # Work on GitHub issue
-agent run -m opus "goal"             # Use specific model
-```
-
-### Available Personas
-
-| Persona | Purpose | When to use |
-|---------|---------|-------------|
-| `opifex` | Issue worker | Well-defined GitHub issues with clear deliverables |
-| `diogenes` | Explorer | Recon before implementation, codebase exploration |
-| `columbo` | Investigator | Root cause diagnosis when things break |
-| `cato` | PR reviewer | Review before merge |
-| `seneca` | Design reviewer | Review planning docs, find gaps |
-| `ego` | General purpose | Research tasks, anything that doesn't fit others |
-| `titus` | TypeScript fixer | Type errors specifically |
-| `galen` | Test diagnostician | Classify test failures |
-| `augur` | Consequence analyst | Trace what will break from a change |
-| `manager` | Coordinator | Multi-phase tasks, delegation |
 
 ## CRITICAL RULES
 
@@ -102,7 +89,7 @@ agent run -m opus "goal"             # Use specific model
 3. **No invented syntax**: No `Type?`, no made-up suffixes
 4. **Banned keyword**: `cum` (English homograph)
 5. **Nullable params**: Use `ignotum`, not invented patterns
-6. **Run scripts via bun**: `bun run faber` not `./scripta/faber`
+6. **Run scripts via bun**: `bun run build` not `./scripta/build`
 7. **Correctness over completion**: Explicit over convenient
 8. **Fix root causes**: Don't paper over problems with workarounds
 
@@ -113,68 +100,79 @@ agent run -m opus "goal"             # Use specific model
 
 ## Commands
 
-### Building Compilers
+### radix-rs (Primary Compiler)
 
-Binaries must be built before use:
-
-```
-bun run build                         # Build faber + rivus (default)
-bun run build --no-rivus              # Build faber only
-bun run build:faber                   # Build faber (rivus compiling itself)
-```
-
-### Rivus CLI (Primary Compiler)
-
-The self-hosted compiler at `opus/bin/rivus`. **Use this for all new development.**
+The production compiler at `fons/radix-rs/`. **Use this for all new development.**
 
 ```
-./opus/bin/rivus compile <file.fab>         # Compile to TypeScript (default)
-./opus/bin/rivus compile <file.fab> -o out.ts
-bun run test:rivus                          # Run tests against rivus
+cd fons/radix-rs && cargo build --release             # Build
+cd fons/radix-rs && cargo test                        # Run tests (39 tests)
+cd fons/radix-rs && cargo run -- emit <file.fab>      # Emit Rust
+cd fons/radix-rs && cargo run -- parse <file.fab>     # Parse only
+cd fons/radix-rs && cargo run -- check <file.fab>     # Semantic analysis
 ```
 
-**When to use Rivus:**
+**Compilation pipeline:** Lex → Parse → Collect → Resolve → Lower → Typecheck → Analysis → Codegen
 
+**When to use radix-rs:**
 - All new feature development
-- Daily compilation tasks
-- Language evolution
+- Semantic analysis work (type checking, borrow analysis, linting)
+- Rust target codegen
 
-**Known Issues:**
+### Nanus CLI (Bootstrap Compilers)
 
-- Parser has infinite loop on some inputs - investigation needed
-- Tests may hang (use Ctrl+C to interrupt)
-
-### Nanus CLI (Bootstrap Compiler)
-
-Minimal compilers in multiple languages at `opus/bin/nanus-*`. **Primary purpose: compile rivus.**
+Minimal compilers in multiple languages at `opus/bin/nanus-*`. **Primary purpose: compile rivus and other targets.**
 
 ```
 ./opus/bin/nanus-ts emit < file.fab         # Emit TypeScript
-./opus/bin/nanus-go emit < file.fab         # Emit Go
+./opus/bin/nanus-go compile file.fab -t ts  # Emit TypeScript
+./opus/bin/nanus-go compile file.fab -t go  # Emit Go
 ./opus/bin/nanus-py emit < file.fab         # Emit Python
 ./opus/bin/nanus-rs emit < file.fab         # Emit Rust
 ```
 
 **When to use Nanus:**
-
 - Building rivus (`bun run build:rivus` uses nanus-ts internally)
-- Fallback when rivus has bugs
+- Targeting TS/Go/Python (radix-rs currently only emits Rust/Faber)
+- Fallback when radix-rs doesn't support a feature yet
 
-**Nanus compilers are intentionally minimal** - new features go in rivus.
+**Nanus compilers are intentionally minimal** — new features go in radix-rs.
 
-### Development
+### Rivus CLI (Self-Hosted Compiler, Deprioritized)
+
+The self-hosted compiler at `opus/bin/rivus`. **Not actively developed — has parser bugs.**
 
 ```
-bun run test:rivus                    # Run tests against rivus (primary)
-bun test                              # Run faber unit tests
+./opus/bin/rivus compile <file.fab>         # Compile to TypeScript (default)
+bun run test:rivus                          # Run tests against rivus
+```
+
+**Known Issues:**
+- Parser has infinite loop on some inputs
+- Tests may hang (use Ctrl+C to interrupt)
+
+### Building
+
+```
+bun run build                         # Build all nanus-* compilers
+bun run build:nanus-ts                # Build nanus-ts executable to opus/bin/nanus-ts
+bun run build:rivus                   # Build rivus (via nanus-ts) to opus/rivus/fons/ts/
+bun run build:rivus -- -t zig         # Build rivus to opus/rivus/fons/zig/
+bun run exempla                       # Compile fons/exempla/*.fab to opus/
+bun run exempla -- -t all             # Compile to all targets
+```
+
+### Testing
+
+```
+cd fons/radix-rs && cargo test                        # radix-rs tests (primary)
+bun test                              # nanus-ts unit tests
 bun test -t "pattern"                 # Filter tests
+bun run test:rivus                    # Run tests against rivus
 bun run test:report                   # Run tests with DB tracking + feature matrix
 bun run test:report -- --compiler rivus --targets ts
 bun run test:report -- --verify       # With target verification (compile/run)
 bun run test:report -- --feature si   # Filter by feature name
-bun run lint                          # Lint TS source (fons/nanus-ts)
-bun run lint:fix                      # Lint with auto-fix
-bun run sanity                        # Verify test coverage
 ```
 
 **Test Reports (`test:report`)**
@@ -195,22 +193,14 @@ Available options (via `--`):
 
 Database location: `opus/proba/results.db` (recreated each run)
 
-### Build
-
-```
-bun run build:nanus-ts                # Build nanus-ts executable to opus/bin/nanus-ts
-bun run build:rivus                   # Build rivus (via nanus-ts) to opus/rivus/fons/ts/
-bun run build:rivus -- -t zig         # Build rivus to opus/rivus/fons/zig/
-bun run exempla                       # Compile fons/exempla/*.fab to opus/
-bun run exempla -- -t all             # Compile to all targets
-bun run release                       # Release new version
-```
-
 ### Tools
 
 ```
 bun run misc:ast                      # Check AST node coverage
 bun run misc:tree-sitter              # Regenerate tree-sitter parser
+bun run lint                          # Lint TS source (fons/nanus-ts)
+bun run lint:fix                      # Lint with auto-fix
+bun run sanity                        # Verify test coverage
 ```
 
 ## Syntax Patterns
@@ -237,7 +227,7 @@ genus Persona
 ```
 itera ex        # itera ex items fixum item { }  - iterate values
 itera de        # itera de obj fixum key { }    - iterate keys
-cura...fit      # cura r fit h { }              - resource scope
+cura            # cura expr fixum h { }         - resource scope
 tempta...cape   # tempta { } cape err { }       - error handling
 dum             # dum cond { }                  - while loop
 si              # si cond { }                   - conditional
@@ -245,13 +235,17 @@ elige           # elige val { casu case { } }     - switch
 discerne        # discerne val { casu Var { } }  - pattern match
 ```
 
-### Return Type Verbs
+### Function Annotations
 
-```
-fit    # becomes (sync)
-fiet   # will become (async)
-fiunt  # become (sync generator)
-fient  # will become (async generator)
+```fab
+functio parse() -> numerus                        # sync function
+@ futura
+functio fetch() -> textus                         # async function
+@ cursor
+functio items() -> numerus                        # generator function
+@ futura
+@ cursor
+functio stream() -> datum                         # async generator
 ```
 
 ### String Formatting
@@ -287,19 +281,13 @@ Output varies by target:
 
 ## Code Standards
 
-- **Documentation tags**: `TARGET:` (target-specific), `GRAMMAR:` (EBNF)
+- **Documentation tags**: `TARGET:` (target-specific), `GRAMMAR:` (EBNF), `WHY:`, `EDGE:`, `PERF:`
 - **Error handling**: Collect errors, never crash on malformed input
 - **No comments explaining what**: Explain WHY, not WHAT
 - **Guard clauses**: Prefer early returns over nested if/else
 - **Prefer `reddit` for single-line returns**: Use `si cond reddit x` and `casu k reddit v` over `{ redde ... }` when the body is a single expression
 - **Stroustrup brace style**: Opening brace on same line
-
-## Working in Worktrees
-
-```
-git worktree list                # Show worktrees
-git pull origin main             # Pull changes from main branch
-```
+- **Tests in dedicated files**: Use `_test.rs` files (e.g., `collect_test.rs`), not inline `#[cfg(test)] mod tests`
 
 ## Communication Style
 

@@ -26,7 +26,7 @@ itera ex items fixum item {
 ```
 
 - **LLMs write Faber.** Word-based, regular syntax. No lifetime annotations, no pointer semantics, no template noise. One language regardless of compile target.
-- **Humans skim Faber.** You see `si` (if), `pro` (for), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
+- **Humans skim Faber.** You see `si` (if), `itera` (iterate), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
 - **Compiler emits target code.** Zig, Rust, C++, TypeScript, or Python. The generated code is what actually runs — you never need to read it.
 
 The workflow: LLM drafts Faber → Human approves → Compiler emits production code.
@@ -95,58 +95,57 @@ The `§` symbol (section marker) distinguishes file-level configuration and impo
 ## Quick Start
 
 ```bash
+# radix-rs (primary compiler — Rust target)
+cd fons/radix-rs && cargo build --release
+cargo run -- emit fons/exempla/salve-munde.fab            # Emit Rust
+
+# Bootstrap compilers (TS/Go/Python targets)
 bun install
-bun run build                                             # Build all compilers
-./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t ts  # TypeScript (recommended)
-./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t go  # Go (recommended)
-./opus/bin/faber run fons/exempla/salve-munde.fab         # Legacy: compile and run (TS only)
-bun test                                                  # Run tests
+bun run build                                             # Build nanus-* compilers
+./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t ts  # TypeScript
+./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t go  # Go
+
+# Tests
+cd fons/radix-rs && cargo test                            # radix-rs tests (39 tests)
+bun test                                                  # nanus-ts unit tests
 ```
 
-## Project Stats
+## Project Structure
 
-| Component             |       Lines |   Files | Description                                   |
-| --------------------- | ----------: | ------: | --------------------------------------------- |
-| **Compiler (faber)**  |      34,729 |     141 | Reference compiler in TypeScript (deprecated) |
-| **Bootstrap (rivus)** |      35,751 |     312 | Self-hosting compiler in Faber                |
-| **Micro-compilers**   |             |         |                                               |
-|   **nanus-ts**        |             |         | TypeScript compiler in TypeScript             |
-|   **nanus-go**        |             |         | Go compiler in Go                             |
-| **Tests**             |      12,002 |       — | Test infrastructure                           |
-| **Test Specs**        |      19,573 |       — | YAML test definitions (0 passing)             |
-| **Core Phases**       |       5,897 |       3 | Tokenizer, parser, semantic analyzer          |
-| **Codegen**           |       7,957 |     171 | Code generators for 3 targets                 |
-| **Documentation**     |       5,345 |       — | Grammar spec + prose tutorials                |
-| **Examples**          |           0 |       0 | Sample Faber programs                         |
-| **Total**             | **121,254** | **627** | Complete implementation                       |
+| Component               | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| **radix-rs**            | Primary compiler in Rust (~17k LOC, 39 tests)         |
+| **rivus**               | Self-hosting compiler in Faber (deprioritized)         |
+| **nanus-{ts,go,py,rs}** | Bootstrap compilers (minimal, stable)                  |
+| **norma/**              | Stdlib definitions with `@ verte` annotations          |
+| **norma-{ts,go,py,rs}** | Target-specific stdlib runtimes                        |
+| **proba/**              | YAML test specs (~75 files)                            |
+| **exempla/**            | Example .fab programs (~90 files)                      |
+| **golden/**             | Golden test outputs                                    |
+| **grammatica/**         | Language documentation (prose tutorials)               |
 
-**Primary Compiler:** nanus-go (Go, supports -t ts and -t go targets)
-**Compilation Targets:** TypeScript, Go, Faber (round-trip)
+**Primary Compiler:** radix-rs (Rust, emits Rust and Faber targets)
+**Bootstrap Compilers:** nanus-go, nanus-ts, nanus-py, nanus-rs (emit TS, Go, Python, Rust)
 
 ## Block Syntax Patterns
 
-Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped constructs. Note: `pro` bindings have been replaced with explicit `fixum`/`varia` declarations:
+Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped constructs:
 
-| Construct       | Syntax                                    | Binding | Purpose        |
-| --------------- | ----------------------------------------- | ------- | -------------- |
-| `ex...fixum`    | `ex expr fixum name { }`                  | `name`  | iterate values |
-| `ex...varia`    | `ex expr varia name { }`                  | `name`  | iterate values |
-| `de...fixum`    | `de expr fixum name { }`                  | `name`  | iterate keys   |
-| `de...varia`    | `de expr varia name { }`                  | `name`  | iterate keys   |
-| `cura...fixum`  | `cura expr fixum name { }`                | `name`  | resource scope |
-| `cura...varia`  | `cura expr varia name { }`                | `name`  | resource scope |
-| `probandum`     | `probandum "label" { }`                   | —       | test suite     |
-| `proba`         | `proba "label" { }`                       | —       | test case      |
-| `praepara`      | `praepara { }`                            | —       | setup          |
-| `postpara`      | `postpara { }`                            | —       | teardown       |
-| `tempta...cape` | `tempta { } cape err { }`                 | `err`   | error handling |
-| `fac...cape`    | `fac { } cape err { }`                    | `err`   | scoped block   |
-| `dum`           | `dum expr { }`                            | —       | while loop     |
-| `si`            | `si expr { }`                             | —       | conditional    |
-| `custodi`       | `custodi { si expr { } }`                 | —       | guard clauses  |
-| `elige`         | `elige expr { casu val { } }`             | —       | switch         |
-| `discerne`      | `discerne expr { casu Variant ut x { } }` | `x`     | pattern match  |
-| `in`            | `in expr { }`                             | —       | mutation scope |
+| Construct       | Syntax                                      | Binding | Purpose        |
+| --------------- | ------------------------------------------- | ------- | -------------- |
+| `itera ex`      | `itera ex expr fixum name { }`              | `name`  | iterate values |
+| `itera de`      | `itera de expr fixum key { }`               | `name`  | iterate keys   |
+| `cura`          | `cura expr fixum name { }`                  | `name`  | resource scope |
+| `tempta...cape` | `tempta { } cape err { }`                   | `err`   | error handling |
+| `dum`           | `dum expr { }`                              | —       | while loop     |
+| `si`            | `si expr { } secus { }`                     | —       | conditional    |
+| `custodi`       | `custodi { si expr { } }`                   | —       | guard clauses  |
+| `elige`         | `elige expr { casu val { } }`               | —       | switch         |
+| `discerne`      | `discerne expr { casu Variant ut x { } }`   | `x`     | pattern match  |
+| `probandum`     | `probandum "label" { }`                     | —       | test suite     |
+| `proba`         | `proba "label" { }`                         | —       | test case      |
+
+Bindings use `fixum` (immutable) or `varia` (mutable).
 
 ## Primitive Types
 
@@ -164,7 +163,7 @@ Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped con
 | `octeti`   | `Uint8Array` | `bytes`    | `[]u8`       | `std::vector<uint8_t>` | `Vec<u8>` |
 | `ignotum`  | `unknown`    | `Any`      | —            | —                      | —         |
 
-## Return Type Verbs
+## Function Annotations
 
 Function return types use arrow syntax (`->`) with optional annotations for async and generator semantics:
 
@@ -173,10 +172,10 @@ functio parse() -> numerus                        # sync function
 @ futura
 functio fetch() -> textus                         # async function
 @ cursor
-functio items() -> numerus                         # generator function
+functio items() -> numerus                        # generator function
 @ futura
 @ cursor
-functio stream() -> datum                          # async generator
+functio stream() -> datum                         # async generator
 ```
 
 The `@ futura` annotation marks async functions, `@ cursor` marks generators. Arrow syntax (`->`) is the standard return type syntax.
