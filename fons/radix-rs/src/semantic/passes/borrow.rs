@@ -4,9 +4,10 @@
 //! Only runs when targeting Rust.
 
 use crate::hir::{
-    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirProgram, HirStmt, HirStmtKind,
+    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirParamMode, HirProgram, HirStmt,
+    HirStmtKind,
 };
-use crate::semantic::{ParamMode, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable};
+use crate::semantic::{ParamMode, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable, WarningKind};
 use rustc_hash::FxHashMap;
 
 /// Analyze borrowing and ownership
@@ -42,12 +43,30 @@ struct BorrowChecker<'a> {
     types: &'a TypeTable,
     states: FxHashMap<DefId, BorrowState>,
     scopes: Vec<BorrowScope>,
+    param_usage: FxHashMap<DefId, ParamUsage>,
     errors: Vec<SemanticError>,
+}
+
+#[derive(Clone, Copy)]
+struct ParamUsage {
+    mode: HirParamMode,
+    span: crate::lexer::Span,
+    mutated: bool,
+    passed_in_or_ex: bool,
+    passed_ex: bool,
+    returned: bool,
+    moved: bool,
 }
 
 impl<'a> BorrowChecker<'a> {
     fn new(types: &'a TypeTable) -> Self {
-        Self { types, states: FxHashMap::default(), scopes: Vec::new(), errors: Vec::new() }
+        Self {
+            types,
+            states: FxHashMap::default(),
+            scopes: Vec::new(),
+            param_usage: FxHashMap::default(),
+            errors: Vec::new(),
+        }
     }
 
     fn check_program(&mut self, hir: &HirProgram) {
@@ -81,15 +100,29 @@ impl<'a> BorrowChecker<'a> {
         self.reset();
         for param in &func.params {
             self.ensure_state(param.def_id);
+            self.param_usage.insert(
+                param.def_id,
+                ParamUsage {
+                    mode: param.mode,
+                    span: param.span,
+                    mutated: false,
+                    passed_in_or_ex: false,
+                    passed_ex: false,
+                    returned: false,
+                    moved: false,
+                },
+            );
         }
         if let Some(body) = &func.body {
             self.check_block(body);
         }
+        self.emit_mode_lints();
     }
 
     fn reset(&mut self) {
         self.states.clear();
         self.scopes.clear();
+        self.param_usage.clear();
     }
 
     fn check_block(&mut self, block: &HirBlock) {
@@ -114,6 +147,11 @@ impl<'a> BorrowChecker<'a> {
             HirStmtKind::Expr(expr) => self.check_expr(expr),
             HirStmtKind::Redde(value) => {
                 if let Some(expr) = value {
+                    if let Some(def_id) = self.root_def_id(expr) {
+                        if let Some(usage) = self.param_usage.get_mut(&def_id) {
+                            usage.returned = true;
+                        }
+                    }
                     self.check_expr(expr);
                 }
             }
@@ -239,6 +277,25 @@ impl<'a> BorrowChecker<'a> {
         match sig {
             Some(sig) => {
                 for (arg, param) in args.iter().zip(sig.params.iter()) {
+                    if let Some(arg_def_id) = self.root_def_id(arg) {
+                        if let Some(arg_usage) = self.param_usage.get_mut(&arg_def_id) {
+                            if matches!(param.mode, ParamMode::MutRef | ParamMode::Move) {
+                                arg_usage.passed_in_or_ex = true;
+                            }
+                            if matches!(param.mode, ParamMode::Move) {
+                                arg_usage.passed_ex = true;
+                            }
+                            if matches!(arg_usage.mode, HirParamMode::Ref)
+                                && matches!(param.mode, ParamMode::MutRef | ParamMode::Move)
+                            {
+                                self.error(
+                                    SemanticErrorKind::ModeMismatch,
+                                    "cannot pass `de` parameter to `in` or `ex` position",
+                                    arg.span,
+                                );
+                            }
+                        }
+                    }
                     match param.mode {
                         ParamMode::Ref => self.borrow_from_expr(arg, BorrowKind::Shared),
                         ParamMode::MutRef => self.borrow_from_expr(arg, BorrowKind::Mutable),
@@ -320,6 +377,17 @@ impl<'a> BorrowChecker<'a> {
     }
 
     fn write_use(&mut self, def_id: DefId, span: crate::lexer::Span) {
+        if let Some(usage) = self.param_usage.get_mut(&def_id) {
+            if matches!(usage.mode, HirParamMode::Ref) {
+                self.error(
+                    SemanticErrorKind::AssignToImmutableBorrow,
+                    "cannot assign to `de` parameter",
+                    span,
+                );
+            } else if matches!(usage.mode, HirParamMode::MutRef) {
+                usage.mutated = true;
+            }
+        }
         let state = self
             .states
             .entry(def_id)
@@ -334,6 +402,9 @@ impl<'a> BorrowChecker<'a> {
     }
 
     fn move_use(&mut self, def_id: DefId, span: crate::lexer::Span) {
+        if let Some(usage) = self.param_usage.get_mut(&def_id) {
+            usage.moved = true;
+        }
         let state = self
             .states
             .entry(def_id)
@@ -420,6 +491,34 @@ impl<'a> BorrowChecker<'a> {
     fn error(&mut self, kind: SemanticErrorKind, message: &str, span: crate::lexer::Span) {
         self.errors
             .push(SemanticError::new(kind, message.to_owned(), span));
+    }
+
+    fn emit_mode_lints(&mut self) {
+        let mut warnings = Vec::new();
+        for usage in self.param_usage.values() {
+            match usage.mode {
+                HirParamMode::MutRef => {
+                    if !usage.mutated && !usage.passed_in_or_ex {
+                        warnings.push(SemanticError::new(
+                            SemanticErrorKind::Warning(WarningKind::UnusedMutRefParam),
+                            "`in` parameter is never mutated; consider `de`",
+                            usage.span,
+                        ));
+                    }
+                }
+                HirParamMode::Move => {
+                    if !usage.passed_ex && !usage.returned && !usage.moved {
+                        warnings.push(SemanticError::new(
+                            SemanticErrorKind::Warning(WarningKind::UnusedMoveParam),
+                            "`ex` parameter is never consumed; consider `de`",
+                            usage.span,
+                        ));
+                    }
+                }
+                HirParamMode::Owned | HirParamMode::Ref => {}
+            }
+        }
+        self.errors.extend(warnings);
     }
 }
 

@@ -205,6 +205,12 @@ pub fn semantic_spec(kind: SemanticErrorKind) -> DiagnosticSpec {
         SemanticErrorKind::LifetimeMismatch => {
             DiagnosticSpec { code: "SEM054", help: Some("ensure borrowed values live long enough") }
         }
+        SemanticErrorKind::AssignToImmutableBorrow => {
+            DiagnosticSpec { code: "SEM056", help: Some("declare the parameter as 'in' if mutation is intended") }
+        }
+        SemanticErrorKind::ModeMismatch => {
+            DiagnosticSpec { code: "SEM057", help: Some("align parameter modes between caller and callee") }
+        }
         SemanticErrorKind::Warning(kind) => warning_spec(kind),
     }
 }
@@ -225,6 +231,12 @@ fn warning_spec(kind: WarningKind) -> DiagnosticSpec {
         }
         WarningKind::TargetNoop => {
             DiagnosticSpec { code: "WARN007", help: Some("remove the construct or gate it by target") }
+        }
+        WarningKind::UnusedMutRefParam => {
+            DiagnosticSpec { code: "WARN008", help: Some("change 'in' to 'de' if mutation is unnecessary") }
+        }
+        WarningKind::UnusedMoveParam => {
+            DiagnosticSpec { code: "WARN009", help: Some("change 'ex' to 'de' if ownership transfer is unnecessary") }
         }
     }
 }

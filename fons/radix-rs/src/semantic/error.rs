@@ -68,6 +68,8 @@ pub enum SemanticErrorKind {
     MutableBorrowConflict,
     CannotMoveOut,
     LifetimeMismatch,
+    AssignToImmutableBorrow,
+    ModeMismatch,
 
     // Warnings
     Warning(WarningKind),
@@ -82,6 +84,8 @@ pub enum WarningKind {
     UnnecessaryCast,
     DeprecatedFeature,
     TargetNoop,
+    UnusedMutRefParam,
+    UnusedMoveParam,
 }
 
 impl std::fmt::Display for SemanticError {
