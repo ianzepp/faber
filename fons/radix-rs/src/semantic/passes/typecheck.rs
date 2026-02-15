@@ -488,9 +488,17 @@ impl<'a> TypeChecker<'a> {
                 self.check_block(block, None);
                 self.vacuum_type()
             }
-            HirExprKind::Itera(_binding, iter, block) => {
-                self.check_expr(iter);
+            HirExprKind::Itera(binding, iter, block) => {
+                let iter_ty = self.check_expr(iter);
+                let elem_ty = match self.types.get(self.resolve_type(iter_ty)) {
+                    Type::Array(inner) => *inner,
+                    Type::Map(key, _) => *key,
+                    _ => self.fresh_infer(),
+                };
+                self.push_scope();
+                self.insert_binding(*binding, elem_ty, true);
                 self.check_block(block, None);
+                self.pop_scope();
                 self.vacuum_type()
             }
             HirExprKind::Assign(target, value) => self.check_assign(target, value),

@@ -22,22 +22,21 @@ pub fn lower_pattern(lowerer: &mut Lowerer, pattern: &Pattern) -> HirPattern {
 
 fn lower_ident_pattern(lowerer: &mut Lowerer, ident: &crate::syntax::Ident, bind: Option<&PatternBind>) -> HirPattern {
     lowerer.current_span = ident.span;
+    let def_id = lowerer.next_def_id();
+    lowerer.bind_local(ident.name, def_id);
 
     match bind {
-        None => {
-            let def_id = lowerer.def_id_for(ident.name);
-            HirPattern::Binding(def_id, ident.name)
-        }
+        None => HirPattern::Binding(def_id, ident.name),
         Some(PatternBind::Alias(alias)) => {
             lowerer.current_span = alias.span;
-            let def_id = lowerer.def_id_for(alias.name);
-            HirPattern::Binding(def_id, alias.name)
+            let alias_def_id = lowerer.next_def_id();
+            lowerer.bind_local(alias.name, alias_def_id);
+            HirPattern::Binding(def_id, ident.name)
         }
         Some(PatternBind::Bindings { mutability, names }) => {
             if *mutability == Mutability::Mutable {
                 lowerer.error("mutable pattern bindings are not lowered yet");
             }
-            let def_id = lowerer.def_id_for(ident.name);
             HirPattern::Variant(def_id, lower_bindings(lowerer, names))
         }
     }
@@ -70,7 +69,8 @@ fn lower_bindings(lowerer: &mut Lowerer, names: &[crate::syntax::Ident]) -> Vec<
     names
         .iter()
         .map(|ident| {
-            let def_id = lowerer.def_id_for(ident.name);
+            let def_id = lowerer.next_def_id();
+            lowerer.bind_local(ident.name, def_id);
             HirPattern::Binding(def_id, ident.name)
         })
         .collect()
@@ -101,7 +101,8 @@ impl<'a> Lowerer<'a> {
 
     /// Lower nomen (identifier) pattern
     pub fn lower_nomen_pattern(&mut self, ident: &crate::syntax::Ident) -> HirPattern {
-        let def_id = self.def_id_for(ident.name);
+        let def_id = self.next_def_id();
+        self.bind_local(ident.name, def_id);
         HirPattern::Binding(def_id, ident.name)
     }
 }
