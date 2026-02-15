@@ -935,6 +935,18 @@ impl<'a> TypeChecker<'a> {
             return sig.ret;
         }
 
+        let array_inner = match self.types.get(self.resolve_type(receiver_ty)) {
+            Type::Array(inner) => Some(*inner),
+            _ => None,
+        };
+        if let Some(inner) = array_inner {
+            if let [arg] = args {
+                let arg_ty = self.check_expr(arg);
+                self.unify(arg_ty, inner, arg.span, "argument type mismatch");
+                return self.vacuum_type();
+            }
+        }
+
         for arg in args {
             self.check_expr(arg);
         }
@@ -1273,7 +1285,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn check_array(&mut self, elements: &mut [HirExpr], span: crate::lexer::Span, expected: Option<TypeId>) -> TypeId {
+    fn check_array(&mut self, elements: &mut [HirExpr], _span: crate::lexer::Span, expected: Option<TypeId>) -> TypeId {
         let expected_elem = expected.and_then(|ty| match self.types.get(self.resolve_type(ty)) {
             Type::Array(inner) => Some(*inner),
             _ => None,
@@ -1283,11 +1295,6 @@ impl<'a> TypeChecker<'a> {
             if let Some(inner) = expected_elem {
                 return self.types.array(inner);
             }
-            self.error(
-                SemanticErrorKind::MissingTypeAnnotation,
-                "empty array needs type annotation",
-                span,
-            );
             let infer = self.fresh_infer();
             return self.types.array(infer);
         }
@@ -1301,12 +1308,31 @@ impl<'a> TypeChecker<'a> {
             };
             element_ty = Some(match element_ty {
                 None => ty,
-                Some(existing) => self.common_type(existing, ty, element.span),
+                Some(existing) => self.array_common_type(existing, ty, element.span),
             });
         }
 
         let elem_ty = element_ty.unwrap_or_else(|| self.fresh_infer());
         self.types.array(elem_ty)
+    }
+
+    fn array_common_type(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span) -> TypeId {
+        let a_resolved = self.resolve_type(a);
+        let b_resolved = self.resolve_type(b);
+
+        if let Type::Array(a_inner) = self.types.get(a_resolved).clone() {
+            if !matches!(self.types.get(b_resolved), Type::Array(_)) {
+                return self.common_type(a_inner, b, span);
+            }
+        }
+
+        if let Type::Array(b_inner) = self.types.get(b_resolved).clone() {
+            if !matches!(self.types.get(a_resolved), Type::Array(_)) {
+                return self.common_type(a, b_inner, span);
+            }
+        }
+
+        self.common_type(a, b, span)
     }
 
     #[allow(clippy::ptr_arg)]

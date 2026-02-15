@@ -629,6 +629,56 @@ incipit {
 }
 
 #[test]
+fn empty_array_and_spread_literals_no_longer_report_annotation_or_type_errors() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum empty = []
+  fixum first = [1, 2, 3]
+  fixum extended = [0, sparge first, 99]
+  scribe empty, extended
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("empty array needs type annotation")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("incompatible types")));
+}
+
+#[test]
+fn cursor_iteration_accumulator_from_empty_array_no_longer_reports_inference_error() {
+    let session = session(Target::Rust);
+    let source = r#"@ cursor
+functio rangeSync(numerus n) -> numerus {
+  itera pro 0..n fixum i {
+    cede i
+  }
+}
+
+incipit {
+  varia syncResults = []
+  itera ex rangeSync(5) fixum num {
+    syncResults.appende(num * 2)
+  }
+  scribe syncResults
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("empty array needs type annotation")));
+}
+
+#[test]
 fn optional_chain_no_longer_reports_lowering_stub() {
     let session = session(Target::Rust);
     let source = r#"genus User {
