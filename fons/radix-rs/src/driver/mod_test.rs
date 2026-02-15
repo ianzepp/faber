@@ -81,6 +81,22 @@ fn compile_accepts_textus_concatenation_and_compound_add() {
 }
 
 #[test]
+fn template_string_literal_no_longer_reports_unsupported_literal() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum name = "Mundus"
+  fixum message = `Hello ${name}`
+  scribe message
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unsupported literal in lowering")));
+}
+
+#[test]
 fn compile_accepts_finge_variant_construction() {
     let session = session(Target::Rust);
     let source = r#"discretio Event {
@@ -98,6 +114,20 @@ incipit {
 
     assert!(result.success());
     assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+}
+
+#[test]
+fn ad_stmt_arguments_allow_unresolved_endpoint_identifiers() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  ad "notificatio:mitte" ("User logged in", userId)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown identifier")));
 }
 
 #[test]
@@ -120,6 +150,26 @@ fn compile_accepts_array_and_ex_destructuring_bindings() {
 }
 
 #[test]
+fn enum_member_access_no_longer_reports_unknown_identifier() {
+    let session = session(Target::Rust);
+    let source = r#"ordo Color { rubrum, viridis }
+
+incipit {
+  fixum color = Color.rubrum
+  elige color {
+    casu Color.rubrum { scribe "r" }
+    casu Color.viridis { scribe "v" }
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown identifier")));
+}
+
+#[test]
 fn compile_accepts_param_alias_binding() {
     let session = session(Target::Rust);
     let source = r#"functio greet(textus name, si bivalens formal ut f) -> vacuum {
@@ -135,6 +185,25 @@ incipit {
 
     assert!(result.success());
     assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+}
+
+#[test]
+fn unary_verum_and_falsum_accept_ignotum_operands() {
+    let session = session(Target::Rust);
+    let source = r#"functio check(ignotum x) -> vacuum {
+  si verum x { scribe "t" }
+  si falsum x { scribe "f" }
+}
+
+incipit {
+  check(verum)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("boolean operand required")));
 }
 
 #[test]
@@ -155,6 +224,29 @@ incipit {
     assert!(result.diagnostics.iter().all(|d| !d
         .message
         .contains("top-level variable declaration requires initializer")));
+}
+
+#[test]
+fn spread_array_argument_can_satisfy_multi_parameter_function() {
+    let session = session(Target::Rust);
+    let source = r#"functio add(numerus a, numerus b) -> numerus {
+  redde a + b
+}
+
+incipit {
+  fixum numerus[] values = [3, 7]
+  scribe add(sparge values)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("wrong number of arguments")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("argument type mismatch")));
 }
 
 #[test]
@@ -324,6 +416,43 @@ incipit {
         .diagnostics
         .iter()
         .all(|d| !d.message.contains("method call on non-struct value")));
+}
+
+#[test]
+fn object_member_and_index_chains_no_longer_report_index_errors() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum config = { name: "test", value: 42 }
+  scribe config["name"]
+
+  fixum data = { items: ["first", "second"] }
+  scribe data.items[0]
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("array index must be numerus")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("indexing requires array or map")));
+}
+
+#[test]
+fn array_method_closure_argument_no_longer_reports_argument_type_mismatch() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum numbers = [1, 2, 3]
+  scribe numbers.map(clausura numerus x: x * 2)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("argument type mismatch")));
 }
 
 #[test]

@@ -428,18 +428,51 @@ impl<'a> Lowerer<'a> {
 
     fn lower_ad(&mut self, stmt: &crate::syntax::AdStmt) -> HirStmtKind {
         // STUB: lowered as tuple placeholder [args..., body?]; needs dedicated annotation/directive HIR node.
-        let mut items: Vec<HirExpr> = stmt
-            .args
-            .iter()
-            .map(|arg| self.lower_expr(&arg.value))
-            .collect();
+        let mut items: Vec<HirExpr> = Vec::new();
+        for arg in &stmt.args {
+            let lowered = match &arg.value.kind {
+                crate::syntax::ExprKind::Ident(ident) if self.lookup_name(ident.name).is_none() => HirExpr {
+                    id: self.next_hir_id(),
+                    kind: HirExprKind::Literal(crate::hir::HirLiteral::String(ident.name)),
+                    ty: None,
+                    span: ident.span,
+                },
+                _ => self.lower_expr(&arg.value),
+            };
+            items.push(lowered);
+        }
         if let Some(body) = &stmt.body {
+            self.push_scope();
+            let mut binding_local = None;
+            if let Some(binding) = &stmt.binding {
+                let def_id = self.next_def_id();
+                self.bind_local(binding.name.name, def_id);
+                binding_local = Some((def_id, binding));
+            }
+            let mut lowered_body = self.lower_block(body);
+            if let Some((def_id, binding)) = binding_local {
+                lowered_body.stmts.insert(
+                    0,
+                    HirStmt {
+                        id: self.next_hir_id(),
+                        kind: HirStmtKind::Local(crate::hir::HirLocal {
+                            def_id,
+                            name: binding.name.name,
+                            ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+                            init: None,
+                            mutable: false,
+                        }),
+                        span: binding.name.span,
+                    },
+                );
+            }
             items.push(HirExpr {
                 id: self.next_hir_id(),
-                kind: HirExprKind::Block(self.lower_block(body)),
+                kind: HirExprKind::Block(lowered_body),
                 ty: None,
                 span: self.current_span,
             });
+            self.pop_scope();
         }
         HirStmtKind::Expr(HirExpr {
             id: self.next_hir_id(),

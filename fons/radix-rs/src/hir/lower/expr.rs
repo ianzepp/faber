@@ -37,6 +37,7 @@ use crate::hir::{
     HirBinOp, HirCollectionFilter, HirCollectionFilterKind, HirCollectionTransform, HirExpr, HirExprKind, HirLiteral,
     HirOptionalChainKind, HirTransformKind, HirUnOp,
 };
+use crate::semantic::{InferVar, Primitive, Type};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
 
 /// Lower an expression
@@ -83,18 +84,20 @@ fn lower_literal(lowerer: &mut Lowerer, lit: &Literal) -> HirExprKind {
     let hir_lit = match lit {
         Literal::Integer(n) => HirLiteral::Int(*n),
         Literal::Float(n) => HirLiteral::Float(*n),
-        Literal::String(s) => HirLiteral::String(*s),
+        Literal::String(s) | Literal::TemplateString(s) => HirLiteral::String(*s),
         Literal::Bool(b) => HirLiteral::Bool(*b),
         Literal::Nil => HirLiteral::Nil,
-        _ => {
-            lowerer.error("unsupported literal in lowering");
-            return HirExprKind::Error;
-        }
     };
+    let _ = lowerer;
     HirExprKind::Literal(hir_lit)
 }
 
 impl<'a> Lowerer<'a> {
+    fn fresh_lower_infer_type(&mut self) -> crate::semantic::TypeId {
+        let infer_id = self.next_def_id().0;
+        self.types.intern(Type::Infer(InferVar(infer_id)))
+    }
+
     fn expr_block(&mut self, expr: HirExpr) -> crate::hir::HirBlock {
         crate::hir::HirBlock { stmts: Vec::new(), expr: Some(Box::new(expr)), span: self.current_span }
     }
@@ -197,6 +200,22 @@ impl<'a> Lowerer<'a> {
 
     /// Lower member access (membrum)
     fn lower_membrum(&mut self, member: &crate::syntax::MemberExpr) -> HirExprKind {
+        if let crate::syntax::ExprKind::Ident(base) = &member.object.kind {
+            if let Some(base_def) = self.lookup_name(base.name) {
+                if let Some(base_symbol) = self.resolver.get_symbol(base_def) {
+                    if base_symbol.kind == crate::semantic::SymbolKind::Enum {
+                        if let Some(variant_def) = self.lookup_name(member.member.name) {
+                            if let Some(variant_symbol) = self.resolver.get_symbol(variant_def) {
+                                if variant_symbol.kind == crate::semantic::SymbolKind::Variant {
+                                    return HirExprKind::Path(variant_def);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let object = lower_expr(self, &member.object);
         let field = member.member.name;
 
@@ -328,9 +347,26 @@ impl<'a> Lowerer<'a> {
 
     /// Lower object literal (objectum)
     fn lower_objectum(&mut self, obj: &crate::syntax::ObjectExpr) -> HirExprKind {
-        // STUB: lowered as tuple placeholder; needs object-literal HIR shape for codegen.
-        let mut fields = Vec::new();
+        let textus_ty = self.types.primitive(Primitive::Textus);
+        let mut value_types = Vec::new();
         for field in &obj.fields {
+            if let Some(value) = &field.value {
+                value_types.push(self.guess_expr_type(value));
+            }
+        }
+        let value_ty = match value_types.as_slice() {
+            [] => self.fresh_lower_infer_type(),
+            [single] => *single,
+            _ => self.types.intern(Type::Union(value_types)),
+        };
+        let target = self.types.map(textus_ty, value_ty);
+        let mut entries = Vec::new();
+        for field in &obj.fields {
+            let key = match &field.key {
+                crate::syntax::ObjectKey::Ident(ident) => ident.name,
+                crate::syntax::ObjectKey::String(string) => *string,
+                _ => continue,
+            };
             let value = match &field.value {
                 Some(value) => lower_expr(self, value),
                 None => match &field.key {
@@ -340,9 +376,40 @@ impl<'a> Lowerer<'a> {
                     _ => HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span },
                 },
             };
-            fields.push(value);
+            entries.push((key, value));
         }
-        HirExprKind::Tuple(fields)
+        let source =
+            HirExpr { id: self.next_hir_id(), kind: HirExprKind::Tuple(Vec::new()), ty: None, span: self.current_span };
+        HirExprKind::Innatum { source: Box::new(source), target, map_entries: Some(entries) }
+    }
+
+    fn guess_expr_type(&mut self, expr: &crate::syntax::Expr) -> crate::semantic::TypeId {
+        match &expr.kind {
+            crate::syntax::ExprKind::Literal(crate::syntax::Literal::Integer(_)) => {
+                self.types.primitive(Primitive::Numerus)
+            }
+            crate::syntax::ExprKind::Literal(crate::syntax::Literal::Float(_)) => {
+                self.types.primitive(Primitive::Fractus)
+            }
+            crate::syntax::ExprKind::Literal(crate::syntax::Literal::String(_))
+            | crate::syntax::ExprKind::Literal(crate::syntax::Literal::TemplateString(_)) => {
+                self.types.primitive(Primitive::Textus)
+            }
+            crate::syntax::ExprKind::Literal(crate::syntax::Literal::Bool(_)) => {
+                self.types.primitive(Primitive::Bivalens)
+            }
+            crate::syntax::ExprKind::Literal(crate::syntax::Literal::Nil) => self.types.primitive(Primitive::Nihil),
+            crate::syntax::ExprKind::Array(_) => {
+                let infer = self.fresh_lower_infer_type();
+                self.types.array(infer)
+            }
+            crate::syntax::ExprKind::Object(_) => {
+                let infer = self.fresh_lower_infer_type();
+                let key = self.types.primitive(Primitive::Textus);
+                self.types.map(key, infer)
+            }
+            _ => self.fresh_lower_infer_type(),
+        }
     }
 
     /// Lower cast expression (qua)

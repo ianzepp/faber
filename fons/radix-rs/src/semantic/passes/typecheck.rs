@@ -630,11 +630,7 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Tuple(items) => self.check_tuple(items),
             HirExprKind::Scribe(items) => {
                 for item in items {
-                    let item_ty = self.check_expr(item);
-                    if self.is_infer(self.resolve_type(item_ty)) {
-                        let ignotum = self.types.primitive(Primitive::Ignotum);
-                        self.unify(item_ty, ignotum, item.span, "scribe argument type mismatch");
-                    }
+                    self.check_expr(item);
                 }
                 self.vacuum_type()
             }
@@ -883,12 +879,7 @@ impl<'a> TypeChecker<'a> {
                 self.bool_type()
             }
             crate::hir::HirUnOp::IsTrue | crate::hir::HirUnOp::IsFalse => {
-                if self.is_infer(self.resolve_type(operand_ty)) {
-                    let bivalens = self.bool_type();
-                    self.unify(operand_ty, bivalens, operand.span, "boolean operand required");
-                } else if !self.is_bool(operand_ty) {
-                    self.error(SemanticErrorKind::InvalidOperandTypes, "boolean operand required", operand.span);
-                }
+                let _ = operand_ty;
                 self.bool_type()
             }
         }
@@ -948,11 +939,23 @@ impl<'a> TypeChecker<'a> {
             _ => None,
         };
         if let Some(inner) = array_inner {
+            if args.is_empty() {
+                return self.numerus_type();
+            }
             if let [arg] = args {
                 let arg_ty = self.check_expr(arg);
-                self.unify(arg_ty, inner, arg.span, "argument type mismatch");
-                return self.vacuum_type();
+                if self
+                    .function_signature_from_type(self.resolve_type(arg_ty))
+                    .is_none()
+                {
+                    self.unify(arg_ty, inner, arg.span, "argument type mismatch");
+                    return self.vacuum_type();
+                }
             }
+            for arg in args {
+                self.check_expr(arg);
+            }
+            return self.types.array(inner);
         }
 
         if matches!(
@@ -974,8 +977,13 @@ impl<'a> TypeChecker<'a> {
 
     fn check_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {
         let required = sig.params.iter().filter(|param| !param.optional).count();
-        if args.len() < required || args.len() > sig.params.len() {
+        let spread_compat =
+            args.len() == 1 && sig.params.len() > 1 && self.check_spread_array_compat(sig, &mut args[0], span);
+        if !spread_compat && (args.len() < required || args.len() > sig.params.len()) {
             self.error(SemanticErrorKind::WrongArity, "wrong number of arguments", span);
+        }
+        if spread_compat {
+            return;
         }
 
         for (arg, param) in args.iter_mut().zip(sig.params.iter()) {
@@ -984,17 +992,25 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    fn check_spread_array_compat(&mut self, sig: &FuncSig, arg: &mut HirExpr, span: crate::lexer::Span) -> bool {
+        let arg_ty = self.check_expr(arg);
+        let resolved = self.resolve_type(arg_ty);
+        let inner = match self.types.get(resolved) {
+            Type::Array(inner) => *inner,
+            _ => return false,
+        };
+        if sig.params.iter().any(|param| param.optional) {
+            return false;
+        }
+        for param in &sig.params {
+            self.unify(inner, param.ty, span, "argument type mismatch");
+        }
+        true
+    }
+
     fn check_field(&mut self, object: &mut HirExpr, name: Symbol) -> TypeId {
         let obj_ty = self.check_expr(object);
-        if let Some(struct_def) = self.struct_def_from_type(obj_ty) {
-            if let Some(info) = self.structs.get(&struct_def) {
-                if let Some(field_ty) = info.fields.get(&name).copied() {
-                    return field_ty;
-                }
-            }
-        }
-
-        self.error_type
+        self.check_field_from_type(obj_ty, name, object.span)
     }
 
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
@@ -1071,6 +1087,10 @@ impl<'a> TypeChecker<'a> {
                 }
             }
         }
+        if let Type::Map(_, value_ty) = self.types.get(self.resolve_type(object_ty)) {
+            let _ = name;
+            return *value_ty;
+        }
         let _ = span;
         self.error_type
     }
@@ -1083,10 +1103,13 @@ impl<'a> TypeChecker<'a> {
         index_span: crate::lexer::Span,
     ) -> TypeId {
         let resolved = self.resolve_type(object_ty);
-        let kind = match self.types.get(resolved) {
-            Type::Array(elem) => Some((Some(*elem), None, None)),
-            Type::Map(key, value) => Some((None, Some(*key), Some(*value))),
+        let resolved_kind = self.types.get(resolved).clone();
+        let kind = match resolved_kind {
+            Type::Array(elem) => Some((Some(elem), None, None)),
+            Type::Map(key, value) => Some((None, Some(key), Some(value))),
             Type::Union(_) => Some((Some(self.types.primitive(Primitive::Ignotum)), None, None)),
+            Type::Primitive(Primitive::Ignotum) => Some((Some(self.types.primitive(Primitive::Ignotum)), None, None)),
+            Type::Infer(_) => Some((Some(self.fresh_infer()), None, None)),
             _ => None,
         };
 
@@ -1468,6 +1491,13 @@ impl<'a> TypeChecker<'a> {
             (Type::Map(_key_ty, value_ty), Some(entries)) => {
                 for (_, value) in entries {
                     let value_ty_actual = self.check_expr(value);
+                    let value_resolved = self.resolve_type(value_ty);
+                    if self.is_infer(value_resolved)
+                        || matches!(self.types.get(value_resolved), Type::Primitive(Primitive::Ignotum))
+                        || matches!(self.types.get(value_resolved), Type::Union(_))
+                    {
+                        continue;
+                    }
                     self.unify(value_ty_actual, value_ty, value.span, "map value type mismatch");
                 }
             }

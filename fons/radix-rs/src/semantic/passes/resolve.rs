@@ -453,6 +453,14 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
             }
         }
         StmtKind::Ad(stmt) => {
+            resolver.enter_scope(ScopeKind::Block);
+            for arg in &stmt.args {
+                if let ExprKind::Ident(ident) = &arg.value.kind {
+                    if resolver.lookup(ident.name).is_none() {
+                        define_symbol(resolver, ident.name, ident.span, SymbolKind::Local, false, errors);
+                    }
+                }
+            }
             for arg in &stmt.args {
                 resolve_expr(resolver, interner, &arg.value, errors);
             }
@@ -478,6 +486,7 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                 resolve_block(resolver, interner, &catch.body, errors);
                 resolver.exit_scope();
             }
+            resolver.exit_scope();
         }
         StmtKind::Probandum(test) => resolve_probandum(resolver, interner, test, errors),
         StmtKind::Proba(case) => {
