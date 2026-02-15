@@ -306,6 +306,11 @@ impl<'a> LintContext<'a> {
                     self.check_expr(element, in_loop);
                 }
             }
+            HirExprKind::Scriptum(_, args) => {
+                for arg in args {
+                    self.check_expr(arg, in_loop);
+                }
+            }
             HirExprKind::Adfirma(cond, message) => {
                 self.check_expr(cond, in_loop);
                 if let Some(message) = message {

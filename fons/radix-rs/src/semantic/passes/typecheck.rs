@@ -349,6 +349,11 @@ impl<'a> TypeChecker<'a> {
                     self.finalize_expr(element);
                 }
             }
+            HirExprKind::Scriptum(_, args) => {
+                for arg in args {
+                    self.finalize_expr(arg);
+                }
+            }
             HirExprKind::Adfirma(cond, message) => {
                 self.finalize_expr(cond);
                 if let Some(message) = message {
@@ -572,6 +577,12 @@ impl<'a> TypeChecker<'a> {
                     self.check_expr(item);
                 }
                 self.vacuum_type()
+            }
+            HirExprKind::Scriptum(_template, args) => {
+                for arg in args {
+                    self.check_expr(arg);
+                }
+                self.textus_type()
             }
             HirExprKind::Adfirma(cond, message) => {
                 let cond_ty = self.check_expr(cond);

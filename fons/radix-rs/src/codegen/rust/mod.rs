@@ -288,6 +288,11 @@ impl<'a> RustCodegen<'a> {
                     self.collect_expr_names(names, element);
                 }
             }
+            HirExprKind::Scriptum(_, args) => {
+                for arg in args {
+                    self.collect_expr_names(names, arg);
+                }
+            }
             HirExprKind::Adfirma(cond, message) => {
                 self.collect_expr_names(names, cond);
                 if let Some(message) = message {
@@ -452,6 +457,11 @@ impl<'a> RustCodegen<'a> {
                 HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                     for element in elements {
                         visit_expr(element, suppressed, deps);
+                    }
+                }
+                HirExprKind::Scriptum(_, args) => {
+                    for arg in args {
+                        visit_expr(arg, suppressed, deps);
                     }
                 }
                 HirExprKind::Adfirma(cond, message) => {

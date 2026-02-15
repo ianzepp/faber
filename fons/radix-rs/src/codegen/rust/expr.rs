@@ -356,6 +356,16 @@ pub fn generate_expr(
                 w.write(")");
             }
         }
+        HirExprKind::Scriptum(template, args) => {
+            w.write("format!(\"");
+            w.write(&rust_format_template(codegen.resolve_symbol(*template)));
+            w.write("\"");
+            for arg in args {
+                w.write(", ");
+                generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            }
+            w.write(")");
+        }
         HirExprKind::Adfirma(cond, message) => {
             w.write("assert!(");
             generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
@@ -557,4 +567,17 @@ fn unop_to_rust(op: HirUnOp) -> &'static str {
         HirUnOp::Not => "!",
         HirUnOp::BitNot => "!",
     }
+}
+
+fn rust_format_template(template: &str) -> String {
+    let mut out = String::with_capacity(template.len());
+    for ch in template.chars() {
+        match ch {
+            '{' => out.push_str("{{"),
+            '}' => out.push_str("}}"),
+            '§' => out.push_str("{}"),
+            _ => out.push(ch),
+        }
+    }
+    out
 }

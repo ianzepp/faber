@@ -327,6 +327,8 @@ pub enum HirExprKind {
     Tuple(Vec<HirExpr>),
     /// Print/log statement expression
     Scribe(Vec<HirExpr>),
+    /// String interpolation expression (scriptum)
+    Scriptum(Symbol, Vec<HirExpr>),
     /// Assert statement expression
     Adfirma(Box<HirExpr>, Option<Box<HirExpr>>),
     /// Panic/throw statement expression

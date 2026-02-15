@@ -437,19 +437,12 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_scriptum(&mut self, scriptum: &crate::syntax::ScriptumExpr) -> HirExprKind {
-        // STUB: lowered as tuple placeholder [template, args...]; needs string-interpolation HIR node.
-        let mut items = Vec::with_capacity(scriptum.args.len() + 1);
-        items.push(HirExpr {
-            id: self.next_hir_id(),
-            kind: HirExprKind::Literal(HirLiteral::String(scriptum.template)),
-            ty: None,
-            span: self.current_span,
-        });
-        for arg in &scriptum.args {
-            items.push(lower_expr(self, arg));
-        }
-        self.error("STUB: scriptum interpolation lowering is placeholder-only");
-        HirExprKind::Tuple(items)
+        let args = scriptum
+            .args
+            .iter()
+            .map(|arg| lower_expr(self, arg))
+            .collect();
+        HirExprKind::Scriptum(scriptum.template, args)
     }
 
     fn lower_praefixum(&mut self, praefixum: &crate::syntax::PraefixumExpr) -> HirExprKind {

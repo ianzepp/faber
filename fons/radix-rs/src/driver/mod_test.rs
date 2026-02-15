@@ -170,3 +170,35 @@ fn ab_property_filter_no_longer_reports_unknown_identifier() {
         .iter()
         .all(|d| !d.message.contains("unknown identifier")));
 }
+
+#[test]
+fn compile_lowers_scriptum_without_stub_diagnostic() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum name = "Marcus"
+  fixum msg = scriptum("salve, §!", name)
+  scribe msg
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("scriptum interpolation lowering is placeholder-only")));
+}
+
+#[test]
+fn rust_output_uses_format_macro_for_scriptum() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum value = 7
+  scribe scriptum("valor: §", value)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("format!(\"valor: {}\""));
+}

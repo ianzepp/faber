@@ -288,6 +288,11 @@ impl<'a> BorrowChecker<'a> {
                     self.check_expr(element);
                 }
             }
+            HirExprKind::Scriptum(_, args) => {
+                for arg in args {
+                    self.check_expr(arg);
+                }
+            }
             HirExprKind::Adfirma(cond, message) => {
                 self.check_expr(cond);
                 if let Some(message) = message {

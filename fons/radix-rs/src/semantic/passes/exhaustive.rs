@@ -197,6 +197,11 @@ fn check_expr(
                 check_expr(element, types, enum_variants, errors);
             }
         }
+        HirExprKind::Scriptum(_, args) => {
+            for arg in args {
+                check_expr(arg, types, enum_variants, errors);
+            }
+        }
         HirExprKind::Adfirma(cond, message) => {
             check_expr(cond, types, enum_variants, errors);
             if let Some(message) = message {

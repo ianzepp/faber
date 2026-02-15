@@ -653,6 +653,16 @@ impl FaberCodegen {
                     self.write_expr(arg, types, names, interner, w);
                 }
             }
+            HirExprKind::Scriptum(template, args) => {
+                w.write("scriptum(\"");
+                w.write(&self.symbol_to_string(*template, interner));
+                w.write("\"");
+                for arg in args {
+                    w.write(", ");
+                    self.write_expr(arg, types, names, interner, w);
+                }
+                w.write(")");
+            }
             HirExprKind::Adfirma(cond, message) => {
                 w.write("adfirma ");
                 self.write_expr(cond, types, names, interner, w);
@@ -972,6 +982,11 @@ impl FaberCodegen {
             HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.collect_expr_names(names, element);
+                }
+            }
+            HirExprKind::Scriptum(_, args) => {
+                for arg in args {
+                    self.collect_expr_names(names, arg);
                 }
             }
             HirExprKind::Adfirma(cond, message) => {
