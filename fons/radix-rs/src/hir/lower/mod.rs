@@ -13,6 +13,7 @@ use super::{HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirItemKind, HirProg
 use crate::lexer::{Interner, Span, Symbol};
 use crate::semantic::{Resolver, TypeTable};
 use crate::syntax::{Program, Stmt, StmtKind};
+use rustc_hash::FxHashMap;
 
 /// Lowerer state for AST to HIR transformation
 pub struct Lowerer<'a> {
@@ -30,6 +31,8 @@ pub struct Lowerer<'a> {
     errors: Vec<LowerError>,
     /// Current span for error reporting
     current_span: Span,
+    /// Lowering-local scopes for parameters and local bindings
+    local_scopes: Vec<FxHashMap<Symbol, crate::hir::DefId>>,
 }
 
 /// Lowering error
@@ -50,6 +53,7 @@ impl<'a> Lowerer<'a> {
             next_def_id: 1_000_000,
             errors: Vec::new(),
             current_span: Span::default(),
+            local_scopes: Vec::new(),
         }
     }
 
@@ -64,7 +68,36 @@ impl<'a> Lowerer<'a> {
             match &stmt.kind {
                 StmtKind::Incipit(entry_stmt) => {
                     // Entry point gets special treatment
-                    let block = self.lower_ergo_body(&entry_stmt.body);
+                    self.push_scope();
+                    let mut args_binding = None;
+                    if let Some(args) = &entry_stmt.args {
+                        let def_id = self.next_def_id();
+                        self.bind_local(args.name, def_id);
+                        args_binding = Some((args.name, args.span, def_id));
+                    }
+                    let mut block = self.lower_ergo_body(&entry_stmt.body);
+                    if let Some((name, span, def_id)) = args_binding {
+                        block.stmts.insert(
+                            0,
+                            HirStmt {
+                                id: self.next_hir_id(),
+                                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                                    def_id,
+                                    name,
+                                    ty: None,
+                                    init: Some(HirExpr {
+                                        id: self.next_hir_id(),
+                                        kind: HirExprKind::Error,
+                                        ty: None,
+                                        span,
+                                    }),
+                                    mutable: false,
+                                }),
+                                span,
+                            },
+                        );
+                    }
+                    self.pop_scope();
                     entry = Some(block);
                 }
                 _ => {
@@ -102,6 +135,29 @@ impl<'a> Lowerer<'a> {
         self.resolver
             .lookup(name)
             .unwrap_or_else(|| self.next_def_id())
+    }
+
+    pub(super) fn push_scope(&mut self) {
+        self.local_scopes.push(FxHashMap::default());
+    }
+
+    pub(super) fn pop_scope(&mut self) {
+        self.local_scopes.pop();
+    }
+
+    pub(super) fn bind_local(&mut self, name: Symbol, def_id: crate::hir::DefId) {
+        if let Some(scope) = self.local_scopes.last_mut() {
+            scope.insert(name, def_id);
+        }
+    }
+
+    pub(super) fn lookup_name(&self, name: Symbol) -> Option<crate::hir::DefId> {
+        for scope in self.local_scopes.iter().rev() {
+            if let Some(def_id) = scope.get(&name) {
+                return Some(*def_id);
+            }
+        }
+        self.resolver.lookup(name)
     }
 
     /// Record an error
@@ -170,11 +226,13 @@ impl<'a> Lowerer<'a> {
     fn lower_block(&mut self, block: &crate::syntax::BlockStmt) -> HirBlock {
         self.current_span = block.span;
         let mut stmts = Vec::new();
+        self.push_scope();
 
         for stmt in &block.stmts {
             let hir_stmt = self.lower_stmt(stmt);
             stmts.push(hir_stmt);
         }
+        self.pop_scope();
 
         HirBlock { stmts, expr: None, span: block.span }
     }

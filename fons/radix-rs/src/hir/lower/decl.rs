@@ -47,10 +47,6 @@ impl<'a> Lowerer<'a> {
             }
         };
 
-        if decl.mutability == crate::syntax::Mutability::Mutable {
-            self.error("mutable top-level variables are not lowered yet");
-        }
-
         let item = HirItem {
             id: self.next_hir_id(),
             def_id,
@@ -71,20 +67,25 @@ impl<'a> Lowerer<'a> {
             .map(|param| HirTypeParam { def_id: self.next_def_id(), name: param.name.name, span: param.span })
             .collect();
 
-        let params = decl
-            .params
-            .iter()
-            .map(|param| HirParam {
-                def_id: self.next_def_id(),
+        let mut params = Vec::new();
+        for param in &decl.params {
+            let param_def_id = self.next_def_id();
+            params.push(HirParam {
+                def_id: param_def_id,
                 name: param.name.name,
                 ty: self.lower_type(&param.ty),
                 mode: lower_param_mode(param.mode),
                 span: param.span,
-            })
-            .collect();
+            });
+        }
 
         let ret_ty = decl.ret.as_ref().map(|ty| self.lower_type(ty));
+        self.push_scope();
+        for param in &params {
+            self.bind_local(param.name, param.def_id);
+        }
         let body = decl.body.as_ref().map(|body| self.lower_block(body));
+        self.pop_scope();
 
         let func = HirFunction {
             name: decl.name.name,
@@ -126,6 +127,25 @@ impl<'a> Lowerer<'a> {
                     });
                 }
                 crate::syntax::ClassMemberKind::Method(method) => {
+                    let mut params = Vec::new();
+                    for param in &method.params {
+                        let param_def_id = self.next_def_id();
+                        params.push(HirParam {
+                            def_id: param_def_id,
+                            name: param.name.name,
+                            ty: self.lower_type(&param.ty),
+                            mode: lower_param_mode(param.mode),
+                            span: param.span,
+                        });
+                    }
+
+                    self.push_scope();
+                    for param in &params {
+                        self.bind_local(param.name, param.def_id);
+                    }
+                    let body = method.body.as_ref().map(|block| self.lower_block(block));
+                    self.pop_scope();
+
                     let func = HirFunction {
                         name: method.name.name,
                         type_params: method
@@ -137,19 +157,9 @@ impl<'a> Lowerer<'a> {
                                 span: param.span,
                             })
                             .collect(),
-                        params: method
-                            .params
-                            .iter()
-                            .map(|param| HirParam {
-                                def_id: self.next_def_id(),
-                                name: param.name.name,
-                                ty: self.lower_type(&param.ty),
-                                mode: lower_param_mode(param.mode),
-                                span: param.span,
-                            })
-                            .collect(),
+                        params,
                         ret_ty: method.ret.as_ref().map(|ty| self.lower_type(ty)),
-                        body: method.body.as_ref().map(|body| self.lower_block(body)),
+                        body,
                         is_async: false,
                         is_generator: false,
                     };
@@ -198,10 +208,6 @@ impl<'a> Lowerer<'a> {
             .members
             .iter()
             .map(|member| {
-                if member.value.is_some() {
-                    self.error("enum member values are not lowered yet");
-                }
-
                 HirVariant { def_id: self.next_def_id(), name: member.name.name, fields: Vec::new(), span: member.span }
             })
             .collect();
@@ -304,7 +310,6 @@ impl<'a> Lowerer<'a> {
                 alias: alias.as_ref().map(|ident| ident.name),
             }],
             crate::syntax::ImportKind::Wildcard { alias } => {
-                self.error("wildcard imports are not lowered yet");
                 vec![HirImportItem { def_id: self.next_def_id(), name: alias.name, alias: None }]
             }
         };
