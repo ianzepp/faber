@@ -462,3 +462,63 @@ fn compile_lowers_probandum_nested_cases_without_lowering_errors() {
         .iter()
         .all(|d| !d.message.contains("unhandled statement kind in lowering")));
 }
+
+#[test]
+fn ego_field_assignment_no_longer_reports_assignment_type_mismatch() {
+    let session = session(Target::Rust);
+    let source = r#"genus Circulus {
+  varia numerus diameter: 1
+  functio crescere(numerus factor) -> vacuum {
+    ego.diameter = ego.diameter * factor
+  }
+}
+
+incipit {
+  fixum c = novum Circulus
+  c.crescere(2)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("assignment type mismatch")));
+}
+
+#[test]
+fn typed_array_index_assignment_no_longer_reports_assignment_type_mismatch() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  varia numerus[] numbers = [3, 7]
+  numbers[0] = 9
+  scribe numbers[0]
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("assignment type mismatch")));
+}
+
+#[test]
+fn ex_destructured_object_fields_can_be_used_in_arithmetic() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum point = novum Point { x: 4, y: 6 }
+  ex point fixum x, y
+  fixum numerus sum = x + y
+  scribe sum
+}
+
+genus Point {
+  numerus x: 0
+  numerus y: 0
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("expression type mismatch")));
+}

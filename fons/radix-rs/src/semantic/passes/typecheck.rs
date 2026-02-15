@@ -913,7 +913,7 @@ impl<'a> TypeChecker<'a> {
             }
         }
 
-        self.types.primitive(Primitive::Ignotum)
+        self.error_type
     }
 
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
@@ -1041,6 +1041,10 @@ impl<'a> TypeChecker<'a> {
 
     fn check_assign(&mut self, target: &mut HirExpr, value: &mut HirExpr) -> TypeId {
         let target_ty = self.check_lvalue(target);
+        if target_ty == self.error_type {
+            self.check_expr(value);
+            return self.error_type;
+        }
         let value_ty = self.check_expr_with_expected(value, Some(target_ty));
         self.unify(value_ty, target_ty, value.span, "assignment type mismatch");
         target_ty
@@ -1094,8 +1098,8 @@ impl<'a> TypeChecker<'a> {
                 );
                 self.error_type
             }
-            HirExprKind::Field(object, _name) => self.check_expr(object),
-            HirExprKind::Index(object, _index) => self.check_expr(object),
+            HirExprKind::Field(object, name) => self.check_field(object, *name),
+            HirExprKind::Index(object, index) => self.check_index(object, index),
             _ => {
                 self.error(
                     SemanticErrorKind::InvalidAssignmentTarget,

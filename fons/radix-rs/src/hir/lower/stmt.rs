@@ -115,7 +115,6 @@ impl<'a> Lowerer<'a> {
 
     fn lower_ex_stmt(&mut self, stmt: &crate::syntax::ExStmt) -> Vec<HirStmt> {
         let mut out = Vec::new();
-        let source = self.lower_expr(&stmt.source);
 
         for field in &stmt.fields {
             let name = field
@@ -131,7 +130,7 @@ impl<'a> Lowerer<'a> {
                 ty: None,
                 init: Some(HirExpr {
                     id: self.next_hir_id(),
-                    kind: HirExprKind::Error,
+                    kind: HirExprKind::Field(Box::new(self.lower_expr(&stmt.source)), field.name.name),
                     ty: None,
                     span: field.name.span,
                 }),
@@ -147,13 +146,11 @@ impl<'a> Lowerer<'a> {
                 def_id,
                 name: rest.name,
                 ty: None,
-                init: Some(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: rest.span }),
+                init: Some(self.lower_expr(&stmt.source)),
                 mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
             };
             out.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Local(local), span: rest.span });
         }
-
-        out.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Expr(source), span: self.current_span });
         out
     }
 
