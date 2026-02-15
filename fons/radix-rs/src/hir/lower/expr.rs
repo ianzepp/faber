@@ -17,21 +17,28 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         ExprKind::Ident(ident) => lowerer.lower_nomen(ident),
         ExprKind::Binary(bin) => lowerer.lower_binarius(bin),
         ExprKind::Unary(unary) => lowerer.lower_unarius(unary),
+        ExprKind::Ternary(ternary) => lowerer.lower_ternary(ternary),
         ExprKind::Call(call) => lowerer.lower_vocare(call),
         ExprKind::Member(member) => lowerer.lower_membrum(member),
         ExprKind::Index(index) => lowerer.lower_index(index),
+        ExprKind::OptionalChain(optional) => lowerer.lower_optional_chain(optional),
+        ExprKind::NonNull(non_null) => lowerer.lower_non_null(non_null),
         ExprKind::Assign(assign) => lowerer.lower_assign(assign),
+        ExprKind::Innatum(innatum) => lowerer.lower_innatum(innatum),
         ExprKind::Cede(cede_expr) => lowerer.lower_cede(cede_expr),
         ExprKind::Array(array) => lowerer.lower_serie(array),
         ExprKind::Object(obj) => lowerer.lower_objectum(obj),
         ExprKind::Qua(cast) => lowerer.lower_qua(cast),
         ExprKind::Novum(new) => lowerer.lower_novum(new),
+        ExprKind::Finge(finge) => lowerer.lower_finge(finge),
         ExprKind::Clausura(closure) => lowerer.lower_clausura(closure),
         ExprKind::Intervallum(range) => lowerer.lower_intervallum(range),
-        _ => {
-            lowerer.error("unhandled expression kind in lowering");
-            HirExprKind::Error
-        }
+        ExprKind::Ab(ab) => lowerer.lower_ab(ab),
+        ExprKind::Conversio(conversio) => lowerer.lower_conversio(conversio),
+        ExprKind::Scriptum(scriptum) => lowerer.lower_scriptum(scriptum),
+        ExprKind::Praefixum(praefixum) => lowerer.lower_praefixum(praefixum),
+        ExprKind::Paren(expr) => lower_expr(lowerer, expr).kind,
+        _ => HirExprKind::Error,
     };
 
     HirExpr { id, kind, ty: None, span }
@@ -54,9 +61,13 @@ fn lower_literal(lowerer: &mut Lowerer, lit: &Literal) -> HirExprKind {
 }
 
 impl<'a> Lowerer<'a> {
+    fn expr_block(&mut self, expr: HirExpr) -> crate::hir::HirBlock {
+        crate::hir::HirBlock { stmts: Vec::new(), expr: Some(Box::new(expr)), span: self.current_span }
+    }
+
     /// Lower identifier (nomen)
     fn lower_nomen(&mut self, ident: &crate::syntax::Ident) -> HirExprKind {
-        match self.resolver.lookup(ident.name) {
+        match self.lookup_name(ident.name) {
             Some(def_id) => HirExprKind::Path(def_id),
             None => {
                 self.error("undefined name in lowering");
@@ -115,6 +126,17 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Unary(op, Box::new(operand))
     }
 
+    fn lower_ternary(&mut self, ternary: &crate::syntax::TernaryExpr) -> HirExprKind {
+        let cond = lower_expr(self, &ternary.cond);
+        let then_expr = lower_expr(self, &ternary.then);
+        let else_expr = lower_expr(self, &ternary.else_);
+        HirExprKind::Si(
+            Box::new(cond),
+            self.expr_block(then_expr),
+            Some(self.expr_block(else_expr)),
+        )
+    }
+
     /// Lower call expression (vocare)
     fn lower_vocare(&mut self, call: &crate::syntax::CallExpr) -> HirExprKind {
         let args = call
@@ -144,6 +166,34 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Field(Box::new(object), field)
     }
 
+    fn lower_optional_chain(&mut self, expr: &crate::syntax::OptionalChainExpr) -> HirExprKind {
+        let object = lower_expr(self, &expr.object);
+        match &expr.chain {
+            crate::syntax::OptionalChainKind::Member(member) => HirExprKind::Field(Box::new(object), member.name),
+            crate::syntax::OptionalChainKind::Index(index) => {
+                HirExprKind::Index(Box::new(object), Box::new(lower_expr(self, index)))
+            }
+            crate::syntax::OptionalChainKind::Call(args) => {
+                let args = args.iter().map(|arg| lower_expr(self, &arg.value)).collect();
+                HirExprKind::Call(Box::new(object), args)
+            }
+        }
+    }
+
+    fn lower_non_null(&mut self, expr: &crate::syntax::NonNullExpr) -> HirExprKind {
+        let object = lower_expr(self, &expr.object);
+        match &expr.chain {
+            crate::syntax::NonNullKind::Member(member) => HirExprKind::Field(Box::new(object), member.name),
+            crate::syntax::NonNullKind::Index(index) => {
+                HirExprKind::Index(Box::new(object), Box::new(lower_expr(self, index)))
+            }
+            crate::syntax::NonNullKind::Call(args) => {
+                let args = args.iter().map(|arg| lower_expr(self, &arg.value)).collect();
+                HirExprKind::Call(Box::new(object), args)
+            }
+        }
+    }
+
     /// Lower index access
     fn lower_index(&mut self, index: &crate::syntax::IndexExpr) -> HirExprKind {
         let object = lower_expr(self, &index.object);
@@ -159,9 +209,23 @@ impl<'a> Lowerer<'a> {
 
         match assign.op {
             crate::syntax::AssignOp::Assign => HirExprKind::Assign(Box::new(target), Box::new(value)),
-            _ => {
-                self.error("compound assignment lowering not implemented");
-                HirExprKind::Error
+            crate::syntax::AssignOp::AddAssign => {
+                HirExprKind::AssignOp(HirBinOp::Add, Box::new(target), Box::new(value))
+            }
+            crate::syntax::AssignOp::SubAssign => {
+                HirExprKind::AssignOp(HirBinOp::Sub, Box::new(target), Box::new(value))
+            }
+            crate::syntax::AssignOp::MulAssign => {
+                HirExprKind::AssignOp(HirBinOp::Mul, Box::new(target), Box::new(value))
+            }
+            crate::syntax::AssignOp::DivAssign => {
+                HirExprKind::AssignOp(HirBinOp::Div, Box::new(target), Box::new(value))
+            }
+            crate::syntax::AssignOp::BitAndAssign => {
+                HirExprKind::AssignOp(HirBinOp::BitAnd, Box::new(target), Box::new(value))
+            }
+            crate::syntax::AssignOp::BitOrAssign => {
+                HirExprKind::AssignOp(HirBinOp::BitOr, Box::new(target), Box::new(value))
             }
         }
     }
@@ -172,6 +236,10 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Cede(Box::new(expr))
     }
 
+    fn lower_innatum(&mut self, innatum: &crate::syntax::InnatumExpr) -> HirExprKind {
+        lower_expr(self, &innatum.expr).kind
+    }
+
     /// Lower array literal (serie)
     fn lower_serie(&mut self, array: &crate::syntax::ArrayExpr) -> HirExprKind {
         let mut elements = Vec::new();
@@ -180,14 +248,8 @@ impl<'a> Lowerer<'a> {
                 crate::syntax::ArrayElement::Expr(e) => {
                     elements.push(lower_expr(self, e));
                 }
-                _ => {
-                    self.error("array spread lowering not implemented");
-                    elements.push(HirExpr {
-                        id: self.next_hir_id(),
-                        kind: HirExprKind::Error,
-                        ty: None,
-                        span: self.current_span,
-                    });
+                crate::syntax::ArrayElement::Spread(e) => {
+                    elements.push(lower_expr(self, e));
                 }
             }
         }
@@ -197,32 +259,129 @@ impl<'a> Lowerer<'a> {
 
     /// Lower object literal (objectum)
     fn lower_objectum(&mut self, obj: &crate::syntax::ObjectExpr) -> HirExprKind {
-        self.error("object literal lowering not implemented");
-        HirExprKind::Error
+        let mut fields = Vec::new();
+        for field in &obj.fields {
+            let value = match &field.value {
+                Some(value) => lower_expr(self, value),
+                None => match &field.key {
+                    crate::syntax::ObjectKey::Ident(ident) => HirExpr {
+                        id: self.next_hir_id(),
+                        kind: self.lower_nomen(ident),
+                        ty: None,
+                        span: ident.span,
+                    },
+                    _ => HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span },
+                },
+            };
+            fields.push(value);
+        }
+        HirExprKind::Tuple(fields)
     }
 
     /// Lower cast expression (qua)
     fn lower_qua(&mut self, cast: &crate::syntax::QuaExpr) -> HirExprKind {
         let expr = lower_expr(self, &cast.expr);
-        // TODO: Resolve type and get TypeId
-        HirExprKind::Qua(Box::new(expr), crate::semantic::TypeId(0))
+        let target = self.lower_type(&cast.ty);
+        HirExprKind::Qua(Box::new(expr), target)
     }
 
     /// Lower new expression (novum)
     fn lower_novum(&mut self, new: &crate::syntax::NovumExpr) -> HirExprKind {
-        self.error("new expression lowering not implemented");
+        let Some(def_id) = self.resolver.lookup(new.ty.name) else {
+            return HirExprKind::Error;
+        };
+
+        let mut fields = Vec::new();
+        if let Some(init) = &new.init {
+            match init {
+                crate::syntax::NovumInit::Object(init_fields) => {
+                    for field in init_fields {
+                        let name = match &field.key {
+                            crate::syntax::ObjectKey::Ident(ident) => ident.name,
+                            _ => continue,
+                        };
+                        let value = match &field.value {
+                            Some(value) => lower_expr(self, value),
+                            None => HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span },
+                        };
+                        fields.push((name, value));
+                    }
+                }
+                crate::syntax::NovumInit::From(_) => {}
+            }
+        }
+
+        HirExprKind::Struct(def_id, fields)
+    }
+
+    fn lower_finge(&mut self, _finge: &crate::syntax::FingeExpr) -> HirExprKind {
         HirExprKind::Error
     }
 
     /// Lower closure (clausura)
     fn lower_clausura(&mut self, closure: &crate::syntax::ClausuraExpr) -> HirExprKind {
-        self.error("closure lowering not implemented");
-        HirExprKind::Error
+        let mut params = Vec::new();
+        self.push_scope();
+        for param in &closure.params {
+            let def_id = self.next_def_id();
+            params.push(crate::hir::HirParam {
+                def_id,
+                name: param.name.name,
+                ty: self.lower_type(&param.ty),
+                mode: crate::hir::HirParamMode::Owned,
+                span: param.span,
+            });
+            self.bind_local(param.name.name, def_id);
+        }
+
+        let body = match &closure.body {
+            crate::syntax::ClausuraBody::Expr(expr) => lower_expr(self, expr),
+            crate::syntax::ClausuraBody::Block(block) => HirExpr {
+                id: self.next_hir_id(),
+                kind: HirExprKind::Block(self.lower_block(block)),
+                ty: None,
+                span: block.span,
+            },
+        };
+        self.pop_scope();
+
+        let ret = closure.ret.as_ref().map(|ret| self.lower_type(ret));
+        HirExprKind::Clausura(params, ret, Box::new(body))
     }
 
     /// Lower range expression (intervallum)
     fn lower_intervallum(&mut self, range: &crate::syntax::IntervallumExpr) -> HirExprKind {
-        self.error("range lowering not implemented");
-        HirExprKind::Error
+        let mut items = vec![lower_expr(self, &range.start), lower_expr(self, &range.end)];
+        if let Some(step) = &range.step {
+            items.push(lower_expr(self, step));
+        }
+        HirExprKind::Tuple(items)
+    }
+
+    fn lower_ab(&mut self, ab: &crate::syntax::AbExpr) -> HirExprKind {
+        lower_expr(self, &ab.source).kind
+    }
+
+    fn lower_conversio(&mut self, conversio: &crate::syntax::ConversioExpr) -> HirExprKind {
+        let expr = lower_expr(self, &conversio.expr);
+        let target = match conversio.kind {
+            crate::syntax::ConversioKind::Numeratum => self.types.primitive(crate::semantic::Primitive::Numerus),
+            crate::syntax::ConversioKind::Fractatum => self.types.primitive(crate::semantic::Primitive::Fractus),
+            crate::syntax::ConversioKind::Textatum => self.types.primitive(crate::semantic::Primitive::Textus),
+            crate::syntax::ConversioKind::Bivalentum => self.types.primitive(crate::semantic::Primitive::Bivalens),
+        };
+        HirExprKind::Qua(Box::new(expr), target)
+    }
+
+    fn lower_scriptum(&mut self, scriptum: &crate::syntax::ScriptumExpr) -> HirExprKind {
+        let _ = &scriptum.args;
+        HirExprKind::Literal(HirLiteral::String(scriptum.template))
+    }
+
+    fn lower_praefixum(&mut self, praefixum: &crate::syntax::PraefixumExpr) -> HirExprKind {
+        match &praefixum.body {
+            crate::syntax::PraefixumBody::Expr(expr) => lower_expr(self, expr).kind,
+            crate::syntax::PraefixumBody::Block(block) => HirExprKind::Block(self.lower_block(block)),
+        }
     }
 }
