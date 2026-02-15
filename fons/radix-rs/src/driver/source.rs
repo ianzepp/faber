@@ -1,6 +1,6 @@
 //! Source file management
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// A source file
 #[derive(Debug)]
@@ -70,3 +70,7 @@ fn compute_line_starts(content: &str) -> Vec<u32> {
 
     starts
 }
+
+#[cfg(test)]
+#[path = "source_test.rs"]
+mod tests;
