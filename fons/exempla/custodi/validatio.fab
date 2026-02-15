@@ -21,7 +21,7 @@ functio processAge(numerus age) -> textus {
     }
 }
 
-functio createUser(textus name, textus email, numerus age, curator alloc) -> textus {
+functio createUser(textus name, textus email, numerus age) curata alloc -> textus {
     custodi {
         si nihil name aut name == "" {
             redde "Error: name required"
