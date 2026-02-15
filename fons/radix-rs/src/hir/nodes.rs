@@ -124,6 +124,7 @@ pub struct HirParam {
     pub name: Symbol,
     pub ty: TypeId,
     pub mode: HirParamMode,
+    pub optional: bool,
     pub span: Span,
 }
 

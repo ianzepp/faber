@@ -141,7 +141,7 @@ impl<'a> TypeChecker<'a> {
                             .map(|param| ParamType {
                                 ty: param.ty,
                                 mode: param_mode_from_hir(param.mode),
-                                optional: false,
+                                optional: param.optional,
                             })
                             .collect();
                         let ret = method.ret_ty.unwrap_or_else(|| self.vacuum_type());
@@ -186,7 +186,7 @@ impl<'a> TypeChecker<'a> {
         let params = func
             .params
             .iter()
-            .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: false })
+            .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: param.optional })
             .collect();
         let ret = func.ret_ty.unwrap_or_else(|| self.vacuum_type());
         FuncSig { params, ret, is_async: func.is_async, is_generator: func.is_generator }
@@ -763,7 +763,11 @@ impl<'a> TypeChecker<'a> {
             | HirBinOp::StrictNotEq
             | HirBinOp::Is
             | HirBinOp::IsNot => {
-                self.unify(lhs_ty, rhs_ty, lhs.span, "incompatible operands");
+                let lhs_is_nil = matches!(self.types.get(self.resolve_type(lhs_ty)), Type::Primitive(Primitive::Nihil));
+                let rhs_is_nil = matches!(self.types.get(self.resolve_type(rhs_ty)), Type::Primitive(Primitive::Nihil));
+                if !(lhs_is_nil || rhs_is_nil) {
+                    self.unify(lhs_ty, rhs_ty, lhs.span, "incompatible operands");
+                }
                 self.bool_type()
             }
             HirBinOp::Lt | HirBinOp::Gt | HirBinOp::LtEq | HirBinOp::GtEq => {
@@ -938,7 +942,8 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn check_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {
-        if args.len() != sig.params.len() {
+        let required = sig.params.iter().filter(|param| !param.optional).count();
+        if args.len() < required || args.len() > sig.params.len() {
             self.error(SemanticErrorKind::WrongArity, "wrong number of arguments", span);
         }
 
@@ -1379,7 +1384,11 @@ impl<'a> TypeChecker<'a> {
         let sig = FuncSig {
             params: params
                 .iter()
-                .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: false })
+                .map(|param| ParamType {
+                    ty: param.ty,
+                    mode: param_mode_from_hir(param.mode),
+                    optional: param.optional,
+                })
                 .collect(),
             ret: ret_ty,
             is_async: false,

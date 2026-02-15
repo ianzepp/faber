@@ -93,11 +93,13 @@ impl<'a> Lowerer<'a> {
         for param in &decl.params {
             let param_def_id = self.next_def_id();
             let binding_name = param.alias.as_ref().unwrap_or(&param.name);
+            let is_optional = param.optional || param.ty.nullable || param.default.is_some();
             params.push(HirParam {
                 def_id: param_def_id,
                 name: binding_name.name,
                 ty: self.lower_type(&param.ty),
                 mode: lower_param_mode(param.mode),
+                optional: is_optional,
                 span: param.span,
             });
         }
@@ -179,11 +181,13 @@ impl<'a> Lowerer<'a> {
                     for param in &method.params {
                         let param_def_id = self.next_def_id();
                         let binding_name = param.alias.as_ref().unwrap_or(&param.name);
+                        let is_optional = param.optional || param.ty.nullable || param.default.is_some();
                         params.push(HirParam {
                             def_id: param_def_id,
                             name: binding_name.name,
                             ty: self.lower_type(&param.ty),
                             mode: lower_param_mode(param.mode),
+                            optional: is_optional,
                             span: param.span,
                         });
                     }
@@ -358,6 +362,7 @@ impl<'a> Lowerer<'a> {
                         name: param.name.name,
                         ty: self.lower_type(&param.ty),
                         mode: lower_param_mode(param.mode),
+                        optional: param.optional || param.ty.nullable || param.default.is_some(),
                         span: param.span,
                     })
                     .collect(),

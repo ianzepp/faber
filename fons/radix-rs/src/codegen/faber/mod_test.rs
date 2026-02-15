@@ -28,6 +28,7 @@ fn emits_basic_function_and_entry() {
             name: name_param,
             ty: textus,
             mode: HirParamMode::Owned,
+            optional: false,
             span: span(),
         }],
         ret_ty: Some(textus),

@@ -793,3 +793,41 @@ fn ordo_exemplum_no_longer_reports_elige_literal_error() {
         .iter()
         .all(|d| !d.message.contains("elige case value must be a literal")));
 }
+
+#[test]
+fn optional_params_no_longer_require_all_arguments() {
+    let session = session(Target::Rust);
+    let source = r#"functio greet(textus nomen, si textus titulus) curata alloc -> textus {
+  si titulus est nihil {
+    redde nomen
+  }
+  redde titulus
+}
+
+functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) -> numerus {
+  redde pagina + per_pagina
+}
+
+functio analyze(textus source, de si numerus depth) -> numerus {
+  si depth est nihil {
+    redde source.longitudo()
+  }
+  redde depth
+}
+
+incipit ergo cura arena fixum alloc {
+  scribe greet("Marcus")
+  scribe greet("Marcus", "Dominus")
+  scribe paginate()
+  scribe paginate(2)
+  scribe paginate(2, 25)
+  scribe analyze("code")
+  scribe analyze("code", 5)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("wrong number of arguments")));
+}
