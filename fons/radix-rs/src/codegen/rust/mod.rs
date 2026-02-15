@@ -1,4 +1,29 @@
-//! Rust code generation
+//! Rust Code Generation
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! This module implements Faber-to-Rust transpilation. It transforms HIR into
+//! idiomatic Rust source code, handling error propagation (Result<T, String>),
+//! reference modes (de/in/ex), and async/await desugaring.
+//!
+//! COMPILER PHASE: Codegen
+//! INPUT: HirProgram (fully-analyzed HIR), TypeTable, Interner
+//! OUTPUT: RustOutput (compilable Rust source code)
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Idiomatic Rust: Generate code that a Rust programmer would write.
+//!   WHY: Output should integrate seamlessly with existing Rust ecosystems.
+//! - Error propagation analysis: Automatically determine which functions return Result.
+//!   WHY: Faber's `iace` (throw) requires Result wrapper; propagate upward transitively.
+//! - Reference mode mapping: Translate de/in/ex to &T, &mut T, and owned T.
+//!   WHY: Faber's borrow semantics map directly to Rust's ownership system.
+//!
+//! TRADE-OFFS
+//! ==========
+//! - All failable functions use String error type (simple but untyped).
+//! - Imports are collected post-codegen by scanning output text (avoids complex tracking).
+//! - Entry point `incipit` blocks never propagate errors (always use panic! for throws).
 
 mod decl;
 mod expr;
@@ -15,10 +40,26 @@ use crate::RustOutput;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
 
-/// Rust code generator
+// =============================================================================
+// CORE
+// =============================================================================
+//
+// The RustCodegen struct pre-computes name resolution and failable function
+// analysis during construction, then uses this information during generation.
+// This two-phase approach simplifies code generation logic.
+
+/// Rust code generator.
+///
+/// WHY: Holds pre-analyzed state (names, failable functions) to enable correct
+/// error propagation and reference resolution during code generation.
 pub struct RustCodegen<'a> {
+    /// DefId -> Symbol map for all definitions
     names: FxHashMap<DefId, Symbol>,
+
+    /// Set of DefIds for functions that can throw (return Result)
     failable_defs: FxHashSet<DefId>,
+
+    /// Interner for symbol resolution
     interner: &'a Interner,
 }
 
@@ -291,6 +332,13 @@ impl<'a> RustCodegen<'a> {
         }
     }
 
+    /// Transitively compute which functions can throw errors.
+    ///
+    /// WHY: Functions that call throwing functions must propagate Result, but
+    /// this is a transitive property requiring fixed-point analysis. We compute
+    /// it upfront to avoid repeated traversals during codegen.
+    ///
+    /// EDGE: `tempta` with catch block suppresses error propagation from body.
     fn collect_failable_functions(&self, hir: &HirProgram) -> FxHashSet<DefId> {
         #[derive(Default)]
         struct FnDeps {
@@ -486,6 +534,16 @@ fn normalize_import_path(path: &str) -> String {
         .join("::")
 }
 
+// =============================================================================
+// HELPERS
+// =============================================================================
+//
+// Import collection is done post-codegen by scanning the generated source text.
+// WHY: Simpler than tracking imports during traversal; Rust types are known ahead.
+
+/// Scan generated code for Rust types that require imports.
+///
+/// WHY: HashMap/HashSet aren't in Rust prelude; auto-import them if used.
 fn collect_prelude_imports(code: &str) -> BTreeSet<String> {
     let mut imports = BTreeSet::new();
     if code.contains("HashMap<") {

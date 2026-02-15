@@ -1,6 +1,37 @@
 //! Expression lowering
 //!
-//! Lowers AST expressions to HIR expressions.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Transforms AST expressions into HIR expressions, resolving identifiers to
+//! DefIds and desugaring method calls. Each expression kind has a dedicated
+//! lowering function following Latin naming conventions.
+//!
+//! COMPILER PHASE: HIR Lowering (submodule)
+//! INPUT: AST expressions (syntax::Expr)
+//! OUTPUT: HIR expressions (HirExpr) with resolved DefIds
+//!
+//! WHY: Separates expression lowering logic from statement/declaration lowering,
+//! keeping the codebase modular and focused.
+//!
+//! METHOD CALL DESUGARING
+//! ======================
+//! `obj.method(args)` in AST becomes:
+//! - HirExprKind::MethodCall(obj, method, args) in HIR
+//!
+//! WHY: Distinguishes method calls from field access for type checker to look
+//! up method signatures on the receiver type.
+//!
+//! STUB CONSTRUCTS
+//! ===============
+//! Several Faber features lower to placeholder HIR nodes:
+//! - Optional chaining (?.) - Not yet supported, becomes Error
+//! - Non-null assertion (!) - Not yet supported, becomes Error
+//! - Collection pipelines (ab) - Needs dedicated HIR node
+//! - String interpolation (scriptum) - Lowered as Tuple placeholder
+//! - Object literals - Lowered as Tuple (needs dedicated HIR shape)
+//!
+//! WHY: Allows parser to accept syntax while deferring full implementation.
+//! Error nodes prevent crashes and allow continued analysis.
 
 use super::Lowerer;
 use crate::hir::{HirBinOp, HirExpr, HirExprKind, HirLiteral, HirUnOp};

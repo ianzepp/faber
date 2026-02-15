@@ -1,4 +1,47 @@
 //! Type system
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Implements the semantic type system with type interning, assignability
+//! checking, and support for primitives, collections, functions, and user-defined
+//! types (structs, enums, interfaces).
+//!
+//! COMPILER PHASE: Semantic (used in all passes after collection)
+//! INPUT: Type expressions from AST
+//! OUTPUT: Interned TypeIds for type checking
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Type Interning: Types are stored in a vec and referenced by TypeId (u32),
+//!   enabling cheap equality checks and small memory footprint
+//! - Pre-Interned Primitives: Common types (textus, numerus, etc.) are interned
+//!   once during TypeTable::new() and retrieved via primitive() method
+//! - Structural Types: Collections (Array, Map, Set) are built compositionally
+//!   from element/key/value types
+//! - Inference Variables: Type::Infer represents unknown types during checking;
+//!   unified to concrete types or reported as errors
+//!
+//! ASSIGNABILITY
+//! =============
+//! The assignable(from, to) method checks whether a value of type `from` can
+//! be used where type `to` is expected:
+//! - Exact match: textus assignable to textus
+//! - nil assignable to Option<T>: nil becomes Some(nil) or None
+//! - T assignable to Option<T>: value becomes Some(value)
+//! - numerus assignable to fractus: integer widening
+//! - Any assignable to ignotum: unknown sink (values flow in, not out)
+//!
+//! WHY: Allows implicit conversions (int → float) and nil-safety (nil → Option)
+//! without explicit casts, reducing boilerplate.
+//!
+//! IGNOTUM TYPE
+//! ============
+//! `ignotum` is an unknown/any type that acts as a type-checking escape hatch:
+//! - Values can flow INTO ignotum (any assignable to ignotum)
+//! - Values cannot flow OUT of ignotum without explicit cast
+//!
+//! WHY: Provides flexibility for interop or prototyping while preventing
+//! unsound type assumptions (ignotum assignable to nothing without cast).
 
 use crate::hir::DefId;
 use crate::lexer::Symbol as LexSymbol;

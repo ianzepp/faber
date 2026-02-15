@@ -1,8 +1,46 @@
 //! AST visitor trait and walking functions
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Implements the visitor pattern for AST traversal. Provides default walking
+//! functions that recursively visit child nodes, allowing visitors to override
+//! specific visit methods for their use case.
+//!
+//! COMPILER PHASE: All phases (utility)
+//! INPUT: AST nodes
+//! OUTPUT: Visitor-specific side effects (type checking, linting, codegen)
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Separation of concerns: Walking logic is separate from visitor logic
+//! - Default traversal: walk_* functions provide complete traversal, visitors
+//!   override only visit_* methods for nodes they care about
+//! - Flexible use: Supports type checking, linting, code generation, and
+//!   any other AST analysis that needs structured traversal
 
 use super::ast::*;
 
-/// Visitor trait for traversing the AST
+// =============================================================================
+// VISITOR TRAIT
+// =============================================================================
+
+/// Visitor trait for traversing the AST.
+///
+/// WHY: Separates traversal logic from analysis logic. Implementers override
+/// visit_* methods for nodes they want to inspect, and the default walk_*
+/// implementations handle recursion. This avoids duplicating traversal code
+/// in every pass.
+///
+/// USAGE:
+/// ```ignore
+/// struct TypeChecker { ... }
+/// impl Visitor for TypeChecker {
+///     fn visit_expr(&mut self, expr: &Expr) {
+///         // Custom logic here
+///         walk_expr(self, expr); // Continue traversal
+///     }
+/// }
+/// ```
 pub trait Visitor: Sized {
     fn visit_program(&mut self, program: &Program) {
         walk_program(self, program);
@@ -26,6 +64,14 @@ pub trait Visitor: Sized {
         walk_block(self, block);
     }
 }
+
+// =============================================================================
+// WALKING FUNCTIONS
+// =============================================================================
+//
+// WHY: These functions implement the recursive descent through the AST,
+// calling visit_* methods on child nodes. They're public so visitors can
+// call them explicitly to continue traversal after custom logic.
 
 pub fn walk_program<V: Visitor>(visitor: &mut V, program: &Program) {
     for stmt in &program.stmts {
@@ -122,7 +168,7 @@ pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
         StmtKind::Mori(panic) => {
             visitor.visit_expr(&panic.value);
         }
-        // Add other statement kinds as needed
+        // NOTE: Add other statement kinds as needed for specific visitors
         _ => {}
     }
 }
@@ -200,11 +246,15 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
         ExprKind::Paren(inner) => {
             visitor.visit_expr(inner);
         }
-        // Add other expression kinds as needed
+        // NOTE: Add other expression kinds as needed for specific visitors
         _ => {}
     }
 }
 
+/// Walk a binding pattern, visiting all nested identifiers.
+///
+/// WHY: Destructuring patterns can contain nested patterns and rest elements.
+/// This function recursively visits all identifiers bound by a pattern.
 fn walk_binding_pattern<V: Visitor>(visitor: &mut V, pattern: &BindingPattern) {
     match pattern {
         BindingPattern::Ident(ident) => visitor.visit_ident(ident),
@@ -246,6 +296,10 @@ pub fn walk_block<V: Visitor>(visitor: &mut V, block: &BlockStmt) {
     }
 }
 
+/// Walk an if-statement body (which can be a block, single statement, or inline return).
+///
+/// WHY: Faber allows `si cond ergo stmt` as a shorthand. This helper handles
+/// all three body styles uniformly.
 fn walk_if_body<V: Visitor>(visitor: &mut V, body: &IfBody) {
     match body {
         IfBody::Block(block) => visitor.visit_block(block),

@@ -1,4 +1,23 @@
-//! Lexer state machine
+//! Lexer state machine and token scanner
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Implements the core lexing state machine with mode-based keyword resolution.
+//! The scanner uses a cursor to read characters and builds tokens one at a time,
+//! collecting errors without panicking.
+//!
+//! COMPILER PHASE: Lexing
+//! INPUT: Source string via Cursor
+//! OUTPUT: Token stream, string interner, error list
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Mode-based scanning: Different keyword tables activate after `@` and `§`
+//!   to avoid treating annotation/section identifiers as reserved keywords
+//! - NFC normalization: All interned strings are Unicode NFC-normalized to
+//!   ensure `résumé` and `re\u0301sume\u0301` are the same symbol
+//! - Error resilience: Invalid characters become Error tokens, scanning continues
+//! - Nested comments: Block comments nest like /* /* */ */ for robustness
 
 use super::cursor::Cursor;
 use super::token::{Span, Symbol, Token, TokenKind};
@@ -6,7 +25,18 @@ use super::{LexError, LexErrorKind, LexResult};
 use rustc_hash::FxHashMap;
 use unicode_normalization::UnicodeNormalization;
 
-/// Lexer mode - determines which keyword table is active
+// =============================================================================
+// LEXER MODE
+// =============================================================================
+//
+// WHY: Faber has context-sensitive keywords. After `@`, identifiers like
+// `verte` are not reserved keywords but annotation names. After `§`, section
+// names are treated as identifiers. Modes track this context per-line.
+
+/// Lexer mode - determines which keyword table is active.
+///
+/// WHY: Prevents annotation and section names from conflicting with language
+/// keywords, allowing `@ verte` and `§ functio` to use otherwise-reserved words.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LexerMode {
     /// Normal mode - statement keywords active
@@ -18,13 +48,32 @@ enum LexerMode {
 }
 
 impl LexerMode {
-    /// Check if mode should reset on newline
+    /// Check if mode should reset on newline.
+    ///
+    /// WHY: Annotation and section modes are line-scoped to avoid requiring
+    /// explicit mode resets and to make lexing order-independent.
     fn is_line_based(self) -> bool {
         matches!(self, Self::Annotation | Self::Section)
     }
 }
 
-/// String interner for symbols
+// =============================================================================
+// STRING INTERNER
+// =============================================================================
+//
+// WHY: Identifiers and string literals are duplicated frequently. Interning
+// reduces memory (one copy per unique string) and makes equality checks O(1).
+
+/// String interner for symbols with NFC normalization.
+///
+/// WHY: Unicode allows multiple representations of the same visual text (e.g.,
+/// é can be U+00E9 or U+0065 U+0301). NFC normalization ensures identifiers
+/// with the same semantic content get the same symbol, preventing confusing
+/// "different identifier" errors for visually identical names.
+///
+/// TRADE-OFF: Normalization costs CPU during lexing, but prevents subtle bugs
+/// and makes symbol equality checks correct. This is the right trade-off for
+/// a production compiler.
 pub struct Interner {
     map: FxHashMap<String, Symbol>,
     strings: Vec<String>,
@@ -35,6 +84,11 @@ impl Interner {
         Self { map: FxHashMap::default(), strings: Vec::new() }
     }
 
+    /// Intern a string, returning its symbol handle.
+    ///
+    /// WHY: Normalizes to NFC before interning to ensure semantic equivalence.
+    /// Uses FxHashMap for speed (strings are untrusted, but we're not defending
+    /// against DoS attacks in a compiler).
     pub fn intern(&mut self, s: &str) -> Symbol {
         let normalized: String = s.nfc().collect();
         if let Some(&sym) = self.map.get(&normalized) {
@@ -46,6 +100,7 @@ impl Interner {
         sym
     }
 
+    /// Resolve a symbol to its string content.
     pub fn resolve(&self, sym: Symbol) -> &str {
         &self.strings[sym.0 as usize]
     }
@@ -57,7 +112,15 @@ impl Default for Interner {
     }
 }
 
-/// Lexer for Faber source
+// =============================================================================
+// LEXER STATE
+// =============================================================================
+
+/// Lexer for Faber source with mode tracking and error collection.
+///
+/// WHY: Maintains all mutable state for lexing in one place. Mode tracking
+/// enables context-sensitive keyword resolution. Error collection allows
+/// showing all lex errors in one pass.
 pub struct Lexer<'a> {
     cursor: Cursor<'a>,
     #[allow(dead_code)]
@@ -82,15 +145,26 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Lex the entire source into tokens.
+    ///
+    /// WHY: Consumes self and returns all results together. This ensures the
+    /// interner and tokens stay synchronized (you can't use symbols from a
+    /// different lexer instance).
     pub fn lex(mut self) -> LexResult {
         while !self.cursor.is_eof() {
             self.scan_token();
         }
+        // Always emit EOF token for parser convenience
         self.tokens
             .push(Token::new(TokenKind::Eof, Span::new(self.cursor.pos(), self.cursor.pos())));
         LexResult { tokens: self.tokens, errors: self.errors, interner: self.interner }
     }
 
+    /// Scan a single token from the current cursor position.
+    ///
+    /// WHY: Core dispatch function. Reads one character, determines token kind,
+    /// delegates to specialized scanners for complex tokens (strings, numbers,
+    /// identifiers), and emits the token.
     fn scan_token(&mut self) {
         let start = self.cursor.pos();
 
@@ -98,13 +172,13 @@ impl<'a> Lexer<'a> {
             return;
         };
 
-        // Check for newline and reset mode if needed
+        // Reset mode on newline for line-scoped modes
         if c == '\n' {
             self.current_line += 1;
             if self.mode.is_line_based() {
                 self.mode = LexerMode::Normal;
             }
-            return;
+            return; // WHY: Newlines are whitespace in Faber, not tokens
         }
 
         let kind = match c {
@@ -123,10 +197,12 @@ impl<'a> Lexer<'a> {
             ';' => TokenKind::Semicolon,
             '~' => TokenKind::Tilde,
             '@' => {
+                // WHY: Switch to annotation mode until end of line
                 self.mode = LexerMode::Annotation;
                 TokenKind::At
             }
             '§' => {
+                // WHY: Switch to section mode until end of line
                 self.mode = LexerMode::Section;
                 TokenKind::Section
             }
@@ -189,7 +265,7 @@ impl<'a> Lexer<'a> {
             '=' => {
                 if self.cursor.eat('=') {
                     if self.cursor.eat('=') {
-                        TokenKind::EqEqEq
+                        TokenKind::EqEqEq // WHY: Strict equality like JavaScript
                     } else {
                         TokenKind::EqEq
                     }
@@ -201,16 +277,16 @@ impl<'a> Lexer<'a> {
             '!' => {
                 if self.cursor.eat('=') {
                     if self.cursor.eat('=') {
-                        TokenKind::BangEqEq
+                        TokenKind::BangEqEq // WHY: Strict inequality
                     } else {
                         TokenKind::BangEq
                     }
                 } else if self.cursor.eat('.') {
-                    TokenKind::BangDot
+                    TokenKind::BangDot // WHY: Non-null assertion x!.y
                 } else if self.cursor.eat('[') {
-                    TokenKind::BangBracket
+                    TokenKind::BangBracket // WHY: Non-null assertion x![i]
                 } else if self.cursor.eat('(') {
-                    TokenKind::BangParen
+                    TokenKind::BangParen // WHY: Non-null assertion x!()
                 } else {
                     TokenKind::Bang
                 }
@@ -235,34 +311,34 @@ impl<'a> Lexer<'a> {
             // Logical and bitwise
             '&' => {
                 if self.cursor.eat('&') {
-                    TokenKind::AmpAmp
+                    TokenKind::AmpAmp // WHY: Logical AND (short-circuits)
                 } else if self.cursor.eat('=') {
                     TokenKind::AmpEq
                 } else {
-                    TokenKind::Amp
+                    TokenKind::Amp // WHY: Bitwise AND
                 }
             }
 
             '|' => {
                 if self.cursor.eat('|') {
-                    TokenKind::PipePipe
+                    TokenKind::PipePipe // WHY: Logical OR (short-circuits)
                 } else if self.cursor.eat('=') {
                     TokenKind::PipeEq
                 } else {
-                    TokenKind::Pipe
+                    TokenKind::Pipe // WHY: Bitwise OR
                 }
             }
 
             // Optional chaining
             '?' => {
                 if self.cursor.eat('.') {
-                    TokenKind::QuestionDot
+                    TokenKind::QuestionDot // WHY: Optional chaining x?.y
                 } else if self.cursor.eat('[') {
-                    TokenKind::QuestionBracket
+                    TokenKind::QuestionBracket // WHY: Optional indexing x?[i]
                 } else if self.cursor.eat('(') {
-                    TokenKind::QuestionParen
+                    TokenKind::QuestionParen // WHY: Optional call x?()
                 } else {
-                    TokenKind::Question
+                    TokenKind::Question // WHY: Ternary conditional
                 }
             }
 
@@ -279,6 +355,7 @@ impl<'a> Lexer<'a> {
             c if is_ident_start(c) => return self.scan_identifier(start),
 
             _ => {
+                // WHY: Emit error but continue scanning for maximum error reporting
                 self.errors.push(LexError {
                     kind: LexErrorKind::UnexpectedCharacter,
                     span: Span::new(start, self.cursor.pos()),
@@ -292,6 +369,14 @@ impl<'a> Lexer<'a> {
             .push(Token::new(kind, Span::new(start, self.cursor.pos())));
     }
 
+    // =========================================================================
+    // COMMENT SCANNERS
+    // =========================================================================
+
+    /// Scan a line comment starting with `//`.
+    ///
+    /// WHY: Doc comments (`///`) are preserved for documentation generation.
+    /// Regular comments are kept in the token stream for formatting tools.
     fn scan_line_comment(&mut self, start: u32) {
         // Check for doc comment (///)
         let is_doc = self.cursor.eat('/');
@@ -312,6 +397,10 @@ impl<'a> Lexer<'a> {
             .push(Token::new(kind, Span::new(start, self.cursor.pos())));
     }
 
+    /// Scan a hash comment starting with `#`.
+    ///
+    /// WHY: Supports shebang lines (`#!/usr/bin/env faber`) and Python-style
+    /// comments for familiarity.
     fn scan_hash_comment(&mut self, start: u32) {
         self.cursor.eat_while(|c| c != '\n');
 
@@ -322,18 +411,23 @@ impl<'a> Lexer<'a> {
             .push(Token::new(TokenKind::LineComment(sym), Span::new(start, self.cursor.pos())));
     }
 
+    /// Scan a block comment with nesting support.
+    ///
+    /// WHY: Nested comments allow commenting out code that already contains
+    /// comments without breaking. Unlike C, `/* /* */ */` is valid.
     fn scan_block_comment(&mut self, start: u32) {
         let mut depth = 1;
 
         while depth > 0 && !self.cursor.is_eof() {
             match self.cursor.advance() {
-                Some('/') if self.cursor.eat('*') => depth += 1,
-                Some('*') if self.cursor.eat('/') => depth -= 1,
+                Some('/') if self.cursor.eat('*') => depth += 1, // WHY: Nested comment opens
+                Some('*') if self.cursor.eat('/') => depth -= 1, // WHY: Comment closes
                 _ => {}
             }
         }
 
         if depth > 0 {
+            // WHY: Emit error but still create a token for recovery
             self.errors.push(LexError {
                 kind: LexErrorKind::UnterminatedComment,
                 span: Span::new(start, self.cursor.pos()),
@@ -349,9 +443,17 @@ impl<'a> Lexer<'a> {
             .push(Token::new(TokenKind::BlockComment(sym), Span::new(start, self.cursor.pos())));
     }
 
+    // =========================================================================
+    // STRING SCANNERS
+    // =========================================================================
+
+    /// Scan a string literal (single, double, or triple-quoted).
+    ///
+    /// WHY: Triple-quoted strings allow multi-line literals without escapes.
+    /// Only double quotes support triple-quoting to avoid ambiguity with
+    /// single-character literals in other languages.
     fn scan_string(&mut self, start: u32, quote: char) {
         // Check for triple-quoted string (only for double quotes)
-        // Use peek to avoid consuming quotes if not a triple
         let is_triple = quote == '"' && self.cursor.peek() == Some('"') && self.cursor.peek_next() == Some('"');
         if is_triple {
             self.cursor.advance();
@@ -369,6 +471,7 @@ impl<'a> Lexer<'a> {
                     break;
                 }
                 Some('\n') if !is_triple => {
+                    // WHY: Single-line strings can't contain newlines
                     self.errors.push(LexError {
                         kind: LexErrorKind::UnterminatedString,
                         span: Span::new(start, self.cursor.pos()),
@@ -377,12 +480,14 @@ impl<'a> Lexer<'a> {
                     break;
                 }
                 Some('\\') => {
+                    // WHY: Skip escaped character (escape processing happens in parser)
                     self.cursor.advance();
                     self.cursor.advance();
                 }
                 Some(c) if c == quote => {
                     self.cursor.advance();
                     if is_triple {
+                        // WHY: Need three consecutive quotes to close
                         if self.cursor.eat('"') && self.cursor.eat('"') {
                             break;
                         }
@@ -409,6 +514,11 @@ impl<'a> Lexer<'a> {
             .push(Token::new(TokenKind::String(sym), Span::new(start, self.cursor.pos())));
     }
 
+    /// Scan a template literal with embedded expressions.
+    ///
+    /// WHY: Template strings like `result: ${x + y}` are parsed as a single
+    /// token here, with interpolation handling deferred to the parser. This
+    /// keeps the lexer simple and avoids tokenizing embedded code twice.
     fn scan_template(&mut self, start: u32) {
         let mut terminated = false;
 
@@ -429,6 +539,7 @@ impl<'a> Lexer<'a> {
                 Some('$') if self.cursor.peek_next() == Some('{') => {
                     self.cursor.advance();
                     self.cursor.advance();
+                    // WHY: Track brace depth to find matching `}`
                     let mut depth = 1;
                     while depth > 0 && !self.cursor.is_eof() {
                         match self.cursor.advance() {
@@ -466,6 +577,18 @@ impl<'a> Lexer<'a> {
             .push(Token::new(TokenKind::TemplateString(sym), Span::new(start, self.cursor.pos())));
     }
 
+    // =========================================================================
+    // NUMBER SCANNER
+    // =========================================================================
+
+    /// Scan a numeric literal (integer or float, various radixes).
+    ///
+    /// WHY: Supports hex (0x), binary (0b), octal (0o) prefixes, underscores
+    /// for readability (1_000_000), floats with exponents (1.5e10), and stores
+    /// parsed values in the token to avoid re-parsing in later phases.
+    ///
+    /// EDGE: Invalid numbers (e.g., `0x`, `1e`) emit errors but still create
+    /// tokens to avoid cascading parser errors.
     fn scan_number(&mut self, start: u32, first: char) {
         // Check for radix prefix
         if first == '0' {
@@ -538,6 +661,7 @@ impl<'a> Lexer<'a> {
         // Decimal number
         self.cursor.eat_while(|c| c.is_ascii_digit() || c == '_');
 
+        // WHY: Check for `.` followed by digit to distinguish floats from ranges (1..10)
         let is_float = if self.cursor.peek() == Some('.') && self.cursor.peek_next().is_some_and(|c| c.is_ascii_digit())
         {
             self.cursor.advance(); // consume '.'
@@ -591,6 +715,15 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    // =========================================================================
+    // IDENTIFIER AND KEYWORD SCANNER
+    // =========================================================================
+
+    /// Scan an identifier or keyword.
+    ///
+    /// WHY: Uses Unicode XID identifiers (allowing non-ASCII names like `ελληνικά`)
+    /// and dispatches to mode-specific keyword tables to handle context-sensitive
+    /// reserved words.
     fn scan_identifier(&mut self, start: u32) {
         self.cursor.eat_while(is_ident_continue);
 
@@ -605,10 +738,22 @@ impl<'a> Lexer<'a> {
     }
 }
 
+// =============================================================================
+// IDENTIFIER PREDICATES
+// =============================================================================
+
+/// Check if character can start an identifier.
+///
+/// WHY: Uses Unicode XID_Start (allowing Greek, Cyrillic, CJK, etc.) instead
+/// of ASCII-only to support international codebases. Underscore is allowed for
+/// convention (e.g., `_unused`).
 fn is_ident_start(c: char) -> bool {
     unicode_ident::is_xid_start(c) || c == '_'
 }
 
+/// Check if character can continue an identifier.
+///
+/// WHY: XID_Continue includes digits (so `x1` is valid) and combining marks.
 fn is_ident_continue(c: char) -> bool {
     unicode_ident::is_xid_continue(c) || c == '_'
 }
@@ -617,7 +762,14 @@ fn is_ident_continue(c: char) -> bool {
 #[path = "scan_test.rs"]
 mod tests;
 
-/// Normal mode keywords - statements and expressions
+// =============================================================================
+// KEYWORD TABLES
+// =============================================================================
+
+/// Normal mode keywords - statements and expressions.
+///
+/// WHY: Main keyword table for Faber language. Returns keyword token for
+/// reserved words, otherwise interns the identifier.
 fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     match text {
         "_" => TokenKind::Underscore(interner.intern(text)),
@@ -785,7 +937,10 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     }
 }
 
-/// Annotation mode keywords - words after @
+/// Annotation mode keywords - words after `@`.
+///
+/// WHY: In annotation context, all identifiers are treated as names, not
+/// reserved keywords. This allows `@ verte` and `@ functio` without conflicts.
 fn annotation_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     if text == "_" {
         TokenKind::Underscore(interner.intern(text))
@@ -794,9 +949,10 @@ fn annotation_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind
     }
 }
 
-/// Section mode keywords - words after § (no reserved keywords)
+/// Section mode keywords - words after `§`.
+///
+/// WHY: Section names (like `§ functio`) are identifiers, not keywords.
 fn section_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
-    // Section keywords are not reserved - they become Ident tokens
     if text == "_" {
         TokenKind::Underscore(interner.intern(text))
     } else {

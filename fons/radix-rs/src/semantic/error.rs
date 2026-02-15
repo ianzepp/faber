@@ -1,4 +1,23 @@
 //! Semantic error types
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Defines error and warning types for all semantic analysis passes. Errors
+//! are structured to distinguish categories (name resolution, type checking,
+//! borrowing) and include optional help text for common mistakes.
+//!
+//! COMPILER PHASE: Semantic
+//! INPUT: N/A (these are output structures)
+//! OUTPUT: Returned by analyze() in SemanticResult
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Categorized Errors: SemanticErrorKind distinguishes error classes,
+//!   enabling targeted error handling and filtering
+//! - Warnings as Errors: WarningKind is embedded in SemanticErrorKind,
+//!   allowing warnings to flow through the same error collection infrastructure
+//! - Optional Help: with_help() method provides actionable suggestions without
+//!   cluttering the error structure for cases where help isn't available
 
 use crate::lexer::Span;
 

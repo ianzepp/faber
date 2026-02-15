@@ -1,4 +1,22 @@
-//! Rust expression generation
+//! Rust Expression Generation
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Generates Rust expressions from HIR, handling error propagation (`?` operator),
+//! async await (`.await`), reference creation (`&` and `&mut`), and control flow.
+//!
+//! COMPILER PHASE: Codegen (submodule)
+//! INPUT: HirExpr nodes
+//! OUTPUT: Rust expression source text
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Error propagation context: `?` operator inserted only in failable functions.
+//!   WHY: Rust requires `?` to appear only in functions returning Result/Option.
+//! - Suppress propagation in entry blocks: Entry code uses panic! for throws.
+//!   WHY: Faber's `incipit` has no error return type; crashes are appropriate.
+//! - Catch blocks suppress `?`: Errors are handled locally, not propagated.
+//!   WHY: `tempta { iace "err" } cape { ... }` should not add `?` to the throw.
 
 use super::super::CodeWriter;
 use super::types::type_to_rust;
@@ -6,6 +24,18 @@ use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
+/// Generate a Rust expression.
+///
+/// TRANSFORMS:
+///   salve(n)           -> salve(n) or salve(n)? (if failable)
+///   iace "err"         -> return Err(String::from("err")) or panic!("err")
+///   obj.method()       -> obj.method() or obj.method()? (if failable)
+///   cede future_expr   -> future_expr.await
+///   de expr            -> &expr
+///   in expr            -> &mut expr
+///
+/// TARGET: Rust-specific `?` operator for error propagation.
+/// EDGE: suppress_error_propagation=true in tempta catch blocks.
 pub fn generate_expr(
     codegen: &RustCodegen<'_>,
     expr: &HirExpr,
@@ -397,6 +427,14 @@ pub fn generate_expr(
     Ok(())
 }
 
+/// Generate a Rust literal.
+///
+/// TRANSFORMS:
+///   HirLiteral::String("hello") -> "hello" (with escaping)
+///   HirLiteral::Bool(true)      -> true
+///   HirLiteral::Nil             -> None
+///
+/// TARGET: Rust string escaping (\n, \t, \\, \").
 fn generate_literal(codegen: &RustCodegen<'_>, lit: &HirLiteral, w: &mut CodeWriter) {
     match lit {
         HirLiteral::Int(n) => {

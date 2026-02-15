@@ -1,16 +1,81 @@
-//! Expression parsing with precedence climbing
+//! Expression Parsing with Precedence Climbing
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! This module implements expression parsing using precedence climbing (also known
+//! as Pratt parsing). Each precedence level has its own parsing function, and
+//! higher-precedence operators are handled by lower recursive calls.
+//!
+//! COMPILER PHASE: Parsing
+//! INPUT: Token stream (via Parser methods)
+//! OUTPUT: Expression AST nodes (Expr with ExprKind variants)
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Precedence hierarchy: Encoded structurally via function call chain
+//! - Left-to-right association: Binary operators associate left via while loops
+//! - Postfix operations: Member access, calls, indexing handled in single postfix phase
+//! - Prefix vs infix disambiguation: Lookahead determines if keywords are unary operators
+//!
+//! PRECEDENCE LEVELS (lowest to highest)
+//! ======================================
+//! 1. Assignment (=, +=, -=, etc.)
+//! 2. Ternary (? :, sic secus)
+//! 3. Logical OR (||, aut, vel)
+//! 4. Logical AND (&&, et)
+//! 5. Equality (==, !=, ===, !==, est, non est)
+//! 6. Comparison (<, >, <=, >=, intra, inter)
+//! 7. Bitwise OR (|)
+//! 8. Bitwise XOR (^)
+//! 9. Bitwise AND (&)
+//! 10. Shift (sinistratum, dextratum)
+//! 11. Range (.., ante, usque)
+//! 12. Additive (+, -)
+//! 13. Multiplicative (*, /, %)
+//! 14. Unary (-, ~, non, nulla, etc.)
+//! 15. Postfix (calls, member access, indexing, casts)
+//! 16. Primary (literals, identifiers, arrays, objects, parenthesized)
+//!
+//! TRADE-OFFS
+//! ==========
+//! - Manual precedence vs operator table: Explicit functions make precedence
+//!   clear in code but require more boilerplate
+//! - Postfix unification: All postfix operations handled together prevents
+//!   precedence issues but makes the function longer
 
 use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
 use crate::syntax::*;
 
+// =============================================================================
+// EXPRESSION ENTRY POINT
+// =============================================================================
+
 impl Parser {
-    /// Parse an expression
+    /// Parse an expression.
+    ///
+    /// WHY: Entry point for expression parsing. Delegates to assignment level,
+    /// which is the lowest precedence operator.
+    ///
+    /// GRAMMAR:
+    ///   expression := assignment
     pub(super) fn parse_expression(&mut self) -> Result<Expr, ParseError> {
         self.parse_assignment()
     }
 
-    /// Assignment (lowest precedence)
+    // =============================================================================
+    // PRECEDENCE CLIMBING
+    // =============================================================================
+    // Each function handles one precedence level, calling the next-higher
+    // precedence level for its operands
+
+    /// Parse assignment expression (lowest precedence).
+    ///
+    /// GRAMMAR:
+    ///   assignment := ternary [assign-op assignment]
+    ///   assign-op := '=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|='
+    ///
+    /// WHY: Right-associative via recursion on RHS. Allows `a = b = c`.
     fn parse_assignment(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let expr = self.parse_ternary()?;
@@ -37,7 +102,13 @@ impl Parser {
         Ok(expr)
     }
 
-    /// Ternary conditional
+    /// Parse ternary conditional expression.
+    ///
+    /// GRAMMAR:
+    ///   ternary := or ['?' expr ':' ternary | 'sic' expr 'secus' ternary]
+    ///
+    /// WHY: Faber supports both C-style (? :) and keyword-style (sic secus) ternary.
+    /// Right-associative via recursion on else branch.
     fn parse_ternary(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let cond = self.parse_or()?;
@@ -363,7 +434,17 @@ impl Parser {
         Ok(left)
     }
 
-    /// Unary operators
+    /// Parse unary prefix operators.
+    ///
+    /// GRAMMAR:
+    ///   unary := unary-op unary | postfix
+    ///   unary-op := '-' | '~' | 'non' | 'nulla' | 'nonnulla' | 'verum' | 'falsum'
+    ///             | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede'
+    ///
+    /// WHY: Some keywords (verum, falsum, nihil) can be either unary operators or
+    /// literals. Lookahead disambiguates: if followed by an operand, it's an operator.
+    ///
+    /// EDGE: Special handling for 'novum' (new) and 'finge' (variant construction).
     fn parse_unary(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
 
@@ -472,7 +553,19 @@ impl Parser {
         self.can_start_expression(kind) && !matches!(kind, TokenKind::LBrace)
     }
 
-    /// Postfix operations (cast, call, member, index)
+    /// Parse postfix operations.
+    ///
+    /// GRAMMAR:
+    ///   postfix := primary (call | member | index | cast | optional-chain | conversion)*
+    ///   call := '(' args ')'
+    ///   member := '.' ident
+    ///   index := '[' expr ']'
+    ///   cast := 'qua' type | 'innatum' type
+    ///   optional-chain := '?.' ident | '?[' expr ']' | '?(' args ')'
+    ///   conversion := 'numeratum' | 'fractatum' | 'textatum' | 'bivalentum'
+    ///
+    /// WHY: All postfix operations share the same precedence, so they're handled
+    /// in a single loop. This prevents precedence ambiguities like `a.b()`.
     fn parse_postfix(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let mut expr = self.parse_primary()?;
@@ -597,7 +690,22 @@ impl Parser {
         Ok(expr)
     }
 
-    /// Primary expressions
+    // =============================================================================
+    // PRIMARY EXPRESSIONS
+    // =============================================================================
+
+    /// Parse primary expressions (highest precedence).
+    ///
+    /// GRAMMAR:
+    ///   primary := literal | ident | array | object | paren | closure | collection-dsl
+    ///   literal := integer | float | string | template-string | bool | nil
+    ///   array := '[' (expr | 'sparge' expr) (',' (expr | 'sparge' expr))* ']'
+    ///   object := '{' field (',' field)* '}'
+    ///   paren := '(' expr ')'
+    ///   closure := 'clausura' params ['->' type] ('{' block '}' | ':' expr)
+    ///
+    /// WHY: Primary expressions are the atoms of expression parsing. They can
+    /// stand alone or be composed via operators and postfix operations.
     fn parse_primary(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let id = self.next_id();
@@ -820,6 +928,19 @@ impl Parser {
         Ok(Expr { id, kind: ExprKind::Clausura(ClausuraExpr { params, ret, body }), span })
     }
 
+    // =============================================================================
+    // SPECIAL EXPRESSION FORMS
+    // =============================================================================
+
+    /// Parse collection DSL expression.
+    ///
+    /// GRAMMAR:
+    ///   ab-expr := 'ab' source [filter] (',' transform)*
+    ///   filter := ident | 'non' ident
+    ///   transform := 'prima' [expr] | 'ultima' [expr] | 'summa' [expr]
+    ///
+    /// WHY: Collection DSL provides a concise syntax for filtering and transforming
+    /// collections. Example: `ab users activus, prima` gets first active user.
     fn parse_ab_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         // Note: 'ab' token already consumed by caller in parse_primary
@@ -864,7 +985,12 @@ impl Parser {
         Ok(Expr { id, kind: ExprKind::Ab(AbExpr { source, filter, transforms }), span })
     }
 
-    /// Parse argument list (for calls)
+    /// Parse argument list for function calls.
+    ///
+    /// GRAMMAR:
+    ///   args := [['sparge'] expr (',' ['sparge'] expr)*]
+    ///
+    /// WHY: Arguments can use spread operator (sparge) to unpack arrays/objects.
     pub(super) fn parse_argument_list(&mut self) -> Result<Vec<Argument>, ParseError> {
         let mut args = Vec::new();
 

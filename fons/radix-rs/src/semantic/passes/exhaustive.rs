@@ -1,6 +1,31 @@
-//! Pass 5: Exhaustiveness checking
+//! Pass 6: Exhaustiveness checking
 //!
-//! Verifies that pattern matches cover all cases.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Verifies that discerne (match) expressions cover all possible values of the
+//! scrutinee type, preventing runtime match failures for enum variants.
+//!
+//! COMPILER PHASE: Semantic (Pass 6)
+//! INPUT: Typed HIR with pattern match expressions
+//! OUTPUT: Exhaustiveness errors for incomplete matches; unreachable pattern warnings
+//!
+//! WHY: Pattern matching on enums must be exhaustive to prevent runtime panics.
+//! Catching missing cases at compile time provides safety and better error
+//! messages than runtime failures.
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Conservative Checking: Requires wildcard or complete variant coverage;
+//!   does not analyze guard conditions (assumes guards may fail)
+//! - Duplicate Detection: Warns on unreachable patterns after catchall
+//! - Guarded Patterns: Patterns with guards are not considered exhaustive
+//!   (guard might fail), so a catchall is still required
+//!
+//! LIMITATIONS
+//! ===========
+//! - No constructor analysis: Does not check literal ranges or nested patterns
+//! - Guard blindness: Treats guarded patterns as non-exhaustive
+//! - Enum-only: Only checks enum variant coverage, not integers or strings
 
 use crate::hir::{
     DefId, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirItemKind, HirPattern, HirProgram, HirStmt,

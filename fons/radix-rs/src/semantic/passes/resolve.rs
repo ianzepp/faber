@@ -1,6 +1,45 @@
 //! Pass 2: Name resolution
 //!
-//! Resolves all identifiers to their definitions.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Resolves all identifier references to their definitions (DefIds) and builds
+//! nested scopes for block-level bindings. Validates that all names are defined
+//! and detects control-flow errors (break/continue outside loops).
+//!
+//! COMPILER PHASE: Semantic (Pass 2)
+//! INPUT: AST with collected top-level definitions from Pass 1
+//! OUTPUT: Resolver with complete scope hierarchy; resolution errors
+//!
+//! WHY: Name resolution must happen before lowering to HIR so that DefIds can
+//! be embedded in HirExpr::Path nodes. Type alias resolution requires special
+//! handling to avoid cycles (aliases may reference other aliases).
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Lexical Scoping: Scopes nest (function > block > loop > match) and lookups
+//!   search outward to parent scopes
+//! - Early Binding: Variables are bound in scopes as they are encountered,
+//!   allowing shadowing detection in later passes
+//! - Control Flow Validation: Checks that return/break/continue appear in
+//!   valid contexts (function/loop) during resolution
+//! - Type Alias Fixpoint: Iteratively resolves type aliases until all are
+//!   resolved or a cycle is detected
+//!
+//! TYPE ALIAS RESOLUTION
+//! =====================
+//! Type aliases may reference other aliases, requiring fixpoint iteration:
+//! 1. Collect all alias declarations
+//! 2. Try to lower each alias type expression
+//! 3. If unresolved dependency, defer to next iteration
+//! 4. Repeat until all resolved or no progress (cycle detected)
+//!
+//! WHY: Avoids cycle detection complexity; failed iteration indicates cycle.
+//!
+//! EDGE CASES
+//! ==========
+//! - Return outside function: Detected during statement resolution
+//! - Binding patterns: Array destructuring creates multiple scope bindings
+//! - Imports: Register the imported name (or alias) in current scope
 
 use crate::hir::DefId;
 use crate::lexer::Interner;

@@ -1,11 +1,59 @@
-//! Statement parsing
+//! Control Flow and Statement Parsing
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! This module handles parsing of Faber's control flow constructs (conditionals,
+//! loops, pattern matching), transfer statements (return, break, continue, throw),
+//! and special statement forms (try-catch, assertions, I/O, resource management).
+//!
+//! COMPILER PHASE: Parsing
+//! INPUT: Token stream (via Parser methods)
+//! OUTPUT: Statement AST nodes (StmtKind variants)
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Inline return syntax: Statements like `si` support `reddit expr` as shorthand
+//! - Error attachment: Many statements support `cape` (catch) clauses for error handling
+//! - Expression-oriented: Statement bodies can be blocks, ergo (single stmt), or inline returns
+//! - Pattern exhaustiveness: `discerne omnia` requires matching all variants
+//!
+//! GRAMMAR COVERAGE
+//! ================
+//! This module implements parsers for:
+//! - Conditionals: si/sin/secus (if/else-if/else)
+//! - Loops: dum (while), itera (for), fac...dum (do-while)
+//! - Pattern matching: discerne (match), elige (switch)
+//! - Guards: custodi (multi-branch early return)
+//! - Transfers: redde (return), rumpe (break), perge (continue), iace (throw), mori (panic)
+//! - Error handling: tempta/cape/demum (try/catch/finally)
+//! - Assertions: adfirma (assert)
+//! - I/O: scribe/vide/mone (print/debug/warn)
+//! - Entry points: incipit/incipiet (main/async main)
+//! - Resources: cura (resource management)
+//! - Endpoints: ad (HTTP endpoint definition)
+//! - Destructuring: ex (extract/destructure)
 
 use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::{Span, Symbol, TokenKind};
 use crate::syntax::*;
 
+// =============================================================================
+// CONDITIONAL STATEMENTS
+// =============================================================================
+
 impl Parser {
-    /// Parse si statement
+    /// Parse if statement.
+    ///
+    /// GRAMMAR:
+    ///   si-stmt := 'si' expr if-body ['cape' ident block] ['secus' secus-clause | 'sin' si-stmt]
+    ///   if-body := block | 'ergo' stmt | inline-return
+    ///   inline-return := 'reddit' expr | 'iacit' expr | 'moritor' expr | 'tacet'
+    ///
+    /// WHY: Faber supports multiple if-body styles for conciseness. Block style for
+    /// multi-statement bodies, 'ergo' for single statements, inline returns for
+    /// early returns without braces.
+    ///
+    /// ERROR HANDLING: Optional 'cape' clause catches errors thrown in condition or body.
     pub(super) fn parse_si_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Si, "expected 'si'")?;
 
@@ -97,7 +145,16 @@ impl Parser {
         }
     }
 
-    /// Parse while loop
+    // =============================================================================
+    // LOOP STATEMENTS
+    // =============================================================================
+
+    /// Parse while loop.
+    ///
+    /// GRAMMAR:
+    ///   dum-stmt := 'dum' expr if-body ['cape' ident block]
+    ///
+    /// WHY: Standard while loop with optional error handling via 'cape'.
     pub(super) fn parse_dum_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Dum, "expected 'dum'")?;
 
@@ -108,7 +165,16 @@ impl Parser {
         Ok(StmtKind::Dum(DumStmt { cond, body, catch }))
     }
 
-    /// Parse iteration loop
+    /// Parse iteration loop (for-each).
+    ///
+    /// GRAMMAR:
+    ///   itera-stmt := 'itera' mode expr ('fixum'|'varia') ident if-body ['cape' ident block]
+    ///   mode := 'ex' | 'de' | 'pro'
+    ///
+    /// WHY: Ownership modes (ex/de/pro) control iteration semantics:
+    /// - 'ex' moves items out of collection
+    /// - 'de' borrows items immutably
+    /// - 'pro' enumerates (index/value pairs)
     pub(super) fn parse_itera_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Itera, "expected 'itera'")?;
 
@@ -139,7 +205,19 @@ impl Parser {
         Ok(StmtKind::Itera(IteraStmt { mode, iterable, mutability, binding, body, catch }))
     }
 
-    /// Parse switch statement
+    // =============================================================================
+    // PATTERN MATCHING AND DISPATCH
+    // =============================================================================
+
+    /// Parse switch statement (value-based dispatch).
+    ///
+    /// GRAMMAR:
+    ///   elige-stmt := 'elige' expr '{' casu-case* [ceterum-default] '}' ['cape' ident block]
+    ///   casu-case := 'casu' expr if-body
+    ///   ceterum-default := 'ceterum' if-body
+    ///
+    /// WHY: Simple value-based dispatch without destructuring. Cases compared via
+    /// equality (not pattern matching). Use 'discerne' for pattern-based matching.
     pub(super) fn parse_elige_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Elige, "expected 'elige'")?;
 
@@ -175,7 +253,15 @@ impl Parser {
         Ok(StmtKind::Elige(EligeStmt { expr, cases, default, catch }))
     }
 
-    /// Parse match statement
+    /// Parse match statement (pattern-based dispatch).
+    ///
+    /// GRAMMAR:
+    ///   discerne-stmt := 'discerne' ['omnia'] expr (',' expr)* '{' arm* [default] '}'
+    ///   arm := 'casu' pattern (',' pattern)* if-body
+    ///
+    /// WHY: Pattern matching with destructuring and binding. 'omnia' requires
+    /// exhaustive matching (all variants covered). Supports multiple subjects
+    /// for tuple-like matching.
     pub(super) fn parse_discerne_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Discerne, "expected 'discerne'")?;
 
@@ -222,7 +308,13 @@ impl Parser {
         Ok(StmtKind::Discerne(DiscerneStmt { exhaustive, subjects, arms, default }))
     }
 
-    /// Parse guard statement
+    /// Parse guard statement (multi-branch early return).
+    ///
+    /// GRAMMAR:
+    ///   custodi-stmt := 'custodi' '{' ('si' expr if-body)+ '}'
+    ///
+    /// WHY: Guard clauses for early returns. Similar to Swift's guard statement.
+    /// Typically used with inline return bodies for validation sequences.
     pub(super) fn parse_custodi_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Custodi, "expected 'custodi'")?;
         self.expect(&TokenKind::LBrace, "expected '{'")?;
@@ -243,7 +335,13 @@ impl Parser {
         Ok(StmtKind::Custodi(CustodiStmt { clauses }))
     }
 
-    /// Parse fac statement
+    /// Parse do-while loop.
+    ///
+    /// GRAMMAR:
+    ///   fac-stmt := 'fac' block ['cape' ident block] ['dum' expr]
+    ///
+    /// WHY: Body executes at least once, optional while condition controls repetition.
+    /// Without 'dum' clause, executes exactly once (equivalent to bare block with error handling).
     pub(super) fn parse_fac_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Fac, "expected 'fac'")?;
 
@@ -259,7 +357,16 @@ impl Parser {
         Ok(StmtKind::Fac(FacStmt { body, catch, while_ }))
     }
 
-    /// Parse return statement
+    // =============================================================================
+    // TRANSFER STATEMENTS
+    // =============================================================================
+
+    /// Parse return statement.
+    ///
+    /// GRAMMAR:
+    ///   redde-stmt := 'redde' [expr]
+    ///
+    /// WHY: Returns a value from the current function. Optional value for void functions.
     pub(super) fn parse_redde_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Redde, "expected 'redde'")?;
 
@@ -301,7 +408,17 @@ impl Parser {
         Ok(StmtKind::Mori(MoriStmt { value }))
     }
 
-    /// Parse try statement
+    // =============================================================================
+    // ERROR HANDLING
+    // =============================================================================
+
+    /// Parse try-catch-finally statement.
+    ///
+    /// GRAMMAR:
+    ///   tempta-stmt := 'tempta' block ['cape' ident block] ['demum' block]
+    ///
+    /// WHY: Structured error handling. 'cape' binds error value, 'demum' runs
+    /// unconditionally (like finally). Both are optional.
     pub(super) fn parse_tempta_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Tempta, "expected 'tempta'")?;
 
@@ -317,7 +434,13 @@ impl Parser {
         Ok(StmtKind::Tempta(TemptaStmt { body, catch, finally }))
     }
 
-    /// Parse assert statement
+    /// Parse assert statement.
+    ///
+    /// GRAMMAR:
+    ///   adfirma-stmt := 'adfirma' expr [',' expr]
+    ///
+    /// WHY: Runtime assertions for invariant checking. Optional message expression
+    /// provides diagnostic information on failure.
     pub(super) fn parse_adfirma_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Adfirma, "expected 'adfirma'")?;
 
@@ -332,7 +455,19 @@ impl Parser {
         Ok(StmtKind::Adfirma(AdfirmaStmt { cond, message }))
     }
 
-    /// Parse output statement
+    // =============================================================================
+    // I/O AND DEBUGGING
+    // =============================================================================
+
+    /// Parse output statement.
+    ///
+    /// GRAMMAR:
+    ///   scribe-stmt := ('scribe'|'vide'|'mone') expr (',' expr)*
+    ///
+    /// WHY: Built-in output statements for different severity levels:
+    /// - 'scribe' (println) - standard output
+    /// - 'vide' (debug) - debug output
+    /// - 'mone' (warn) - warning output
     pub(super) fn parse_scribe_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let kind = if self.eat_keyword(TokenKind::Scribe) {
             ScribeKind::Scribe
@@ -355,7 +490,17 @@ impl Parser {
         Ok(StmtKind::Scribe(ScribeStmt { kind, args }))
     }
 
-    /// Parse entry statement
+    // =============================================================================
+    // SPECIAL STATEMENTS
+    // =============================================================================
+
+    /// Parse entry point declaration.
+    ///
+    /// GRAMMAR:
+    ///   incipit-stmt := ('incipit'|'incipiet') ['argumenta' ident] ['exitus' expr] if-body
+    ///
+    /// WHY: Program entry points. 'incipit' for sync main, 'incipiet' for async main.
+    /// Optional 'argumenta' binds command-line args, 'exitus' sets exit code.
     pub(super) fn parse_incipit_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let is_async = if self.eat_keyword(TokenKind::Incipit) {
             false
@@ -382,7 +527,16 @@ impl Parser {
         Ok(StmtKind::Incipit(IncipitStmt { is_async, body, args, exitus }))
     }
 
-    /// Parse resource statement
+    /// Parse resource management statement.
+    ///
+    /// GRAMMAR:
+    ///   cura-stmt := 'cura' ['arena'] [expr] ('fixum'|'varia') [type] ident block ['cape' ident block]
+    ///
+    /// WHY: Resource management with automatic cleanup (like Rust's Drop or C++'s RAII).
+    /// 'arena' creates arena allocator for block scope. Resource bound to identifier,
+    /// cleanup happens when block exits.
+    ///
+    /// EDGE: Anonymous scopes allowed: `cura arena { ... }` without binding.
     pub(super) fn parse_cura_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Cura, "expected 'cura'")?;
 
@@ -439,7 +593,13 @@ impl Parser {
         Ok(StmtKind::Cura(CuraStmt { kind, init, mutability, ty, binding, body, catch }))
     }
 
-    /// Parse endpoint statement
+    /// Parse HTTP endpoint declaration.
+    ///
+    /// GRAMMAR:
+    ///   ad-stmt := 'ad' string '(' args ')' ['->' [type] 'pro' ident ['ut' ident]] [block] ['cape' ident block]
+    ///
+    /// WHY: Declares HTTP endpoints for web services. Path string supports templates,
+    /// args bind to request parameters, optional binding captures response.
     pub(super) fn parse_ad_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Ad, "expected 'ad'")?;
 
@@ -462,7 +622,14 @@ impl Parser {
         Ok(StmtKind::Ad(AdStmt { path, args, binding, body, catch }))
     }
 
-    /// Parse extract statement
+    /// Parse destructuring statement.
+    ///
+    /// GRAMMAR:
+    ///   ex-stmt := 'ex' expr ('fixum'|'varia') field (',' field)* ['ceteri' ident]
+    ///   field := ident ['ut' ident]
+    ///
+    /// WHY: Extracts fields from objects/structs into local variables. Similar to
+    /// JavaScript destructuring. 'ceteri' (rest) captures remaining fields.
     pub(super) fn parse_extract_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Ex, "expected 'ex'")?;
@@ -535,7 +702,13 @@ impl Parser {
         Ok(StmtKind::Expr(ExprStmt { expr }))
     }
 
-    /// Try to parse catch clause
+    /// Try to parse optional catch clause.
+    ///
+    /// GRAMMAR:
+    ///   cape-clause := 'cape' ident block
+    ///
+    /// WHY: Many statements support optional error handling via 'cape'. This helper
+    /// is shared across statement parsers to maintain consistent syntax.
     fn try_parse_cape_stmt(&mut self) -> Result<Option<CapeClause>, ParseError> {
         if !self.eat_keyword(TokenKind::Cape) {
             return Ok(None);

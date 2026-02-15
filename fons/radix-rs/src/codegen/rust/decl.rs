@@ -1,4 +1,23 @@
-//! Rust declaration generation
+//! Rust Declaration Generation
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Generates Rust item declarations (functions, structs, enums, traits, type aliases,
+//! constants) from HIR. Handles error propagation wrapping, reference mode translation,
+//! and async function generation.
+//!
+//! COMPILER PHASE: Codegen (submodule)
+//! INPUT: HIR items (HirFunction, HirStruct, etc.)
+//! OUTPUT: Rust declaration source text
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Failable functions return Result<T, String>.
+//!   WHY: Faber's `iace` requires error propagation; String is simple error type.
+//! - Reference modes map to Rust borrow syntax.
+//!   WHY: de -> &T, in -> &mut T, ex -> T (moved).
+//! - Async functions use `async fn`.
+//!   WHY: Direct mapping to Rust's async/await.
 
 use super::super::CodeWriter;
 use super::types::type_to_rust;
@@ -6,6 +25,14 @@ use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
+/// Generate a Rust function declaration.
+///
+/// TRANSFORMS:
+///   functio salve(textus n) -> fn salve(n: String)
+///   Failable function      -> fn f() -> Result<T, String>
+///   futura functio f()     -> async fn f()
+///
+/// TARGET: Rust-specific Result wrapping for failable functions.
 pub fn generate_function(
     codegen: &RustCodegen<'_>,
     def_id: DefId,
@@ -74,6 +101,13 @@ pub fn generate_function(
     Ok(())
 }
 
+/// Generate a Rust struct declaration.
+///
+/// TRANSFORMS:
+///   genus Person { textus name } -> pub struct Person { pub name: String }
+///
+/// TARGET: All fields are pub (Faber has no visibility modifiers).
+/// NOTE: Static fields are skipped (not supported in Rust structs).
 pub fn generate_struct(
     codegen: &RustCodegen<'_>,
     s: &HirStruct,
@@ -125,6 +159,13 @@ pub fn generate_struct(
     Ok(())
 }
 
+/// Generate a Rust enum declaration.
+///
+/// TRANSFORMS:
+///   discretio Result { Ok { textus val }, Err { textus msg } }
+///   -> pub enum Result { Ok { val: String }, Err { msg: String } }
+///
+/// TARGET: Rust enum with struct-like variants (named fields).
 pub fn generate_enum(
     codegen: &RustCodegen<'_>,
     e: &HirEnum,
@@ -169,6 +210,12 @@ pub fn generate_enum(
     Ok(())
 }
 
+/// Generate a Rust trait declaration.
+///
+/// TRANSFORMS:
+///   pactum Display { functio display() } -> pub trait Display { fn display(&self); }
+///
+/// TARGET: Rust trait with &self receiver (Faber interfaces always have implicit self).
 pub fn generate_trait(
     codegen: &RustCodegen<'_>,
     i: &HirInterface,

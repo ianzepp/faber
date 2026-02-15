@@ -1,4 +1,38 @@
 //! Scope and symbol table
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Implements lexical scoping and symbol resolution for name binding. The
+//! Resolver maintains a stack of scopes and a flat table of symbols (DefId → Symbol),
+//! enabling efficient name lookup and definition tracking.
+//!
+//! COMPILER PHASE: Semantic (used in Passes 1-2)
+//! INPUT: Symbol names from AST
+//! OUTPUT: DefId mappings for name resolution
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Separate Scope Tree and Symbol Table: Scopes contain name → DefId mappings;
+//!   symbols table contains DefId → Symbol metadata. This allows efficient
+//!   lookups without duplicating symbol information.
+//! - Lexical Scope Stack: Scopes nest (Global > Module > Function > Block);
+//!   lookups search parent scopes until found or Global reached
+//! - Scope Kinds: Distinguishes scope types (Function, Loop) for control-flow
+//!   validation (e.g., break only in Loop scopes)
+//!
+//! INVARIANTS
+//! ==========
+//! INV-1: Every DefId in a scope's symbols map has corresponding Symbol in symbols table
+//! INV-2: Scopes form a tree with Global as root
+//! INV-3: current_scope is always a valid ScopeId in scopes vector
+//!
+//! SCOPE KINDS
+//! ===========
+//! - Global: Module-level scope for top-level declarations
+//! - Function: Function scope; stops break/continue/return validation
+//! - Block: Lexical block scope for local bindings
+//! - Loop: Loop scope; allows break/continue
+//! - Match: Pattern match scope for arm bindings
 
 use super::types::TypeId;
 use crate::hir::DefId;

@@ -1,7 +1,58 @@
 //! AST to HIR lowering
 //!
-//! Transforms the AST into a simplified HIR representation.
-//! Uses Latin function names matching Faber keywords.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Transforms the resolved AST into High-Level Intermediate Representation (HIR),
+//! desugaring syntax constructs and embedding resolved DefIds. Operates after
+//! name resolution (Pass 2) and before type checking (Pass 4).
+//!
+//! COMPILER PHASE: HIR Lowering (Pass 3)
+//! INPUT: AST with resolved names from Resolver
+//! OUTPUT: HirProgram with DefIds embedded; lowering errors
+//!
+//! WHY: HIR eliminates syntactic sugar (ergo, reddit, inline returns) and
+//! normalizes constructs (method calls, implicit returns) so later passes
+//! (type checking, borrow analysis) work with simpler structures.
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Explicit Returns: ergo/reddit syntax becomes explicit HirStmtKind::Redde
+//!   for simpler control-flow analysis
+//! - Method Normalization: `obj.method()` becomes HirExprKind::MethodCall,
+//!   distinguishing from field access for type checking
+//! - Synthetic DefIds: Loop bindings and catch blocks get fresh DefIds for
+//!   type checker to attach types
+//! - Error Recovery: Invalid constructs become HirExprKind::Error to allow
+//!   continued analysis rather than aborting
+//!
+//! LOWERING SCOPES
+//! ===============
+//! The lowerer maintains its own scope stack (local_scopes) separate from the
+//! Resolver because:
+//! - Resolver scopes track global/module-level definitions
+//! - Lowerer scopes track function-local bindings (parameters, locals)
+//! - Synthetic DefIds for patterns need local tracking
+//!
+//! WHY: Function parameters and pattern bindings aren't in the global Resolver
+//! scope, so the lowerer creates and tracks them locally.
+//!
+//! ENTRY POINT HANDLING
+//! ====================
+//! Top-level statements are separated into:
+//! - HirProgram::items - Declarations (functio, gens, ordo, etc.)
+//! - HirProgram::entry - Executable statements (from incipit or implicit)
+//!
+//! WHY: Matches target language structure (Rust's items vs main function).
+//!
+//! NAMING CONVENTION
+//! =================
+//! Lowering functions use Latin names matching Faber keywords:
+//! - lower_functio() for function declarations
+//! - lower_gens() for class declarations (gens)
+//! - lower_ordo() for enum declarations (ordo)
+//!
+//! WHY: Makes it clear which AST construct is being lowered by reading the
+//! function name.
 
 mod decl;
 mod expr;

@@ -1,9 +1,29 @@
-//! Compilation session
+//! Compilation Session Management
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Manages compiler configuration and session state. The Config struct holds
+//! user-specified compilation options (target language, strict mode, stdlib path),
+//! and the Session struct tracks state during compilation.
+//!
+//! COMPILER PHASE: Driver (infrastructure)
+//! INPUT: User-specified configuration options
+//! OUTPUT: Config and Session structs for use by compilation pipeline
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Builder pattern for Config: Chainable methods for ergonomic configuration.
+//!   WHY: Config::new().with_target(Rust).strict() is more readable than constructors.
+//! - Minimal session state: Session currently holds only Config.
+//!   WHY: Future expansion may add caching, incremental state, or diagnostics aggregation.
 
 use crate::codegen::Target;
 use std::path::PathBuf;
 
-/// Compilation configuration
+/// Compilation configuration.
+///
+/// WHY: Centralized configuration enables future expansion (optimization levels,
+/// feature flags) without changing function signatures throughout the compiler.
 #[derive(Debug, Clone)]
 pub struct Config {
     /// Target language
@@ -46,7 +66,10 @@ impl Config {
     }
 }
 
-/// Compilation session state
+/// Compilation session state.
+///
+/// WHY: Encapsulates mutable state that may grow in the future (cached modules,
+/// incremental compilation data, diagnostics buffer).
 pub struct Session {
     pub config: Config,
 }

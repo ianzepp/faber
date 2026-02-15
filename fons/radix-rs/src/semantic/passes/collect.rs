@@ -1,8 +1,34 @@
 //! Pass 1: Collect declarations
 //!
-//! Walks the AST and registers all top-level declarations,
-//! creating DefIds for each named item. Does not look inside
-//! function bodies.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! First pass of semantic analysis that scans the AST and registers all
+//! top-level declarations in the symbol table. Creates DefIds for named items
+//! without analyzing bodies or resolving references.
+//!
+//! COMPILER PHASE: Semantic (Pass 1)
+//! INPUT: AST (syntax::Program) from parser
+//! OUTPUT: Populated Resolver symbol table with DefIds; errors for duplicates
+//!
+//! WHY: Forward references are allowed in Faber (unlike C), so declarations
+//! must be collected before resolution. This enables `functio a() { b() }` to
+//! reference `functio b()` defined later in the file.
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Shallow Scan: Only processes top-level declarations; function bodies are
+//!   analyzed in the resolve pass after all names are available
+//! - Duplicate Detection: Immediately detects duplicate definitions at the
+//!   global scope, preventing ambiguous references in later passes
+//! - Variant Registration: Enum and union variants are registered as separate
+//!   definitions, enabling pattern matching resolution
+//!
+//! EDGE CASES
+//! ==========
+//! - Top-level variables: Must have identifier bindings (not patterns) since
+//!   they become module-level constants
+//! - Imports: Register the bound name (alias if provided, otherwise original
+//!   name) for subsequent resolution
 
 use crate::semantic::{Resolver, SemanticError, SemanticErrorKind, Symbol, SymbolKind, TypeTable};
 use crate::syntax::{Program, StmtKind};

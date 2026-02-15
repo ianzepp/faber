@@ -1,29 +1,83 @@
 //! HIR node definitions
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Defines the data structures for the High-Level Intermediate Representation.
+//! Each HIR node represents a resolved, desugared program construct with all
+//! names resolved to DefIds and types (when available) resolved to TypeIds.
+//!
+//! COMPILER PHASE: HIR Lowering
+//! INPUT: N/A (these are the output structures)
+//! OUTPUT: Used by semantic analysis, type checking, and code generation
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Two-Level Identification: DefId identifies declarations; HirId identifies
+//!   all nodes for type checking results and annotations
+//! - Optional Types: Type information (TypeId) is None during lowering and
+//!   filled in by the type checker
+//! - Span Preservation: Every node includes a Span for error reporting in
+//!   later passes (type checking, borrow analysis, codegen)
 
 use crate::lexer::{Span, Symbol};
 use crate::semantic::TypeId;
 
-/// Definition ID - uniquely identifies a named item
+// =============================================================================
+// IDENTIFIERS
+// =============================================================================
+//
+// DefId and HirId serve different purposes:
+// - DefId: Identifies definitions (function, struct, variable) for name resolution
+// - HirId: Identifies every HIR node for type checker to attach type information
+
+/// Definition ID uniquely identifies a named declaration.
+///
+/// WHY: Separates the concept of "what is this definition" from "what is this
+/// node". A single function definition has one DefId but many HirIds (one per
+/// expression, statement, etc.).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct DefId(pub u32);
 
-/// HIR node ID
+/// HIR node ID uniquely identifies any HIR node.
+///
+/// WHY: Type checker needs to attach type information to every expression,
+/// not just definitions. HirId provides a unique identifier for this mapping.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct HirId(pub u32);
 
-/// HIR program
+// =============================================================================
+// PROGRAM STRUCTURE
+// =============================================================================
+//
+// The HIR program separates top-level items from entry point code.
+// WHY: Matches target language structure (Rust, Go) where items are declared
+// separately from the main entry point.
+
+/// HIR program containing all top-level items and optional entry point.
+///
+/// WHY: Separates module-level declarations from entry point execution,
+/// matching the structure of target languages like Rust (items vs main fn).
 #[derive(Debug)]
 pub struct HirProgram {
+    /// Top-level declarations (functions, structs, enums, etc.)
     pub items: Vec<HirItem>,
+    /// Entry point block (from incipit or implicit top-level statements)
     pub entry: Option<HirBlock>,
 }
 
-/// Top-level item
+/// Top-level declaration item.
+///
+/// WHY: All top-level constructs share common metadata (id, def_id, span)
+/// but have different kinds. This structure avoids duplication.
 #[derive(Debug)]
 pub struct HirItem {
+    /// Node identifier for type checker annotations
     pub id: HirId,
+    /// Definition identifier for name resolution
     pub def_id: DefId,
+    /// The specific kind of item (function, struct, etc.)
     pub kind: HirItemKind,
+    /// Source location for error reporting
     pub span: Span,
 }
 
@@ -38,15 +92,22 @@ pub enum HirItemKind {
     Import(HirImport),
 }
 
-/// Function definition
+/// Function definition with signature and optional body.
+///
+/// WHY: Functions may be interface methods (no body) or concrete implementations.
+/// Optional ret_ty allows type inference for return types.
 #[derive(Debug)]
 pub struct HirFunction {
     pub name: Symbol,
     pub type_params: Vec<HirTypeParam>,
     pub params: Vec<HirParam>,
+    /// Return type; None until type checker infers it
     pub ret_ty: Option<TypeId>,
+    /// Function body; None for interface methods
     pub body: Option<HirBlock>,
+    /// Whether function is async (futura)
     pub is_async: bool,
+    /// Whether function is a generator (not yet supported)
     pub is_generator: bool,
 }
 

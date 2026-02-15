@@ -1,9 +1,39 @@
-//! Rust type generation
+//! Rust Type Generation
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Converts Faber type representations (TypeId) to Rust type syntax. Handles
+//! primitives, collections, references, structs, enums, traits, and function types.
+//!
+//! COMPILER PHASE: Codegen (submodule)
+//! INPUT: TypeId from TypeTable
+//! OUTPUT: Rust type syntax string
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Primitive mapping: Faber types map to closest Rust equivalents.
+//!   WHY: numerus -> i64, textus -> String, bivalens -> bool.
+//! - Collection mapping: lista -> Vec, tabula -> HashMap, copia -> HashSet.
+//!   WHY: Rust standard library collections are idiomatic.
+//! - Reference translation: de T -> &T, in T -> &mut T.
+//!   WHY: Direct mapping of Faber borrow modes to Rust references.
 
 use super::RustCodegen;
 use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
 
-/// Convert a Faber type to Rust syntax
+/// Convert a Faber type to Rust syntax.
+///
+/// TRANSFORMS:
+///   numerus           -> i64
+///   textus            -> String
+///   lista<T>          -> Vec<T>
+///   tabula<K, V>      -> HashMap<K, V>
+///   de T              -> &T
+///   in T              -> &mut T
+///   si T              -> Option<T>
+///   futura functio    -> impl Future<Output = T>
+///
+/// TARGET: Rust-specific type mappings; ignotum -> Box<dyn Any>.
 pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTable) -> String {
     let ty = types.get(type_id);
 
@@ -92,6 +122,20 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
     }
 }
 
+/// Map Faber primitive types to Rust types.
+///
+/// TRANSFORMS:
+///   Textus   -> String
+///   Numerus  -> i64
+///   Fractus  -> f64
+///   Bivalens -> bool
+///   Nihil    -> ()
+///   Vacuum   -> ()
+///   Numquam  -> ! (never type)
+///   Ignotum  -> Box<dyn Any>
+///   Octeti   -> Vec<u8>
+///
+/// TARGET: Rust primitive and standard library types.
 fn primitive_to_rust(prim: Primitive) -> String {
     match prim {
         Primitive::Textus => "String",

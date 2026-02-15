@@ -1,6 +1,23 @@
 //! Statement lowering
 //!
-//! Lowers AST statements to HIR statements.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Transforms AST statements into HIR statements, handling control flow
+//! constructs (si, dum, itera, discerne) and desugaring ergo/reddit syntax.
+//!
+//! COMPILER PHASE: HIR Lowering (submodule)
+//! INPUT: AST statements (syntax::Stmt)
+//! OUTPUT: HIR statements (HirStmt)
+//!
+//! CONTROL FLOW DESUGARING
+//! =======================
+//! - ergo: Single statement becomes block with one statement
+//! - reddit: Inline return becomes explicit HirStmtKind::Redde
+//! - custodi: Multiple clauses desugar to nested si expressions
+//! - discerne: Pattern matching with scope management for bindings
+//!
+//! WHY: Explicit returns and blocks simplify control-flow analysis in later
+//! passes (type checking doesn't need to handle multiple return syntaxes).
 
 use super::{pattern, HirBlock, HirExpr, HirExprKind, HirStmt, HirStmtKind, Lowerer};
 use crate::hir::{HirCasuArm, HirPattern};

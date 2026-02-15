@@ -1,6 +1,28 @@
 //! Declaration lowering
 //!
-//! Lowers AST declarations to HIR items.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Transforms AST declarations (functio, gens, ordo, etc.) into HIR items,
+//! resolving type references and creating DefIds for members.
+//!
+//! COMPILER PHASE: HIR Lowering (submodule)
+//! INPUT: AST declarations (syntax::FuncDecl, ClassDecl, etc.)
+//! OUTPUT: HIR items (HirFunction, HirStruct, etc.)
+//!
+//! WHY: Separates declaration lowering from expression/statement lowering,
+//! keeping the codebase modular.
+//!
+//! MEMBER RESOLUTION
+//! =================
+//! - Struct fields: Lower types and initializers
+//! - Methods: Create fresh DefIds and lower function bodies with parameter scope
+//! - Enum variants: Register variant DefIds for pattern matching
+//!
+//! EXTENDS/IMPLEMENTS
+//! ==================
+//! Class inheritance (extends) and interface implementation (implements) are
+//! resolved by looking up names in the Resolver. Missing types emit errors
+//! but continue lowering to allow further analysis.
 
 use super::Lowerer;
 use crate::hir::{

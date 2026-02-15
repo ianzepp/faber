@@ -1,6 +1,36 @@
-//! Pass 6: Linting
+//! Pass 7: Linting
 //!
-//! Produces warnings for common issues.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Detects code quality issues and suspicious patterns that are not errors
+//! but may indicate bugs or suboptimal code. Emits warnings without preventing
+//! compilation.
+//!
+//! COMPILER PHASE: Semantic (Pass 7, final)
+//! INPUT: Fully analyzed HIR with types and borrow information
+//! OUTPUT: Warnings for unused bindings, unnecessary casts, unreachable code
+//!
+//! WHY: Catches common mistakes (unused variables, shadowing) and provides
+//! actionable feedback to improve code quality without forcing corrections.
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Usage Tracking: Collects all definitions and tracks DefId references to
+//!   detect unused bindings (variables, functions, imports)
+//! - Shadowing as Error: Unlike warnings, shadowing is a hard error (from issue
+//!   triage) to prevent confusion with similarly named variables
+//! - Explicit Ignotum Warning: Warns on manual `ignotum` annotations since they
+//!   disable type checking, which is usually unintentional
+//! - Unreachable Code Detection: Tracks whether statements can be reached after
+//!   return/break/continue
+//!
+//! LINTS
+//! =====
+//! - Unused variable/function/import
+//! - Unreachable code after return/break/continue
+//! - Unnecessary cast (target type equals source type)
+//! - Explicit ignotum annotation (disables type checking)
+//! - Shadowed variable (hard error, not warning)
 
 use crate::hir::{
     HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirItem, HirItemKind, HirLocal, HirProgram,

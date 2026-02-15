@@ -1,11 +1,49 @@
 //! Abstract Syntax Tree node definitions
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Defines the complete AST structure for Faber programs. Each node carries
+//! its source span for error reporting and a unique ID for semantic analysis.
+//! The AST is an untyped, direct representation of the concrete syntax.
+//!
+//! COMPILER PHASE: Parsing (data structures)
+//! INPUT: Token stream (consumed by parser)
+//! OUTPUT: AST consumed by semantic analysis and HIR lowering
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Faithful to source: AST preserves syntactic structure, including optional
+//!   punctuation and formatting hints, for error messages and code formatting
+//! - NodeId assignment: Every statement and expression gets a unique ID for
+//!   def-use chains and type inference results
+//! - Span tracking: All nodes carry their source location for diagnostics
+//! - Annotation preservation: Annotations attach to declarations rather than
+//!   being stored separately, making them easier to process during lowering
+//!
+//! ORGANIZATION
+//! ============
+//! - Statements (Stmt, StmtKind): Top-level and block-level declarations
+//! - Expressions (Expr, ExprKind): Value-producing constructs
+//! - Types (TypeExpr): Type annotations in source
+//! - Annotations: Metadata for code generation and compiler hints
 
 use crate::lexer::{Span, Symbol, Token};
 
-/// Unique node identifier
+// =============================================================================
+// CORE TYPES
+// =============================================================================
+
+/// Unique node identifier for statements and expressions.
+///
+/// WHY: Assigned during parsing, used throughout semantic analysis to track
+/// type inference results, control flow, and definition sites. Stored as u32
+/// to keep nodes compact.
 pub type NodeId = u32;
 
-/// Root of the AST
+/// Root of the AST representing a complete Faber source file.
+///
+/// WHY: Directives (like `§ verte rust`) appear before the module body and
+/// affect compilation globally. Separating them simplifies processing.
 #[derive(Debug)]
 pub struct Program {
     pub directives: Vec<DirectiveDecl>,

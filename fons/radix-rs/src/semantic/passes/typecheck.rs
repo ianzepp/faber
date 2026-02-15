@@ -1,6 +1,50 @@
-//! Pass 3: Type checking
+//! Pass 4: Type checking
 //!
-//! Bidirectional type inference and checking.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Implements bidirectional type inference and checking for the HIR. Infers
+//! types where unspecified, checks type compatibility where specified, and
+//! attaches TypeId annotations to every expression and declaration.
+//!
+//! COMPILER PHASE: Semantic (Pass 4)
+//! INPUT: HIR with resolved DefIds but no type information
+//! OUTPUT: HIR with TypeId on every expr/stmt; type errors for mismatches
+//!
+//! WHY: Bidirectional type checking combines inference (bottom-up) with
+//! checking (top-down), enabling both flexibility (infer local variable types)
+//! and precision (check function arguments against signatures).
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Inference Variables: Fresh type variables (InferVar) represent unknown
+//!   types during checking; unification resolves them to concrete types
+//! - Expected Type Propagation: check_expr_with_expected() allows parent
+//!   context to guide type inference (e.g., array element type from annotation)
+//! - Substitution Resolution: resolve_type() follows chains of type variable
+//!   bindings to concrete types after unification
+//! - Finalization Phase: After checking, finalize_hir() replaces all InferVars
+//!   with their resolved types or emits errors for unresolved variables
+//!
+//! BIDIRECTIONAL TYPING
+//! ====================
+//! - Synthesis (check_expr): Infer type bottom-up (e.g., literal 42 → numerus)
+//! - Checking (check_expr_with_expected): Verify type top-down (e.g., if
+//!   expected is fractus, coerce numerus → fractus)
+//!
+//! UNIFICATION
+//! ===========
+//! unify(a, b) makes two types equal by:
+//! 1. If either is InferVar, bind it to the other type (occurs check prevents cycles)
+//! 2. If both are concrete, check structural equality (e.g., lista<T> ~ lista<U>)
+//! 3. If assignable (e.g., numerus → fractus widening), use target type
+//! 4. Otherwise, emit type mismatch error
+//!
+//! TRADE-OFFS
+//! ==========
+//! - No HM-style full inference: Requires type annotations on function parameters
+//!   to avoid ambiguity and improve error messages (simpler for users)
+//! - Eager error reporting: Continues checking after errors to find more issues,
+//!   but may produce cascading errors if types remain unresolved
 
 use crate::hir::{
     DefId, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral,

@@ -1,13 +1,46 @@
 //! Semantic analysis
 //!
-//! Multi-pass semantic analysis:
-//! 1. Collect - gather all top-level declarations
-//! 2. Resolve - resolve names to definitions
-//! 3. Lower - build resolved HIR from the AST
-//! 4. Typecheck - bidirectional type inference
-//! 5. Borrow - ownership/borrowing analysis (for Rust target)
-//! 6. Exhaustive - pattern match exhaustiveness
-//! 7. Lint - warnings and suggestions
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Implements multi-pass semantic analysis transforming the AST into a typed,
+//! validated HIR suitable for code generation. Each pass depends on the results
+//! of previous passes, ensuring early errors prevent cascading failures.
+//!
+//! COMPILER PHASE: Semantic
+//! INPUT: AST (syntax::Program) from parser
+//! OUTPUT: HirProgram with type annotations and semantic errors
+//!
+//! MULTI-PASS PIPELINE
+//! ===================
+//! The analysis runs in this order:
+//! 1. Collect - Gather all top-level declarations into symbol table
+//! 2. Resolve - Resolve all name references to DefIds
+//! 3. Lower - Transform AST into HIR with resolved names
+//! 4. Typecheck - Bidirectional type inference and checking
+//! 5. Borrow - Ownership/borrowing analysis (Rust target only)
+//! 6. Exhaustive - Pattern match exhaustiveness checking
+//! 7. Lint - Warnings and best practice suggestions
+//!
+//! WHY: Multi-pass design allows each pass to assume invariants from prior
+//! passes (e.g., type checker assumes all names are resolved). Early exit on
+//! errors prevents cascading failures and confusing error messages.
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Fail Fast: Collection and resolution errors stop the pipeline before
+//!   lowering, avoiding complex error recovery in later passes
+//! - Error Collection: Each pass collects all errors rather than stopping at
+//!   the first, providing complete diagnostic information
+//! - Target-Specific Analysis: Borrow checking only runs for Rust target,
+//!   avoiding false positives for permissive targets like Faber pretty-print
+//! - Configurable Passes: PassConfig allows disabling analysis for faster
+//!   development iteration or target-specific needs
+//!
+//! ERROR HANDLING
+//! ==============
+//! Errors are collected into SemanticResult, which distinguishes hard errors
+//! (prevent codegen) from warnings (informational). The success() method checks
+//! for hard errors only, allowing compilation to proceed with warnings.
 
 mod error;
 pub mod passes;

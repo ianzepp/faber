@@ -1,6 +1,31 @@
 //! Pattern lowering
 //!
-//! Lowers AST patterns to HIR patterns.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Transforms AST patterns into HIR patterns, creating DefIds for pattern-bound
+//! variables and resolving variant references. Used in discerne (match) arms.
+//!
+//! COMPILER PHASE: HIR Lowering (submodule)
+//! INPUT: AST patterns (syntax::Pattern)
+//! OUTPUT: HIR patterns (HirPattern) with DefIds for bindings
+//!
+//! WHY: Pattern matching binds new variables (e.g., `casu Ok(val)` binds `val`),
+//! requiring DefId allocation during lowering so type checker can attach types.
+//!
+//! PATTERN BINDING
+//! ===============
+//! Identifiers in patterns create new bindings:
+//! - Simple: `x` → HirPattern::Binding(DefId, Symbol)
+//! - Variant: `Some(x)` → HirPattern::Variant(DefId, [Binding(DefId, Symbol)])
+//!
+//! WHY: DefIds for bindings must be fresh (not resolved from Resolver) since
+//! they are new variables, not references to existing definitions.
+//!
+//! EDGE CASES
+//! ==========
+//! - Mutable patterns: Not yet lowered, produces error
+//! - Alias bindings: Not yet lowered, produces error
+//! - Path patterns: Resolves variant DefId from Resolver
 
 use super::Lowerer;
 use crate::hir::{HirLiteral, HirPattern};

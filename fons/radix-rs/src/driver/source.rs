@@ -1,8 +1,34 @@
-//! Source file management
+//! Source File Management
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Manages source file metadata and provides utilities for mapping byte offsets
+//! to line/column positions. This enables accurate diagnostic reporting with
+//! human-readable locations.
+//!
+//! COMPILER PHASE: Driver (infrastructure)
+//! INPUT: File path and source text
+//! OUTPUT: SourceFile with line indexing for diagnostics
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Precomputed line starts: Build index once during construction.
+//!   WHY: Repeated offset-to-line-col conversions during error reporting would be
+//!   O(n) each time; precomputation makes lookups O(log n) via binary search.
+//! - Support inline sources: `SourceFile::inline` for REPL or test cases.
+//!   WHY: Not all Faber code comes from disk files (string compilation, LSP).
 
 use std::path::PathBuf;
 
-/// A source file
+/// A source file with precomputed line indexing.
+///
+/// WHY: Line/column lookups are frequent during error reporting; precomputing
+/// line starts amortizes the O(n) indexing cost across all diagnostics.
+///
+/// INVARIANTS:
+/// ----------
+/// INV-1: line_starts[0] is always 0 (first line starts at byte 0).
+/// INV-2: line_starts is sorted in ascending order (monotonic byte offsets).
 #[derive(Debug)]
 pub struct SourceFile {
     pub path: PathBuf,
@@ -32,7 +58,11 @@ impl SourceFile {
         Self { path: PathBuf::new(), name, content, line_starts }
     }
 
-    /// Convert byte offset to line and column
+    /// Convert byte offset to 1-based line and column numbers.
+    ///
+    /// WHY: Diagnostics display line:col in human-readable form (editors use 1-based).
+    ///
+    /// PERF: Binary search in precomputed line_starts is O(log n).
     pub fn offset_to_line_col(&self, offset: u32) -> (u32, u32) {
         let line = self
             .line_starts
@@ -59,6 +89,11 @@ impl SourceFile {
     }
 }
 
+/// Compute byte offsets of each line start.
+///
+/// WHY: Enables O(log n) offset-to-line conversion via binary search.
+///
+/// NOTE: Handles both \n and \r\n line endings (only \n is recorded).
 fn compute_line_starts(content: &str) -> Vec<u32> {
     let mut starts = vec![0];
 

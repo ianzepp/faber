@@ -1,4 +1,29 @@
-//! radix CLI
+//! radix CLI - Command-line interface for the Faber compiler
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! This binary provides a multi-command CLI for inspecting each phase of the
+//! compiler pipeline. It's designed for compiler development and debugging,
+//! not end-user compilation (use the library API for that).
+//!
+//! COMMANDS
+//! ========
+//! - `lex`: Tokenize source and emit JSON
+//! - `parse`: Parse source and emit AST as JSON
+//! - `hir`: Lower AST to HIR and emit JSON
+//! - `check`: Run semantic analysis (with optional --permissive mode)
+//! - `emit`: Compile to target (Rust or Faber)
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Phase introspection: Each command exposes a specific compiler phase,
+//!   allowing developers to debug lexing, parsing, or semantic issues in isolation.
+//!
+//! - JSON output: Machine-readable output enables automated testing and tooling
+//!   integration (e.g., language servers, formatters).
+//!
+//! - Stdin support: All commands accept stdin when no file is given, enabling
+//!   pipeline composition and REPL-style workflows.
 
 use std::io::{self, Read};
 use std::path::PathBuf;
@@ -43,6 +68,10 @@ fn print_usage() {
     eprintln!("If no file is given, reads from stdin.");
 }
 
+/// Read source from file argument or stdin.
+///
+/// WHY: Centralizes source reading logic for all commands. Stdin support
+/// enables piping from other tools.
 fn read_source(args: &[String]) -> (String, String) {
     if args.is_empty() || args[0] == "-" {
         let mut source = String::new();
@@ -60,11 +89,14 @@ fn read_source(args: &[String]) -> (String, String) {
     }
 }
 
+/// Tokenize source and emit JSON.
+///
+/// WHY: Enables inspection of lexer output for debugging tokenization issues.
 fn cmd_lex(args: &[String]) {
     let (name, source) = read_source(args);
     let result = radix::lexer::lex(&source);
 
-    // Output as JSON
+    // WHY: JSON output for machine readability
     println!("{{");
     println!("  \"file\": \"{}\",", escape_json(&name));
     println!("  \"success\": {},", result.success());
@@ -73,7 +105,7 @@ fn cmd_lex(args: &[String]) {
     for (i, token) in result.tokens.iter().enumerate() {
         let comma = if i + 1 < result.tokens.len() { "," } else { "" };
         let kind = format!("{:?}", token.kind);
-        // Truncate long token kinds
+        // WHY: Truncate long token representations to keep output readable
         let kind_display = if kind.len() > 60 {
             format!("{}...", &kind[..57])
         } else {
@@ -110,6 +142,9 @@ fn cmd_lex(args: &[String]) {
     }
 }
 
+/// Parse source and emit AST JSON.
+///
+/// WHY: Enables inspection of parser output for debugging AST structure.
 fn cmd_parse(args: &[String]) {
     let (name, source) = read_source(args);
     let lex_result = radix::lexer::lex(&source);
@@ -135,7 +170,7 @@ fn cmd_parse(args: &[String]) {
         for (i, stmt) in program.stmts.iter().enumerate() {
             let comma = if i + 1 < program.stmts.len() { "," } else { "" };
             let kind = format!("{:?}", stmt.kind);
-            // Just show the variant name
+            // WHY: Extract variant name only to avoid huge debug output
             let kind_name = kind.split('(').next().unwrap_or(&kind);
             println!(
                 "    {{ \"id\": {}, \"kind\": \"{}\", \"span\": [{}, {}] }}{}",
@@ -167,10 +202,14 @@ fn cmd_parse(args: &[String]) {
     }
 }
 
+/// Lower AST to HIR and emit JSON.
+///
+/// WHY: Enables inspection of HIR lowering for debugging name resolution
+/// and type assignment issues.
 fn cmd_hir(args: &[String]) {
     let (name, source) = read_source(args);
 
-    // Phase 1: Lexing
+    // WHY: HIR lowering requires lexing, parsing, and name resolution
     let lex_result = radix::lexer::lex(&source);
     if !lex_result.success() {
         eprintln!("lexer errors:");
@@ -180,7 +219,6 @@ fn cmd_hir(args: &[String]) {
         std::process::exit(1);
     }
 
-    // Phase 2: Parsing
     let parse_result = radix::parser::parse(lex_result);
     if !parse_result.success() {
         eprintln!("parser errors:");
@@ -193,11 +231,9 @@ fn cmd_hir(args: &[String]) {
     let radix::parser::ParseResult { program, interner, .. } = parse_result;
     let program = program.unwrap();
 
-    // Phase 3: Name resolution (needed for HIR lowering)
     let mut resolver = radix::semantic::Resolver::new();
     let mut types = radix::semantic::TypeTable::new();
 
-    // Collect declarations
     if let Err(e) = radix::semantic::passes::collect::collect(&program, &mut resolver, &mut types) {
         eprintln!("collection errors:");
         for err in e {
@@ -206,7 +242,6 @@ fn cmd_hir(args: &[String]) {
         std::process::exit(1);
     }
 
-    // Resolve names
     if let Err(e) = radix::semantic::passes::resolve::resolve(&program, &mut resolver, &interner, &mut types) {
         eprintln!("resolution errors:");
         for err in e {
@@ -215,10 +250,8 @@ fn cmd_hir(args: &[String]) {
         std::process::exit(1);
     }
 
-    // Phase 4: Lower to HIR
     let (hir, errors) = radix::hir::lower(&program, &resolver, &mut types, &interner);
 
-    // Output as JSON
     println!("{{");
     println!("  \"file\": \"{}\",", escape_json(&name));
     println!("  \"success\": {},", errors.is_empty());
@@ -257,6 +290,10 @@ fn cmd_hir(args: &[String]) {
     }
 }
 
+/// Run semantic analysis.
+///
+/// WHY: --permissive mode allows checking files with unresolved imports,
+/// useful for partial compilation or library development.
 fn cmd_check(args: &[String]) {
     let mut permissive = false;
     let mut file_args = Vec::new();
@@ -327,11 +364,15 @@ fn cmd_check(args: &[String]) {
     }
 }
 
+/// Compile to target language.
+///
+/// WHY: End-to-end compilation command. Accepts -t flag to select Rust or
+/// Faber pretty-print output.
 fn cmd_emit(args: &[String]) {
     let mut target = radix::codegen::Target::Rust;
     let mut file_args = args;
 
-    // Parse -t/--target flag
+    // WHY: Parse target flag manually to avoid dependency on clap or similar
     if args.len() >= 2 && (args[0] == "-t" || args[0] == "--target") {
         target = match args[1].as_str() {
             "rust" | "rs" => radix::codegen::Target::Rust,
@@ -373,6 +414,7 @@ fn cmd_emit(args: &[String]) {
     }
 }
 
+/// Escape special characters for JSON strings.
 fn escape_json(s: &str) -> String {
     s.replace('\\', "\\\\")
         .replace('"', "\\\"")

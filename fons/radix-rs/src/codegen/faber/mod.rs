@@ -1,7 +1,29 @@
-//! Faber canonical code generation
+//! Faber Canonical Code Generation
 //!
-//! Pretty-prints Faber source in canonical form.
-//! Useful for formatting, normalization, and round-tripping.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! This module implements a canonical pretty-printer for Faber source code. It
+//! converts HIR back into well-formatted Faber source text, enabling formatting,
+//! normalization, round-trip compilation validation, and AST visualization.
+//!
+//! COMPILER PHASE: Codegen
+//! INPUT: HirProgram (fully-analyzed HIR), TypeTable, Interner
+//! OUTPUT: FaberOutput (formatted Faber source text)
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Canonical form: Generate a single normalized representation for any given HIR.
+//!   WHY: Consistent formatting across all Faber code, enables reliable diff comparisons.
+//! - Round-trip fidelity: Preserve all semantic information from the HIR.
+//!   WHY: Parser(Codegen(HIR)) should produce equivalent HIR for validation testing.
+//! - Minimal whitespace: Generate readable but compact output.
+//!   WHY: Balance human readability with efficient storage and transmission.
+//!
+//! TRADE-OFFS
+//! ==========
+//! - Comments and original formatting are lost (HIR doesn't preserve them).
+//! - Generates Latin keywords only; no target-language interop in this backend.
+//! - DefId resolution requires building a names map upfront (single-pass generation).
 
 use super::{CodeWriter, Codegen, CodegenError};
 use crate::hir::{
@@ -13,7 +35,18 @@ use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
 use crate::FaberOutput;
 use rustc_hash::FxHashMap;
 
-/// Faber canonical code generator
+// =============================================================================
+// CORE
+// =============================================================================
+//
+// The FaberCodegen struct is stateless; all name resolution is performed during
+// generation by building a DefId -> Symbol map from the HIR. This enables
+// parallel code generation if needed in the future.
+
+/// Faber canonical code generator.
+///
+/// WHY: Separate from RustCodegen to maintain clean separation between Faber
+/// pretty-printing (for tooling/formatting) and target code generation.
 pub struct FaberCodegen;
 
 impl FaberCodegen {
@@ -300,6 +333,14 @@ impl FaberCodegen {
         Ok(())
     }
 
+    /// Convert a TypeId to canonical Faber type syntax.
+    ///
+    /// TRANSFORMS:
+    ///   Type::Primitive(Numerus) -> "numerus"
+    ///   Type::Array(elem)        -> "lista<elem>"
+    ///   Type::Ref(Immutable, T)  -> "de T"
+    ///
+    /// WHY: Type syntax must match Faber grammar exactly for round-trip validity.
     fn type_to_faber(
         &self,
         type_id: TypeId,
@@ -799,6 +840,11 @@ impl FaberCodegen {
         interner.resolve(sym).to_owned()
     }
 
+    /// Collect DefId -> Symbol mappings for all definitions in the program.
+    ///
+    /// WHY: HIR uses DefIds for references; we need to map them back to their
+    /// original names for source generation. This is a single upfront traversal
+    /// rather than repeated lookups during generation.
     fn collect_names(&self, hir: &HirProgram) -> FxHashMap<DefId, Symbol> {
         let mut names = FxHashMap::default();
         for item in &hir.items {

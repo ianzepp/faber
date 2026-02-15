@@ -1,4 +1,23 @@
-//! Diagnostic types
+//! Diagnostic Types
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Defines the core Diagnostic struct that represents a compiler error, warning,
+//! or info message. Provides constructors for creating diagnostics from various
+//! error types (lex, parse, semantic, I/O).
+//!
+//! COMPILER PHASE: Diagnostics (infrastructure)
+//! INPUT: Error objects (LexError, ParseError, SemanticError)
+//! OUTPUT: Diagnostic structs ready for rendering
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Builder pattern: Chainable methods for constructing diagnostics incrementally.
+//!   WHY: Diagnostic::error(msg).with_code("SEM001").with_span(span) is readable.
+//! - Unified representation: All errors/warnings use the same Diagnostic struct.
+//!   WHY: Simplifies rendering and filtering; severity distinguishes error vs warning.
+//! - Source line capture: Diagnostics include the problematic source line.
+//!   WHY: Users need context to understand errors without opening the file.
 
 use super::catalog;
 use crate::lexer::{LexError, Span};
@@ -6,7 +25,9 @@ use crate::parser::ParseError;
 use crate::semantic::SemanticError;
 use std::path::Path;
 
-/// Severity level
+/// Diagnostic severity level.
+///
+/// WHY: Distinguishes errors (must fix) from warnings (should fix) from info (FYI).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Severity {
     Error,
@@ -14,7 +35,10 @@ pub enum Severity {
     Info,
 }
 
-/// A diagnostic message
+/// A compiler diagnostic (error, warning, or info).
+///
+/// WHY: Unified representation for all compiler messages enables consistent
+/// rendering, filtering, and aggregation.
 #[derive(Debug)]
 pub struct Diagnostic {
     pub severity: Severity,
@@ -85,7 +109,9 @@ impl Diagnostic {
         Self::error(format!("cannot read '{}': {}", path.display(), err)).with_file(path.display().to_string())
     }
 
-    /// Create from lex error
+    /// Create diagnostic from a lexer error.
+    ///
+    /// WHY: Lexer errors need source line context and error codes from catalog.
     pub fn from_lex_error(file: &str, source: &str, err: &LexError) -> Self {
         let line = get_line_at_offset(source, err.span.start as usize);
         let spec = catalog::lex_spec(err.kind);
@@ -97,7 +123,9 @@ impl Diagnostic {
             .with_help_opt(spec.help)
     }
 
-    /// Create from parse error
+    /// Create diagnostic from a parser error.
+    ///
+    /// WHY: Parser errors need source line context and error codes from catalog.
     pub fn from_parse_error(file: &str, source: &str, err: &ParseError) -> Self {
         let line = get_line_at_offset(source, err.span.start as usize);
         let spec = catalog::parse_spec(err.kind);
@@ -109,7 +137,9 @@ impl Diagnostic {
             .with_help_opt(spec.help)
     }
 
-    /// Create from semantic error
+    /// Create diagnostic from a semantic error.
+    ///
+    /// WHY: Semantic errors can be warnings or errors; help text may be custom.
     pub fn from_semantic_error(file: &str, source: &str, err: &SemanticError) -> Self {
         let line = get_line_at_offset(source, err.span.start as usize);
         let severity = if err.is_error() {
@@ -153,6 +183,9 @@ impl Diagnostic {
     }
 }
 
+/// Extract the source line containing a byte offset.
+///
+/// WHY: Diagnostics need to show the problematic line for context.
 fn get_line_at_offset(source: &str, offset: usize) -> String {
     let start = source[..offset].rfind('\n').map(|i| i + 1).unwrap_or(0);
     let end = source[offset..]

@@ -1,7 +1,55 @@
-//! Pass 4: Borrow checking
+//! Pass 5: Borrow checking
 //!
-//! Validates ownership and borrowing rules for Rust target.
-//! Only runs when targeting Rust.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Validates ownership and borrowing rules for safe memory management when
+//! targeting Rust. Tracks move semantics, shared/mutable borrows, and parameter
+//! passing modes (de/in/ex) to ensure generated Rust code compiles without
+//! lifetime errors.
+//!
+//! COMPILER PHASE: Semantic (Pass 5, Rust target only)
+//! INPUT: Typed HIR with DefIds and TypeIds
+//! OUTPUT: Borrowing errors (use-after-move, borrow conflicts); mode lints
+//!
+//! WHY: Faber's de/in/ex parameter modes map directly to Rust's &/&mut/move,
+//! but users may write invalid borrow patterns. This pass catches errors early
+//! rather than emitting invalid Rust code that fails at rustc compile time.
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Simplified Borrow Model: Tracks basic ownership (moved/borrowed) without
+//!   full lifetime analysis, relying on Rust's borrow checker for complex cases
+//! - Scope-Based Borrows: Borrows are tracked per lexical scope and released
+//!   on scope exit, matching Rust's non-lexical-lifetimes behavior
+//! - Mode Validation: de → in/ex promotions are errors (immutable → mutable);
+//!   unused in/ex parameters generate warnings (should be de)
+//! - Optimistic Checking: Allows borderline cases that rustc would accept,
+//!   avoiding false positives on complex lifetime patterns
+//!
+//! BORROW STATES
+//! =============
+//! Each variable tracks:
+//! - moved: bool - Value has been moved out (cannot use again)
+//! - shared: u32 - Count of active shared borrows
+//! - mutable: bool - Active mutable borrow exists
+//!
+//! INVARIANTS
+//! ==========
+//! INV-1: Cannot move value that is borrowed (shared > 0 || mutable)
+//! INV-2: Cannot mutably borrow if any borrows exist (shared > 0 || mutable)
+//! INV-3: Cannot use value after move (moved == true)
+//! INV-4: Cannot assign to de parameter (immutable borrow)
+//!
+//! PARAMETER MODE LINTS
+//! ====================
+//! - `in` param never mutated → suggest `de` (shared borrow sufficient)
+//! - `ex` param never consumed → suggest `de` (move not required)
+//!
+//! EDGE CASES
+//! ==========
+//! - Field/index projections: root_def_id() extracts the base variable from
+//!   field access chains (e.g., `x.y.z` → DefId for `x`)
+//! - Method calls: Borrows receiver based on method signature if available
 
 use crate::hir::{
     DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirParamMode, HirProgram, HirStmt,

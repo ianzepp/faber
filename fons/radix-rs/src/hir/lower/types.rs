@@ -1,6 +1,36 @@
 //! Type lowering
 //!
-//! Lowers AST type expressions to TypeIds.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Transforms AST type expressions into interned TypeIds, resolving named types
+//! to DefIds and handling collection types (lista, tabula, copia) and modifiers
+//! (nullable ?, reference de/in).
+//!
+//! COMPILER PHASE: HIR Lowering (submodule)
+//! INPUT: AST type expressions (syntax::TypeExpr)
+//! OUTPUT: TypeIds from TypeTable
+//!
+//! WHY: Type expressions in the AST are strings and syntax nodes; TypeIds are
+//! interned references suitable for efficient type checking and comparison.
+//!
+//! BUILTIN TYPES
+//! =============
+//! Primitive types (textus, numerus, etc.) are interned once during TypeTable
+//! construction and reused. Collection types (lista<T>, tabula<K,V>, copia<T>)
+//! are built from their element types.
+//!
+//! TYPE MODIFIERS
+//! ==============
+//! - Nullable (?): Wraps type in Option<T>
+//! - Reference (de/in): Wraps type in Ref(Immutable/Mutable, T)
+//!
+//! WHY: Applied after lowering base type to correctly handle `lista<T>?` as
+//! Option<Array<T>> rather than Array<Option<T>>.
+//!
+//! ERROR HANDLING
+//! ==============
+//! Unknown type names and incorrect collection arities return Type::Error
+//! rather than panicking, allowing continued analysis and error reporting.
 
 use super::Lowerer;
 use crate::semantic::{FuncSig, Mutability, ParamMode, ParamType, Primitive, Type, TypeId};

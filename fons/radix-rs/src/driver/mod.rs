@@ -1,6 +1,34 @@
-//! Compilation driver
+//! Compilation driver - orchestrates the multi-phase pipeline
 //!
-//! Orchestrates the compilation pipeline from source to output.
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! The driver module coordinates the execution of all compiler phases in sequence:
+//! lexing → parsing → semantic analysis → codegen. It collects diagnostics from
+//! each phase and halts on errors before attempting dependent phases.
+//!
+//! COMPILER PHASE: Driver (pipeline orchestration)
+//! INPUT: Source code string, session configuration
+//! OUTPUT: CompileResult with optional target code and diagnostics
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Fail fast: Stop after each failed phase to avoid cascading errors. For
+//!   example, don't attempt parsing if lexing failed, as token stream is invalid.
+//!
+//! - Diagnostic collection: Gather all diagnostics from every phase, even when
+//!   compilation succeeds (to report warnings).
+//!
+//! - Target-aware warnings: Some constructs are no-ops in certain targets
+//!   (e.g., `cura arena` in Rust). The driver scans for these after parsing
+//!   and emits warnings before semantic analysis.
+//!
+//! PIPELINE PHASES
+//! ===============
+//! 1. Lexing: Tokenize source
+//! 2. Parsing: Build AST
+//! 3. Target warnings: Scan for target-specific no-ops
+//! 4. Semantic: Name resolution, type checking, borrow analysis
+//! 5. Codegen: Emit target source code
 
 mod session;
 mod source;
@@ -16,11 +44,30 @@ use crate::semantic::{self, PassConfig};
 use crate::syntax::*;
 use crate::CompileResult;
 
-/// Run the full compilation pipeline
+// =============================================================================
+// CORE
+// =============================================================================
+//
+// Main compilation pipeline entry point.
+
+/// Run the full compilation pipeline.
+///
+/// WHY: Single entry point for all compilation. Each phase is run sequentially,
+/// with early exit on errors to avoid wasting work on invalid input.
+///
+/// PHASES:
+/// - Lexing: Tokenize source
+/// - Parsing: Build AST
+/// - Target warnings: Scan for constructs that are no-ops in the selected target
+/// - Semantic: Analyze types and borrows
+/// - Codegen: Emit target code
 pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     let mut diagnostics = Vec::new();
 
-    // Phase 1: Lexing
+    // -------------------------------------------------------------------------
+    // PHASE 1: LEXING
+    // Tokenize the source into a stream of tokens
+    // -------------------------------------------------------------------------
     let lex_result = lexer::lex(source);
     if !lex_result.success() {
         for err in &lex_result.errors {
@@ -29,7 +76,10 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         return CompileResult { output: None, diagnostics };
     }
 
-    // Phase 2: Parsing
+    // -------------------------------------------------------------------------
+    // PHASE 2: PARSING
+    // Build the abstract syntax tree from tokens
+    // -------------------------------------------------------------------------
     let parse_result = parser::parse(lex_result);
     if !parse_result.success() {
         for err in &parse_result.errors {
@@ -41,11 +91,18 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     let parser::ParseResult { program, interner, .. } = parse_result;
     let program = program.unwrap();
 
+    // -------------------------------------------------------------------------
+    // TARGET-SPECIFIC WARNINGS
+    // Scan for constructs that are no-ops in the target (e.g., arena in Rust)
+    // -------------------------------------------------------------------------
     if session.config.target == Target::Rust {
         diagnostics.extend(collect_rust_noop_warnings(&program, name));
     }
 
-    // Phase 3: Semantic analysis
+    // -------------------------------------------------------------------------
+    // PHASE 3: SEMANTIC ANALYSIS
+    // Name resolution, type checking, borrow analysis
+    // -------------------------------------------------------------------------
     let pass_config = PassConfig::for_target(session.config.target);
     let semantic_result = semantic::analyze(&program, &pass_config, &interner);
 
@@ -59,7 +116,10 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
 
     let hir = semantic_result.hir.unwrap();
 
-    // Phase 4: Code generation
+    // -------------------------------------------------------------------------
+    // PHASE 4: CODE GENERATION
+    // Emit target-specific source code
+    // -------------------------------------------------------------------------
     match codegen::generate(session.config.target, &hir, &semantic_result.types, &interner) {
         Ok(output) => CompileResult { output: Some(output), diagnostics },
         Err(err) => {
@@ -69,6 +129,17 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     }
 }
 
+// =============================================================================
+// HELPERS
+// =============================================================================
+//
+// Target-specific warning detection.
+
+/// Collect warnings for Rust-specific no-ops.
+///
+/// WHY: Some Faber constructs are meaningful in GC'd targets (e.g., JavaScript,
+/// Python) but no-ops in Rust (e.g., `cura arena`). We warn users to avoid
+/// confusion about why arena scoping has no effect.
 fn collect_rust_noop_warnings(program: &Program, file: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     for stmt in &program.stmts {
@@ -77,6 +148,7 @@ fn collect_rust_noop_warnings(program: &Program, file: &str) -> Vec<Diagnostic> 
     diagnostics
 }
 
+/// Recursively scan statements for Rust no-op warnings.
 fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Diagnostic>) {
     match &stmt.kind {
         StmtKind::Block(block) => scan_block_for_rust_warnings(block, file, diagnostics),
@@ -160,6 +232,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
             scan_if_body_for_rust_warnings(&entry.body, file, diagnostics);
         }
         StmtKind::Cura(resource) => {
+            // WHY: Arena resource management is a no-op in Rust (RAII handles it)
             if matches!(resource.kind, Some(CuraKind::Arena)) {
                 let spec = crate::diagnostics::semantic_spec(crate::semantic::SemanticErrorKind::Warning(
                     crate::semantic::WarningKind::TargetNoop,

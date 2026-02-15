@@ -1,4 +1,21 @@
-//! Rust statement generation
+//! Rust Statement Generation
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! Generates Rust statements (let bindings, expression statements, return, break,
+//! continue) from HIR, handling error wrapping for return statements in failable
+//! functions.
+//!
+//! COMPILER PHASE: Codegen (submodule)
+//! INPUT: HirStmt nodes
+//! OUTPUT: Rust statement source text
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Return wrapping: `redde expr` becomes `return Ok(expr)` in failable functions.
+//!   WHY: Failable functions return Result; explicit returns must wrap with Ok.
+//! - Control flow mapping: Direct translation of rumpe/perge to break/continue.
+//!   WHY: Faber's loop control flow maps 1:1 to Rust.
 
 use super::super::CodeWriter;
 use super::expr::generate_expr;
@@ -7,6 +24,16 @@ use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
+/// Generate a Rust statement.
+///
+/// TRANSFORMS:
+///   fixum numerus x = 5  -> let x: i64 = 5;
+///   varia textus s       -> let mut s: String;
+///   redde x              -> return Ok(x); (in failable fn) or return x;
+///   rumpe                -> break;
+///   perge                -> continue;
+///
+/// TARGET: Rust-specific Ok wrapping for return in failable functions.
 pub fn generate_stmt(
     codegen: &RustCodegen<'_>,
     stmt: &HirStmt,
