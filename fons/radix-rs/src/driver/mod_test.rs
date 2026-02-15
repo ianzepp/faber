@@ -524,6 +524,46 @@ genus Point {
 }
 
 #[test]
+fn array_destructured_vars_can_be_used_in_arithmetic() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum coords = [100, 200]
+  varia [x, y] = coords
+  x = x + 50
+  y = y + 50
+  scribe x, y
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("numeric operands required")));
+}
+
+#[test]
+fn method_return_values_can_participate_in_numeric_comparisons() {
+    let session = session(Target::Rust);
+    let source = r#"functio accessArray(lista<numerus> items, numerus index) -> numerus {
+  si index < 0 aut index >= items.longitudo() {
+    mori "Index out of bounds"
+  }
+  redde items[index]
+}
+
+incipit {
+  fixum nums = [1, 2, 3]
+  scribe accessArray(nums, 1)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("numeric operands required")));
+}
+
+#[test]
 fn optional_chain_no_longer_reports_lowering_stub() {
     let session = session(Target::Rust);
     let source = r#"genus User {

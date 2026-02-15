@@ -938,7 +938,8 @@ impl<'a> TypeChecker<'a> {
         for arg in args {
             self.check_expr(arg);
         }
-        self.types.primitive(Primitive::Ignotum)
+        let _ = name;
+        self.fresh_infer()
     }
 
     fn check_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {

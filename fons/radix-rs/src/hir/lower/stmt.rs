@@ -20,7 +20,7 @@
 //! passes (type checking doesn't need to handle multiple return syntaxes).
 
 use super::{pattern, HirBlock, HirExpr, HirExprKind, HirStmt, HirStmtKind, Lowerer};
-use crate::hir::{HirCasuArm, HirPattern};
+use crate::hir::{HirCasuArm, HirLiteral, HirPattern};
 use crate::lexer::Span;
 use crate::syntax::{Stmt, StmtKind};
 
@@ -82,32 +82,72 @@ pub fn lower_stmt_expanded(lowerer: &mut Lowerer, stmt: &Stmt) -> Vec<HirStmt> {
 
 impl<'a> Lowerer<'a> {
     fn lower_array_destructure_stmt(&mut self, decl: &crate::syntax::VarDecl) -> Vec<HirStmt> {
-        let mut names = Vec::new();
-        Self::collect_binding_names(&decl.binding, &mut names);
-        let mut out = Vec::new();
+        let Some(init) = &decl.init else {
+            self.error("array destructuring requires initializer");
+            return Vec::new();
+        };
 
-        for (name, name_span) in names {
+        let mut out = Vec::new();
+        let mutable = decl.mutability == crate::syntax::Mutability::Mutable;
+        let (elements, rest, span) = match &decl.binding {
+            crate::syntax::BindingPattern::Array { elements, rest, span } => (elements, rest, *span),
+            _ => return Vec::new(),
+        };
+
+        for (idx, pattern) in elements.iter().enumerate() {
+            match pattern {
+                crate::syntax::BindingPattern::Ident(ident) => {
+                    let def_id = self.next_def_id();
+                    self.bind_local(ident.name, def_id);
+                    let index_expr = HirExpr {
+                        id: self.next_hir_id(),
+                        kind: HirExprKind::Literal(HirLiteral::Int(idx as i64)),
+                        ty: None,
+                        span: ident.span,
+                    };
+                    let init_expr = HirExpr {
+                        id: self.next_hir_id(),
+                        kind: HirExprKind::Index(Box::new(self.lower_expr(init)), Box::new(index_expr)),
+                        ty: None,
+                        span: ident.span,
+                    };
+                    out.push(HirStmt {
+                        id: self.next_hir_id(),
+                        kind: HirStmtKind::Local(crate::hir::HirLocal {
+                            def_id,
+                            name: ident.name,
+                            ty: None,
+                            init: Some(init_expr),
+                            mutable,
+                        }),
+                        span: ident.span,
+                    });
+                }
+                crate::syntax::BindingPattern::Wildcard(_) => {}
+                crate::syntax::BindingPattern::Array { .. } => {
+                    self.error("nested array destructuring is not lowered yet");
+                }
+            }
+        }
+
+        if let Some(rest_ident) = rest {
             let def_id = self.next_def_id();
-            self.bind_local(name, def_id);
+            self.bind_local(rest_ident.name, def_id);
             out.push(HirStmt {
                 id: self.next_hir_id(),
                 kind: HirStmtKind::Local(crate::hir::HirLocal {
                     def_id,
-                    name,
+                    name: rest_ident.name,
                     ty: None,
-                    init: Some(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: name_span }),
-                    mutable: decl.mutability == crate::syntax::Mutability::Mutable,
+                    init: Some(self.lower_expr(init)),
+                    mutable,
                 }),
-                span: name_span,
+                span: rest_ident.span,
             });
         }
 
-        if let Some(init) = &decl.init {
-            out.push(HirStmt {
-                id: self.next_hir_id(),
-                kind: HirStmtKind::Expr(self.lower_expr(init)),
-                span: init.span,
-            });
+        if out.is_empty() {
+            out.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Expr(self.lower_expr(init)), span });
         }
 
         out
@@ -623,24 +663,6 @@ impl<'a> Lowerer<'a> {
             crate::syntax::SecusClause::InlineReturn(ret) => {
                 let stmt = self.lower_inline_return(ret);
                 HirBlock { stmts: vec![stmt], expr: None, span: self.current_span }
-            }
-        }
-    }
-
-    fn collect_binding_names(
-        pattern: &crate::syntax::BindingPattern,
-        out: &mut Vec<(crate::lexer::Symbol, crate::lexer::Span)>,
-    ) {
-        match pattern {
-            crate::syntax::BindingPattern::Ident(ident) => out.push((ident.name, ident.span)),
-            crate::syntax::BindingPattern::Wildcard(_) => {}
-            crate::syntax::BindingPattern::Array { elements, rest, .. } => {
-                for element in elements {
-                    Self::collect_binding_names(element, out);
-                }
-                if let Some(rest) = rest {
-                    out.push((rest.name, rest.span));
-                }
             }
         }
     }
