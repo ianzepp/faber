@@ -76,3 +76,7 @@ impl Compiler {
 #[cfg(test)]
 #[path = "lib_test.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "exempla_e2e_test.rs"]
+mod exempla_e2e_tests;
