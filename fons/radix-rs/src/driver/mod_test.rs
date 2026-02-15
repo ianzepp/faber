@@ -272,6 +272,45 @@ incipit {
 }
 
 #[test]
+fn module_method_call_in_condition_no_longer_leaves_infer_type() {
+    let session = session(Target::Rust);
+    let source = r#"importa ex "../../norma/hal/consolum" privata consolum
+
+incipit {
+  si consolum.estTerminale() {
+    scribe "Interactive mode"
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("condition must be bivalens")));
+}
+
+#[test]
+fn module_method_call_statements_no_longer_leave_infer_type() {
+    let session = session(Target::Rust);
+    let source = r#"importa ex "../../norma/hal/consolum" privata consolum
+
+incipit {
+  consolum.fundeLineam("x")
+  consolum.errorLineam("y")
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
+}
+
+#[test]
 fn itera_de_array_index_no_longer_leaves_infer_types() {
     let session = session(Target::Rust);
     let source = r#"incipit {

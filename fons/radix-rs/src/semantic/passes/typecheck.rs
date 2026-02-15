@@ -516,7 +516,11 @@ impl<'a> TypeChecker<'a> {
         match &mut stmt.kind {
             HirStmtKind::Local(local) => self.check_local(local),
             HirStmtKind::Expr(expr) => {
-                self.check_expr(expr);
+                let expr_ty = self.check_expr(expr);
+                if self.is_infer(self.resolve_type(expr_ty)) {
+                    let vacuum = self.vacuum_type();
+                    self.unify(expr_ty, vacuum, expr.span, "ignored expression result must resolve");
+                }
             }
             HirStmtKind::Redde(value) => self.check_return(value.as_mut(), stmt.span),
             HirStmtKind::Rumpe | HirStmtKind::Perge => {}
@@ -1144,12 +1148,8 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn check_condition(&mut self, cond: &mut HirExpr) {
-        let cond_ty = self.check_expr(cond);
-        if self.is_infer(self.resolve_type(cond_ty)) {
-            let bivalens = self.bool_type();
-            self.unify(cond_ty, bivalens, cond.span, "condition must be bivalens");
-            return;
-        }
+        let bivalens = self.bool_type();
+        let cond_ty = self.check_expr_with_expected(cond, Some(bivalens));
         if !self.is_bool(cond_ty) {
             self.error(SemanticErrorKind::InvalidOperandTypes, "condition must be bivalens", cond.span);
         }
