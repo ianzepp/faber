@@ -232,3 +232,7 @@ fn scan_test_for_rust_warnings(test: &ProbandumDecl, file: &str, diagnostics: &m
         scan_test_for_rust_warnings(nested, file, diagnostics);
     }
 }
+
+#[cfg(test)]
+#[path = "mod_test.rs"]
+mod tests;
