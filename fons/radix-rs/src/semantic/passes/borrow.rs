@@ -287,7 +287,7 @@ impl<'a> BorrowChecker<'a> {
             }
             HirExprKind::Assign(target, value) => {
                 self.check_lvalue(target);
-                self.check_move_expr(value);
+                self.check_expr(value);
             }
             HirExprKind::AssignOp(_, target, value) => {
                 self.check_lvalue(target);
@@ -406,7 +406,8 @@ impl<'a> BorrowChecker<'a> {
                     match param.mode {
                         ParamMode::Ref => self.borrow_from_expr(arg, BorrowKind::Shared),
                         ParamMode::MutRef => self.borrow_from_expr(arg, BorrowKind::Mutable),
-                        ParamMode::Move | ParamMode::Owned => self.move_from_expr(arg),
+                        ParamMode::Move => self.move_from_expr(arg),
+                        ParamMode::Owned => self.check_expr(arg),
                     }
                 }
             }
@@ -423,14 +424,6 @@ impl<'a> BorrowChecker<'a> {
             self.write_use(def_id, target.span);
         } else {
             self.check_expr(target);
-        }
-    }
-
-    fn check_move_expr(&mut self, expr: &HirExpr) {
-        if let Some(def_id) = self.root_def_id(expr) {
-            self.move_use(def_id, expr.span);
-        } else {
-            self.check_expr(expr);
         }
     }
 

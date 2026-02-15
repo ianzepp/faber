@@ -564,6 +564,71 @@ incipit {
 }
 
 #[test]
+fn repeated_owned_calls_no_longer_report_use_after_move() {
+    let session = session(Target::Rust);
+    let source = r#"functio sumArray(numerus[] nums) -> numerus {
+  varia numerus total = 0
+  itera ex nums fixum n {
+    total = total + n
+  }
+  redde total
+}
+
+functio maxValue(numerus[] nums) -> numerus {
+  varia numerus max = nums[0]
+  itera ex nums fixum n {
+    si n > max {
+      max = n
+    }
+  }
+  redde max
+}
+
+incipit {
+  fixum numbers = [1, 2, 3, 4, 5]
+  scribe sumArray(numbers)
+  scribe maxValue(numbers)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("use after move")));
+}
+
+#[test]
+fn assignment_and_tempta_flow_no_longer_report_use_after_move() {
+    let session = session(Target::Rust);
+    let source = r#"functio process(textus name) -> vacuum {
+  varia resource = "pending"
+  tempta {
+    resource = name
+    si name == "" {
+      iace "Empty name"
+    }
+    scribe resource
+  }
+  cape err {
+    scribe err
+  }
+  demum {
+    scribe resource
+  }
+}
+
+incipit {
+  process("")
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("use after move")));
+}
+
+#[test]
 fn optional_chain_no_longer_reports_lowering_stub() {
     let session = session(Target::Rust);
     let source = r#"genus User {
