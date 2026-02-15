@@ -270,3 +270,72 @@ incipit {
         .iter()
         .all(|d| !d.message.contains("method call on non-struct value")));
 }
+
+#[test]
+fn itera_de_array_index_no_longer_leaves_infer_types() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum xs = [10, 20, 30]
+  itera de xs fixum idx {
+    scribe xs[idx]
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
+}
+
+#[test]
+fn itera_pro_range_no_longer_leaves_infer_types() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  itera pro 0..5 fixum i {
+    scribe i
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
+}
+
+#[test]
+fn deferred_local_assignment_can_drive_inference() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  varia value
+  value = 42
+  scribe value
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer variable type")));
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("variable declaration needs a type or initializer")));
+}
+
+#[test]
+fn cura_arena_anonymous_scope_no_longer_reports_infer_variable_error() {
+    let session = session(Target::Rust);
+    let source = r#"incipit ergo cura arena {
+  scribe "ok"
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer variable type")));
+}

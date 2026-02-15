@@ -255,7 +255,7 @@ impl<'a> BorrowChecker<'a> {
                 self.check_expr(cond);
                 self.check_block(block);
             }
-            HirExprKind::Itera(binding, iter, block) => {
+            HirExprKind::Itera(_, binding, iter, block) => {
                 self.check_expr(iter);
                 self.ensure_state(*binding);
                 self.check_block(block);

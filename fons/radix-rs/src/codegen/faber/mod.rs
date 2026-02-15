@@ -584,10 +584,17 @@ impl FaberCodegen {
                 w.indented(|w| self.write_block(block, types, names, interner, w));
                 w.write("}");
             }
-            HirExprKind::Itera(binding, iter, block) => {
+            HirExprKind::Itera(mode, binding, iter, block) => {
                 w.write("itera ");
+                let mode_text = match mode {
+                    crate::hir::HirIteraMode::Ex => "ex",
+                    crate::hir::HirIteraMode::De => "de",
+                    crate::hir::HirIteraMode::Pro => "pro",
+                };
+                w.write(mode_text);
+                w.write(" ");
                 w.write(&self.name_for_def(*binding, names, interner));
-                w.write(" ex ");
+                w.write(" ");
                 self.write_expr(iter, types, names, interner, w);
                 w.writeln(" {");
                 w.indented(|w| self.write_block(block, types, names, interner, w));
@@ -975,7 +982,7 @@ impl FaberCodegen {
             HirExprKind::Loop(block) | HirExprKind::Dum(_, block) => {
                 self.collect_block_names(names, Some(block));
             }
-            HirExprKind::Itera(_, iter, block) => {
+            HirExprKind::Itera(_, _, iter, block) => {
                 self.collect_expr_names(names, iter);
                 self.collect_block_names(names, Some(block));
             }

@@ -249,7 +249,9 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_innatum(&mut self, innatum: &crate::syntax::InnatumExpr) -> HirExprKind {
-        lower_expr(self, &innatum.expr).kind
+        let expr = lower_expr(self, &innatum.expr);
+        let target = self.lower_type(&innatum.ty);
+        HirExprKind::Qua(Box::new(expr), target)
     }
 
     /// Lower array literal (serie)

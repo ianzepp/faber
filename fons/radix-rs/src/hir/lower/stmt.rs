@@ -216,8 +216,11 @@ impl<'a> Lowerer<'a> {
 
     /// Lower itera (for) statement
     fn lower_itera(&mut self, iter_stmt: &crate::syntax::IteraStmt) -> HirStmtKind {
-        // STUB: `itera de` vs `itera ex` mode is not distinguished in HIR yet.
-        let _ = iter_stmt.mode;
+        let mode = match iter_stmt.mode {
+            crate::syntax::IteraMode::Ex => crate::hir::HirIteraMode::Ex,
+            crate::syntax::IteraMode::De => crate::hir::HirIteraMode::De,
+            crate::syntax::IteraMode::Pro => crate::hir::HirIteraMode::Pro,
+        };
 
         let binding = self.next_def_id();
         let iter = self.lower_expr(&iter_stmt.iterable);
@@ -227,7 +230,7 @@ impl<'a> Lowerer<'a> {
         self.pop_scope();
         let expr = HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Itera(binding, Box::new(iter), body),
+            kind: HirExprKind::Itera(mode, binding, Box::new(iter), body),
             ty: None,
             span: self.current_span,
         };
@@ -339,22 +342,36 @@ impl<'a> Lowerer<'a> {
 
     fn lower_cura(&mut self, stmt: &crate::syntax::CuraStmt) -> HirStmtKind {
         let mut stmts = Vec::new();
-        let def_id = self.next_def_id();
-        let init = stmt.init.as_ref().map(|expr| self.lower_expr(expr));
-        stmts.push(HirStmt {
-            id: self.next_hir_id(),
-            kind: HirStmtKind::Local(crate::hir::HirLocal {
-                def_id,
-                name: stmt.binding.name,
-                ty: stmt.ty.as_ref().map(|ty| self.lower_type(ty)),
-                init,
-                mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
-            }),
-            span: self.current_span,
-        });
+        let has_binding = stmt.binding.name.0 != 0;
+        let mut def_id = None;
+        if has_binding {
+            let local_def = self.next_def_id();
+            let init = stmt.init.as_ref().map(|expr| self.lower_expr(expr));
+            let ty = stmt.ty.as_ref().map(|ty| self.lower_type(ty)).or_else(|| {
+                if stmt.kind.is_some() {
+                    Some(self.types.primitive(crate::semantic::Primitive::Ignotum))
+                } else {
+                    None
+                }
+            });
+            stmts.push(HirStmt {
+                id: self.next_hir_id(),
+                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                    def_id: local_def,
+                    name: stmt.binding.name,
+                    ty,
+                    init,
+                    mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
+                }),
+                span: self.current_span,
+            });
+            def_id = Some(local_def);
+        }
 
         self.push_scope();
-        self.bind_local(stmt.binding.name, def_id);
+        if let Some(local_def) = def_id {
+            self.bind_local(stmt.binding.name, local_def);
+        }
         for lowered in self.lower_block(&stmt.body).stmts {
             stmts.push(lowered);
         }

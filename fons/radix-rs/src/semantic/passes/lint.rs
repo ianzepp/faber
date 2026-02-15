@@ -278,7 +278,7 @@ impl<'a> LintContext<'a> {
                 self.check_expr(cond, in_loop);
                 self.check_block(block, true);
             }
-            HirExprKind::Itera(_, iter, block) => {
+            HirExprKind::Itera(_, _, iter, block) => {
                 self.check_expr(iter, in_loop);
                 self.check_block(block, true);
             }

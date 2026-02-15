@@ -314,7 +314,7 @@ pub enum HirExprKind {
     /// While loop
     Dum(Box<HirExpr>, HirBlock),
     /// For loop
-    Itera(DefId, Box<HirExpr>, HirBlock),
+    Itera(HirIteraMode, DefId, Box<HirExpr>, HirBlock),
     /// Assignment
     Assign(Box<HirExpr>, Box<HirExpr>),
     /// Compound assignment
@@ -353,6 +353,13 @@ pub enum HirExprKind {
     Deref(Box<HirExpr>),
     /// Error placeholder
     Error,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HirIteraMode {
+    Ex,
+    De,
+    Pro,
 }
 
 #[derive(Debug)]

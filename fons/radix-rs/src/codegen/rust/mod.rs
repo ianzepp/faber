@@ -279,7 +279,7 @@ impl<'a> RustCodegen<'a> {
             HirExprKind::Loop(block) | HirExprKind::Dum(_, block) => {
                 self.collect_block_names(names, Some(block));
             }
-            HirExprKind::Itera(_, iter, block) => {
+            HirExprKind::Itera(_, _, iter, block) => {
                 self.collect_expr_names(names, iter);
                 self.collect_block_names(names, Some(block));
             }
@@ -450,7 +450,7 @@ impl<'a> RustCodegen<'a> {
                     visit_expr(cond, suppressed, deps);
                     visit_block(block, suppressed, deps);
                 }
-                HirExprKind::Itera(_, iter, block) => {
+                HirExprKind::Itera(_, _, iter, block) => {
                     visit_expr(iter, suppressed, deps);
                     visit_block(block, suppressed, deps);
                 }

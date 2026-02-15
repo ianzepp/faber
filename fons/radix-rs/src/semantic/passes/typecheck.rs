@@ -188,7 +188,7 @@ impl<'a> TypeChecker<'a> {
             .iter()
             .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: false })
             .collect();
-        let ret = func.ret_ty.unwrap_or_else(|| self.fresh_infer());
+        let ret = func.ret_ty.unwrap_or_else(|| self.vacuum_type());
         FuncSig { params, ret, is_async: func.is_async, is_generator: func.is_generator }
     }
 
@@ -355,7 +355,7 @@ impl<'a> TypeChecker<'a> {
                 self.finalize_expr(cond);
                 self.finalize_block(block);
             }
-            HirExprKind::Itera(_, iter, block) => {
+            HirExprKind::Itera(_, _, iter, block) => {
                 self.finalize_expr(iter);
                 self.finalize_block(block);
             }
@@ -499,18 +499,7 @@ impl<'a> TypeChecker<'a> {
             }
             (Some(ty), None) => *ty,
             (None, Some(init)) => self.check_expr(init),
-            (None, None) => {
-                self.error(
-                    SemanticErrorKind::MissingTypeAnnotation,
-                    "variable declaration needs a type or initializer",
-                    local
-                        .init
-                        .as_ref()
-                        .map(|expr| expr.span)
-                        .unwrap_or_default(),
-                );
-                self.fresh_infer()
-            }
+            (None, None) => self.fresh_infer(),
         };
 
         if local.ty.is_none() {
@@ -573,12 +562,21 @@ impl<'a> TypeChecker<'a> {
                 self.check_block(block, None);
                 self.vacuum_type()
             }
-            HirExprKind::Itera(binding, iter, block) => {
+            HirExprKind::Itera(mode, binding, iter, block) => {
                 let iter_ty = self.check_expr(iter);
                 let elem_ty = match self.types.get(self.resolve_type(iter_ty)) {
-                    Type::Array(inner) => *inner,
-                    Type::Map(key, _) => *key,
-                    _ => self.fresh_infer(),
+                    Type::Array(inner) => match mode {
+                        crate::hir::HirIteraMode::De => self.numerus_type(),
+                        crate::hir::HirIteraMode::Ex | crate::hir::HirIteraMode::Pro => *inner,
+                    },
+                    Type::Map(key, value) => match mode {
+                        crate::hir::HirIteraMode::Ex => *value,
+                        crate::hir::HirIteraMode::De | crate::hir::HirIteraMode::Pro => *key,
+                    },
+                    Type::Union(items) if matches!(mode, crate::hir::HirIteraMode::Pro) && items.len() >= 2 => {
+                        self.numerus_type()
+                    }
+                    _ => self.numerus_type(),
                 };
                 self.push_scope();
                 self.insert_binding(*binding, elem_ty, true);
@@ -827,7 +825,7 @@ impl<'a> TypeChecker<'a> {
         for arg in args {
             self.check_expr(arg);
         }
-        self.fresh_infer()
+        self.types.primitive(Primitive::Ignotum)
     }
 
     fn check_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {
@@ -851,7 +849,7 @@ impl<'a> TypeChecker<'a> {
             }
         }
 
-        self.fresh_infer()
+        self.types.primitive(Primitive::Ignotum)
     }
 
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
@@ -861,6 +859,7 @@ impl<'a> TypeChecker<'a> {
         let kind = match self.types.get(resolved) {
             Type::Array(elem) => Some((Some(*elem), None, None)),
             Type::Map(key, value) => Some((None, Some(*key), Some(*value))),
+            Type::Union(_) => Some((Some(self.types.primitive(Primitive::Ignotum)), None, None)),
             _ => None,
         };
 

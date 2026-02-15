@@ -1,8 +1,8 @@
 use crate::codegen::{self, Target};
 use crate::hir::{
     DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId, HirImport, HirImportItem,
-    HirInterface, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt,
-    HirStmtKind, HirStruct, HirTypeAlias, HirVariant, HirVariantField,
+    HirInterface, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram,
+    HirStmt, HirStmtKind, HirStruct, HirTypeAlias, HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
@@ -709,6 +709,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
             HirExpr {
                 id: HirId(327),
                 kind: HirExprKind::Itera(
+                    HirIteraMode::Ex,
                     DefId(7),
                     Box::new(HirExpr {
                         id: HirId(328),

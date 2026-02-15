@@ -169,7 +169,7 @@ fn check_expr(
             check_expr(cond, types, enum_variants, errors);
             check_block(block, types, enum_variants, errors);
         }
-        HirExprKind::Itera(_, iter, block) => {
+        HirExprKind::Itera(_, _, iter, block) => {
             check_expr(iter, types, enum_variants, errors);
             check_block(block, types, enum_variants, errors);
         }
