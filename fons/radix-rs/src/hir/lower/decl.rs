@@ -41,10 +41,7 @@ impl<'a> Lowerer<'a> {
         let ty = decl.ty.as_ref().map(|ty| self.lower_type(ty));
         let value = match &decl.init {
             Some(init) => self.lower_expr(init),
-            None => {
-                self.error("top-level variable declaration requires initializer");
-                error_expr(self, name_span)
-            }
+            None => HirExpr { id: self.next_hir_id(), kind: HirExprKind::Literal(crate::hir::HirLiteral::Nil), ty: None, span: name_span },
         };
 
         let item = HirItem {

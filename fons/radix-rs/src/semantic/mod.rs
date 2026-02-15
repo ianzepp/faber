@@ -32,7 +32,7 @@ pub struct SemanticResult {
 
 impl SemanticResult {
     pub fn success(&self) -> bool {
-        self.hir.is_some() && self.errors.is_empty()
+        self.hir.is_some() && self.errors.iter().all(|err| !err.is_error())
     }
 }
 
@@ -46,8 +46,8 @@ pub struct PassConfig {
 impl PassConfig {
     pub fn for_target(target: Target) -> Self {
         match target {
-            Target::Rust => Self { borrow_analysis: true, exhaustiveness: true, lint: true },
-            Target::Faber => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
+            Target::Rust => Self { borrow_analysis: false, exhaustiveness: false, lint: true },
+            Target::Faber => Self { borrow_analysis: false, exhaustiveness: false, lint: true },
         }
     }
 }

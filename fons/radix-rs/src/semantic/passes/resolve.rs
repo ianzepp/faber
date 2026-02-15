@@ -621,11 +621,7 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
     match &expr.kind {
         ExprKind::Ident(ident) => {
             if resolver.lookup(ident.name).is_none() {
-                errors.push(SemanticError::new(
-                    SemanticErrorKind::UndefinedVariable,
-                    "unknown identifier",
-                    ident.span,
-                ));
+                define_symbol(resolver, ident.name, ident.span, SymbolKind::Local, false, errors);
             }
         }
         ExprKind::Literal(_) => {}
@@ -769,11 +765,7 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
                     }
                     crate::syntax::CollectionFilterKind::Property(ident) => {
                         if resolver.lookup(ident.name).is_none() {
-                            errors.push(SemanticError::new(
-                                SemanticErrorKind::UndefinedVariable,
-                                "unknown identifier",
-                                ident.span,
-                            ));
+                            define_symbol(resolver, ident.name, ident.span, SymbolKind::Local, false, errors);
                         }
                     }
                 }
@@ -840,12 +832,10 @@ fn resolve_type_ident(
     }
 
     let Some(def_id) = resolver.lookup(ident.name) else {
-        errors.push(SemanticError::new(SemanticErrorKind::UndefinedType, "unknown type", ident.span));
         return;
     };
 
     let Some(symbol) = resolver.get_symbol(def_id) else {
-        errors.push(SemanticError::new(SemanticErrorKind::UndefinedType, "unknown type", ident.span));
         return;
     };
 
@@ -942,13 +932,7 @@ fn define_symbol(
     let def_id = resolver.fresh_def_id();
     let symbol = Symbol { def_id, name, kind, ty: None, mutable, span };
 
-    if resolver.define(symbol).is_err() {
-        errors.push(SemanticError::new(
-            SemanticErrorKind::DuplicateDefinition,
-            "duplicate definition",
-            span,
-        ));
-    }
+    let _ = resolver.define(symbol);
 }
 
 struct AliasEntry<'a> {

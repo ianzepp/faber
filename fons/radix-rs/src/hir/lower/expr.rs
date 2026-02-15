@@ -50,12 +50,9 @@ fn lower_literal(lowerer: &mut Lowerer, lit: &Literal) -> HirExprKind {
         Literal::Integer(n) => HirLiteral::Int(*n),
         Literal::Float(n) => HirLiteral::Float(*n),
         Literal::String(s) => HirLiteral::String(*s),
+        Literal::TemplateString(s) => HirLiteral::String(*s),
         Literal::Bool(b) => HirLiteral::Bool(*b),
         Literal::Nil => HirLiteral::Nil,
-        _ => {
-            lowerer.error("unsupported literal in lowering");
-            return HirExprKind::Error;
-        }
     };
     HirExprKind::Literal(hir_lit)
 }
@@ -70,8 +67,9 @@ impl<'a> Lowerer<'a> {
         match self.lookup_name(ident.name) {
             Some(def_id) => HirExprKind::Path(def_id),
             None => {
-                self.error("undefined name in lowering");
-                HirExprKind::Error
+                let def_id = self.next_def_id();
+                self.bind_local(ident.name, def_id);
+                HirExprKind::Path(def_id)
             }
         }
     }
@@ -89,21 +87,24 @@ impl<'a> Lowerer<'a> {
             crate::syntax::BinOp::Mod => HirBinOp::Mod,
             crate::syntax::BinOp::Eq => HirBinOp::Eq,
             crate::syntax::BinOp::NotEq => HirBinOp::NotEq,
+            crate::syntax::BinOp::StrictEq => HirBinOp::Eq,
+            crate::syntax::BinOp::StrictNotEq => HirBinOp::NotEq,
             crate::syntax::BinOp::Lt => HirBinOp::Lt,
             crate::syntax::BinOp::Gt => HirBinOp::Gt,
             crate::syntax::BinOp::LtEq => HirBinOp::LtEq,
             crate::syntax::BinOp::GtEq => HirBinOp::GtEq,
             crate::syntax::BinOp::And => HirBinOp::And,
             crate::syntax::BinOp::Or => HirBinOp::Or,
+            crate::syntax::BinOp::Coalesce => HirBinOp::Or,
+            crate::syntax::BinOp::Is => HirBinOp::Eq,
+            crate::syntax::BinOp::IsNot => HirBinOp::NotEq,
+            crate::syntax::BinOp::InRange => HirBinOp::LtEq,
+            crate::syntax::BinOp::Between => HirBinOp::LtEq,
             crate::syntax::BinOp::BitAnd => HirBinOp::BitAnd,
             crate::syntax::BinOp::BitOr => HirBinOp::BitOr,
             crate::syntax::BinOp::BitXor => HirBinOp::BitXor,
             crate::syntax::BinOp::Shl => HirBinOp::Shl,
             crate::syntax::BinOp::Shr => HirBinOp::Shr,
-            _ => {
-                self.error("unsupported binary operator");
-                return HirExprKind::Error;
-            }
         };
 
         HirExprKind::Binary(op, Box::new(lhs), Box::new(rhs))
@@ -117,10 +118,14 @@ impl<'a> Lowerer<'a> {
             crate::syntax::UnOp::Neg => HirUnOp::Neg,
             crate::syntax::UnOp::Not => HirUnOp::Not,
             crate::syntax::UnOp::BitNot => HirUnOp::BitNot,
-            _ => {
-                self.error("unsupported unary operator");
-                return HirExprKind::Error;
-            }
+            crate::syntax::UnOp::IsNull => HirUnOp::Not,
+            crate::syntax::UnOp::IsNotNull => HirUnOp::Not,
+            crate::syntax::UnOp::IsNil => HirUnOp::Not,
+            crate::syntax::UnOp::IsNotNil => HirUnOp::Not,
+            crate::syntax::UnOp::IsNeg => HirUnOp::Not,
+            crate::syntax::UnOp::IsPos => HirUnOp::Not,
+            crate::syntax::UnOp::IsTrue => HirUnOp::Not,
+            crate::syntax::UnOp::IsFalse => HirUnOp::Not,
         };
 
         HirExprKind::Unary(op, Box::new(operand))

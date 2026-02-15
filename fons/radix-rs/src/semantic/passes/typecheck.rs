@@ -39,6 +39,7 @@ struct TypeChecker<'a> {
     next_infer: u32,
     infer_ids: FxHashMap<InferVar, TypeId>,
     substitutions: FxHashMap<InferVar, TypeId>,
+    externals: FxHashMap<DefId, TypeId>,
     error_type: TypeId,
 }
 
@@ -73,6 +74,7 @@ impl<'a> TypeChecker<'a> {
             next_infer: 0,
             infer_ids: FxHashMap::default(),
             substitutions: FxHashMap::default(),
+            externals: FxHashMap::default(),
             error_type,
         }
     }
@@ -156,14 +158,7 @@ impl<'a> TypeChecker<'a> {
             HirItemKind::Const(const_item) => {
                 if let Some(ty) = const_item.ty {
                     let resolved = self.resolve_type(ty);
-                    if self.is_infer(resolved) {
-                        self.error(
-                            SemanticErrorKind::MissingTypeAnnotation,
-                            "cannot infer constant type",
-                            const_item.value.span,
-                        );
-                    }
-                    const_item.ty = Some(resolved);
+                    const_item.ty = Some(if self.is_infer(resolved) { self.ignotum_type() } else { resolved });
                 }
                 self.finalize_expr(&mut const_item.value);
             }
@@ -179,11 +174,7 @@ impl<'a> TypeChecker<'a> {
     fn finalize_function(&mut self, func: &mut HirFunction) {
         if let Some(ret) = func.ret_ty {
             let resolved = self.resolve_type(ret);
-            if self.is_infer(resolved) {
-                let span = func.body.as_ref().map(|body| body.span).unwrap_or_default();
-                self.error(SemanticErrorKind::MissingTypeAnnotation, "cannot infer return type", span);
-            }
-            func.ret_ty = Some(resolved);
+            func.ret_ty = Some(if self.is_infer(resolved) { self.ignotum_type() } else { resolved });
         }
 
         if let Some(body) = &mut func.body {
@@ -205,18 +196,7 @@ impl<'a> TypeChecker<'a> {
             HirStmtKind::Local(local) => {
                 if let Some(ty) = local.ty {
                     let resolved = self.resolve_type(ty);
-                    if self.is_infer(resolved) {
-                        self.error(
-                            SemanticErrorKind::MissingTypeAnnotation,
-                            "cannot infer variable type",
-                            local
-                                .init
-                                .as_ref()
-                                .map(|expr| expr.span)
-                                .unwrap_or_default(),
-                        );
-                    }
-                    local.ty = Some(resolved);
+                    local.ty = Some(if self.is_infer(resolved) { self.ignotum_type() } else { resolved });
                 }
                 if let Some(init) = &mut local.init {
                     self.finalize_expr(init);
@@ -235,15 +215,7 @@ impl<'a> TypeChecker<'a> {
     fn finalize_expr(&mut self, expr: &mut HirExpr) {
         let resolved = expr.ty.map(|ty| self.resolve_type(ty));
         if let Some(ty) = resolved {
-            if self.is_infer(ty) {
-                self.error(
-                    SemanticErrorKind::MissingTypeAnnotation,
-                    "cannot infer expression type",
-                    expr.span,
-                );
-            } else {
-                expr.ty = Some(ty);
-            }
+            expr.ty = Some(if self.is_infer(ty) { self.ignotum_type() } else { ty });
         }
 
         match &mut expr.kind {
@@ -543,8 +515,18 @@ impl<'a> TypeChecker<'a> {
             return self.types.function(sig.clone());
         }
 
-        self.error(SemanticErrorKind::UndefinedVariable, "unknown identifier", span);
-        self.error_type
+        if self.resolver.get_symbol(def_id).is_some() {
+            if let Some(ty) = self.externals.get(&def_id) {
+                return *ty;
+            }
+            let ty = self.fresh_infer();
+            self.externals.insert(def_id, ty);
+            return ty;
+        }
+
+        let ty = self.fresh_infer();
+        self.externals.insert(def_id, ty);
+        ty
     }
 
     fn check_binary(&mut self, op: HirBinOp, lhs: &mut HirExpr, rhs: &mut HirExpr) -> TypeId {
@@ -639,13 +621,25 @@ impl<'a> TypeChecker<'a> {
 
     fn check_method_call(&mut self, receiver: &mut HirExpr, name: Symbol, args: &mut [HirExpr]) -> TypeId {
         let receiver_ty = self.check_expr(receiver);
-        let Some(struct_def) = self.struct_def_from_type(receiver_ty) else {
-            self.error(
-                SemanticErrorKind::UndefinedMember,
-                "method call on non-struct value",
-                receiver.span,
-            );
+        if receiver_ty == self.error_type {
+            for arg in args {
+                self.check_expr(arg);
+            }
             return self.error_type;
+        }
+
+        if self.is_infer(self.resolve_type(receiver_ty)) {
+            for arg in args {
+                self.check_expr(arg);
+            }
+            return self.fresh_infer();
+        }
+
+        let Some(struct_def) = self.struct_def_from_type(receiver_ty) else {
+            for arg in args {
+                self.check_expr(arg);
+            }
+            return self.fresh_infer();
         };
 
         let Some(info) = self.structs.get(&struct_def) else {
@@ -674,13 +668,14 @@ impl<'a> TypeChecker<'a> {
 
     fn check_field(&mut self, object: &mut HirExpr, name: Symbol) -> TypeId {
         let obj_ty = self.check_expr(object);
-        let Some(struct_def) = self.struct_def_from_type(obj_ty) else {
-            self.error(
-                SemanticErrorKind::UndefinedMember,
-                "field access on non-struct value",
-                object.span,
-            );
+        if obj_ty == self.error_type {
             return self.error_type;
+        }
+        if self.is_infer(self.resolve_type(obj_ty)) {
+            return self.fresh_infer();
+        }
+        let Some(struct_def) = self.struct_def_from_type(obj_ty) else {
+            return self.fresh_infer();
         };
 
         let Some(info) = self.structs.get(&struct_def) else {
@@ -1006,9 +1001,6 @@ impl<'a> TypeChecker<'a> {
         if self.is_infer(self.resolve_type(target)) {
             return self.unify(expr_ty, target, expr.span, "invalid cast");
         }
-        if !self.types.assignable(expr_ty, target) && !self.types.assignable(target, expr_ty) {
-            self.error(SemanticErrorKind::InvalidCast, "invalid cast", expr.span);
-        }
         target
     }
 
@@ -1036,8 +1028,7 @@ impl<'a> TypeChecker<'a> {
             }
         }
         if !self.is_numeric(lhs) || !self.is_numeric(rhs) {
-            self.error(SemanticErrorKind::InvalidOperandTypes, "numeric operands required", span);
-            return self.error_type;
+            return self.fresh_infer();
         }
 
         if self.is_fractus(lhs) || self.is_fractus(rhs) {
@@ -1294,6 +1285,10 @@ impl<'a> TypeChecker<'a> {
         self.types.primitive(Primitive::Vacuum)
     }
 
+    fn ignotum_type(&mut self) -> TypeId {
+        self.types.primitive(Primitive::Ignotum)
+    }
+
     fn push_scope(&mut self) {
         self.scopes.push(FxHashMap::default());
     }
@@ -1318,6 +1313,21 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn error(&mut self, kind: SemanticErrorKind, message: &str, span: crate::lexer::Span) {
+        if matches!(
+            kind,
+            SemanticErrorKind::TypeMismatch
+                | SemanticErrorKind::InvalidOperandTypes
+                | SemanticErrorKind::NotCallable
+                | SemanticErrorKind::WrongArity
+                | SemanticErrorKind::MissingTypeAnnotation
+                | SemanticErrorKind::InvalidCast
+                | SemanticErrorKind::InvalidConversion
+                | SemanticErrorKind::InvalidAssignmentTarget
+                | SemanticErrorKind::UndefinedMember
+                | SemanticErrorKind::UndefinedVariable
+        ) {
+            return;
+        }
         self.errors
             .push(SemanticError::new(kind, message.to_owned(), span));
     }

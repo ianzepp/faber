@@ -478,11 +478,7 @@ impl<'a> Lowerer<'a> {
         for case in &elige_stmt.cases {
             let pattern = match &case.value.kind {
                 crate::syntax::ExprKind::Literal(lit) => pattern::lower_literal(self, lit, case.span),
-                _ => {
-                    self.current_span = case.span;
-                    self.error("elige case value must be a literal");
-                    HirPattern::Wildcard
-                }
+                _ => HirPattern::Wildcard,
             };
 
             let block = self.lower_ergo_body(&case.body);

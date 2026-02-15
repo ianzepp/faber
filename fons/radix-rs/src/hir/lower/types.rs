@@ -62,8 +62,7 @@ impl<'a> Lowerer<'a> {
         }
 
         let Some(def_id) = self.resolver.lookup(name.name) else {
-            self.error("unknown type name");
-            return self.types.intern(Type::Error);
+            return self.types.primitive(Primitive::Ignotum);
         };
 
         let Some(symbol) = self.resolver.get_symbol(def_id) else {

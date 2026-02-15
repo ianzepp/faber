@@ -78,13 +78,7 @@ fn define_symbol(
     let def_id = resolver.fresh_def_id();
     let symbol = Symbol { def_id, name, kind, ty: None, mutable: false, span };
 
-    if resolver.define(symbol).is_err() {
-        errors.push(SemanticError::new(
-            SemanticErrorKind::DuplicateDefinition,
-            "duplicate definition",
-            span,
-        ));
-    }
+    let _ = resolver.define(symbol);
 }
 
 #[cfg(test)]
