@@ -77,10 +77,10 @@ pub fn collect(program: &Program, resolver: &mut Resolver, _types: &mut TypeTabl
             StmtKind::Import(decl) => match &decl.kind {
                 crate::syntax::ImportKind::Named { name, alias } => {
                     let binding = alias.as_ref().unwrap_or(name);
-                    define_symbol(resolver, &mut errors, binding.name, binding.span, SymbolKind::Module);
+                    define_import_symbol(resolver, &mut errors, binding.name, binding.span);
                 }
                 crate::syntax::ImportKind::Wildcard { alias } => {
-                    define_symbol(resolver, &mut errors, alias.name, alias.span, SymbolKind::Module);
+                    define_import_symbol(resolver, &mut errors, alias.name, alias.span);
                 }
             },
             _ => {}
@@ -92,6 +92,21 @@ pub fn collect(program: &Program, resolver: &mut Resolver, _types: &mut TypeTabl
     } else {
         Err(errors)
     }
+}
+
+fn define_import_symbol(
+    resolver: &mut Resolver,
+    errors: &mut Vec<SemanticError>,
+    name: crate::lexer::Symbol,
+    span: crate::lexer::Span,
+) {
+    if let Some(existing) = resolver.lookup(name) {
+        if matches!(resolver.get_symbol(existing), Some(symbol) if symbol.kind == SymbolKind::Module) {
+            return;
+        }
+    }
+
+    define_symbol(resolver, errors, name, span, SymbolKind::Module);
 }
 
 fn define_symbol(

@@ -27,8 +27,8 @@
 use super::Lowerer;
 use crate::hir::{
     HirConst, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirImport, HirImportItem, HirInterface,
-    HirInterfaceMethod, HirItem, HirItemKind, HirMethod, HirParam, HirParamMode, HirReceiver, HirStruct, HirTypeAlias,
-    HirTypeParam, HirVariant, HirVariantField,
+    HirInterfaceMethod, HirItem, HirItemKind, HirLiteral, HirMethod, HirParam, HirParamMode, HirReceiver, HirStruct,
+    HirTypeAlias, HirTypeParam, HirVariant, HirVariantField,
 };
 use crate::lexer::Span;
 use crate::syntax::{
@@ -49,6 +49,16 @@ fn lower_param_mode(mode: crate::syntax::ParamMode) -> HirParamMode {
 }
 
 impl<'a> Lowerer<'a> {
+    fn has_externa_annotation(&self, stmt: &Stmt) -> bool {
+        stmt.annotations
+            .iter()
+            .any(|annotation| match &annotation.kind {
+                crate::syntax::AnnotationKind::Externa => true,
+                crate::syntax::AnnotationKind::Statement(stmt) => self.interner.resolve(stmt.name.name) == "externa",
+                _ => false,
+            })
+    }
+
     /// Lower varia/ficum declaration
     pub fn lower_varia(&mut self, stmt: &Stmt, decl: &VarDecl) -> Option<HirItem> {
         let (name, name_span) = match &decl.binding {
@@ -64,8 +74,17 @@ impl<'a> Lowerer<'a> {
         let value = match &decl.init {
             Some(init) => self.lower_expr(init),
             None => {
-                self.error("top-level variable declaration requires initializer");
-                error_expr(self, name_span)
+                if self.has_externa_annotation(stmt) {
+                    HirExpr {
+                        id: self.next_hir_id(),
+                        kind: HirExprKind::Literal(HirLiteral::Nil),
+                        ty: None,
+                        span: name_span,
+                    }
+                } else {
+                    self.error("top-level variable declaration requires initializer");
+                    error_expr(self, name_span)
+                }
             }
         };
 

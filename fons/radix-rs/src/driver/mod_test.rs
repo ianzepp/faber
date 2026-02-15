@@ -138,6 +138,26 @@ incipit {
 }
 
 #[test]
+fn externa_top_level_var_without_initializer_no_longer_errors() {
+    let session = session(Target::Rust);
+    let source = r#"@ externa
+fixum ignotum Bun
+
+@ externa
+functio require(textus path) -> ignotum
+
+incipit {
+  scribe Bun
+  scribe require("x")
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("top-level variable declaration requires initializer")));
+}
+
+#[test]
 fn import_alias_usage_no_longer_reports_unknown_identifier() {
     let session = session(Target::Rust);
     let source = r#"importa ex "../../norma/hal/consolum" privata consolum
@@ -152,6 +172,41 @@ incipit {
         .diagnostics
         .iter()
         .all(|d| !d.message.contains("unknown identifier")));
+}
+
+#[test]
+fn duplicate_import_module_bindings_no_longer_report_duplicate_definition() {
+    let session = session(Target::Rust);
+    let source = r#"importa ex "helpers" privata item
+importa ex "helpers" privata item
+
+incipit {
+  scribe "ok"
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("duplicate definition")));
+}
+
+#[test]
+fn ignotum_receiver_method_calls_no_longer_leave_infer_type() {
+    let session = session(Target::Rust);
+    let source = r#"@ externa
+fixum ignotum process
+
+incipit {
+  fixum args = process.argv qua lista<textus>
+  scribe args.longitudo()
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
 }
 
 #[test]

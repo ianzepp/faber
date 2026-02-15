@@ -1,7 +1,8 @@
 use super::{collect, Resolver, SemanticErrorKind, SymbolKind, TypeTable};
 use crate::lexer::{Interner, Span, Symbol};
 use crate::syntax::{
-    BlockStmt, EnumDecl, EnumMember, FuncDecl, Mutability, Program, Stmt, StmtKind, TypeExpr, TypeExprKind, VarDecl,
+    BlockStmt, EnumDecl, EnumMember, FuncDecl, ImportDecl, ImportKind, Mutability, Program, Stmt, StmtKind, TypeExpr,
+    TypeExprKind, VarDecl, Visibility,
 };
 
 fn ident(interner: &mut Interner, name: &str) -> crate::syntax::Ident {
@@ -121,4 +122,28 @@ fn collects_function_definitions() {
         .expect("function def");
     let symbol = resolver.get_symbol(def_id).expect("function symbol");
     assert_eq!(symbol.kind, SymbolKind::Function);
+}
+
+#[test]
+fn allows_duplicate_import_module_bindings() {
+    let mut interner = Interner::new();
+    let path = interner.intern("helpers");
+    let import1 = ImportDecl {
+        path,
+        visibility: Visibility::Private,
+        kind: ImportKind::Named { name: ident(&mut interner, "item"), alias: None },
+        span: Span::default(),
+    };
+    let import2 = ImportDecl {
+        path,
+        visibility: Visibility::Private,
+        kind: ImportKind::Named { name: ident(&mut interner, "item"), alias: None },
+        span: Span::default(),
+    };
+    let program = program(vec![stmt(StmtKind::Import(import1)), stmt(StmtKind::Import(import2))]);
+
+    let mut resolver = Resolver::new();
+    let mut types = TypeTable::new();
+    let result = collect(&program, &mut resolver, &mut types);
+    assert!(result.is_ok());
 }

@@ -630,7 +630,11 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Tuple(items) => self.check_tuple(items),
             HirExprKind::Scribe(items) => {
                 for item in items {
-                    self.check_expr(item);
+                    let item_ty = self.check_expr(item);
+                    if self.is_infer(self.resolve_type(item_ty)) {
+                        let ignotum = self.types.primitive(Primitive::Ignotum);
+                        self.unify(item_ty, ignotum, item.span, "scribe argument type mismatch");
+                    }
                 }
                 self.vacuum_type()
             }
@@ -949,6 +953,16 @@ impl<'a> TypeChecker<'a> {
                 self.unify(arg_ty, inner, arg.span, "argument type mismatch");
                 return self.vacuum_type();
             }
+        }
+
+        if matches!(
+            self.types.get(self.resolve_type(receiver_ty)),
+            Type::Primitive(Primitive::Ignotum)
+        ) {
+            for arg in args {
+                self.check_expr(arg);
+            }
+            return self.types.primitive(Primitive::Ignotum);
         }
 
         for arg in args {
