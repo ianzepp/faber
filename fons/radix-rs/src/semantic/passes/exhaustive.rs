@@ -146,6 +146,18 @@ fn check_expr(
             check_expr(object, types, enum_variants, errors);
             check_expr(index, types, enum_variants, errors);
         }
+        HirExprKind::OptionalChain(object, chain) => {
+            check_expr(object, types, enum_variants, errors);
+            match chain {
+                crate::hir::HirOptionalChainKind::Member(_) => {}
+                crate::hir::HirOptionalChainKind::Index(index) => check_expr(index, types, enum_variants, errors),
+                crate::hir::HirOptionalChainKind::Call(args) => {
+                    for arg in args {
+                        check_expr(arg, types, enum_variants, errors);
+                    }
+                }
+            }
+        }
         HirExprKind::Block(block) => check_block(block, types, enum_variants, errors),
         HirExprKind::Si(cond, then_block, else_block) => {
             check_expr(cond, types, enum_variants, errors);

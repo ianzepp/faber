@@ -231,6 +231,18 @@ impl<'a> BorrowChecker<'a> {
                 self.check_expr(object);
                 self.check_expr(index);
             }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.check_expr(object);
+                match chain {
+                    crate::hir::HirOptionalChainKind::Member(_) => {}
+                    crate::hir::HirOptionalChainKind::Index(index) => self.check_expr(index),
+                    crate::hir::HirOptionalChainKind::Call(args) => {
+                        for arg in args {
+                            self.check_expr(arg);
+                        }
+                    }
+                }
+            }
             HirExprKind::Block(block) => self.check_block(block),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.check_expr(cond);

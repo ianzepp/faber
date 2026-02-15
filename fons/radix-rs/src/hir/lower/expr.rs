@@ -24,7 +24,6 @@
 //! STUB CONSTRUCTS
 //! ===============
 //! Several Faber features lower to placeholder HIR nodes:
-//! - Optional chaining (?.) - Not yet supported, becomes Error
 //! - Non-null assertion (!) - Not yet supported, becomes Error
 //! - Collection pipelines (ab) - Needs dedicated HIR node
 //! - String interpolation (scriptum) - Lowered as Tuple placeholder
@@ -34,7 +33,7 @@
 //! Error nodes prevent crashes and allow continued analysis.
 
 use super::Lowerer;
-use crate::hir::{HirBinOp, HirExpr, HirExprKind, HirLiteral, HirUnOp};
+use crate::hir::{HirBinOp, HirExpr, HirExprKind, HirLiteral, HirOptionalChainKind, HirUnOp};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
 
 /// Lower an expression
@@ -202,9 +201,19 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_optional_chain(&mut self, expr: &crate::syntax::OptionalChainExpr) -> HirExprKind {
-        let _ = expr;
-        self.error("STUB: optional-chain lowering requires dedicated null-safe HIR node");
-        HirExprKind::Error
+        let object = lower_expr(self, &expr.object);
+        let chain = match &expr.chain {
+            crate::syntax::OptionalChainKind::Member(member) => HirOptionalChainKind::Member(member.name),
+            crate::syntax::OptionalChainKind::Index(index) => {
+                HirOptionalChainKind::Index(Box::new(lower_expr(self, index)))
+            }
+            crate::syntax::OptionalChainKind::Call(args) => HirOptionalChainKind::Call(
+                args.iter()
+                    .map(|arg| lower_expr(self, &arg.value))
+                    .collect(),
+            ),
+        };
+        HirExprKind::OptionalChain(Box::new(object), chain)
     }
 
     fn lower_non_null(&mut self, expr: &crate::syntax::NonNullExpr) -> HirExprKind {

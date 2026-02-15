@@ -524,6 +524,65 @@ genus Point {
 }
 
 #[test]
+fn optional_chain_no_longer_reports_lowering_stub() {
+    let session = session(Target::Rust);
+    let source = r#"genus User {
+  textus name: "Anon"
+  lista<numerus> nums: [1, 2, 3]
+}
+
+functio id(textus x) -> textus {
+  redde x
+}
+
+incipit {
+  fixum si User maybeUser = nihil
+  fixum a = maybeUser?.name
+  fixum b = maybeUser?.nums?[0]
+  fixum si (textus) -> textus maybeFn = id
+  fixum c = maybeFn?("x")
+  scribe a, b, c
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("STUB: optional-chain lowering requires dedicated null-safe HIR node")));
+}
+
+#[test]
+fn rust_output_emits_option_map_and_and_then_for_optional_chain() {
+    let session = session(Target::Rust);
+    let source = r#"genus User {
+  textus name: "Anon"
+}
+
+functio id(textus x) -> textus {
+  redde x
+}
+
+incipit {
+  fixum si User maybeUser = nihil
+  fixum a = maybeUser?.name
+  fixum si (textus) -> textus maybeFn = id
+  fixum c = maybeFn?("x")
+  scribe a, c
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output
+        .code
+        .contains(".as_ref().map(|__faber_opt| __faber_opt."));
+    assert!(output
+        .code
+        .contains(".and_then(|__faber_opt| Some(__faber_opt("));
+}
+
+#[test]
 fn objectum_return_type_no_longer_reports_unknown_type() {
     let session = session(Target::Rust);
     let source = r#"functio getResponse() -> objectum {

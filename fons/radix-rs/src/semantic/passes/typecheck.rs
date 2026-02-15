@@ -333,6 +333,18 @@ impl<'a> TypeChecker<'a> {
                 self.finalize_expr(object);
                 self.finalize_expr(index);
             }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.finalize_expr(object);
+                match chain {
+                    crate::hir::HirOptionalChainKind::Member(_) => {}
+                    crate::hir::HirOptionalChainKind::Index(index) => self.finalize_expr(index),
+                    crate::hir::HirOptionalChainKind::Call(args) => {
+                        for arg in args {
+                            self.finalize_expr(arg);
+                        }
+                    }
+                }
+            }
             HirExprKind::Block(block) => self.finalize_block(block),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.finalize_expr(cond);
@@ -548,6 +560,7 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::MethodCall(receiver, name, args) => self.check_method_call(receiver, *name, args),
             HirExprKind::Field(object, name) => self.check_field(object, *name),
             HirExprKind::Index(object, index) => self.check_index(object, index),
+            HirExprKind::OptionalChain(object, chain) => self.check_optional_chain(object, chain, expr.span),
             HirExprKind::Block(block) => self.check_block(block, expected),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.check_if(cond, then_block, else_block.as_mut(), expected)
@@ -919,7 +932,55 @@ impl<'a> TypeChecker<'a> {
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
         let obj_ty = self.check_expr(object);
         let idx_ty = self.check_expr(index);
-        let resolved = self.resolve_type(obj_ty);
+        self.check_index_from_type(obj_ty, idx_ty, object.span, index.span)
+    }
+
+    fn check_optional_chain(
+        &mut self,
+        object: &mut HirExpr,
+        chain: &mut crate::hir::HirOptionalChainKind,
+        span: crate::lexer::Span,
+    ) -> TypeId {
+        let object_ty = self.check_expr(object);
+        let object_resolved = self.resolve_type(object_ty);
+
+        let inner_ty = match self.types.get(object_resolved) {
+            Type::Option(inner) => *inner,
+            _ => object_ty,
+        };
+
+        let result = match chain {
+            crate::hir::HirOptionalChainKind::Member(name) => self.check_field_from_type(inner_ty, *name, object.span),
+            crate::hir::HirOptionalChainKind::Index(index) => {
+                let idx_ty = self.check_expr(index);
+                self.check_index_from_type(inner_ty, idx_ty, object.span, index.span)
+            }
+            crate::hir::HirOptionalChainKind::Call(args) => self.check_call_from_type(inner_ty, args, span),
+        };
+
+        self.types.option(result)
+    }
+
+    fn check_field_from_type(&mut self, object_ty: TypeId, name: Symbol, span: crate::lexer::Span) -> TypeId {
+        if let Some(struct_def) = self.struct_def_from_type(object_ty) {
+            if let Some(info) = self.structs.get(&struct_def) {
+                if let Some(field_ty) = info.fields.get(&name).copied() {
+                    return field_ty;
+                }
+            }
+        }
+        let _ = span;
+        self.error_type
+    }
+
+    fn check_index_from_type(
+        &mut self,
+        object_ty: TypeId,
+        idx_ty: TypeId,
+        object_span: crate::lexer::Span,
+        index_span: crate::lexer::Span,
+    ) -> TypeId {
+        let resolved = self.resolve_type(object_ty);
         let kind = match self.types.get(resolved) {
             Type::Array(elem) => Some((Some(*elem), None, None)),
             Type::Map(key, value) => Some((None, Some(*key), Some(*value))),
@@ -933,24 +994,46 @@ impl<'a> TypeChecker<'a> {
                     self.error(
                         SemanticErrorKind::InvalidOperandTypes,
                         "array index must be numerus",
-                        index.span,
+                        index_span,
                     );
                 }
                 elem
             }
             Some((None, Some(key), Some(value))) => {
-                self.unify(idx_ty, key, index.span, "map index type mismatch");
+                self.unify(idx_ty, key, index_span, "map index type mismatch");
                 value
             }
             _ => {
                 self.error(
                     SemanticErrorKind::InvalidOperandTypes,
                     "indexing requires array or map",
-                    object.span,
+                    object_span,
                 );
                 self.error_type
             }
         }
+    }
+
+    fn check_call_from_type(&mut self, callee_ty: TypeId, args: &mut [HirExpr], span: crate::lexer::Span) -> TypeId {
+        let resolved = self.resolve_type(callee_ty);
+        if let Some(sig) = self.function_signature_from_type(resolved) {
+            self.check_call_args(&sig, args, span);
+            return self.resolve_type(sig.ret);
+        }
+
+        if self.is_infer(resolved) {
+            let sig = self.build_call_signature(args);
+            let func_ty = self.types.function(sig.clone());
+            self.unify(resolved, func_ty, span, "callee is not callable");
+            self.check_call_args(&sig, args, span);
+            return sig.ret;
+        }
+
+        for arg in args {
+            self.check_expr(arg);
+        }
+        self.error(SemanticErrorKind::NotCallable, "callee is not callable", span);
+        self.error_type
     }
 
     fn check_if(

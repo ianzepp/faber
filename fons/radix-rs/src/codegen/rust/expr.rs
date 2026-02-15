@@ -211,6 +211,32 @@ pub fn generate_expr(
             generate_expr(codegen, idx, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write("]");
         }
+        HirExprKind::OptionalChain(object, chain) => {
+            w.write("(");
+            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            match chain {
+                HirOptionalChainKind::Member(field) => {
+                    w.write(").as_ref().map(|__faber_opt| __faber_opt.");
+                    w.write(codegen.resolve_symbol(*field));
+                    w.write(")");
+                }
+                HirOptionalChainKind::Index(index) => {
+                    w.write(").as_ref().map(|__faber_opt| __faber_opt[");
+                    generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write("])");
+                }
+                HirOptionalChainKind::Call(args) => {
+                    w.write(").and_then(|__faber_opt| Some(__faber_opt(");
+                    for (i, arg) in args.iter().enumerate() {
+                        if i > 0 {
+                            w.write(", ");
+                        }
+                        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    }
+                    w.write(")))");
+                }
+            }
+        }
         HirExprKind::Block(block) => {
             w.writeln("{");
             w.indented(|w| {

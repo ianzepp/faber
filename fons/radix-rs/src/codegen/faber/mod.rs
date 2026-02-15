@@ -547,6 +547,30 @@ impl FaberCodegen {
                 self.write_expr(index, types, names, interner, w);
                 w.write("]");
             }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.write_expr(object, types, names, interner, w);
+                match chain {
+                    crate::hir::HirOptionalChainKind::Member(name) => {
+                        w.write("?.");
+                        w.write(&self.symbol_to_string(*name, interner));
+                    }
+                    crate::hir::HirOptionalChainKind::Index(index) => {
+                        w.write("?[");
+                        self.write_expr(index, types, names, interner, w);
+                        w.write("]");
+                    }
+                    crate::hir::HirOptionalChainKind::Call(args) => {
+                        w.write("?(");
+                        for (idx, arg) in args.iter().enumerate() {
+                            if idx > 0 {
+                                w.write(", ");
+                            }
+                            self.write_expr(arg, types, names, interner, w);
+                        }
+                        w.write(")");
+                    }
+                }
+            }
             HirExprKind::Block(block) => {
                 w.writeln("{");
                 w.indented(|w| self.write_block(block, types, names, interner, w));
@@ -977,6 +1001,18 @@ impl FaberCodegen {
             }
             HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {
                 self.collect_expr_names(names, object);
+            }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.collect_expr_names(names, object);
+                match chain {
+                    crate::hir::HirOptionalChainKind::Member(_) => {}
+                    crate::hir::HirOptionalChainKind::Index(index) => self.collect_expr_names(names, index),
+                    crate::hir::HirOptionalChainKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_names(names, arg);
+                        }
+                    }
+                }
             }
             HirExprKind::Block(block) => self.collect_block_names(names, Some(block)),
             HirExprKind::Si(cond, then_block, else_block) => {

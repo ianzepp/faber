@@ -303,6 +303,8 @@ pub enum HirExprKind {
     Field(Box<HirExpr>, Symbol),
     /// Index access
     Index(Box<HirExpr>, Box<HirExpr>),
+    /// Optional chaining (null-safe member/index/call)
+    OptionalChain(Box<HirExpr>, HirOptionalChainKind),
     /// Block expression
     Block(HirBlock),
     /// If expression
@@ -353,6 +355,13 @@ pub enum HirExprKind {
     Deref(Box<HirExpr>),
     /// Error placeholder
     Error,
+}
+
+#[derive(Debug)]
+pub enum HirOptionalChainKind {
+    Member(Symbol),
+    Index(Box<HirExpr>),
+    Call(Vec<HirExpr>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

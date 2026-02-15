@@ -32,7 +32,8 @@ mod types;
 
 use super::{CodeWriter, Codegen, CodegenError};
 use crate::hir::{
-    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirPattern, HirProgram, HirStmtKind,
+    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirOptionalChainKind, HirPattern,
+    HirProgram, HirStmtKind,
 };
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::TypeTable;
@@ -260,6 +261,18 @@ impl<'a> RustCodegen<'a> {
             HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {
                 self.collect_expr_names(names, object);
             }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.collect_expr_names(names, object);
+                match chain {
+                    HirOptionalChainKind::Member(_) => {}
+                    HirOptionalChainKind::Index(index) => self.collect_expr_names(names, index),
+                    HirOptionalChainKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_names(names, arg);
+                        }
+                    }
+                }
+            }
             HirExprKind::Block(block) => self.collect_block_names(names, Some(block)),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.collect_expr_names(names, cond);
@@ -426,6 +439,18 @@ impl<'a> RustCodegen<'a> {
                 | HirExprKind::Panic(operand) => visit_expr(operand, suppressed, deps),
                 HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {
                     visit_expr(object, suppressed, deps);
+                }
+                HirExprKind::OptionalChain(object, chain) => {
+                    visit_expr(object, suppressed, deps);
+                    match chain {
+                        HirOptionalChainKind::Member(_) => {}
+                        HirOptionalChainKind::Index(index) => visit_expr(index, suppressed, deps),
+                        HirOptionalChainKind::Call(args) => {
+                            for arg in args {
+                                visit_expr(arg, suppressed, deps);
+                            }
+                        }
+                    }
                 }
                 HirExprKind::Block(block) | HirExprKind::Loop(block) => {
                     visit_block(block, suppressed, deps);

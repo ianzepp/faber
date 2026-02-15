@@ -259,6 +259,18 @@ impl<'a> LintContext<'a> {
                 self.check_expr(object, in_loop);
                 self.check_expr(index, in_loop);
             }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.check_expr(object, in_loop);
+                match chain {
+                    crate::hir::HirOptionalChainKind::Member(_) => {}
+                    crate::hir::HirOptionalChainKind::Index(index) => self.check_expr(index, in_loop),
+                    crate::hir::HirOptionalChainKind::Call(args) => {
+                        for arg in args {
+                            self.check_expr(arg, in_loop);
+                        }
+                    }
+                }
+            }
             HirExprKind::Block(block) => self.check_block(block, in_loop),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.check_expr(cond, in_loop);
