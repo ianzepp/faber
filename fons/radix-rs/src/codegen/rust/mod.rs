@@ -9,16 +9,14 @@ use super::{CodeWriter, Codegen, CodegenError};
 use crate::hir::{HirItem, HirItemKind, HirProgram};
 use crate::lexer::Interner;
 use crate::semantic::TypeTable;
-use crate::{CrateDep, RustOutput};
+use crate::RustOutput;
 
 /// Rust code generator
-pub struct RustCodegen {
-    crate_name: String,
-}
+pub struct RustCodegen;
 
 impl RustCodegen {
-    pub fn new(crate_name: String) -> Self {
-        Self { crate_name }
+    pub fn new() -> Self {
+        Self
     }
 
     fn generate_prelude(&self, w: &mut CodeWriter) {
@@ -84,10 +82,6 @@ impl Codegen for RustCodegen {
 
         Ok(RustOutput {
             code: w.finish(),
-            crate_name: self.crate_name.clone(),
-            dependencies: vec![
-                // Add standard dependencies
-            ],
         })
     }
 }

@@ -9,9 +9,6 @@ pub struct Config {
     /// Target language
     pub target: Target,
 
-    /// Crate name for Rust output
-    pub crate_name: Option<String>,
-
     /// Emit comments in output
     pub emit_comments: bool,
 
@@ -24,7 +21,7 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        Self { target: Target::Rust, crate_name: None, emit_comments: true, stdlib_path: None, strict: false }
+        Self { target: Target::Rust, emit_comments: true, stdlib_path: None, strict: false }
     }
 }
 
@@ -35,11 +32,6 @@ impl Config {
 
     pub fn with_target(mut self, target: Target) -> Self {
         self.target = target;
-        self
-    }
-
-    pub fn with_crate_name(mut self, name: impl Into<String>) -> Self {
-        self.crate_name = Some(name.into());
         self
     }
 

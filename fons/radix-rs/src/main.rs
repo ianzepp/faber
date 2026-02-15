@@ -342,9 +342,7 @@ fn cmd_emit(args: &[String]) {
 
     let (name, source) = read_source(file_args);
 
-    let config = radix::driver::Config::default()
-        .with_target(target)
-        .with_crate_name("output");
+    let config = radix::driver::Config::default().with_target(target);
 
     let compiler = radix::Compiler::new(config);
     let result = compiler.compile_str(&name, &source);

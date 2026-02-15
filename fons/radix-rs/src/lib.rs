@@ -38,20 +38,11 @@ pub enum Output {
 /// Rust compilation output
 pub struct RustOutput {
     pub code: String,
-    pub crate_name: String,
-    pub dependencies: Vec<CrateDep>,
 }
 
 /// Faber canonical output
 pub struct FaberOutput {
     pub code: String,
-}
-
-/// Cargo dependency specification
-pub struct CrateDep {
-    pub name: String,
-    pub version: String,
-    pub features: Vec<String>,
 }
 
 /// Main compiler entry point

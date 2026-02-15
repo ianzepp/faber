@@ -13,7 +13,6 @@ pub use writer::CodeWriter;
 use crate::hir::HirProgram;
 use crate::lexer::Interner;
 use crate::semantic::TypeTable;
-use crate::{CrateDep, FaberOutput, RustOutput};
 
 /// Compilation target
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,11 +48,10 @@ pub fn generate(
     hir: &HirProgram,
     types: &TypeTable,
     interner: &Interner,
-    crate_name: &str,
 ) -> Result<crate::Output, CodegenError> {
     match target {
         Target::Rust => {
-            let gen = rust::RustCodegen::new(crate_name.to_owned());
+            let gen = rust::RustCodegen::new();
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::Rust(output))
         }

@@ -14,7 +14,7 @@ use crate::lexer;
 use crate::parser;
 use crate::semantic::{self, PassConfig};
 use crate::syntax::*;
-use crate::{CompileResult, Output};
+use crate::CompileResult;
 
 /// Run the full compilation pipeline
 pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
@@ -60,8 +60,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     let hir = semantic_result.hir.unwrap();
 
     // Phase 4: Code generation
-    let crate_name = session.config.crate_name.as_deref().unwrap_or("output");
-    match codegen::generate(session.config.target, &hir, &semantic_result.types, &interner, crate_name) {
+    match codegen::generate(session.config.target, &hir, &semantic_result.types, &interner) {
         Ok(output) => CompileResult { output: Some(output), diagnostics },
         Err(err) => {
             diagnostics.push(Diagnostic::codegen_error(&err.message));
