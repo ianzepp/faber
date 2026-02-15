@@ -9,6 +9,8 @@ license = "MIT"
 ariadne = "0.4"
 thiserror = "2"
 rustc-hash = "2"
+unicode-ident = "1"
+unicode-normalization = "0.1"
 
 [dev-dependencies]
 insta = "1"
