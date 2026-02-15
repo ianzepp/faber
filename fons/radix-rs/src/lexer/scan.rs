@@ -4,6 +4,7 @@ use super::cursor::Cursor;
 use super::token::{Span, Symbol, Token, TokenKind};
 use super::{LexError, LexErrorKind, LexResult};
 use rustc_hash::FxHashMap;
+use unicode_normalization::UnicodeNormalization;
 
 /// Lexer mode - determines which keyword table is active
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,12 +36,13 @@ impl Interner {
     }
 
     pub fn intern(&mut self, s: &str) -> Symbol {
-        if let Some(&sym) = self.map.get(s) {
+        let normalized: String = s.nfc().collect();
+        if let Some(&sym) = self.map.get(&normalized) {
             return sym;
         }
         let sym = Symbol(self.strings.len() as u32);
-        self.strings.push(s.to_owned());
-        self.map.insert(s.to_owned(), sym);
+        self.strings.push(normalized.clone());
+        self.map.insert(normalized, sym);
         sym
     }
 
@@ -603,12 +605,16 @@ impl<'a> Lexer<'a> {
 }
 
 fn is_ident_start(c: char) -> bool {
-    c.is_alphabetic() || c == '_'
+    unicode_ident::is_xid_start(c) || c == '_'
 }
 
 fn is_ident_continue(c: char) -> bool {
-    c.is_alphanumeric() || c == '_'
+    unicode_ident::is_xid_continue(c) || c == '_'
 }
+
+#[cfg(test)]
+#[path = "scan_test.rs"]
+mod tests;
 
 /// Normal mode keywords - statements and expressions
 fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
