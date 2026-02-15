@@ -118,7 +118,7 @@ pub fn generate(
     }
 }
 
-fn reject_hir_errors(hir: &HirProgram) -> Result<(), CodegenError> {
+pub(super) fn reject_hir_errors(hir: &HirProgram) -> Result<(), CodegenError> {
     if let Some(span) = find_error_expr_in_program(hir) {
         return Err(CodegenError {
             message: format!(

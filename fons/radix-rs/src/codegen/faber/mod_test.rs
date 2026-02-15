@@ -97,3 +97,33 @@ fn renders_unresolved_infer_as_comment_marker() {
     let output = gen.generate(&program, &types, &interner).expect("codegen");
     assert!(output.code.contains("/* unresolved */ x"));
 }
+
+#[test]
+fn rejects_hir_error_nodes_in_direct_faber_codegen() {
+    let interner = Interner::new();
+    let types = TypeTable::new();
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(1),
+                kind: HirStmtKind::Expr(HirExpr {
+                    id: crate::hir::HirId(2),
+                    kind: HirExprKind::Error,
+                    ty: None,
+                    span: span(),
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let gen = FaberCodegen::new();
+    let error = match gen.generate(&program, &types, &interner) {
+        Ok(_) => panic!("expected faber codegen error"),
+        Err(error) => error,
+    };
+    assert!(error.message.contains("HIR containing error expressions"));
+}

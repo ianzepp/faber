@@ -1157,6 +1157,8 @@ impl Codegen for FaberCodegen {
     type Output = FaberOutput;
 
     fn generate(&self, hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<FaberOutput, CodegenError> {
+        super::reject_hir_errors(hir)?;
+
         let mut w = CodeWriter::new();
         let names = self.collect_names(hir);
 
