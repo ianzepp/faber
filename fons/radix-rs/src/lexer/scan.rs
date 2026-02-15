@@ -674,7 +674,9 @@ impl<'a> Lexer<'a> {
         // Exponent
         let has_exp = if self.cursor.peek() == Some('e') || self.cursor.peek() == Some('E') {
             self.cursor.advance();
-            if !self.cursor.eat('+') { self.cursor.eat('-'); }
+            if !self.cursor.eat('+') {
+                self.cursor.eat('-');
+            }
             self.cursor.eat_while(|c| c.is_ascii_digit() || c == '_');
             true
         } else {

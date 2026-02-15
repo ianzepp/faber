@@ -33,8 +33,8 @@
 //! - Shadowed variable (hard error, not warning)
 
 use crate::hir::{
-    HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirItem, HirItemKind, HirLocal, HirProgram,
-    HirStmt, HirStmtKind,
+    HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirItem, HirItemKind, HirLocal, HirProgram, HirStmt,
+    HirStmtKind,
 };
 use crate::lexer::Span;
 use crate::semantic::{error::WarningKind, Primitive, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable};

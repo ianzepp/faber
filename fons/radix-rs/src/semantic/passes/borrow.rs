@@ -427,16 +427,11 @@ impl<'a> BorrowChecker<'a> {
     }
 
     fn ensure_state(&mut self, def_id: DefId) {
-        self.states
-            .entry(def_id)
-            .or_default();
+        self.states.entry(def_id).or_default();
     }
 
     fn read_use(&mut self, def_id: DefId, span: crate::lexer::Span) {
-        let state = self
-            .states
-            .entry(def_id)
-            .or_default();
+        let state = self.states.entry(def_id).or_default();
         if state.moved {
             self.error(SemanticErrorKind::UseAfterMove, "use after move", span);
             return;
@@ -458,10 +453,7 @@ impl<'a> BorrowChecker<'a> {
                 usage.mutated = true;
             }
         }
-        let state = self
-            .states
-            .entry(def_id)
-            .or_default();
+        let state = self.states.entry(def_id).or_default();
         if state.moved {
             self.error(SemanticErrorKind::UseAfterMove, "use after move", span);
             return;
@@ -475,10 +467,7 @@ impl<'a> BorrowChecker<'a> {
         if let Some(usage) = self.param_usage.get_mut(&def_id) {
             usage.moved = true;
         }
-        let state = self
-            .states
-            .entry(def_id)
-            .or_default();
+        let state = self.states.entry(def_id).or_default();
         if state.moved {
             self.error(SemanticErrorKind::UseAfterMove, "use after move", span);
             return;
@@ -491,10 +480,7 @@ impl<'a> BorrowChecker<'a> {
     }
 
     fn borrow_shared(&mut self, def_id: DefId, span: crate::lexer::Span) {
-        let state = self
-            .states
-            .entry(def_id)
-            .or_default();
+        let state = self.states.entry(def_id).or_default();
         if state.moved {
             self.error(SemanticErrorKind::BorrowOfMoved, "borrow of moved value", span);
             return;
@@ -514,10 +500,7 @@ impl<'a> BorrowChecker<'a> {
     }
 
     fn borrow_mut(&mut self, def_id: DefId, span: crate::lexer::Span) {
-        let state = self
-            .states
-            .entry(def_id)
-            .or_default();
+        let state = self.states.entry(def_id).or_default();
         if state.moved {
             self.error(SemanticErrorKind::BorrowOfMoved, "borrow of moved value", span);
             return;

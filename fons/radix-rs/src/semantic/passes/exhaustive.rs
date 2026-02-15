@@ -28,8 +28,7 @@
 //! - Enum-only: Only checks enum variant coverage, not integers or strings
 
 use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirItemKind, HirPattern, HirProgram, HirStmt,
-    HirStmtKind,
+    DefId, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirItemKind, HirPattern, HirProgram, HirStmt, HirStmtKind,
 };
 use crate::semantic::{SemanticError, SemanticErrorKind, Type, TypeId, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -254,14 +253,13 @@ fn check_match(
 
         match &arm.pattern {
             HirPattern::Variant(def_id, _) => {
-                if !is_guarded
-                    && !covered.insert(*def_id) {
-                        errors.push(SemanticError::new(
-                            SemanticErrorKind::DuplicatePattern,
-                            "duplicate pattern",
-                            arm.span,
-                        ));
-                    }
+                if !is_guarded && !covered.insert(*def_id) {
+                    errors.push(SemanticError::new(
+                        SemanticErrorKind::DuplicatePattern,
+                        "duplicate pattern",
+                        arm.span,
+                    ));
+                }
             }
             HirPattern::Wildcard | HirPattern::Binding(_, _) => {
                 if !is_guarded {

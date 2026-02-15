@@ -155,8 +155,6 @@ impl Diagnostic {
             spec.help.map(|h| h.to_owned())
         };
 
-        
-
         Self {
             severity,
             message: err.message.clone(),

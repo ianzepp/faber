@@ -119,17 +119,17 @@ pub enum TokenKind {
     TemplateString(Symbol),
 
     // === Keywords: Declarations ===
-    Fixum,      // const
-    Varia,      // let/var
-    Functio,    // function
-    Genus,      // class
-    Pactum,     // interface
-    Typus,      // type alias
-    Ordo,       // enum
-    Discretio,  // tagged union
-    Importa,    // import
-    Probandum,  // test suite
-    Proba,      // test case
+    Fixum,     // const
+    Varia,     // let/var
+    Functio,   // function
+    Genus,     // class
+    Pactum,    // interface
+    Typus,     // type alias
+    Ordo,      // enum
+    Discretio, // tagged union
+    Importa,   // import
+    Probandum, // test suite
+    Proba,     // test case
 
     // === Keywords: Modifiers ===
     Abstractus, // abstract
@@ -148,19 +148,19 @@ pub enum TokenKind {
     Optiones,   // options struct
 
     // === Keywords: Control flow ===
-    Si,        // if
-    Sic,       // then (ternary)
-    Sin,       // else if
-    Secus,     // else
-    Dum,       // while
-    Itera,     // for
-    Elige,     // switch
-    Casu,      // case
-    Ceterum,   // default
-    Discerne,  // pattern match
-    Custodi,   // guard clauses
-    Fac,       // do-while
-    Ergo,      // therefore (single-statement then)
+    Si,       // if
+    Sic,      // then (ternary)
+    Sin,      // else if
+    Secus,    // else
+    Dum,      // while
+    Itera,    // for
+    Elige,    // switch
+    Casu,     // case
+    Ceterum,  // default
+    Discerne, // pattern match
+    Custodi,  // guard clauses
+    Fac,      // do-while
+    Ergo,     // therefore (single-statement then)
 
     // === Keywords: Transfer ===
     Redde,  // return
@@ -221,12 +221,12 @@ pub enum TokenKind {
     Mone,   // warn print
 
     // === Keywords: Entry points ===
-    Incipit,  // main (sync)
-    Incipiet, // main (async)
+    Incipit,   // main (sync)
+    Incipiet,  // main (async)
     Argumenta, // command-line args
-    Cura,     // resource management
-    Arena,    // arena allocator
-    Ad,       // HTTP endpoint
+    Cura,      // resource management
+    Arena,     // arena allocator
+    Ad,        // HTTP endpoint
 
     // === Keywords: Misc ===
     Ex,        // extract/move
