@@ -167,31 +167,15 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_optional_chain(&mut self, expr: &crate::syntax::OptionalChainExpr) -> HirExprKind {
-        let object = lower_expr(self, &expr.object);
-        match &expr.chain {
-            crate::syntax::OptionalChainKind::Member(member) => HirExprKind::Field(Box::new(object), member.name),
-            crate::syntax::OptionalChainKind::Index(index) => {
-                HirExprKind::Index(Box::new(object), Box::new(lower_expr(self, index)))
-            }
-            crate::syntax::OptionalChainKind::Call(args) => {
-                let args = args.iter().map(|arg| lower_expr(self, &arg.value)).collect();
-                HirExprKind::Call(Box::new(object), args)
-            }
-        }
+        let _ = expr;
+        self.error("STUB: optional-chain lowering requires dedicated null-safe HIR node");
+        HirExprKind::Error
     }
 
     fn lower_non_null(&mut self, expr: &crate::syntax::NonNullExpr) -> HirExprKind {
-        let object = lower_expr(self, &expr.object);
-        match &expr.chain {
-            crate::syntax::NonNullKind::Member(member) => HirExprKind::Field(Box::new(object), member.name),
-            crate::syntax::NonNullKind::Index(index) => {
-                HirExprKind::Index(Box::new(object), Box::new(lower_expr(self, index)))
-            }
-            crate::syntax::NonNullKind::Call(args) => {
-                let args = args.iter().map(|arg| lower_expr(self, &arg.value)).collect();
-                HirExprKind::Call(Box::new(object), args)
-            }
-        }
+        let _ = expr;
+        self.error("STUB: non-null chain lowering requires dedicated HIR node");
+        HirExprKind::Error
     }
 
     /// Lower index access
@@ -259,6 +243,7 @@ impl<'a> Lowerer<'a> {
 
     /// Lower object literal (objectum)
     fn lower_objectum(&mut self, obj: &crate::syntax::ObjectExpr) -> HirExprKind {
+        // STUB: lowered as tuple placeholder; needs object-literal HIR shape for codegen.
         let mut fields = Vec::new();
         for field in &obj.fields {
             let value = match &field.value {
@@ -351,6 +336,7 @@ impl<'a> Lowerer<'a> {
 
     /// Lower range expression (intervallum)
     fn lower_intervallum(&mut self, range: &crate::syntax::IntervallumExpr) -> HirExprKind {
+        // STUB: lowered as tuple placeholder; needs dedicated range HIR node.
         let mut items = vec![lower_expr(self, &range.start), lower_expr(self, &range.end)];
         if let Some(step) = &range.step {
             items.push(lower_expr(self, step));
@@ -359,7 +345,9 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_ab(&mut self, ab: &crate::syntax::AbExpr) -> HirExprKind {
-        lower_expr(self, &ab.source).kind
+        let _ = ab;
+        self.error("STUB: collection pipeline lowering requires dedicated HIR node");
+        HirExprKind::Error
     }
 
     fn lower_conversio(&mut self, conversio: &crate::syntax::ConversioExpr) -> HirExprKind {
@@ -374,8 +362,19 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_scriptum(&mut self, scriptum: &crate::syntax::ScriptumExpr) -> HirExprKind {
-        let _ = &scriptum.args;
-        HirExprKind::Literal(HirLiteral::String(scriptum.template))
+        // STUB: lowered as tuple placeholder [template, args...]; needs string-interpolation HIR node.
+        let mut items = Vec::with_capacity(scriptum.args.len() + 1);
+        items.push(HirExpr {
+            id: self.next_hir_id(),
+            kind: HirExprKind::Literal(HirLiteral::String(scriptum.template)),
+            ty: None,
+            span: self.current_span,
+        });
+        for arg in &scriptum.args {
+            items.push(lower_expr(self, arg));
+        }
+        self.error("STUB: scriptum interpolation lowering is placeholder-only");
+        HirExprKind::Tuple(items)
     }
 
     fn lower_praefixum(&mut self, praefixum: &crate::syntax::PraefixumExpr) -> HirExprKind {

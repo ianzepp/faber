@@ -228,6 +228,7 @@ impl<'a> Lowerer<'a> {
 
     fn lower_adfirma(&mut self, stmt: &crate::syntax::AdfirmaStmt) -> HirStmtKind {
         let cond = self.lower_expr(&stmt.cond);
+        // STUB: lowered as tuple placeholder [condition, message?]; needs dedicated assert HIR node.
         let mut items = vec![cond];
         if let Some(message) = &stmt.message {
             items.push(self.lower_expr(message));
@@ -243,6 +244,7 @@ impl<'a> Lowerer<'a> {
     fn lower_scribe(&mut self, stmt: &crate::syntax::ScribeStmt) -> HirStmtKind {
         let _ = stmt.kind;
         let args = stmt.args.iter().map(|arg| self.lower_expr(arg)).collect();
+        // STUB: lowered as tuple placeholder; needs dedicated print/log HIR node.
         HirStmtKind::Expr(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Tuple(args), ty: None, span: self.current_span })
     }
 
@@ -339,6 +341,7 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_ad(&mut self, stmt: &crate::syntax::AdStmt) -> HirStmtKind {
+        // STUB: lowered as tuple placeholder [args..., body?]; needs dedicated annotation/directive HIR node.
         let mut items: Vec<HirExpr> = stmt.args.iter().map(|arg| self.lower_expr(&arg.value)).collect();
         if let Some(body) = &stmt.body {
             items.push(HirExpr {
