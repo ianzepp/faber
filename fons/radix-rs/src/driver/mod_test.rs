@@ -522,3 +522,70 @@ genus Point {
         .iter()
         .all(|d| !d.message.contains("expression type mismatch")));
 }
+
+#[test]
+fn objectum_return_type_no_longer_reports_unknown_type() {
+    let session = session(Target::Rust);
+    let source = r#"functio getResponse() -> objectum {
+  redde { body: "ok" }
+}
+
+incipit {
+  fixum response = getResponse()
+  scribe response
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown type")));
+}
+
+#[test]
+fn curator_param_type_no_longer_reports_unknown_type() {
+    let session = session(Target::Rust);
+    let source = r#"functio createUser(textus name, curator alloc) -> textus {
+  redde name
+}
+
+incipit {
+  scribe "ok"
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown type")));
+}
+
+#[test]
+fn quidlibet_container_annotation_no_longer_reports_unknown_type() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum lista<quidlibet> docs = [] innatum lista<quidlibet>
+  scribe docs
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown type")));
+}
+
+#[test]
+fn conversio_type_params_no_longer_report_unknown_type() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum n = "ff" numeratum<i32, Hex>
+  scribe n
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown type")));
+}

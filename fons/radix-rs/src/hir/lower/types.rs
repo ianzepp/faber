@@ -170,6 +170,9 @@ fn primitive_from_name(name: &str) -> Option<Primitive> {
         "numquam" => Some(Primitive::Numquam),
         "ignotum" => Some(Primitive::Ignotum),
         "octeti" => Some(Primitive::Octeti),
+        "objectum" => Some(Primitive::Ignotum),
+        "quidlibet" => Some(Primitive::Ignotum),
+        "curator" => Some(Primitive::Ignotum),
         _ => None,
     }
 }

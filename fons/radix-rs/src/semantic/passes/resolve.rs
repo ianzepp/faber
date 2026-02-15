@@ -825,9 +825,8 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
         }
         ExprKind::Conversio(expr) => {
             resolve_expr(resolver, interner, &expr.expr, errors);
-            for param in &expr.type_params {
-                resolve_type(resolver, interner, param, errors);
-            }
+            // WHY: conversio parameters (e.g., numeratum<i32, Hex>) are conversion
+            // specifiers, not normal type annotations that must resolve in scope.
             if let Some(fallback) = &expr.fallback {
                 resolve_expr(resolver, interner, fallback, errors);
             }
@@ -942,6 +941,9 @@ fn is_builtin_type(name: &str) -> bool {
             | "numquam"
             | "ignotum"
             | "octeti"
+            | "objectum"
+            | "quidlibet"
+            | "curator"
             | "lista"
             | "tabula"
             | "copia"
@@ -1194,6 +1196,9 @@ fn primitive_from_name(name: &str) -> Option<crate::semantic::Primitive> {
         "numquam" => Some(crate::semantic::Primitive::Numquam),
         "ignotum" => Some(crate::semantic::Primitive::Ignotum),
         "octeti" => Some(crate::semantic::Primitive::Octeti),
+        "objectum" => Some(crate::semantic::Primitive::Ignotum),
+        "quidlibet" => Some(crate::semantic::Primitive::Ignotum),
+        "curator" => Some(crate::semantic::Primitive::Ignotum),
         _ => None,
     }
 }
