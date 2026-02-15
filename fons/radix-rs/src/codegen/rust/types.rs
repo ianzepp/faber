@@ -77,7 +77,7 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
         }
 
         Type::Alias(def_id, resolved) => {
-            let _ = codegen.resolve_def(*def_id);
+            codegen.resolve_def(*def_id);
             type_to_rust(codegen, *resolved, types)
         }
 

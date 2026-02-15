@@ -992,6 +992,65 @@ fn codegen_rejects_hir_error_nodes_for_all_targets() {
 }
 
 #[test]
+fn direct_rust_codegen_propagates_entry_stmt_errors() {
+    let interner = Interner::new();
+    let types = TypeTable::new();
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: HirId(1),
+                kind: HirStmtKind::Expr(HirExpr { id: HirId(2), kind: HirExprKind::Error, ty: None, span: span() }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let rust_codegen = super::RustCodegen::new(&program, &interner);
+    let error = match crate::codegen::Codegen::generate(&rust_codegen, &program, &types, &interner) {
+        Ok(_) => panic!("expected direct rust codegen error"),
+        Err(error) => error,
+    };
+    assert!(error
+        .message
+        .contains("cannot generate Rust for HIR error expression"));
+}
+
+#[test]
+fn expr_codegen_block_propagates_nested_stmt_errors() {
+    let interner = Interner::new();
+    let types = TypeTable::new();
+    let support_program = HirProgram { items: Vec::new(), entry: None };
+    let rust_codegen = super::RustCodegen::new(&support_program, &interner);
+    let mut writer = super::CodeWriter::new();
+
+    let block_expr = HirExpr {
+        id: HirId(1),
+        kind: HirExprKind::Block(HirBlock {
+            stmts: vec![HirStmt {
+                id: HirId(2),
+                kind: HirStmtKind::Expr(HirExpr { id: HirId(3), kind: HirExprKind::Error, ty: None, span: span() }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+        ty: None,
+        span: span(),
+    };
+
+    let error = match super::expr::generate_expr(&rust_codegen, &block_expr, &types, &mut writer, false, false, false) {
+        Ok(_) => panic!("expected nested block codegen error"),
+        Err(error) => error,
+    };
+    assert!(error
+        .message
+        .contains("cannot generate Rust for HIR error expression"));
+}
+
+#[test]
 fn type_to_rust_covers_composite_and_special_cases() {
     let mut interner = Interner::new();
     let sym_t = interner.intern("T");

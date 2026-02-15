@@ -160,11 +160,16 @@ pub fn generate_struct(
         w.write("impl ");
         w.write(codegen.resolve_symbol(s.name));
         w.writeln(" {");
+        let mut method_result = Ok(());
         w.indented(|w| {
             for method in &s.methods {
-                let _ = generate_function(codegen, method.def_id, &method.func, types, w);
+                if method_result.is_err() {
+                    return;
+                }
+                method_result = generate_function(codegen, method.def_id, &method.func, types, w);
             }
         });
+        method_result?;
         w.writeln("}");
     }
 
@@ -320,20 +325,28 @@ fn generate_block(
     wrap_tail_ok: bool,
 ) -> Result<(), CodegenError> {
     w.writeln("{");
+    let mut block_result = Ok(());
     w.indented(|w| {
         for stmt in &block.stmts {
-            let _ = super::stmt::generate_stmt(codegen, stmt, types, w, in_failable_fn, in_entry, false);
+            if block_result.is_err() {
+                return;
+            }
+            block_result = super::stmt::generate_stmt(codegen, stmt, types, w, in_failable_fn, in_entry, false);
         }
         if let Some(expr) = &block.expr {
+            if block_result.is_err() {
+                return;
+            }
             if wrap_tail_ok && in_failable_fn && !in_entry {
                 w.write("Ok(");
-                let _ = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
+                block_result = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
                 w.writeln(")");
             } else {
-                let _ = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
+                block_result = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
             }
         }
     });
+    block_result?;
     w.write("}");
     Ok(())
 }

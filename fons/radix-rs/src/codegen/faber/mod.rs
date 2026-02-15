@@ -213,6 +213,7 @@ impl FaberCodegen {
         }
 
         w.writeln(" {");
+        let mut struct_result = Ok(());
         w.indented(|w| {
             for field in &s.fields {
                 if field.is_static {
@@ -229,10 +230,14 @@ impl FaberCodegen {
             }
 
             for method in &s.methods {
+                if struct_result.is_err() {
+                    return;
+                }
                 w.newline();
-                let _ = self.generate_function(&method.func, types, names, interner, w);
+                struct_result = self.generate_function(&method.func, types, names, interner, w);
             }
         });
+        struct_result?;
         w.writeln("}");
 
         Ok(())

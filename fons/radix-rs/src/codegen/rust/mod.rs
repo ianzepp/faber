@@ -678,15 +678,23 @@ impl Codegen for RustCodegen<'_> {
         // Generate main if there's an entry point
         if let Some(entry) = &hir.entry {
             body.writeln("fn main() {");
+            let mut entry_result = Ok(());
             body.indented(|w| {
                 for stmt in &entry.stmts {
-                    let _ = stmt::generate_stmt(self, stmt, types, w, false, true, false);
+                    if entry_result.is_err() {
+                        return;
+                    }
+                    entry_result = stmt::generate_stmt(self, stmt, types, w, false, true, false);
                 }
                 if let Some(expr) = &entry.expr {
-                    let _ = expr::generate_expr(self, expr, types, w, false, true, false);
+                    if entry_result.is_err() {
+                        return;
+                    }
+                    entry_result = expr::generate_expr(self, expr, types, w, false, true, false);
                     w.writeln(";");
                 }
             });
+            entry_result?;
             body.writeln("}");
         }
 

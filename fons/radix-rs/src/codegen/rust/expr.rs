@@ -248,11 +248,16 @@ pub fn generate_expr(
             let item_name = format!("__faber_ab_item_{}", suffix);
 
             w.writeln("{");
+            let mut ab_result = Ok(());
             w.indented(|w| {
                 w.write("let mut ");
                 w.write(&vec_name);
                 w.write(" = (");
-                let _ = generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                if ab_result.is_err() {
+                    return;
+                }
+                ab_result =
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation);
                 w.write(").iter()");
                 if let Some(filter) = filter {
                     match &filter.kind {
@@ -270,7 +275,10 @@ pub fn generate_expr(
                         }
                         HirCollectionFilterKind::Condition(cond) => {
                             w.write(".filter(|_| ");
-                            let _ = generate_expr(
+                            if ab_result.is_err() {
+                                return;
+                            }
+                            ab_result = generate_expr(
                                 codegen,
                                 cond,
                                 types,
@@ -296,7 +304,10 @@ pub fn generate_expr(
                             w.write(&n_name);
                             w.write(" = ");
                             if let Some(arg) = &transform.arg {
-                                let _ = generate_expr(
+                                if ab_result.is_err() {
+                                    return;
+                                }
+                                ab_result = generate_expr(
                                     codegen,
                                     arg,
                                     types,
@@ -321,7 +332,10 @@ pub fn generate_expr(
                             w.write(&n_name);
                             w.write(" = ");
                             if let Some(arg) = &transform.arg {
-                                let _ = generate_expr(
+                                if ab_result.is_err() {
+                                    return;
+                                }
+                                ab_result = generate_expr(
                                     codegen,
                                     arg,
                                     types,
@@ -377,13 +391,18 @@ pub fn generate_expr(
                     w.newline();
                 }
             });
+            ab_result?;
             w.write("}");
         }
         HirExprKind::Block(block) => {
             w.writeln("{");
+            let mut block_result = Ok(());
             w.indented(|w| {
                 for stmt in &block.stmts {
-                    let _ = super::stmt::generate_stmt(
+                    if block_result.is_err() {
+                        return;
+                    }
+                    block_result = super::stmt::generate_stmt(
                         codegen,
                         stmt,
                         types,
@@ -394,17 +413,25 @@ pub fn generate_expr(
                     );
                 }
                 if let Some(expr) = &block.expr {
-                    let _ =
+                    if block_result.is_err() {
+                        return;
+                    }
+                    block_result =
                         generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
                 }
             });
+            block_result?;
             w.write("}");
         }
         HirExprKind::Tempta { body, catch, finally } => {
             w.writeln("{");
+            let mut tempta_result = Ok(());
             w.indented(|w| {
                 for stmt in &body.stmts {
-                    let _ = super::stmt::generate_stmt(
+                    if tempta_result.is_err() {
+                        return;
+                    }
+                    tempta_result = super::stmt::generate_stmt(
                         codegen,
                         stmt,
                         types,
@@ -415,7 +442,10 @@ pub fn generate_expr(
                     );
                 }
                 if let Some(expr) = &body.expr {
-                    let _ = generate_expr(
+                    if tempta_result.is_err() {
+                        return;
+                    }
+                    tempta_result = generate_expr(
                         codegen,
                         expr,
                         types,
@@ -428,7 +458,10 @@ pub fn generate_expr(
                 }
                 if let Some(catch) = catch {
                     for stmt in &catch.stmts {
-                        let _ = super::stmt::generate_stmt(
+                        if tempta_result.is_err() {
+                            return;
+                        }
+                        tempta_result = super::stmt::generate_stmt(
                             codegen,
                             stmt,
                             types,
@@ -439,7 +472,10 @@ pub fn generate_expr(
                         );
                     }
                     if let Some(expr) = &catch.expr {
-                        let _ = generate_expr(
+                        if tempta_result.is_err() {
+                            return;
+                        }
+                        tempta_result = generate_expr(
                             codegen,
                             expr,
                             types,
@@ -453,7 +489,10 @@ pub fn generate_expr(
                 }
                 if let Some(finally) = finally {
                     for stmt in &finally.stmts {
-                        let _ = super::stmt::generate_stmt(
+                        if tempta_result.is_err() {
+                            return;
+                        }
+                        tempta_result = super::stmt::generate_stmt(
                             codegen,
                             stmt,
                             types,
@@ -464,7 +503,10 @@ pub fn generate_expr(
                         );
                     }
                     if let Some(expr) = &finally.expr {
-                        let _ = generate_expr(
+                        if tempta_result.is_err() {
+                            return;
+                        }
+                        tempta_result = generate_expr(
                             codegen,
                             expr,
                             types,
@@ -477,6 +519,7 @@ pub fn generate_expr(
                     }
                 }
             });
+            tempta_result?;
             w.write("}");
         }
         HirExprKind::Si(cond, then, else_) => {
@@ -509,12 +552,16 @@ pub fn generate_expr(
                 suppress_error_propagation,
             )?;
             w.writeln(" {");
+            let mut discerne_result = Ok(());
             w.indented(|w| {
                 for arm in arms {
                     generate_pattern(codegen, &arm.pattern, w);
                     if let Some(guard) = &arm.guard {
                         w.write(" if ");
-                        let _ = generate_expr(
+                        if discerne_result.is_err() {
+                            return;
+                        }
+                        discerne_result = generate_expr(
                             codegen,
                             guard,
                             types,
@@ -525,7 +572,10 @@ pub fn generate_expr(
                         );
                     }
                     w.write(" => ");
-                    let _ = generate_expr(
+                    if discerne_result.is_err() {
+                        return;
+                    }
+                    discerne_result = generate_expr(
                         codegen,
                         &arm.body,
                         types,
@@ -537,6 +587,7 @@ pub fn generate_expr(
                     w.writeln(",");
                 }
             });
+            discerne_result?;
             w.write("}");
         }
         HirExprKind::Loop(block) => {
@@ -582,15 +633,20 @@ pub fn generate_expr(
         HirExprKind::Struct(def_id, fields) => {
             w.write(codegen.resolve_def(*def_id));
             w.writeln(" {");
+            let mut struct_result = Ok(());
             w.indented(|w| {
                 for (name, value) in fields {
                     w.write(codegen.resolve_symbol(*name));
                     w.write(": ");
-                    let _ =
+                    if struct_result.is_err() {
+                        return;
+                    }
+                    struct_result =
                         generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
                     w.writeln(",");
                 }
             });
+            struct_result?;
             w.write("}");
         }
         HirExprKind::Tuple(elements) => {
@@ -717,6 +773,7 @@ pub fn generate_expr(
                     let suffix = expr.id.0;
                     let map_name = format!("__faber_innatum_map_{}", suffix);
                     w.writeln("{");
+                    let mut map_result = Ok(());
                     w.indented(|w| {
                         w.write("let mut ");
                         w.write(&map_name);
@@ -730,7 +787,10 @@ pub fn generate_expr(
                             w.write(".insert(");
                             write_innatum_map_key(codegen, types, *key, *key_ty, w);
                             w.write(", ");
-                            let _ = generate_expr(
+                            if map_result.is_err() {
+                                return;
+                            }
+                            map_result = generate_expr(
                                 codegen,
                                 value,
                                 types,
@@ -744,6 +804,7 @@ pub fn generate_expr(
                         w.write(&map_name);
                         w.newline();
                     });
+                    map_result?;
                     w.write("}");
                 } else {
                     w.write("std::collections::HashMap::<");
@@ -861,9 +922,13 @@ fn generate_block(
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     w.writeln("{");
+    let mut block_result = Ok(());
     w.indented(|w| {
         for stmt in &block.stmts {
-            let _ = super::stmt::generate_stmt(
+            if block_result.is_err() {
+                return;
+            }
+            block_result = super::stmt::generate_stmt(
                 codegen,
                 stmt,
                 types,
@@ -874,9 +939,13 @@ fn generate_block(
             );
         }
         if let Some(expr) = &block.expr {
-            let _ = generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+            if block_result.is_err() {
+                return;
+            }
+            block_result = generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
         }
     });
+    block_result?;
     w.write("}");
     Ok(())
 }
