@@ -760,3 +760,36 @@ incipit {
         .iter()
         .all(|d| !d.message.contains("callee is not callable")));
 }
+
+#[test]
+fn elige_accepts_enum_variant_case_values() {
+    let session = session(Target::Rust);
+    let source = r#"ordo Color { rubrum, viridis, caeruleum }
+
+incipit {
+  fixum color = Color.rubrum
+  elige color {
+    casu Color.rubrum { scribe "R" }
+    casu Color.viridis { scribe "G" }
+    casu Color.caeruleum { scribe "B" }
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("elige case value must be a literal")));
+}
+
+#[test]
+fn ordo_exemplum_no_longer_reports_elige_literal_error() {
+    let session = session(Target::Rust);
+    let source = std::fs::read_to_string("../exempla/ordo/ordo.fab").expect("read ordo exemplum");
+    let result = compile(&session, "ordo.fab", &source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("elige case value must be a literal")));
+}

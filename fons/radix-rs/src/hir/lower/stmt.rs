@@ -473,14 +473,7 @@ impl<'a> Lowerer<'a> {
         let mut arms = Vec::new();
 
         for case in &elige_stmt.cases {
-            let pattern = match &case.value.kind {
-                crate::syntax::ExprKind::Literal(lit) => pattern::lower_literal(self, lit, case.span),
-                _ => {
-                    self.current_span = case.span;
-                    self.error("elige case value must be a literal");
-                    HirPattern::Wildcard
-                }
-            };
+            let pattern = self.lower_elige_case_pattern(&case.value, case.span);
 
             let block = self.lower_ergo_body(&case.body);
             let body = self.block_expr(block, case.span);
@@ -501,6 +494,51 @@ impl<'a> Lowerer<'a> {
         };
 
         HirStmtKind::Expr(expr)
+    }
+
+    fn lower_elige_case_pattern(&mut self, value: &crate::syntax::Expr, span: crate::lexer::Span) -> HirPattern {
+        match &value.kind {
+            crate::syntax::ExprKind::Literal(lit) => pattern::lower_literal(self, lit, span),
+            crate::syntax::ExprKind::Ident(ident) => {
+                let Some(def_id) = self.lookup_name(ident.name) else {
+                    self.current_span = span;
+                    self.error("elige case value must be a literal or enum variant");
+                    return HirPattern::Wildcard;
+                };
+                if matches!(
+                    self.resolver.get_symbol(def_id).map(|symbol| symbol.kind),
+                    Some(crate::semantic::SymbolKind::Variant)
+                ) {
+                    HirPattern::Variant(def_id, Vec::new())
+                } else {
+                    self.current_span = span;
+                    self.error("elige case value must be a literal or enum variant");
+                    HirPattern::Wildcard
+                }
+            }
+            crate::syntax::ExprKind::Member(member) => {
+                let Some(def_id) = self.lookup_name(member.member.name) else {
+                    self.current_span = span;
+                    self.error("elige case value must be a literal or enum variant");
+                    return HirPattern::Wildcard;
+                };
+                if matches!(
+                    self.resolver.get_symbol(def_id).map(|symbol| symbol.kind),
+                    Some(crate::semantic::SymbolKind::Variant)
+                ) {
+                    HirPattern::Variant(def_id, Vec::new())
+                } else {
+                    self.current_span = span;
+                    self.error("elige case value must be a literal or enum variant");
+                    HirPattern::Wildcard
+                }
+            }
+            _ => {
+                self.current_span = span;
+                self.error("elige case value must be a literal or enum variant");
+                HirPattern::Wildcard
+            }
+        }
     }
 
     fn lower_discerne(&mut self, discerne_stmt: &crate::syntax::DiscerneStmt) -> HirStmtKind {
