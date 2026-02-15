@@ -195,6 +195,12 @@ impl TypeTable {
             // ignotum is an unknown sink: values can flow into it, but not out without cast/narrowing.
             (Type::Primitive(Primitive::Ignotum), _) => false,
 
+            // Union source is assignable when every member can flow into destination.
+            (Type::Union(from_types), _) => from_types.iter().all(|member| self.assignable(*member, to)),
+
+            // Destination union accepts any source that can flow into at least one member.
+            (_, Type::Union(to_types)) => to_types.iter().any(|member| self.assignable(from, *member)),
+
             // nil is assignable to Option<T>
             (Type::Primitive(Primitive::Nihil), Type::Option(_)) => true,
 

@@ -344,6 +344,29 @@ fn ab_pipeline_from_object_member_no_longer_leaves_infer_types() {
 }
 
 #[test]
+fn ex_object_varia_bindings_accept_same_type_reassignment() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum data = { count: 100, active: verum }
+  ex data varia count, active
+  count = 200
+  active = falsum
+  scribe count, active
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("expression type mismatch")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("assignment type mismatch")));
+}
+
+#[test]
 fn compile_lowers_scriptum_without_stub_diagnostic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
