@@ -51,3 +51,7 @@ fons/nanus-go/nanus-go
 
 # Rust build files
 **/target/
+
+# Local Codex worktrees
+.codex/worktrees/*
+!.codex/worktrees/.gitkeep
