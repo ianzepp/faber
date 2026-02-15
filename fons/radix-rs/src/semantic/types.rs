@@ -104,6 +104,9 @@ impl TypeTable {
         let to_ty = self.get(to);
 
         match (from_ty, to_ty) {
+            // ignotum is an unknown sink: values can flow into it, but not out without cast/narrowing.
+            (Type::Primitive(Primitive::Ignotum), _) => false,
+
             // nil is assignable to Option<T>
             (Type::Primitive(Primitive::Nihil), Type::Option(_)) => true,
 
@@ -229,3 +232,7 @@ pub enum ParamMode {
 /// Inference variable
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InferVar(pub u32);
+
+#[cfg(test)]
+#[path = "types_test.rs"]
+mod tests;

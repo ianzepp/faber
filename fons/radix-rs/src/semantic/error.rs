@@ -86,6 +86,7 @@ pub enum WarningKind {
     TargetNoop,
     UnusedMutRefParam,
     UnusedMoveParam,
+    ExplicitIgnotumAnnotation,
 }
 
 impl std::fmt::Display for SemanticError {
