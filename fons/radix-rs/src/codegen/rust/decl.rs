@@ -2,11 +2,16 @@
 
 use super::super::CodeWriter;
 use super::types::type_to_rust;
-use super::CodegenError;
+use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
-pub fn generate_function(func: &HirFunction, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+pub fn generate_function(
+    codegen: &RustCodegen<'_>,
+    func: &HirFunction,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     // Async modifier
     if func.is_async {
         w.write("async ");
@@ -43,13 +48,13 @@ pub fn generate_function(func: &HirFunction, types: &TypeTable, w: &mut CodeWrit
     // Return type
     if let Some(ret_ty) = func.ret_ty {
         w.write(" -> ");
-        w.write(&type_to_rust(ret_ty, types));
+        w.write(&type_to_rust(codegen, ret_ty, types));
     }
 
     // Body
     if let Some(body) = &func.body {
         w.write(" ");
-        generate_block(body, types, w)?;
+        generate_block(codegen, body, types, w)?;
     } else {
         w.write(";");
     }
@@ -58,7 +63,12 @@ pub fn generate_function(func: &HirFunction, types: &TypeTable, w: &mut CodeWrit
     Ok(())
 }
 
-pub fn generate_struct(s: &HirStruct, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+pub fn generate_struct(
+    codegen: &RustCodegen<'_>,
+    s: &HirStruct,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.write("pub struct ");
     // TODO: Write struct name
     w.write("TodoStruct");
@@ -94,7 +104,7 @@ pub fn generate_struct(s: &HirStruct, types: &TypeTable, w: &mut CodeWriter) -> 
         w.writeln(" {");
         w.indented(|w| {
             for method in &s.methods {
-                let _ = generate_function(&method.func, types, w);
+                let _ = generate_function(codegen, &method.func, types, w);
             }
         });
         w.writeln("}");
@@ -103,7 +113,12 @@ pub fn generate_struct(s: &HirStruct, types: &TypeTable, w: &mut CodeWriter) -> 
     Ok(())
 }
 
-pub fn generate_enum(e: &HirEnum, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+pub fn generate_enum(
+    _codegen: &RustCodegen<'_>,
+    e: &HirEnum,
+    _types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.write("pub enum ");
     // TODO: Write enum name
     w.write("TodoEnum");
@@ -142,7 +157,12 @@ pub fn generate_enum(e: &HirEnum, types: &TypeTable, w: &mut CodeWriter) -> Resu
     Ok(())
 }
 
-pub fn generate_trait(i: &HirInterface, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+pub fn generate_trait(
+    codegen: &RustCodegen<'_>,
+    i: &HirInterface,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.write("pub trait ");
     // TODO: Write trait name
     w.write("TodoTrait");
@@ -174,7 +194,7 @@ pub fn generate_trait(i: &HirInterface, types: &TypeTable, w: &mut CodeWriter) -
             w.write(")");
             if let Some(ret) = method.ret_ty {
                 w.write(" -> ");
-                w.write(&type_to_rust(ret, types));
+                w.write(&type_to_rust(codegen, ret, types));
             }
             w.writeln(";");
         }
@@ -184,24 +204,34 @@ pub fn generate_trait(i: &HirInterface, types: &TypeTable, w: &mut CodeWriter) -
     Ok(())
 }
 
-pub fn generate_type_alias(a: &HirTypeAlias, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+pub fn generate_type_alias(
+    codegen: &RustCodegen<'_>,
+    a: &HirTypeAlias,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.write("pub type ");
     // TODO: Write alias name
     w.write("TodoAlias");
     w.write(" = ");
-    w.write(&type_to_rust(a.ty, types));
+    w.write(&type_to_rust(codegen, a.ty, types));
     w.writeln(";");
 
     Ok(())
 }
 
-pub fn generate_const(c: &HirConst, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+pub fn generate_const(
+    codegen: &RustCodegen<'_>,
+    c: &HirConst,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.write("pub const ");
     // TODO: Write const name
     w.write("TODO_CONST");
     w.write(": ");
     if let Some(ty) = c.ty {
-        w.write(&type_to_rust(ty, types));
+        w.write(&type_to_rust(codegen, ty, types));
     } else {
         w.write("()");
     }
@@ -213,16 +243,21 @@ pub fn generate_const(c: &HirConst, types: &TypeTable, w: &mut CodeWriter) -> Re
     Ok(())
 }
 
-fn generate_block(block: &HirBlock, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+fn generate_block(
+    codegen: &RustCodegen<'_>,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.writeln("{");
     w.indented(|w| {
         for stmt in &block.stmts {
             // TODO: Generate statement
-            w.writeln("todo!();");
+            let _ = super::stmt::generate_stmt(codegen, stmt, types, w);
         }
         if let Some(expr) = &block.expr {
             // TODO: Generate tail expression
-            w.writeln("todo!()");
+            let _ = super::expr::generate_expr(codegen, expr, types, w);
         }
     });
     w.write("}");

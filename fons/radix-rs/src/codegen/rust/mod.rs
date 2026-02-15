@@ -6,17 +6,26 @@ mod stmt;
 mod types;
 
 use super::{CodeWriter, Codegen, CodegenError};
-use crate::hir::{HirItem, HirItemKind, HirProgram};
-use crate::lexer::Interner;
+use crate::hir::{DefId, HirBlock, HirExpr, HirExprKind, HirItem, HirItemKind, HirPattern, HirProgram, HirStmtKind};
+use crate::lexer::{Interner, Symbol};
 use crate::semantic::TypeTable;
 use crate::RustOutput;
+use rustc_hash::FxHashMap;
 
 /// Rust code generator
-pub struct RustCodegen;
+pub struct RustCodegen<'a> {
+    names: FxHashMap<DefId, Symbol>,
+    interner: &'a Interner,
+}
 
-impl RustCodegen {
-    pub fn new() -> Self {
-        Self
+impl<'a> RustCodegen<'a> {
+    pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
+        let mut codegen = Self {
+            names: FxHashMap::default(),
+            interner,
+        };
+        codegen.names = codegen.collect_names(hir);
+        codegen
     }
 
     fn generate_prelude(&self, w: &mut CodeWriter) {
@@ -30,25 +39,36 @@ impl RustCodegen {
         w.newline();
     }
 
+    pub(super) fn resolve_symbol(&self, sym: Symbol) -> &str {
+        self.interner.resolve(sym)
+    }
+
+    pub(super) fn resolve_def(&self, def_id: DefId) -> &str {
+        self.names
+            .get(&def_id)
+            .map(|sym| self.resolve_symbol(*sym))
+            .unwrap_or("unresolved_def")
+    }
+
     fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
         match &item.kind {
             HirItemKind::Function(func) => {
-                decl::generate_function(func, types, w)?;
+                decl::generate_function(self, func, types, w)?;
             }
             HirItemKind::Struct(s) => {
-                decl::generate_struct(s, types, w)?;
+                decl::generate_struct(self, s, types, w)?;
             }
             HirItemKind::Enum(e) => {
-                decl::generate_enum(e, types, w)?;
+                decl::generate_enum(self, e, types, w)?;
             }
             HirItemKind::Interface(i) => {
-                decl::generate_trait(i, types, w)?;
+                decl::generate_trait(self, i, types, w)?;
             }
             HirItemKind::TypeAlias(a) => {
-                decl::generate_type_alias(a, types, w)?;
+                decl::generate_type_alias(self, a, types, w)?;
             }
             HirItemKind::Const(c) => {
-                decl::generate_const(c, types, w)?;
+                decl::generate_const(self, c, types, w)?;
             }
             HirItemKind::Import(_) => {
                 // Handled in prelude or use statements
@@ -56,9 +76,168 @@ impl RustCodegen {
         }
         Ok(())
     }
+
+    fn collect_names(&self, hir: &HirProgram) -> FxHashMap<DefId, Symbol> {
+        let mut names = FxHashMap::default();
+        for item in &hir.items {
+            match &item.kind {
+                HirItemKind::Function(func) => {
+                    names.insert(item.def_id, func.name);
+                    self.collect_block_names(&mut names, func.body.as_ref());
+                }
+                HirItemKind::Struct(strukt) => {
+                    names.insert(item.def_id, strukt.name);
+                    for field in &strukt.fields {
+                        names.insert(field.def_id, field.name);
+                    }
+                    for method in &strukt.methods {
+                        names.insert(method.def_id, method.func.name);
+                        self.collect_block_names(&mut names, method.func.body.as_ref());
+                    }
+                }
+                HirItemKind::Enum(enum_item) => {
+                    names.insert(item.def_id, enum_item.name);
+                    for variant in &enum_item.variants {
+                        names.insert(variant.def_id, variant.name);
+                    }
+                }
+                HirItemKind::Interface(interface) => {
+                    names.insert(item.def_id, interface.name);
+                }
+                HirItemKind::TypeAlias(alias) => {
+                    names.insert(item.def_id, alias.name);
+                }
+                HirItemKind::Const(const_item) => {
+                    names.insert(item.def_id, const_item.name);
+                }
+                HirItemKind::Import(import) => {
+                    for item in &import.items {
+                        let name = item.alias.unwrap_or(item.name);
+                        names.insert(item.def_id, name);
+                    }
+                }
+            }
+        }
+
+        if let Some(entry) = &hir.entry {
+            self.collect_block_names(&mut names, Some(entry));
+        }
+
+        names
+    }
+
+    fn collect_block_names(&self, names: &mut FxHashMap<DefId, Symbol>, block: Option<&HirBlock>) {
+        let Some(block) = block else {
+            return;
+        };
+        for stmt in &block.stmts {
+            match &stmt.kind {
+                HirStmtKind::Local(local) => {
+                    names.insert(local.def_id, local.name);
+                    if let Some(init) = &local.init {
+                        self.collect_expr_names(names, init);
+                    }
+                }
+                HirStmtKind::Expr(expr) => self.collect_expr_names(names, expr),
+                HirStmtKind::Redde(value) => {
+                    if let Some(expr) = value {
+                        self.collect_expr_names(names, expr);
+                    }
+                }
+                HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            }
+        }
+        if let Some(expr) = &block.expr {
+            self.collect_expr_names(names, expr);
+        }
+    }
+
+    fn collect_expr_names(&self, names: &mut FxHashMap<DefId, Symbol>, expr: &HirExpr) {
+        match &expr.kind {
+            HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
+                self.collect_expr_names(names, lhs);
+                self.collect_expr_names(names, rhs);
+            }
+            HirExprKind::Unary(_, operand)
+            | HirExprKind::Cede(operand)
+            | HirExprKind::Qua(operand, _)
+            | HirExprKind::Ref(_, operand)
+            | HirExprKind::Deref(operand) => self.collect_expr_names(names, operand),
+            HirExprKind::Call(callee, args) => {
+                self.collect_expr_names(names, callee);
+                for arg in args {
+                    self.collect_expr_names(names, arg);
+                }
+            }
+            HirExprKind::MethodCall(receiver, _, args) => {
+                self.collect_expr_names(names, receiver);
+                for arg in args {
+                    self.collect_expr_names(names, arg);
+                }
+            }
+            HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {
+                self.collect_expr_names(names, object);
+            }
+            HirExprKind::Block(block) => self.collect_block_names(names, Some(block)),
+            HirExprKind::Si(cond, then_block, else_block) => {
+                self.collect_expr_names(names, cond);
+                self.collect_block_names(names, Some(then_block));
+                self.collect_block_names(names, else_block.as_ref());
+            }
+            HirExprKind::Discerne(scrutinee, arms) => {
+                self.collect_expr_names(names, scrutinee);
+                for arm in arms {
+                    self.collect_pattern_names(names, &arm.pattern);
+                    if let Some(guard) = &arm.guard {
+                        self.collect_expr_names(names, guard);
+                    }
+                    self.collect_expr_names(names, &arm.body);
+                }
+            }
+            HirExprKind::Loop(block) | HirExprKind::Dum(_, block) => {
+                self.collect_block_names(names, Some(block));
+            }
+            HirExprKind::Itera(_, iter, block) => {
+                self.collect_expr_names(names, iter);
+                self.collect_block_names(names, Some(block));
+            }
+            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) => {
+                for element in elements {
+                    self.collect_expr_names(names, element);
+                }
+            }
+            HirExprKind::Struct(_, fields) => {
+                for (_, value) in fields {
+                    self.collect_expr_names(names, value);
+                }
+            }
+            HirExprKind::Clausura(params, _, body) => {
+                for param in params {
+                    names.insert(param.def_id, param.name);
+                }
+                self.collect_expr_names(names, body);
+            }
+            HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+        }
+    }
+
+    fn collect_pattern_names(&self, names: &mut FxHashMap<DefId, Symbol>, pattern: &HirPattern) {
+        match pattern {
+            HirPattern::Wildcard => {}
+            HirPattern::Binding(def_id, name) => {
+                names.insert(*def_id, *name);
+            }
+            HirPattern::Variant(_, patterns) => {
+                for pattern in patterns {
+                    self.collect_pattern_names(names, pattern);
+                }
+            }
+            HirPattern::Literal(_) => {}
+        }
+    }
 }
 
-impl Codegen for RustCodegen {
+impl Codegen for RustCodegen<'_> {
     type Output = RustOutput;
 
     fn generate(&self, hir: &HirProgram, types: &TypeTable, _interner: &Interner) -> Result<RustOutput, CodegenError> {

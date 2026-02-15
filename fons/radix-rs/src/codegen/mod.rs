@@ -51,7 +51,7 @@ pub fn generate(
 ) -> Result<crate::Output, CodegenError> {
     match target {
         Target::Rust => {
-            let gen = rust::RustCodegen::new();
+            let gen = rust::RustCodegen::new(hir, interner);
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::Rust(output))
         }

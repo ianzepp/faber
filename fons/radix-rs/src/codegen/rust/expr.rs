@@ -2,11 +2,16 @@
 
 use super::super::CodeWriter;
 use super::types::type_to_rust;
-use super::CodegenError;
+use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
-pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+pub fn generate_expr(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     match &expr.kind {
         HirExprKind::Path(_def_id) => {
             // TODO: Resolve path to name
@@ -17,30 +22,31 @@ pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> R
         }
         HirExprKind::Binary(op, lhs, rhs) => {
             w.write("(");
-            generate_expr(lhs, types, w)?;
+            generate_expr(codegen, lhs, types, w)?;
             w.write(" ");
             w.write(binop_to_rust(*op));
             w.write(" ");
-            generate_expr(rhs, types, w)?;
+            generate_expr(codegen, rhs, types, w)?;
             w.write(")");
         }
         HirExprKind::Unary(op, operand) => {
             w.write(unop_to_rust(*op));
-            generate_expr(operand, types, w)?;
+            generate_expr(codegen, operand, types, w)?;
         }
         HirExprKind::Call(callee, args) => {
-            generate_expr(callee, types, w)?;
+            generate_expr(codegen, callee, types, w)?;
             w.write("(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(arg, types, w)?;
+                generate_expr(codegen, arg, types, w)?;
             }
             w.write(")");
         }
         HirExprKind::MethodCall(receiver, method, args) => {
-            generate_expr(receiver, types, w)?;
+            let _ = codegen.resolve_symbol(*method);
+            generate_expr(codegen, receiver, types, w)?;
             w.write(".");
             // TODO: Write method name
             w.write("method");
@@ -49,57 +55,57 @@ pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> R
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(arg, types, w)?;
+                generate_expr(codegen, arg, types, w)?;
             }
             w.write(")");
         }
         HirExprKind::Field(obj, _field) => {
-            generate_expr(obj, types, w)?;
+            generate_expr(codegen, obj, types, w)?;
             w.write(".");
             // TODO: Write field name
             w.write("field");
         }
         HirExprKind::Index(obj, idx) => {
-            generate_expr(obj, types, w)?;
+            generate_expr(codegen, obj, types, w)?;
             w.write("[");
-            generate_expr(idx, types, w)?;
+            generate_expr(codegen, idx, types, w)?;
             w.write("]");
         }
         HirExprKind::Block(block) => {
             w.writeln("{");
             w.indented(|w| {
                 for stmt in &block.stmts {
-                    let _ = super::stmt::generate_stmt(stmt, types, w);
+                    let _ = super::stmt::generate_stmt(codegen, stmt, types, w);
                 }
                 if let Some(expr) = &block.expr {
-                    let _ = generate_expr(expr, types, w);
+                    let _ = generate_expr(codegen, expr, types, w);
                 }
             });
             w.write("}");
         }
         HirExprKind::Si(cond, then, else_) => {
             w.write("if ");
-            generate_expr(cond, types, w)?;
+            generate_expr(codegen, cond, types, w)?;
             w.write(" ");
-            generate_block(then, types, w)?;
+            generate_block(codegen, then, types, w)?;
             if let Some(else_block) = else_ {
                 w.write(" else ");
-                generate_block(else_block, types, w)?;
+                generate_block(codegen, else_block, types, w)?;
             }
         }
         HirExprKind::Discerne(scrutinee, arms) => {
             w.write("match ");
-            generate_expr(scrutinee, types, w)?;
+            generate_expr(codegen, scrutinee, types, w)?;
             w.writeln(" {");
             w.indented(|w| {
                 for arm in arms {
-                    generate_pattern(&arm.pattern, w);
+                    generate_pattern(codegen, &arm.pattern, w);
                     if let Some(guard) = &arm.guard {
                         w.write(" if ");
-                        let _ = generate_expr(guard, types, w);
+                        let _ = generate_expr(codegen, guard, types, w);
                     }
                     w.write(" => ");
-                    let _ = generate_expr(&arm.body, types, w);
+                    let _ = generate_expr(codegen, &arm.body, types, w);
                     w.writeln(",");
                 }
             });
@@ -107,31 +113,31 @@ pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> R
         }
         HirExprKind::Loop(block) => {
             w.write("loop ");
-            generate_block(block, types, w)?;
+            generate_block(codegen, block, types, w)?;
         }
         HirExprKind::Dum(cond, block) => {
             w.write("while ");
-            generate_expr(cond, types, w)?;
+            generate_expr(codegen, cond, types, w)?;
             w.write(" ");
-            generate_block(block, types, w)?;
+            generate_block(codegen, block, types, w)?;
         }
         HirExprKind::Itera(_binding, iter, block) => {
             w.write("for var in ");
-            generate_expr(iter, types, w)?;
+            generate_expr(codegen, iter, types, w)?;
             w.write(" ");
-            generate_block(block, types, w)?;
+            generate_block(codegen, block, types, w)?;
         }
         HirExprKind::Assign(target, value) => {
-            generate_expr(target, types, w)?;
+            generate_expr(codegen, target, types, w)?;
             w.write(" = ");
-            generate_expr(value, types, w)?;
+            generate_expr(codegen, value, types, w)?;
         }
         HirExprKind::AssignOp(op, target, value) => {
-            generate_expr(target, types, w)?;
+            generate_expr(codegen, target, types, w)?;
             w.write(" ");
             w.write(binop_to_rust(*op));
             w.write("= ");
-            generate_expr(value, types, w)?;
+            generate_expr(codegen, value, types, w)?;
         }
         HirExprKind::Array(elements) => {
             w.write("vec![");
@@ -139,7 +145,7 @@ pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> R
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(elem, types, w)?;
+                generate_expr(codegen, elem, types, w)?;
             }
             w.write("]");
         }
@@ -151,7 +157,7 @@ pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> R
                 for (_name, value) in fields {
                     // TODO: Write field name
                     w.write("field: ");
-                    let _ = generate_expr(value, types, w);
+                    let _ = generate_expr(codegen, value, types, w);
                     w.writeln(",");
                 }
             });
@@ -163,7 +169,7 @@ pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> R
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(elem, types, w)?;
+                generate_expr(codegen, elem, types, w)?;
             }
             w.write(")");
         }
@@ -177,27 +183,27 @@ pub fn generate_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) -> R
                 w.write("p");
             }
             w.write("| ");
-            generate_expr(body, types, w)?;
+            generate_expr(codegen, body, types, w)?;
         }
         HirExprKind::Cede(expr) => {
-            generate_expr(expr, types, w)?;
+            generate_expr(codegen, expr, types, w)?;
             w.write(".await");
         }
         HirExprKind::Qua(expr, ty) => {
-            generate_expr(expr, types, w)?;
+            generate_expr(codegen, expr, types, w)?;
             w.write(" as ");
-            w.write(&type_to_rust(*ty, types));
+            w.write(&type_to_rust(codegen, *ty, types));
         }
         HirExprKind::Ref(kind, expr) => {
             match kind {
                 HirRefKind::Shared => w.write("&"),
                 HirRefKind::Mutable => w.write("&mut "),
             }
-            generate_expr(expr, types, w)?;
+            generate_expr(codegen, expr, types, w)?;
         }
         HirExprKind::Deref(expr) => {
             w.write("*");
-            generate_expr(expr, types, w)?;
+            generate_expr(codegen, expr, types, w)?;
         }
         HirExprKind::Error => {
             w.write("todo!(\"error\")");
@@ -227,16 +233,18 @@ fn generate_literal(lit: &HirLiteral, w: &mut CodeWriter) {
     }
 }
 
-fn generate_pattern(pattern: &HirPattern, w: &mut CodeWriter) {
+fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, w: &mut CodeWriter) {
     match pattern {
         HirPattern::Wildcard => {
             w.write("_");
         }
-        HirPattern::Binding(_def_id, _name) => {
+        HirPattern::Binding(def_id, _name) => {
+            let _ = codegen.resolve_def(*def_id);
             // TODO: Write binding name
             w.write("var");
         }
-        HirPattern::Variant(_def_id, fields) => {
+        HirPattern::Variant(def_id, fields) => {
+            let _ = codegen.resolve_def(*def_id);
             // TODO: Write variant name
             w.write("Variant");
             if !fields.is_empty() {
@@ -245,7 +253,7 @@ fn generate_pattern(pattern: &HirPattern, w: &mut CodeWriter) {
                     if i > 0 {
                         w.write(", ");
                     }
-                    generate_pattern(field, w);
+                    generate_pattern(codegen, field, w);
                 }
                 w.write(" }");
             }
@@ -256,14 +264,19 @@ fn generate_pattern(pattern: &HirPattern, w: &mut CodeWriter) {
     }
 }
 
-fn generate_block(block: &HirBlock, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+fn generate_block(
+    codegen: &RustCodegen<'_>,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     w.writeln("{");
     w.indented(|w| {
         for stmt in &block.stmts {
-            let _ = super::stmt::generate_stmt(stmt, types, w);
+            let _ = super::stmt::generate_stmt(codegen, stmt, types, w);
         }
         if let Some(expr) = &block.expr {
-            let _ = generate_expr(expr, types, w);
+            let _ = generate_expr(codegen, expr, types, w);
         }
     });
     w.write("}");
