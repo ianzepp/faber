@@ -240,6 +240,13 @@ impl<'a> BorrowChecker<'a> {
                     self.check_expr(element);
                 }
             }
+            HirExprKind::Adfirma(cond, message) => {
+                self.check_expr(cond);
+                if let Some(message) = message {
+                    self.check_expr(message);
+                }
+            }
+            HirExprKind::Panic(value) => self.check_expr(value),
             HirExprKind::Clausura(params, _, body) => {
                 self.push_scope();
                 for param in params {

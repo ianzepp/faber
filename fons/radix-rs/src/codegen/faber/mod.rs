@@ -612,6 +612,18 @@ impl FaberCodegen {
                     self.write_expr(arg, types, names, interner, w);
                 }
             }
+            HirExprKind::Adfirma(cond, message) => {
+                w.write("adfirma ");
+                self.write_expr(cond, types, names, interner, w);
+                if let Some(message) = message {
+                    w.write(", ");
+                    self.write_expr(message, types, names, interner, w);
+                }
+            }
+            HirExprKind::Panic(value) => {
+                w.write("mori ");
+                self.write_expr(value, types, names, interner, w);
+            }
             HirExprKind::Clausura(params, ret, body) => {
                 w.write("clausura(");
                 for (idx, param) in params.iter().enumerate() {
@@ -899,6 +911,13 @@ impl FaberCodegen {
                     self.collect_expr_names(names, element);
                 }
             }
+            HirExprKind::Adfirma(cond, message) => {
+                self.collect_expr_names(names, cond);
+                if let Some(message) = message {
+                    self.collect_expr_names(names, message);
+                }
+            }
+            HirExprKind::Panic(value) => self.collect_expr_names(names, value),
             HirExprKind::Struct(_, fields) => {
                 for (_, value) in fields {
                     self.collect_expr_names(names, value);

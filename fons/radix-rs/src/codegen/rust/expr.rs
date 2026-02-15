@@ -185,6 +185,20 @@ pub fn generate_expr(
                 w.write(")");
             }
         }
+        HirExprKind::Adfirma(cond, message) => {
+            w.write("assert!(");
+            generate_expr(codegen, cond, types, w)?;
+            if let Some(message) = message {
+                w.write(", \"{}\", ");
+                generate_expr(codegen, message, types, w)?;
+            }
+            w.write(")");
+        }
+        HirExprKind::Panic(value) => {
+            w.write("panic!(\"{}\", ");
+            generate_expr(codegen, value, types, w)?;
+            w.write(")");
+        }
         HirExprKind::Clausura(params, _ret, body) => {
             w.write("|");
             for (i, param) in params.iter().enumerate() {

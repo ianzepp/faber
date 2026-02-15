@@ -1,8 +1,8 @@
 use crate::codegen::{self, Target};
 use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId, HirInterface, HirItem,
-    HirItemKind, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct, HirTypeAlias,
-    HirVariant, HirVariantField,
+    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId, HirImport, HirImportItem,
+    HirInterface, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind,
+    HirStruct, HirTypeAlias, HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
@@ -101,6 +101,56 @@ fn emits_main_body_and_scribe_as_println() {
 
     assert!(rust.code.contains("fn main() {"));
     assert!(rust.code.contains("println!(\"{}\", \"Salve, munde!\");"));
+}
+
+#[test]
+fn emits_usage_driven_and_importa_use_statements() {
+    let mut interner = Interner::new();
+    let mut types = TypeTable::new();
+    let textus = types.primitive(Primitive::Textus);
+    let numerus = types.primitive(Primitive::Numerus);
+    let map_ty = types.map(textus, numerus);
+
+    let path = interner.intern("std/collections");
+    let name = interner.intern("HashMap");
+    let alias_name = interner.intern("Mapa");
+
+    let program = HirProgram {
+        items: vec![
+            HirItem {
+                id: HirId(10),
+                def_id: DefId(10),
+                kind: HirItemKind::Import(HirImport {
+                    path,
+                    items: vec![HirImportItem {
+                        def_id: DefId(11),
+                        name,
+                        alias: Some(alias_name),
+                    }],
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: HirId(12),
+                def_id: DefId(12),
+                kind: HirItemKind::TypeAlias(HirTypeAlias {
+                    name: interner.intern("Tab"),
+                    ty: map_ty,
+                }),
+                span: span(),
+            },
+        ],
+        entry: None,
+    };
+
+    let output = codegen::generate(Target::Rust, &program, &types, &interner).expect("rust codegen");
+    let crate::Output::Rust(rust) = output else {
+        panic!("expected rust output");
+    };
+
+    assert!(rust.code.contains("use std::collections::HashMap as Mapa;"));
+    assert!(rust.code.contains("use std::collections::HashMap;"));
+    assert!(!rust.code.contains("use std::collections::HashSet;"));
 }
 
 #[test]
@@ -819,6 +869,36 @@ fn expr_codegen_handles_control_flow_and_operators() {
                 span: span(),
             },
             HirExpr {
+                id: HirId(854),
+                kind: HirExprKind::Adfirma(
+                    Box::new(HirExpr {
+                        id: HirId(855),
+                        kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                        ty: Some(bivalens),
+                        span: span(),
+                    }),
+                    Some(Box::new(HirExpr {
+                        id: HirId(856),
+                        kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
+                        ty: Some(types.primitive(Primitive::Textus)),
+                        span: span(),
+                    })),
+                ),
+                ty: None,
+                span: span(),
+            },
+            HirExpr {
+                id: HirId(857),
+                kind: HirExprKind::Panic(Box::new(HirExpr {
+                    id: HirId(858),
+                    kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
+                    ty: Some(types.primitive(Primitive::Textus)),
+                    span: span(),
+                })),
+                ty: None,
+                span: span(),
+            },
+            HirExpr {
                 id: HirId(340),
                 kind: HirExprKind::Cede(Box::new(HirExpr {
                     id: HirId(341),
@@ -916,6 +996,8 @@ fn expr_codegen_handles_control_flow_and_operators() {
     assert!(code.contains("todo!(\"error\")"));
     assert!(code.contains("\"N\""));
     assert!(code.contains("println!(\"{} {}\", \"N\", 3)"));
+    assert!(code.contains("assert!(true, \"{}\", \"N\")"));
+    assert!(code.contains("panic!(\"{}\", \"N\")"));
 }
 
 #[test]

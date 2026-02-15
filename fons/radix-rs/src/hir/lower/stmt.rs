@@ -176,12 +176,22 @@ impl<'a> Lowerer<'a> {
 
     fn lower_iace(&mut self, stmt: &crate::syntax::IaceStmt) -> HirStmtKind {
         let value = self.lower_expr(&stmt.value);
-        HirStmtKind::Expr(value)
+        HirStmtKind::Expr(HirExpr {
+            id: self.next_hir_id(),
+            kind: HirExprKind::Panic(Box::new(value)),
+            ty: None,
+            span: self.current_span,
+        })
     }
 
     fn lower_mori(&mut self, stmt: &crate::syntax::MoriStmt) -> HirStmtKind {
         let value = self.lower_expr(&stmt.value);
-        HirStmtKind::Expr(value)
+        HirStmtKind::Expr(HirExpr {
+            id: self.next_hir_id(),
+            kind: HirExprKind::Panic(Box::new(value)),
+            ty: None,
+            span: self.current_span,
+        })
     }
 
     fn lower_tempta(&mut self, stmt: &crate::syntax::TemptaStmt) -> HirStmtKind {
@@ -207,14 +217,12 @@ impl<'a> Lowerer<'a> {
 
     fn lower_adfirma(&mut self, stmt: &crate::syntax::AdfirmaStmt) -> HirStmtKind {
         let cond = self.lower_expr(&stmt.cond);
-        // STUB: lowered as tuple placeholder [condition, message?]; needs dedicated assert HIR node.
-        let mut items = vec![cond];
-        if let Some(message) = &stmt.message {
-            items.push(self.lower_expr(message));
-        }
         HirStmtKind::Expr(HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Tuple(items),
+            kind: HirExprKind::Adfirma(
+                Box::new(cond),
+                stmt.message.as_ref().map(|message| Box::new(self.lower_expr(message))),
+            ),
             ty: None,
             span: self.current_span,
         })

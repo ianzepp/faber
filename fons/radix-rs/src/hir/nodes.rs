@@ -266,6 +266,10 @@ pub enum HirExprKind {
     Tuple(Vec<HirExpr>),
     /// Print/log statement expression
     Scribe(Vec<HirExpr>),
+    /// Assert statement expression
+    Adfirma(Box<HirExpr>, Option<Box<HirExpr>>),
+    /// Panic/throw statement expression
+    Panic(Box<HirExpr>),
     /// Closure
     Clausura(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
     /// Await

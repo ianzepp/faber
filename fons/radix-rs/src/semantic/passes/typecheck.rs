@@ -304,6 +304,13 @@ impl<'a> TypeChecker<'a> {
                     self.finalize_expr(element);
                 }
             }
+            HirExprKind::Adfirma(cond, message) => {
+                self.finalize_expr(cond);
+                if let Some(message) = message {
+                    self.finalize_expr(message);
+                }
+            }
+            HirExprKind::Panic(value) => self.finalize_expr(value),
             HirExprKind::Struct(_, fields) => {
                 for (_, value) in fields {
                     self.finalize_expr(value);
@@ -510,6 +517,19 @@ impl<'a> TypeChecker<'a> {
                 for item in items {
                     self.check_expr(item);
                 }
+                self.vacuum_type()
+            }
+            HirExprKind::Adfirma(cond, message) => {
+                let cond_ty = self.check_expr(cond);
+                let bool_ty = self.bool_type();
+                self.unify(cond_ty, bool_ty, cond.span, "assert condition must be boolean");
+                if let Some(message) = message {
+                    self.check_expr(message);
+                }
+                self.vacuum_type()
+            }
+            HirExprKind::Panic(value) => {
+                self.check_expr(value);
                 self.vacuum_type()
             }
             HirExprKind::Clausura(params, ret, body) => self.check_closure(params, ret.as_mut(), body, expected),

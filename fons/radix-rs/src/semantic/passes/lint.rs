@@ -279,6 +279,13 @@ impl<'a> LintContext<'a> {
                     self.check_expr(element, in_loop);
                 }
             }
+            HirExprKind::Adfirma(cond, message) => {
+                self.check_expr(cond, in_loop);
+                if let Some(message) = message {
+                    self.check_expr(message, in_loop);
+                }
+            }
+            HirExprKind::Panic(value) => self.check_expr(value, in_loop),
             HirExprKind::Clausura(_, _, body) => self.check_expr(body, in_loop),
             HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
                 self.check_expr(expr, in_loop)

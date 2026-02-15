@@ -310,7 +310,11 @@ impl<'a> Lowerer<'a> {
                 alias: alias.as_ref().map(|ident| ident.name),
             }],
             crate::syntax::ImportKind::Wildcard { alias } => {
-                vec![HirImportItem { def_id: self.next_def_id(), name: alias.name, alias: None }]
+                vec![HirImportItem {
+                    def_id: self.next_def_id(),
+                    name: alias.name,
+                    alias: Some(alias.name),
+                }]
             }
         };
 
