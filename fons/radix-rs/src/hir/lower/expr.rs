@@ -68,6 +68,7 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         ExprKind::Conversio(conversio) => lowerer.lower_conversio(conversio),
         ExprKind::Scriptum(scriptum) => lowerer.lower_scriptum(scriptum),
         ExprKind::Praefixum(praefixum) => lowerer.lower_praefixum(praefixum),
+        ExprKind::Ego(span) => lowerer.lower_ego(*span),
         ExprKind::Paren(expr) => lower_expr(lowerer, expr).kind,
         _ => HirExprKind::Error,
     };
@@ -449,6 +450,17 @@ impl<'a> Lowerer<'a> {
         match &praefixum.body {
             crate::syntax::PraefixumBody::Expr(expr) => lower_expr(self, expr).kind,
             crate::syntax::PraefixumBody::Block(block) => HirExprKind::Block(self.lower_block(block)),
+        }
+    }
+
+    fn lower_ego(&mut self, span: crate::lexer::Span) -> HirExprKind {
+        self.current_span = span;
+        match self.current_ego_struct {
+            Some(def_id) => HirExprKind::Path(def_id),
+            None => {
+                self.error("ego used outside method context");
+                HirExprKind::Error
+            }
         }
     }
 }

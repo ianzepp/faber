@@ -77,6 +77,7 @@ struct TypeChecker<'a> {
     functions: FxHashMap<DefId, FuncSig>,
     consts: FxHashMap<DefId, TypeId>,
     structs: FxHashMap<DefId, StructInfo>,
+    interfaces: FxHashMap<DefId, FxHashMap<Symbol, FuncSig>>,
     variant_fields: FxHashMap<DefId, Vec<TypeId>>,
     variant_parent: FxHashMap<DefId, DefId>,
     current_return: Option<TypeId>,
@@ -111,6 +112,7 @@ impl<'a> TypeChecker<'a> {
             functions: FxHashMap::default(),
             consts: FxHashMap::default(),
             structs: FxHashMap::default(),
+            interfaces: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
             variant_parent: FxHashMap::default(),
             current_return: None,
@@ -130,6 +132,23 @@ impl<'a> TypeChecker<'a> {
                     self.functions.insert(item.def_id, sig);
                 }
                 HirItemKind::Struct(struct_item) => self.collect_struct(item.def_id, struct_item),
+                HirItemKind::Interface(interface_item) => {
+                    let mut methods = FxHashMap::default();
+                    for method in &interface_item.methods {
+                        let params = method
+                            .params
+                            .iter()
+                            .map(|param| ParamType {
+                                ty: param.ty,
+                                mode: param_mode_from_hir(param.mode),
+                                optional: false,
+                            })
+                            .collect();
+                        let ret = method.ret_ty.unwrap_or_else(|| self.vacuum_type());
+                        methods.insert(method.name, FuncSig { params, ret, is_async: false, is_generator: false });
+                    }
+                    self.interfaces.insert(item.def_id, methods);
+                }
                 HirItemKind::Enum(enum_item) => {
                     for variant in &enum_item.variants {
                         let fields = variant.fields.iter().map(|f| f.ty).collect();
@@ -654,6 +673,20 @@ impl<'a> TypeChecker<'a> {
 
         if matches!(
             self.resolver.get_symbol(def_id).map(|symbol| symbol.kind),
+            Some(crate::semantic::SymbolKind::Struct)
+        ) {
+            return self.types.intern(Type::Struct(def_id));
+        }
+
+        if matches!(
+            self.resolver.get_symbol(def_id).map(|symbol| symbol.kind),
+            Some(crate::semantic::SymbolKind::Interface)
+        ) {
+            return self.types.intern(Type::Interface(def_id));
+        }
+
+        if matches!(
+            self.resolver.get_symbol(def_id).map(|symbol| symbol.kind),
             Some(crate::semantic::SymbolKind::Module)
         ) {
             return self.types.primitive(Primitive::Ignotum);
@@ -786,26 +819,15 @@ impl<'a> TypeChecker<'a> {
 
     fn check_method_call(&mut self, receiver: &mut HirExpr, name: Symbol, args: &mut [HirExpr]) -> TypeId {
         let receiver_ty = self.check_expr(receiver);
-        let Some(struct_def) = self.struct_def_from_type(receiver_ty) else {
-            self.error(
-                SemanticErrorKind::UndefinedMember,
-                "method call on non-struct value",
-                receiver.span,
-            );
-            return self.error_type;
-        };
+        if let Some(sig) = self.lookup_method_signature(receiver_ty, name) {
+            self.check_call_args(&sig, args, receiver.span);
+            return sig.ret;
+        }
 
-        let Some(info) = self.structs.get(&struct_def) else {
-            return self.error_type;
-        };
-
-        let Some(sig) = info.methods.get(&name).cloned() else {
-            self.error(SemanticErrorKind::UndefinedMember, "unknown method", receiver.span);
-            return self.error_type;
-        };
-
-        self.check_call_args(&sig, args, receiver.span);
-        sig.ret
+        for arg in args {
+            self.check_expr(arg);
+        }
+        self.fresh_infer()
     }
 
     fn check_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {
@@ -821,26 +843,15 @@ impl<'a> TypeChecker<'a> {
 
     fn check_field(&mut self, object: &mut HirExpr, name: Symbol) -> TypeId {
         let obj_ty = self.check_expr(object);
-        let Some(struct_def) = self.struct_def_from_type(obj_ty) else {
-            self.error(
-                SemanticErrorKind::UndefinedMember,
-                "field access on non-struct value",
-                object.span,
-            );
-            return self.error_type;
-        };
+        if let Some(struct_def) = self.struct_def_from_type(obj_ty) {
+            if let Some(info) = self.structs.get(&struct_def) {
+                if let Some(field_ty) = info.fields.get(&name).copied() {
+                    return field_ty;
+                }
+            }
+        }
 
-        let Some(info) = self.structs.get(&struct_def) else {
-            return self.error_type;
-        };
-
-        let field_ty = info.fields.get(&name).copied();
-        let Some(field_ty) = field_ty else {
-            self.error(SemanticErrorKind::UndefinedMember, "unknown field", object.span);
-            return self.error_type;
-        };
-
-        field_ty
+        self.fresh_infer()
     }
 
     fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {
@@ -1230,6 +1241,7 @@ impl<'a> TypeChecker<'a> {
         match self.types.get(self.resolve_type(ty)) {
             Type::Struct(def_id) => Some(*def_id),
             Type::Ref(_, inner) => self.struct_def_from_type(*inner),
+            Type::Option(inner) => self.struct_def_from_type(*inner),
             Type::Applied(base, _) => self.struct_def_from_type(*base),
             _ => None,
         }
@@ -1238,9 +1250,38 @@ impl<'a> TypeChecker<'a> {
     fn enum_def_from_type(&self, ty: TypeId) -> Option<DefId> {
         match self.types.get(self.resolve_type(ty)) {
             Type::Enum(def_id) => Some(*def_id),
+            Type::Option(inner) => self.enum_def_from_type(*inner),
             Type::Applied(base, _) => self.enum_def_from_type(*base),
             _ => None,
         }
+    }
+
+    fn interface_def_from_type(&self, ty: TypeId) -> Option<DefId> {
+        match self.types.get(self.resolve_type(ty)) {
+            Type::Interface(def_id) => Some(*def_id),
+            Type::Ref(_, inner) => self.interface_def_from_type(*inner),
+            Type::Option(inner) => self.interface_def_from_type(*inner),
+            Type::Applied(base, _) => self.interface_def_from_type(*base),
+            _ => None,
+        }
+    }
+
+    fn lookup_method_signature(&self, receiver_ty: TypeId, name: Symbol) -> Option<FuncSig> {
+        if let Some(struct_def) = self.struct_def_from_type(receiver_ty) {
+            if let Some(info) = self.structs.get(&struct_def) {
+                if let Some(sig) = info.methods.get(&name) {
+                    return Some(sig.clone());
+                }
+            }
+        }
+        if let Some(interface_def) = self.interface_def_from_type(receiver_ty) {
+            if let Some(methods) = self.interfaces.get(&interface_def) {
+                if let Some(sig) = methods.get(&name) {
+                    return Some(sig.clone());
+                }
+            }
+        }
+        None
     }
 
     #[allow(dead_code)]

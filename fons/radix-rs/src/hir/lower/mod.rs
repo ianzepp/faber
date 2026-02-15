@@ -84,6 +84,8 @@ pub struct Lowerer<'a> {
     current_span: Span,
     /// Lowering-local scopes for parameters and local bindings
     local_scopes: Vec<FxHashMap<Symbol, crate::hir::DefId>>,
+    /// Current self type for lowering `ego` expressions inside methods.
+    current_ego_struct: Option<crate::hir::DefId>,
 }
 
 /// Lowering error
@@ -105,6 +107,7 @@ impl<'a> Lowerer<'a> {
             errors: Vec::new(),
             current_span: Span::default(),
             local_scopes: Vec::new(),
+            current_ego_struct: None,
         }
     }
 

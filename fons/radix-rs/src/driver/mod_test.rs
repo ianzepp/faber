@@ -202,3 +202,71 @@ fn rust_output_uses_format_macro_for_scriptum() {
     };
     assert!(output.code.contains("format!(\"valor: {}\""));
 }
+
+#[test]
+fn ego_field_access_no_longer_reports_non_struct_member_error() {
+    let session = session(Target::Rust);
+    let source = r#"genus Counter {
+  numerus count: 0
+  functio inc() -> numerus {
+    ego.count = ego.count + 1
+    redde ego.count
+  }
+}
+
+incipit {
+  fixum c = novum Counter
+  scribe c.inc()
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("field access on non-struct value")));
+}
+
+#[test]
+fn array_method_call_no_longer_reports_non_struct_member_error() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum numbers = [1, 2, 3]
+  fixum doubled = numbers.map(clausura numerus x: x * 2)
+  scribe doubled
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("method call on non-struct value")));
+}
+
+#[test]
+fn interface_method_call_no_longer_reports_non_struct_member_error() {
+    let session = session(Target::Rust);
+    let source = r#"pactum Drawable {
+  functio draw() -> vacuum
+}
+
+genus Circle implet Drawable {
+  functio draw() {
+    scribe "ok"
+  }
+}
+
+functio render(Drawable d) -> vacuum {
+  d.draw()
+}
+
+incipit {
+  fixum c = novum Circle
+  render(c)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("method call on non-struct value")));
+}

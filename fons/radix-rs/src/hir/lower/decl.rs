@@ -192,6 +192,8 @@ impl<'a> Lowerer<'a> {
                     for param in &params {
                         self.bind_local(param.name, param.def_id);
                     }
+                    let prev_ego = self.current_ego_struct;
+                    self.current_ego_struct = Some(def_id);
                     let mut modifier_locals = Vec::new();
                     for ident in modifier_bindings(&method.modifiers) {
                         let def_id = self.next_def_id();
@@ -200,6 +202,7 @@ impl<'a> Lowerer<'a> {
                     }
                     let body = method.body.as_ref().map(|block| self.lower_block(block));
                     self.pop_scope();
+                    self.current_ego_struct = prev_ego;
                     let body = body.map(|mut body| {
                         for (def_id, name, span) in modifier_locals.into_iter().rev() {
                             body.stmts.insert(
