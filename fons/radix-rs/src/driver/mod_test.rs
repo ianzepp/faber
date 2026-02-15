@@ -54,6 +54,22 @@ fn compile_reports_semantic_errors() {
 }
 
 #[test]
+fn incipit_argumenta_reports_unsupported_lowering_error() {
+    let session = session(Target::Rust);
+    let source = r#"incipit argumenta args {
+  scribe "ok"
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("incipit argumenta") && d.message.contains("not yet supported")));
+}
+
+#[test]
 fn rust_target_reports_cura_arena_noop_warning() {
     let session = session(Target::Rust);
     let source = "incipit {\n  cura arena fixum mem {\n  }\n}";
