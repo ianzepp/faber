@@ -2,14 +2,14 @@
 //!
 //! Compiles Faber source code to Rust or canonical Faber output.
 
-pub mod lexer;
-pub mod syntax;
-pub mod parser;
-pub mod hir;
-pub mod semantic;
 pub mod codegen;
-pub mod driver;
 pub mod diagnostics;
+pub mod driver;
+pub mod hir;
+pub mod lexer;
+pub mod parser;
+pub mod semantic;
+pub mod syntax;
 
 use std::path::Path;
 
@@ -61,9 +61,7 @@ pub struct Compiler {
 
 impl Compiler {
     pub fn new(config: Config) -> Self {
-        Self {
-            session: Session::new(config),
-        }
+        Self { session: Session::new(config) }
     }
 
     /// Compile a file from disk
@@ -71,10 +69,7 @@ impl Compiler {
         let source = match std::fs::read_to_string(path) {
             Ok(s) => s,
             Err(e) => {
-                return CompileResult {
-                    output: None,
-                    diagnostics: vec![Diagnostic::io_error(path, e)],
-                };
+                return CompileResult { output: None, diagnostics: vec![Diagnostic::io_error(path, e)] };
             }
         };
         let name = path.display().to_string();

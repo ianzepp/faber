@@ -3,19 +3,15 @@
 //! Produces warnings for common issues.
 
 use crate::hir::{
-    HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirImportItem, HirItem, HirItemKind,
-    HirLocal, HirProgram, HirStmt, HirStmtKind,
+    HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirImportItem, HirItem, HirItemKind, HirLocal, HirProgram,
+    HirStmt, HirStmtKind,
 };
 use crate::lexer::Span;
 use crate::semantic::{error::WarningKind, Resolver, SemanticError, SemanticErrorKind, TypeTable};
 use rustc_hash::FxHashSet;
 
 /// Run lint checks
-pub fn lint(
-    hir: &HirProgram,
-    _resolver: &Resolver,
-    types: &TypeTable,
-) -> Result<(), Vec<SemanticError>> {
+pub fn lint(hir: &HirProgram, _resolver: &Resolver, types: &TypeTable) -> Result<(), Vec<SemanticError>> {
     let mut warnings = Vec::new();
 
     let mut ctx = LintContext::new(types);
@@ -74,10 +70,9 @@ impl<'a> LintContext<'a> {
         for item in &hir.items {
             match &item.kind {
                 HirItemKind::Import(import) => self.collect_import(import),
-                HirItemKind::Function(func) => self.functions.push((
-                    item.def_id,
-                    func.body.as_ref().map(|b| b.span).unwrap_or(item.span),
-                )),
+                HirItemKind::Function(func) => self
+                    .functions
+                    .push((item.def_id, func.body.as_ref().map(|b| b.span).unwrap_or(item.span))),
                 _ => {}
             }
         }
@@ -117,11 +112,8 @@ impl<'a> LintContext<'a> {
 
         for (def_id, span) in &self.functions {
             if !self.used.contains(def_id) {
-                self.warnings.push((
-                    WarningKind::UnusedFunction,
-                    "unused function".to_owned(),
-                    *span,
-                ));
+                self.warnings
+                    .push((WarningKind::UnusedFunction, "unused function".to_owned(), *span));
             }
         }
     }
@@ -158,11 +150,8 @@ impl<'a> LintContext<'a> {
         let mut terminated = false;
         for stmt in &block.stmts {
             if terminated {
-                self.warnings.push((
-                    WarningKind::UnreachableCode,
-                    "unreachable code".to_owned(),
-                    stmt.span,
-                ));
+                self.warnings
+                    .push((WarningKind::UnreachableCode, "unreachable code".to_owned(), stmt.span));
                 continue;
             }
             self.check_stmt(stmt, in_loop);
@@ -296,11 +285,8 @@ impl<'a> LintContext<'a> {
                 self.check_expr(inner, in_loop);
                 if let Some(inner_ty) = inner.ty {
                     if inner_ty == *target {
-                        self.warnings.push((
-                            WarningKind::UnnecessaryCast,
-                            "unnecessary cast".to_owned(),
-                            expr.span,
-                        ));
+                        self.warnings
+                            .push((WarningKind::UnnecessaryCast, "unnecessary cast".to_owned(), expr.span));
                     }
                 }
             }
@@ -308,12 +294,7 @@ impl<'a> LintContext<'a> {
         }
     }
 
-    fn check_shadowing(
-        &mut self,
-        name: crate::lexer::Symbol,
-        def_id: crate::hir::DefId,
-        span: Span,
-    ) {
+    fn check_shadowing(&mut self, name: crate::lexer::Symbol, def_id: crate::hir::DefId, span: Span) {
         for scope in self.scope.iter().rev() {
             if let Some(existing) = scope.get(&name) {
                 if existing != &def_id {
@@ -344,232 +325,5 @@ impl<'a> LintContext<'a> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::hir::{HirExpr, HirExprKind, HirLiteral, HirProgram, HirStmt, HirStmtKind};
-    use crate::lexer::Span;
-    use crate::semantic::Primitive;
-
-    fn span() -> Span {
-        Span::default()
-    }
-
-    fn lit_expr() -> HirExpr {
-        HirExpr {
-            id: crate::hir::HirId(0),
-            kind: HirExprKind::Literal(HirLiteral::Int(1)),
-            ty: None,
-            span: span(),
-        }
-    }
-
-    #[test]
-    fn warns_on_unused_local() {
-        let program = HirProgram {
-            items: Vec::new(),
-            entry: Some(HirBlock {
-                stmts: vec![HirStmt {
-                    id: crate::hir::HirId(1),
-                    kind: HirStmtKind::Local(HirLocal {
-                        def_id: crate::hir::DefId(1),
-                        name: crate::lexer::Symbol(1),
-                        ty: None,
-                        init: Some(lit_expr()),
-                        mutable: false,
-                    }),
-                    span: span(),
-                }],
-                expr: None,
-                span: span(),
-            }),
-        };
-
-        let result = lint(&program, &Resolver::new(), &TypeTable::new());
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnusedVariable)));
-    }
-
-    #[test]
-    fn warns_on_unreachable_code() {
-        let program = HirProgram {
-            items: Vec::new(),
-            entry: Some(HirBlock {
-                stmts: vec![
-                    HirStmt {
-                        id: crate::hir::HirId(1),
-                        kind: HirStmtKind::Redde(Some(lit_expr())),
-                        span: span(),
-                    },
-                    HirStmt {
-                        id: crate::hir::HirId(2),
-                        kind: HirStmtKind::Expr(lit_expr()),
-                        span: span(),
-                    },
-                ],
-                expr: None,
-                span: span(),
-            }),
-        };
-
-        let result = lint(&program, &Resolver::new(), &TypeTable::new());
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnreachableCode)));
-    }
-
-    #[test]
-    fn warns_on_unused_import() {
-        let program = HirProgram {
-            items: vec![HirItem {
-                id: crate::hir::HirId(0),
-                def_id: crate::hir::DefId(10),
-                kind: HirItemKind::Import(HirImport {
-                    path: crate::lexer::Symbol(1),
-                    items: vec![HirImportItem {
-                        def_id: crate::hir::DefId(11),
-                        name: crate::lexer::Symbol(2),
-                        alias: None,
-                    }],
-                }),
-                span: span(),
-            }],
-            entry: None,
-        };
-
-        let result = lint(&program, &Resolver::new(), &TypeTable::new());
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnusedImport)));
-    }
-
-    #[test]
-    fn warns_on_shadowed_variable() {
-        let program = HirProgram {
-            items: Vec::new(),
-            entry: Some(HirBlock {
-                stmts: vec![
-                    HirStmt {
-                        id: crate::hir::HirId(1),
-                        kind: HirStmtKind::Local(HirLocal {
-                            def_id: crate::hir::DefId(1),
-                            name: crate::lexer::Symbol(1),
-                            ty: None,
-                            init: Some(lit_expr()),
-                            mutable: false,
-                        }),
-                        span: span(),
-                    },
-                    HirStmt {
-                        id: crate::hir::HirId(2),
-                        kind: HirStmtKind::Local(HirLocal {
-                            def_id: crate::hir::DefId(2),
-                            name: crate::lexer::Symbol(1),
-                            ty: None,
-                            init: Some(lit_expr()),
-                            mutable: false,
-                        }),
-                        span: span(),
-                    },
-                ],
-                expr: None,
-                span: span(),
-            }),
-        };
-
-        let result = lint(&program, &Resolver::new(), &TypeTable::new());
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::ShadowedVariable));
-    }
-
-    #[test]
-    fn warns_on_unnecessary_cast() {
-        let mut types = TypeTable::new();
-        let numerus = types.primitive(Primitive::Numerus);
-        let program = HirProgram {
-            items: Vec::new(),
-            entry: Some(HirBlock {
-                stmts: vec![HirStmt {
-                    id: crate::hir::HirId(1),
-                    kind: HirStmtKind::Expr(HirExpr {
-                        id: crate::hir::HirId(2),
-                        kind: HirExprKind::Qua(
-                            Box::new(HirExpr {
-                                id: crate::hir::HirId(3),
-                                kind: HirExprKind::Literal(HirLiteral::Int(1)),
-                                ty: Some(numerus),
-                                span: span(),
-                            }),
-                            numerus,
-                        ),
-                        ty: Some(numerus),
-                        span: span(),
-                    }),
-                    span: span(),
-                }],
-                expr: None,
-                span: span(),
-            }),
-        };
-
-        let result = lint(&program, &Resolver::new(), &types);
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnnecessaryCast)));
-    }
-
-    #[test]
-    fn warns_on_unreachable_after_break() {
-        let loop_block = HirBlock {
-            stmts: vec![
-                HirStmt {
-                    id: crate::hir::HirId(1),
-                    kind: HirStmtKind::Rumpe,
-                    span: span(),
-                },
-                HirStmt {
-                    id: crate::hir::HirId(2),
-                    kind: HirStmtKind::Expr(lit_expr()),
-                    span: span(),
-                },
-            ],
-            expr: None,
-            span: span(),
-        };
-        let program = HirProgram {
-            items: Vec::new(),
-            entry: Some(HirBlock {
-                stmts: vec![HirStmt {
-                    id: crate::hir::HirId(3),
-                    kind: HirStmtKind::Expr(HirExpr {
-                        id: crate::hir::HirId(4),
-                        kind: HirExprKind::Loop(loop_block),
-                        ty: None,
-                        span: span(),
-                    }),
-                    span: span(),
-                }],
-                expr: None,
-                span: span(),
-            }),
-        };
-
-        let result = lint(&program, &Resolver::new(), &TypeTable::new());
-        assert!(result.is_err());
-        let errors = result.unwrap_err();
-        assert!(errors
-            .iter()
-            .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnreachableCode)));
-    }
-}
+#[path = "lint_test.rs"]
+mod tests;

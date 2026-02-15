@@ -33,11 +33,7 @@ pub fn parse(lex_result: LexResult) -> ParseResult {
             errors: lex_result
                 .errors
                 .into_iter()
-                .map(|e| ParseError {
-                    kind: ParseErrorKind::LexError,
-                    message: e.message,
-                    span: e.span,
-                })
+                .map(|e| ParseError { kind: ParseErrorKind::LexError, message: e.message, span: e.span })
                 .collect(),
             interner: lex_result.interner,
         };
@@ -58,13 +54,7 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>, interner: Interner) -> Self {
-        Self {
-            tokens,
-            pos: 0,
-            errors: Vec::new(),
-            next_node_id: 0,
-            interner,
-        }
+        Self { tokens, pos: 0, errors: Vec::new(), next_node_id: 0, interner }
     }
 
     /// Parse the entire program
@@ -97,11 +87,7 @@ impl Parser {
         let span = start.merge(end);
 
         ParseResult {
-            program: Some(Program {
-                directives,
-                stmts,
-                span,
-            }),
+            program: Some(Program { directives, stmts, span }),
             errors: std::mem::take(&mut self.errors),
             interner: std::mem::replace(&mut self.interner, Interner::new()),
         }
@@ -223,17 +209,12 @@ impl Parser {
     /// Pattern: identifier followed by '='
     fn is_simple_var_decl(&self) -> bool {
         matches!(self.peek().kind, TokenKind::LBracket)
-            || (matches!(self.peek().kind, TokenKind::Ident(_))
-                && matches!(self.peek_at(1).kind, TokenKind::Eq))
+            || (matches!(self.peek().kind, TokenKind::Ident(_)) && matches!(self.peek_at(1).kind, TokenKind::Eq))
     }
 
     /// Create an error at current position
     fn error(&self, kind: ParseErrorKind, message: &str) -> ParseError {
-        ParseError {
-            kind,
-            message: message.to_owned(),
-            span: self.current_span(),
-        }
+        ParseError { kind, message: message.to_owned(), span: self.current_span() }
     }
 
     /// Synchronize after error - skip to next statement
@@ -278,11 +259,7 @@ impl Parser {
         match token.kind {
             TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident { name: sym, span }),
             TokenKind::Tag => Ok(self.keyword_ident("tag", span)),
-            _ => Err(ParseError {
-                kind: ParseErrorKind::Expected,
-                message: "expected identifier".to_owned(),
-                span,
-            }),
+            _ => Err(ParseError { kind: ParseErrorKind::Expected, message: "expected identifier".to_owned(), span }),
         }
     }
 
@@ -293,11 +270,7 @@ impl Parser {
             TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident { name: sym, span }),
             TokenKind::Cape => Ok(self.keyword_ident("cape", span)),
             TokenKind::Inter => Ok(self.keyword_ident("inter", span)),
-            _ => Err(ParseError {
-                kind: ParseErrorKind::Expected,
-                message: "expected identifier".to_owned(),
-                span,
-            }),
+            _ => Err(ParseError { kind: ParseErrorKind::Expected, message: "expected identifier".to_owned(), span }),
         }
     }
 

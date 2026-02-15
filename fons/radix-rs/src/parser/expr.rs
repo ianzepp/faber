@@ -31,15 +31,7 @@ impl Parser {
             let value = Box::new(self.parse_assignment()?);
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            return Ok(Expr {
-                id,
-                kind: ExprKind::Assign(AssignExpr {
-                    op,
-                    target: Box::new(expr),
-                    value,
-                }),
-                span,
-            });
+            return Ok(Expr { id, kind: ExprKind::Assign(AssignExpr { op, target: Box::new(expr), value }), span });
         }
 
         Ok(expr)
@@ -103,11 +95,7 @@ impl Parser {
             let id = self.next_id();
             left = Expr {
                 id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op: BinOp::Or,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
+                kind: ExprKind::Binary(BinaryExpr { op: BinOp::Or, lhs: Box::new(left), rhs: Box::new(right) }),
                 span,
             };
         }
@@ -120,11 +108,7 @@ impl Parser {
             let id = self.next_id();
             left = Expr {
                 id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op: BinOp::Coalesce,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
+                kind: ExprKind::Binary(BinaryExpr { op: BinOp::Coalesce, lhs: Box::new(left), rhs: Box::new(right) }),
                 span,
             };
         }
@@ -144,11 +128,7 @@ impl Parser {
             let id = self.next_id();
             left = Expr {
                 id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op: BinOp::And,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
+                kind: ExprKind::Binary(BinaryExpr { op: BinOp::And, lhs: Box::new(left), rhs: Box::new(right) }),
                 span,
             };
         }
@@ -182,15 +162,8 @@ impl Parser {
             let right = self.parse_comparison()?;
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            left = Expr {
-                id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
-                span,
-            };
+            left =
+                Expr { id, kind: ExprKind::Binary(BinaryExpr { op, lhs: Box::new(left), rhs: Box::new(right) }), span };
         }
 
         Ok(left)
@@ -215,15 +188,8 @@ impl Parser {
             let right = self.parse_bitwise_or()?;
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            left = Expr {
-                id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
-                span,
-            };
+            left =
+                Expr { id, kind: ExprKind::Binary(BinaryExpr { op, lhs: Box::new(left), rhs: Box::new(right) }), span };
         }
 
         Ok(left)
@@ -241,11 +207,7 @@ impl Parser {
             let id = self.next_id();
             left = Expr {
                 id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op: BinOp::BitOr,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
+                kind: ExprKind::Binary(BinaryExpr { op: BinOp::BitOr, lhs: Box::new(left), rhs: Box::new(right) }),
                 span,
             };
         }
@@ -265,11 +227,7 @@ impl Parser {
             let id = self.next_id();
             left = Expr {
                 id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op: BinOp::BitXor,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
+                kind: ExprKind::Binary(BinaryExpr { op: BinOp::BitXor, lhs: Box::new(left), rhs: Box::new(right) }),
                 span,
             };
         }
@@ -289,11 +247,7 @@ impl Parser {
             let id = self.next_id();
             left = Expr {
                 id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op: BinOp::BitAnd,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
+                kind: ExprKind::Binary(BinaryExpr { op: BinOp::BitAnd, lhs: Box::new(left), rhs: Box::new(right) }),
                 span,
             };
         }
@@ -320,15 +274,8 @@ impl Parser {
             let right = self.parse_range()?;
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            left = Expr {
-                id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
-                span,
-            };
+            left =
+                Expr { id, kind: ExprKind::Binary(BinaryExpr { op, lhs: Box::new(left), rhs: Box::new(right) }), span };
         }
 
         Ok(left)
@@ -363,12 +310,7 @@ impl Parser {
             let id = self.next_id();
             return Ok(Expr {
                 id,
-                kind: ExprKind::Intervallum(IntervallumExpr {
-                    start: Box::new(left),
-                    end,
-                    step,
-                    kind,
-                }),
+                kind: ExprKind::Intervallum(IntervallumExpr { start: Box::new(left), end, step, kind }),
                 span,
             });
         }
@@ -391,15 +333,8 @@ impl Parser {
             let right = self.parse_multiplicative()?;
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            left = Expr {
-                id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
-                span,
-            };
+            left =
+                Expr { id, kind: ExprKind::Binary(BinaryExpr { op, lhs: Box::new(left), rhs: Box::new(right) }), span };
         }
 
         Ok(left)
@@ -421,15 +356,8 @@ impl Parser {
             let right = self.parse_unary()?;
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            left = Expr {
-                id,
-                kind: ExprKind::Binary(BinaryExpr {
-                    op,
-                    lhs: Box::new(left),
-                    rhs: Box::new(right),
-                }),
-                span,
-            };
+            left =
+                Expr { id, kind: ExprKind::Binary(BinaryExpr { op, lhs: Box::new(left), rhs: Box::new(right) }), span };
         }
 
         Ok(left)
@@ -439,55 +367,28 @@ impl Parser {
     fn parse_unary(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
 
-        if self.check_keyword(TokenKind::Verum)
-            && self.can_start_prefix_operand(&self.peek_at(1).kind)
-        {
+        if self.check_keyword(TokenKind::Verum) && self.can_start_prefix_operand(&self.peek_at(1).kind) {
             self.advance();
             let operand = Box::new(self.parse_unary()?);
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            return Ok(Expr {
-                id,
-                kind: ExprKind::Unary(UnaryExpr {
-                    op: UnOp::IsTrue,
-                    operand,
-                }),
-                span,
-            });
+            return Ok(Expr { id, kind: ExprKind::Unary(UnaryExpr { op: UnOp::IsTrue, operand }), span });
         }
 
-        if self.check_keyword(TokenKind::Falsum)
-            && self.can_start_prefix_operand(&self.peek_at(1).kind)
-        {
+        if self.check_keyword(TokenKind::Falsum) && self.can_start_prefix_operand(&self.peek_at(1).kind) {
             self.advance();
             let operand = Box::new(self.parse_unary()?);
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            return Ok(Expr {
-                id,
-                kind: ExprKind::Unary(UnaryExpr {
-                    op: UnOp::IsFalse,
-                    operand,
-                }),
-                span,
-            });
+            return Ok(Expr { id, kind: ExprKind::Unary(UnaryExpr { op: UnOp::IsFalse, operand }), span });
         }
 
-        if self.check_keyword(TokenKind::Nihil)
-            && self.can_start_prefix_operand(&self.peek_at(1).kind)
-        {
+        if self.check_keyword(TokenKind::Nihil) && self.can_start_prefix_operand(&self.peek_at(1).kind) {
             self.advance();
             let operand = Box::new(self.parse_unary()?);
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            return Ok(Expr {
-                id,
-                kind: ExprKind::Unary(UnaryExpr {
-                    op: UnOp::IsNil,
-                    operand,
-                }),
-                span,
-            });
+            return Ok(Expr { id, kind: ExprKind::Unary(UnaryExpr { op: UnOp::IsNil, operand }), span });
         }
 
         let op = match self.peek().kind {
@@ -507,11 +408,7 @@ impl Parser {
             let operand = Box::new(self.parse_unary()?);
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            return Ok(Expr {
-                id,
-                kind: ExprKind::Unary(UnaryExpr { op, operand }),
-                span,
-            });
+            return Ok(Expr { id, kind: ExprKind::Unary(UnaryExpr { op, operand }), span });
         }
 
         // await
@@ -520,11 +417,7 @@ impl Parser {
             let expr = Box::new(self.parse_unary()?);
             let span = start.merge(self.previous_span());
             let id = self.next_id();
-            return Ok(Expr {
-                id,
-                kind: ExprKind::Cede(CedeExpr { expr }),
-                span,
-            });
+            return Ok(Expr { id, kind: ExprKind::Cede(CedeExpr { expr }), span });
         }
 
         // novum
@@ -592,28 +485,14 @@ impl Parser {
                 self.expect(&TokenKind::RParen, "expected ')'")?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
-                expr = Expr {
-                    id,
-                    kind: ExprKind::Call(CallExpr {
-                        callee: Box::new(expr),
-                        args,
-                    }),
-                    span,
-                };
+                expr = Expr { id, kind: ExprKind::Call(CallExpr { callee: Box::new(expr), args }), span };
             } else if self.check(&TokenKind::Dot) {
                 // Member access
                 self.advance();
                 let member = self.parse_member_ident()?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
-                expr = Expr {
-                    id,
-                    kind: ExprKind::Member(MemberExpr {
-                        object: Box::new(expr),
-                        member,
-                    }),
-                    span,
-                };
+                expr = Expr { id, kind: ExprKind::Member(MemberExpr { object: Box::new(expr), member }), span };
             } else if self.check(&TokenKind::LBracket) {
                 // Index access
                 self.advance();
@@ -621,14 +500,7 @@ impl Parser {
                 self.expect(&TokenKind::RBracket, "expected ']'")?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
-                expr = Expr {
-                    id,
-                    kind: ExprKind::Index(IndexExpr {
-                        object: Box::new(expr),
-                        index,
-                    }),
-                    span,
-                };
+                expr = Expr { id, kind: ExprKind::Index(IndexExpr { object: Box::new(expr), index }), span };
             } else if self.check(&TokenKind::QuestionDot) {
                 // Optional member
                 self.advance();
@@ -679,28 +551,14 @@ impl Parser {
                 let ty = self.parse_type()?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
-                expr = Expr {
-                    id,
-                    kind: ExprKind::Qua(QuaExpr {
-                        expr: Box::new(expr),
-                        ty,
-                    }),
-                    span,
-                };
+                expr = Expr { id, kind: ExprKind::Qua(QuaExpr { expr: Box::new(expr), ty }), span };
             } else if self.check_keyword(TokenKind::Innatum) {
                 // Native construction
                 self.advance();
                 let ty = self.parse_type()?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
-                expr = Expr {
-                    id,
-                    kind: ExprKind::Innatum(InnatumExpr {
-                        expr: Box::new(expr),
-                        ty,
-                    }),
-                    span,
-                };
+                expr = Expr { id, kind: ExprKind::Innatum(InnatumExpr { expr: Box::new(expr), ty }), span };
             } else if self.check_keyword(TokenKind::Numeratum)
                 || self.check_keyword(TokenKind::Fractatum)
                 || self.check_keyword(TokenKind::Textatum)
@@ -728,12 +586,7 @@ impl Parser {
                 let id = self.next_id();
                 expr = Expr {
                     id,
-                    kind: ExprKind::Conversio(ConversioExpr {
-                        expr: Box::new(expr),
-                        kind,
-                        type_params,
-                        fallback,
-                    }),
+                    kind: ExprKind::Conversio(ConversioExpr { expr: Box::new(expr), kind, type_params, fallback }),
                     span,
                 };
             } else {
@@ -885,11 +738,7 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Novum(NovumExpr { ty, args, init }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Novum(NovumExpr { ty, args, init }), span })
     }
 
     fn parse_variant_expr(&mut self) -> Result<Expr, ParseError> {
@@ -924,15 +773,7 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Finge(FingeExpr {
-                variant,
-                fields,
-                cast,
-            }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Finge(FingeExpr { variant, fields, cast }), span })
     }
 
     fn parse_clausura_expr(&mut self) -> Result<Expr, ParseError> {
@@ -951,11 +792,7 @@ impl Parser {
             let ty = self.parse_type()?;
             let name = self.parse_ident()?;
             let param_span = param_start.merge(self.previous_span());
-            params.push(ClausuraParam {
-                ty,
-                name,
-                span: param_span,
-            });
+            params.push(ClausuraParam { ty, name, span: param_span });
 
             if !self.eat(&TokenKind::Comma) {
                 break;
@@ -975,19 +812,12 @@ impl Parser {
         } else if self.check(&TokenKind::LBrace) {
             ClausuraBody::Block(self.parse_block()?)
         } else {
-            return Err(self.error(
-                ParseErrorKind::Expected,
-                "expected ':' or '{' after closure parameters",
-            ));
+            return Err(self.error(ParseErrorKind::Expected, "expected ':' or '{' after closure parameters"));
         };
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Clausura(ClausuraExpr { params, ret, body }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Clausura(ClausuraExpr { params, ret, body }), span })
     }
 
     fn parse_ab_expr(&mut self) -> Result<Expr, ParseError> {
@@ -998,27 +828,19 @@ impl Parser {
         let source = Box::new(self.parse_postfix()?);
 
         // Check for optional filter after source expression
-        let filter = if matches!(self.peek().kind, TokenKind::Comma | TokenKind::RBrace)
-            || self.is_at_end()
-        {
+        let filter = if matches!(self.peek().kind, TokenKind::Comma | TokenKind::RBrace) || self.is_at_end() {
             // No filter - go straight to transforms
             None
         } else if self.eat_keyword(TokenKind::Non) {
             // Negated property: non activus
             if let Some(ident) = self.try_parse_ident() {
-                Some(CollectionFilter {
-                    negated: true,
-                    kind: CollectionFilterKind::Property(ident),
-                })
+                Some(CollectionFilter { negated: true, kind: CollectionFilterKind::Property(ident) })
             } else {
                 None
             }
         } else if let Some(ident) = self.try_parse_ident() {
             // Property filter: activus
-            Some(CollectionFilter {
-                negated: false,
-                kind: CollectionFilterKind::Property(ident),
-            })
+            Some(CollectionFilter { negated: false, kind: CollectionFilterKind::Property(ident) })
         } else {
             None
         };
@@ -1048,15 +870,7 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Ab(AbExpr {
-                source,
-                filter,
-                transforms,
-            }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Ab(AbExpr { source, filter, transforms }), span })
     }
 
     /// Parse argument list (for calls)
@@ -1068,11 +882,7 @@ impl Parser {
             let spread = self.eat_keyword(TokenKind::Sparge);
             let value = Box::new(self.parse_expression()?);
             let span = start.merge(self.previous_span());
-            args.push(Argument {
-                spread,
-                value,
-                span,
-            });
+            args.push(Argument { spread, value, span });
 
             if !self.eat(&TokenKind::Comma) {
                 break;
@@ -1110,22 +920,14 @@ impl Parser {
             if self.eat_keyword(TokenKind::Sparge) {
                 let expr = Box::new(self.parse_expression()?);
                 let span = start.merge(self.previous_span());
-                fields.push(ObjectField {
-                    key: ObjectKey::Spread(expr),
-                    value: None,
-                    span,
-                });
+                fields.push(ObjectField { key: ObjectKey::Spread(expr), value: None, span });
             } else if let TokenKind::String(s) = self.peek().kind {
                 // String key
                 self.advance();
                 self.expect(&TokenKind::Colon, "expected ':'")?;
                 let value = Some(Box::new(self.parse_expression()?));
                 let span = start.merge(self.previous_span());
-                fields.push(ObjectField {
-                    key: ObjectKey::String(s),
-                    value,
-                    span,
-                });
+                fields.push(ObjectField { key: ObjectKey::String(s), value, span });
             } else if self.check(&TokenKind::LBracket) {
                 // Computed key
                 self.advance();
@@ -1134,11 +936,7 @@ impl Parser {
                 self.expect(&TokenKind::Colon, "expected ':'")?;
                 let value = Some(Box::new(self.parse_expression()?));
                 let span = start.merge(self.previous_span());
-                fields.push(ObjectField {
-                    key: ObjectKey::Computed(key_expr),
-                    value,
-                    span,
-                });
+                fields.push(ObjectField { key: ObjectKey::Computed(key_expr), value, span });
             } else {
                 // Identifier key (possibly shorthand)
                 let ident = self.parse_ident()?;
@@ -1148,11 +946,7 @@ impl Parser {
                     None // Shorthand
                 };
                 let span = start.merge(self.previous_span());
-                fields.push(ObjectField {
-                    key: ObjectKey::Ident(ident),
-                    value,
-                    span,
-                });
+                fields.push(ObjectField { key: ObjectKey::Ident(ident), value, span });
             }
 
             if !self.eat(&TokenKind::Comma) {
@@ -1199,11 +993,7 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Scriptum(ScriptumExpr { template, args }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Scriptum(ScriptumExpr { template, args }), span })
     }
 
     /// Parse lege / lineam
@@ -1218,11 +1008,7 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Lege(LegeExpr { line, span }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Lege(LegeExpr { line, span }), span })
     }
 
     /// Parse comptime expression: praefixum(expr)
@@ -1238,11 +1024,7 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Praefixum(PraefixumExpr { body }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Praefixum(PraefixumExpr { body }), span })
     }
 
     /// Parse regex literal: sed "pattern" [flags]
@@ -1260,14 +1042,6 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr {
-            id,
-            kind: ExprKind::Sed(SedExpr {
-                pattern,
-                flags,
-                span,
-            }),
-            span,
-        })
+        Ok(Expr { id, kind: ExprKind::Sed(SedExpr { pattern, flags, span }), span })
     }
 }

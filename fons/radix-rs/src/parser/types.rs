@@ -40,12 +40,7 @@ impl Parser {
         if self.check(&TokenKind::LParen) {
             let func = self.parse_func_type()?;
             let span = start.merge(self.previous_span());
-            return Ok(TypeExpr {
-                nullable,
-                mode,
-                kind: TypeExprKind::Func(func),
-                span,
-            });
+            return Ok(TypeExpr { nullable, mode, kind: TypeExprKind::Func(func), span });
         }
 
         // Named type
@@ -79,21 +74,11 @@ impl Parser {
             self.advance();
             self.expect(&TokenKind::RBracket, "expected ']'")?;
             let span = start.merge(self.previous_span());
-            kind = TypeExprKind::Array(Box::new(TypeExpr {
-                nullable: false,
-                mode: None,
-                kind,
-                span,
-            }));
+            kind = TypeExprKind::Array(Box::new(TypeExpr { nullable: false, mode: None, kind, span }));
         }
 
         let span = start.merge(self.previous_span());
-        Ok(TypeExpr {
-            nullable,
-            mode,
-            kind,
-            span,
-        })
+        Ok(TypeExpr { nullable, mode, kind, span })
     }
 
     /// Parse function type: (A, B) -> C

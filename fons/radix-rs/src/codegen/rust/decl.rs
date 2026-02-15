@@ -6,11 +6,7 @@ use super::CodegenError;
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
-pub fn generate_function(
-    func: &HirFunction,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_function(func: &HirFunction, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     // Async modifier
     if func.is_async {
         w.write("async ");
@@ -62,11 +58,7 @@ pub fn generate_function(
     Ok(())
 }
 
-pub fn generate_struct(
-    s: &HirStruct,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_struct(s: &HirStruct, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.write("pub struct ");
     // TODO: Write struct name
     w.write("TodoStruct");
@@ -111,11 +103,7 @@ pub fn generate_struct(
     Ok(())
 }
 
-pub fn generate_enum(
-    e: &HirEnum,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_enum(e: &HirEnum, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.write("pub enum ");
     // TODO: Write enum name
     w.write("TodoEnum");
@@ -154,11 +142,7 @@ pub fn generate_enum(
     Ok(())
 }
 
-pub fn generate_trait(
-    i: &HirInterface,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_trait(i: &HirInterface, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.write("pub trait ");
     // TODO: Write trait name
     w.write("TodoTrait");
@@ -200,11 +184,7 @@ pub fn generate_trait(
     Ok(())
 }
 
-pub fn generate_type_alias(
-    a: &HirTypeAlias,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_type_alias(a: &HirTypeAlias, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.write("pub type ");
     // TODO: Write alias name
     w.write("TodoAlias");
@@ -215,11 +195,7 @@ pub fn generate_type_alias(
     Ok(())
 }
 
-pub fn generate_const(
-    c: &HirConst,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+pub fn generate_const(c: &HirConst, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.write("pub const ");
     // TODO: Write const name
     w.write("TODO_CONST");
@@ -237,11 +213,7 @@ pub fn generate_const(
     Ok(())
 }
 
-fn generate_block(
-    block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
+fn generate_block(block: &HirBlock, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
     w.writeln("{");
     w.indented(|w| {
         for stmt in &block.stmts {

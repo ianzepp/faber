@@ -21,10 +21,7 @@ impl Parser {
             TokenKind::Discretio => self.parse_union_decl()?,
             TokenKind::Importa => self.parse_import_decl()?,
             TokenKind::Section => {
-                return Err(self.error(
-                    ParseErrorKind::InvalidDirective,
-                    "directives must appear at file scope",
-                ));
+                return Err(self.error(ParseErrorKind::InvalidDirective, "directives must appear at file scope"));
             }
             TokenKind::Ex => self.parse_extract_stmt()?,
             TokenKind::Probandum => self.parse_probandum_decl()?,
@@ -79,12 +76,7 @@ impl Parser {
         };
 
         let span = start.merge(self.previous_span());
-        Ok(Stmt {
-            id,
-            kind,
-            span,
-            annotations: Vec::new(),
-        })
+        Ok(Stmt { id, kind, span, annotations: Vec::new() })
     }
 
     /// Parse variable declaration
@@ -122,13 +114,7 @@ impl Parser {
             None
         };
 
-        Ok(StmtKind::Var(VarDecl {
-            mutability,
-            is_await,
-            ty,
-            binding,
-            init,
-        }))
+        Ok(StmtKind::Var(VarDecl { mutability, is_await, ty, binding, init }))
     }
 
     fn parse_binding_pattern(&mut self) -> Result<BindingPattern, ParseError> {
@@ -156,9 +142,7 @@ impl Parser {
         while !self.check(&TokenKind::RBracket) && !self.is_at_end() {
             if self.eat_keyword(TokenKind::Ceteri) {
                 if rest.is_some() {
-                    return Err(
-                        self.error(ParseErrorKind::Expected, "rest pattern already specified")
-                    );
+                    return Err(self.error(ParseErrorKind::Expected, "rest pattern already specified"));
                 }
                 let name = self.parse_ident()?;
                 rest = Some(name);
@@ -184,11 +168,7 @@ impl Parser {
 
         self.expect(&TokenKind::RBracket, "expected ']' after pattern")?;
         let span = start.merge(self.previous_span());
-        Ok(BindingPattern::Array {
-            elements,
-            rest,
-            span,
-        })
+        Ok(BindingPattern::Array { elements, rest, span })
     }
 
     /// Parse function declaration
@@ -236,10 +216,7 @@ impl Parser {
             self.advance();
             self.expect_keyword(TokenKind::Typus, "expected 'typus' after 'prae'")?;
             let name = self.parse_ident()?;
-            type_params.push(TypeParam {
-                span: name.span,
-                name,
-            });
+            type_params.push(TypeParam { span: name.span, name });
             if !self.eat(&TokenKind::Comma) {
                 break;
             }
@@ -287,16 +264,7 @@ impl Parser {
             };
 
             let span = start.merge(self.previous_span());
-            params.push(Param {
-                optional,
-                mode,
-                rest,
-                ty,
-                name,
-                alias,
-                default,
-                span,
-            });
+            params.push(Param { optional, mode, rest, ty, name, alias, default, span });
 
             if !self.eat(&TokenKind::Comma) {
                 break;
@@ -422,21 +390,11 @@ impl Parser {
                 None
             };
 
-            ClassMemberKind::Field(FieldDecl {
-                is_static,
-                is_bound,
-                ty,
-                name,
-                init,
-            })
+            ClassMemberKind::Field(FieldDecl { is_static, is_bound, ty, name, init })
         };
 
         let span = start.merge(self.previous_span());
-        Ok(ClassMember {
-            annotations,
-            kind,
-            span,
-        })
+        Ok(ClassMember { annotations, kind, span })
     }
 
     /// Parse interface declaration
@@ -468,22 +426,12 @@ impl Parser {
             };
 
             let span = start.merge(self.previous_span());
-            methods.push(InterfaceMethod {
-                name: method_name,
-                params,
-                modifiers,
-                ret,
-                span,
-            });
+            methods.push(InterfaceMethod { name: method_name, params, modifiers, ret, span });
         }
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
-        Ok(StmtKind::Interface(InterfaceDecl {
-            name,
-            type_params,
-            methods,
-        }))
+        Ok(StmtKind::Interface(InterfaceDecl { name, type_params, methods }))
     }
 
     /// Parse type alias
@@ -534,11 +482,7 @@ impl Parser {
             };
 
             let span = start.merge(self.previous_span());
-            members.push(EnumMember {
-                name: member_name,
-                value,
-                span,
-            });
+            members.push(EnumMember { name: member_name, value, span });
 
             // Optional comma
             self.eat(&TokenKind::Comma);
@@ -569,11 +513,7 @@ impl Parser {
                     let ty = self.parse_type()?;
                     let field_name = self.parse_ident()?;
                     let field_span = field_start.merge(self.previous_span());
-                    fields.push(VariantField {
-                        ty,
-                        name: field_name,
-                        span: field_span,
-                    });
+                    fields.push(VariantField { ty, name: field_name, span: field_span });
                     self.eat(&TokenKind::Comma);
                 }
                 self.expect(&TokenKind::RBrace, "expected '}'")?;
@@ -583,22 +523,14 @@ impl Parser {
             };
 
             let span = start.merge(self.previous_span());
-            variants.push(Variant {
-                name: variant_name,
-                fields,
-                span,
-            });
+            variants.push(Variant { name: variant_name, fields, span });
 
             self.eat(&TokenKind::Comma);
         }
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
-        Ok(StmtKind::Union(UnionDecl {
-            name,
-            type_params,
-            variants,
-        }))
+        Ok(StmtKind::Union(UnionDecl { name, type_params, variants }))
     }
 
     /// Parse import declaration
@@ -632,12 +564,7 @@ impl Parser {
         };
 
         let span = start.merge(self.previous_span());
-        Ok(StmtKind::Import(ImportDecl {
-            path,
-            visibility,
-            kind,
-            span,
-        }))
+        Ok(StmtKind::Import(ImportDecl { path, visibility, kind, span }))
     }
 
     /// Parse directive
@@ -717,12 +644,7 @@ impl Parser {
                 let all = self.eat_keyword(TokenKind::Omnia);
                 let body = self.parse_block()?;
                 let span = start.merge(self.previous_span());
-                setup.push(PraeparaBlock {
-                    kind,
-                    all,
-                    body,
-                    span,
-                });
+                setup.push(PraeparaBlock { kind, all, body, span });
             } else if self.check_keyword(TokenKind::Probandum) {
                 if let StmtKind::Probandum(test) = self.parse_probandum_decl()? {
                     nested.push(test);
@@ -735,11 +657,7 @@ impl Parser {
             }
         }
 
-        Ok(ProbandumBody {
-            setup,
-            tests,
-            nested,
-        })
+        Ok(ProbandumBody { setup, tests, nested })
     }
 
     fn parse_proba_case(&mut self) -> Result<ProbaCase, ParseError> {
@@ -793,12 +711,7 @@ impl Parser {
         let body = self.parse_block()?;
 
         let span = start.merge(self.previous_span());
-        Ok(ProbaCase {
-            modifiers,
-            name,
-            body,
-            span,
-        })
+        Ok(ProbaCase { modifiers, name, body, span })
     }
 
     /// Parse annotations
@@ -862,11 +775,7 @@ impl Parser {
             let value = self.parse_string()?;
             let span = start.merge(self.previous_span());
 
-            mappings.push(TargetMapping {
-                target,
-                value,
-                span,
-            });
+            mappings.push(TargetMapping { target, value, span });
 
             if !self.eat(&TokenKind::Comma) {
                 break;
@@ -907,10 +816,7 @@ impl Parser {
         let mut params = Vec::new();
         loop {
             let name = self.parse_ident()?;
-            params.push(TypeParam {
-                span: name.span,
-                name,
-            });
+            params.push(TypeParam { span: name.span, name });
 
             if !self.eat(&TokenKind::Comma) {
                 break;

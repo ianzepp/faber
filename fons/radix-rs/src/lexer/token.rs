@@ -13,10 +13,7 @@ impl Span {
     }
 
     pub fn merge(self, other: Span) -> Span {
-        Span {
-            start: self.start.min(other.start),
-            end: self.end.max(other.end),
-        }
+        Span { start: self.start.min(other.start), end: self.end.max(other.end) }
     }
 
     pub fn len(&self) -> u32 {

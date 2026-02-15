@@ -46,16 +46,8 @@ pub struct PassConfig {
 impl PassConfig {
     pub fn for_target(target: Target) -> Self {
         match target {
-            Target::Rust => Self {
-                borrow_analysis: true,
-                exhaustiveness: true,
-                lint: true,
-            },
-            Target::Faber => Self {
-                borrow_analysis: false,
-                exhaustiveness: true,
-                lint: true,
-            },
+            Target::Rust => Self { borrow_analysis: true, exhaustiveness: true, lint: true },
+            Target::Faber => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
         }
     }
 }
@@ -78,11 +70,7 @@ pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> S
 
     // Early exit if resolution failed
     if !errors.is_empty() {
-        return SemanticResult {
-            hir: None,
-            types,
-            errors,
-        };
+        return SemanticResult { hir: None, types, errors };
     }
 
     // Pass 3: Lower to HIR
@@ -90,19 +78,11 @@ pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> S
 
     // Add lowering errors
     for err in lower_errors {
-        errors.push(SemanticError::new(
-            SemanticErrorKind::LoweringError,
-            err.message,
-            err.span,
-        ));
+        errors.push(SemanticError::new(SemanticErrorKind::LoweringError, err.message, err.span));
     }
 
     if !errors.is_empty() {
-        return SemanticResult {
-            hir: None,
-            types,
-            errors,
-        };
+        return SemanticResult { hir: None, types, errors };
     }
 
     // Pass 4: Type checking
@@ -131,9 +111,5 @@ pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> S
         }
     }
 
-    SemanticResult {
-        hir: Some(hir),
-        types,
-        errors,
-    }
+    SemanticResult { hir: Some(hir), types, errors }
 }

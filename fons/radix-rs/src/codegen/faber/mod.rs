@@ -5,8 +5,8 @@
 
 use super::{CodeWriter, Codegen, CodegenError};
 use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirFunction, HirInterface, HirItem,
-    HirItemKind, HirLiteral, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct,
+    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirFunction, HirInterface, HirItem, HirItemKind,
+    HirLiteral, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct,
 };
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
@@ -323,10 +323,7 @@ impl FaberCodegen {
             }
             .to_owned(),
 
-            Type::Array(elem) => format!(
-                "lista<{}>",
-                self.type_to_faber(*elem, types, names, interner)
-            ),
+            Type::Array(elem) => format!("lista<{}>", self.type_to_faber(*elem, types, names, interner)),
 
             Type::Map(key, value) => format!(
                 "tabula<{}, {}>",
@@ -334,10 +331,7 @@ impl FaberCodegen {
                 self.type_to_faber(*value, types, names, interner)
             ),
 
-            Type::Set(elem) => format!(
-                "copia<{}>",
-                self.type_to_faber(*elem, types, names, interner)
-            ),
+            Type::Set(elem) => format!("copia<{}>", self.type_to_faber(*elem, types, names, interner)),
 
             Type::Option(inner) => {
                 format!("si {}", self.type_to_faber(*inner, types, names, interner))
@@ -348,11 +342,7 @@ impl FaberCodegen {
                     Mutability::Immutable => "de",
                     Mutability::Mutable => "in",
                 };
-                format!(
-                    "{} {}",
-                    prefix,
-                    self.type_to_faber(*inner, types, names, interner)
-                )
+                format!("{} {}", prefix, self.type_to_faber(*inner, types, names, interner))
             }
 
             Type::Struct(def_id) | Type::Enum(def_id) | Type::Interface(def_id) => {
@@ -760,12 +750,7 @@ impl FaberCodegen {
         }
     }
 
-    fn name_for_def(
-        &self,
-        def_id: DefId,
-        names: &FxHashMap<DefId, Symbol>,
-        interner: &Interner,
-    ) -> String {
+    fn name_for_def(&self, def_id: DefId, names: &FxHashMap<DefId, Symbol>, interner: &Interner) -> String {
         names
             .get(&def_id)
             .map(|sym| self.symbol_to_string(*sym, interner))
@@ -853,9 +838,7 @@ impl FaberCodegen {
 
     fn collect_expr_names(&self, names: &mut FxHashMap<DefId, Symbol>, expr: &HirExpr) {
         match &expr.kind {
-            HirExprKind::Binary(_, lhs, rhs)
-            | HirExprKind::Assign(lhs, rhs)
-            | HirExprKind::AssignOp(_, lhs, rhs) => {
+            HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
                 self.collect_expr_names(names, lhs);
                 self.collect_expr_names(names, rhs);
             }
@@ -947,12 +930,7 @@ impl Default for FaberCodegen {
 impl Codegen for FaberCodegen {
     type Output = FaberOutput;
 
-    fn generate(
-        &self,
-        hir: &HirProgram,
-        types: &TypeTable,
-        interner: &Interner,
-    ) -> Result<FaberOutput, CodegenError> {
+    fn generate(&self, hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<FaberOutput, CodegenError> {
         let mut w = CodeWriter::new();
         let names = self.collect_names(hir);
 
@@ -972,75 +950,5 @@ impl Codegen for FaberCodegen {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::hir::{
-        HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirParam,
-        HirParamMode, HirProgram, HirStmt, HirStmtKind,
-    };
-    use crate::lexer::Span;
-
-    fn span() -> Span {
-        Span::default()
-    }
-
-    #[test]
-    fn emits_basic_function_and_entry() {
-        let mut interner = Interner::new();
-        let name_greet = interner.intern("greet");
-        let name_param = interner.intern("name");
-        let name_text = interner.intern("salve");
-
-        let mut types = TypeTable::new();
-        let textus = types.primitive(Primitive::Textus);
-
-        let function = HirFunction {
-            name: name_greet,
-            type_params: Vec::new(),
-            params: vec![HirParam {
-                def_id: DefId(1),
-                name: name_param,
-                ty: textus,
-                mode: HirParamMode::Owned,
-                span: span(),
-            }],
-            ret_ty: Some(textus),
-            body: Some(HirBlock {
-                stmts: vec![HirStmt {
-                    id: crate::hir::HirId(2),
-                    kind: HirStmtKind::Redde(Some(HirExpr {
-                        id: crate::hir::HirId(3),
-                        kind: HirExprKind::Literal(HirLiteral::String(name_text)),
-                        ty: Some(textus),
-                        span: span(),
-                    })),
-                    span: span(),
-                }],
-                expr: None,
-                span: span(),
-            }),
-            is_async: false,
-            is_generator: false,
-        };
-
-        let program = HirProgram {
-            items: vec![HirItem {
-                id: crate::hir::HirId(0),
-                def_id: DefId(0),
-                kind: HirItemKind::Function(function),
-                span: span(),
-            }],
-            entry: Some(HirBlock {
-                stmts: Vec::new(),
-                expr: None,
-                span: span(),
-            }),
-        };
-
-        let gen = FaberCodegen::new();
-        let output = gen.generate(&program, &types, &interner).expect("codegen");
-        assert!(output.code.contains("functio greet"));
-        assert!(output.code.contains("incipit"));
-        assert!(output.code.contains("redde \"salve\""));
-    }
-}
+#[path = "mod_test.rs"]
+mod tests;

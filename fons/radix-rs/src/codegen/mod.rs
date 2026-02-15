@@ -40,12 +40,7 @@ impl std::error::Error for CodegenError {}
 pub trait Codegen {
     type Output;
 
-    fn generate(
-        &self,
-        hir: &HirProgram,
-        types: &TypeTable,
-        interner: &Interner,
-    ) -> Result<Self::Output, CodegenError>;
+    fn generate(&self, hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<Self::Output, CodegenError>;
 }
 
 /// Generate code for the specified target

@@ -34,12 +34,7 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         }
     };
 
-    HirExpr {
-        id,
-        kind,
-        ty: None,
-        span,
-    }
+    HirExpr { id, kind, ty: None, span }
 }
 
 /// Lower a literal
@@ -163,9 +158,7 @@ impl<'a> Lowerer<'a> {
         let value = lower_expr(self, &assign.value);
 
         match assign.op {
-            crate::syntax::AssignOp::Assign => {
-                HirExprKind::Assign(Box::new(target), Box::new(value))
-            }
+            crate::syntax::AssignOp::Assign => HirExprKind::Assign(Box::new(target), Box::new(value)),
             _ => {
                 self.error("compound assignment lowering not implemented");
                 HirExprKind::Error

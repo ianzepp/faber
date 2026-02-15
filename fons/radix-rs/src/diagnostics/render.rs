@@ -32,12 +32,8 @@ fn render_one(diag: &Diagnostic, sources: &[(String, String)]) {
         .map(|(_, content)| content.as_str())
         .unwrap_or("");
 
-    let mut builder = Report::build(
-        kind,
-        &diag.file,
-        diag.span.map(|s| s.start as usize).unwrap_or(0),
-    )
-    .with_message(message);
+    let mut builder =
+        Report::build(kind, &diag.file, diag.span.map(|s| s.start as usize).unwrap_or(0)).with_message(message);
 
     if let Some(span) = diag.span {
         let color = match diag.severity {

@@ -21,19 +21,11 @@ impl<'a> Lowerer<'a> {
                 let params = func
                     .params
                     .iter()
-                    .map(|param| ParamType {
-                        ty: self.lower_type(param),
-                        mode: ParamMode::Owned,
-                        optional: false,
-                    })
+                    .map(|param| ParamType { ty: self.lower_type(param), mode: ParamMode::Owned, optional: false })
                     .collect();
                 let ret = self.lower_type(&func.ret);
-                self.types.function(FuncSig {
-                    params,
-                    ret,
-                    is_async: false,
-                    is_generator: false,
-                })
+                self.types
+                    .function(FuncSig { params, ret, is_async: false, is_generator: false })
             }
         };
 

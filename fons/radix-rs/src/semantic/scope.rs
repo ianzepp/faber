@@ -31,12 +31,7 @@ pub struct Scope {
 
 impl Scope {
     pub fn new(id: ScopeId, parent: Option<ScopeId>, kind: ScopeKind) -> Self {
-        Self {
-            id,
-            parent,
-            kind,
-            symbols: FxHashMap::default(),
-        }
+        Self { id, parent, kind, symbols: FxHashMap::default() }
     }
 }
 
@@ -79,12 +74,7 @@ pub struct Resolver {
 impl Resolver {
     pub fn new() -> Self {
         let global = Scope::new(ScopeId(0), None, ScopeKind::Global);
-        Self {
-            scopes: vec![global],
-            symbols: FxHashMap::default(),
-            current_scope: ScopeId(0),
-            next_def_id: 0,
-        }
+        Self { scopes: vec![global], symbols: FxHashMap::default(), current_scope: ScopeId(0), next_def_id: 0 }
     }
 
     /// Create a new DefId

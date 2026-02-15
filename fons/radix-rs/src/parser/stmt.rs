@@ -25,12 +25,7 @@ impl Parser {
             None
         };
 
-        Ok(StmtKind::Si(SiStmt {
-            cond,
-            then,
-            catch,
-            else_,
-        }))
+        Ok(StmtKind::Si(SiStmt { cond, then, catch, else_ }))
     }
 
     /// Parse sin statement - sin already consumed
@@ -47,12 +42,7 @@ impl Parser {
             None
         };
 
-        Ok(SiStmt {
-            cond,
-            then,
-            catch,
-            else_,
-        })
+        Ok(SiStmt { cond, then, catch, else_ })
     }
 
     /// Parse if body (block, ergo, or inline return)
@@ -60,17 +50,11 @@ impl Parser {
         if self.check(&TokenKind::LBrace) {
             Ok(IfBody::Block(self.parse_block()?))
         } else if self.eat_keyword(TokenKind::Reddit) {
-            Ok(IfBody::InlineReturn(InlineReturn::Reddit(Box::new(
-                self.parse_expression()?,
-            ))))
+            Ok(IfBody::InlineReturn(InlineReturn::Reddit(Box::new(self.parse_expression()?))))
         } else if self.eat_keyword(TokenKind::Iacit) {
-            Ok(IfBody::InlineReturn(InlineReturn::Iacit(Box::new(
-                self.parse_expression()?,
-            ))))
+            Ok(IfBody::InlineReturn(InlineReturn::Iacit(Box::new(self.parse_expression()?))))
         } else if self.eat_keyword(TokenKind::Moritor) {
-            Ok(IfBody::InlineReturn(InlineReturn::Moritor(Box::new(
-                self.parse_expression()?,
-            ))))
+            Ok(IfBody::InlineReturn(InlineReturn::Moritor(Box::new(self.parse_expression()?))))
         } else if self.eat_keyword(TokenKind::Tacet) {
             Ok(IfBody::InlineReturn(InlineReturn::Tacet))
         } else if self.eat_keyword(TokenKind::Ergo) {
@@ -109,12 +93,7 @@ impl Parser {
             let start = self.current_span();
             let kind = self.parse_expr_stmt()?;
             let span = start.merge(self.previous_span());
-            Ok(SecusClause::Stmt(Box::new(Stmt {
-                id,
-                kind,
-                span,
-                annotations: Vec::new(),
-            })))
+            Ok(SecusClause::Stmt(Box::new(Stmt { id, kind, span, annotations: Vec::new() })))
         }
     }
 
@@ -157,14 +136,7 @@ impl Parser {
         let body = self.parse_ergo_body()?;
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Itera(IteraStmt {
-            mode,
-            iterable,
-            mutability,
-            binding,
-            body,
-            catch,
-        }))
+        Ok(StmtKind::Itera(IteraStmt { mode, iterable, mutability, binding, body, catch }))
     }
 
     /// Parse switch statement
@@ -200,12 +172,7 @@ impl Parser {
 
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Elige(EligeStmt {
-            expr,
-            cases,
-            default,
-            catch,
-        }))
+        Ok(StmtKind::Elige(EligeStmt { expr, cases, default, catch }))
     }
 
     /// Parse match statement
@@ -238,11 +205,7 @@ impl Parser {
                 let patterns = self.parse_patterns()?;
                 let body = self.parse_ergo_body()?;
                 let span = start.merge(self.previous_span());
-                arms.push(CasuArm {
-                    patterns,
-                    body,
-                    span,
-                });
+                arms.push(CasuArm { patterns, body, span });
             } else if self.eat_keyword(TokenKind::Ceterum) {
                 let start = self.current_span();
                 let body = self.parse_ergo_body()?;
@@ -256,12 +219,7 @@ impl Parser {
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
-        Ok(StmtKind::Discerne(DiscerneStmt {
-            exhaustive,
-            subjects,
-            arms,
-            default,
-        }))
+        Ok(StmtKind::Discerne(DiscerneStmt { exhaustive, subjects, arms, default }))
     }
 
     /// Parse guard statement
@@ -298,11 +256,7 @@ impl Parser {
             None
         };
 
-        Ok(StmtKind::Fac(FacStmt {
-            body,
-            catch,
-            while_,
-        }))
+        Ok(StmtKind::Fac(FacStmt { body, catch, while_ }))
     }
 
     /// Parse return statement
@@ -310,10 +264,7 @@ impl Parser {
         self.expect_keyword(TokenKind::Redde, "expected 'redde'")?;
 
         // Check for value - if next token could start expression
-        let value = if !self.is_at_end()
-            && !self.check(&TokenKind::RBrace)
-            && !self.check(&TokenKind::Semicolon)
-        {
+        let value = if !self.is_at_end() && !self.check(&TokenKind::RBrace) && !self.check(&TokenKind::Semicolon) {
             Some(Box::new(self.parse_expression()?))
         } else {
             None
@@ -363,11 +314,7 @@ impl Parser {
             None
         };
 
-        Ok(StmtKind::Tempta(TemptaStmt {
-            body,
-            catch,
-            finally,
-        }))
+        Ok(StmtKind::Tempta(TemptaStmt { body, catch, finally }))
     }
 
     /// Parse assert statement
@@ -432,12 +379,7 @@ impl Parser {
 
         let body = self.parse_ergo_body()?;
 
-        Ok(StmtKind::Incipit(IncipitStmt {
-            is_async,
-            body,
-            args,
-            exitus,
-        }))
+        Ok(StmtKind::Incipit(IncipitStmt { is_async, body, args, exitus }))
     }
 
     /// Parse resource statement
@@ -468,8 +410,7 @@ impl Parser {
             }));
         }
 
-        let init = if !self.check_keyword(TokenKind::Fixum) && !self.check_keyword(TokenKind::Varia)
-        {
+        let init = if !self.check_keyword(TokenKind::Fixum) && !self.check_keyword(TokenKind::Varia) {
             Some(Box::new(self.parse_expression()?))
         } else {
             None
@@ -484,8 +425,7 @@ impl Parser {
         };
 
         // Check: is this "name {" (no type) or "type name {" (with type)?
-        let ty = if matches!(self.peek().kind, TokenKind::Ident(_))
-            && matches!(self.peek_at(1).kind, TokenKind::LBrace)
+        let ty = if matches!(self.peek().kind, TokenKind::Ident(_)) && matches!(self.peek_at(1).kind, TokenKind::LBrace)
         {
             None
         } else {
@@ -496,15 +436,7 @@ impl Parser {
         let body = self.parse_block()?;
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Cura(CuraStmt {
-            kind,
-            init,
-            mutability,
-            ty,
-            binding,
-            body,
-            catch,
-        }))
+        Ok(StmtKind::Cura(CuraStmt { kind, init, mutability, ty, binding, body, catch }))
     }
 
     /// Parse endpoint statement
@@ -527,13 +459,7 @@ impl Parser {
 
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Ad(AdStmt {
-            path,
-            args,
-            binding,
-            body,
-            catch,
-        }))
+        Ok(StmtKind::Ad(AdStmt { path, args, binding, body, catch }))
     }
 
     /// Parse extract statement
@@ -557,9 +483,7 @@ impl Parser {
         loop {
             if self.eat_keyword(TokenKind::Ceteri) {
                 if rest.is_some() {
-                    return Err(
-                        self.error(ParseErrorKind::Expected, "rest pattern already specified")
-                    );
+                    return Err(self.error(ParseErrorKind::Expected, "rest pattern already specified"));
                 }
                 rest = Some(self.parse_ident()?);
                 break;
@@ -579,13 +503,7 @@ impl Parser {
         }
 
         let span = start.merge(self.previous_span());
-        Ok(StmtKind::Ex(ExStmt {
-            source,
-            mutability,
-            fields,
-            rest,
-            span,
-        }))
+        Ok(StmtKind::Ex(ExStmt { source, mutability, fields, rest, span }))
     }
 
     fn try_parse_endpoint_binding(&mut self) -> Result<Option<AdBinding>, ParseError> {
@@ -608,12 +526,7 @@ impl Parser {
             None
         };
 
-        Ok(Some(AdBinding {
-            verb: EndpointVerb::Fit,
-            ty,
-            name,
-            alias,
-        }))
+        Ok(Some(AdBinding { verb: EndpointVerb::Fit, ty, name, alias }))
     }
 
     /// Parse expression statement
@@ -633,10 +546,6 @@ impl Parser {
         let body = self.parse_block()?;
         let span = start.merge(self.previous_span());
 
-        Ok(Some(CapeClause {
-            binding,
-            body,
-            span,
-        }))
+        Ok(Some(CapeClause { binding, body, span }))
     }
 }

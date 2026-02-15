@@ -12,12 +12,7 @@ pub struct CodeWriter {
 
 impl CodeWriter {
     pub fn new() -> Self {
-        Self {
-            buffer: String::new(),
-            indent: 0,
-            indent_str: "    ",
-            at_line_start: true,
-        }
+        Self { buffer: String::new(), indent: 0, indent_str: "    ", at_line_start: true }
     }
 
     /// Get the generated code
