@@ -390,3 +390,75 @@ fn compile_supports_extended_unary_operators() {
         .iter()
         .all(|d| !d.message.contains("unsupported unary operator")));
 }
+
+#[test]
+fn compile_lowers_top_level_proba_to_rust_test_function() {
+    let session = session(Target::Rust);
+    let source = r#"proba "one plus one equals two" {
+  adfirma 1 + 1 == 2
+}
+
+incipit {}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unhandled statement kind in lowering")));
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("#[test]"));
+    assert!(output.code.contains("fn proba_"));
+}
+
+#[test]
+fn compile_lowers_proba_omit_and_futurum_as_ignored_tests() {
+    let session = session(Target::Rust);
+    let source = r#"proba omitte "blocked" "case one" {
+  adfirma falsum
+}
+
+proba futurum "todo" "case two" {
+  adfirma verum
+}
+
+incipit {}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unhandled statement kind in lowering")));
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("#[ignore]"));
+}
+
+#[test]
+fn compile_lowers_probandum_nested_cases_without_lowering_errors() {
+    let session = session(Target::Rust);
+    let source = r#"probandum "suite" {
+  praepara omnia {
+    fixum x = 1
+    scribe x
+  }
+
+  proba "case one" {
+    adfirma 1 == 1
+  }
+
+  probandum "nested" {
+    proba "case two" {
+      adfirma verum
+    }
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unhandled statement kind in lowering")));
+}

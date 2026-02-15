@@ -63,7 +63,7 @@ mod types;
 use super::{HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirProgram, HirStmt, HirStmtKind};
 use crate::lexer::{Interner, Span, Symbol};
 use crate::semantic::{Resolver, TypeTable};
-use crate::syntax::{Program, Stmt, StmtKind};
+use crate::syntax::{PraeparaBlock, PraeparaKind, ProbaCase, ProbaModifier, ProbandumDecl, Program, Stmt, StmtKind};
 use rustc_hash::FxHashMap;
 
 /// Lowerer state for AST to HIR transformation
@@ -157,8 +157,9 @@ impl<'a> Lowerer<'a> {
                     entry = Some(block);
                 }
                 _ => {
-                    if let Some(item) = self.lower_stmt_item(stmt) {
-                        items.push(item);
+                    let lowered_items = self.lower_stmt_items(stmt);
+                    if !lowered_items.is_empty() {
+                        items.extend(lowered_items);
                     } else {
                         if !implicit_entry_scope {
                             self.push_scope();
@@ -240,23 +241,86 @@ impl<'a> Lowerer<'a> {
             .push(LowerError { message: message.into(), span: self.current_span });
     }
 
-    /// Lower a statement to an item (top-level declarations)
-    fn lower_stmt_item(&mut self, stmt: &Stmt) -> Option<HirItem> {
+    /// Lower a statement to item declarations (top-level declarations)
+    fn lower_stmt_items(&mut self, stmt: &Stmt) -> Vec<HirItem> {
         match &stmt.kind {
-            StmtKind::Var(decl) => self.lower_varia(stmt, decl),
-            StmtKind::Func(decl) => self.lower_functio(stmt, decl),
-            StmtKind::Class(decl) => self.lower_gens(stmt, decl),
-            StmtKind::Enum(decl) => self.lower_ordo(stmt, decl),
-            StmtKind::Union(decl) => self.lower_discretio(stmt, decl),
-            StmtKind::Interface(decl) => self.lower_pactum(stmt, decl),
-            StmtKind::TypeAlias(decl) => self.lower_typus(stmt, decl),
-            StmtKind::Import(decl) => self.lower_importa(stmt, decl),
-            // TODO: Handle Probandum and Proba appropriately
-            _ => {
-                // For now, skip non-item statements at top level
-                // They might be test cases or other constructs handled differently
-                None
+            StmtKind::Var(decl) => self.lower_varia(stmt, decl).into_iter().collect(),
+            StmtKind::Func(decl) => self.lower_functio(stmt, decl).into_iter().collect(),
+            StmtKind::Class(decl) => self.lower_gens(stmt, decl).into_iter().collect(),
+            StmtKind::Enum(decl) => self.lower_ordo(stmt, decl).into_iter().collect(),
+            StmtKind::Union(decl) => self.lower_discretio(stmt, decl).into_iter().collect(),
+            StmtKind::Interface(decl) => self.lower_pactum(stmt, decl).into_iter().collect(),
+            StmtKind::TypeAlias(decl) => self.lower_typus(stmt, decl).into_iter().collect(),
+            StmtKind::Import(decl) => self.lower_importa(stmt, decl).into_iter().collect(),
+            StmtKind::Proba(case) => vec![self.lower_proba_item(case, &[])],
+            StmtKind::Probandum(suite) => {
+                let mut items = Vec::new();
+                self.lower_probandum_items(suite, &[], &mut items);
+                items
             }
+            _ => Vec::new(),
+        }
+    }
+
+    fn lower_probandum_items(
+        &mut self,
+        suite: &ProbandumDecl,
+        inherited_setup: &[&PraeparaBlock],
+        out: &mut Vec<HirItem>,
+    ) {
+        let mut combined_setup = inherited_setup.to_vec();
+        for setup in &suite.body.setup {
+            if setup.all {
+                combined_setup.push(setup);
+            }
+        }
+
+        for case in &suite.body.tests {
+            out.push(self.lower_proba_item(case, &combined_setup));
+        }
+
+        for nested in &suite.body.nested {
+            self.lower_probandum_items(nested, &combined_setup, out);
+        }
+    }
+
+    fn lower_proba_item(&mut self, case: &ProbaCase, inherited_setup: &[&PraeparaBlock]) -> HirItem {
+        let def_id = self.next_def_id();
+        self.push_scope();
+
+        let mut stmts = Vec::new();
+        for setup in inherited_setup {
+            if matches!(setup.kind, PraeparaKind::Praepara | PraeparaKind::Praeparabit) {
+                stmts.extend(self.lower_block(&setup.body).stmts);
+            }
+        }
+        stmts.extend(self.lower_block(&case.body).stmts);
+        for setup in inherited_setup {
+            if matches!(setup.kind, PraeparaKind::Postpara | PraeparaKind::Postparabit) {
+                stmts.extend(self.lower_block(&setup.body).stmts);
+            }
+        }
+
+        self.pop_scope();
+
+        let ignored = case
+            .modifiers
+            .iter()
+            .any(|modifier| matches!(modifier, ProbaModifier::Omitte(_) | ProbaModifier::Futurum(_)));
+        HirItem {
+            id: self.next_hir_id(),
+            def_id,
+            kind: crate::hir::HirItemKind::Function(crate::hir::HirFunction {
+                name: case.name,
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(self.types.primitive(crate::semantic::Primitive::Vacuum)),
+                body: Some(HirBlock { stmts, expr: None, span: case.span }),
+                is_async: false,
+                // Reused for test metadata on synthetic proba functions.
+                is_generator: ignored,
+            }),
+            span: case.span,
         }
     }
 

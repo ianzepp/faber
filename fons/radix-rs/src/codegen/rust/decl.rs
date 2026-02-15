@@ -41,6 +41,14 @@ pub fn generate_function(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     let is_failable = codegen.is_failable_def(def_id);
+    let is_proba = def_id.0 >= 1_000_000;
+
+    if is_proba {
+        w.writeln("#[test]");
+        if func.is_generator {
+            w.writeln("#[ignore]");
+        }
+    }
 
     // Async modifier
     if func.is_async {
@@ -48,7 +56,11 @@ pub fn generate_function(
     }
 
     w.write("fn ");
-    w.write(codegen.resolve_symbol(func.name));
+    if is_proba {
+        w.write(&format!("proba_{}", def_id.0));
+    } else {
+        w.write(codegen.resolve_symbol(func.name));
+    }
 
     // Type parameters
     if !func.type_params.is_empty() {

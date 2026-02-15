@@ -100,9 +100,12 @@ impl<'a> LintContext<'a> {
         for item in &hir.items {
             match &item.kind {
                 HirItemKind::Import(import) => self.collect_import(import),
-                HirItemKind::Function(func) => self
-                    .functions
-                    .push((item.def_id, func.body.as_ref().map(|b| b.span).unwrap_or(item.span))),
+                HirItemKind::Function(func) => {
+                    if item.def_id.0 < 1_000_000 {
+                        self.functions
+                            .push((item.def_id, func.body.as_ref().map(|b| b.span).unwrap_or(item.span)));
+                    }
+                }
                 _ => {}
             }
         }
