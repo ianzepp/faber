@@ -39,21 +39,15 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
         }
 
         Type::Struct(def_id) => {
-            let _ = codegen.resolve_def(*def_id);
-            // TODO: Look up struct name
-            "TodoStruct".to_owned()
+            codegen.resolve_def(*def_id).to_owned()
         }
 
         Type::Enum(def_id) => {
-            let _ = codegen.resolve_def(*def_id);
-            // TODO: Look up enum name
-            "TodoEnum".to_owned()
+            codegen.resolve_def(*def_id).to_owned()
         }
 
         Type::Interface(def_id) => {
-            let _ = codegen.resolve_def(*def_id);
-            // TODO: Look up trait name, use dyn Trait
-            "dyn TodoTrait".to_owned()
+            format!("dyn {}", codegen.resolve_def(*def_id))
         }
 
         Type::Alias(def_id, resolved) => {
@@ -76,9 +70,8 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
             }
         }
 
-        Type::Param(_name) => {
-            // TODO: Look up type parameter name
-            "T".to_owned()
+        Type::Param(name) => {
+            codegen.resolve_symbol(*name).to_owned()
         }
 
         Type::Applied(base, args) => {
@@ -94,8 +87,7 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
             if variants.is_empty() {
                 "!".to_owned() // never type
             } else {
-                // TODO: This needs proper handling
-                "TodoUnion".to_owned()
+                "Box<dyn std::any::Any>".to_owned()
             }
         }
 

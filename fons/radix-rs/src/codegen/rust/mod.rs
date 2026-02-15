@@ -83,26 +83,47 @@ impl<'a> RustCodegen<'a> {
             match &item.kind {
                 HirItemKind::Function(func) => {
                     names.insert(item.def_id, func.name);
+                    for type_param in &func.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
+                    for param in &func.params {
+                        names.insert(param.def_id, param.name);
+                    }
                     self.collect_block_names(&mut names, func.body.as_ref());
                 }
                 HirItemKind::Struct(strukt) => {
                     names.insert(item.def_id, strukt.name);
+                    for type_param in &strukt.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
                     for field in &strukt.fields {
                         names.insert(field.def_id, field.name);
                     }
                     for method in &strukt.methods {
                         names.insert(method.def_id, method.func.name);
+                        for type_param in &method.func.type_params {
+                            names.insert(type_param.def_id, type_param.name);
+                        }
+                        for param in &method.func.params {
+                            names.insert(param.def_id, param.name);
+                        }
                         self.collect_block_names(&mut names, method.func.body.as_ref());
                     }
                 }
                 HirItemKind::Enum(enum_item) => {
                     names.insert(item.def_id, enum_item.name);
+                    for type_param in &enum_item.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
                     for variant in &enum_item.variants {
                         names.insert(variant.def_id, variant.name);
                     }
                 }
                 HirItemKind::Interface(interface) => {
                     names.insert(item.def_id, interface.name);
+                    for type_param in &interface.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
                 }
                 HirItemKind::TypeAlias(alias) => {
                     names.insert(item.def_id, alias.name);

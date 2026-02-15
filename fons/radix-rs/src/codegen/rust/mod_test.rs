@@ -1,17 +1,14 @@
 use crate::codegen::{self, Target};
 use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirFunction, HirId, HirInterface, HirItem, HirItemKind,
-    HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind, HirTypeAlias, HirVariant,
+    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId, HirInterface, HirItem,
+    HirItemKind, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct, HirTypeAlias,
+    HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
 
 fn span() -> Span {
     Span::default()
-}
-
-fn empty_program() -> HirProgram {
-    HirProgram { items: Vec::new(), entry: None }
 }
 
 #[test]
@@ -64,7 +61,7 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
         panic!("expected rust output");
     };
 
-    assert!(rust.code.contains("fn todo_func_name"));
+    assert!(rust.code.contains("fn f(x: i64) -> i64"));
     assert!(rust.code.contains("fn main() {"));
 }
 
@@ -203,14 +200,16 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
     };
 
     assert!(rust.code.contains("match "));
-    assert!(rust.code.contains("Variant"));
+    assert!(rust.code.contains("Ok"));
     assert!(rust.code.contains("|p|"));
 }
 
 #[test]
-fn keeps_placeholder_type_names_for_named_defs() {
+fn resolves_type_names_for_named_defs() {
     let mut interner = Interner::new();
     let iface_name = interner.intern("Servitium");
+    let struct_name = interner.intern("Structura");
+    let enum_name = interner.intern("Enumeratio");
     let alias_name = interner.intern("Alias");
     let mut types = TypeTable::new();
     let iface_ty = types.intern(Type::Interface(DefId(70)));
@@ -219,6 +218,29 @@ fn keeps_placeholder_type_names_for_named_defs() {
 
     let program = HirProgram {
         items: vec![
+            HirItem {
+                id: HirId(58),
+                def_id: DefId(71),
+                kind: HirItemKind::Struct(HirStruct {
+                    name: struct_name,
+                    type_params: Vec::new(),
+                    fields: Vec::new(),
+                    methods: Vec::new(),
+                    extends: None,
+                    implements: Vec::new(),
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: HirId(59),
+                def_id: DefId(72),
+                kind: HirItemKind::Enum(HirEnum {
+                    name: enum_name,
+                    type_params: Vec::new(),
+                    variants: Vec::new(),
+                }),
+                span: span(),
+            },
             HirItem {
                 id: HirId(60),
                 def_id: DefId(70),
@@ -276,9 +298,9 @@ fn keeps_placeholder_type_names_for_named_defs() {
         panic!("expected rust output");
     };
 
-    assert!(rust.code.contains("TodoStruct"));
-    assert!(rust.code.contains("TodoEnum"));
-    assert!(rust.code.contains("dyn TodoTrait"));
+    assert!(rust.code.contains("Structura"));
+    assert!(rust.code.contains("Enumeratio"));
+    assert!(rust.code.contains("dyn Servitium"));
 }
 
 #[test]
@@ -292,7 +314,170 @@ fn expr_codegen_handles_control_flow_and_operators() {
     let bivalens = types.primitive(Primitive::Bivalens);
     let err_ty = types.intern(Type::Error);
 
-    let codegen = super::RustCodegen::new(&empty_program(), &interner);
+    let support_program = HirProgram {
+        items: vec![
+            HirItem {
+                id: HirId(260),
+                def_id: DefId(1),
+                kind: HirItemKind::Function(HirFunction {
+                    name: interner.intern("fn_name"),
+                    type_params: Vec::new(),
+                    params: Vec::new(),
+                    ret_ty: None,
+                    body: None,
+                    is_async: false,
+                    is_generator: false,
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: HirId(261),
+                def_id: DefId(10),
+                kind: HirItemKind::Struct(HirStruct {
+                    name: interner.intern("Record"),
+                    type_params: Vec::new(),
+                    fields: vec![HirField {
+                        def_id: DefId(251),
+                        name: field,
+                        ty: numerus,
+                        is_static: false,
+                        init: None,
+                        span: span(),
+                    }],
+                    methods: Vec::new(),
+                    extends: None,
+                    implements: Vec::new(),
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: HirId(262),
+                def_id: DefId(250),
+                kind: HirItemKind::Enum(HirEnum {
+                    name: interner.intern("Res"),
+                    type_params: Vec::new(),
+                    variants: vec![HirVariant {
+                        def_id: DefId(5),
+                        name: interner.intern("Case"),
+                        fields: vec![HirVariantField {
+                            name: method,
+                            ty: numerus,
+                            span: span(),
+                        }],
+                        span: span(),
+                    }],
+                }),
+                span: span(),
+            },
+        ],
+        entry: Some(HirBlock {
+            stmts: vec![
+                HirStmt {
+                    id: HirId(263),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(2),
+                        name: interner.intern("recv"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(264),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(3),
+                        name: interner.intern("obj"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(265),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(4),
+                        name: interner.intern("scrut"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(266),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(7),
+                        name: interner.intern("iter_item"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(267),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(8),
+                        name: interner.intern("lhs"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(268),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(9),
+                        name: interner.intern("acc"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(269),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(12),
+                        name: interner.intern("fut"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(270),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(13),
+                        name: interner.intern("shared"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(271),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id: DefId(14),
+                        name: interner.intern("ptr"),
+                        ty: None,
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+            ],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let codegen = super::RustCodegen::new(&support_program, &interner);
     let mut w = codegen::CodeWriter::new();
 
     let expr = HirExpr {
@@ -658,19 +843,20 @@ fn expr_codegen_handles_control_flow_and_operators() {
     super::expr::generate_expr(&codegen, &expr, &types, &mut w).expect("expr codegen");
     let code = w.finish();
 
-    assert!(code.contains("todo_var"));
-    assert!(code.contains("method("));
+    assert!(code.contains("fn_name"));
+    assert!(code.contains("met("));
     assert!(code.contains("match "));
     assert!(code.contains("loop "));
     assert!(code.contains("while "));
-    assert!(code.contains("for var in "));
-    assert!(code.contains("Struct"));
-    assert!(code.contains("|p|"));
+    assert!(code.contains("for iter_item in "));
+    assert!(code.contains("Record"));
+    assert!(code.contains("|met|"));
     assert!(code.contains(".await"));
     assert!(code.contains(" as i64"));
     assert!(code.contains("&mut "));
-    assert!(code.contains("*todo_var"));
+    assert!(code.contains("*ptr"));
     assert!(code.contains("todo!(\"error\")"));
+    assert!(code.contains("\"N\""));
 }
 
 #[test]
@@ -719,7 +905,45 @@ fn type_to_rust_covers_composite_and_special_cases() {
         is_generator: false,
     });
 
-    let codegen = super::RustCodegen::new(&empty_program(), &interner);
+    let program = HirProgram {
+        items: vec![
+            HirItem {
+                id: HirId(790),
+                def_id: DefId(100),
+                kind: HirItemKind::Struct(HirStruct {
+                    name: interner.intern("Structum"),
+                    type_params: Vec::new(),
+                    fields: Vec::new(),
+                    methods: Vec::new(),
+                    extends: None,
+                    implements: Vec::new(),
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: HirId(791),
+                def_id: DefId(101),
+                kind: HirItemKind::Enum(HirEnum {
+                    name: interner.intern("Enumeratio"),
+                    type_params: Vec::new(),
+                    variants: Vec::new(),
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: HirId(792),
+                def_id: DefId(102),
+                kind: HirItemKind::Interface(HirInterface {
+                    name: interner.intern("Officium"),
+                    type_params: Vec::new(),
+                    methods: Vec::new(),
+                }),
+                span: span(),
+            },
+        ],
+        entry: None,
+    };
+    let codegen = super::RustCodegen::new(&program, &interner);
 
     assert_eq!(super::types::type_to_rust(&codegen, numerus, &types), "i64");
     assert_eq!(super::types::type_to_rust(&codegen, array_ty, &types), "Vec<i64>");
@@ -728,9 +952,9 @@ fn type_to_rust_covers_composite_and_special_cases() {
     assert_eq!(super::types::type_to_rust(&codegen, option_ty, &types), "Option<i64>");
     assert_eq!(super::types::type_to_rust(&codegen, ref_ty, &types), "&i64");
     assert_eq!(super::types::type_to_rust(&codegen, mut_ref_ty, &types), "&mut i64");
-    assert_eq!(super::types::type_to_rust(&codegen, struct_ty, &types), "TodoStruct");
-    assert_eq!(super::types::type_to_rust(&codegen, enum_ty, &types), "TodoEnum");
-    assert_eq!(super::types::type_to_rust(&codegen, iface_ty, &types), "dyn TodoTrait");
+    assert_eq!(super::types::type_to_rust(&codegen, struct_ty, &types), "Structum");
+    assert_eq!(super::types::type_to_rust(&codegen, enum_ty, &types), "Enumeratio");
+    assert_eq!(super::types::type_to_rust(&codegen, iface_ty, &types), "dyn Officium");
     assert_eq!(super::types::type_to_rust(&codegen, alias_ty, &types), "i64");
     assert_eq!(super::types::type_to_rust(&codegen, sync_fn_ty, &types), "fn(i64) -> String");
     assert_eq!(
@@ -738,9 +962,9 @@ fn type_to_rust_covers_composite_and_special_cases() {
         "impl Future<Output = String>"
     );
     assert_eq!(super::types::type_to_rust(&codegen, param_ty, &types), "T");
-    assert_eq!(super::types::type_to_rust(&codegen, applied_ty, &types), "TodoStruct<i64>");
+    assert_eq!(super::types::type_to_rust(&codegen, applied_ty, &types), "Structum<i64>");
     assert_eq!(super::types::type_to_rust(&codegen, infer_ty, &types), "_");
     assert_eq!(super::types::type_to_rust(&codegen, union_empty_ty, &types), "!");
-    assert_eq!(super::types::type_to_rust(&codegen, union_ty, &types), "TodoUnion");
+    assert_eq!(super::types::type_to_rust(&codegen, union_ty, &types), "Box<dyn std::any::Any>");
     assert_eq!(super::types::type_to_rust(&codegen, error_ty, &types), "/* error */");
 }

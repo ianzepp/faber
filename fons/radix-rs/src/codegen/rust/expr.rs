@@ -13,12 +13,11 @@ pub fn generate_expr(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     match &expr.kind {
-        HirExprKind::Path(_def_id) => {
-            // TODO: Resolve path to name
-            w.write("todo_var");
+        HirExprKind::Path(def_id) => {
+            w.write(codegen.resolve_def(*def_id));
         }
         HirExprKind::Literal(lit) => {
-            generate_literal(lit, w);
+            generate_literal(codegen, lit, w);
         }
         HirExprKind::Binary(op, lhs, rhs) => {
             w.write("(");
@@ -45,11 +44,9 @@ pub fn generate_expr(
             w.write(")");
         }
         HirExprKind::MethodCall(receiver, method, args) => {
-            let _ = codegen.resolve_symbol(*method);
             generate_expr(codegen, receiver, types, w)?;
             w.write(".");
-            // TODO: Write method name
-            w.write("method");
+            w.write(codegen.resolve_symbol(*method));
             w.write("(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
@@ -59,11 +56,10 @@ pub fn generate_expr(
             }
             w.write(")");
         }
-        HirExprKind::Field(obj, _field) => {
+        HirExprKind::Field(obj, field) => {
             generate_expr(codegen, obj, types, w)?;
             w.write(".");
-            // TODO: Write field name
-            w.write("field");
+            w.write(codegen.resolve_symbol(*field));
         }
         HirExprKind::Index(obj, idx) => {
             generate_expr(codegen, obj, types, w)?;
@@ -121,8 +117,10 @@ pub fn generate_expr(
             w.write(" ");
             generate_block(codegen, block, types, w)?;
         }
-        HirExprKind::Itera(_binding, iter, block) => {
-            w.write("for var in ");
+        HirExprKind::Itera(binding, iter, block) => {
+            w.write("for ");
+            w.write(codegen.resolve_def(*binding));
+            w.write(" in ");
             generate_expr(codegen, iter, types, w)?;
             w.write(" ");
             generate_block(codegen, block, types, w)?;
@@ -149,14 +147,13 @@ pub fn generate_expr(
             }
             w.write("]");
         }
-        HirExprKind::Struct(_def_id, fields) => {
-            // TODO: Write struct name
-            w.write("Struct");
+        HirExprKind::Struct(def_id, fields) => {
+            w.write(codegen.resolve_def(*def_id));
             w.writeln(" {");
             w.indented(|w| {
-                for (_name, value) in fields {
-                    // TODO: Write field name
-                    w.write("field: ");
+                for (name, value) in fields {
+                    w.write(codegen.resolve_symbol(*name));
+                    w.write(": ");
                     let _ = generate_expr(codegen, value, types, w);
                     w.writeln(",");
                 }
@@ -175,12 +172,11 @@ pub fn generate_expr(
         }
         HirExprKind::Clausura(params, _ret, body) => {
             w.write("|");
-            for (i, _param) in params.iter().enumerate() {
+            for (i, param) in params.iter().enumerate() {
                 if i > 0 {
                     w.write(", ");
                 }
-                // TODO: Write param
-                w.write("p");
+                w.write(codegen.resolve_symbol(param.name));
             }
             w.write("| ");
             generate_expr(codegen, body, types, w)?;
@@ -212,7 +208,7 @@ pub fn generate_expr(
     Ok(())
 }
 
-fn generate_literal(lit: &HirLiteral, w: &mut CodeWriter) {
+fn generate_literal(codegen: &RustCodegen<'_>, lit: &HirLiteral, w: &mut CodeWriter) {
     match lit {
         HirLiteral::Int(n) => {
             w.write(&n.to_string());
@@ -220,9 +216,19 @@ fn generate_literal(lit: &HirLiteral, w: &mut CodeWriter) {
         HirLiteral::Float(f) => {
             w.write(&f.to_string());
         }
-        HirLiteral::String(_s) => {
-            // TODO: Escape string
-            w.write("\"todo\"");
+        HirLiteral::String(s) => {
+            w.write("\"");
+            for ch in codegen.resolve_symbol(*s).chars() {
+                match ch {
+                    '\\' => w.write("\\\\"),
+                    '"' => w.write("\\\""),
+                    '\n' => w.write("\\n"),
+                    '\r' => w.write("\\r"),
+                    '\t' => w.write("\\t"),
+                    _ => w.write(&ch.to_string()),
+                }
+            }
+            w.write("\"");
         }
         HirLiteral::Bool(b) => {
             w.write(if *b { "true" } else { "false" });
@@ -238,15 +244,16 @@ fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, w: &mut Cod
         HirPattern::Wildcard => {
             w.write("_");
         }
-        HirPattern::Binding(def_id, _name) => {
-            let _ = codegen.resolve_def(*def_id);
-            // TODO: Write binding name
-            w.write("var");
+        HirPattern::Binding(def_id, name) => {
+            let resolved = codegen.resolve_def(*def_id);
+            if resolved == "unresolved_def" {
+                w.write(codegen.resolve_symbol(*name));
+            } else {
+                w.write(resolved);
+            }
         }
         HirPattern::Variant(def_id, fields) => {
-            let _ = codegen.resolve_def(*def_id);
-            // TODO: Write variant name
-            w.write("Variant");
+            w.write(codegen.resolve_def(*def_id));
             if !fields.is_empty() {
                 w.write(" { ");
                 for (i, field) in fields.iter().enumerate() {
@@ -259,7 +266,7 @@ fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, w: &mut Cod
             }
         }
         HirPattern::Literal(lit) => {
-            generate_literal(lit, w);
+            generate_literal(codegen, lit, w);
         }
     }
 }

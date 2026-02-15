@@ -50,9 +50,7 @@ fn generate_local(
     if local.mutable {
         w.write("mut ");
     }
-    let _ = codegen.resolve_def(local.def_id);
-    // TODO: Write variable name
-    w.write("var");
+    w.write(codegen.resolve_symbol(local.name));
 
     if let Some(ty) = local.ty {
         w.write(": ");

@@ -18,8 +18,7 @@ pub fn generate_function(
     }
 
     w.write("fn ");
-    // TODO: Write function name from symbol
-    w.write("todo_func_name");
+    w.write(codegen.resolve_symbol(func.name));
 
     // Type parameters
     if !func.type_params.is_empty() {
@@ -28,8 +27,7 @@ pub fn generate_function(
             if i > 0 {
                 w.write(", ");
             }
-            // TODO: Write type param name
-            w.write("T");
+            w.write(codegen.resolve_symbol(param.name));
         }
         w.write(">");
     }
@@ -40,8 +38,9 @@ pub fn generate_function(
         if i > 0 {
             w.write(", ");
         }
-        // TODO: Write param name and type
-        w.write("param: ()");
+        w.write(codegen.resolve_symbol(param.name));
+        w.write(": ");
+        w.write(&type_to_rust(codegen, param.ty, types));
     }
     w.write(")");
 
@@ -70,16 +69,15 @@ pub fn generate_struct(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     w.write("pub struct ");
-    // TODO: Write struct name
-    w.write("TodoStruct");
+    w.write(codegen.resolve_symbol(s.name));
 
     if !s.type_params.is_empty() {
         w.write("<");
-        for (i, _param) in s.type_params.iter().enumerate() {
+        for (i, param) in s.type_params.iter().enumerate() {
             if i > 0 {
                 w.write(", ");
             }
-            w.write("T");
+            w.write(codegen.resolve_symbol(param.name));
         }
         w.write(">");
     }
@@ -89,8 +87,10 @@ pub fn generate_struct(
         for field in &s.fields {
             if !field.is_static {
                 w.write("pub ");
-                // TODO: Write field name and type
-                w.writeln("field: (),");
+                w.write(codegen.resolve_symbol(field.name));
+                w.write(": ");
+                w.write(&type_to_rust(codegen, field.ty, types));
+                w.writeln(",");
             }
         }
     });
@@ -100,7 +100,7 @@ pub fn generate_struct(
     if !s.methods.is_empty() {
         w.newline();
         w.write("impl ");
-        w.write("TodoStruct");
+        w.write(codegen.resolve_symbol(s.name));
         w.writeln(" {");
         w.indented(|w| {
             for method in &s.methods {
@@ -114,22 +114,21 @@ pub fn generate_struct(
 }
 
 pub fn generate_enum(
-    _codegen: &RustCodegen<'_>,
+    codegen: &RustCodegen<'_>,
     e: &HirEnum,
-    _types: &TypeTable,
+    types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     w.write("pub enum ");
-    // TODO: Write enum name
-    w.write("TodoEnum");
+    w.write(codegen.resolve_symbol(e.name));
 
     if !e.type_params.is_empty() {
         w.write("<");
-        for (i, _param) in e.type_params.iter().enumerate() {
+        for (i, param) in e.type_params.iter().enumerate() {
             if i > 0 {
                 w.write(", ");
             }
-            w.write("T");
+            w.write(codegen.resolve_symbol(param.name));
         }
         w.write(">");
     }
@@ -137,14 +136,15 @@ pub fn generate_enum(
     w.writeln(" {");
     w.indented(|w| {
         for variant in &e.variants {
-            // TODO: Write variant name
-            w.write("Variant");
+            w.write(codegen.resolve_symbol(variant.name));
             if !variant.fields.is_empty() {
                 w.writeln(" {");
                 w.indented(|w| {
                     for field in &variant.fields {
-                        // TODO: Write field
-                        w.writeln("field: (),");
+                        w.write(codegen.resolve_symbol(field.name));
+                        w.write(": ");
+                        w.write(&type_to_rust(codegen, field.ty, types));
+                        w.writeln(",");
                     }
                 });
                 w.write("}");
@@ -164,16 +164,15 @@ pub fn generate_trait(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     w.write("pub trait ");
-    // TODO: Write trait name
-    w.write("TodoTrait");
+    w.write(codegen.resolve_symbol(i.name));
 
     if !i.type_params.is_empty() {
         w.write("<");
-        for (idx, _param) in i.type_params.iter().enumerate() {
+        for (idx, param) in i.type_params.iter().enumerate() {
             if idx > 0 {
                 w.write(", ");
             }
-            w.write("T");
+            w.write(codegen.resolve_symbol(param.name));
         }
         w.write(">");
     }
@@ -182,14 +181,14 @@ pub fn generate_trait(
     w.indented(|w| {
         for method in &i.methods {
             w.write("fn ");
-            // TODO: Write method name
-            w.write("method");
+            w.write(codegen.resolve_symbol(method.name));
             w.write("(");
             w.write("&self");
             for param in &method.params {
                 w.write(", ");
-                // TODO: Write param
-                w.write("param: ()");
+                w.write(codegen.resolve_symbol(param.name));
+                w.write(": ");
+                w.write(&type_to_rust(codegen, param.ty, types));
             }
             w.write(")");
             if let Some(ret) = method.ret_ty {
@@ -211,8 +210,7 @@ pub fn generate_type_alias(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     w.write("pub type ");
-    // TODO: Write alias name
-    w.write("TodoAlias");
+    w.write(codegen.resolve_symbol(a.name));
     w.write(" = ");
     w.write(&type_to_rust(codegen, a.ty, types));
     w.writeln(";");
@@ -227,8 +225,7 @@ pub fn generate_const(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     w.write("pub const ");
-    // TODO: Write const name
-    w.write("TODO_CONST");
+    w.write(codegen.resolve_symbol(c.name));
     w.write(": ");
     if let Some(ty) = c.ty {
         w.write(&type_to_rust(codegen, ty, types));
