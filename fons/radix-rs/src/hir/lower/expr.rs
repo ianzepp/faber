@@ -325,8 +325,57 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Struct(def_id, fields)
     }
 
-    fn lower_finge(&mut self, _finge: &crate::syntax::FingeExpr) -> HirExprKind {
-        HirExprKind::Error
+    fn lower_finge(&mut self, finge: &crate::syntax::FingeExpr) -> HirExprKind {
+        let Some(variant_def_id) = self.resolver.lookup(finge.variant.name) else {
+            self.error("unknown variant in finge expression");
+            return HirExprKind::Error;
+        };
+
+        let callee = HirExpr {
+            id: self.next_hir_id(),
+            kind: HirExprKind::Path(variant_def_id),
+            ty: None,
+            span: finge.variant.span,
+        };
+        let args = finge
+            .fields
+            .iter()
+            .map(|field| lower_expr(self, &field.value))
+            .collect();
+
+        let call = HirExpr {
+            id: self.next_hir_id(),
+            kind: HirExprKind::Call(Box::new(callee), args),
+            ty: None,
+            span: self.current_span,
+        };
+
+        if let Some(cast) = &finge.cast {
+            let Some(cast_def_id) = self.resolver.lookup(cast.name) else {
+                self.error("unknown cast type in finge expression");
+                return HirExprKind::Error;
+            };
+            let Some(symbol) = self.resolver.get_symbol(cast_def_id) else {
+                self.error("missing cast symbol information");
+                return HirExprKind::Error;
+            };
+            let cast_ty = match symbol.kind {
+                crate::semantic::SymbolKind::Struct => self
+                    .types
+                    .intern(crate::semantic::Type::Struct(cast_def_id)),
+                crate::semantic::SymbolKind::Enum => self.types.intern(crate::semantic::Type::Enum(cast_def_id)),
+                crate::semantic::SymbolKind::Interface => self
+                    .types
+                    .intern(crate::semantic::Type::Interface(cast_def_id)),
+                _ => {
+                    self.error("finge cast must name a type");
+                    return HirExprKind::Error;
+                }
+            };
+            return HirExprKind::Qua(Box::new(call), cast_ty);
+        }
+
+        call.kind
     }
 
     /// Lower closure (clausura)

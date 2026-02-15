@@ -230,7 +230,7 @@ impl<'a> Lowerer<'a> {
             .members
             .iter()
             .map(|member| HirVariant {
-                def_id: self.next_def_id(),
+                def_id: self.def_id_for(member.name.name),
                 name: member.name.name,
                 fields: Vec::new(),
                 span: member.span,
@@ -266,7 +266,12 @@ impl<'a> Lowerer<'a> {
                     })
                     .collect();
 
-                HirVariant { def_id: self.next_def_id(), name: variant.name.name, fields, span: variant.span }
+                HirVariant {
+                    def_id: self.def_id_for(variant.name.name),
+                    name: variant.name.name,
+                    fields,
+                    span: variant.span,
+                }
             })
             .collect();
 

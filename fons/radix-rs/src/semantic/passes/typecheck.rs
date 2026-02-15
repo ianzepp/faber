@@ -637,6 +637,10 @@ impl<'a> TypeChecker<'a> {
             return self.types.function(sig.clone());
         }
 
+        if let Some(parent) = self.variant_parent.get(&def_id).copied() {
+            return self.types.intern(Type::Enum(parent));
+        }
+
         self.error(SemanticErrorKind::UndefinedVariable, "unknown identifier", span);
         self.error_type
     }
@@ -646,9 +650,26 @@ impl<'a> TypeChecker<'a> {
         let rhs_ty = self.check_expr(rhs);
 
         match op {
-            HirBinOp::Add | HirBinOp::Sub | HirBinOp::Mul | HirBinOp::Div | HirBinOp::Mod => {
-                self.numeric_bin(lhs_ty, rhs_ty, lhs.span)
+            HirBinOp::Add => {
+                if self.is_infer(self.resolve_type(lhs_ty)) && self.is_textus(rhs_ty) {
+                    let textus = self.textus_type();
+                    self.unify(lhs_ty, textus, lhs.span, "string operands required");
+                }
+                if self.is_infer(self.resolve_type(rhs_ty)) && self.is_textus(lhs_ty) {
+                    let textus = self.textus_type();
+                    self.unify(rhs_ty, textus, rhs.span, "string operands required");
+                }
+                if self.is_textus(lhs_ty) || self.is_textus(rhs_ty) {
+                    if !self.is_textus(lhs_ty) || !self.is_textus(rhs_ty) {
+                        self.error(SemanticErrorKind::InvalidOperandTypes, "string operands required", lhs.span);
+                        return self.error_type;
+                    }
+                    self.textus_type()
+                } else {
+                    self.numeric_bin(lhs_ty, rhs_ty, lhs.span)
+                }
             }
+            HirBinOp::Sub | HirBinOp::Mul | HirBinOp::Div | HirBinOp::Mod => self.numeric_bin(lhs_ty, rhs_ty, lhs.span),
             HirBinOp::Eq | HirBinOp::NotEq => {
                 self.unify(lhs_ty, rhs_ty, lhs.span, "incompatible operands");
                 self.bool_type()
@@ -711,6 +732,20 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn check_call(&mut self, callee: &mut HirExpr, args: &mut [HirExpr]) -> TypeId {
+        if let HirExprKind::Path(def_id) = &callee.kind {
+            if let Some(parent) = self.variant_parent.get(def_id).copied() {
+                let fields = self.variant_fields.get(def_id).cloned().unwrap_or_default();
+                if args.len() != fields.len() {
+                    self.error(SemanticErrorKind::WrongArity, "wrong number of arguments", callee.span);
+                }
+                for (arg, field_ty) in args.iter_mut().zip(fields.iter()) {
+                    let arg_ty = self.check_expr(arg);
+                    self.unify(arg_ty, *field_ty, arg.span, "argument type mismatch");
+                }
+                return self.types.intern(Type::Enum(parent));
+            }
+        }
+
         let callee_ty = self.check_expr(callee);
 
         let resolved = self.resolve_type(callee_ty);
@@ -923,6 +958,10 @@ impl<'a> TypeChecker<'a> {
         let target_ty = self.check_lvalue(target);
         let value_ty = self.check_expr(value);
         match op {
+            HirBinOp::Add if self.is_textus(target_ty) => {
+                let textus = self.textus_type();
+                self.unify(value_ty, textus, target.span, "string operands required");
+            }
             HirBinOp::Add | HirBinOp::Sub | HirBinOp::Mul | HirBinOp::Div | HirBinOp::Mod => {
                 self.numeric_bin(target_ty, value_ty, target.span);
             }
@@ -1361,6 +1400,10 @@ impl<'a> TypeChecker<'a> {
 
     fn is_fractus(&self, ty: TypeId) -> bool {
         matches!(self.types.get(self.resolve_type(ty)), Type::Primitive(Primitive::Fractus))
+    }
+
+    fn is_textus(&self, ty: TypeId) -> bool {
+        matches!(self.types.get(self.resolve_type(ty)), Type::Primitive(Primitive::Textus))
     }
 
     fn is_bool(&self, ty: TypeId) -> bool {

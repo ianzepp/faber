@@ -65,3 +65,37 @@ fn rust_target_reports_cura_arena_noop_warning() {
                 .contains("cura arena has no effect for Rust targets")
     }));
 }
+
+#[test]
+fn compile_accepts_textus_concatenation_and_compound_add() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  varia textus s = "salve"
+  s += "!"
+  scribe "dicit: " + s
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+}
+
+#[test]
+fn compile_accepts_finge_variant_construction() {
+    let session = session(Target::Rust);
+    let source = r#"discretio Event {
+  Click { numerus x, numerus y },
+  Quit
+}
+
+incipit {
+  fixum Event e1 = finge Click { x: 1, y: 2 } qua Event
+  fixum Event e2 = finge Quit qua Event
+  scribe e1
+  scribe e2
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Rust(_))));
+}

@@ -133,8 +133,53 @@ impl TypeTable {
         if a == b {
             return true;
         }
-        // Structural equality check would go here
-        false
+        match (self.get(a), self.get(b)) {
+            (Type::Primitive(pa), Type::Primitive(pb)) => pa == pb,
+            (Type::Array(ae), Type::Array(be))
+            | (Type::Option(ae), Type::Option(be))
+            | (Type::Set(ae), Type::Set(be)) => self.equals(*ae, *be),
+            (Type::Map(ak, av), Type::Map(bk, bv)) => self.equals(*ak, *bk) && self.equals(*av, *bv),
+            (Type::Ref(am, ai), Type::Ref(bm, bi)) => am == bm && self.equals(*ai, *bi),
+            (Type::Struct(a_def), Type::Struct(b_def))
+            | (Type::Enum(a_def), Type::Enum(b_def))
+            | (Type::Interface(a_def), Type::Interface(b_def)) => a_def == b_def,
+            (Type::Alias(_, a_inner), _) => self.equals(*a_inner, b),
+            (_, Type::Alias(_, b_inner)) => self.equals(a, *b_inner),
+            (Type::Func(a_sig), Type::Func(b_sig)) => {
+                a_sig.params.len() == b_sig.params.len()
+                    && a_sig
+                        .params
+                        .iter()
+                        .zip(b_sig.params.iter())
+                        .all(|(a_param, b_param)| {
+                            a_param.mode == b_param.mode
+                                && a_param.optional == b_param.optional
+                                && self.equals(a_param.ty, b_param.ty)
+                        })
+                    && self.equals(a_sig.ret, b_sig.ret)
+                    && a_sig.is_async == b_sig.is_async
+                    && a_sig.is_generator == b_sig.is_generator
+            }
+            (Type::Param(a_name), Type::Param(b_name)) => a_name == b_name,
+            (Type::Applied(a_base, a_args), Type::Applied(b_base, b_args)) => {
+                a_args.len() == b_args.len()
+                    && self.equals(*a_base, *b_base)
+                    && a_args
+                        .iter()
+                        .zip(b_args.iter())
+                        .all(|(a_arg, b_arg)| self.equals(*a_arg, *b_arg))
+            }
+            (Type::Infer(a_var), Type::Infer(b_var)) => a_var == b_var,
+            (Type::Union(a_types), Type::Union(b_types)) => {
+                a_types.len() == b_types.len()
+                    && a_types
+                        .iter()
+                        .zip(b_types.iter())
+                        .all(|(a_ty, b_ty)| self.equals(*a_ty, *b_ty))
+            }
+            (Type::Error, Type::Error) => true,
+            _ => false,
+        }
     }
 
     /// Check if `from` is assignable to `to`
@@ -152,6 +197,9 @@ impl TypeTable {
 
             // nil is assignable to Option<T>
             (Type::Primitive(Primitive::Nihil), Type::Option(_)) => true,
+
+            // Option<S> is assignable to Option<T> if S is assignable to T
+            (Type::Option(from_inner), Type::Option(to_inner)) => self.assignable(*from_inner, *to_inner),
 
             // T is assignable to Option<T>
             (_, Type::Option(inner)) => self.assignable(from, *inner),
