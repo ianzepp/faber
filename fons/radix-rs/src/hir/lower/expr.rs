@@ -33,7 +33,10 @@
 //! Error nodes prevent crashes and allow continued analysis.
 
 use super::Lowerer;
-use crate::hir::{HirBinOp, HirExpr, HirExprKind, HirLiteral, HirOptionalChainKind, HirUnOp};
+use crate::hir::{
+    HirBinOp, HirCollectionFilter, HirCollectionFilterKind, HirCollectionTransform, HirExpr, HirExprKind, HirLiteral,
+    HirOptionalChainKind, HirTransformKind, HirUnOp,
+};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
 
 /// Lower an expression
@@ -439,9 +442,32 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_ab(&mut self, ab: &crate::syntax::AbExpr) -> HirExprKind {
-        let _ = ab;
-        self.error("STUB: collection pipeline lowering requires dedicated HIR node");
-        HirExprKind::Error
+        let source = Box::new(lower_expr(self, &ab.source));
+        let filter = ab.filter.as_ref().map(|filter| HirCollectionFilter {
+            negated: filter.negated,
+            kind: match &filter.kind {
+                crate::syntax::CollectionFilterKind::Condition(expr) => {
+                    HirCollectionFilterKind::Condition(Box::new(lower_expr(self, expr)))
+                }
+                crate::syntax::CollectionFilterKind::Property(ident) => HirCollectionFilterKind::Property(ident.name),
+            },
+        });
+        let transforms = ab
+            .transforms
+            .iter()
+            .map(|transform| HirCollectionTransform {
+                kind: match transform.kind {
+                    crate::syntax::TransformKind::First => HirTransformKind::First,
+                    crate::syntax::TransformKind::Last => HirTransformKind::Last,
+                    crate::syntax::TransformKind::Sum => HirTransformKind::Sum,
+                },
+                arg: transform
+                    .arg
+                    .as_ref()
+                    .map(|arg| Box::new(lower_expr(self, arg))),
+            })
+            .collect();
+        HirExprKind::Ab { source, filter, transforms }
     }
 
     fn lower_conversio(&mut self, conversio: &crate::syntax::ConversioExpr) -> HirExprKind {

@@ -164,7 +164,7 @@ fn ab_property_filter_no_longer_reports_unknown_identifier() {
 }"#;
     let result = compile(&session, "test.fab", source);
 
-    assert!(!result.success());
+    assert!(result.success());
     assert!(result
         .diagnostics
         .iter()
@@ -580,6 +580,53 @@ incipit {
     assert!(output
         .code
         .contains(".and_then(|__faber_opt| Some(__faber_opt("));
+}
+
+#[test]
+fn ab_pipeline_no_longer_reports_lowering_stub() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum items = [
+    { valor: 10, visibilis: verum },
+    { valor: 20, visibilis: falsum },
+    { valor: 30, visibilis: verum }
+  ]
+  fixum nums = [1, 2, 3, 4, 5]
+  fixum visible = ab items visibilis, prima 2
+  fixum sumFirst = ab nums, prima 3, summa
+  scribe visible, sumFirst
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("STUB: collection pipeline lowering requires dedicated HIR node")));
+}
+
+#[test]
+fn rust_output_emits_iterator_pipeline_for_ab_expr() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum items = [
+    { valor: 10, visibilis: verum },
+    { valor: 20, visibilis: falsum },
+    { valor: 30, visibilis: verum }
+  ]
+  fixum nums = [1, 2, 3, 4, 5]
+  fixum top = ab items visibilis, prima 2
+  fixum total = ab nums, prima 3, summa
+  scribe top, total
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".iter()"));
+    assert!(output.code.contains(".filter("));
+    assert!(output.code.contains(".take("));
+    assert!(output.code.contains(".sum::<i64>()"));
 }
 
 #[test]

@@ -158,6 +158,19 @@ fn check_expr(
                 }
             }
         }
+        HirExprKind::Ab { source, filter, transforms } => {
+            check_expr(source, types, enum_variants, errors);
+            if let Some(filter) = filter {
+                if let crate::hir::HirCollectionFilterKind::Condition(cond) = &filter.kind {
+                    check_expr(cond, types, enum_variants, errors);
+                }
+            }
+            for transform in transforms {
+                if let Some(arg) = &transform.arg {
+                    check_expr(arg, types, enum_variants, errors);
+                }
+            }
+        }
         HirExprKind::Block(block) => check_block(block, types, enum_variants, errors),
         HirExprKind::Si(cond, then_block, else_block) => {
             check_expr(cond, types, enum_variants, errors);

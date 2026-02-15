@@ -305,6 +305,12 @@ pub enum HirExprKind {
     Index(Box<HirExpr>, Box<HirExpr>),
     /// Optional chaining (null-safe member/index/call)
     OptionalChain(Box<HirExpr>, HirOptionalChainKind),
+    /// Collection pipeline DSL (ab)
+    Ab {
+        source: Box<HirExpr>,
+        filter: Option<HirCollectionFilter>,
+        transforms: Vec<HirCollectionTransform>,
+    },
     /// Block expression
     Block(HirBlock),
     /// If expression
@@ -362,6 +368,31 @@ pub enum HirOptionalChainKind {
     Member(Symbol),
     Index(Box<HirExpr>),
     Call(Vec<HirExpr>),
+}
+
+#[derive(Debug)]
+pub struct HirCollectionFilter {
+    pub negated: bool,
+    pub kind: HirCollectionFilterKind,
+}
+
+#[derive(Debug)]
+pub enum HirCollectionFilterKind {
+    Condition(Box<HirExpr>),
+    Property(Symbol),
+}
+
+#[derive(Debug)]
+pub struct HirCollectionTransform {
+    pub kind: HirTransformKind,
+    pub arg: Option<Box<HirExpr>>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum HirTransformKind {
+    First,
+    Last,
+    Sum,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

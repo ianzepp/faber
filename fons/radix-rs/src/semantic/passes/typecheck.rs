@@ -345,6 +345,19 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
             }
+            HirExprKind::Ab { source, filter, transforms } => {
+                self.finalize_expr(source);
+                if let Some(filter) = filter {
+                    if let crate::hir::HirCollectionFilterKind::Condition(cond) = &mut filter.kind {
+                        self.finalize_expr(cond);
+                    }
+                }
+                for transform in transforms {
+                    if let Some(arg) = &mut transform.arg {
+                        self.finalize_expr(arg);
+                    }
+                }
+            }
             HirExprKind::Block(block) => self.finalize_block(block),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.finalize_expr(cond);
@@ -561,6 +574,7 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Field(object, name) => self.check_field(object, *name),
             HirExprKind::Index(object, index) => self.check_index(object, index),
             HirExprKind::OptionalChain(object, chain) => self.check_optional_chain(object, chain, expr.span),
+            HirExprKind::Ab { source, filter, transforms } => self.check_ab(source, filter.as_mut(), transforms),
             HirExprKind::Block(block) => self.check_block(block, expected),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.check_if(cond, then_block, else_block.as_mut(), expected)
@@ -959,6 +973,40 @@ impl<'a> TypeChecker<'a> {
         };
 
         self.types.option(result)
+    }
+
+    fn check_ab(
+        &mut self,
+        source: &mut HirExpr,
+        filter: Option<&mut crate::hir::HirCollectionFilter>,
+        transforms: &mut [crate::hir::HirCollectionTransform],
+    ) -> TypeId {
+        let source_ty = self.check_expr(source);
+
+        if let Some(filter) = filter {
+            match &mut filter.kind {
+                crate::hir::HirCollectionFilterKind::Condition(cond) => {
+                    self.check_condition(cond);
+                }
+                crate::hir::HirCollectionFilterKind::Property(_name) => {}
+            }
+        }
+
+        let mut has_sum = false;
+        for transform in transforms {
+            if let Some(arg) = &mut transform.arg {
+                self.check_expr(arg);
+            }
+            if matches!(transform.kind, crate::hir::HirTransformKind::Sum) {
+                has_sum = true;
+            }
+        }
+
+        if has_sum {
+            self.numerus_type()
+        } else {
+            source_ty
+        }
     }
 
     fn check_field_from_type(&mut self, object_ty: TypeId, name: Symbol, span: crate::lexer::Span) -> TypeId {

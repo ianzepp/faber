@@ -571,6 +571,36 @@ impl FaberCodegen {
                     }
                 }
             }
+            HirExprKind::Ab { source, filter, transforms } => {
+                w.write("ab ");
+                self.write_expr(source, types, names, interner, w);
+                if let Some(filter) = filter {
+                    w.write(" ");
+                    if filter.negated {
+                        w.write("non ");
+                    }
+                    match &filter.kind {
+                        crate::hir::HirCollectionFilterKind::Condition(cond) => {
+                            self.write_expr(cond, types, names, interner, w);
+                        }
+                        crate::hir::HirCollectionFilterKind::Property(name) => {
+                            w.write(&self.symbol_to_string(*name, interner));
+                        }
+                    }
+                }
+                for transform in transforms {
+                    w.write(", ");
+                    match transform.kind {
+                        crate::hir::HirTransformKind::First => w.write("prima"),
+                        crate::hir::HirTransformKind::Last => w.write("ultima"),
+                        crate::hir::HirTransformKind::Sum => w.write("summa"),
+                    }
+                    if let Some(arg) = &transform.arg {
+                        w.write(" ");
+                        self.write_expr(arg, types, names, interner, w);
+                    }
+                }
+            }
             HirExprKind::Block(block) => {
                 w.writeln("{");
                 w.indented(|w| self.write_block(block, types, names, interner, w));
@@ -1011,6 +1041,19 @@ impl FaberCodegen {
                         for arg in args {
                             self.collect_expr_names(names, arg);
                         }
+                    }
+                }
+            }
+            HirExprKind::Ab { source, filter, transforms } => {
+                self.collect_expr_names(names, source);
+                if let Some(filter) = filter {
+                    if let crate::hir::HirCollectionFilterKind::Condition(cond) = &filter.kind {
+                        self.collect_expr_names(names, cond);
+                    }
+                }
+                for transform in transforms {
+                    if let Some(arg) = &transform.arg {
+                        self.collect_expr_names(names, arg);
                     }
                 }
             }

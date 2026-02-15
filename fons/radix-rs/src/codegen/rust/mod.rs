@@ -32,8 +32,8 @@ mod types;
 
 use super::{CodeWriter, Codegen, CodegenError};
 use crate::hir::{
-    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirOptionalChainKind, HirPattern,
-    HirProgram, HirStmtKind,
+    DefId, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind,
+    HirOptionalChainKind, HirPattern, HirProgram, HirStmtKind,
 };
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::TypeTable;
@@ -273,6 +273,19 @@ impl<'a> RustCodegen<'a> {
                     }
                 }
             }
+            HirExprKind::Ab { source, filter, transforms } => {
+                self.collect_expr_names(names, source);
+                if let Some(filter) = filter {
+                    if let HirCollectionFilterKind::Condition(cond) = &filter.kind {
+                        self.collect_expr_names(names, cond);
+                    }
+                }
+                for transform in transforms {
+                    if let Some(arg) = &transform.arg {
+                        self.collect_expr_names(names, arg);
+                    }
+                }
+            }
             HirExprKind::Block(block) => self.collect_block_names(names, Some(block)),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.collect_expr_names(names, cond);
@@ -449,6 +462,19 @@ impl<'a> RustCodegen<'a> {
                             for arg in args {
                                 visit_expr(arg, suppressed, deps);
                             }
+                        }
+                    }
+                }
+                HirExprKind::Ab { source, filter, transforms } => {
+                    visit_expr(source, suppressed, deps);
+                    if let Some(filter) = filter {
+                        if let HirCollectionFilterKind::Condition(cond) = &filter.kind {
+                            visit_expr(cond, suppressed, deps);
+                        }
+                    }
+                    for transform in transforms {
+                        if let Some(arg) = &transform.arg {
+                            visit_expr(arg, suppressed, deps);
                         }
                     }
                 }

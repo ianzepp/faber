@@ -243,6 +243,19 @@ impl<'a> BorrowChecker<'a> {
                     }
                 }
             }
+            HirExprKind::Ab { source, filter, transforms } => {
+                self.check_expr(source);
+                if let Some(filter) = filter {
+                    if let crate::hir::HirCollectionFilterKind::Condition(cond) = &filter.kind {
+                        self.check_expr(cond);
+                    }
+                }
+                for transform in transforms {
+                    if let Some(arg) = &transform.arg {
+                        self.check_expr(arg);
+                    }
+                }
+            }
             HirExprKind::Block(block) => self.check_block(block),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.check_expr(cond);

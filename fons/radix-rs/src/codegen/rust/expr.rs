@@ -237,6 +237,147 @@ pub fn generate_expr(
                 }
             }
         }
+        HirExprKind::Ab { source, filter, transforms } => {
+            let suffix = expr.id.0;
+            let vec_name = format!("__faber_ab_vec_{}", suffix);
+            let n_name = format!("__faber_ab_n_{}", suffix);
+            let len_name = format!("__faber_ab_len_{}", suffix);
+            let keep_name = format!("__faber_ab_keep_{}", suffix);
+            let sum_name = format!("__faber_ab_sum_{}", suffix);
+            let item_name = format!("__faber_ab_item_{}", suffix);
+
+            w.writeln("{");
+            w.indented(|w| {
+                w.write("let mut ");
+                w.write(&vec_name);
+                w.write(" = (");
+                let _ = generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                w.write(").iter()");
+                if let Some(filter) = filter {
+                    match &filter.kind {
+                        HirCollectionFilterKind::Property(name) => {
+                            w.write(".filter(|");
+                            w.write(&item_name);
+                            w.write("| ");
+                            if filter.negated {
+                                w.write("!");
+                            }
+                            w.write(&item_name);
+                            w.write(".");
+                            w.write(codegen.resolve_symbol(*name));
+                            w.write(")");
+                        }
+                        HirCollectionFilterKind::Condition(cond) => {
+                            w.write(".filter(|_| ");
+                            let _ = generate_expr(
+                                codegen,
+                                cond,
+                                types,
+                                w,
+                                in_failable_fn,
+                                in_entry,
+                                suppress_error_propagation,
+                            );
+                            w.write(")");
+                        }
+                    }
+                }
+                w.writeln(".collect::<Vec<_>>();");
+
+                let mut terminal_sum = false;
+                for transform in transforms {
+                    if terminal_sum {
+                        break;
+                    }
+                    match transform.kind {
+                        HirTransformKind::First => {
+                            w.write("let ");
+                            w.write(&n_name);
+                            w.write(" = ");
+                            if let Some(arg) = &transform.arg {
+                                let _ = generate_expr(
+                                    codegen,
+                                    arg,
+                                    types,
+                                    w,
+                                    in_failable_fn,
+                                    in_entry,
+                                    suppress_error_propagation,
+                                );
+                            } else {
+                                w.write("1");
+                            }
+                            w.writeln(" as usize;");
+                            w.write(&vec_name);
+                            w.write(" = ");
+                            w.write(&vec_name);
+                            w.write(".into_iter().take(");
+                            w.write(&n_name);
+                            w.writeln(").collect::<Vec<_>>();");
+                        }
+                        HirTransformKind::Last => {
+                            w.write("let ");
+                            w.write(&n_name);
+                            w.write(" = ");
+                            if let Some(arg) = &transform.arg {
+                                let _ = generate_expr(
+                                    codegen,
+                                    arg,
+                                    types,
+                                    w,
+                                    in_failable_fn,
+                                    in_entry,
+                                    suppress_error_propagation,
+                                );
+                            } else {
+                                w.write("1");
+                            }
+                            w.writeln(" as usize;");
+                            w.write("let ");
+                            w.write(&len_name);
+                            w.write(" = ");
+                            w.write(&vec_name);
+                            w.writeln(".len();");
+                            w.write("let ");
+                            w.write(&keep_name);
+                            w.write(" = ");
+                            w.write(&n_name);
+                            w.write(".min(");
+                            w.write(&len_name);
+                            w.writeln(");");
+                            w.write(&vec_name);
+                            w.write(" = ");
+                            w.write(&vec_name);
+                            w.write(".into_iter().skip(");
+                            w.write(&len_name);
+                            w.write(".saturating_sub(");
+                            w.write(&keep_name);
+                            w.writeln(")).collect::<Vec<_>>();");
+                        }
+                        HirTransformKind::Sum => {
+                            w.write("let ");
+                            w.write(&sum_name);
+                            w.write(" = ");
+                            w.write(&vec_name);
+                            w.writeln(".into_iter().copied().sum::<i64>();");
+                            terminal_sum = true;
+                        }
+                    }
+                }
+
+                if transforms
+                    .iter()
+                    .any(|t| matches!(t.kind, HirTransformKind::Sum))
+                {
+                    w.write(&sum_name);
+                    w.newline();
+                } else {
+                    w.write(&vec_name);
+                    w.newline();
+                }
+            });
+            w.write("}");
+        }
         HirExprKind::Block(block) => {
             w.writeln("{");
             w.indented(|w| {
