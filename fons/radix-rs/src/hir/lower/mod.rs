@@ -61,6 +61,8 @@ impl<'a> Lowerer<'a> {
     pub fn lower_program(&mut self, program: &Program) -> HirProgram {
         let mut items = Vec::new();
         let mut entry = None;
+        let mut implicit_entry_stmts = Vec::new();
+        let mut implicit_entry_scope = false;
 
         for stmt in &program.stmts {
             self.current_span = stmt.span;
@@ -103,9 +105,31 @@ impl<'a> Lowerer<'a> {
                 _ => {
                     if let Some(item) = self.lower_stmt_item(stmt) {
                         items.push(item);
+                    } else {
+                        if !implicit_entry_scope {
+                            self.push_scope();
+                            implicit_entry_scope = true;
+                        }
+                        implicit_entry_stmts.push(stmt::lower_stmt(self, stmt));
                     }
                 }
             }
+        }
+
+        if implicit_entry_scope {
+            self.pop_scope();
+        }
+
+        if entry.is_none() && !implicit_entry_stmts.is_empty() {
+            let span = implicit_entry_stmts
+                .first()
+                .map(|stmt| stmt.span)
+                .unwrap_or_else(Span::default);
+            entry = Some(HirBlock {
+                stmts: implicit_entry_stmts,
+                expr: None,
+                span,
+            });
         }
 
         HirProgram { items, entry }

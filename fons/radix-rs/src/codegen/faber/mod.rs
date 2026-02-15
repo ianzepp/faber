@@ -603,6 +603,15 @@ impl FaberCodegen {
                 }
                 w.write(")");
             }
+            HirExprKind::Scribe(args) => {
+                w.write("scribe ");
+                for (idx, arg) in args.iter().enumerate() {
+                    if idx > 0 {
+                        w.write(", ");
+                    }
+                    self.write_expr(arg, types, names, interner, w);
+                }
+            }
             HirExprKind::Clausura(params, ret, body) => {
                 w.write("clausura(");
                 for (idx, param) in params.iter().enumerate() {
@@ -885,7 +894,7 @@ impl FaberCodegen {
                 self.collect_expr_names(names, iter);
                 self.collect_block_names(names, Some(block));
             }
-            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) => {
+            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.collect_expr_names(names, element);
                 }

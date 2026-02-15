@@ -233,8 +233,7 @@ pub fn generate_const(
         w.write("()");
     }
     w.write(" = ");
-    // TODO: Generate const value
-    w.write("todo!()");
+    super::expr::generate_expr(codegen, &c.value, types, w)?;
     w.writeln(";");
 
     Ok(())

@@ -264,6 +264,8 @@ pub enum HirExprKind {
     Struct(DefId, Vec<(Symbol, HirExpr)>),
     /// Tuple (for multiple return, etc)
     Tuple(Vec<HirExpr>),
+    /// Print/log statement expression
+    Scribe(Vec<HirExpr>),
     /// Closure
     Clausura(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
     /// Await

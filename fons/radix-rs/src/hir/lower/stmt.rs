@@ -223,8 +223,7 @@ impl<'a> Lowerer<'a> {
     fn lower_scribe(&mut self, stmt: &crate::syntax::ScribeStmt) -> HirStmtKind {
         let _ = stmt.kind;
         let args = stmt.args.iter().map(|arg| self.lower_expr(arg)).collect();
-        // STUB: lowered as tuple placeholder; needs dedicated print/log HIR node.
-        HirStmtKind::Expr(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Tuple(args), ty: None, span: self.current_span })
+        HirStmtKind::Expr(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Scribe(args), ty: None, span: self.current_span })
     }
 
     fn lower_incipit_stmt(&mut self, stmt: &crate::syntax::IncipitStmt) -> HirStmtKind {

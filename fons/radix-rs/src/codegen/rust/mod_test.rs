@@ -66,6 +66,44 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
 }
 
 #[test]
+fn emits_main_body_and_scribe_as_println() {
+    let mut interner = Interner::new();
+    let salve = interner.intern("Salve, munde!");
+    let types = TypeTable::new();
+
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: HirId(1),
+                kind: HirStmtKind::Expr(HirExpr {
+                    id: HirId(2),
+                    kind: HirExprKind::Scribe(vec![HirExpr {
+                        id: HirId(3),
+                        kind: HirExprKind::Literal(HirLiteral::String(salve)),
+                        ty: None,
+                        span: span(),
+                    }]),
+                    ty: None,
+                    span: span(),
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let output = codegen::generate(Target::Rust, &program, &types, &interner).expect("rust codegen");
+    let crate::Output::Rust(rust) = output else {
+        panic!("expected rust output");
+    };
+
+    assert!(rust.code.contains("fn main() {"));
+    assert!(rust.code.contains("println!(\"{}\", \"Salve, munde!\");"));
+}
+
+#[test]
 fn traverses_match_patterns_and_closure_params_in_name_collection() {
     let mut interner = Interner::new();
     let enum_name = interner.intern("Res");
@@ -301,6 +339,7 @@ fn resolves_type_names_for_named_defs() {
     assert!(rust.code.contains("Structura"));
     assert!(rust.code.contains("Enumeratio"));
     assert!(rust.code.contains("dyn Servitium"));
+    assert!(rust.code.contains("pub const C: Enumeratio = 0;"));
 }
 
 #[test]
@@ -761,6 +800,25 @@ fn expr_codegen_handles_control_flow_and_operators() {
                 span: span(),
             },
             HirExpr {
+                id: HirId(851),
+                kind: HirExprKind::Scribe(vec![
+                    HirExpr {
+                        id: HirId(852),
+                        kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
+                        ty: Some(types.primitive(Primitive::Textus)),
+                        span: span(),
+                    },
+                    HirExpr {
+                        id: HirId(853),
+                        kind: HirExprKind::Literal(HirLiteral::Int(3)),
+                        ty: Some(numerus),
+                        span: span(),
+                    },
+                ]),
+                ty: None,
+                span: span(),
+            },
+            HirExpr {
                 id: HirId(340),
                 kind: HirExprKind::Cede(Box::new(HirExpr {
                     id: HirId(341),
@@ -857,6 +915,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
     assert!(code.contains("*ptr"));
     assert!(code.contains("todo!(\"error\")"));
     assert!(code.contains("\"N\""));
+    assert!(code.contains("println!(\"{} {}\", \"N\", 3)"));
 }
 
 #[test]

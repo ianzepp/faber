@@ -299,7 +299,7 @@ impl<'a> TypeChecker<'a> {
                 self.finalize_expr(lhs);
                 self.finalize_expr(rhs);
             }
-            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) => {
+            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.finalize_expr(element);
                 }
@@ -506,6 +506,12 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Array(elements) => self.check_array(elements, expr.span, expected),
             HirExprKind::Struct(def_id, fields) => self.check_struct_literal(*def_id, fields),
             HirExprKind::Tuple(items) => self.check_tuple(items),
+            HirExprKind::Scribe(items) => {
+                for item in items {
+                    self.check_expr(item);
+                }
+                self.vacuum_type()
+            }
             HirExprKind::Clausura(params, ret, body) => self.check_closure(params, ret.as_mut(), body, expected),
             HirExprKind::Cede(inner) => self.check_expr(inner),
             HirExprKind::Qua(inner, target) => self.check_cast(inner, *target),

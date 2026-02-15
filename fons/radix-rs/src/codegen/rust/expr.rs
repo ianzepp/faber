@@ -170,6 +170,21 @@ pub fn generate_expr(
             }
             w.write(")");
         }
+        HirExprKind::Scribe(args) => {
+            if args.is_empty() {
+                w.write("println!()");
+            } else {
+                let format = vec!["{}"; args.len()].join(" ");
+                w.write("println!(\"");
+                w.write(&format);
+                w.write("\"");
+                for arg in args {
+                    w.write(", ");
+                    generate_expr(codegen, arg, types, w)?;
+                }
+                w.write(")");
+            }
+        }
         HirExprKind::Clausura(params, _ret, body) => {
             w.write("|");
             for (i, param) in params.iter().enumerate() {

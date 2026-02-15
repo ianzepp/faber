@@ -168,6 +168,11 @@ fn check_expr(
                 check_expr(element, types, enum_variants, errors);
             }
         }
+        HirExprKind::Scribe(elements) => {
+            for element in elements {
+                check_expr(element, types, enum_variants, errors);
+            }
+        }
         HirExprKind::Clausura(_, _, body) => check_expr(body, types, enum_variants, errors),
         HirExprKind::Cede(expr) | HirExprKind::Qua(expr, _) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
             check_expr(expr, types, enum_variants, errors)

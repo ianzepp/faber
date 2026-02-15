@@ -222,7 +222,7 @@ impl<'a> RustCodegen<'a> {
                 self.collect_expr_names(names, iter);
                 self.collect_block_names(names, Some(block));
             }
-            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) => {
+            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.collect_expr_names(names, element);
                 }
@@ -272,10 +272,16 @@ impl Codegen for RustCodegen<'_> {
         }
 
         // Generate main if there's an entry point
-        if hir.entry.is_some() {
+        if let Some(entry) = &hir.entry {
             w.writeln("fn main() {");
             w.indented(|w| {
-                w.writeln("// Entry point");
+                for stmt in &entry.stmts {
+                    let _ = stmt::generate_stmt(self, stmt, types, w);
+                }
+                if let Some(expr) = &entry.expr {
+                    let _ = expr::generate_expr(self, expr, types, w);
+                    w.writeln(";");
+                }
             });
             w.writeln("}");
         }

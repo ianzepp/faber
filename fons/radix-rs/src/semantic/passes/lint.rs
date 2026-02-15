@@ -274,6 +274,11 @@ impl<'a> LintContext<'a> {
                     self.check_expr(element, in_loop);
                 }
             }
+            HirExprKind::Scribe(elements) => {
+                for element in elements {
+                    self.check_expr(element, in_loop);
+                }
+            }
             HirExprKind::Clausura(_, _, body) => self.check_expr(body, in_loop),
             HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
                 self.check_expr(expr, in_loop)

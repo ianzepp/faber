@@ -235,6 +235,11 @@ impl<'a> BorrowChecker<'a> {
                     self.check_expr(element);
                 }
             }
+            HirExprKind::Scribe(elements) => {
+                for element in elements {
+                    self.check_expr(element);
+                }
+            }
             HirExprKind::Clausura(params, _, body) => {
                 self.push_scope();
                 for param in params {
