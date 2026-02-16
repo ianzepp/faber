@@ -291,3 +291,34 @@
   rs:
       - 'let result = !true;'
   fab:'fixum result ← non verum'
+
+# =============================================================================
+# TypeScript backend regression coverage
+# =============================================================================
+
+- name: 'ts emits async iife for cede in entry'
+  source: |
+      functio fetch() → textus {
+        redde "ok"
+      }
+      incipit {
+        cede fetch()
+      }
+  ts:
+      - '(async () => {'
+      - 'await fetch()'
+  fab:
+      - 'functio fetch() → textus'
+      - 'cede fetch()'
+
+- name: 'ts translates lista appende to push'
+  source: |
+      incipit {
+        varia lista<numerus> nums ← [1]
+        nums.appende(2)
+      }
+  ts:
+      - 'let nums'
+      - 'nums.push(2)'
+  fab:
+      - 'nums.appende(2)'
