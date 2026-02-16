@@ -11,7 +11,7 @@
 
 # Return with expression
 - name: return with value
-  source: 'redde 42'
+  source:'redde 42'
   expect:
       ts:
           - 'return 42;'
@@ -28,7 +28,7 @@
 
 # Return with string
 - name: return with string
-  source: 'redde "hello"'
+  source:'redde "hello"'
   expect:
       ts:
           - 'return "hello";'
@@ -45,7 +45,7 @@
 
 # Return with variable
 - name: return with identifier
-  source: 'redde result'
+  source:'redde result'
   expect:
       ts:
           - 'return result;'
@@ -62,7 +62,7 @@
 
 # Return with expression
 - name: return with binary expression
-  source: 'redde x + y'
+  source:'redde x + y'
   expect:
       ts:
           - 'return (x + y);'
@@ -79,7 +79,7 @@
 
 # Void return (no value)
 - name: void return
-  source: 'redde'
+  source:'redde'
   expect:
       ts:
           - 'return;'
@@ -100,7 +100,7 @@
 
 # Return with object literal
 - name: return with object literal
-  source: 'redde { success: verum, data: result }'
+  source:'redde { success: verum, data: result }'
   expect:
       ts:
           - 'return { success: true, data: result };'
@@ -111,7 +111,7 @@
 
 # Return with array literal
 - name: return with array literal
-  source: 'redde [a, b, c]'
+  source:'redde [a, b, c]'
   expect:
       ts:
           - 'return [a, b, c];'
@@ -122,7 +122,7 @@
 
 # Return with lambda
 - name: return with lambda
-  source: 'redde pro x: x * 2'
+  source:'redde pro x: x * 2'
   expect:
       ts:
           - 'return (x) => (x * 2);'
@@ -133,7 +133,7 @@
 
 # Return with complex expression
 - name: return with complex expression
-  source: 'redde a + b * c - d / e'
+  source:'redde a + b * c - d / e'
   expect:
       ts:
           - 'return ((a + (b * c)) - (d / e));'
@@ -144,7 +144,7 @@
 
 # Return with call chain
 - name: return with call chain
-  source: 'redde items.filter(fn).map(fn2).first'
+  source:'redde items.filter(fn).map(fn2).first'
   expect:
       ts:
           - 'return items.filter(fn).map(fn2).first;'
@@ -155,7 +155,7 @@
 
 # Return with template literal
 - name: return with template literal
-  source: 'redde `Hello ${name}!`'
+  source:'redde `Hello ${name}!`'
   expect:
       ts:
           - 'return `Hello ${name}!`;'
@@ -166,7 +166,7 @@
 
 # Return with member access
 - name: return with member access
-  source: 'redde obj.nested.value'
+  source:'redde obj.nested.value'
   expect:
       ts:
           - 'return obj.nested.value;'

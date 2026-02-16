@@ -18,7 +18,7 @@
 - name: single guard with return
   source: |
       custodi {
-        si x == nihil { redde }
+        si x ≡ nihil { redde }
       }
   expect:
       ts:
@@ -38,14 +38,14 @@
           - 'return;'
       fab:
           - 'custodi {'
-          - 'si x == nihil { redde }'
+          - 'si x ≡ nihil { redde }'
           - '}'
 
 # Multiple guard clauses
 - name: multiple guard clauses
   source: |
       custodi {
-        si user == nihil { redde nihil }
+        si user ≡ nihil { redde nihil }
         si user.age < 0 { iace "Invalid age" }
       }
   expect:
@@ -76,7 +76,7 @@
           - 'return error.InvalidAge;'
       fab:
           - 'custodi {'
-          - 'si user == nihil { redde nihil }'
+          - 'si user ≡ nihil { redde nihil }'
           - 'si user.age < 0 { iace "Invalid age" }'
           - '}'
 
@@ -362,7 +362,7 @@
   source: |
       ex items pro item {
         custodi {
-          si item == nihil { rumpe }
+          si item ≡ nihil { rumpe }
         }
         process(item)
       }
@@ -380,7 +380,7 @@
       fab:
           - 'ex items pro item {'
           - 'custodi {'
-          - 'si item == nihil { rumpe }'
+          - 'si item ≡ nihil { rumpe }'
           - '}'
           - 'process(item)'
           - '}'
@@ -389,9 +389,9 @@
 - name: deeply nested null checks
   source: |
       custodi {
-        si x == nihil { redde }
-        si x.data == nihil { redde }
-        si x.data.value == nihil { redde }
+        si x ≡ nihil { redde }
+        si x.data ≡ nihil { redde }
+        si x.data.value ≡ nihil { redde }
       }
   expect:
       ts:
@@ -410,16 +410,16 @@
           - 'return'
       fab:
           - 'custodi {'
-          - 'si x == nihil { redde }'
-          - 'si x.data == nihil { redde }'
-          - 'si x.data.value == nihil { redde }'
+          - 'si x ≡ nihil { redde }'
+          - 'si x.data ≡ nihil { redde }'
+          - 'si x.data.value ≡ nihil { redde }'
           - '}'
 
 # Guard with multiple conditions per guard
 - name: guard with multiple conditions
   source: |
       custodi {
-        si a == nihil aut b == nihil { redde }
+        si a ≡ nihil aut b ≡ nihil { redde }
       }
   expect:
       ts:
@@ -430,7 +430,7 @@
           - 'return'
       fab:
           - 'custodi {'
-          - 'si a == nihil aut b == nihil { redde }'
+          - 'si a ≡ nihil aut b ≡ nihil { redde }'
           - '}'
 
 # Guard with function call condition
@@ -454,10 +454,10 @@
 # Guard at start of function
 - name: guard at start of function
   source: |
-      functio validate(textus input) -> textus? {
+      functio validate(textus input) → textus? {
         custodi {
-          si input == nihil { redde nihil }
-          si input.length == 0 { redde nihil }
+          si input ≡ nihil { redde nihil }
+          si input.length ≡ 0 { redde nihil }
         }
         redde input
       }
@@ -479,8 +479,8 @@
       fab:
           - 'functio validate(textus input) fit textus? {'
           - 'custodi {'
-          - 'si input == nihil { redde nihil }'
-          - 'si input.length == 0 { redde nihil }'
+          - 'si input ≡ nihil { redde nihil }'
+          - 'si input.length ≡ 0 { redde nihil }'
           - '}'
           - 'redde input'
           - '}'
@@ -493,8 +493,8 @@
 - name: guard with reddit
   source: |
       custodi {
-        si x == nihil reddit nihil
-        si y == nihil reddit nihil
+        si x ≡ nihil reddit nihil
+        si y ≡ nihil reddit nihil
       }
   expect:
       ts:
@@ -509,9 +509,9 @@
           - 'return None'
       fab:
           - 'custodi {'
-          - 'si x == nihil'
+          - 'si x ≡ nihil'
           - 'redde nihil'
-          - 'si y == nihil'
+          - 'si y ≡ nihil'
           - 'redde nihil'
           - '}'
 
@@ -520,7 +520,7 @@
   source: |
       custodi {
         si count < 0 ergo iace "Invalid count"
-        si name == "" ergo iace "Name required"
+        si name ≡ "" ergo iace "Name required"
       }
   expect:
       ts:
@@ -537,7 +537,7 @@
           - 'custodi {'
           - 'si count < 0'
           - 'iace "Invalid count"'
-          - 'si name == ""'
+          - 'si name ≡ ""'
           - 'iace "Name required"'
           - '}'
 
@@ -545,9 +545,9 @@
 - name: guard with mixed styles
   source: |
       custodi {
-        si a == nihil reddit nihil
+        si a ≡ nihil reddit nihil
         si b < 0 ergo iace "Invalid b"
-        si c == "" {
+        si c ≡ "" {
           mone "c is empty"
           redde nihil
         }
@@ -570,11 +570,11 @@
           - 'return None'
       fab:
           - 'custodi {'
-          - 'si a == nihil'
+          - 'si a ≡ nihil'
           - 'redde nihil'
           - 'si b < 0'
           - 'iace "Invalid b"'
-          - 'si c == ""'
+          - 'si c ≡ ""'
           - 'mone "c is empty"'
           - 'redde nihil'
           - '}'

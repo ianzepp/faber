@@ -18,7 +18,7 @@
 
 # Simple assertion
 - name: assert simple condition
-  source: 'adfirma x > 0'
+  source:'adfirma x > 0'
   expect:
       ts:
           - 'if (!((x > 0))) { throw new Error("Assertion failed: (x > 0)"); }'
@@ -35,7 +35,7 @@
 
 # Assertion with equality
 - name: assert equality
-  source: 'adfirma result == 42'
+  source:'adfirma result ≡ 42'
   expect:
       ts:
           - 'if (!((result == 42))) { throw new Error("Assertion failed: (result == 42)"); }'
@@ -48,11 +48,11 @@
       zig:
           - 'std.debug.assert((result == 42));'
       fab:
-          - 'adfirma result == 42'
+          - 'adfirma result ≡ 42'
 
 # Assertion with boolean literal
 - name: assert verum
-  source: 'adfirma verum'
+  source:'adfirma verum'
   expect:
       ts:
           - 'if (!(true)) { throw new Error("Assertion failed: true"); }'
@@ -73,7 +73,7 @@
 
 # Assertion with custom message
 - name: assert with custom message
-  source: 'adfirma x > 0, "x must be positive"'
+  source:'adfirma x > 0, "x must be positive"'
   expect:
       ts:
           - 'if (!((x > 0))) { throw new Error("x must be positive"); }'
@@ -90,7 +90,7 @@
 
 # Assertion with variable message
 - name: assert with variable message
-  source: 'adfirma valid, errorMsg'
+  source:'adfirma valid, errorMsg'
   expect:
       ts:
           - 'if (!(valid)) { throw new Error(errorMsg); }'
@@ -111,7 +111,7 @@
 
 # Complex condition with multiple logical operators
 - name: assert complex condition
-  source: 'adfirma x > 0 et x < 100 et x != 50'
+  source:'adfirma x > 0 et x < 100 et x ≠ 50'
   expect:
       ts:
           - 'if (!((((x > 0) && (x < 100)) && (x != 50)))) { throw new Error("Assertion failed: (((x > 0) && (x < 100)) && (x != 50))"); }'
@@ -124,11 +124,11 @@
       zig:
           - 'std.debug.assert((((x > 0) and (x < 100)) and (x != 50)));'
       fab:
-          - 'adfirma x > 0 et x < 100 et x != 50'
+          - 'adfirma x > 0 et x < 100 et x ≠ 50'
 
 # Assertion with call expression
 - name: assert call expression
-  source: 'adfirma isValid(data)'
+  source:'adfirma isValid(data)'
   expect:
       ts:
           - 'if (!(isValid(data))) { throw new Error("Assertion failed: isValid(data)"); }'
@@ -145,7 +145,7 @@
 
 # Assertion with template message
 - name: assert with template message
-  source: 'adfirma x > 0, `Expected positive, got ${x}`'
+  source:'adfirma x > 0, `Expected positive, got ${x}`'
   expect:
       ts:
           - 'if (!((x > 0))) { throw new Error(`Expected positive, got ${x}`); }'
@@ -162,7 +162,7 @@
 
 # Assertion with falsum (always fails)
 - name: assert falsum
-  source: 'adfirma falsum'
+  source:'adfirma falsum'
   expect:
       ts:
           - 'if (!(false)) { throw new Error("Assertion failed: false"); }'
@@ -179,7 +179,7 @@
 
 # Assertion with member expression
 - name: assert member expression
-  source: 'adfirma user.isActive et user.hasPermission'
+  source:'adfirma user.isActive et user.hasPermission'
   expect:
       ts:
           - 'if (!((user.isActive && user.hasPermission))) { throw new Error("Assertion failed: (user.isActive && user.hasPermission)"); }'
@@ -196,7 +196,7 @@
 
 # Assertion with negation
 - name: assert negation
-  source: 'adfirma non isEmpty(list)'
+  source:'adfirma non isEmpty(list)'
   expect:
       ts:
           - 'if (!(!isEmpty(list))) { throw new Error("Assertion failed: !isEmpty(list)"); }'
@@ -213,7 +213,7 @@
 
 # Assertion with comparison chain
 - name: assert comparison chain
-  source: 'adfirma a < b et b < c'
+  source:'adfirma a < b et b < c'
   expect:
       ts:
           - 'if (!(((a < b) && (b < c)))) { throw new Error("Assertion failed: ((a < b) && (b < c))"); }'

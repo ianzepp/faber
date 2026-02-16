@@ -18,7 +18,7 @@
 
 # Basic enum without explicit values
 - name: simple ordo without values
-  source: 'ordo Color { rubrum, viridis, caeruleum }'
+  source:'ordo Color { rubrum, viridis, caeruleum }'
   expect:
       ts:
           - 'enum Color'
@@ -51,7 +51,7 @@
 
 # Enum with explicit numeric values
 - name: ordo with numeric values
-  source: 'ordo Status { pendens = 0, actum = 1, finitum = 2 }'
+  source:'ordo Status { pendens ← 0, actum ← 1, finitum ← 2 }'
   expect:
       ts:
           - 'enum Status'
@@ -77,9 +77,9 @@
           - 'finitum = 2,'
       fab:
           - 'ordo Status'
-          - 'pendens = 0'
-          - 'actum = 1'
-          - 'finitum = 2'
+          - 'pendens ← 0'
+          - 'actum ← 1'
+          - 'finitum ← 2'
 
 # =============================================================================
 # String Values
@@ -87,7 +87,7 @@
 
 # Enum with string values (TypeScript/Python/Rust)
 - name: ordo with string values
-  source: 'ordo Direction { north = "N", south = "S", east = "E", west = "W" }'
+  source:'ordo Direction { north ← "N", south ← "S", east ← "E", west ← "W" }'
   expect:
       ts:
           - 'enum Direction'
@@ -107,10 +107,10 @@
           - 'const Direction = enum'
       fab:
           - 'ordo Direction'
-          - 'north = "N"'
-          - 'south = "S"'
-          - 'east = "E"'
-          - 'west = "W"'
+          - 'north ← "N"'
+          - 'south ← "S"'
+          - 'east ← "E"'
+          - 'west ← "W"'
 
 # =============================================================================
 # Mixed Values
@@ -118,7 +118,7 @@
 
 # Some members with values, some without
 - name: ordo with mixed values
-  source: 'ordo Priority { low = 1, medium, high = 10 }'
+  source:'ordo Priority { low ← 1, medium, high ← 10 }'
   expect:
       ts:
           - 'enum Priority'
@@ -144,9 +144,9 @@
           - 'high = 10,'
       fab:
           - 'ordo Priority'
-          - 'low = 1'
+          - 'low ← 1'
           - 'medium'
-          - 'high = 10'
+          - 'high ← 10'
 
 # =============================================================================
 # Edge Cases
@@ -154,7 +154,7 @@
 
 # Ordo with single member
 - name: ordo with single member
-  source: 'ordo Singleton { OnlyOne }'
+  source:'ordo Singleton { OnlyOne }'
   expect:
       ts:
           - 'enum Singleton'
@@ -168,7 +168,7 @@
 
 # Ordo with many members (10+)
 - name: ordo with many members
-  source: 'ordo Month { Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec }'
+  source:'ordo Month { Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec }'
   expect:
       ts:
           - 'enum Month'
@@ -183,7 +183,7 @@
 
 # Ordo with bitflag values
 - name: ordo with bitflag values
-  source: 'ordo Flags { Read = 1, Write = 2, Execute = 4 }'
+  source:'ordo Flags { Read ← 1, Write ← 2, Execute ← 4 }'
   expect:
       ts:
           - 'enum Flags'
@@ -197,13 +197,13 @@
           - 'Execute = 4'
       fab:
           - 'ordo Flags'
-          - 'Read = 1'
-          - 'Write = 2'
-          - 'Execute = 4'
+          - 'Read ← 1'
+          - 'Write ← 2'
+          - 'Execute ← 4'
 
 # Ordo with negative values
 - name: ordo with negative values
-  source: 'ordo Offset { Before = -1, At = 0, After = 1 }'
+  source:'ordo Offset { Before ← -1, At ← 0, After ← 1 }'
   expect:
       ts:
           - 'enum Offset'
@@ -217,13 +217,13 @@
           - 'After = 1'
       fab:
           - 'ordo Offset'
-          - 'Before = -1'
-          - 'At = 0'
-          - 'After = 1'
+          - 'Before ← -1'
+          - 'At ← 0'
+          - 'After ← 1'
 
 # Ordo with large values
 - name: ordo with large values
-  source: 'ordo HttpStatus { OK = 200, NotFound = 404, ServerError = 500 }'
+  source:'ordo HttpStatus { OK ← 200, NotFound ← 404, ServerError ← 500 }'
   expect:
       ts:
           - 'enum HttpStatus'
@@ -237,13 +237,13 @@
           - 'ServerError = 500'
       fab:
           - 'ordo HttpStatus'
-          - 'OK = 200'
-          - 'NotFound = 404'
-          - 'ServerError = 500'
+          - 'OK ← 200'
+          - 'NotFound ← 404'
+          - 'ServerError ← 500'
 
 # Ordo with sequential implicit values
 - name: ordo with sequential implicit values
-  source: 'ordo Priority { Low, Medium, High, Critical }'
+  source:'ordo Priority { Low, Medium, High, Critical }'
   expect:
       ts:
           - 'enum Priority'

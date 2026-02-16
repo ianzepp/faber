@@ -10,7 +10,7 @@
 
 # Simple continue statement
 - name: simple continue
-  source: 'perge'
+  source:'perge'
   expect:
       ts:
           - 'continue;'

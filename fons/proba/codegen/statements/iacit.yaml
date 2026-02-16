@@ -16,7 +16,7 @@
 
 - name: si with iacit - simple
   source: |
-      functio validate(numerus x) -> numerus {
+      functio validate(numerus x) → numerus {
           si x < 0 iacit "value must be non-negative"
           redde x
       }
@@ -36,7 +36,7 @@
 
 - name: si chain with iacit
   source: |
-      functio check(numerus x, numerus y) -> numerus {
+      functio check(numerus x, numerus y) → numerus {
           si x < 0 iacit "x must be non-negative"
           si y < 0 iacit "y must be non-negative"
           si x > y iacit "x must not exceed y"
@@ -66,7 +66,7 @@
 
 - name: elige with iacit cases
   source: |
-      functio getCode(textus status) -> numerus {
+      functio getCode(textus status) → numerus {
           elige status {
               casu "ok" reddit 200
               casu "created" reddit 201
@@ -95,7 +95,7 @@
 
 - name: elige ceterum with iacit
   source: |
-      functio process(numerus code) -> textus {
+      functio process(numerus code) → textus {
           elige code {
               casu 1 reddit "one"
               casu 2 reddit "two"
@@ -127,7 +127,7 @@
           Ok(numerus)
           Err(textus)
       }
-      functio unwrap(Result r) -> numerus {
+      functio unwrap(Result r) → numerus {
           discerne r {
               casu Ok pro value reddit value
               casu Err pro msg iacit msg
@@ -152,7 +152,7 @@
 
 - name: secus with iacit
   source: |
-      functio require(bivalens condition, textus msg) -> vacuum {
+      functio require(bivalens condition, textus msg) → vacuum {
           si condition {
               redde
           } secus iacit msg
@@ -175,7 +175,7 @@
 
 - name: mixed reddit and iacit in elige
   source: |
-      functio lookup(textus key) -> numerus {
+      functio lookup(textus key) → numerus {
           elige key {
               casu "a" reddit 1
               casu "b" reddit 2

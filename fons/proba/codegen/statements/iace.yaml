@@ -18,7 +18,7 @@
 
 # Throw string literal
 - name: throw string literal
-  source: 'iace "error occurred"'
+  source:'iace "error occurred"'
   expect:
       ts:
           - 'throw "error occurred";'
@@ -35,7 +35,7 @@
 
 # Throw variable
 - name: throw variable
-  source: 'iace err'
+  source:'iace err'
   expect:
       ts:
           - 'throw err;'
@@ -56,7 +56,7 @@
 
 # Panic with string literal
 - name: panic with string literal
-  source: 'mori "fatal error"'
+  source:'mori "fatal error"'
   expect:
       ts:
           - 'throw new Panic("fatal error");'
@@ -73,7 +73,7 @@
 
 # Panic with variable
 - name: panic with variable
-  source: 'mori msg'
+  source:'mori msg'
   expect:
       ts:
           - 'throw new Panic(String(msg));'
@@ -94,7 +94,7 @@
 
 # Throw with Error constructor
 - name: throw with error constructor
-  source: 'iace novum Error("message")'
+  source:'iace novum Error("message")'
   expect:
       ts:
           - 'throw new Error("message");'
@@ -105,7 +105,7 @@
 
 # Throw with template message
 - name: throw with template message
-  source: 'iace `Failed to process ${item.id}`'
+  source:'iace `Failed to process ${item.id}`'
   expect:
       ts:
           - 'throw `Failed to process ${item.id}`;'
@@ -133,7 +133,7 @@
 
 # Panic with template
 - name: panic with template message
-  source: 'mori `Critical failure at ${location}`'
+  source:'mori `Critical failure at ${location}`'
   expect:
       ts:
           - 'throw new Panic(String(`Critical failure at ${location}`));'
@@ -144,7 +144,7 @@
 
 # Throw with variable (explicit edge case)
 - name: throw error message variable
-  source: 'iace errorMessage'
+  source:'iace errorMessage'
   expect:
       ts:
           - 'throw errorMessage;'
@@ -155,7 +155,7 @@
 
 # Throw with concatenated message
 - name: throw concatenated message
-  source: 'iace "Error: " + message'
+  source:'iace "Error: " + message'
   expect:
       ts:
           - 'throw ("Error: " + message);'

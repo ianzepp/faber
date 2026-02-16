@@ -2,7 +2,7 @@
 # Maps Faber unary operators to target-language equivalents
 
 - name: logical not with non
-  source: non verum
+  source:non verum
   expect:
       ts: '!true;'
       py: 'not True'
@@ -16,7 +16,7 @@
           - 'non verum'
 
 - name: bitwise not
-  source: '~5'
+  source:'~5'
   expect:
       ts: '~5;'
       py: '~5'
@@ -30,7 +30,7 @@
           - '~5'
 
 - name: negation literal
-  source: '-42'
+  source:'-42'
   expect:
       ts: '-42;'
       py: '-42'
@@ -98,7 +98,7 @@
           - 'scribe'
 
 - name: double negation logical
-  source: non non verum
+  source:non non verum
   expect:
       ts: '!!true;'
       py: 'not not True'
@@ -106,7 +106,7 @@
           - 'non non verum'
 
 - name: double bitwise not
-  source: '~~x'
+  source:'~~x'
   expect:
       ts: '~~x;'
       py: '~~x'
@@ -114,7 +114,7 @@
           - '~~x'
 
 - name: negation of grouped expression
-  source: '-(a + b)'
+  source:'-(a + b)'
   expect:
       ts: '-(a + b);'
       py: '-(a + b)'
@@ -122,7 +122,7 @@
           - '-(a + b)'
 
 - name: non with grouped expression
-  source: non (a et b)
+  source:non (a et b)
   expect:
       ts: '!(a && b);'
       py: 'not (a and b)'
@@ -130,7 +130,7 @@
           - 'non (a et b)'
 
 - name: chained unary operators
-  source: non ~x
+  source:non ~x
   expect:
       ts: '!~x;'
       py: 'not ~x'
@@ -138,7 +138,7 @@
           - 'non ~x'
 
 - name: negation of call result
-  source: '-getValue()'
+  source:'-getValue()'
   expect:
       ts: '-getValue();'
       py: '-getValue()'
@@ -146,7 +146,7 @@
           - '-getValue()'
 
 - name: non with member access
-  source: non obj.flag
+  source:non obj.flag
   expect:
       ts: '!obj.flag;'
       py: 'not obj.flag'
@@ -154,7 +154,7 @@
           - 'non obj.flag'
 
 - name: negation of member
-  source: '-obj.value'
+  source:'-obj.value'
   expect:
       ts: '-obj.value;'
       py: '-obj.value'

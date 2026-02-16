@@ -12,7 +12,7 @@
 
 # Simple while with boolean
 - name: while with boolean
-  source: 'dum verum { scribe "loop" }'
+  source:'dum verum { scribe "loop" }'
   expect:
       ts:
           - 'while (true)'
@@ -34,7 +34,7 @@
 
 # While with comparison
 - name: while with comparison
-  source: 'dum x > 0 { x = x - 1 }'
+  source:'dum x > 0 { x ← x - 1 }'
   expect:
       ts:
           - 'while ((x > 0))'
@@ -53,11 +53,11 @@
           - 'x = x - 1;'
       fab:
           - 'dum x > 0'
-          - 'x = x - 1'
+          - 'x ← x - 1'
 
 # While with variable test
 - name: while with variable condition
-  source: 'dum running { process() }'
+  source:'dum running { process() }'
   expect:
       ts:
           - 'while (running)'
@@ -228,7 +228,7 @@
 
 # While with iterator pattern
 - name: while with iterator pattern
-  source: 'dum iterator.hasNext() { process(iterator.next()) }'
+  source:'dum iterator.hasNext() { process(iterator.next()) }'
   expect:
       ts:
           - 'while (iterator.hasNext())'
@@ -249,9 +249,9 @@
       dum x > 0 {
         dum y > 0 {
           process()
-          y = y - 1
+          y ← y - 1
         }
-        x = x - 1
+        x ← x - 1
       }
   expect:
       ts:
@@ -276,12 +276,12 @@
           - 'dum x > 0'
           - 'dum y > 0'
           - 'process()'
-          - 'y = y - 1'
-          - 'x = x - 1'
+          - 'y ← y - 1'
+          - 'x ← x - 1'
 
 # While with multiple conditions
 - name: while with multiple conditions
-  source: 'dum x > 0 et y < 100 { process() }'
+  source:'dum x > 0 et y < 100 { process() }'
   expect:
       ts:
           - 'while (((x > 0) && (y < 100)))'
@@ -298,7 +298,7 @@
 
 # While with method call condition
 - name: while with method call condition
-  source: 'dum queue.nonEmpty() { process(queue.pop()) }'
+  source:'dum queue.nonEmpty() { process(queue.pop()) }'
   expect:
       ts:
           - 'while (queue.nonEmpty())'
@@ -318,7 +318,7 @@
   source: |
       dum count > 0 {
         scribe count
-        count = count - 1
+        count ← count - 1
       }
   expect:
       ts:
@@ -336,7 +336,7 @@
       fab:
           - 'dum count > 0'
           - 'scribe count'
-          - 'count = count - 1'
+          - 'count ← count - 1'
 
 # While with perge and rumpe together
 - name: while with perge and rumpe together
@@ -378,7 +378,7 @@
 
 # Empty while body
 - name: empty while body
-  source: 'dum condition { }'
+  source:'dum condition { }'
   expect:
       ts:
           - 'while (condition)'

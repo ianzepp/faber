@@ -171,7 +171,7 @@
   source: |
       elige mode {
         casu 1 {
-          varia x = init()
+          varia x ← init()
           process(x)
           redde x
         }
@@ -221,7 +221,7 @@
       fab:
           - 'elige mode'
           - 'casu 1'
-          - 'varia x = init()'
+          - 'varia x ← init()'
           - 'process(x)'
           - 'redde x'
           - 'ceterum'
@@ -493,7 +493,7 @@
 
 # Elige with boolean cases
 - name: elige with boolean cases
-  source: 'elige flag { casu verum { yes() } casu falsum { no() } }'
+  source:'elige flag { casu verum { yes() } casu falsum { no() } }'
   expect:
       ts:
           - 'if (flag === true)'
@@ -585,7 +585,7 @@
 
 # Elige with member expression discriminant
 - name: elige with member expression discriminant
-  source: 'elige obj.status { casu 1 { active() } casu 0 { inactive() } }'
+  source:'elige obj.status { casu 1 { active() } casu 0 { inactive() } }'
   expect:
       ts:
           - 'if (obj.status === 1)'
@@ -663,7 +663,7 @@
 
 # Consecutive elige statements (single-line avoids parser issue with multiline consecutive elige)
 - name: consecutive elige statements
-  source: "elige a { casu 1 { first() } casu 2 { second() } }\nelige b { casu 3 { third() } casu 4 { fourth() } }"
+  source:"elige a { casu 1 { first() } casu 2 { second() } }\nelige b { casu 3 { third() } casu 4 { fourth() } }"
   expect:
       ts:
           - 'if (a === 1)'

@@ -2,7 +2,7 @@
 # Maps Faber member access to target-language equivalents
 
 - name: simple property access
-  source: usuario.nomen
+  source:usuario.nomen
   expect:
       ts: 'usuario.nomen;'
       py: 'usuario.nomen'
@@ -16,7 +16,7 @@
           - 'usuario.nomen'
 
 - name: computed access with variable
-  source: obj[key]
+  source:obj[key]
   expect:
       ts: 'obj[key];'
       py: 'obj[key]'
@@ -28,7 +28,7 @@
           - 'obj[key]'
 
 - name: computed access with literal
-  source: arr[0]
+  source:arr[0]
   expect:
       ts: 'arr[0];'
       py: 'arr[0]'
@@ -40,7 +40,7 @@
           - 'arr[0]'
 
 - name: optional property access
-  source: user?.name
+  source:user?.name
   expect:
       ts: 'user?.name;'
       py:
@@ -58,7 +58,7 @@
           - 'user?.name'
 
 - name: optional computed access
-  source: arr?[0]
+  source:arr?[0]
   expect:
       ts: 'arr?.[0];'
       py:
@@ -75,7 +75,7 @@
           - 'arr?[0]'
 
 - name: non-null property access
-  source: user!.name
+  source:user!.name
   expect:
       ts: 'user!.name;'
       py: 'user.name'
@@ -89,7 +89,7 @@
           - 'user!.name'
 
 - name: very long member chain
-  source: a.b.c.d.e.f.g
+  source:a.b.c.d.e.f.g
   expect:
       ts: 'a.b.c.d.e.f.g;'
       py: 'a.b.c.d.e.f.g'
@@ -99,7 +99,7 @@
           - 'a.b.c.d.e.f.g'
 
 - name: mixed optional and non-optional chain
-  source: a?.b.c?.d.e
+  source:a?.b.c?.d.e
   expect:
       ts: 'a?.b.c?.d.e;'
       py:
@@ -109,7 +109,7 @@
           - 'a?.b.c?.d.e'
 
 - name: computed access with expression
-  source: arr[i * 2 + 1]
+  source:arr[i * 2 + 1]
   expect:
       ts: 'arr[i * 2 + 1];'
       py: 'arr[i * 2 + 1]'
@@ -119,7 +119,7 @@
           - 'arr[i * 2 + 1]'
 
 - name: computed access with string key
-  source: obj["property-name"]
+  source:obj["property-name"]
   expect:
       ts: 'obj["property-name"];'
       py: 'obj["property-name"]'
@@ -129,7 +129,7 @@
           - 'obj["property-name"]'
 
 - name: tabula computed access (typed)
-  source: 'm["a"]'
+  source:'m["a"]'
   wrap: 'functio f(tabula<textus, numerus> m) { $ }'
   expect:
       ts:
@@ -137,7 +137,7 @@
           - 'm.get("a");'
 
 - name: member on string literal
-  source: '"hello".length'
+  source:'"hello".length'
   expect:
       ts: '"hello".length;'
       py: 'len("hello")'
@@ -145,7 +145,7 @@
           - '"hello".length'
 
 - name: member on array literal
-  source: '[1, 2, 3].length'
+  source:'[1, 2, 3].length'
   expect:
       ts: '[1, 2, 3].length;'
       py: 'len([1, 2, 3])'
@@ -153,7 +153,7 @@
           - '[1, 2, 3].length'
 
 - name: optional computed then call
-  source: obj?[key]()
+  source:obj?[key]()
   expect:
       ts: 'obj?.[key]();'
       py:
@@ -162,7 +162,7 @@
           - 'obj?[key]()'
 
 - name: non-null after call
-  source: getUser()!.name
+  source:getUser()!.name
   expect:
       ts: 'getUser()!.name;'
       py: 'getUser().name'
@@ -170,7 +170,7 @@
           - 'getUser()!.name'
 
 - name: computed with template
-  source: obj[`key_${id}`]
+  source:obj[`key_${id}`]
   expect:
       ts: 'obj[`key_${id}`];'
       py: 'obj[f"key_{id}"]'
@@ -178,7 +178,7 @@
           - 'obj[`key_${id}`]'
 
 - name: double computed access
-  source: matrix[i][j]
+  source:matrix[i][j]
   expect:
       ts: 'matrix[i][j];'
       py: 'matrix[i][j]'
@@ -188,7 +188,7 @@
           - 'matrix[i][j]'
 
 - name: slice with exclusive range
-  source: arr[1..3]
+  source:arr[1..3]
   expect:
       ts: 'arr.slice(1, 3);'
       py: 'arr[1:3]'
@@ -198,7 +198,7 @@
           - 'arr[1..3]'
 
 - name: slice with inclusive range
-  source: arr[1 usque 3]
+  source:arr[1 usque 3]
   expect:
       ts: 'arr.slice(1, 4);'
       py: 'arr[1:4]'
@@ -208,7 +208,7 @@
           - 'arr[1 usque 3]'
 
 - name: negative index access
-  source: arr[-1]
+  source:arr[-1]
   expect:
       ts: 'arr.at(-1);'
       py: 'arr[-1]'
@@ -218,7 +218,7 @@
           - 'arr[-1]'
 
 - name: negative slice range
-  source: arr[-3..-1]
+  source:arr[-3..-1]
   expect:
       ts: 'arr.slice(-3, -1);'
       py: 'arr[-3:-1]'
@@ -228,7 +228,7 @@
           - 'arr[-3..-1]'
 
 - name: non-null computed access
-  source: arr![0]
+  source:arr![0]
   expect:
       ts: 'arr![0];'
       py: 'arr[0]'
@@ -238,7 +238,7 @@
           - 'arr![0]'
 
 - name: inclusive negative slice (to end)
-  source: arr[-3 usque -1]
+  source:arr[-3 usque -1]
   expect:
       ts: 'arr.slice(-3);'
       py: 'arr[-3:]'

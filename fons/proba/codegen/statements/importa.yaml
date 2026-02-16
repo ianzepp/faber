@@ -19,7 +19,7 @@
 
 # Basic named imports
 - name: basic named imports
-  source: 'ex "@hono/hono" importa Hono, Context'
+  source:'ex "@hono/hono" importa Hono, Context'
   expect:
       ts:
           - 'import { Hono, Context } from "@hono/hono";'
@@ -37,7 +37,7 @@
 
 # Single named import
 - name: single named import
-  source: 'ex "lodash" importa map'
+  source:'ex "lodash" importa map'
   expect:
       ts:
           - 'import { map } from "lodash";'
@@ -54,7 +54,7 @@
 
 # Wildcard import (without alias - passes through literally)
 - name: wildcard import
-  source: 'ex "@std/crypto" importa *'
+  source:'ex "@std/crypto" importa *'
   expect:
       ts:
           - 'import * from "@std/crypto";'
@@ -70,7 +70,7 @@
 
 # Wildcard import with alias (required for TypeScript)
 - name: wildcard import with alias
-  source: 'ex "@std/crypto" importa * ut crypto'
+  source:'ex "@std/crypto" importa * ut crypto'
   expect:
       ts:
           - 'import * as crypto from "@std/crypto";'
@@ -90,7 +90,7 @@
 
 # Single import with alias
 - name: import with alias
-  source: 'ex "utils" importa helper ut h'
+  source:'ex "utils" importa helper ut h'
   expect:
       ts:
           - 'import { helper as h } from "utils";'
@@ -107,7 +107,7 @@
 
 # Multiple imports with mixed aliases
 - name: imports with mixed aliases
-  source: 'ex "db" importa connect, query ut q, close'
+  source:'ex "db" importa connect, query ut q, close'
   expect:
       ts:
           - 'import { connect, query as q, close } from "db";'
@@ -130,7 +130,7 @@
 
 # norma imports are suppressed in TS and Rust (handled as intrinsics)
 - name: norma import suppressed in ts and rs
-  source: 'ex "norma/tempus" importa nunc, SECUNDUM'
+  source:'ex "norma/tempus" importa nunc, SECUNDUM'
   expect:
       ts: [] # Empty - norma imports are suppressed
       py:
@@ -146,7 +146,7 @@
 
 # norma wildcard import
 - name: norma wildcard import
-  source: 'ex "norma" importa *'
+  source:'ex "norma" importa *'
   expect:
       ts: []
       py:
@@ -194,7 +194,7 @@
 
 # Import with special characters in source
 - name: import with scoped package
-  source: 'ex "@types/node" importa Process'
+  source:'ex "@types/node" importa Process'
   expect:
       ts:
           - 'import { Process } from "@types/node";'
@@ -211,7 +211,7 @@
 
 # Relative import path
 - name: relative import
-  source: 'ex "./utils" importa helper'
+  source:'ex "./utils" importa helper'
   expect:
       ts:
           - 'import { helper } from "./utils";'
@@ -228,7 +228,7 @@
 
 # All names aliased
 - name: all imports aliased
-  source: 'ex "lib" importa foo ut f, bar ut b'
+  source:'ex "lib" importa foo ut f, bar ut b'
   expect:
       ts:
           - 'import { foo as f, bar as b } from "lib";'
@@ -246,7 +246,7 @@
 
 # Import with very long path
 - name: import with very long path
-  source: 'ex "@organization/package-name/deeply/nested/module" importa thing'
+  source:'ex "@organization/package-name/deeply/nested/module" importa thing'
   expect:
       ts:
           - 'import { thing } from "@organization/package-name/deeply/nested/module";'
@@ -263,7 +263,7 @@
 
 # Import many named items (5+)
 - name: import many named items
-  source: 'ex "utils" importa a, b, c, d, e, f'
+  source:'ex "utils" importa a, b, c, d, e, f'
   expect:
       ts:
           - 'import { a, b, c, d, e, f } from "utils";'
@@ -285,7 +285,7 @@
 
 # Import with multiple aliases
 - name: import with multiple aliases
-  source: 'ex "mod" importa foo ut f, bar ut b, baz ut z'
+  source:'ex "mod" importa foo ut f, bar ut b, baz ut z'
   expect:
       ts:
           - 'import { foo as f, bar as b, baz as z } from "mod";'
@@ -304,7 +304,7 @@
 
 # Import from parent directory
 - name: import from parent directory
-  source: 'ex "../shared/utils" importa helper'
+  source:'ex "../shared/utils" importa helper'
   expect:
       ts:
           - 'import { helper } from "../shared/utils";'
@@ -321,7 +321,7 @@
 
 # Import from sibling directory
 - name: import from sibling directory
-  source: 'ex "./sibling/module" importa Component'
+  source:'ex "./sibling/module" importa Component'
   expect:
       ts:
           - 'import { Component } from "./sibling/module";'

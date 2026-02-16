@@ -10,7 +10,7 @@
 
 - name: pavimentum (floor)
   source: |
-      fixum x = pavimentum(3.7)
+      fixum x ← pavimentum(3.7)
   expect:
       ts: 'const x = Math.floor(3.7);'
       py:
@@ -26,7 +26,7 @@
 
 - name: tectum (ceiling)
   source: |
-      fixum x = tectum(3.2)
+      fixum x ← tectum(3.2)
   expect:
       ts: 'const x = Math.ceil(3.2);'
       py:
@@ -42,7 +42,7 @@
 
 - name: rotundum (round)
   source: |
-      fixum x = rotundum(3.5)
+      fixum x ← rotundum(3.5)
   expect:
       ts: 'const x = Math.round(3.5);'
       py:
@@ -57,7 +57,7 @@
 
 - name: truncatum (truncate)
   source: |
-      fixum x = truncatum(3.9)
+      fixum x ← truncatum(3.9)
   expect:
       ts: 'const x = Math.trunc(3.9);'
       py:
@@ -77,7 +77,7 @@
 
 - name: radix (sqrt)
   source: |
-      fixum x = radix(16)
+      fixum x ← radix(16)
   expect:
       ts: 'const x = Math.sqrt(16);'
       py:
@@ -93,7 +93,7 @@
 
 - name: potentia (pow)
   source: |
-      fixum x = potentia(2, 8)
+      fixum x ← potentia(2, 8)
   expect:
       ts: 'const x = Math.pow(2, 8);'
       py:
@@ -109,7 +109,7 @@
 
 - name: logarithmus (natural log)
   source: |
-      fixum x = logarithmus(10)
+      fixum x ← logarithmus(10)
   expect:
       ts: 'const x = Math.log(10);'
       py:
@@ -125,7 +125,7 @@
 
 - name: logarithmus10 (log base 10)
   source: |
-      fixum x = logarithmus10(100)
+      fixum x ← logarithmus10(100)
   expect:
       ts: 'const x = Math.log10(100);'
       py:
@@ -141,7 +141,7 @@
 
 - name: exponens (e^x)
   source: |
-      fixum x = exponens(1)
+      fixum x ← exponens(1)
   expect:
       ts: 'const x = Math.exp(1);'
       py:
@@ -161,7 +161,7 @@
 
 - name: sinus (sin)
   source: |
-      fixum x = sinus(0)
+      fixum x ← sinus(0)
   expect:
       ts: 'const x = Math.sin(0);'
       py:
@@ -177,7 +177,7 @@
 
 - name: cosinus (cos)
   source: |
-      fixum x = cosinus(0)
+      fixum x ← cosinus(0)
   expect:
       ts: 'const x = Math.cos(0);'
       py:
@@ -193,7 +193,7 @@
 
 - name: tangens (tan)
   source: |
-      fixum x = tangens(0)
+      fixum x ← tangens(0)
   expect:
       ts: 'const x = Math.tan(0);'
       py:
@@ -213,7 +213,7 @@
 
 - name: absolutum (abs)
   source: |
-      fixum x = absolutum(-5)
+      fixum x ← absolutum(-5)
   expect:
       ts: 'const x = Math.abs(-5);'
       py:
@@ -228,7 +228,7 @@
 
 - name: signum (sign)
   source: |
-      fixum x = signum(-5)
+      fixum x ← signum(-5)
   expect:
       ts: 'const x = Math.sign(-5);'
       py:
@@ -248,7 +248,7 @@
 
 - name: minimus (min)
   source: |
-      fixum x = minimus(3, 7)
+      fixum x ← minimus(3, 7)
   expect:
       ts: 'const x = Math.min(3, 7);'
       py:
@@ -263,7 +263,7 @@
 
 - name: maximus (max)
   source: |
-      fixum x = maximus(3, 7)
+      fixum x ← maximus(3, 7)
   expect:
       ts: 'const x = Math.max(3, 7);'
       py:
@@ -278,7 +278,7 @@
 
 - name: constringens (clamp)
   source: |
-      fixum x = constringens(5, 0, 10)
+      fixum x ← constringens(5, 0, 10)
   expect:
       ts: 'const x = Math.min(Math.max(5, 0), 10);'
       py:
@@ -297,7 +297,7 @@
 
 - name: PI constant
   source: |
-      fixum x = PI
+      fixum x ← PI
   expect:
       ts: 'const x = Math.PI;'
       py:
@@ -313,7 +313,7 @@
 
 - name: E constant
   source: |
-      fixum x = E
+      fixum x ← E
   expect:
       ts: 'const x = Math.E;'
       py:
@@ -329,7 +329,7 @@
 
 - name: TAU constant
   source: |
-      fixum x = TAU
+      fixum x ← TAU
   expect:
       ts: 'const x = (Math.PI * 2);'
       py:
@@ -349,8 +349,8 @@
 
 - name: area of circle with PI
   source: |
-      fixum r = 5
-      fixum area = PI * r * r
+      fixum r ← 5
+      fixum area ← PI * r * r
   expect:
       ts:
           - 'const r = 5;'
@@ -366,9 +366,9 @@
 
 - name: pythagorean theorem with radix
   source: |
-      fixum a = 3
-      fixum b = 4
-      fixum c = radix(a * a + b * b)
+      fixum a ← 3
+      fixum b ← 4
+      fixum c ← radix(a * a + b * b)
   expect:
       ts:
           - 'const a = 3;'

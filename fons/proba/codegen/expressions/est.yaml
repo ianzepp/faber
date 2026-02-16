@@ -2,7 +2,7 @@
 # Maps Faber "est" (is) to typeof/instanceof equivalents
 
 - name: est with primitive string
-  source: fixum check = x est textus
+  source:fixum check ← x est textus
   expect:
       ts:
           - 'typeof x === "string"'
@@ -18,7 +18,7 @@
           - 'x est textus'
 
 - name: est with primitive number
-  source: fixum check = x est numerus
+  source:fixum check ← x est numerus
   expect:
       ts:
           - 'typeof x === "number"'
@@ -34,7 +34,7 @@
           - 'x est numerus'
 
 - name: non est negated check
-  source: fixum check = x non est numerus
+  source:fixum check ← x non est numerus
   expect:
       ts:
           - 'typeof x !== "number"'
@@ -50,7 +50,7 @@
           - 'x non est numerus'
 
 - name: est with user type
-  source: fixum check = obj est Persona
+  source:fixum check ← obj est Persona
   expect:
       ts:
           - 'instanceof Persona'
@@ -66,7 +66,7 @@
           - 'obj est Persona'
 
 - name: est with array type
-  source: fixum check = x est lista<numerus>
+  source:fixum check ← x est lista<numerus>
   expect:
       ts:
           - 'Array.isArray(x)'
@@ -76,7 +76,7 @@
           - 'x est lista<numerus>'
 
 - name: est with nullable type
-  source: fixum check = x est textus?
+  source:fixum check ← x est textus?
   expect:
       ts:
           - 'typeof x === "string" || x === null'
@@ -86,7 +86,7 @@
           - 'x est textus?'
 
 - name: chained est checks
-  source: x est numerus et x > 0
+  source:x est numerus et x > 0
   expect:
       ts:
           - 'typeof x === "number"'
@@ -121,7 +121,7 @@
           - 'scribe data'
 
 - name: est with nihil
-  source: fixum isNull = x est nihil
+  source:fixum isNull ← x est nihil
   expect:
       ts:
           - 'x === null'
@@ -131,7 +131,7 @@
           - 'x est nihil'
 
 - name: est with bivalens
-  source: fixum isBool = x est bivalens
+  source:fixum isBool ← x est bivalens
   expect:
       ts:
           - 'typeof x === "boolean"'
@@ -145,7 +145,7 @@
           - 'x est bivalens'
 
 - name: non est with primitive
-  source: fixum notNum = x non est numerus
+  source:fixum notNum ← x non est numerus
   expect:
       ts:
           - 'typeof x !== "number"'

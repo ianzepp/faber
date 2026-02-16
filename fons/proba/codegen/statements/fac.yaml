@@ -22,7 +22,7 @@
 - name: simple fac block
   source: |
       fac {
-        fixum x = 42
+        fixum x ← 42
       }
   expect:
       ts:
@@ -43,12 +43,12 @@
           - 'const x = 42;'
       fab:
           - 'fac {'
-          - 'fixum x = 42'
+          - 'fixum x ← 42'
           - '}'
 
 # Do block with statement
 - name: fac block with statement
-  source: 'fac { scribe "test" }'
+  source:'fac { scribe "test" }'
   expect:
       ts:
           - '{'
@@ -120,7 +120,7 @@
 - name: fac with multiple statements and cape
   source: |
       fac {
-        fixum x = compute()
+        fixum x ← compute()
         redde x
       } cape e {
         redde nihil
@@ -154,7 +154,7 @@
           - '}'
       fab:
           - 'fac {'
-          - 'fixum x = compute()'
+          - 'fixum x ← compute()'
           - 'redde x'
           - '} cape e {'
           - 'redde nihil'
@@ -203,7 +203,7 @@
 
 # Do-while with comparison
 - name: do-while with comparison condition
-  source: 'fac { x = x + 1 } dum x < 10'
+  source:'fac { x ← x + 1 } dum x < 10'
   expect:
       ts:
           - 'do {'
@@ -231,7 +231,7 @@
           - '}'
       fab:
           - 'fac {'
-          - 'x = x + 1'
+          - 'x ← x + 1'
           - '} dum x < 10'
 
 # Do-while with cape (error handling)

@@ -11,7 +11,7 @@
 - name: nunc (milliseconds)
   source: |
       ex "norma/hal/tempus" importa tempus
-      fixum t = tempus.nunc()
+      fixum t ← tempus.nunc()
   expect:
       ts: 'const t = tempus.nunc();'
       py:
@@ -28,7 +28,7 @@
 - name: nunc_nano (nanoseconds)
   source: |
       ex "norma/hal/tempus" importa tempus
-      fixum t = tempus.nuncNano()
+      fixum t ← tempus.nuncNano()
   expect:
       ts: 'const t = tempus.nuncNano();'
       py:
@@ -45,7 +45,7 @@
 - name: nunc_secunda (seconds)
   source: |
       ex "norma/hal/tempus" importa tempus
-      fixum t = tempus.nuncSecunda()
+      fixum t ← tempus.nuncSecunda()
   expect:
       ts: 'const t = tempus.nuncSecunda();'
       py:
@@ -83,7 +83,7 @@
 
 - name: MILLISECUNDUM constant
   source: |
-      fixum d = MILLISECUNDUM
+      fixum d ← MILLISECUNDUM
   expect:
       ts: 'const d = 1;'
       py: 'd = 1'
@@ -96,7 +96,7 @@
 
 - name: SECUNDUM constant
   source: |
-      fixum d = SECUNDUM
+      fixum d ← SECUNDUM
   expect:
       ts: 'const d = 1000;'
       py: 'd = 1000'
@@ -109,7 +109,7 @@
 
 - name: MINUTUM constant
   source: |
-      fixum d = MINUTUM
+      fixum d ← MINUTUM
   expect:
       ts: 'const d = 60000;'
       py: 'd = 60000'
@@ -122,7 +122,7 @@
 
 - name: HORA constant
   source: |
-      fixum d = HORA
+      fixum d ← HORA
   expect:
       ts: 'const d = 3600000;'
       py: 'd = 3600000'
@@ -135,7 +135,7 @@
 
 - name: DIES constant
   source: |
-      fixum d = DIES
+      fixum d ← DIES
   expect:
       ts: 'const d = 86400000;'
       py: 'd = 86400000'

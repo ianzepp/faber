@@ -9,19 +9,19 @@
 # =============================================================================
 
 - name: error - missing target string
-  source: 'ad (args)'
+  source:'ad (args)'
   errata:
       - 'Parse errors'
       - 'Expected string literal'
 
 - name: error - target is number not string
-  source: 'ad 123 (args)'
+  source:'ad 123 (args)'
   errata:
       - 'Parse errors'
       - 'Expected string literal'
 
 - name: error - target is identifier not string
-  source: 'ad target (args)'
+  source:'ad target (args)'
   errata:
       - 'Parse errors'
       - 'Expected string literal'
@@ -31,19 +31,19 @@
 # =============================================================================
 
 - name: error - missing opening paren
-  source: 'ad "target" args)'
+  source:'ad "target" args)'
   errata:
       - 'Parse errors'
       - "Expected '('"
 
 - name: error - missing closing paren
-  source: 'ad "target" (args'
+  source:'ad "target" (args'
   errata:
       - 'Parse errors'
       - "Expected ')'"
 
 - name: error - missing paren entirely
-  source: 'ad "target"'
+  source:'ad "target"'
   errata:
       - 'Parse errors'
       - "Expected '('"
@@ -53,25 +53,25 @@
 # =============================================================================
 
 - name: error - missing pro keyword in binding
-  source: 'ad "target" (args) fit textus content { }'
+  source:'ad "target" (args) fit textus content { }'
   errata:
       - 'Parse errors'
       - "Expected 'pro'"
 
 - name: error - missing binding name after pro
-  source: 'ad "target" (args) fit textus pro { }'
+  source:'ad "target" (args) fit textus pro { }'
   errata:
       - 'Parse errors'
       - 'Expected identifier'
 
 - name: error - missing binding name after pro (no block)
-  source: 'ad "target" (args) fit textus pro'
+  source:'ad "target" (args) fit textus pro'
   errata:
       - 'Parse errors'
       - 'Expected identifier'
 
 - name: error - ut without alias name
-  source: 'ad "target" (args) fit Type pro name ut { }'
+  source:'ad "target" (args) fit Type pro name ut { }'
   errata:
       - 'Parse errors'
       - 'Expected identifier'
@@ -81,7 +81,7 @@
 # =============================================================================
 
 - name: error - missing block closing brace
-  source: 'ad "target" (args) fit textus pro content { scribe content'
+  source:'ad "target" (args) fit textus pro content { scribe content'
   errata:
       - 'Parse errors'
       - "Expected '}'"
@@ -91,19 +91,19 @@
 # =============================================================================
 
 - name: error - cape without error binding name
-  source: 'ad "target" (args) fit Type pro r { } cape { }'
+  source:'ad "target" (args) fit Type pro r { } cape { }'
   errata:
       - 'Parse errors'
       - 'Expected identifier'
 
 - name: error - cape without block
-  source: 'ad "target" (args) fit Type pro r { } cape err'
+  source:'ad "target" (args) fit Type pro r { } cape err'
   errata:
       - 'Parse errors'
       - "Expected '{'"
 
 - name: error - cape with missing closing brace
-  source: 'ad "target" (args) fit Type pro r { } cape err { scribe err'
+  source:'ad "target" (args) fit Type pro r { } cape err { scribe err'
   errata:
       - 'Parse errors'
       - "Expected '}'"

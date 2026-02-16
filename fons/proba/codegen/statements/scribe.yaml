@@ -19,7 +19,7 @@
 
 # Print string literal
 - name: scribe with string literal
-  source: 'scribe "hello"'
+  source:'scribe "hello"'
   expect:
       ts:
           - 'console.log("hello");'
@@ -36,7 +36,7 @@
 
 # Print variable
 - name: scribe with variable
-  source: 'scribe x'
+  source:'scribe x'
   expect:
       ts:
           - 'console.log(x);'
@@ -54,7 +54,7 @@
 
 # Print multiple arguments
 - name: scribe with multiple args
-  source: 'scribe "value:", x'
+  source:'scribe "value:", x'
   expect:
       ts:
           - 'console.log("value:", x);'
@@ -76,7 +76,7 @@
 
 # Debug print
 - name: vide with string
-  source: 'vide "debug info"'
+  source:'vide "debug info"'
   expect:
       ts:
           - 'console.debug("debug info");'
@@ -99,7 +99,7 @@
 
 # Warning print
 - name: mone with string
-  source: 'mone "warning message"'
+  source:'mone "warning message"'
   expect:
       ts:
           - 'console.warn("warning message");'
@@ -121,7 +121,7 @@
 
 # Scribe with many arguments (5+)
 - name: scribe with many arguments
-  source: 'scribe a, b, c, d, e, f'
+  source:'scribe a, b, c, d, e, f'
   expect:
       ts:
           - 'console.log(a, b, c, d, e, f);'
@@ -132,7 +132,7 @@
 
 # Scribe with object literal (edge case - not typical usage)
 - name: scribe with object literal
-  source: 'scribe { x: 1, y: 2 }'
+  source:'scribe { x: 1, y: 2 }'
   rivus: false
   expect:
       ts:
@@ -144,7 +144,7 @@
 
 # Scribe with template literal
 - name: scribe with template literal
-  source: 'scribe `Value: ${x}, Status: ${status}`'
+  source:'scribe `Value: ${x}, Status: ${status}`'
   expect:
       ts:
           - 'console.log(`Value: ${x}, Status: ${status}`);'
@@ -155,7 +155,7 @@
 
 # Scribe with expression
 - name: scribe with expression
-  source: 'scribe x * 2 + y'
+  source:'scribe x * 2 + y'
   expect:
       ts:
           - 'console.log(((x * 2) + y));'
@@ -166,7 +166,7 @@
 
 # Scribe with member access
 - name: scribe with member access
-  source: 'scribe obj.nested.value'
+  source:'scribe obj.nested.value'
   expect:
       ts:
           - 'console.log(obj.nested.value);'
@@ -177,7 +177,7 @@
 
 # Scribe with call result
 - name: scribe with call result
-  source: 'scribe getData()'
+  source:'scribe getData()'
   expect:
       ts:
           - 'console.log(getData());'
@@ -188,7 +188,7 @@
 
 # Vide with template
 - name: vide with template literal
-  source: 'vide `Debug: ${value}`'
+  source:'vide `Debug: ${value}`'
   expect:
       ts:
           - 'console.debug(`Debug: ${value}`);'
@@ -199,7 +199,7 @@
 
 # Mone with expression
 - name: mone with expression
-  source: 'mone "Error:", err.message'
+  source:'mone "Error:", err.message'
   expect:
       ts:
           - 'console.warn("Error:", err.message);'

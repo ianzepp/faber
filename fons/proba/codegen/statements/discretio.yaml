@@ -19,7 +19,7 @@
 
 # Unit variants only (no payload)
 - name: discretio with unit variants
-  source: 'discretio Status { Active, Inactive, Pending }'
+  source:'discretio Status { Active, Inactive, Pending }'
   expect:
       ts:
           - 'type Status ='
@@ -157,7 +157,7 @@
 
 # Variant with single field
 - name: discretio with single field variant
-  source: 'discretio Result { Success { textus message }, Failure { textus error } }'
+  source:'discretio Result { Success { textus message }, Failure { textus error } }'
   expect:
       ts:
           - 'type Result ='
@@ -192,7 +192,7 @@
 
 # Multiple type parameters
 - name: discretio with multiple type params
-  source: 'discretio Either<L, R> { Left { L value }, Right { R value } }'
+  source:'discretio Either<L, R> { Left { L value }, Right { R value } }'
   expect:
       ts:
           - 'type Either<L, R> ='
@@ -238,7 +238,7 @@
 
 # Single variant only
 - name: discretio with single variant
-  source: 'discretio Wrapper { Value { numerus x } }'
+  source:'discretio Wrapper { Value { numerus x } }'
   expect:
       ts:
           - 'type Wrapper ='

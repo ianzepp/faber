@@ -72,7 +72,7 @@
 - name: probandum with praepara
   source: |
       probandum "Lexer" {
-        praepara { lexer = init() }
+        praepara { lexer ← init() }
         proba "parses" { adfirma verum }
       }
   expect:
@@ -88,7 +88,7 @@
       fab:
           - 'probandum "Lexer"'
           - 'praepara'
-          - 'lexer = init()'
+          - 'lexer ← init()'
           - 'proba "parses"'
   skip: [py, cpp, zig]
 
@@ -118,7 +118,7 @@
 - name: probandum with praepara omnia and postpara omnia
   source: |
       probandum "Server" {
-        praepara omnia { server = start() }
+        praepara omnia { server ← start() }
         postpara omnia { server.stop() }
         proba "responds" { adfirma verum }
       }
@@ -135,7 +135,7 @@
       fab:
           - 'probandum "Server"'
           - 'praepara omnia'
-          - 'server = start()'
+          - 'server ← start()'
           - 'postpara omnia'
           - 'server.stop()'
           - 'proba "responds"'
@@ -145,7 +145,7 @@
 - name: probandum with praeparabit omnia
   source: |
       probandum "AsyncServer" {
-        praeparabit omnia { db = cede connect() }
+        praeparabit omnia { db ← cede connect() }
         proba "responds" { adfirma verum }
       }
   expect:
@@ -159,7 +159,7 @@
       fab:
           - 'probandum "AsyncServer"'
           - 'praeparabit omnia'
-          - 'db = cede connect()'
+          - 'db ← cede connect()'
           - 'proba "responds"'
   skip: [py, cpp, zig]
 
@@ -319,9 +319,9 @@
 - name: probandum with setup initializing state
   source: |
       probandum "SharedState" {
-        praepara { counter = 0 }
-        proba "increments" { counter = counter + 1 }
-        proba "checks value" { adfirma counter == 0 }
+        praepara { counter ← 0 }
+        proba "increments" { counter ← counter + 1 }
+        proba "checks value" { adfirma counter ≡ 0 }
       }
   expect:
       ts:
@@ -337,11 +337,11 @@
       fab:
           - 'probandum "SharedState"'
           - 'praepara'
-          - 'counter = 0'
+          - 'counter ← 0'
           - 'proba "increments"'
-          - 'counter = counter + 1'
+          - 'counter ← counter + 1'
           - 'proba "checks value"'
-          - 'adfirma counter == 0'
+          - 'adfirma counter ≡ 0'
 
 # Suite with all hook types
 - name: probandum with all hook types
@@ -383,7 +383,7 @@
 
 # Empty suite
 - name: empty probandum
-  source: probandum "Empty" { }
+  source:probandum "Empty" { }
   expect:
       ts:
           - 'describe("Empty", () => {'

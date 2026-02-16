@@ -7,7 +7,7 @@
 # === numeratum (to integer) ===
 
 - name: basic numeratum
-  source: fixum n = "42" numeratum
+  source:fixum n ← "42" numeratum
   expect:
       ts: 'const n = parseInt("42", 10);'
       py: 'n = int("42")'
@@ -18,10 +18,10 @@
       zig:
           - 'std.fmt.parseInt(i64, "42", 10)'
       fab:
-          - 'fixum n = "42" numeratum'
+          - 'fixum n ← "42" numeratum'
 
 - name: numeratum with fallback
-  source: fixum n = input numeratum vel 0
+  source:fixum n ← input numeratum vel 0
   expect:
       ts: 'const n = (parseInt(input, 10) || 0);'
       py:
@@ -35,10 +35,10 @@
       zig:
           - 'std.fmt.parseInt(i64, input, 10) catch 0'
       fab:
-          - 'fixum n = input numeratum vel 0'
+          - 'fixum n ← input numeratum vel 0'
 
 - name: numeratum with type param
-  source: fixum n = "42" numeratum<i32>
+  source:fixum n ← "42" numeratum<i32>
   expect:
       ts: 'const n = parseInt("42", 10);'
       rs:
@@ -46,10 +46,10 @@
       zig:
           - 'std.fmt.parseInt(i32, "42", 10)'
       fab:
-          - 'fixum n = "42" numeratum<i32>'
+          - 'fixum n ← "42" numeratum<i32>'
 
 - name: numeratum with hex radix
-  source: fixum n = "ff" numeratum<i32, Hex>
+  source:fixum n ← "ff" numeratum<i32, Hex>
   expect:
       ts: 'const n = parseInt("ff", 16);'
       py: 'n = int("ff", 16)'
@@ -63,10 +63,10 @@
       zig:
           - 'std.fmt.parseInt(i32, "ff", 16)'
       fab:
-          - 'fixum n = "ff" numeratum<i32, Hex>'
+          - 'fixum n ← "ff" numeratum<i32, Hex>'
 
 - name: numeratum with binary radix
-  source: fixum n = "101" numeratum<u8, Bin>
+  source:fixum n ← "101" numeratum<u8, Bin>
   expect:
       ts: 'const n = parseInt("101", 2);'
       py: 'n = int("101", 2)'
@@ -79,10 +79,10 @@
           - '"101"'
           - '2'
       fab:
-          - 'fixum n = "101" numeratum<u8, Bin>'
+          - 'fixum n ← "101" numeratum<u8, Bin>'
 
 - name: numeratum with octal radix
-  source: fixum n = "777" numeratum<i32, Oct>
+  source:fixum n ← "777" numeratum<i32, Oct>
   expect:
       ts: 'const n = parseInt("777", 8);'
       py: 'n = int("777", 8)'
@@ -95,12 +95,12 @@
           - '"777"'
           - '8'
       fab:
-          - 'fixum n = "777" numeratum<i32, Oct>'
+          - 'fixum n ← "777" numeratum<i32, Oct>'
 
 # === fractatum (to float) ===
 
 - name: basic fractatum
-  source: fixum f = "3.14" fractatum
+  source:fixum f ← "3.14" fractatum
   expect:
       ts: 'const f = parseFloat("3.14");'
       py: 'f = float("3.14")'
@@ -111,10 +111,10 @@
       zig:
           - 'std.fmt.parseFloat(f64, "3.14")'
       fab:
-          - 'fixum f = "3.14" fractatum'
+          - 'fixum f ← "3.14" fractatum'
 
 - name: fractatum with fallback
-  source: fixum f = input fractatum vel 0.0
+  source:fixum f ← input fractatum vel 0.0
   expect:
       ts: 'const f = (parseFloat(input) || 0.0);'
       rs:
@@ -125,12 +125,12 @@
       zig:
           - 'std.fmt.parseFloat(f64, input) catch 0'
       fab:
-          - 'fixum f = input fractatum vel 0.0'
+          - 'fixum f ← input fractatum vel 0.0'
 
 # === textatum (to string) ===
 
 - name: number to string
-  source: fixum s = 42 textatum
+  source:fixum s ← 42 textatum
   expect:
       ts: 'const s = String(42);'
       py: 's = str(42)'
@@ -142,10 +142,10 @@
           - 'std.fmt.allocPrint'
           - '42'
       fab:
-          - 'fixum s = 42 textatum'
+          - 'fixum s ← 42 textatum'
 
 - name: variable to string
-  source: fixum s = value textatum
+  source:fixum s ← value textatum
   expect:
       ts: 'const s = String(value);'
       py: 's = str(value)'
@@ -154,12 +154,12 @@
       cpp:
           - 'std::to_string(value)'
       fab:
-          - 'fixum s = value textatum'
+          - 'fixum s ← value textatum'
 
 # === bivalentum (to boolean) ===
 
 - name: number to boolean
-  source: fixum b = 42 bivalentum
+  source:fixum b ← 42 bivalentum
   expect:
       ts: 'const b = Boolean(42);'
       py: 'b = bool(42)'
@@ -170,26 +170,26 @@
       zig:
           - '42 != 0'
       fab:
-          - 'fixum b = 42 bivalentum'
+          - 'fixum b ← 42 bivalentum'
 
 - name: string to boolean
-  source: fixum b = "hello" bivalentum
+  source:fixum b ← "hello" bivalentum
   expect:
       ts: 'const b = Boolean("hello");'
       py: 'b = bool("hello")'
       cpp:
           - 'static_cast<bool>'
       fab:
-          - 'fixum b = "hello" bivalentum'
+          - 'fixum b ← "hello" bivalentum'
 
 # === chaining ===
 
 - name: conversion chain
-  source: fixum s = "42" numeratum textatum
+  source:fixum s ← "42" numeratum textatum
   expect:
       ts: 'const s = String(parseInt("42", 10));'
       py: 's = str(int("42"))'
       rs:
           - '.to_string()'
       fab:
-          - 'fixum s = "42" numeratum textatum'
+          - 'fixum s ← "42" numeratum textatum'

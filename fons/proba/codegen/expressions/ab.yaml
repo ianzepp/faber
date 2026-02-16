@@ -6,204 +6,204 @@
 
 # Boolean property shorthand
 - name: ab with boolean property shorthand
-  source: fixum active = ab users activus
+  source:fixum active ← ab users activus
   expect:
       ts: 'const active = users.filter(_x => _x.activus);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab with negated boolean property
-  source: fixum clean = ab users non banned
+  source:fixum clean ← ab users non banned
   expect:
       ts: 'const clean = users.filter(_x => !(_x.banned));'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab with ubi condition
-  source: fixum adults = ab users ubi aetas >= 18
+  source:fixum adults ← ab users ubi aetas ≥ 18
   expect:
       ts: 'const adults = users.filter(_x => (_x.aetas >= 18));'
   skip: [py, rs, cpp, zig, fab]
 
 # Transform chaining
 - name: ab with prima transform
-  source: fixum top2 = ab users activus, prima 2
+  source:fixum top2 ← ab users activus, prima 2
   expect:
       ts: 'const top2 = users.filter(_x => _x.activus).slice(0, 2);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab with ultima transform
-  source: fixum result = ab items non hidden, ultima 5
+  source:fixum result ← ab items non hidden, ultima 5
   expect:
       ts: 'const result = items.filter(_x => !(_x.hidden)).slice(-5);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab with summa transform
-  source: fixum total = ab prices valid, summa
+  source:fixum total ← ab prices valid, summa
   expect:
       ts: 'const total = prices.filter(_x => _x.valid).reduce((a, b) => a + b, 0);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab with multiple transforms
-  source: fixum result = ab items visible, prima 10, ultima 3
+  source:fixum result ← ab items visible, prima 10, ultima 3
   expect:
       ts: 'const result = items.filter(_x => _x.visible).slice(0, 10).slice(-3);'
   skip: [py, rs, cpp, zig, fab]
 
 # Complex sources
 - name: ab with member expression source
-  source: fixum active = ab data.users activus
+  source:fixum active ← ab data.users activus
   expect:
       ts: 'const active = data.users.filter(_x => _x.activus);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab with call expression source
-  source: fixum active = ab getUsers() activus
+  source:fixum active ← ab getUsers() activus
   expect:
       ts: 'const active = getUsers().filter(_x => _x.activus);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab with indexed source
-  source: fixum active = ab groups[0] activus
+  source:fixum active ← ab groups[0] activus
   expect:
       ts: 'const active = groups[0].filter(_x => _x.activus);'
   skip: [py, rs, cpp, zig, fab]
 
 # No filter (just transforms)
 - name: ab without filter just transforms
-  source: fixum top = ab items, prima 5
+  source:fixum top ← ab items, prima 5
   expect:
       ts: 'const top = items.slice(0, 5);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab without filter multiple transforms
-  source: fixum result = ab nums, prima 10, summa
+  source:fixum result ← ab nums, prima 10, summa
   expect:
       ts: 'const result = nums.slice(0, 10).reduce((a, b) => a + b, 0);'
   skip: [py, rs, cpp, zig, fab]
 
 # Negation variations
 - name: ab negated with transforms
-  source: fixum result = ab users non suspended, prima 20
+  source:fixum result ← ab users non suspended, prima 20
   expect:
       ts: 'const result = users.filter(_x => !(_x.suspended)).slice(0, 20);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab negated with multiple transforms
-  source: fixum result = ab items non archived, prima 50, ultima 10
+  source:fixum result ← ab items non archived, prima 50, ultima 10
   expect:
       ts: 'const result = items.filter(_x => !(_x.archived)).slice(0, 50).slice(-10);'
   skip: [py, rs, cpp, zig, fab]
 
 # Direct transforms (no filter, no comma - replaces ex DSL)
 - name: ab direct prima transform
-  source: fixum top = ab items prima 5
+  source:fixum top ← ab items prima 5
   expect:
       ts: 'const top = items.slice(0, 5);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab direct ultima transform
-  source: fixum last = ab items ultima 3
+  source:fixum last ← ab items ultima 3
   expect:
       ts: 'const last = items.slice(-3);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab direct summa transform
-  source: fixum total = ab nums summa
+  source:fixum total ← ab nums summa
   expect:
       ts: 'const total = nums.reduce((a, b) => a + b, 0);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab direct chained transforms
-  source: fixum result = ab items prima 10, ultima 3
+  source:fixum result ← ab items prima 10, ultima 3
   expect:
       ts: 'const result = items.slice(0, 10).slice(-3);'
   skip: [py, rs, cpp, zig, fab]
 
 # Sorting (ordina)
 - name: ab ordina per property ascending (default)
-  source: fixum sorted = ab items, ordina per nomen
+  source:fixum sorted ← ab items, ordina per nomen
   expect:
       ts: 'const sorted = items.toSorted((a, b) => a.nomen < b.nomen ? -1 : a.nomen > b.nomen ? 1 : 0);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab ordina per property descending
-  source: fixum sorted = ab items, ordina per pretium descendens
+  source:fixum sorted ← ab items, ordina per pretium descendens
   expect:
       ts: 'const sorted = items.toSorted((a, b) => b.pretium < a.pretium ? -1 : b.pretium > a.pretium ? 1 : 0);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab filter with ordina
-  source: fixum result = ab users activus, ordina per nomen
+  source:fixum result ← ab users activus, ordina per nomen
   expect:
       ts: 'const result = users.filter(_x => _x.activus).toSorted((a, b) => a.nomen < b.nomen ? -1 : a.nomen > b.nomen ? 1 : 0);'
   skip: [py, rs, cpp, zig, fab]
 
 # Plucking (collige)
 - name: ab collige property
-  source: fixum names = ab users, collige nomen
+  source:fixum names ← ab users, collige nomen
   expect:
       ts: 'const names = users.map(_x => _x.nomen);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab filter then collige
-  source: fixum names = ab users activus, collige nomen
+  source:fixum names ← ab users activus, collige nomen
   expect:
       ts: 'const names = users.filter(_x => _x.activus).map(_x => _x.nomen);'
   skip: [py, rs, cpp, zig, fab]
 
 # Grouping (grupa)
 - name: ab grupa per property
-  source: fixum grouped = ab items, grupa per categoria
+  source:fixum grouped ← ab items, grupa per categoria
   expect:
       ts: 'const grouped = Object.groupBy(items, _x => _x.categoria);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab filter then grupa
-  source: fixum grouped = ab products inStock, grupa per categoria
+  source:fixum grouped ← ab products inStock, grupa per categoria
   expect:
       ts: 'const grouped = Object.groupBy(products.filter(_x => _x.inStock), _x => _x.categoria);'
   skip: [py, rs, cpp, zig, fab]
 
 # Summa with property
 - name: ab summa with property
-  source: fixum total = ab orders, summa pretium
+  source:fixum total ← ab orders, summa pretium
   expect:
       ts: 'const total = orders.reduce((a, b) => a + b.pretium, 0);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab filter then summa property
-  source: fixum total = ab orders completum, summa pretium
+  source:fixum total ← ab orders completum, summa pretium
   expect:
       ts: 'const total = orders.filter(_x => _x.completum).reduce((a, b) => a + b.pretium, 0);'
   skip: [py, rs, cpp, zig, fab]
 
 # Aggregations
 - name: ab maximum
-  source: fixum highest = ab scores, maximum
+  source:fixum highest ← ab scores, maximum
   expect:
       ts: 'const highest = Math.max(...scores);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab minimum
-  source: fixum lowest = ab scores, minimum
+  source:fixum lowest ← ab scores, minimum
   expect:
       ts: 'const lowest = Math.min(...scores);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab medium (average)
-  source: fixum avg = ab scores, medium
+  source:fixum avg ← ab scores, medium
   expect:
       ts: 'const avg = ((_arr) => _arr.reduce((a, b) => a + b, 0) / _arr.length)(scores);'
   skip: [py, rs, cpp, zig, fab]
 
 - name: ab numera (count)
-  source: fixum count = ab users activus, numera
+  source:fixum count ← ab users activus, numera
   expect:
       ts: 'const count = users.filter(_x => _x.activus).length;'
   skip: [py, rs, cpp, zig, fab]
 
 # Complex pipeline
 - name: ab complex pipeline
-  source: fixum result = ab users activus, ordina per nomen, prima 10, collige email
+  source:fixum result ← ab users activus, ordina per nomen, prima 10, collige email
   expect:
       ts: 'const result = users.filter(_x => _x.activus).toSorted((a, b) => a.nomen < b.nomen ? -1 : a.nomen > b.nomen ? 1 : 0).slice(0, 10).map(_x => _x.email);'
   skip: [py, rs, cpp, zig, fab]

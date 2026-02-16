@@ -4,7 +4,7 @@
 # Faber uses § (section sign) as its placeholder syntax.
 
 - name: scriptum with single argument
-  source: 'scriptum("Hello, §", name)'
+  source:'scriptum("Hello, §", name)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -21,7 +21,7 @@
           - 'scriptum("Hello, §", name)'
 
 - name: scriptum with multiple arguments
-  source: 'scriptum("§ + § = §", a, b, c)'
+  source:'scriptum("§ + § ← §", a, b, c)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -35,10 +35,10 @@
       zig:
           - 'std.fmt.allocPrint(alloc, "{any} + {any} = {any}", .{ a, b, c }) catch @panic("OOM")'
       fab:
-          - 'scriptum("§ + § = §", a, b, c)'
+          - 'scriptum("§ + § ← §", a, b, c)'
 
 - name: scriptum with no arguments (constant string)
-  source: 'scriptum("Hello, World!")'
+  source:'scriptum("Hello, World!")'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -55,7 +55,7 @@
           - 'scriptum("Hello, World!")'
 
 - name: scriptum in variable assignment
-  source: 'fixum greeting = scriptum("Hello, §", name)'
+  source:'fixum greeting ← scriptum("Hello, §", name)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -69,10 +69,10 @@
       zig:
           - 'const greeting = std.fmt.allocPrint(alloc, "Hello, {any}", .{ name }) catch @panic("OOM")'
       fab:
-          - 'fixum greeting = scriptum("Hello, §", name)'
+          - 'fixum greeting ← scriptum("Hello, §", name)'
 
 - name: scriptum with expression argument
-  source: 'scriptum("Result: §", a + b)'
+  source:'scriptum("Result: §", a + b)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -89,7 +89,7 @@
           - 'scriptum("Result: §", a + b)'
 
 - name: scriptum with punctuation after placeholder
-  source: 'scriptum("Hello, §!", name)'
+  source:'scriptum("Hello, §!", name)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -108,7 +108,7 @@
 # Indexed placeholder tests (§0, §1, etc.)
 
 - name: scriptum with indexed placeholders in order
-  source: 'scriptum("§0 and §1", a, b)'
+  source:'scriptum("§0 and §1", a, b)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -125,7 +125,7 @@
           - 'scriptum("§0 and §1", a, b)'
 
 - name: scriptum with indexed placeholders reversed
-  source: 'scriptum("§1 before §0", a, b)'
+  source:'scriptum("§1 before §0", a, b)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -142,7 +142,7 @@
           - 'scriptum("§1 before §0", a, b)'
 
 - name: scriptum with mixed implicit and indexed placeholders
-  source: 'scriptum("§ then §1 then §0", a, b)'
+  source:'scriptum("§ then §1 then §0", a, b)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -159,7 +159,7 @@
           - 'scriptum("§ then §1 then §0", a, b)'
 
 - name: scriptum with repeated indexed placeholder
-  source: 'scriptum("§0 + §0 = §1", x, y)'
+  source:'scriptum("§0 + §0 ← §1", x, y)'
   wrap: 'cura arena fit alloc { $ }'
   expect:
       ts:
@@ -173,4 +173,4 @@
       zig:
           - 'std.fmt.allocPrint(alloc, "{any} + {any} = {any}", .{ x, x, y }) catch @panic("OOM")'
       fab:
-          - 'scriptum("§0 + §0 = §1", x, y)'
+          - 'scriptum("§0 + §0 ← §1", x, y)'

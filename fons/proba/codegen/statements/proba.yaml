@@ -18,7 +18,7 @@
 
 # Basic test case
 - name: simple proba
-  source: 'proba "should work" { adfirma verum }'
+  source:'proba "should work" { adfirma verum }'
   expect:
       ts:
           - 'test("should work", () =>'
@@ -55,7 +55,7 @@
 
 # Skipped test with reason
 - name: proba omitte with reason
-  source: 'proba omitte "blocked by #42" "skip this" { adfirma falsum }'
+  source:'proba omitte "blocked by #42" "skip this" { adfirma falsum }'
   expect:
       ts:
           - 'test.skip("blocked by #42: skip this", () =>'
@@ -73,7 +73,7 @@
 
 # Todo test with reason
 - name: proba futurum with reason
-  source: 'proba futurum "needs async support" "implement later" { adfirma verum }'
+  source:'proba futurum "needs async support" "implement later" { adfirma verum }'
   expect:
       ts:
           - 'test.todo("needs async support: implement later")'
@@ -85,7 +85,7 @@
 
 # Todo test without reason
 - name: proba futurum without test name
-  source: 'proba futurum "implement later" { adfirma verum }'
+  source:'proba futurum "implement later" { adfirma verum }'
   expect:
       ts:
           - 'test.todo("implement later: ")'
@@ -101,7 +101,7 @@
 
 # Test with special characters in name (Rust sanitizes)
 - name: proba with special characters
-  source: 'proba "handles user emails" { adfirma verum }'
+  source:'proba "handles user emails" { adfirma verum }'
   expect:
       ts:
           - 'test("handles user emails"'
@@ -114,7 +114,7 @@
 
 # Test with spaces converted to underscores (Rust)
 - name: proba name conversion
-  source: 'proba "converts to snake case" { adfirma verum }'
+  source:'proba "converts to snake case" { adfirma verum }'
   expect:
       ts:
           - 'test("converts to snake case"'
@@ -133,9 +133,9 @@
 - name: proba with setup in body
   source: |
       proba "with setup" {
-        varia counter = 0
+        varia counter ← 0
         counter += 1
-        adfirma counter == 1
+        adfirma counter ≡ 1
       }
   expect:
       ts:
@@ -150,17 +150,17 @@
           - 'counter += 1'
       fab:
           - 'proba "with setup"'
-          - 'varia counter = 0'
+          - 'varia counter ← 0'
           - 'counter += 1'
-          - 'adfirma counter == 1'
+          - 'adfirma counter ≡ 1'
 
 # Test with multiple assertion types
 - name: proba with multiple assertion types
   source: |
       proba "multiple checks" {
-        adfirma x == 5
-        adfirma y != 0
-        adfirma z >= 10
+        adfirma x ≡ 5
+        adfirma y ≠ 0
+        adfirma z ≥ 10
       }
   expect:
       ts:
@@ -173,13 +173,13 @@
           - 'fn multiple_checks()'
       fab:
           - 'proba "multiple checks"'
-          - 'adfirma x == 5'
-          - 'adfirma y != 0'
-          - 'adfirma z >= 10'
+          - 'adfirma x ≡ 5'
+          - 'adfirma y ≠ 0'
+          - 'adfirma z ≥ 10'
 
 # Test with complex assertion
 - name: proba with complex assertion
-  source: 'proba "complex" { adfirma x > 0 et x < 100 }'
+  source:'proba "complex" { adfirma x > 0 et x < 100 }'
   expect:
       ts:
           - 'test("complex", () =>'
@@ -194,7 +194,7 @@
 
 # Test with function call in assertion
 - name: proba with function call assertion
-  source: 'proba "call" { adfirma isValid(data) }'
+  source:'proba "call" { adfirma isValid(data) }'
   expect:
       ts:
           - 'test("call", () =>'
@@ -209,7 +209,7 @@
 
 # Test with member access assertion
 - name: proba with member access assertion
-  source: 'proba "member" { adfirma user.isActive }'
+  source:'proba "member" { adfirma user.isActive }'
   expect:
       ts:
           - 'test("member", () =>'
@@ -224,7 +224,7 @@
 
 # Test with negated assertion
 - name: proba with negated assertion
-  source: 'proba omitte "blocked by #42" "negated" { adfirma non isEmpty(list) }'
+  source:'proba omitte "blocked by #42" "negated" { adfirma non isEmpty(list) }'
   expect:
       ts:
           - 'test.skip("blocked by #42: negated", () =>'

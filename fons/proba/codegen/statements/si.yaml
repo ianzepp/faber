@@ -41,7 +41,7 @@
 
 # If with comparison expression
 - name: if with comparison
-  source: 'si x > 0 { scribe "positive" }'
+  source:'si x > 0 { scribe "positive" }'
   expect:
       ts:
           - 'if ((x > 0))'
@@ -130,8 +130,8 @@
 # Literal style: sin
 - name: if-elif-else with sin
   source: |
-      si x == 1 { a() }
-      sin x == 2 { b() }
+      si x ≡ 1 { a() }
+      sin x ≡ 2 { b() }
       secus { c() }
   expect:
       ts:
@@ -155,9 +155,9 @@
           - 'else if ((x == 2))'
           - 'else {'
       fab:
-          - 'si x == 1'
+          - 'si x ≡ 1'
           - 'a()'
-          - 'sin x == 2'
+          - 'sin x ≡ 2'
           - 'b()'
           - 'secus'
           - 'c()'
@@ -165,8 +165,8 @@
 # Poetic style: sin (= "but if")
 - name: if-elif-else with sin (poetic)
   source: |
-      si x == 1 { a() }
-      sin x == 2 { b() }
+      si x ≡ 1 { a() }
+      sin x ≡ 2 { b() }
       secus { c() }
   expect:
       ts:
@@ -190,9 +190,9 @@
           - 'else if ((x == 2))'
           - 'else {'
       fab:
-          - 'si x == 1'
+          - 'si x ≡ 1'
           - 'a()'
-          - 'sin x == 2'
+          - 'sin x ≡ 2'
           - 'b()'
           - 'secus'
           - 'c()'
@@ -200,8 +200,8 @@
 # Mixed styles (allowed per grammar)
 - name: mixed literal and poetic style
   source: |
-      si x == 1 { a() }
-      sin x == 2 { b() }
+      si x ≡ 1 { a() }
+      sin x ≡ 2 { b() }
       secus { c() }
   expect:
       ts:
@@ -213,9 +213,9 @@
           - 'elif (x == 2):'
           - 'else:'
       fab:
-          - 'si x == 1'
+          - 'si x ≡ 1'
           - 'a()'
-          - 'sin x == 2'
+          - 'sin x ≡ 2'
           - 'b()'
           - 'secus'
           - 'c()'
@@ -305,7 +305,7 @@
 # =============================================================================
 
 - name: si with type check (est)
-  source: 'si x est textus { scribe x }'
+  source:'si x est textus { scribe x }'
   expect:
       ts:
           - 'typeof x === "string"'
@@ -320,7 +320,7 @@
           - 'scribe x'
 
 - name: si with negated type check
-  source: 'si x non est numerus { redde }'
+  source:'si x non est numerus { redde }'
   expect:
       ts:
           - 'typeof x !== "number"'
@@ -341,11 +341,11 @@
 
 - name: very long elif chain (5 branches)
   source: |
-      si x == 1 { a() }
-      sin x == 2 { b() }
-      sin x == 3 { c() }
-      sin x == 4 { d() }
-      sin x == 5 { e() }
+      si x ≡ 1 { a() }
+      sin x ≡ 2 { b() }
+      sin x ≡ 3 { c() }
+      sin x ≡ 4 { d() }
+      sin x ≡ 5 { e() }
       secus { f() }
   expect:
       ts:
@@ -370,15 +370,15 @@
           - 'else if (x == 5)'
           - 'else {'
       fab:
-          - 'si x == 1'
+          - 'si x ≡ 1'
           - 'a()'
-          - 'sin x == 2'
+          - 'sin x ≡ 2'
           - 'b()'
-          - 'sin x == 3'
+          - 'sin x ≡ 3'
           - 'c()'
-          - 'sin x == 4'
+          - 'sin x ≡ 4'
           - 'd()'
-          - 'sin x == 5'
+          - 'sin x ≡ 5'
           - 'e()'
           - 'secus'
           - 'f()'
@@ -388,7 +388,7 @@
 # =============================================================================
 
 - name: si with complex grouped boolean
-  source: 'si (a et b) aut (c et d) { action() }'
+  source:'si (a et b) aut (c et d) { action() }'
   expect:
       ts:
           - '(a && b) || (c && d)'
@@ -400,11 +400,11 @@
           - '(a && b) || (c && d)'
           - 'action()'
       fab:
-          - 'si (a && b) || (c && d)'
+          - 'si (a et b) aut (c et d)'
           - 'action()'
 
 - name: si with logical not
-  source: 'si non condition { fallback() }'
+  source:'si non condition { fallback() }'
   expect:
       ts:
           - 'if (!condition)'
@@ -459,7 +459,7 @@
 # =============================================================================
 
 - name: si with function call condition
-  source: 'si isValid(data) { process(data) }'
+  source:'si isValid(data) { process(data) }'
   expect:
       ts:
           - 'if (isValid(data))'
@@ -475,7 +475,7 @@
           - 'process(data)'
 
 - name: si with member access condition
-  source: 'si user.isActive et user.hasPermission { allow() }'
+  source:'si user.isActive et user.hasPermission { allow() }'
   expect:
       ts:
           - 'if ((user.isActive && user.hasPermission))'
@@ -487,7 +487,7 @@
           - 'if (user.isActive && user.hasPermission)'
           - 'allow()'
       fab:
-          - 'si user.isActive && user.hasPermission'
+          - 'si user.isActive et user.hasPermission'
           - 'allow()'
 
 # =============================================================================
@@ -495,7 +495,7 @@
 # =============================================================================
 
 - name: empty if body with else
-  source: 'si condition { } secus { fallback() }'
+  source:'si condition { } secus { fallback() }'
   expect:
       ts:
           - 'if (condition)'

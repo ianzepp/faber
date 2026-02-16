@@ -22,7 +22,7 @@
 
 # Basic struct with single field
 - name: simple genus with one field
-  source: 'genus Persona { textus nomen }'
+  source:'genus Persona { textus nomen }'
   expect:
       ts:
           - 'class Persona'
@@ -84,7 +84,7 @@
 
 # Fields with default values
 - name: genus with field defaults
-  source: 'genus Config { textus nomen: "default" numerus port: 8080 }'
+  source:'genus Config { textus nomen: "default" numerus port: 8080 }'
   expect:
       ts:
           - 'nomen: string = "default"'
@@ -134,7 +134,7 @@
 
 # Static fields
 - name: genus with static field
-  source: 'genus Config { generis textus VERSION: "1.0" }'
+  source:'genus Config { generis textus VERSION: "1.0" }'
   expect:
       ts:
           - 'static VERSION: string = "1.0"'
@@ -159,7 +159,7 @@
   source: |
       genus Persona {
         textus nomen
-        functio saluta() -> textus {
+        functio saluta() → textus {
           redde nomen
         }
       }
@@ -184,7 +184,7 @@
       fab:
           - 'genus Persona'
           - 'textus nomen'
-          - 'functio saluta() -> textus'
+          - 'functio saluta() → textus'
           - 'redde nomen'
 
 # =============================================================================
@@ -198,7 +198,7 @@
         numerus aetas
         functio creo() {
           si aetas < 0 {
-            aetas = 0
+            aetas ← 0
           }
         }
       }
@@ -228,7 +228,7 @@
           - 'numerus aetas'
           - 'functio creo()'
           - 'si aetas < 0'
-          - 'aetas = 0'
+          - 'aetas ← 0'
 
 # =============================================================================
 # Type Parameters (Generics)
@@ -236,7 +236,7 @@
 
 # Generic genus with type parameter
 - name: genus with type parameter
-  source: 'genus Box<T> { T value }'
+  source:'genus Box<T> { T value }'
   expect:
       ts:
           - 'class Box<T>'
@@ -262,7 +262,7 @@
 
 # Genus implementing interface
 - name: genus implementing pactum
-  source: 'genus Reader implet Legibilis { functio lege() -> textus { redde "" } }'
+  source:'genus Reader implet Legibilis { functio lege() → textus { redde "" } }'
   expect:
       ts:
           - 'class Reader implements Legibilis'
@@ -276,7 +276,7 @@
           - 'const Reader = struct'
       fab:
           - 'genus Reader implet Legibilis'
-          - 'functio lege() -> textus'
+          - 'functio lege() → textus'
           - 'redde ""'
 
 # =============================================================================
@@ -325,14 +325,14 @@
   source: |
       genus Calculator {
         numerus value
-        functio add(numerus n) -> numerus {
+        functio add(numerus n) → numerus {
           redde value + n
         }
-        functio subtract(numerus n) -> numerus {
+        functio subtract(numerus n) → numerus {
           redde value - n
         }
         functio reset() {
-          value = 0
+          value ← 0
         }
       }
   expect:
@@ -349,12 +349,12 @@
       fab:
           - 'genus Calculator'
           - 'numerus value'
-          - 'functio add(numerus n) -> numerus'
+          - 'functio add(numerus n) → numerus'
           - 'redde value + n'
-          - 'functio subtract(numerus n) -> numerus'
+          - 'functio subtract(numerus n) → numerus'
           - 'redde value - n'
           - 'functio reset()'
-          - 'value = 0'
+          - 'value ← 0'
 
 # Genus with static method (generis)
 # WHY: generis modifier should produce static methods, but codegen may not support it yet
@@ -369,7 +369,7 @@
   source: |
       genus Factory {
         textus nomen
-        generis functio create() -> textus {
+        generis functio create() → textus {
           redde "created"
         }
       }
@@ -383,7 +383,7 @@
       fab:
           - 'genus Factory'
           - 'textus nomen'
-          - 'generis functio create() -> textus'
+          - 'generis functio create() → textus'
           - 'redde "created"'
 
 # Genus with nested method calls on ego
@@ -392,7 +392,7 @@
       genus Node {
         textus data
         Node? parent
-        functio rootData() -> textus {
+        functio rootData() → textus {
           redde ego.parent.data
         }
       }
@@ -411,7 +411,7 @@
           - 'genus Node'
           - 'textus data'
           - 'Node? parent'
-          - 'functio rootData() -> textus'
+          - 'functio rootData() → textus'
           - 'redde ego.parent.data'
 
 # Genus with computed method
@@ -420,7 +420,7 @@
       genus Rectangle {
         numerus width
         numerus height
-        functio area() -> numerus {
+        functio area() → numerus {
           redde width * height
         }
       }
@@ -441,12 +441,12 @@
           - 'genus Rectangle'
           - 'numerus width'
           - 'numerus height'
-          - 'functio area() -> numerus'
+          - 'functio area() → numerus'
           - 'redde width * height'
 
 # Genus implementing multiple interfaces
 - name: genus implementing multiple interfaces
-  source: 'genus Service implet Readable, Writable { functio read() -> textus { redde "" } functio write(textus data) { } }'
+  source:'genus Service implet Readable, Writable { functio read() → textus { redde "" } functio write(textus data) { } }'
   expect:
       ts:
           - 'class Service implements Readable, Writable'
@@ -454,12 +454,12 @@
           - 'class Service(Readable, Writable):'
       fab:
           - 'genus Service implet Readable, Writable'
-          - 'functio read() -> textus'
+          - 'functio read() → textus'
           - 'functio write(textus data)'
 
 # Empty genus (no fields or methods)
 - name: empty genus
-  source: 'genus Empty { }'
+  source:'genus Empty { }'
   expect:
       ts:
           - 'class Empty'
@@ -470,7 +470,7 @@
 
 # Genus with generic type parameter
 - name: genus with generic type parameter
-  source: 'genus Container<T> { T value }'
+  source:'genus Container<T> { T value }'
   expect:
       ts:
           - 'class Container<T>'
@@ -488,7 +488,7 @@
 
 # Genus extending another genus
 - name: genus with sub inheritance
-  source: 'genus Employee sub Persona { textus title }'
+  source:'genus Employee sub Persona { textus title }'
   expect:
       ts:
           - 'class Employee extends Persona'
@@ -499,7 +499,7 @@
 
 # Genus with sub and implet
 - name: genus with sub and implet
-  source: 'genus Manager sub Employee implet Leader { functio lead() { } }'
+  source:'genus Manager sub Employee implet Leader { functio lead() { } }'
   expect:
       ts:
           - 'class Manager extends Employee implements Leader'
@@ -518,7 +518,7 @@
       @ abstractum
       genus Animal {
           @ abstracta
-          functio speak() -> textus
+          functio speak() → textus
       }
   expect:
       ts:
@@ -528,13 +528,13 @@
           - '@ abstractum'
           - 'genus Animal'
           - '@ abstracta'
-          - 'functio speak() -> textus'
+          - 'functio speak() → textus'
 
 # Concrete genus extending abstract
 - name: genus extending abstract class
   source: |
       genus Dog sub Animal {
-        functio speak() -> textus {
+        functio speak() → textus {
           redde "woof"
         }
       }
@@ -545,7 +545,7 @@
           - 'return "woof"'
       fab:
           - 'genus Dog sub Animal'
-          - 'functio speak() -> textus'
+          - 'functio speak() → textus'
           - 'redde "woof"'
 
 # =============================================================================
@@ -593,7 +593,7 @@
 - name: abstractus genus declaration
   source: |
       abstractus genus Shape {
-          functio area() -> fractus
+          functio area() → fractus
       }
   expect:
       ts:
@@ -601,7 +601,7 @@
           - 'area(): number'
       fab:
           - 'abstractus genus Shape'
-          - 'functio area() -> fractus'
+          - 'functio area() → fractus'
 
 - name: abstractus genus with concrete method
   source: |
@@ -625,7 +625,7 @@
   source: |
       abstractus genus Entity {
           textus id
-          functio validate() -> bivalens
+          functio validate() → bivalens
       }
   expect:
       ts:
@@ -635,5 +635,5 @@
       fab:
           - 'abstractus genus Entity'
           - 'textus id'
-          - 'functio validate() -> bivalens'
+          - 'functio validate() → bivalens'
 

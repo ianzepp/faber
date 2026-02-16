@@ -10,7 +10,7 @@
 
 # Simple break statement
 - name: simple break
-  source: 'rumpe'
+  source:'rumpe'
   expect:
       ts:
           - 'break;'

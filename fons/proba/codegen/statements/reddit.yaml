@@ -18,7 +18,7 @@
 
 - name: si with reddit - simple
   source: |
-      functio check(numerus x) -> bivalens {
+      functio check(numerus x) → bivalens {
           si x < 0 reddit falsum
           redde verum
       }
@@ -50,7 +50,7 @@
 
 - name: si with reddit - expression
   source: |
-      functio double(numerus x) -> numerus {
+      functio double(numerus x) → numerus {
           si x > 100 reddit x * 2
           redde x
       }
@@ -70,10 +70,10 @@
 
 - name: si chain with reddit
   source: |
-      functio grade(numerus score) -> textus {
-          si score >= 90 reddit "A"
-          si score >= 80 reddit "B"
-          si score >= 70 reddit "C"
+      functio grade(numerus score) → textus {
+          si score ≥ 90 reddit "A"
+          si score ≥ 80 reddit "B"
+          si score ≥ 70 reddit "C"
           redde "F"
       }
   expect:
@@ -94,11 +94,11 @@
           - 'return "C"'
           - 'return "F"'
       fab:
-          - 'si score >= 90'
+          - 'si score ≥ 90'
           - 'redde "A"'
-          - 'si score >= 80'
+          - 'si score ≥ 80'
           - 'redde "B"'
-          - 'si score >= 70'
+          - 'si score ≥ 70'
           - 'redde "C"'
           - 'redde "F"'
 
@@ -108,7 +108,7 @@
 
 - name: elige with reddit cases
   source: |
-      functio getType(textus name) -> numerus {
+      functio getType(textus name) → numerus {
           elige name {
               casu "textus" reddit 1
               casu "numerus" reddit 2
@@ -141,7 +141,7 @@
 
 - name: elige with mixed reddit and blocks
   source: |
-      functio process(numerus code) -> textus {
+      functio process(numerus code) → textus {
           elige code {
               casu 1 reddit "one"
               casu 2 {
@@ -179,9 +179,9 @@
 
 - name: ex pro with reddit - find first
   source: |
-      functio findFirst(lista<numerus> items, numerus target) -> numerus? {
+      functio findFirst(lista<numerus> items, numerus target) → numerus? {
           ex items pro item {
-              si item == target reddit item
+              si item ≡ target reddit item
           }
           redde nihil
       }
@@ -198,15 +198,15 @@
           - 'return None'
       fab:
           - 'ex items pro item'
-          - 'si item == target'
+          - 'si item ≡ target'
           - 'redde item'
           - 'redde nihil'
 
 - name: de pro with reddit - has key
   source: |
-      functio hasKey(tabula<textus, numerus> obj, textus key) -> bivalens {
+      functio hasKey(tabula<textus, numerus> obj, textus key) → bivalens {
           de obj pro k {
-              si k == key reddit verum
+              si k ≡ key reddit verum
           }
           redde falsum
       }
@@ -223,7 +223,7 @@
           - 'return False'
       fab:
           - 'de obj pro k'
-          - 'si k == key'
+          - 'si k ≡ key'
           - 'redde verum'
           - 'redde falsum'
 
@@ -237,7 +237,7 @@
           Some(numerus)
           None
       }
-      functio unwrap(Option opt) -> numerus {
+      functio unwrap(Option opt) → numerus {
           discerne opt {
               casu Some pro value reddit value
               casu None ergo iace "Cannot unwrap None"
@@ -262,9 +262,9 @@
 
 - name: sin secus chain with reddit
   source: |
-      functio classify(numerus x) -> textus {
+      functio classify(numerus x) → textus {
           si x < 0 reddit "negative"
-          sin x == 0 reddit "zero"
+          sin x ≡ 0 reddit "zero"
           secus reddit "positive"
       }
   expect:
@@ -285,7 +285,7 @@
       fab:
           - 'si x < 0'
           - 'redde "negative"'
-          - 'sin x == 0'
+          - 'sin x ≡ 0'
           - 'redde "zero"'
           - 'secus'
           - 'redde "positive"'
@@ -295,7 +295,7 @@
 # =============================================================================
 
 - name: incipit reddit exit code
-  source: 'incipit reddit 0'
+  source:'incipit reddit 0'
   expect:
       ts:
           - 'return 0'
@@ -317,8 +317,8 @@
 
 - name: reddit nihil for nullable return
   source: |
-      functio divide(numerus a, numerus b) -> numerus? {
-          si b == 0 reddit nihil
+      functio divide(numerus a, numerus b) → numerus? {
+          si b ≡ 0 reddit nihil
           redde a / b
       }
   expect:
@@ -331,6 +331,6 @@
           - 'return None'
           - 'return (a / b)'
       fab:
-          - 'si b == 0'
+          - 'si b ≡ 0'
           - 'redde nihil'
           - 'redde a / b'

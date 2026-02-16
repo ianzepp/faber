@@ -44,7 +44,7 @@
 
 # Function with explicit return type annotation
 - name: function with return type
-  source: 'functio greet() -> textus { redde "hello" }'
+  source:'functio greet() → textus { redde "hello" }'
   expect:
       ts:
           - 'function greet(): string'
@@ -62,26 +62,26 @@
           - 'fn greet() []const u8'
           - 'return "hello";'
       fab:
-          - 'functio greet() -> textus'
+          - 'functio greet() → textus'
           - 'redde "hello"'
 
 # Post-function modifiers
 - name: function with no post modifiers
-  source: 'functio plain() -> numerus { redde 1 }'
+  source:'functio plain() → numerus { redde 1 }'
   expect:
       ts:
           - 'function plain(): number'
           - 'return 1;'
 
 - name: function with curata modifier
-  source: 'functio manage(textus data) curata alloc -> textus { redde data }'
+  source:'functio manage(textus data) curata alloc → textus { redde data }'
   expect:
       ts:
           - 'function manage(data: string): string'
           - 'return data;'
 
 - name: function with multiple post modifiers
-  source: 'functio process(textus data) curata alloc errata err immutata iacit -> textus { redde data }'
+  source:'functio process(textus data) curata alloc errata err immutata iacit → textus { redde data }'
   expect:
       ts:
           - 'function process(data: string): string'
@@ -89,8 +89,8 @@
 
 - name: function with errata modifier
   source: |
-      functio divide(numerus a, numerus b) errata err -> numerus {
-        si b == 0 { iace "division by zero" }
+      functio divide(numerus a, numerus b) errata err → numerus {
+        si b ≡ 0 { iace "division by zero" }
         redde a / b
       }
   expect:
@@ -118,8 +118,8 @@
 - name: function with exitus identifier
   source: |
       functio main() exitus code {
-        varia failed = falsum
-        si failed { code = 1 }
+        varia failed ← falsum
+        si failed { code ← 1 }
         scribe "done"
       }
   expect:
@@ -134,7 +134,7 @@
 
 # Empty function body - Python requires pass, others allow {}
 - name: empty function body
-  source: 'functio noop() {}'
+  source:'functio noop() {}'
   expect:
       ts: 'function noop() {}'
       py:
@@ -155,7 +155,7 @@
 
 # Function with typed parameter (type-first syntax)
 - name: typed parameter
-  source: 'functio greet(textus name) { redde name }'
+  source:'functio greet(textus name) { redde name }'
   expect:
       ts:
           - 'function greet(name: string)'
@@ -173,7 +173,7 @@
 
 # Function with multiple typed parameters
 - name: multiple typed parameters
-  source: 'functio add(numerus a, numerus b) -> numerus { redde a + b }'
+  source:'functio add(numerus a, numerus b) → numerus { redde a + b }'
   expect:
       ts:
           - 'function add(a: number, b: number): number'
@@ -186,12 +186,12 @@
       zig:
           - 'fn add(a: i64, b: i64) i64'
       fab:
-          - 'functio add(numerus a, numerus b) -> numerus'
+          - 'functio add(numerus a, numerus b) → numerus'
           - 'redde a + b'
 
 # Function with user-defined array type parameter (Point[] syntax)
 - name: user-defined array type parameter
-  source: 'functio process(Point[] points) { scribe points }'
+  source:'functio process(Point[] points) { scribe points }'
   expect:
       ts:
           - 'function process(points: Array<Point>)'
@@ -209,7 +209,7 @@
 
 # Nested array type (matrix)
 - name: nested array type parameter
-  source: 'functio process(textus[][] matrix) { scribe matrix }'
+  source:'functio process(textus[][] matrix) { scribe matrix }'
   expect:
       ts:
           - 'function process(matrix: Array<Array<string>>)'
@@ -227,7 +227,7 @@
 
 # Array type with de preposition (borrowed)
 - name: array type with de preposition
-  source: 'functio read(de Point[] points) { scribe points }'
+  source:'functio read(de Point[] points) { scribe points }'
   expect:
       ts:
           - 'function read(points: Array<Point>)'
@@ -245,7 +245,7 @@
 
 # Array type with in preposition (mutable borrow)
 - name: array type with in preposition
-  source: 'functio modify(in numerus[] items) { scribe items }'
+  source:'functio modify(in numerus[] items) { scribe items }'
   expect:
       ts:
           - 'function modify(items: Array<number>)'
@@ -263,7 +263,7 @@
 
 # Array type with ut alias
 - name: array type with ut alias
-  source: 'functio process(Point[] points ut p) { scribe p }'
+  source:'functio process(Point[] points ut p) { scribe p }'
   expect:
       ts:
           - 'function process(p: Array<Point>)'
@@ -282,7 +282,7 @@
 # Array type with vel default
 - name: array type with vel default
   skip: [rs, zig] # default params unsupported
-  source: 'functio process(textus[] items vel []) { scribe items }'
+  source:'functio process(textus[] items vel []) { scribe items }'
   expect:
       ts:
           - 'function process(items: Array<string> = [])'
@@ -296,7 +296,7 @@
 
 # Generic type with array type parameter (copia<textus[]>)
 - name: generic type with array type parameter
-  source: 'functio process(copia<textus[]> items) { scribe items }'
+  source:'functio process(copia<textus[]> items) { scribe items }'
   expect:
       ts:
           - 'function process(items: Set<Array<string>>)'
@@ -314,7 +314,7 @@
 
 # Map type with array value (tabula<textus, numerus[]>)
 - name: map type with array value
-  source: 'functio process(tabula<textus, numerus[]> map) { scribe map }'
+  source:'functio process(tabula<textus, numerus[]> map) { scribe map }'
   expect:
       ts:
           - 'function process(map: Map<string, Array<number>>)'
@@ -332,7 +332,7 @@
 
 # Array of generic type (copia<textus>[])
 - name: array of generic type
-  source: 'functio process(copia<textus>[] items) { scribe items }'
+  source:'functio process(copia<textus>[] items) { scribe items }'
   expect:
       ts:
           - 'function process(items: Array<Set<string>>)'
@@ -375,7 +375,7 @@
 # fiet = async + return type (wraps in Promise/Awaitable)
 - name: async function with fiet return type
   skip: [cpp, zig] # async unsupported
-  source: 'functio fetch() fiet textus { redde "data" }'
+  source:'functio fetch() fiet textus { redde "data" }'
   expect:
       ts:
           - 'async function fetch(): Promise<string>'
@@ -384,7 +384,7 @@
       rs:
           - 'async fn fetch() -> String'
       fab:
-          - 'functio fetch() -> textus'
+          - 'functio fetch() → textus'
           - 'redde "data"'
 
 # =============================================================================
@@ -394,27 +394,27 @@
 # fiunt makes a function a generator (wraps return in Generator/Iterator)
 - name: generator function with fiunt
   skip: [cpp, rs, zig] # generators unsupported
-  source: 'functio range() fiunt numerus { redde 1 }'
+  source:'functio range() fiunt numerus { redde 1 }'
   expect:
       ts:
           - 'function* range(): Generator<number>'
       py:
           - 'def range() -> Iterator[int]:'
       fab:
-          - 'functio range() cursor -> numerus'
+          - 'functio range() cursor → numerus'
           - 'redde 1'
 
 # fient = async generator (wraps in AsyncGenerator/AsyncIterator)
 - name: async generator function with fient
   skip: [cpp, rs, zig] # async generators unsupported
-  source: 'functio stream() fient textus { redde "chunk" }'
+  source:'functio stream() fient textus { redde "chunk" }'
   expect:
       ts:
           - 'async function* stream(): AsyncGenerator<string>'
       py:
           - 'async def stream() -> AsyncIterator[str]:'
       fab:
-          - 'functio stream() futura cursor -> textus'
+          - 'functio stream() futura cursor → textus'
           - 'redde "chunk"'
 
 # =============================================================================
@@ -424,7 +424,7 @@
 # cede in generator context becomes yield respond.item() (Responsum protocol)
 - name: cede as yield in generator
   skip: [cpp, rs, zig] # generators unsupported
-  source: 'functio range() fiunt numerus { cede 1 }'
+  source:'functio range() fiunt numerus { cede 1 }'
   expect:
       ts:
           - 'yield respond.item(1)'
@@ -432,13 +432,13 @@
       py:
           - 'yield 1'
       fab:
-          - 'cursor functio range() -> numerus'
+          - 'cursor functio range() → numerus'
           - 'cede 1'
 
 # cede in async context becomes await
 - name: cede as await in async function
   skip: [cpp, zig] # async unsupported
-  source: 'functio fetch() fiet textus { cede getData() }'
+  source:'functio fetch() fiet textus { cede getData() }'
   expect:
       ts:
           - 'await getData()'
@@ -447,7 +447,7 @@
       rs:
           - 'getData().await;'
       fab:
-          - 'functio fetch() -> textus'
+          - 'functio fetch() → textus'
           - 'cede getData()'
 
 # =============================================================================
@@ -456,7 +456,7 @@
 
 # ceteri collects variadic arguments
 - name: rest parameter with ceteri
-  source: 'functio sum(ceteri numerus[] nums) { redde 0 }'
+  source:'functio sum(ceteri numerus[] nums) { redde 0 }'
   expect:
       ts:
           - '...nums: Array<number>'
@@ -483,7 +483,7 @@
 
 # de = borrowed, read-only parameter
 - name: de preposition (read-only borrow)
-  source: 'functio process(de textus source) { redde source }'
+  source:'functio process(de textus source) { redde source }'
   expect:
       ts:
           - 'function process(source: string)'
@@ -501,7 +501,7 @@
 
 # in = mutable borrow parameter
 - name: in preposition (mutable borrow)
-  source: 'functio mutate(in textus target) { redde target }'
+  source:'functio mutate(in textus target) { redde target }'
   expect:
       ts:
           - 'function mutate(target: string)'
@@ -519,7 +519,7 @@
 
 # Mixed: regular and prepositional parameters
 - name: mixed regular and prepositional parameters
-  source: 'functio update(de textus source, in textus target) { redde target }'
+  source:'functio update(de textus source, in textus target) { redde target }'
   expect:
       ts:
           - 'function update(source: string, target: string)'
@@ -546,7 +546,7 @@
 # WHY: Tests si (optional) + vel (default) syntax
 - name: function with default parameter
   skip: [rs, zig] # default params unsupported
-  source: 'functio greet(si textus name vel "World") -> textus { redde name }'
+  source:'functio greet(si textus name vel "World") → textus { redde name }'
   expect:
       ts:
           - 'function greet(name: string = "World")'
@@ -565,8 +565,8 @@
 # WHY: Tests self-referential function calls
 - name: recursive function
   source: |
-      functio factorial(numerus n) -> numerus {
-        si n <= 1 {
+      functio factorial(numerus n) → numerus {
+        si n ≤ 1 {
           redde 1
         }
         redde n * factorial(n - 1)
@@ -598,15 +598,15 @@
           - 'return 1'
           - 'return (n * factorial((n - 1)))'
       fab:
-          - 'functio factorial(numerus n) -> numerus'
-          - 'si n <= 1'
+          - 'functio factorial(numerus n) → numerus'
+          - 'si n ≤ 1'
           - 'redde 1'
           - 'redde n * factorial(n - 1)'
 
 # Function with many parameters (6+)
 # WHY: Stress test for parameter lists
 - name: function with many parameters
-  source: 'functio many(a, b, c, d, e, f) { redde a }'
+  source:'functio many(a, b, c, d, e, f) { redde a }'
   expect:
       ts:
           - 'function many(a, b, c, d, e, f)'
@@ -630,7 +630,7 @@
 # Generic function with type parameter
 # WHY: Tests prae typus (type parameter) syntax
 - name: generic function
-  source: 'functio identity(prae typus T, T value) -> T { redde value }'
+  source:'functio identity(prae typus T, T value) → T { redde value }'
   expect:
       ts:
           - 'function identity<T>(value: T): T'
@@ -649,13 +649,13 @@
           - 'fn identity(comptime T: type, value: T) T'
           - 'return value'
       fab:
-          - 'functio identity(prae typus T, T value) -> T'
+          - 'functio identity(prae typus T, T value) → T'
           - 'redde value'
 
 # Function returning lambda
 # WHY: Tests lambda expression as return value
 - name: function returning lambda
-  source: 'functio makeAdder(numerus x) { redde pro y: x + y }'
+  source:'functio makeAdder(numerus x) { redde pro y: x + y }'
   expect:
       ts:
           - 'function makeAdder(x: number)'
@@ -680,8 +680,8 @@
 # WHY: Tests function declarations inside function bodies
 - name: nested function
   source: |
-      functio outer(numerus x) -> numerus {
-        functio inner(numerus y) -> numerus {
+      functio outer(numerus x) → numerus {
+        functio inner(numerus y) → numerus {
           redde y * 2
         }
         redde inner(x)
@@ -713,15 +713,15 @@
           - 'return (y * 2)'
           - 'return inner(x)'
       fab:
-          - 'functio outer(numerus x) -> numerus'
-          - 'functio inner(numerus y) -> numerus'
+          - 'functio outer(numerus x) → numerus'
+          - 'functio inner(numerus y) → numerus'
           - 'redde y * 2'
           - 'redde inner(x)'
 
 # Function with optional (nullable) parameter
 # WHY: Tests nullable type syntax (textus?)
 - name: function with optional parameter
-  source: 'functio process(textus? input) { redde input }'
+  source:'functio process(textus? input) { redde input }'
   expect:
       ts:
           - 'function process(input: string | null)'
@@ -745,7 +745,7 @@
 # Function with both regular and rest params
 # WHY: Tests mixed regular and variadic parameters
 - name: function with regular and rest params
-  source: 'functio log(textus prefix, ceteri args) { scribe prefix }'
+  source:'functio log(textus prefix, ceteri args) { scribe prefix }'
   expect:
       ts:
           - 'function log(prefix: string, ...args)'
@@ -774,7 +774,7 @@
 
 # Basic dual naming - internal name used in body
 - name: dual parameter naming with ut
-  source: 'functio greet(textus location ut loc) { scribe loc }'
+  source:'functio greet(textus location ut loc) { scribe loc }'
   expect:
       ts:
           - 'function greet(loc: string)'
@@ -797,7 +797,7 @@
 
 # Dual naming with preposition
 - name: dual parameter naming with preposition
-  source: 'functio process(de textus source ut src) { redde src }'
+  source:'functio process(de textus source ut src) { redde src }'
   expect:
       ts:
           - 'function process(src: string)'
@@ -820,7 +820,7 @@
 
 # Mixed aliased and non-aliased params
 - name: mixed aliased and non-aliased parameters
-  source: 'functio copy(textus from ut source, textus to) { scribe source }'
+  source:'functio copy(textus from ut source, textus to) { scribe source }'
   expect:
       ts:
           - 'function copy(source: string, to: string)'
@@ -847,7 +847,7 @@
 # Basic default value - string
 - name: default parameter value string
   skip: [rs, zig] # default params unsupported
-  source: 'functio greet(textus name vel "World") { scribe name }'
+  source:'functio greet(textus name vel "World") { scribe name }'
   expect:
       ts:
           - 'function greet(name: string = "World")'
@@ -864,7 +864,7 @@
 # Default value - numeric
 - name: default parameter value numeric
   skip: [rs, zig] # default params unsupported
-  source: 'functio count(numerus n vel 10) -> numerus { redde n }'
+  source:'functio count(numerus n vel 10) → numerus { redde n }'
   expect:
       ts:
           - 'function count(n: number = 10): number'
@@ -875,13 +875,13 @@
       cpp:
           - 'int64_t count(int64_t n = 10)'
       fab:
-          - 'functio count(numerus n vel 10) -> numerus'
+          - 'functio count(numerus n vel 10) → numerus'
           - 'redde n'
 
 # Default with dual naming
 - name: default with dual naming
   skip: [rs, zig] # default params unsupported
-  source: 'functio greet(textus location ut loc vel "Roma") { scribe loc }'
+  source:'functio greet(textus location ut loc vel "Roma") { scribe loc }'
   expect:
       ts:
           - 'function greet(loc: string = "Roma")'
@@ -898,7 +898,7 @@
 # Mixed default and non-default params
 - name: mixed default and non-default parameters
   skip: [rs, zig] # default params unsupported
-  source: 'functio greet(textus greeting, textus name vel "World") { scribe greeting }'
+  source:'functio greet(textus greeting, textus name vel "World") { scribe greeting }'
   expect:
       ts:
           - 'function greet(greeting: string, name: string = "World")'
@@ -919,7 +919,7 @@
 
 # Optional parameter without default (becomes nullable)
 - name: optional parameter without default
-  source: 'functio greet(textus name, si textus title) { scribe name }'
+  source:'functio greet(textus name, si textus title) { scribe name }'
   expect:
       ts:
           - 'function greet(name: string, title?: string)'
@@ -938,7 +938,7 @@
 # Optional parameter with default value
 - name: optional parameter with default value
   skip: [rs, zig] # default params unsupported
-  source: 'functio greet(si textus name vel "World") { scribe name }'
+  source:'functio greet(si textus name vel "World") { scribe name }'
   expect:
       ts:
           - 'function greet(name: string = "World")'
@@ -953,7 +953,7 @@
 # Optional numeric parameter with default
 - name: optional numeric parameter with default
   skip: [rs, zig] # default params unsupported
-  source: 'functio paginate(si numerus page vel 1, si numerus limit vel 10) -> textus { redde "ok" }'
+  source:'functio paginate(si numerus page vel 1, si numerus limit vel 10) → textus { redde "ok" }'
   expect:
       ts:
           - 'function paginate(page: number = 1, limit: number = 10): string'
@@ -962,13 +962,13 @@
       cpp:
           - 'std::string paginate(int64_t page = 1, int64_t limit = 10)'
       fab:
-          - 'functio paginate(si numerus page vel 1, si numerus limit vel 10) -> textus'
+          - 'functio paginate(si numerus page vel 1, si numerus limit vel 10) → textus'
           - 'redde "ok"'
 
 # Mixed required and optional parameters
 - name: mixed required and optional parameters
   skip: [rs, zig] # default params unsupported
-  source: 'functio create(textus name, si numerus age, si bivalens active vel verum) { scribe name }'
+  source:'functio create(textus name, si numerus age, si bivalens active vel verum) { scribe name }'
   expect:
       ts:
           - 'function create(name: string, age?: number, active: boolean = true)'
@@ -982,7 +982,7 @@
 
 # Preposition with optional (de si - borrowed optional)
 - name: preposition with optional parameter
-  source: 'functio analyze(textus source, de si numerus depth) { scribe source }'
+  source:'functio analyze(textus source, de si numerus depth) { scribe source }'
   expect:
       ts:
           - 'function analyze(source: string, depth?: number)'
@@ -1014,42 +1014,42 @@
   targets: [ts, fab]
   source: |
       @ externa
-      functio _readFileSync(textus path) -> textus
+      functio _readFileSync(textus path) → textus
   expect:
       ts:
           - 'declare function _readFileSync(path: string): string;'
       fab:
           - '@ externa'
-          - 'functio _readFileSync(textus path) -> textus'
+          - 'functio _readFileSync(textus path) → textus'
 
 # External function with boolean return
 - name: external function with boolean return
   targets: [ts, fab]
   source: |
       @ externa
-      functio _existsSync(textus path) -> bivalens
+      functio _existsSync(textus path) → bivalens
   expect:
       ts:
           - 'declare function _existsSync(path: string): boolean;'
       fab:
           - '@ externa'
-          - 'functio _existsSync(textus path) -> bivalens'
+          - 'functio _existsSync(textus path) → bivalens'
 
 # Multiple external function declarations
 - name: multiple external function declarations
   targets: [ts, fab]
   source: |
       @ externa
-      functio _dirname(textus path) -> textus
+      functio _dirname(textus path) → textus
 
       @ externa
-      functio _resolve(textus base, textus relative) -> textus
+      functio _resolve(textus base, textus relative) → textus
   expect:
       ts:
           - 'declare function _dirname(path: string): string;'
           - 'declare function _resolve(base: string, relative: string): string;'
       fab:
           - '@ externa'
-          - 'functio _dirname(textus path) -> textus'
+          - 'functio _dirname(textus path) → textus'
           - '@ externa'
-          - 'functio _resolve(textus base, textus relative) -> textus'
+          - 'functio _resolve(textus base, textus relative) → textus'

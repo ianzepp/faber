@@ -60,7 +60,7 @@
 - name: incipiet with await
   source: |
       incipiet {
-        fixum data = cede fetch()
+        fixum data ← cede fetch()
         scribe data
       }
   expect:
@@ -84,6 +84,6 @@
           - 'fetch()'
       fab:
           - 'incipiet {'
-          - 'fixum data = cede fetch()'
+          - 'fixum data ← cede fetch()'
           - 'scribe data'
   skip: [zig]

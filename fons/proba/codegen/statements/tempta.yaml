@@ -60,7 +60,7 @@
 - name: tempta with multiple statements
   source: |
       tempta {
-        varia x = compute()
+        varia x ← compute()
         process(x)
         redde x
       }
@@ -102,7 +102,7 @@
           - 'return x;'
       fab:
           - 'tempta {'
-          - 'varia x = compute()'
+          - 'varia x ← compute()'
           - 'process(x)'
           - 'redde x'
           - 'cape e {'
@@ -206,7 +206,7 @@
 - name: tempta with multiple statements in all blocks
   source: |
       tempta {
-        varia fd = open()
+        varia fd ← open()
         write(fd, data)
       }
       cape e {
@@ -253,7 +253,7 @@
           - 'write(fd, data);'
       fab:
           - 'tempta {'
-          - 'varia fd = open()'
+          - 'varia fd ← open()'
           - 'write(fd, data)'
           - 'cape e {'
           - 'scribe "Failed"'
@@ -471,7 +471,7 @@
   source: |
       dum verum {
         tempta {
-          result = tryConnect()
+          result ← tryConnect()
           rumpe
         }
         cape e {
@@ -513,7 +513,7 @@
       fab:
           - 'dum verum {'
           - 'tempta {'
-          - 'result = tryConnect()'
+          - 'result ← tryConnect()'
           - 'rumpe'
           - 'cape e {'
           - 'scribe "Retrying..."'
@@ -522,8 +522,8 @@
 - name: tempta with multiple statements in each block
   source: |
       tempta {
-        varia conn = openConnection()
-        varia data = fetchData(conn)
+        varia conn ← openConnection()
+        varia data ← fetchData(conn)
         process(data)
       }
       cape err {
@@ -585,8 +585,8 @@
           - 'process(data);'
       fab:
           - 'tempta {'
-          - 'varia conn = openConnection()'
-          - 'varia data = fetchData(conn)'
+          - 'varia conn ← openConnection()'
+          - 'varia data ← fetchData(conn)'
           - 'process(data)'
           - 'cape err {'
           - 'logError(err)'
