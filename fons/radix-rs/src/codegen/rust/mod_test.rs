@@ -1058,6 +1058,7 @@ fn type_to_rust_covers_composite_and_special_cases() {
     let numerus = types.primitive(Primitive::Numerus);
     let textus = types.primitive(Primitive::Textus);
     let fractus = types.primitive(Primitive::Fractus);
+    let regex = types.primitive(Primitive::Regex);
 
     let struct_ty = types.intern(Type::Struct(DefId(100)));
     let enum_ty = types.intern(Type::Enum(DefId(101)));
@@ -1129,6 +1130,7 @@ fn type_to_rust_covers_composite_and_special_cases() {
     let codegen = super::RustCodegen::new(&program, &interner);
 
     assert_eq!(super::types::type_to_rust(&codegen, numerus, &types), "i64");
+    assert_eq!(super::types::type_to_rust(&codegen, regex, &types), "regex::Regex");
     assert_eq!(super::types::type_to_rust(&codegen, array_ty, &types), "Vec<i64>");
     assert_eq!(super::types::type_to_rust(&codegen, map_ty, &types), "HashMap<String, i64>");
     assert_eq!(super::types::type_to_rust(&codegen, set_ty, &types), "HashSet<f64>");

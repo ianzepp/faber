@@ -414,6 +414,7 @@ pub enum HirLiteral {
     Int(i64),
     Float(f64),
     String(Symbol),
+    Regex(Symbol, Option<Symbol>),
     Bool(bool),
     Nil,
 }

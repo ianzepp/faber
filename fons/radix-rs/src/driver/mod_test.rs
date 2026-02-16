@@ -121,13 +121,17 @@ fn unsupported_expression_kind_reports_lowering_error() {
 fn sed_regex_literals_no_longer_report_unsupported_lowering_error() {
     let session = session(Target::Faber);
     let source = r#"incipit {
-  fixum pattern = sed "\d+"
+  fixum pattern = sed "\d+" g
   scribe pattern
 }"#;
     let result = compile(&session, "test.fab", source);
 
     assert!(result.success());
-    assert!(matches!(result.output, Some(crate::Output::Faber(_))));
+    let code = match result.output {
+        Some(crate::Output::Faber(out)) => out.code,
+        _ => panic!("expected faber output"),
+    };
+    assert!(code.contains("sed \"\\d+\" g"));
     assert!(result.diagnostics.iter().all(|d| !d
         .message
         .contains("unsupported expression kind in lowering")));

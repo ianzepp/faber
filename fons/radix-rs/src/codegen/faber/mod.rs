@@ -366,6 +366,7 @@ impl FaberCodegen {
                 Primitive::Numquam => "numquam",
                 Primitive::Ignotum => "ignotum",
                 Primitive::Octeti => "octeti",
+                Primitive::Regex => "regex",
             }
             .to_owned(),
 
@@ -876,13 +877,25 @@ impl FaberCodegen {
             HirLiteral::Int(value) => w.write(&value.to_string()),
             HirLiteral::Float(value) => w.write(&value.to_string()),
             HirLiteral::String(sym) => {
-                w.write("\"");
-                w.write(interner.resolve(*sym));
-                w.write("\"");
+                self.write_quoted_symbol(*sym, interner, w);
+            }
+            HirLiteral::Regex(pattern, flags) => {
+                w.write("sed ");
+                self.write_quoted_symbol(*pattern, interner, w);
+                if let Some(flags) = flags {
+                    w.write(" ");
+                    w.write(interner.resolve(*flags));
+                }
             }
             HirLiteral::Bool(value) => w.write(if *value { "verum" } else { "falsum" }),
             HirLiteral::Nil => w.write("nihil"),
         }
+    }
+
+    fn write_quoted_symbol(&self, sym: Symbol, interner: &Interner, w: &mut CodeWriter) {
+        w.write("\"");
+        w.write(interner.resolve(sym));
+        w.write("\"");
     }
 
     fn binop_to_faber(&self, op: crate::hir::HirBinOp) -> &'static str {

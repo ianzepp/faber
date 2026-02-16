@@ -72,6 +72,7 @@ impl TypeTable {
             Primitive::Numquam,
             Primitive::Ignotum,
             Primitive::Octeti,
+            Primitive::Regex,
         ] {
             let id = table.intern(Type::Primitive(prim));
             table.primitives.insert(prim, id);
@@ -291,6 +292,7 @@ pub enum Primitive {
     Numquam,  // never
     Ignotum,  // unknown
     Octeti,   // bytes
+    Regex,    // regex literal
 }
 
 impl Primitive {
@@ -305,6 +307,7 @@ impl Primitive {
             "numquam" => Some(Self::Numquam),
             "ignotum" => Some(Self::Ignotum),
             "octeti" => Some(Self::Octeti),
+            "regex" => Some(Self::Regex),
             "objectum" | "quidlibet" | "curator" => Some(Self::Ignotum),
             _ => None,
         }

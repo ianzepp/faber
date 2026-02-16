@@ -147,6 +147,7 @@ fn primitive_to_rust(prim: Primitive) -> String {
         Primitive::Numquam => "!",
         Primitive::Ignotum => "Box<dyn std::any::Any>",
         Primitive::Octeti => "Vec<u8>",
+        Primitive::Regex => "regex::Regex",
     }
     .to_owned()
 }

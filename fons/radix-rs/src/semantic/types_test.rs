@@ -29,6 +29,7 @@ fn still_assigns_same_type_id() {
 #[test]
 fn primitive_from_name_maps_builtin_aliases() {
     assert_eq!(Primitive::from_name("textus"), Some(Primitive::Textus));
+    assert_eq!(Primitive::from_name("regex"), Some(Primitive::Regex));
     assert_eq!(Primitive::from_name("objectum"), Some(Primitive::Ignotum));
     assert_eq!(Primitive::from_name("quidlibet"), Some(Primitive::Ignotum));
     assert_eq!(Primitive::from_name("curator"), Some(Primitive::Ignotum));

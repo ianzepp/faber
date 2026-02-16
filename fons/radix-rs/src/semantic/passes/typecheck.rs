@@ -1587,6 +1587,7 @@ impl<'a> TypeChecker<'a> {
             HirLiteral::Int(_) => self.numerus_type(),
             HirLiteral::Float(_) => self.fractus_type(),
             HirLiteral::String(_) => self.textus_type(),
+            HirLiteral::Regex(_, _) => self.regex_type(),
             HirLiteral::Bool(_) => self.bool_type(),
             HirLiteral::Nil => self.nil_type(),
         }
@@ -1838,6 +1839,10 @@ impl<'a> TypeChecker<'a> {
 
     fn bool_type(&mut self) -> TypeId {
         self.types.primitive(Primitive::Bivalens)
+    }
+
+    fn regex_type(&mut self) -> TypeId {
+        self.types.primitive(Primitive::Regex)
     }
 
     fn nil_type(&mut self) -> TypeId {

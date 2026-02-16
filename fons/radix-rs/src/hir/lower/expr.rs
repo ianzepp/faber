@@ -599,8 +599,7 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_sed(&mut self, sed: &crate::syntax::SedExpr) -> HirExprKind {
-        let _ = sed.flags;
-        HirExprKind::Literal(HirLiteral::String(sed.pattern))
+        HirExprKind::Literal(HirLiteral::Regex(sed.pattern, sed.flags))
     }
 
     fn lower_praefixum(&mut self, praefixum: &crate::syntax::PraefixumExpr) -> HirExprKind {

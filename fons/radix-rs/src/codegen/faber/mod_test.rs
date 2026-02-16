@@ -427,3 +427,35 @@ fn emits_object_literal_fields_from_innatum_entries() {
     assert!(output.code.contains("activus: verum"));
     assert!(!output.code.contains("innatum tabula"));
 }
+
+#[test]
+fn emits_regex_literals_with_flags() {
+    let mut interner = Interner::new();
+    let pattern = interner.intern("\\d+");
+    let flags = interner.intern("g");
+
+    let mut types = TypeTable::new();
+    let regex = types.primitive(Primitive::Regex);
+
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(1),
+                kind: HirStmtKind::Expr(HirExpr {
+                    id: crate::hir::HirId(2),
+                    kind: HirExprKind::Literal(HirLiteral::Regex(pattern, Some(flags))),
+                    ty: Some(regex),
+                    span: span(),
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("sed \"\\d+\" g"));
+}
