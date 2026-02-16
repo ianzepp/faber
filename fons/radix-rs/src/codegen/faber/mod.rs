@@ -946,8 +946,7 @@ impl FaberCodegen {
         for item in &hir.items {
             match &item.kind {
                 HirItemKind::Function(func) => {
-                    names.insert(item.def_id, func.name);
-                    self.collect_block_names(&mut names, func.body.as_ref());
+                    self.collect_function_names(&mut names, item.def_id, func);
                 }
                 HirItemKind::Struct(strukt) => {
                     names.insert(item.def_id, strukt.name);
@@ -955,8 +954,7 @@ impl FaberCodegen {
                         names.insert(field.def_id, field.name);
                     }
                     for method in &strukt.methods {
-                        names.insert(method.def_id, method.func.name);
-                        self.collect_block_names(&mut names, method.func.body.as_ref());
+                        self.collect_function_names(&mut names, method.def_id, &method.func);
                     }
                 }
                 HirItemKind::Enum(enum_item) => {
@@ -988,6 +986,14 @@ impl FaberCodegen {
         }
 
         names
+    }
+
+    fn collect_function_names(&self, names: &mut FxHashMap<DefId, Symbol>, def_id: DefId, func: &HirFunction) {
+        names.insert(def_id, func.name);
+        for param in &func.params {
+            names.insert(param.def_id, param.name);
+        }
+        self.collect_block_names(names, func.body.as_ref());
     }
 
     fn collect_block_names(&self, names: &mut FxHashMap<DefId, Symbol>, block: Option<&HirBlock>) {

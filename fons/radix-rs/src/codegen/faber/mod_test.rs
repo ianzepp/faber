@@ -127,3 +127,58 @@ fn rejects_hir_error_nodes_in_direct_faber_codegen() {
     };
     assert!(error.message.contains("HIR containing error expressions"));
 }
+
+#[test]
+fn emits_parameter_references_with_original_names() {
+    let mut interner = Interner::new();
+    let name_identity = interner.intern("identity");
+    let name_x = interner.intern("x");
+
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+
+    let function = HirFunction {
+        name: name_identity,
+        type_params: Vec::new(),
+        params: vec![HirParam {
+            def_id: DefId(100),
+            name: name_x,
+            ty: numerus,
+            mode: HirParamMode::Owned,
+            optional: false,
+            span: span(),
+        }],
+        ret_ty: Some(numerus),
+        body: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(2),
+                kind: HirStmtKind::Redde(Some(HirExpr {
+                    id: crate::hir::HirId(3),
+                    kind: HirExprKind::Path(DefId(100)),
+                    ty: Some(numerus),
+                    span: span(),
+                })),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+        is_async: false,
+        is_generator: false,
+    };
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(function),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("redde x"));
+    assert!(!output.code.contains("def_100"));
+}
