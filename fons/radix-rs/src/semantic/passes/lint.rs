@@ -361,10 +361,17 @@ impl<'a> LintContext<'a> {
             }
             HirExprKind::Verte { source, target, entries } => {
                 self.check_expr(source, in_loop);
-                if let Some(inner_ty) = source.ty {
-                    if inner_ty == *target {
-                        self.warnings
-                            .push((WarningKind::UnnecessaryCast, "unnecessary cast".to_owned(), expr.span));
+                // Warn when source type already matches target — the ⇢ cast is noise.
+                // Skip when entries are present: that's struct/map construction, not casting.
+                if entries.is_none() {
+                    if let Some(inner_ty) = source.ty {
+                        if self.types.equals(inner_ty, *target) {
+                            self.warnings.push((
+                                WarningKind::UnnecessaryCast,
+                                "unnecessary cast: type is already known".to_owned(),
+                                expr.span,
+                            ));
+                        }
                     }
                 }
                 if let Some(entries) = entries {

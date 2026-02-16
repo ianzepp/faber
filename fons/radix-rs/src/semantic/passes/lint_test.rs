@@ -174,6 +174,105 @@ fn warns_on_unnecessary_cast() {
 }
 
 #[test]
+fn warns_on_unnecessary_cast_through_alias() {
+    use crate::semantic::Type;
+
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    // Create an alias that resolves to Numerus — the cast should still be flagged
+    let alias = types.intern(Type::Alias(crate::hir::DefId(999), numerus));
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(1),
+                kind: HirStmtKind::Expr(HirExpr {
+                    id: crate::hir::HirId(2),
+                    kind: HirExprKind::Verte {
+                        source: Box::new(HirExpr {
+                            id: crate::hir::HirId(3),
+                            kind: HirExprKind::Literal(HirLiteral::Int(1)),
+                            ty: Some(numerus),
+                            span: span(),
+                        }),
+                        target: alias,
+                        entries: None,
+                    },
+                    ty: Some(alias),
+                    span: span(),
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let result = lint(&program, &Resolver::new(), &types);
+    assert!(result.is_err());
+    let errors = result.unwrap_err();
+    assert!(errors
+        .iter()
+        .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnnecessaryCast)));
+}
+
+#[test]
+fn no_warning_on_verte_with_entries() {
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let struct_ty = types.intern(crate::semantic::Type::Struct(crate::hir::DefId(100)));
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(1),
+                kind: HirStmtKind::Expr(HirExpr {
+                    id: crate::hir::HirId(2),
+                    kind: HirExprKind::Verte {
+                        source: Box::new(HirExpr {
+                            id: crate::hir::HirId(3),
+                            kind: HirExprKind::Literal(HirLiteral::Int(1)),
+                            ty: Some(struct_ty),
+                            span: span(),
+                        }),
+                        target: struct_ty,
+                        // Entries present = struct construction, not a redundant cast
+                        entries: Some(vec![(
+                            crate::lexer::Symbol(0),
+                            HirExpr {
+                                id: crate::hir::HirId(4),
+                                kind: HirExprKind::Literal(HirLiteral::Int(42)),
+                                ty: Some(numerus),
+                                span: span(),
+                            },
+                        )]),
+                    },
+                    ty: Some(struct_ty),
+                    span: span(),
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let result = lint(&program, &Resolver::new(), &types);
+    // Should NOT contain an UnnecessaryCast warning
+    match result {
+        Ok(()) => {} // no warnings at all
+        Err(errors) => {
+            assert!(
+                !errors
+                    .iter()
+                    .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnnecessaryCast)),
+                "struct construction via ⇢ should not trigger unnecessary cast warning"
+            );
+        }
+    }
+}
+
+#[test]
 fn warns_on_unreachable_after_break() {
     let loop_block = HirBlock {
         stmts: vec![
