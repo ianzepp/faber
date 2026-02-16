@@ -258,6 +258,12 @@ impl<'a> Lexer<'a> {
                     TokenKind::Gt
                 }
             }
+            '←' => TokenKind::Eq,
+            '≡' => TokenKind::EqEq,
+            '≠' => TokenKind::BangEq,
+            '≤' => TokenKind::LtEq,
+            '≥' => TokenKind::GtEq,
+            '→' => TokenKind::Arrow,
             '&' => {
                 if self.cursor.eat('&') {
                     TokenKind::AmpAmp

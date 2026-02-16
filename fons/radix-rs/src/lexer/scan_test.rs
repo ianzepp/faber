@@ -48,7 +48,7 @@ fn lexer_interns_equivalent_unicode_forms_as_one_symbol() {
 
 #[test]
 fn lexes_operator_tokens_consistently() {
-    let result = lex("+ += - -= -> * *= / /= % ^ == === != !== !. ![ !( < <= > >= && &= || |= ?. ?[ ?( ??");
+    let result = lex("+ += - -= -> → * *= / /= % ^ == ≡ === != ≠ !== !. ![ !( < <= ≤ > >= ≥ && &= || |= ?. ?[ ?( ?? = ←");
     assert!(result.errors.is_empty());
 
     let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
@@ -58,6 +58,7 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::Minus,
         TokenKind::MinusEq,
         TokenKind::Arrow,
+        TokenKind::Arrow,
         TokenKind::Star,
         TokenKind::StarEq,
         TokenKind::Slash,
@@ -65,7 +66,9 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::Percent,
         TokenKind::Caret,
         TokenKind::EqEq,
+        TokenKind::EqEq,
         TokenKind::EqEqEq,
+        TokenKind::BangEq,
         TokenKind::BangEq,
         TokenKind::BangEqEq,
         TokenKind::BangDot,
@@ -73,7 +76,9 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::BangParen,
         TokenKind::Lt,
         TokenKind::LtEq,
+        TokenKind::LtEq,
         TokenKind::Gt,
+        TokenKind::GtEq,
         TokenKind::GtEq,
         TokenKind::AmpAmp,
         TokenKind::AmpEq,
@@ -84,6 +89,8 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::QuestionParen,
         TokenKind::Question,
         TokenKind::Question,
+        TokenKind::Eq,
+        TokenKind::Eq,
         TokenKind::Eof,
     ];
 
