@@ -182,3 +182,120 @@ fn emits_parameter_references_with_original_names() {
     assert!(output.code.contains("redde x"));
     assert!(!output.code.contains("def_100"));
 }
+
+#[test]
+fn emits_si_sin_secus_chain_with_reddit_shorthand() {
+    let mut interner = Interner::new();
+    let name_grade = interner.intern("grade");
+    let text_a = interner.intern("A");
+    let text_b = interner.intern("B");
+    let text_f = interner.intern("F");
+
+    let mut types = TypeTable::new();
+    let textus = types.primitive(Primitive::Textus);
+    let bivalens = types.primitive(Primitive::Bivalens);
+
+    let expr = HirExpr {
+        id: crate::hir::HirId(10),
+        kind: HirExprKind::Si(
+            Box::new(HirExpr {
+                id: crate::hir::HirId(11),
+                kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                ty: Some(bivalens),
+                span: span(),
+            }),
+            HirBlock {
+                stmts: vec![HirStmt {
+                    id: crate::hir::HirId(12),
+                    kind: HirStmtKind::Redde(Some(HirExpr {
+                        id: crate::hir::HirId(13),
+                        kind: HirExprKind::Literal(HirLiteral::String(text_a)),
+                        ty: Some(textus),
+                        span: span(),
+                    })),
+                    span: span(),
+                }],
+                expr: None,
+                span: span(),
+            },
+            Some(HirBlock {
+                stmts: Vec::new(),
+                expr: Some(Box::new(HirExpr {
+                    id: crate::hir::HirId(14),
+                    kind: HirExprKind::Si(
+                        Box::new(HirExpr {
+                            id: crate::hir::HirId(15),
+                            kind: HirExprKind::Literal(HirLiteral::Bool(false)),
+                            ty: Some(bivalens),
+                            span: span(),
+                        }),
+                        HirBlock {
+                            stmts: vec![HirStmt {
+                                id: crate::hir::HirId(16),
+                                kind: HirStmtKind::Redde(Some(HirExpr {
+                                    id: crate::hir::HirId(17),
+                                    kind: HirExprKind::Literal(HirLiteral::String(text_b)),
+                                    ty: Some(textus),
+                                    span: span(),
+                                })),
+                                span: span(),
+                            }],
+                            expr: None,
+                            span: span(),
+                        },
+                        Some(HirBlock {
+                            stmts: vec![HirStmt {
+                                id: crate::hir::HirId(18),
+                                kind: HirStmtKind::Redde(Some(HirExpr {
+                                    id: crate::hir::HirId(19),
+                                    kind: HirExprKind::Literal(HirLiteral::String(text_f)),
+                                    ty: Some(textus),
+                                    span: span(),
+                                })),
+                                span: span(),
+                            }],
+                            expr: None,
+                            span: span(),
+                        }),
+                    ),
+                    ty: Some(textus),
+                    span: span(),
+                })),
+                span: span(),
+            }),
+        ),
+        ty: Some(textus),
+        span: span(),
+    };
+
+    let function = HirFunction {
+        name: name_grade,
+        type_params: Vec::new(),
+        params: Vec::new(),
+        ret_ty: Some(textus),
+        body: Some(HirBlock {
+            stmts: vec![HirStmt { id: crate::hir::HirId(20), kind: HirStmtKind::Expr(expr), span: span() }],
+            expr: None,
+            span: span(),
+        }),
+        is_async: false,
+        is_generator: false,
+    };
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(function),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("si verum reddit \"A\""));
+    assert!(output.code.contains("sin falsum reddit \"B\""));
+    assert!(output.code.contains("secus reddit \"F\""));
+    assert!(!output.code.contains("aliter"));
+}

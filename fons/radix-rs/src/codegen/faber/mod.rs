@@ -612,17 +612,7 @@ impl FaberCodegen {
                 w.write("}");
             }
             HirExprKind::Si(cond, then_block, else_block) => {
-                w.write("si ");
-                self.write_expr(cond, types, names, interner, w);
-                w.writeln(" {");
-                w.indented(|w| self.write_block(then_block, types, names, interner, w));
-                w.write("}");
-                if let Some(block) = else_block {
-                    w.write(" aliter ");
-                    w.writeln("{");
-                    w.indented(|w| self.write_block(block, types, names, interner, w));
-                    w.write("}");
-                }
+                self.write_si_chain(cond, then_block, else_block.as_ref(), types, names, interner, w);
             }
             HirExprKind::Discerne(scrutinee, arms) => {
                 w.write("discerne ");
@@ -1138,6 +1128,78 @@ impl FaberCodegen {
                 self.collect_expr_names(names, body);
             }
             HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn write_si_chain(
+        &self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        else_block: Option<&HirBlock>,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        w.write("si ");
+        self.write_expr(cond, types, names, interner, w);
+        self.write_si_branch_body(then_block, types, names, interner, w);
+
+        let mut next_else = else_block;
+        while let Some(block) = next_else {
+            if let Some((sin_cond, sin_then, sin_else)) = self.as_sin_branch(block) {
+                w.write(" sin ");
+                self.write_expr(sin_cond, types, names, interner, w);
+                self.write_si_branch_body(sin_then, types, names, interner, w);
+                next_else = sin_else;
+            } else {
+                w.write(" secus");
+                self.write_si_branch_body(block, types, names, interner, w);
+                break;
+            }
+        }
+    }
+
+    fn write_si_branch_body(
+        &self,
+        block: &HirBlock,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        if let Some(reddit_expr) = self.reddit_expr(block) {
+            w.write(" reddit ");
+            self.write_expr(reddit_expr, types, names, interner, w);
+            return;
+        }
+
+        w.writeln(" {");
+        w.indented(|w| self.write_block(block, types, names, interner, w));
+        w.write("}");
+    }
+
+    fn as_sin_branch<'a>(&self, block: &'a HirBlock) -> Option<(&'a HirExpr, &'a HirBlock, Option<&'a HirBlock>)> {
+        if !block.stmts.is_empty() {
+            return None;
+        }
+
+        let expr = block.expr.as_ref()?;
+        if let HirExprKind::Si(cond, then_block, else_block) = &expr.kind {
+            Some((cond, then_block, else_block.as_ref()))
+        } else {
+            None
+        }
+    }
+
+    fn reddit_expr<'a>(&self, block: &'a HirBlock) -> Option<&'a HirExpr> {
+        if block.expr.is_some() || block.stmts.len() != 1 {
+            return None;
+        }
+        match &block.stmts[0].kind {
+            HirStmtKind::Redde(Some(expr)) => Some(expr),
+            _ => None,
         }
     }
 
