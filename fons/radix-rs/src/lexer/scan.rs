@@ -187,6 +187,7 @@ impl<'a> Lexer<'a> {
             '⊜' => TokenKind::AmpEq,
             '⊚' => TokenKind::PipeEq,
             '⇢' => TokenKind::Verte,
+            '⇒' => TokenKind::Conversio,
             '+' => {
                 if self.cursor.eat('=') {
                     TokenKind::PlusEq

@@ -821,6 +821,25 @@ impl FaberCodegen {
                     }
                 }
             }
+            HirExprKind::Conversio { source, target, params, fallback } => {
+                self.write_expr(source, types, names, interner, w);
+                w.write(" ⇒ ");
+                w.write(&self.type_to_faber(*target, types, names, interner));
+                if !params.is_empty() {
+                    w.write("<");
+                    for (idx, param) in params.iter().enumerate() {
+                        if idx > 0 {
+                            w.write(", ");
+                        }
+                        w.write(&self.symbol_to_string(*param, interner));
+                    }
+                    w.write(">");
+                }
+                if let Some(fallback) = fallback {
+                    w.write(" vel ");
+                    self.write_expr(fallback, types, names, interner, w);
+                }
+            }
             HirExprKind::Ref(kind, inner) => {
                 match kind {
                     crate::hir::HirRefKind::Shared => w.write("de "),
@@ -1080,6 +1099,12 @@ impl FaberCodegen {
                     for (_, value) in entries {
                         self.collect_expr_names(names, value);
                     }
+                }
+            }
+            HirExprKind::Conversio { source, fallback, .. } => {
+                self.collect_expr_names(names, source);
+                if let Some(fallback) = fallback {
+                    self.collect_expr_names(names, fallback);
                 }
             }
             HirExprKind::Call(callee, args) => {

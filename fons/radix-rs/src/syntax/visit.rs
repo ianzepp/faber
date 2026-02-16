@@ -243,6 +243,18 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
             visitor.visit_expr(&verte.expr);
             visitor.visit_type_expr(&verte.ty);
         }
+        ExprKind::Conversio(conversio) => {
+            visitor.visit_expr(&conversio.expr);
+            if let ConversioTarget::Explicit(ty) = &conversio.target {
+                visitor.visit_type_expr(ty);
+            }
+            for ty in &conversio.type_params {
+                visitor.visit_type_expr(ty);
+            }
+            if let Some(fallback) = &conversio.fallback {
+                visitor.visit_expr(fallback);
+            }
+        }
         ExprKind::Paren(inner) => {
             visitor.visit_expr(inner);
         }

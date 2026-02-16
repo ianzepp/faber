@@ -253,6 +253,12 @@ impl<'a> RustCodegen<'a> {
                     }
                 }
             }
+            HirExprKind::Conversio { source, fallback, .. } => {
+                self.collect_expr_names(names, source);
+                if let Some(fallback) = fallback {
+                    self.collect_expr_names(names, fallback);
+                }
+            }
             HirExprKind::Call(callee, args) => {
                 self.collect_expr_names(names, callee);
                 for arg in args {
@@ -462,6 +468,12 @@ impl<'a> RustCodegen<'a> {
                         for (_, value) in entries {
                             visit_expr(value, suppressed, deps);
                         }
+                    }
+                }
+                HirExprKind::Conversio { source, fallback, .. } => {
+                    visit_expr(source, suppressed, deps);
+                    if let Some(fallback) = fallback {
+                        visit_expr(fallback, suppressed, deps);
                     }
                 }
                 HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {

@@ -204,6 +204,7 @@ pub enum TokenKind {
 
     // === Keywords: Type operations ===
     Verte,      // ⇢ / qua / innatum / novum — unified type conversion
+    Conversio,  // ⇒ — runtime value conversion (glyph form)
     Numeratum,  // to integer
     Fractatum,  // to float
     Textatum,   // to string
@@ -422,6 +423,7 @@ impl TokenKind {
                 | Sub
                 | Implet
                 | Verte
+                | Conversio
                 | Numeratum
                 | Fractatum
                 | Textatum

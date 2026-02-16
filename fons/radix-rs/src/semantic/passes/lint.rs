@@ -373,6 +373,12 @@ impl<'a> LintContext<'a> {
                     }
                 }
             }
+            HirExprKind::Conversio { source, fallback, .. } => {
+                self.check_expr(source, in_loop);
+                if let Some(fallback) = fallback {
+                    self.check_expr(fallback, in_loop);
+                }
+            }
             HirExprKind::Literal(_) | HirExprKind::Error => {}
         }
     }

@@ -1481,3 +1481,118 @@ incipit ergo cura arena fixum alloc {
         .iter()
         .all(|d| !d.message.contains("wrong number of arguments")));
 }
+
+#[test]
+fn conversio_glyph_form_compiles_to_parse() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum n = "22" ⇒ numerus
+  scribe n
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".parse::<i64>().unwrap()"));
+}
+
+#[test]
+fn conversio_keyword_emits_parse_not_as_cast() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum n = "42" numeratum
+  scribe n
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".parse::<i64>().unwrap()"));
+    assert!(!output.code.contains(" as i64"));
+}
+
+#[test]
+fn conversio_with_fallback_emits_unwrap_or() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum n = "bad" numeratum vel 0
+  scribe n
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".parse::<i64>().unwrap_or(0)"));
+}
+
+#[test]
+fn conversio_textatum_emits_to_string() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum n = 42
+  fixum s = n textatum
+  scribe s
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".to_string()"));
+}
+
+#[test]
+fn verte_qua_still_emits_as_cast() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum n = 42
+  fixum f = n qua fractus
+  scribe f
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(" as f64"));
+}
+
+#[test]
+fn conversio_glyph_form_roundtrips_through_faber_codegen() {
+    let session = session(Target::Faber);
+    let source = r#"incipit {
+  fixum n = "22" ⇒ numerus
+  scribe n
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Faber(output)) = result.output else {
+        panic!("expected faber output");
+    };
+    assert!(output.code.contains("⇒ numerus"));
+}
+
+#[test]
+fn conversio_with_fallback_roundtrips_through_faber_codegen() {
+    let session = session(Target::Faber);
+    let source = r#"incipit {
+  fixum n = "bad" numeratum vel 0
+  scribe n
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Faber(output)) = result.output else {
+        panic!("expected faber output");
+    };
+    assert!(output.code.contains("⇒ numerus vel 0"));
+}

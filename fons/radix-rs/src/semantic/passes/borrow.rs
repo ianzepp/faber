@@ -351,6 +351,12 @@ impl<'a> BorrowChecker<'a> {
                     }
                 }
             }
+            HirExprKind::Conversio { source, fallback, .. } => {
+                self.check_expr(source);
+                if let Some(fallback) = fallback {
+                    self.check_expr(fallback);
+                }
+            }
             HirExprKind::Ref(kind, inner) => match self.root_def_id(inner) {
                 Some(def_id) => match kind {
                     crate::hir::HirRefKind::Shared => self.borrow_shared(def_id, expr.span),

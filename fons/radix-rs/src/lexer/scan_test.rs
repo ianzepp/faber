@@ -150,6 +150,16 @@ fn lexes_unicode_range_operators() {
 }
 
 #[test]
+fn lexes_conversio_glyph() {
+    let result = lex("x ⇒ numerus");
+    assert!(result.errors.is_empty());
+    assert!(
+        matches!(result.tokens[1].kind, TokenKind::Conversio),
+        "'⇒' should lex as TokenKind::Conversio"
+    );
+}
+
+#[test]
 fn lexes_verte_keyword_aliases() {
     for keyword in &["qua", "innatum", "novum"] {
         let result = lex(&format!("x {} textus", keyword));

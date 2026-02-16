@@ -277,5 +277,7 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
                     .find_map(|(_, value)| find_error_expr_in_expr(value))
             })
         }),
+        HirExprKind::Conversio { source, fallback, .. } => find_error_expr_in_expr(source)
+            .or_else(|| fallback.as_ref().and_then(|fb| find_error_expr_in_expr(fb))),
     }
 }

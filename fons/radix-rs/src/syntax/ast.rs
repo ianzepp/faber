@@ -1019,17 +1019,21 @@ pub enum TransformKind {
 #[derive(Debug)]
 pub struct ConversioExpr {
     pub expr: Box<Expr>,
-    pub kind: ConversioKind,
+    pub target: ConversioTarget,
     pub type_params: Vec<TypeExpr>,
     pub fallback: Option<Box<Expr>>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum ConversioKind {
+/// Target of a conversio expression.
+/// Keywords imply a fixed primitive type; the glyph form takes an explicit type.
+#[derive(Debug)]
+pub enum ConversioTarget {
     Numeratum,
     Fractatum,
     Textatum,
     Bivalentum,
+    /// Explicit type from `⇒ type` form
+    Explicit(TypeExpr),
 }
 
 #[derive(Debug)]

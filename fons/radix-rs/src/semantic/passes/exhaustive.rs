@@ -255,6 +255,12 @@ fn check_expr(
                 }
             }
         }
+        HirExprKind::Conversio { source, fallback, .. } => {
+            check_expr(source, types, enum_variants, errors);
+            if let Some(fallback) = fallback {
+                check_expr(fallback, types, enum_variants, errors);
+            }
+        }
         HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
     }
 }

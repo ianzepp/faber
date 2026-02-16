@@ -782,6 +782,84 @@ pub fn generate_expr(
                 generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
         },
+        HirExprKind::Conversio { source, target, params: _, fallback } => {
+            let target_resolved = types.get(*target);
+            let source_ty = source.ty.map(|t| types.get(t));
+            match (source_ty, target_resolved) {
+                // textus → numerus: .parse::<i64>()
+                (Some(Type::Primitive(Primitive::Textus)), Type::Primitive(Primitive::Numerus)) => {
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    if let Some(fallback) = fallback {
+                        w.write(".parse::<i64>().unwrap_or(");
+                        generate_expr(codegen, fallback, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(")");
+                    } else {
+                        w.write(".parse::<i64>().unwrap()");
+                    }
+                }
+                // textus → fractus: .parse::<f64>()
+                (Some(Type::Primitive(Primitive::Textus)), Type::Primitive(Primitive::Fractus)) => {
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    if let Some(fallback) = fallback {
+                        w.write(".parse::<f64>().unwrap_or(");
+                        generate_expr(codegen, fallback, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(")");
+                    } else {
+                        w.write(".parse::<f64>().unwrap()");
+                    }
+                }
+                // textus → bivalens: !source.is_empty()
+                (Some(Type::Primitive(Primitive::Textus)), Type::Primitive(Primitive::Bivalens)) => {
+                    w.write("!");
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(".is_empty()");
+                }
+                // numerus → textus: source.to_string()
+                (Some(Type::Primitive(Primitive::Numerus)), Type::Primitive(Primitive::Textus))
+                | (Some(Type::Primitive(Primitive::Fractus)), Type::Primitive(Primitive::Textus)) => {
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(".to_string()");
+                }
+                // numerus → fractus: source as f64
+                (Some(Type::Primitive(Primitive::Numerus)), Type::Primitive(Primitive::Fractus)) => {
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(" as f64");
+                }
+                // numerus → bivalens: source != 0
+                (Some(Type::Primitive(Primitive::Numerus)), Type::Primitive(Primitive::Bivalens)) => {
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(" != 0");
+                }
+                // any → textus: format!("{}", source)
+                (_, Type::Primitive(Primitive::Textus)) => {
+                    w.write("format!(\"{}\", ");
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(")");
+                }
+                // Fallback: .parse() for string-to-target, `as` for numeric
+                _ => match target_resolved {
+                    Type::Primitive(Primitive::Numerus) | Type::Primitive(Primitive::Fractus) => {
+                        generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        if let Some(fallback) = fallback {
+                            w.write(".parse::<");
+                            w.write(&type_to_rust(codegen, *target, types));
+                            w.write(">().unwrap_or(");
+                            generate_expr(codegen, fallback, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                            w.write(")");
+                        } else {
+                            w.write(".parse::<");
+                            w.write(&type_to_rust(codegen, *target, types));
+                            w.write(">().unwrap()");
+                        }
+                    }
+                    _ => {
+                        generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(" as ");
+                        w.write(&type_to_rust(codegen, *target, types));
+                    }
+                },
+            }
+        }
         HirExprKind::Ref(kind, expr) => {
             match kind {
                 HirRefKind::Shared => w.write("&"),

@@ -558,14 +558,24 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_conversio(&mut self, conversio: &crate::syntax::ConversioExpr) -> HirExprKind {
-        let expr = lower_expr(self, &conversio.expr);
-        let target = match conversio.kind {
-            crate::syntax::ConversioKind::Numeratum => self.types.primitive(crate::semantic::Primitive::Numerus),
-            crate::syntax::ConversioKind::Fractatum => self.types.primitive(crate::semantic::Primitive::Fractus),
-            crate::syntax::ConversioKind::Textatum => self.types.primitive(crate::semantic::Primitive::Textus),
-            crate::syntax::ConversioKind::Bivalentum => self.types.primitive(crate::semantic::Primitive::Bivalens),
+        let source = lower_expr(self, &conversio.expr);
+        let target = match &conversio.target {
+            crate::syntax::ConversioTarget::Numeratum => self.types.primitive(Primitive::Numerus),
+            crate::syntax::ConversioTarget::Fractatum => self.types.primitive(Primitive::Fractus),
+            crate::syntax::ConversioTarget::Textatum => self.types.primitive(Primitive::Textus),
+            crate::syntax::ConversioTarget::Bivalentum => self.types.primitive(Primitive::Bivalens),
+            crate::syntax::ConversioTarget::Explicit(ty) => self.lower_type(ty),
         };
-        HirExprKind::Verte { source: Box::new(expr), target, entries: None }
+        let params: Vec<_> = conversio.type_params.iter().filter_map(|ty| {
+            // Extract the raw type name symbol as a codegen hint, not a resolved type
+            if let crate::syntax::TypeExprKind::Named(ident, _) = &ty.kind {
+                Some(ident.name)
+            } else {
+                None
+            }
+        }).collect();
+        let fallback = conversio.fallback.as_ref().map(|fb| Box::new(lower_expr(self, fb)));
+        HirExprKind::Conversio { source: Box::new(source), target, params, fallback }
     }
 
     fn lower_scriptum(&mut self, scriptum: &crate::syntax::ScriptumExpr) -> HirExprKind {

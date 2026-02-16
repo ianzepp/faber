@@ -151,6 +151,12 @@ impl<'a> TsCodegen<'a> {
                     }
                 }
             }
+            HirExprKind::Conversio { source, fallback, .. } => {
+                self.collect_expr_names(names, source);
+                if let Some(fallback) = fallback {
+                    self.collect_expr_names(names, fallback);
+                }
+            }
             HirExprKind::Call(callee, args) => {
                 self.collect_expr_names(names, callee);
                 for arg in args {

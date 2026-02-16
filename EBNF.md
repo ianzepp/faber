@@ -352,12 +352,12 @@ range      := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' addit
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
 unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'finge') unary | cast
-cast       := call (('⇢' | 'qua' | 'innatum' | 'novum') typeAnnotation | conversionOp)*
-conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
-             | ('textatum' | 'bivalentum')
+cast       := call (('⇢' | 'qua' | 'innatum' | 'novum') typeAnnotation | conversio)*
+conversio  := ('⇒' typeAnnotation | 'numeratum' | 'fractatum' | 'textatum' | 'bivalentum')
+              typeParams? ('vel' unary)?
 ```
 
-**Type conversion (`⇢` / verte):**
+**Type conversion (`⇢` / verte) — compile-time cast:**
 
 The `⇢` glyph (U+21E2, "rightwards dashed arrow") is the unified type conversion operator. The compiler dispatches on the target type:
 
@@ -366,6 +366,16 @@ The `⇢` glyph (U+21E2, "rightwards dashed arrow") is the unified type conversi
 - `genus` type → struct instantiation: `{ x: 10 } ⇢ Point` → `Point { x: 10 }`
 
 The keywords `qua`, `innatum`, and `novum` are permanent aliases for `⇢`.
+
+**Runtime conversion (`⇒` / conversio):**
+
+The `⇒` glyph (U+21D2, "rightwards double arrow") is the runtime value conversion operator. Unlike `⇢` (compile-time cast), this performs actual parsing/conversion that can fail:
+
+- `"22" ⇒ numerus` → Rust: `"22".parse::<i64>().unwrap()`
+- `"bad" ⇒ numerus vel 0` → Rust: `"bad".parse::<i64>().unwrap_or(0)`
+- `42 ⇒ textus` → Rust: `42.to_string()`
+
+The keywords `numeratum`, `fractatum`, `textatum`, and `bivalentum` are shorthand aliases that imply the target type.
 
 ### Call and Member Access
 
@@ -594,7 +604,8 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `vel`                         | nullish coalescing  |
 | **Objects**         | `ego`                         | this/self           |
 |                     | `finge`                       | construct variant   |
-| **Type Conversion** | `⇢` / `qua` / `innatum` / `novum` | type conversion (unified) |
+| **Type Cast**       | `⇢` / `qua` / `innatum` / `novum` | compile-time type cast |
+| **Type Conversion** | `⇒` / `numeratum` / `fractatum` / `textatum` / `bivalentum` | runtime value conversion |
 |                     | `numeratum`                   | parse to integer    |
 |                     | `fractatum`                   | parse to float      |
 |                     | `textatum`                    | convert to string   |

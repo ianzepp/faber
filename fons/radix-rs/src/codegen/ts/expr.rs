@@ -218,6 +218,44 @@ pub fn generate_expr(
                 w.write(&types::type_to_ts(codegen, *target, types));
             }
         },
+        HirExprKind::Conversio { source, target, params: _, fallback } => {
+            let target_resolved = types.get(*target);
+            match target_resolved {
+                Type::Primitive(Primitive::Numerus) => {
+                    if let Some(fallback) = fallback {
+                        w.write("(Number(");
+                        generate_expr(codegen, source, types, w)?;
+                        w.write(") ?? ");
+                        generate_expr(codegen, fallback, types, w)?;
+                        w.write(")");
+                    } else {
+                        w.write("Number(");
+                        generate_expr(codegen, source, types, w)?;
+                        w.write(")");
+                    }
+                }
+                Type::Primitive(Primitive::Fractus) => {
+                    w.write("parseFloat(");
+                    generate_expr(codegen, source, types, w)?;
+                    w.write(")");
+                }
+                Type::Primitive(Primitive::Textus) => {
+                    w.write("String(");
+                    generate_expr(codegen, source, types, w)?;
+                    w.write(")");
+                }
+                Type::Primitive(Primitive::Bivalens) => {
+                    w.write("Boolean(");
+                    generate_expr(codegen, source, types, w)?;
+                    w.write(")");
+                }
+                _ => {
+                    generate_expr(codegen, source, types, w)?;
+                    w.write(" as ");
+                    w.write(&types::type_to_ts(codegen, *target, types));
+                }
+            }
+        }
         HirExprKind::Ref(_, inner) | HirExprKind::Deref(inner) => generate_expr(codegen, inner, types, w)?,
         HirExprKind::Block(block) => {
             w.write("(() => ");
@@ -720,6 +758,10 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                 || entries
                     .as_ref()
                     .is_some_and(|entries| entries.iter().any(|(_, value)| contains_await_in_expr(value)))
+        }
+        HirExprKind::Conversio { source, fallback, .. } => {
+            contains_await_in_expr(source)
+                || fallback.as_ref().is_some_and(|fb| contains_await_in_expr(fb))
         }
         HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => false,
     }

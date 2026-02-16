@@ -640,17 +640,35 @@ impl Parser {
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
                 expr = Expr { id, kind: ExprKind::Verte(VerteExpr { expr: Box::new(expr), ty }), span };
+            } else if self.check_keyword(TokenKind::Conversio) {
+                // Runtime value conversion: ⇒ type [<params>] [vel fallback]
+                self.advance();
+                let ty = self.parse_type()?;
+                let target = ConversioTarget::Explicit(ty);
+                let type_params = self.try_parse_type_args()?;
+                let fallback = if self.eat_keyword(TokenKind::Vel) {
+                    Some(Box::new(self.parse_unary()?))
+                } else {
+                    None
+                };
+                let span = start.merge(self.previous_span());
+                let id = self.next_id();
+                expr = Expr {
+                    id,
+                    kind: ExprKind::Conversio(ConversioExpr { expr: Box::new(expr), target, type_params, fallback }),
+                    span,
+                };
             } else if self.check_keyword(TokenKind::Numeratum)
                 || self.check_keyword(TokenKind::Fractatum)
                 || self.check_keyword(TokenKind::Textatum)
                 || self.check_keyword(TokenKind::Bivalentum)
             {
-                // Type conversion
-                let kind = match self.peek().kind {
-                    TokenKind::Numeratum => ConversioKind::Numeratum,
-                    TokenKind::Fractatum => ConversioKind::Fractatum,
-                    TokenKind::Textatum => ConversioKind::Textatum,
-                    TokenKind::Bivalentum => ConversioKind::Bivalentum,
+                // Type conversion via keyword
+                let target = match self.peek().kind {
+                    TokenKind::Numeratum => ConversioTarget::Numeratum,
+                    TokenKind::Fractatum => ConversioTarget::Fractatum,
+                    TokenKind::Textatum => ConversioTarget::Textatum,
+                    TokenKind::Bivalentum => ConversioTarget::Bivalentum,
                     _ => unreachable!(),
                 };
                 self.advance();
@@ -667,7 +685,7 @@ impl Parser {
                 let id = self.next_id();
                 expr = Expr {
                     id,
-                    kind: ExprKind::Conversio(ConversioExpr { expr: Box::new(expr), kind, type_params, fallback }),
+                    kind: ExprKind::Conversio(ConversioExpr { expr: Box::new(expr), target, type_params, fallback }),
                     span,
                 };
             } else {
