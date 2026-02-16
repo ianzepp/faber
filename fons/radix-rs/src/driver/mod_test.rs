@@ -54,19 +54,51 @@ fn compile_reports_semantic_errors() {
 }
 
 #[test]
-fn incipit_argumenta_reports_unsupported_lowering_error() {
-    let session = session(Target::Rust);
+fn incipit_argumenta_compiles_for_faber_target() {
+    let session = session(Target::Faber);
     let source = r#"incipit argumenta args {
-  scribe "ok"
+  scribe args
 }"#;
     let result = compile(&session, "test.fab", source);
 
-    assert!(result.output.is_none());
-    assert!(!result.success());
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|d| d.is_error() && d.message.contains("incipit argumenta") && d.message.contains("not yet supported")));
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Faber(_))));
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("invalid expression produced during lowering")));
+}
+
+#[test]
+fn tempta_iace_fac_custodi_compile_for_faber_target() {
+    let session = session(Target::Faber);
+    let source = r#"functio probe(numerus n) -> vacuum {
+  custodi {
+    si n < 0 {
+      iace "neg"
+    }
+  }
+
+  fac {
+    tempta {
+      iace "boom"
+    } cape err {
+      scribe err
+    }
+  } cape capta {
+    scribe capta
+  }
+}
+
+incipit {
+  probe(1)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Faber(_))));
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("invalid expression produced during lowering")));
 }
 
 #[test]
@@ -83,6 +115,22 @@ fn unsupported_expression_kind_reports_lowering_error() {
     assert!(result.diagnostics.iter().any(|d| d.is_error()
         && d.message
             .contains("unsupported expression kind in lowering")));
+}
+
+#[test]
+fn sed_regex_literals_no_longer_report_unsupported_lowering_error() {
+    let session = session(Target::Faber);
+    let source = r#"incipit {
+  fixum pattern = sed "\d+"
+  scribe pattern
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Faber(_))));
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("unsupported expression kind in lowering")));
 }
 
 #[test]

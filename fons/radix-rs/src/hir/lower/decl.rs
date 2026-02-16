@@ -145,8 +145,8 @@ impl<'a> Lowerer<'a> {
                         kind: crate::hir::HirStmtKind::Local(crate::hir::HirLocal {
                             def_id,
                             name,
-                            ty: None,
-                            init: Some(error_expr(self, span)),
+                            ty: Some(self.types.primitive(crate::semantic::Primitive::Ignotum)),
+                            init: None,
                             mutable: true,
                         }),
                         span,
@@ -235,8 +235,8 @@ impl<'a> Lowerer<'a> {
                                     kind: crate::hir::HirStmtKind::Local(crate::hir::HirLocal {
                                         def_id,
                                         name,
-                                        ty: None,
-                                        init: Some(error_expr(self, span)),
+                                        ty: Some(self.types.primitive(crate::semantic::Primitive::Ignotum)),
+                                        init: None,
                                         mutable: true,
                                     }),
                                     span,

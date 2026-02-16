@@ -360,8 +360,11 @@ impl<'a> Lowerer<'a> {
                     kind: HirStmtKind::Local(crate::hir::HirLocal {
                         def_id,
                         name,
-                        ty: None,
-                        init: Some(HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span }),
+                        ty: Some(
+                            self.types
+                                .array(self.types.primitive(crate::semantic::Primitive::Textus)),
+                        ),
+                        init: None,
                         mutable: false,
                     }),
                     span,
@@ -723,13 +726,8 @@ impl<'a> Lowerer<'a> {
             kind: HirStmtKind::Local(crate::hir::HirLocal {
                 def_id: catch_def_id,
                 name: catch.binding.name,
-                ty: None,
-                init: Some(HirExpr {
-                    id: self.next_hir_id(),
-                    kind: HirExprKind::Error,
-                    ty: None,
-                    span: catch.binding.span,
-                }),
+                ty: Some(self.types.primitive(crate::semantic::Primitive::Ignotum)),
+                init: None,
                 mutable: false,
             }),
             span: catch.binding.span,

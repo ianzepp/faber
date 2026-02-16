@@ -70,6 +70,7 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         ExprKind::Ab(ab) => lowerer.lower_ab(ab),
         ExprKind::Conversio(conversio) => lowerer.lower_conversio(conversio),
         ExprKind::Scriptum(scriptum) => lowerer.lower_scriptum(scriptum),
+        ExprKind::Sed(sed) => lowerer.lower_sed(sed),
         ExprKind::Praefixum(praefixum) => lowerer.lower_praefixum(praefixum),
         ExprKind::Ego(span) => lowerer.lower_ego(*span),
         ExprKind::Paren(expr) => lower_expr(lowerer, expr).kind,
@@ -595,6 +596,11 @@ impl<'a> Lowerer<'a> {
             .map(|arg| lower_expr(self, arg))
             .collect();
         HirExprKind::Scriptum(scriptum.template, args)
+    }
+
+    fn lower_sed(&mut self, sed: &crate::syntax::SedExpr) -> HirExprKind {
+        let _ = sed.flags;
+        HirExprKind::Literal(HirLiteral::String(sed.pattern))
     }
 
     fn lower_praefixum(&mut self, praefixum: &crate::syntax::PraefixumExpr) -> HirExprKind {

@@ -125,13 +125,32 @@ impl<'a> Lowerer<'a> {
                 StmtKind::Incipit(entry_stmt) => {
                     // Entry point gets special treatment
                     self.push_scope();
+                    let mut args_binding = None;
                     if let Some(args) = &entry_stmt.args {
                         let def_id = self.next_def_id();
                         self.bind_local(args.name, def_id);
-                        self.current_span = args.span;
-                        self.error("`incipit argumenta` is not yet supported in radix-rs lowering");
+                        args_binding = Some((args.name, args.span, def_id));
                     }
-                    let block = self.lower_ergo_body(&entry_stmt.body);
+                    let mut block = self.lower_ergo_body(&entry_stmt.body);
+                    if let Some((name, span, def_id)) = args_binding {
+                        block.stmts.insert(
+                            0,
+                            HirStmt {
+                                id: self.next_hir_id(),
+                                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                                    def_id,
+                                    name,
+                                    ty: Some(
+                                        self.types
+                                            .array(self.types.primitive(crate::semantic::Primitive::Textus)),
+                                    ),
+                                    init: None,
+                                    mutable: false,
+                                }),
+                                span,
+                            },
+                        );
+                    }
                     self.pop_scope();
                     entry = Some(block);
                 }
