@@ -1,6 +1,6 @@
 # scriptum formatting
 
-fixum textus name = "Roma"
-fixum textus msg = scriptum("Salve, §!", name)
+fixum textus name ← "Roma"
+fixum textus msg ← scriptum("Salve, §!", name)
 
 scribe msg

@@ -1,6 +1,6 @@
 # Function declaration, params, return
 
-functio summa(numerus a, numerus b) -> numerus {
+functio summa(numerus a, numerus b) → numerus {
     redde a + b
 }
 

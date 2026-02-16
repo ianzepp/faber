@@ -1,18 +1,18 @@
 # genus / pactum / ordo
 
 pactum Res {
-    functio lege() -> textus
+    functio lege() → textus
 }
 
 ordo Color {
-    Ruber = "red",
-    Viridis = "green",
+    Ruber ← "red",
+    Viridis ← "green",
 }
 
 genus Persona implet Res {
     textus nomen
 
-    functio lege() -> textus {
+    functio lege() → textus {
         redde ego.nomen
     }
 }

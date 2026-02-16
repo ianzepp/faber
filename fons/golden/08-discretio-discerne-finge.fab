@@ -5,7 +5,7 @@ discretio Eventus {
     Finis
 }
 
-functio tracta(Eventus e) -> numerus {
+functio tracta(Eventus e) → numerus {
     discerne e {
         casu Init pro x {
             redde x
