@@ -788,11 +788,11 @@ impl FaberCodegen {
                                 w.write(": ");
                                 self.write_expr(value, types, names, interner, w);
                             }
-                            w.write("} novum ");
+                            w.write("} ⇢ ");
                             w.write(&self.type_to_faber(*target, types, names, interner));
                         } else {
                             self.write_expr(source, types, names, interner, w);
-                            w.write(" novum ");
+                            w.write(" ⇢ ");
                             w.write(&self.type_to_faber(*target, types, names, interner));
                         }
                     }
@@ -807,16 +807,16 @@ impl FaberCodegen {
                                 w.write(": ");
                                 self.write_expr(value, types, names, interner, w);
                             }
-                            w.write("} innatum ");
+                            w.write("} ⇢ ");
                         } else {
                             self.write_expr(source, types, names, interner, w);
-                            w.write(" innatum ");
+                            w.write(" ⇢ ");
                         }
                         w.write(&self.type_to_faber(*target, types, names, interner));
                     }
                     _ => {
                         self.write_expr(source, types, names, interner, w);
-                        w.write(" qua ");
+                        w.write(" ⇢ ");
                         w.write(&self.type_to_faber(*target, types, names, interner));
                     }
                 }

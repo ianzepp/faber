@@ -240,7 +240,7 @@ describe('feature interactions', () => {
         // test('collections and iteration compile everywhere', () => {
         //     const source = `
         //         functio filter(numerus[] items, numerus threshold) fit numerus[] {
-        //             varia numerus[] result = [] innatum numerus[]
+        //             varia numerus[] result = [] ⇢ numerus[]
         //             ex items pro item {
         //                 si item > threshold {
         //                     result.adde(item)

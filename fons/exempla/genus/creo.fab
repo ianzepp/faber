@@ -41,20 +41,20 @@ incipit {
     # Validation in creo
     fixum normal ← {
         value: 50
-    } novum BoundedValue
+    } ⇢ BoundedValue
 
     scribe normal.getValue()
 
     fixum clamped ← {
         value: 200
-    } novum BoundedValue
+    } ⇢ BoundedValue
 
     scribe clamped.getValue()
 
     # Derived initialization in creo
     fixum c ← {
         radius: 5
-    } novum Circle
+    } ⇢ Circle
 
     scribe c.radius
     scribe c.diameter

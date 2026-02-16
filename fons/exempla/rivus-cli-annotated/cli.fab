@@ -218,7 +218,7 @@ functio run(
     si bivalens json
 ) exitus code → vacuum {
     # TODO: arg forwarding - for now, pass empty list
-    varia scriptArgs ← [] innatum lista<textus>
+    varia scriptArgs ← [] ⇢ lista<textus>
     fixum result ← cede mandatumCurrere(script, manifest, list, json, scriptArgs)
     code ← result
 }

@@ -7,7 +7,7 @@
 # Run with: bun run faber compile exempla/morphologia.fab
 
 incipit {
-    varia items ← [1, 2, 3, 4, 5] qua numerus[]
+    varia items ← [1, 2, 3, 4, 5] ⇢ numerus[]
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # FILTER: filtr-

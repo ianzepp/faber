@@ -26,7 +26,7 @@ incipit {
     scribe "Max:", max
 
     # With nullish values
-    varia maybe ← nihil qua si textus
+    varia maybe ← nihil ⇢ si textus
     fixum result ← nonnihil maybe sic maybe secus "default"
     scribe result  # "default"
 

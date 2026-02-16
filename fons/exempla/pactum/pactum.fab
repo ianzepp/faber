@@ -24,8 +24,8 @@ genus Square implet Drawable {
 }
 
 incipit {
-    fixum circle ← { radius: 25 } novum Circle
-    fixum square ← { side: 15 } novum Square
+    fixum circle ← { radius: 25 } ⇢ Circle
+    fixum square ← { side: 15 } ⇢ Square
 
     circle.draw()
     square.draw()

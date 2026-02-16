@@ -186,6 +186,7 @@ impl<'a> Lexer<'a> {
             '⊘' => TokenKind::SlashEq,
             '⊜' => TokenKind::AmpEq,
             '⊚' => TokenKind::PipeEq,
+            '⇢' => TokenKind::Verte,
             '+' => {
                 if self.cursor.eat('=') {
                     TokenKind::PlusEq
@@ -766,14 +767,14 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
 
         // Objects
         "ego" => TokenKind::Ego,
-        "novum" => TokenKind::Novum,
         "finge" => TokenKind::Finge,
         "sub" => TokenKind::Sub,
         "implet" => TokenKind::Implet,
 
-        // Type operations
-        "qua" => TokenKind::Qua,
-        "innatum" => TokenKind::Innatum,
+        // Type operations (qua/innatum/novum are keyword aliases for ⇢)
+        "qua" => TokenKind::Verte,
+        "innatum" => TokenKind::Verte,
+        "novum" => TokenKind::Verte,
         "numeratum" => TokenKind::Numeratum,
         "fractatum" => TokenKind::Fractatum,
         "textatum" => TokenKind::Textatum,

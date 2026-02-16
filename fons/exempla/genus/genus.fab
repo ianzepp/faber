@@ -21,7 +21,7 @@ incipit {
     fixum p ← {
         x: 10,
         y: 20
-    } novum Punctum
+    } ⇢ Punctum
 
     scribe p.x
     scribe p.y
@@ -29,7 +29,7 @@ incipit {
     # Instantiate with required + optional defaults
     fixum marcus ← {
         nomen: "Marcus"
-    } novum Persona
+    } ⇢ Persona
 
     scribe marcus.nomen
     scribe marcus.aetas
@@ -40,7 +40,7 @@ incipit {
         nomen: "Julia",
         aetas: 25,
         activus: falsum
-    } novum Persona
+    } ⇢ Persona
 
     scribe julia.nomen
     scribe julia.aetas

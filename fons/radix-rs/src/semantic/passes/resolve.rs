@@ -736,15 +736,7 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
             resolve_expr(resolver, interner, &expr.target, errors);
             resolve_expr(resolver, interner, &expr.value, errors);
         }
-        ExprKind::Qua(expr) => {
-            resolve_expr(resolver, interner, &expr.expr, errors);
-            resolve_type(resolver, interner, &expr.ty, errors);
-        }
-        ExprKind::Innatum(expr) => {
-            resolve_expr(resolver, interner, &expr.expr, errors);
-            resolve_type(resolver, interner, &expr.ty, errors);
-        }
-        ExprKind::Novum(expr) => {
+        ExprKind::Verte(expr) => {
             resolve_expr(resolver, interner, &expr.expr, errors);
             resolve_type(resolver, interner, &expr.ty, errors);
         }

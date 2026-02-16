@@ -555,7 +555,7 @@ impl Parser {
     ///   call := '(' args ')'
     ///   member := '.' ident
     ///   index := '[' expr ']'
-    ///   cast := 'qua' type | 'innatum' type
+    ///   cast := ('⇢' | 'qua' | 'innatum' | 'novum') type
     ///   optional-chain := '?.' ident | '?[' expr ']' | '?(' args ')'
     ///   conversion := 'numeratum' | 'fractatum' | 'textatum' | 'bivalentum'
     ///
@@ -633,27 +633,13 @@ impl Parser {
                     }),
                     span,
                 };
-            } else if self.check_keyword(TokenKind::Qua) {
-                // Type cast
+            } else if self.check_keyword(TokenKind::Verte) {
+                // Unified type conversion: ⇢ / qua / innatum / novum
                 self.advance();
                 let ty = self.parse_type()?;
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
-                expr = Expr { id, kind: ExprKind::Qua(QuaExpr { expr: Box::new(expr), ty }), span };
-            } else if self.check_keyword(TokenKind::Innatum) {
-                // Native construction
-                self.advance();
-                let ty = self.parse_type()?;
-                let span = start.merge(self.previous_span());
-                let id = self.next_id();
-                expr = Expr { id, kind: ExprKind::Innatum(InnatumExpr { expr: Box::new(expr), ty }), span };
-            } else if self.check_keyword(TokenKind::Novum) {
-                // Struct instantiation (postfix)
-                self.advance();
-                let ty = self.parse_type()?;
-                let span = start.merge(self.previous_span());
-                let id = self.next_id();
-                expr = Expr { id, kind: ExprKind::Novum(NovumExpr { expr: Box::new(expr), ty }), span };
+                expr = Expr { id, kind: ExprKind::Verte(VerteExpr { expr: Box::new(expr), ty }), span };
             } else if self.check_keyword(TokenKind::Numeratum)
                 || self.check_keyword(TokenKind::Fractatum)
                 || self.check_keyword(TokenKind::Textatum)
@@ -844,7 +830,7 @@ impl Parser {
             Vec::new()
         };
 
-        let cast = if self.eat_keyword(TokenKind::Qua) {
+        let cast = if self.eat_keyword(TokenKind::Verte) {
             Some(self.parse_ident()?)
         } else {
             None

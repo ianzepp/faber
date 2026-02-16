@@ -1,12 +1,12 @@
-# Innatum expressions - native type construction
-# Maps Faber innatum to target-language native constructors
+# Verte expressions - native type construction (⇢ operator)
+# Maps Faber ⇢ to target-language native constructors
 #
 # Note: ts uses new Map() for tabula, Python uses {} (dict)
 # Note: Rust uses HashMap::new(), Zig uses std.AutoHashMap().init()
 # Note: C++ uses std::map{} and std::vector{}
 
 - name: empty tabula with types
-  source:varia x ← {} innatum tabula<textus, numerus>
+  source:varia x ← {} ⇢ tabula<textus, numerus>
   expect:
       ts: 'let x = new Map<string, number>();'
       py: 'x = {}'
@@ -17,10 +17,10 @@
       zig:
           - 'std.AutoHashMap([]const u8, i64).init(alloc)'
       fab:
-          - 'varia x ← {} innatum tabula<textus, numerus>'
+          - 'varia x ← {} ⇢ tabula<textus, numerus>'
 
 - name: empty lista with type
-  source:varia items ← [] innatum lista<textus>
+  source:varia items ← [] ⇢ lista<textus>
   expect:
       ts: 'let items = ([] as string[]);'
       py: 'items = []'
@@ -31,10 +31,10 @@
       zig:
           - 'Lista([]const u8).init(alloc)'
       fab:
-          - 'varia items ← [] innatum lista<textus>'
+          - 'varia items ← [] ⇢ lista<textus>'
 
 - name: const tabula
-  source:fixum cache ← {} innatum tabula<textus, bivalens>
+  source:fixum cache ← {} ⇢ tabula<textus, bivalens>
   expect:
       ts: 'const cache = new Map<string, boolean>();'
       py: 'cache = {}'
@@ -45,10 +45,10 @@
       zig:
           - 'std.AutoHashMap([]const u8, bool).init(alloc)'
       fab:
-          - 'fixum cache ← {} innatum tabula<textus, bivalens>'
+          - 'fixum cache ← {} ⇢ tabula<textus, bivalens>'
 
 - name: const lista
-  source:fixum names ← [] innatum lista<textus>
+  source:fixum names ← [] ⇢ lista<textus>
   expect:
       ts: 'const names = ([] as string[]);'
       py: 'names = []'
@@ -59,10 +59,10 @@
       zig:
           - 'Lista([]const u8).init(alloc)'
       fab:
-          - 'fixum names ← [] innatum lista<textus>'
+          - 'fixum names ← [] ⇢ lista<textus>'
 
 - name: tabula with fractus value type
-  source:varia scores ← {} innatum tabula<textus, fractus>
+  source:varia scores ← {} ⇢ tabula<textus, fractus>
   expect:
       ts: 'let scores = new Map<string, number>();'
       py: 'scores = {}'
@@ -73,10 +73,10 @@
       zig:
           - 'std.AutoHashMap([]const u8, f64).init(alloc)'
       fab:
-          - 'varia scores ← {} innatum tabula<textus, fractus>'
+          - 'varia scores ← {} ⇢ tabula<textus, fractus>'
 
 - name: lista of numerus
-  source:varia numbers ← [] innatum lista<numerus>
+  source:varia numbers ← [] ⇢ lista<numerus>
   expect:
       ts: 'let numbers = ([] as number[]);'
       py: 'numbers = []'
@@ -87,10 +87,10 @@
       zig:
           - 'Lista(i64).init(alloc)'
       fab:
-          - 'varia numbers ← [] innatum lista<numerus>'
+          - 'varia numbers ← [] ⇢ lista<numerus>'
 
 - name: non-empty tabula
-  source:'varia data ← {a: 1, b: 2} innatum tabula<textus, numerus>'
+  source:'varia data ← {a: 1, b: 2} ⇢ tabula<textus, numerus>'
   expect:
       ts: 'let data = new Map<string, number>([["a", 1], ["b", 2]]);'
       py: 'data = {"a": 1, "b": 2}'
@@ -103,10 +103,10 @@
           - '.put("a", 1)'
           - '.put("b", 2)'
       fab:
-          - 'varia data ← {a: 1, b: 2} innatum tabula<textus, numerus>'
+          - 'varia data ← {a: 1, b: 2} ⇢ tabula<textus, numerus>'
 
 - name: non-empty lista
-  source:varia items ← [1, 2, 3] innatum lista<numerus>
+  source:varia items ← [1, 2, 3] ⇢ lista<numerus>
   expect:
       ts: 'let items = [1, 2, 3];'
       py: 'items = [1, 2, 3]'
@@ -119,4 +119,4 @@
           - '.append(1)'
           - '.append(2)'
       fab:
-          - 'varia items ← [1, 2, 3] innatum lista<numerus>'
+          - 'varia items ← [1, 2, 3] ⇢ lista<numerus>'

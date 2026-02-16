@@ -48,7 +48,7 @@ fn lexer_interns_equivalent_unicode_forms_as_one_symbol() {
 
 #[test]
 fn lexes_operator_tokens_consistently() {
-    let result = lex("+ ⊕ += - ⊖ -= -> → * ⊛ *= / ⊘ /= % ⊻ == ≡ === != ≠ !== ¬ !. ![ !( < <= ≤ > >= ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ?. ?[ ?( ?? = ←");
+    let result = lex("+ ⊕ += - ⊖ -= -> → * ⊛ *= / ⊘ /= % ⊻ == ≡ === != ≠ !== ¬ !. ![ !( < <= ≤ > >= ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←");
     assert!(result.errors.is_empty());
 
     let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
@@ -91,6 +91,7 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::PipeEq,
         TokenKind::Sinistratum,
         TokenKind::Dextratum,
+        TokenKind::Verte,
         TokenKind::QuestionDot,
         TokenKind::QuestionBracket,
         TokenKind::QuestionParen,
@@ -146,4 +147,17 @@ fn lexes_unicode_range_operators() {
     ];
 
     assert_eq!(kinds, expected);
+}
+
+#[test]
+fn lexes_verte_keyword_aliases() {
+    for keyword in &["qua", "innatum", "novum"] {
+        let result = lex(&format!("x {} textus", keyword));
+        assert!(result.errors.is_empty(), "failed for keyword: {}", keyword);
+        assert!(
+            matches!(result.tokens[1].kind, TokenKind::Verte),
+            "'{}' should lex as TokenKind::Verte",
+            keyword
+        );
+    }
 }

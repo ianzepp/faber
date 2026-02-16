@@ -198,14 +198,12 @@ pub enum TokenKind {
 
     // === Keywords: Objects ===
     Ego,    // self/this
-    Novum,  // new
     Finge,  // construct tagged union variant
     Sub,    // extends
     Implet, // implements
 
     // === Keywords: Type operations ===
-    Qua,        // type cast
-    Innatum,    // native FFI type
+    Verte,      // ⇢ / qua / innatum / novum — unified type conversion
     Numeratum,  // to integer
     Fractatum,  // to float
     Textatum,   // to string
@@ -420,12 +418,10 @@ impl TokenKind {
                 | Vel
                 | Est
                 | Ego
-                | Novum
                 | Finge
                 | Sub
                 | Implet
-                | Qua
-                | Innatum
+                | Verte
                 | Numeratum
                 | Fractatum
                 | Textatum

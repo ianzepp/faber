@@ -698,12 +698,8 @@ pub enum ExprKind {
     NonNull(NonNullExpr),
     /// Assignment
     Assign(AssignExpr),
-    /// Type cast: qua
-    Qua(QuaExpr),
-    /// Native construction: innatum
-    Innatum(InnatumExpr),
-    /// New instance: novum
-    Novum(NovumExpr),
+    /// Unified type conversion: ⇢ / qua / innatum / novum
+    Verte(VerteExpr),
     /// Variant construction: finge
     Finge(FingeExpr),
     /// Closure: clausura
@@ -898,19 +894,7 @@ pub enum AssignOp {
 }
 
 #[derive(Debug)]
-pub struct QuaExpr {
-    pub expr: Box<Expr>,
-    pub ty: TypeExpr,
-}
-
-#[derive(Debug)]
-pub struct InnatumExpr {
-    pub expr: Box<Expr>,
-    pub ty: TypeExpr,
-}
-
-#[derive(Debug)]
-pub struct NovumExpr {
+pub struct VerteExpr {
     pub expr: Box<Expr>,
     pub ty: TypeExpr,
 }
@@ -919,7 +903,7 @@ pub struct NovumExpr {
 pub struct FingeExpr {
     pub variant: Ident,
     pub fields: Vec<FingeFieldInit>,
-    pub cast: Option<Ident>, // qua
+    pub cast: Option<Ident>, // ⇢ / qua
 }
 
 #[derive(Debug)]

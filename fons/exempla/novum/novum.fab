@@ -1,4 +1,4 @@
-# Novum (instantiation) expressions
+# Instantiation expressions with ⇢ (formerly novum)
 # Creates new instances of genus types
 
 genus Point {
@@ -13,12 +13,12 @@ genus Person {
 
 incipit {
     # Instantiate with all fields
-    fixum p1 ← { x: 10, y: 20 } novum Point
+    fixum p1 ← { x: 10, y: 20 } ⇢ Point
     scribe p1.x
     scribe p1.y
 
     # With default value
-    fixum person ← { name: "Marcus" } novum Person
+    fixum person ← { name: "Marcus" } ⇢ Person
     scribe person.name
     scribe person.age
 }

@@ -1,137 +1,137 @@
-# Qua expressions - type casting
-# Maps Faber qua to target-language type assertions/casts
+# Verte expressions - type casting (⇢ operator)
+# Maps Faber ⇢ to target-language type assertions/casts
 #
 # Note: ts/py use exact match; rs uses contains (it wraps in main)
 # Note: Python ignores type casts (dynamically typed)
 # Note: Faber uses Latin type names (textus, numerus, logicum) which get mapped
 
 - name: cast to string
-  source:fixum name ← data qua textus
+  source:fixum name ← data ⇢ textus
   expect:
       ts: 'const name = (data as string);'
       py: 'name = data'
       rs:
           - 'let name = data as String;'
       fab:
-          - 'fixum name ← data qua textus'
+          - 'fixum name ← data ⇢ textus'
 
 - name: cast member expression
-  source:fixum body ← response.body qua objectum
+  source:fixum body ← response.body ⇢ objectum
   expect:
       ts: 'const body = (response.body as object);'
       py: 'body = response.body'
       rs:
           - 'let body = response.body as objectum;'
       fab:
-          - 'fixum body ← response.body qua objectum'
+          - 'fixum body ← response.body ⇢ objectum'
 
 - name: cast to number
-  source:fixum num ← input qua numerus
+  source:fixum num ← input ⇢ numerus
   expect:
       ts: 'const num = (input as number);'
       py: 'num = input'
       rs:
           - 'let num = input as i64;'
       fab:
-          - 'fixum num ← input qua numerus'
+          - 'fixum num ← input ⇢ numerus'
 
 - name: cast call result
-  source:fixum result ← getData() qua textus
+  source:fixum result ← getData() ⇢ textus
   expect:
       ts: 'const result = (getData() as string);'
       py: 'result = getData()'
       rs:
           - 'let result = getData() as String;'
       fab:
-          - 'fixum result ← getData() qua textus'
+          - 'fixum result ← getData() ⇢ textus'
 
 - name: cast to boolean type
-  source:fixum flag ← value qua logicum
+  source:fixum flag ← value ⇢ logicum
   expect:
       ts: 'const flag = (value as logicum);'
       py: 'flag = value'
       rs:
           - 'let flag = value as logicum;'
       fab:
-          - 'fixum flag ← value qua logicum'
+          - 'fixum flag ← value ⇢ logicum'
 
 - name: cast to array type
-  source:fixum items ← data qua lista<textus>
+  source:fixum items ← data ⇢ lista<textus>
   expect:
       ts: 'const items = (data as Array<string>);'
       py: 'items = data'
       rs:
           - 'let items = data as Vec<String>;'
       fab:
-          - 'fixum items ← data qua lista<textus>'
+          - 'fixum items ← data ⇢ lista<textus>'
 
 - name: cast to user-defined type
-  source:fixum user ← obj qua UserType
+  source:fixum user ← obj ⇢ UserType
   expect:
       ts: 'const user = (obj as UserType);'
       py: 'user = obj'
       rs:
           - 'let user = obj as UserType;'
       fab:
-          - 'fixum user ← obj qua UserType'
+          - 'fixum user ← obj ⇢ UserType'
 
 - name: cast on optional chain
-  source:fixum name ← user?.name qua textus
+  source:fixum name ← user?.name ⇢ textus
   expect:
       ts: 'const name = (user?.name as string);'
       py: 'name = (user.name if user is not None else None)'
       rs:
           - 'let name = user.as_ref().map(|x| x.name) as String;'
       fab:
-          - 'fixum name ← user?.name qua textus'
+          - 'fixum name ← user?.name ⇢ textus'
 
 - name: cast in expression
-  source:fixum len ← (data qua textus).length
+  source:fixum len ← (data ⇢ textus).length
   expect:
       ts: 'const len = (data as string).length;'
       py: 'len = len(data)'
       rs:
           - 'let len = data as String.length;'
       fab:
-          - 'fixum len ← (data qua textus).length'
+          - 'fixum len ← (data ⇢ textus).length'
 
 - name: cast with call result
-  source:fixum str ← getValue() qua textus
+  source:fixum str ← getValue() ⇢ textus
   expect:
       ts: 'const str = (getValue() as string);'
       py: 'str = getValue()'
       rs:
           - 'let str = getValue() as String;'
       fab:
-          - 'fixum str ← getValue() qua textus'
+          - 'fixum str ← getValue() ⇢ textus'
 
 - name: cast to nullable
-  source:fixum maybe ← value qua numerus?
+  source:fixum maybe ← value ⇢ numerus?
   expect:
       ts: 'const maybe = (value as number | null);'
       py: 'maybe = value'
       rs:
           - 'let maybe = value as Option<i64>;'
       fab:
-          - 'fixum maybe ← value qua numerus?'
+          - 'fixum maybe ← value ⇢ numerus?'
 
 # Empty object literal cast to copia (Set) - constructs actual Set, not type assertion
 - name: empty object to copia (cast)
-  source:fixum s ← {} qua copia<textus>
+  source:fixum s ← {} ⇢ copia<textus>
   expect:
       ts: 'const s = ({} as Set<string>);'
       py: 's = {}'
       rs:
           - 'let s = {} as HashSet<String>;'
       fab:
-          - 'fixum s ← {} qua copia<textus>'
+          - 'fixum s ← {} ⇢ copia<textus>'
 
 - name: empty object to copia with numerus (cast)
-  source:fixum nums ← {} qua copia<numerus>
+  source:fixum nums ← {} ⇢ copia<numerus>
   expect:
       ts: 'const nums = ({} as Set<number>);'
       py: 'nums = {}'
       rs:
           - 'let nums = {} as HashSet<i64>;'
       fab:
-          - 'fixum nums ← {} qua copia<numerus>'
+          - 'fixum nums ← {} ⇢ copia<numerus>'

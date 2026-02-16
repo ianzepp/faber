@@ -20,8 +20,8 @@ incipit {
     # User with full address
     fixum alice ← {
         name: "Alice",
-        address: { city: "Roma", state: "Italia" } novum Address
-    } novum User
+        address: { city: "Roma", state: "Italia" } ⇢ Address
+    } ⇢ User
 
     # Optional chaining prevents errors when properties might be nihil
     fixum city ← alice?.address?.city
@@ -31,7 +31,7 @@ incipit {
     scribe state  # "Italia"
 
     # User with no address
-    fixum bob ← { name: "Bob" } novum User
+    fixum bob ← { name: "Bob" } ⇢ User
     fixum bobCity ← bob?.address?.city
     scribe bobCity  # nihil (no error thrown)
 

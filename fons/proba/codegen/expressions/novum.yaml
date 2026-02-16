@@ -1,13 +1,13 @@
-# Novum expressions - new/constructor calls
-# Maps Faber novum to target-language object instantiation
+# Verte expressions - new/constructor calls (⇢ operator)
+# Maps Faber ⇢ to target-language object instantiation
 #
-# Postfix syntax: { fields } novum Type
-# Bare form: {} novum Type
+# Postfix syntax: { fields } ⇢ Type
+# Bare form: {} ⇢ Type
 #
 # Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
 
-- name: novum bare constructor
-  source:fixum p ← {} novum Persona
+- name: bare constructor
+  source:fixum p ← {} ⇢ Persona
   expect:
       ts: 'const p = new Persona();'
       py: 'p = Persona()'
@@ -18,10 +18,10 @@
       zig:
           - 'Persona.init(.{})'
       fab:
-          - '{} novum Persona'
+          - '{} ⇢ Persona'
 
-- name: novum bare constructor (Error)
-  source:'fixum e ← {} novum Error'
+- name: bare constructor (Error)
+  source:'fixum e ← {} ⇢ Error'
   expect:
       ts: 'const e = new Error();'
       py: 'e = Error()'
@@ -32,10 +32,10 @@
       zig:
           - 'Error.init(.{})'
       fab:
-          - '{} novum Error'
+          - '{} ⇢ Error'
 
-- name: novum with object literal overrides
-  source:'fixum u ← { nomen: "Marcus", aetas: 30 } novum User'
+- name: with object literal overrides
+  source:'fixum u ← { nomen: "Marcus", aetas: 30 } ⇢ User'
   expect:
       ts: 'const u = new User({ nomen: "Marcus", aetas: 30 });'
       py: 'u = User({"nomen": "Marcus", "aetas": 30})'
@@ -47,10 +47,10 @@
       zig:
           - 'User.init(.{ .nomen = "Marcus", .aetas = 30 })'
       fab:
-          - '{ nomen: "Marcus", aetas: 30 } novum User'
+          - '{ nomen: "Marcus", aetas: 30 } ⇢ User'
 
-- name: novum with single property override
-  source:'fixum item ← { pretium: 99 } novum Item'
+- name: with single property override
+  source:'fixum item ← { pretium: 99 } ⇢ Item'
   expect:
       ts: 'const item = new Item({ pretium: 99 });'
       py: 'item = Item({"pretium": 99})'
@@ -61,36 +61,36 @@
       zig:
           - 'Item.init(.{ .pretium = 99 })'
       fab:
-          - '{ pretium: 99 } novum Item'
+          - '{ pretium: 99 } ⇢ Item'
 
-- name: novum with spread in overrides
-  source:'fixum u ← { sparge defaults, extra: 1 } novum User'
+- name: with spread in overrides
+  source:'fixum u ← { sparge defaults, extra: 1 } ⇢ User'
   expect:
       ts: 'const u = new User({ ...defaults, extra: 1 });'
       py: 'u = User({**defaults, "extra": 1})'
       fab:
-          - '{ sparge defaults, extra: 1 } novum User'
+          - '{ sparge defaults, extra: 1 } ⇢ User'
 
-- name: novum with nested object
-  source:'fixum c ← { database: { host: "localhost" } } novum Config'
+- name: with nested object
+  source:'fixum c ← { database: { host: "localhost" } } ⇢ Config'
   expect:
       ts: 'const c = new Config({ database: { host: "localhost" } });'
       py: 'c = Config({"database": {"host": "localhost"}})'
       fab:
-          - '{ database: { host: "localhost" } } novum Config'
+          - '{ database: { host: "localhost" } } ⇢ Config'
 
-- name: novum bare (Error, alternate)
-  source:'fixum e ← {} novum Error'
+- name: bare (Error, alternate)
+  source:'fixum e ← {} ⇢ Error'
   expect:
       ts: 'const e = new Error();'
       py: 'e = Error()'
       fab:
-          - '{} novum Error'
+          - '{} ⇢ Error'
 
-- name: novum bare (Point)
-  source:'fixum p ← {} novum Point'
+- name: bare (Point)
+  source:'fixum p ← {} ⇢ Point'
   expect:
       ts: 'const p = new Point();'
       py: 'p = Point()'
       fab:
-          - '{} novum Point'
+          - '{} ⇢ Point'

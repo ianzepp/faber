@@ -21,10 +21,10 @@ functio require(textus path) → ignotum
 # Use the external declarations
 incipit {
     # Access runtime globals
-    fixum args ← process.argv qua lista<textus>
+    fixum args ← process.argv ⇢ lista<textus>
     scribe "Args:", args.longitudo()
 
     # Check runtime
-    fixum runtime ← Bun.version qua textus
+    fixum runtime ← Bun.version ⇢ textus
     scribe "Bun version:", runtime
 }

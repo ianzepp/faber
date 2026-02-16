@@ -39,14 +39,14 @@ incipit {
     fixum rect ← {
         width: 10,
         height: 5
-    } novum Rectangle
+    } ⇢ Rectangle
 
     scribe rect.area()
     scribe rect.perimeter()
     scribe rect.isSquare()
 
     # Methods that modify state
-    varia counter ← {} novum Counter
+    varia counter ← {} ⇢ Counter
 
     scribe counter.getValue()
 

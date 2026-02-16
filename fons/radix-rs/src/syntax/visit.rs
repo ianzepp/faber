@@ -239,17 +239,9 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
         ExprKind::Cede(cede) => {
             visitor.visit_expr(&cede.expr);
         }
-        ExprKind::Qua(qua) => {
-            visitor.visit_expr(&qua.expr);
-            visitor.visit_type_expr(&qua.ty);
-        }
-        ExprKind::Innatum(innatum) => {
-            visitor.visit_expr(&innatum.expr);
-            visitor.visit_type_expr(&innatum.ty);
-        }
-        ExprKind::Novum(novum) => {
-            visitor.visit_expr(&novum.expr);
-            visitor.visit_type_expr(&novum.ty);
+        ExprKind::Verte(verte) => {
+            visitor.visit_expr(&verte.expr);
+            visitor.visit_type_expr(&verte.ty);
         }
         ExprKind::Paren(inner) => {
             visitor.visit_expr(inner);

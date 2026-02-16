@@ -142,7 +142,7 @@
 # Resource with complex expression
 - name: cura with complex resource expression
   source: |
-      cura {} novum Database fit db {
+      cura {} ⇢ Database fit db {
         db.init()
       }
   expect:
@@ -160,7 +160,7 @@
           - 'defer db.solve();'
           - 'db.init();'
       fab:
-          - 'cura {} novum Database fit db {'
+          - 'cura {} ⇢ Database fit db {'
           - 'db.init()'
   skip: [py, cpp]
 

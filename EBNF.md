@@ -352,22 +352,20 @@ range      := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' addit
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
 unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'finge') unary | cast
-cast       := call ('qua' typeAnnotation | 'innatum' typeAnnotation | 'novum' typeAnnotation | conversionOp)*
+cast       := call (('⇢' | 'qua' | 'innatum' | 'novum') typeAnnotation | conversionOp)*
 conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
              | ('textatum' | 'bivalentum')
 ```
 
-**Type casting vs construction:**
+**Type conversion (`⇢` / verte):**
 
-- `qua` = compile-time type assertion only. No runtime effect. Use when you know a value's type but the compiler doesn't.
-    - `data qua textus` → TypeScript: `(data as string)`
+The `⇢` glyph (U+21E2, "rightwards dashed arrow") is the unified type conversion operator. The compiler dispatches on the target type:
 
-- `innatum` = native type construction. Actually builds the target type at runtime. Use for built-in collections:
-    - `[] innatum lista<T>` → typed empty array
-    - `{} innatum tabula<K,V>` → `new Map<K,V>()`
-    - `[] innatum copia<T>` → `new Set<T>()`
+- Primitive/alias → cast (no runtime effect): `data ⇢ textus` → TypeScript: `(data as string)`
+- Built-in collection → native construction: `[] ⇢ lista<T>` → typed empty array, `{} ⇢ tabula<K,V>` → `new Map<K,V>()`
+- `genus` type → struct instantiation: `{ x: 10 } ⇢ Point` → `Point { x: 10 }`
 
-**Important:** Do NOT use `qua` for collection construction. `{} qua copia<T>` produces a plain object with a type assertion—it will NOT have Set methods like `.add()` or `.has()`. Use `innatum` instead.
+The keywords `qua`, `innatum`, and `novum` are permanent aliases for `⇢`.
 
 ### Call and Member Access
 
@@ -393,8 +391,8 @@ primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
 ### Special Expressions
 
 ```ebnf
-// novum is now postfix — parsed in the cast production above as: expr 'novum' typeAnnotation
-fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('qua' IDENTIFIER)?
+// verte (⇢/qua/innatum/novum) is postfix — parsed in the cast production above
+fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? (('⇢' | 'qua') IDENTIFIER)?
 praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
 scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'  # § placeholders filled positionally
 legeExpr      := 'lege' 'lineam'?
@@ -595,9 +593,9 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `non`                         | not                 |
 |                     | `vel`                         | nullish coalescing  |
 | **Objects**         | `ego`                         | this/self           |
-|                     | `novum`                       | new                 |
 |                     | `finge`                       | construct variant   |
-| **Type Conversion** | `numeratum`                   | parse to integer    |
+| **Type Conversion** | `⇢` / `qua` / `innatum` / `novum` | type conversion (unified) |
+|                     | `numeratum`                   | parse to integer    |
 |                     | `fractatum`                   | parse to float      |
 |                     | `textatum`                    | convert to string   |
 |                     | `bivalentum`                  | convert to boolean  |

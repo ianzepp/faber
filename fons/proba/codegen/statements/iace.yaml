@@ -94,14 +94,14 @@
 
 # Throw with Error constructor
 - name: throw with error constructor
-  source:'iace {} novum Error'
+  source:'iace {} ⇢ Error'
   expect:
       ts:
           - 'throw new Error();'
       py:
           - 'raise Exception()'
       fab:
-          - 'iace {} novum Error'
+          - 'iace {} ⇢ Error'
 
 # Throw with template message
 - name: throw with template message

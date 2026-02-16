@@ -3,8 +3,8 @@
 #
 # Syntax:
 #   finge Variant { field: value }
-#   finge Variant { field: value } qua DiscretioType
-#   finge Variant qua DiscretioType
+#   finge Variant { field: value } ⇢ DiscretioType
+#   finge Variant ⇢ DiscretioType
 #
 # Target mappings:
 #   TypeScript: { tag: 'Variant', field: value }
@@ -17,8 +17,8 @@
 # Payload Variants with Explicit Type
 # =============================================================================
 
-- name: finge payload variant with qua
-  source:'fixum e ← finge Click { x: 10, y: 20 } qua Event'
+- name: finge payload variant with type
+  source:'fixum e ← finge Click { x: 10, y: 20 } ⇢ Event'
   expect:
       ts:
           - "{ tag: 'Click', x: 10, y: 20 }"
@@ -31,14 +31,14 @@
       zig:
           - 'Event{ .click = .{ .x = 10, .y = 20 } }'
       fab:
-          - 'finge Click { x: 10, y: 20 } qua Event'
+          - 'finge Click { x: 10, y: 20 } ⇢ Event'
 
 # =============================================================================
 # Unit Variants (No Payload)
 # =============================================================================
 
-- name: finge unit variant with qua
-  source:'fixum s ← finge Active qua Status'
+- name: finge unit variant with type
+  source:'fixum s ← finge Active ⇢ Status'
   expect:
       ts:
           - "{ tag: 'Active' }"
@@ -51,13 +51,13 @@
       zig:
           - 'Status.active'
       fab:
-          - 'finge Active qua Status'
+          - 'finge Active ⇢ Status'
 
 # =============================================================================
 # Variants without Explicit Type (Type Inferred)
 # =============================================================================
 
-- name: finge payload variant without qua
+- name: finge payload variant without type
   source:'fixum e ← finge Click { x: 5, y: 15 }'
   expect:
       ts:
@@ -73,7 +73,7 @@
       fab:
           - 'finge Click { x: 5, y: 15 }'
 
-- name: finge unit variant without qua
+- name: finge unit variant without type
   source:'fixum s ← finge Pending'
   expect:
       ts:
@@ -94,7 +94,7 @@
 # =============================================================================
 
 - name: finge single field variant
-  source:'fixum r ← finge Success { message: "done" } qua Result'
+  source:'fixum r ← finge Success { message: "done" } ⇢ Result'
   expect:
       ts:
           - "{ tag: 'Success', message: \"done\" }"
@@ -107,14 +107,14 @@
       zig:
           - 'Result{ .success = .{ .message = "done" } }'
       fab:
-          - 'finge Success { message: "done" } qua Result'
+          - 'finge Success { message: "done" } ⇢ Result'
 
 # =============================================================================
 # Expression Fields
 # =============================================================================
 
 - name: finge with expression fields
-  source:'fixum e ← finge Move { x: a + b, y: c * 2 } qua Action'
+  source:'fixum e ← finge Move { x: a + b, y: c * 2 } ⇢ Action'
   expect:
       ts:
           - "{ tag: 'Move', x: (a + b), y: (c * 2) }"
@@ -125,4 +125,4 @@
       cpp:
           - 'Move{.x = (a + b), .y = (c * 2)}'
       fab:
-          - 'finge Move { x: a + b, y: c * 2 } qua Action'
+          - 'finge Move { x: a + b, y: c * 2 } ⇢ Action'

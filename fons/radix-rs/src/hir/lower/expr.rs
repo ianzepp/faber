@@ -58,12 +58,10 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         ExprKind::OptionalChain(optional) => lowerer.lower_optional_chain(optional),
         ExprKind::NonNull(non_null) => lowerer.lower_non_null(non_null),
         ExprKind::Assign(assign) => lowerer.lower_assign(assign),
-        ExprKind::Innatum(innatum) => lowerer.lower_innatum(innatum),
+        ExprKind::Verte(verte) => lowerer.lower_verte(verte),
         ExprKind::Cede(cede_expr) => lowerer.lower_cede(cede_expr),
         ExprKind::Array(array) => lowerer.lower_serie(array),
         ExprKind::Object(obj) => lowerer.lower_objectum(obj),
-        ExprKind::Qua(cast) => lowerer.lower_qua(cast),
-        ExprKind::Novum(new) => lowerer.lower_novum(new),
         ExprKind::Finge(finge) => lowerer.lower_finge(finge),
         ExprKind::Clausura(closure) => lowerer.lower_clausura(closure),
         ExprKind::Intervallum(range) => lowerer.lower_intervallum(range),
@@ -290,9 +288,15 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Cede(Box::new(expr))
     }
 
-    fn lower_innatum(&mut self, innatum: &crate::syntax::InnatumExpr) -> HirExprKind {
-        let target = self.lower_type(&innatum.ty);
-        match &innatum.expr.kind {
+    /// Lower unified type conversion (⇢ / qua / innatum / novum)
+    ///
+    /// WHY unified: All three share the same grammar (`expr ⇢ type`) and produce
+    /// the same HIR node. The codegen dispatches on the resolved target type, not
+    /// the source keyword. Object literal sources get their entries extracted for
+    /// struct/collection construction; everything else passes through as a cast.
+    fn lower_verte(&mut self, verte: &crate::syntax::VerteExpr) -> HirExprKind {
+        let target = self.lower_type(&verte.ty);
+        match &verte.expr.kind {
             crate::syntax::ExprKind::Object(object) => {
                 let mut entries = Vec::new();
                 for field in &object.fields {
@@ -300,7 +304,7 @@ impl<'a> Lowerer<'a> {
                         crate::syntax::ObjectKey::Ident(ident) => ident.name,
                         crate::syntax::ObjectKey::String(string) => *string,
                         _ => {
-                            self.error("computed/spread keys not supported in innatum object");
+                            self.error("computed/spread keys not supported in verte object");
                             continue;
                         }
                     };
@@ -311,7 +315,7 @@ impl<'a> Lowerer<'a> {
                             kind: HirExprKind::Path(match self.lookup_name(key) {
                                 Some(def_id) => def_id,
                                 None => {
-                                    self.error("undefined shorthand key in innatum object");
+                                    self.error("undefined shorthand key in verte object");
                                     return HirExprKind::Error;
                                 }
                             }),
@@ -322,8 +326,6 @@ impl<'a> Lowerer<'a> {
                     entries.push((key, value));
                 }
 
-                // Use a placeholder source — entries already contain all lowered values.
-                // Re-lowering the object expression would produce duplicate HIR nodes.
                 let placeholder = HirExpr {
                     id: self.next_hir_id(),
                     kind: HirExprKind::Tuple(Vec::new()),
@@ -337,7 +339,7 @@ impl<'a> Lowerer<'a> {
                 }
             }
             _ => {
-                let source = lower_expr(self, &innatum.expr);
+                let source = lower_expr(self, &verte.expr);
                 HirExprKind::Verte { source: Box::new(source), target, entries: None }
             }
         }
@@ -430,68 +432,6 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower cast expression (qua)
-    fn lower_qua(&mut self, cast: &crate::syntax::QuaExpr) -> HirExprKind {
-        let expr = lower_expr(self, &cast.expr);
-        let target = self.lower_type(&cast.ty);
-        HirExprKind::Verte { source: Box::new(expr), target, entries: None }
-    }
-
-    /// Lower struct instantiation (novum) — postfix form: `expr novum Type`
-    fn lower_novum(&mut self, novum: &crate::syntax::NovumExpr) -> HirExprKind {
-        let target = self.lower_type(&novum.ty);
-
-        // Extract object literal entries from the source expression when present
-        match &novum.expr.kind {
-            crate::syntax::ExprKind::Object(object) => {
-                let mut entries = Vec::new();
-                for field in &object.fields {
-                    let key = match &field.key {
-                        crate::syntax::ObjectKey::Ident(ident) => ident.name,
-                        crate::syntax::ObjectKey::String(string) => *string,
-                        _ => {
-                            self.error("computed/spread keys not supported in novum object");
-                            continue;
-                        }
-                    };
-                    let value = match &field.value {
-                        Some(value) => lower_expr(self, value),
-                        None => HirExpr {
-                            id: self.next_hir_id(),
-                            kind: HirExprKind::Path(match self.lookup_name(key) {
-                                Some(def_id) => def_id,
-                                None => {
-                                    self.error("undefined shorthand key in novum object");
-                                    return HirExprKind::Error;
-                                }
-                            }),
-                            ty: None,
-                            span: field.span,
-                        },
-                    };
-                    entries.push((key, value));
-                }
-
-                // Use a placeholder source — entries already contain all lowered values.
-                // Re-lowering the object expression would produce duplicate HIR nodes.
-                let placeholder = HirExpr {
-                    id: self.next_hir_id(),
-                    kind: HirExprKind::Tuple(Vec::new()),
-                    ty: None,
-                    span: self.current_span,
-                };
-                HirExprKind::Verte {
-                    source: Box::new(placeholder),
-                    target,
-                    entries: Some(entries),
-                }
-            }
-            _ => {
-                let source = lower_expr(self, &novum.expr);
-                HirExprKind::Verte { source: Box::new(source), target, entries: None }
-            }
-        }
-    }
 
     fn lower_finge(&mut self, finge: &crate::syntax::FingeExpr) -> HirExprKind {
         let Some(variant_def_id) = self.resolver.lookup(finge.variant.name) else {
