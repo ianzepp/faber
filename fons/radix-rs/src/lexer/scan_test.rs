@@ -115,3 +115,28 @@ fn lexes_radix_numbers_and_reports_invalid_literals() {
         .iter()
         .any(|err| err.kind == LexErrorKind::InvalidNumber && err.message == "invalid hexadecimal number"));
 }
+
+#[test]
+fn lexes_unicode_range_operators() {
+    let result = lex("0‥5 0…5 0 ante 5 0 usque 5");
+    assert!(result.errors.is_empty());
+
+    let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
+    let expected = vec![
+        TokenKind::Integer(0),
+        TokenKind::DotDot,
+        TokenKind::Integer(5),
+        TokenKind::Integer(0),
+        TokenKind::Ellipsis,
+        TokenKind::Integer(5),
+        TokenKind::Integer(0),
+        TokenKind::Ante,
+        TokenKind::Integer(5),
+        TokenKind::Integer(0),
+        TokenKind::Usque,
+        TokenKind::Integer(5),
+        TokenKind::Eof,
+    ];
+
+    assert_eq!(kinds, expected);
+}

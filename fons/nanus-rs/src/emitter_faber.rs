@@ -722,7 +722,7 @@ fn emit_expr(expr: &Expr) -> String {
             inclusive,
             ..
         } => {
-            let op = if *inclusive { " usque " } else { " ante " };
+            let op = if *inclusive { "…" } else { "‥" };
             format!("{}{}{}", emit_expr(start), op, emit_expr(end))
         }
         Expr::PostfixNovum { expr, typus, .. } => {

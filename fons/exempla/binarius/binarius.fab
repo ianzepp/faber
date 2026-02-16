@@ -104,12 +104,12 @@
 # GRAMMAR: Range
 # ----------------------------------------------------------------------------
 #
-#   range :← additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
+#   range :← additive (('‥' | '…' | 'ante' | 'usque') additive ('per' additive)?)?
 #
 # Range operators for numeric iteration:
-#   - '..' and 'ante': exclusive end (0..10 yields 0-9)
-#   - 'usque': inclusive end (0 usque 10 yields 0-10)
-#   - 'per': step value (0..10 per 2 yields 0, 2, 4, 6, 8)
+#   - '‥' and 'ante': exclusive end (0‥10 yields 0-9)
+#   - '…' and 'usque': inclusive end (0…10 yields 0-10)
+#   - 'per': step value (0‥10 per 2 yields 0, 2, 4, 6, 8)
 #
 # Latin: 'ante' ← "before", 'usque' ← "up to", 'per' ← "by/through".
 #

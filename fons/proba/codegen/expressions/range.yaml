@@ -5,7 +5,7 @@
 # Note: Range expressions outside for-loops compile to array/list creation
 
 - name: exclusive range
-  source:fixum nums ← 0..5
+  source:fixum nums ← 0‥5
   expect:
       ts: 'const nums = Array.from({length: 5 - 0}, (_, i) => 0 + i);'
       py: 'nums = list(range(0, 5))'
@@ -16,10 +16,10 @@
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '0..5'
+          - '0‥5'
 
-- name: inclusive range with usque
-  source:fixum nums ← 0 usque 5
+- name: inclusive range with …
+  source:fixum nums ← 0…5
   expect:
       ts: 'const nums = Array.from({length: 5 - 0 + 1}, (_, i) => 0 + i);'
       py: 'nums = list(range(0, 5 + 1))'
@@ -30,10 +30,10 @@
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '0 usque 5'
+          - '0…5'
 
 - name: range with variables
-  source:fixum seq ← start..end
+  source:fixum seq ← start‥end
   expect:
       ts: 'const seq = Array.from({length: end - start}, (_, i) => start + i);'
       py: 'seq = list(range(start, end))'
@@ -44,10 +44,10 @@
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - 'start..end'
+          - 'start‥end'
 
 - name: range with step
-  source:fixum evens ← 0..10 per 2
+  source:fixum evens ← 0‥10 per 2
   expect:
       ts: 'const evens = Array.from({length: Math.ceil((10 - 0) / 2)}, (_, i) => 0 + i * 2);'
       py: 'evens = list(range(0, 10, 2))'
@@ -56,10 +56,10 @@
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '0..10 per 2'
+          - '0‥10 per 2'
 
 - name: inclusive range with step
-  source:fixum odds ← 1 usque 9 per 2
+  source:fixum odds ← 1…9 per 2
   expect:
       ts: 'const odds = Array.from({length: Math.floor((9 - 1) / 2) + 1}, (_, i) => 1 + i * 2);'
       py: 'odds = list(range(1, 9 + 1, 2))'
@@ -68,84 +68,84 @@
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '1 usque 9 per 2'
+          - '1…9 per 2'
 
 - name: range with negative step
-  source:fixum countdown ← 10..0 per -1
+  source:fixum countdown ← 10‥0 per -1
   expect:
       ts: 'const countdown = Array.from({length: Math.ceil((0 - 10) / -1)}, (_, i) => 10 + i * -1);'
       py: 'countdown = list(range(10, 0, -1))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '10..0 per -1'
+          - '10‥0 per -1'
 
 - name: range with expression bounds
-  source:fixum seq ← (start + 1)..(end - 1)
+  source:fixum seq ← (start + 1)‥(end - 1)
   expect:
       ts: 'const seq = Array.from({length: (end - 1) - (start + 1)}, (_, i) => (start + 1) + i);'
       py: 'seq = list(range((start + 1), (end - 1)))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '(start + 1)..(end - 1)'
+          - '(start + 1)‥(end - 1)'
 
 - name: range with zero length (same start/end)
-  source:fixum empty ← 5..5
+  source:fixum empty ← 5‥5
   expect:
       ts: 'const empty = Array.from({length: 5 - 5}, (_, i) => 5 + i);'
       py: 'empty = list(range(5, 5))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '5..5'
+          - '5‥5'
 
 - name: range with member expression bounds
-  source:fixum seq ← config.start..config.end
+  source:fixum seq ← config.start‥config.end
   expect:
       ts: 'const seq = Array.from({length: config.end - config.start}, (_, i) => config.start + i);'
       py: 'seq = list(range(config.start, config.end))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - 'config.start..config.end'
+          - 'config.start‥config.end'
 
 - name: range with call bounds
-  source:fixum seq ← getStart()..getEnd()
+  source:fixum seq ← getStart()‥getEnd()
   expect:
       ts: 'const seq = Array.from({length: getEnd() - getStart()}, (_, i) => getStart() + i);'
       py: 'seq = list(range(getStart(), getEnd()))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - 'getStart()..getEnd()'
+          - 'getStart()‥getEnd()'
 
 - name: large range
-  source:fixum big ← 0..10000
+  source:fixum big ← 0‥10000
   expect:
       ts: 'const big = Array.from({length: 10000 - 0}, (_, i) => 0 + i);'
       py: 'big = list(range(0, 10000))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '0..10000'
+          - '0‥10000'
 
 - name: range with large step
-  source:fixum evens ← 0..100 per 10
+  source:fixum evens ← 0‥100 per 10
   expect:
       ts: 'const evens = Array.from({length: Math.ceil((100 - 0) / 10)}, (_, i) => 0 + i * 10);'
       py: 'evens = list(range(0, 100, 10))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '0..100 per 10'
+          - '0‥100 per 10'
 
 - name: inclusive range with step (edge)
-  source:fixum seq ← 0 usque 10 per 2
+  source:fixum seq ← 0…10 per 2
   expect:
       ts: 'const seq = Array.from({length: Math.floor((10 - 0) / 2) + 1}, (_, i) => 0 + i * 2);'
       py: 'seq = list(range(0, 10 + 1, 2))'
       zig:
           - '@compileError("Range expressions must be used in for loops")'
       fab:
-          - '0 usque 10 per 2'
+          - '0…10 per 2'

@@ -264,7 +264,7 @@ iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expres
 - `dum` = while
 - `itera ex...fixum`/`itera ex...varia` = for-of (values)
 - `itera de...fixum`/`itera de...varia` = for-in (keys)
-- `itera pro range ('per' step)? fixum/varia i` = range iteration (e.g. `itera pro 0..10 per 2 fixum i { scribe i }`)
+- `itera pro range ('per' step)? fixum/varia i` = range iteration (e.g. `itera pro 0‥10 per 2 fixum i { scribe i }`)
 
 ### Switch/Match
 
@@ -349,7 +349,7 @@ bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
 bitwiseAnd := shift ('&' shift)*
 shift      := range (shiftOp range)*
 shiftOp    := 'sinistratum' | 'dextratum'
-range      := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
+range      := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' additive)?)?
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
 unary      := ('-' | '~' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast

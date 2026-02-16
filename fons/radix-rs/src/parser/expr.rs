@@ -29,7 +29,7 @@
 //! 8. Bitwise XOR (^)
 //! 9. Bitwise AND (&)
 //! 10. Shift (sinistratum, dextratum)
-//! 11. Range (.., ante, usque)
+//! 11. Range (‥, …, ante, usque)
 //! 12. Additive (+, -)
 //! 13. Multiplicative (*, /, %)
 //! 14. Unary (-, ~, non, nulla, etc.)
@@ -358,12 +358,15 @@ impl Parser {
         let kind = if self.check(&TokenKind::DotDot) {
             self.advance();
             Some(RangeKind::Exclusive)
+        } else if self.check(&TokenKind::Ellipsis) {
+            self.advance();
+            Some(RangeKind::Inclusive)
         } else if self.check_keyword(TokenKind::Ante) {
             self.advance();
-            Some(RangeKind::Ante)
+            Some(RangeKind::Exclusive)
         } else if self.check_keyword(TokenKind::Usque) {
             self.advance();
-            Some(RangeKind::Usque)
+            Some(RangeKind::Inclusive)
         } else {
             None
         };

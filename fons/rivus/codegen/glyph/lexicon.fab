@@ -80,7 +80,8 @@ functio glyphOperator(de textus token) → textus {
         casu "!" { redde "\u00AC" }   # Not sign
 
         # Other operators
-        casu ".." { redde "\u2025" }  # Two dot leader (range)
+        casu "‥" { redde "\u2025" }  # Two dot leader (range)
+        casu "…" { redde "\u2026" }  # Horizontal ellipsis (inclusive range)
         casu "->" { redde "\u2192" }  # Rightwards arrow
         casu "=>" { redde "\u21D2" }  # Rightwards double arrow
     }

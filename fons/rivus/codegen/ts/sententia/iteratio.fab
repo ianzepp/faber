@@ -6,7 +6,7 @@
 #   per x de lista { ... }  -> for (const x in lista) { ... }
 #   per x de tabula { ... } -> for (const x of tabula.keys()) { ... }
 #   per x ex lista { ... }  -> for (const x of lista) { ... }
-#   per x ex 0..10 { ... }  -> for (let x = 0; x < 10; x++) { ... }
+#   per x ex 0‥10 { ... }   -> for (let x = 0; x < 10; x++) { ... }
 
 importa ex "../../../ast/sententia" privata Sententia
 importa ex "../../../ast/sententia" privata IteratioGenus

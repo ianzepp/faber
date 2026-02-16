@@ -771,7 +771,24 @@ fn itera_de_array_index_no_longer_leaves_infer_types() {
 fn itera_pro_range_no_longer_leaves_infer_types() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  itera pro 0..5 fixum i {
+  itera pro 0‥5 fixum i {
+    scribe i
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("cannot infer expression type")));
+}
+
+#[test]
+fn itera_pro_inclusive_range_glyph_compiles() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  itera pro 0…5 fixum i {
     scribe i
   }
 }"#;
@@ -829,7 +846,7 @@ fn compile_supports_extended_binary_operators() {
   scribe a ≡ b
   scribe a ≠ b
   scribe maybe est nihil
-  scribe a intra 0..3
+  scribe a intra 0‥3
   scribe a inter [1, 2, 3]
   scribe maybe vel 0
 }"#;
@@ -1132,7 +1149,7 @@ fn cursor_iteration_accumulator_from_empty_array_no_longer_reports_inference_err
     let session = session(Target::Rust);
     let source = r#"@ cursor
 functio rangeSync(numerus n) -> numerus {
-  itera pro 0..n fixum i {
+  itera pro 0‥n fixum i {
     cede i
   }
 }

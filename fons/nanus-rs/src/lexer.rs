@@ -127,7 +127,7 @@ impl<'a> Lexer<'a> {
             "===", "!==", "==", "!=", "<=", ">=", "&&", "||", "??", "+=", "-=", "*=", "/=", "->",
             // Unicode core operators
             "←", "≡", "≠", "≤", "≥", "→",
-            "..", // Single-char
+            "‥", "…", "..", // Range glyphs + compatibility alias
             "+", "-", "*", "/", "%", "<", ">", "=", "&", "|", "^", "~",
         ];
 
@@ -258,9 +258,15 @@ impl<'a> Lexer<'a> {
             let mut matched = false;
             for op in &self.operators.clone() {
                 if self.match_str(op) {
+                    let (tag, valor) = match *op {
+                        // Accept glyph ranges while preserving parser compatibility.
+                        "‥" => ("Operator", "..".to_string()),
+                        "…" => ("Keyword", "usque".to_string()),
+                        _ => ("Operator", op.to_string()),
+                    };
                     tokens.push(Token {
-                        tag: "Operator".to_string(),
-                        valor: op.to_string(),
+                        tag: tag.to_string(),
+                        valor,
                         locus: loc,
                     });
                     matched = true;

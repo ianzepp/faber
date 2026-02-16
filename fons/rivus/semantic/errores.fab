@@ -102,7 +102,7 @@ functio hintForAssumedGlobal(de textus nomen) → si textus {
         casu "None" reddit "Use nihil for null values."
         casu "True" reddit "Use verum for boolean true."
         casu "False" reddit "Use falsum for boolean false."
-        casu "range" reddit "Use ante/usque operators: 0 ante 10, 0 usque 10"
+        casu "range" reddit "Use range operators: 0‥10, 0…10 (aliases: ante/usque)"
         casu "enumerate" reddit "Use 'ex' with index: ex lista fixum [index, item] { }"
         casu "zip" reddit "Zip utilities may be available in norma."
         casu "input" reddit "Use lege lineam for reading input."

@@ -111,7 +111,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) → SemanticTypus {
             redde resolveCondicio(r, expr)
         }
 
-        # Range expression (1..10)
+        # Range expression (1‥10)
         casu AmbitusExpressia {
             redde genericumTypus("lista", [NUMERUS], falsum)
         }

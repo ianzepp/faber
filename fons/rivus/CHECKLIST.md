@@ -71,7 +71,7 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | Rest in destructuring        | ● | ○ | ○ | ○ | ○ |
 | Skip pattern (`_`)           | ● | ○ | ○ | ○ | ○ |
 | Negative indices `[-1]`      | ● | ○ | ○ | ○ | ○ |
-| Slicing `[1..3]`             | ● | ○ | ○ | ○ | ○ |
+| Slicing `[1‥3]`             | ● | ○ | ○ | ○ | ○ |
 | Inclusive slicing (`usque`)  | ● | ○ | ○ | ○ | ○ |
 | Initializer expressions      | ● | ● | ○ | ○ | ○ |
 
@@ -123,7 +123,8 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | `ex...fiet` (async for)       | ● | ○ | ○ | ○ | ○ |
 | `ex...pro (i, n)` (indexed)   | ● | ○ | ○ | ○ | ○ |
 | `de...pro` (for-in)           | ● | ○ | ○ | ○ | ○ |
-| Range `..` (exclusive)        | ● | ● | ○ | ○ | ○ |
+| Range `‥` (exclusive)         | ● | ● | ○ | ○ | ○ |
+| Range `…` (inclusive)         | ● | ● | ○ | ○ | ○ |
 | Range `ante` (exclusive)      | ● | ● | ○ | ○ | ○ |
 | Range `usque` (inclusive)     | ● | ● | ○ | ○ | ○ |
 | Range with step (`per`)       | ● | ○ | ○ | ○ | ○ |
@@ -379,4 +380,3 @@ Ownership system, borrowing (`&`/`&mut`), `Option<T>`/`Result<T,E>` instead of n
 ### C++23
 
 `std::expected<T,E>` for errors, `std::print` for output, concepts for interfaces, coroutines for async, RAII for cleanup.
-

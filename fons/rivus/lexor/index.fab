@@ -699,7 +699,7 @@ genus Lexor {
                 }
             }
 
-            # ---- Dot operators: . or .. or ... ----
+            # ---- Dot operators: ., ‥, …, or ... ----
             casu "." {
                 si ego.specta(0) ≡ "." {
                     ego.procede()
@@ -707,11 +707,19 @@ genus Lexor {
                         ego.procede()
                         ego.addeSymbolum(SymbolumGenus.PunctumTer, "...", loc)  # spread/rest
                     } secus {
-                        ego.addeSymbolum(SymbolumGenus.PunctumBis, "..", loc)   # range
+                        ego.addeSymbolum(SymbolumGenus.PunctumBis, "‥", loc)   # compatibility range
                     }
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Punctum, c, loc)             # member access
                 }
+            }
+            casu "‥" {
+                ego.procede()
+                ego.addeSymbolum(SymbolumGenus.PunctumBis, "‥", loc)             # exclusive range
+            }
+            casu "…" {
+                ego.procede()
+                ego.addeVerbum("usque", loc, VerbumId.Usque)                     # inclusive range glyph alias
             }
 
             # ---- Arithmetic operators ----

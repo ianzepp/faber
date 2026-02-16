@@ -162,7 +162,7 @@ functio parseDumSententia(in Resolvitor r) → Sententia {
 #
 # Examples:
 #   itera ex items fixum item { scribe item }
-#   itera pro 0 ante 10 varia i { scribe i }
+#   itera pro 0‥10 varia i { scribe i }
 #   itera de obiectum fixum clavis { scribe clavis }
 @ publica
 functio parseIteraSententia(in Resolvitor r) → Sententia {
@@ -198,7 +198,7 @@ functio parseIteraSententia(in Resolvitor r) → Sententia {
     }
 
     si species ≡ IteratioGenus.Pro et non estAmbitus {
-        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "'itera pro' requires a range expression (use .. or ante/usque)")
+        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "'itera pro' requires a range expression (use ‥/… or ante/usque)")
     } sin estAmbitus et species ≠ IteratioGenus.Pro {
         p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "range expressions require 'itera pro', not 'itera " + (species ≡ IteratioGenus.Ex sic "ex" secus "de") + "'")
     }

@@ -254,7 +254,7 @@
           - 'value ?? defaultValue'
 
 - name: range containment with intra (exclusive end)
-  source:x intra 0..100
+  source:x intra 0‥100
   expect:
       ts: '(x >= 0 && x < 100);'
       py: '(x >= 0 and x < 100)'
@@ -265,10 +265,10 @@
       zig:
           - '(x >= 0 and x < 100)'
       fab:
-          - 'x intra 0..100'
+          - 'x intra 0‥100'
 
-- name: range containment with intra (inclusive end with usque)
-  source:age intra 18 usque 65
+- name: range containment with intra (inclusive end with …)
+  source:age intra 18…65
   expect:
       ts: '(age >= 18 && age <= 65);'
       py: '(age >= 18 and age <= 65)'
@@ -279,7 +279,7 @@
       zig:
           - '(age >= 18 and age <= 65)'
       fab:
-          - 'age intra 18 usque 65'
+          - 'age intra 18…65'
 
 - name: range containment with intra (explicit exclusive with ante)
   source:x intra 0 ante 10
@@ -324,7 +324,7 @@
           - 'status inter ["pending", "active", "paused"]'
 
 - name: character range containment with intra (exclusive)
-  source:c intra "a".."z"
+  source:c intra "a"‥"z"
   expect:
       ts: '(c >= "a" && c < "z");'
       py: '(c >= "a" and c < "z")'
@@ -335,10 +335,10 @@
       zig:
           - '(c >= "a" and c < "z")'
       fab:
-          - 'c intra "a".."z"'
+          - 'c intra "a"‥"z"'
 
 - name: character range containment with intra (inclusive)
-  source:c intra "a" usque "z"
+  source:c intra "a"…"z"
   expect:
       ts: '(c >= "a" && c <= "z");'
       py: '(c >= "a" and c <= "z")'
@@ -349,10 +349,10 @@
       zig:
           - '(c >= "a" and c <= "z")'
       fab:
-          - 'c intra "a" usque "z"'
+          - 'c intra "a"…"z"'
 
 - name: character range containment for hex digits
-  source:c intra "0".."9" aut c intra "a".."f" aut c intra "A".."F"
+  source:c intra "0"‥"9" aut c intra "a"‥"f" aut c intra "A"‥"F"
   expect:
       ts: '(((c >= "0" && c < "9") || (c >= "a" && c < "f")) || (c >= "A" && c < "F"));'
       py: '(((c >= "0" and c < "9") or (c >= "a" and c < "f")) or (c >= "A" and c < "F"))'
@@ -363,7 +363,7 @@
       zig:
           - '(((c >= "0" and c < "9") or (c >= "a" and c < "f")) or (c >= "A" and c < "F"))'
       fab:
-          - 'c intra "0".."9" aut c intra "a".."f" aut c intra "A".."F"'
+          - 'c intra "0"‥"9" aut c intra "a"‥"f" aut c intra "A"‥"F"'
 
 # Ternary Expressions
 # WHY: Tests both symbolic (? :) and Latin (sic/secus) conditional forms

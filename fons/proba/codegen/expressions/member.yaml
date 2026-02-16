@@ -188,24 +188,24 @@
           - 'matrix[i][j]'
 
 - name: slice with exclusive range
-  source:arr[1..3]
+  source:arr[1‥3]
   expect:
       ts: 'arr.slice(1, 3);'
       py: 'arr[1:3]'
       zig:
           - 'arr[1..3]'
       fab:
-          - 'arr[1..3]'
+          - 'arr[1‥3]'
 
 - name: slice with inclusive range
-  source:arr[1 usque 3]
+  source:arr[1…3]
   expect:
       ts: 'arr.slice(1, 4);'
       py: 'arr[1:4]'
       zig:
           - 'arr[1..4]'
       fab:
-          - 'arr[1 usque 3]'
+          - 'arr[1…3]'
 
 - name: negative index access
   source:arr[-1]
@@ -218,14 +218,14 @@
           - 'arr[-1]'
 
 - name: negative slice range
-  source:arr[-3..-1]
+  source:arr[-3‥-1]
   expect:
       ts: 'arr.slice(-3, -1);'
       py: 'arr[-3:-1]'
       zig:
           - 'arr[arr.len - 3..arr.len - 1]'
       fab:
-          - 'arr[-3..-1]'
+          - 'arr[-3‥-1]'
 
 - name: non-null computed access
   source:arr![0]
@@ -238,11 +238,11 @@
           - 'arr![0]'
 
 - name: inclusive negative slice (to end)
-  source:arr[-3 usque -1]
+  source:arr[-3…-1]
   expect:
       ts: 'arr.slice(-3);'
       py: 'arr[-3:]'
       zig:
           - 'arr[arr.len - 3..arr.len]'
       fab:
-          - 'arr[-3 usque -1]'
+          - 'arr[-3…-1]'

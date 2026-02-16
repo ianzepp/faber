@@ -171,13 +171,9 @@ impl<'a> Lexer<'a> {
 
     fn scan_operator(&mut self, start: u32, c: char) -> Option<TokenKind> {
         let kind = match c {
-            '.' => {
-                if self.cursor.eat('.') {
-                    TokenKind::DotDot
-                } else {
-                    TokenKind::Dot
-                }
-            }
+            '.' => TokenKind::Dot,
+            '‥' => TokenKind::DotDot,
+            '…' => TokenKind::Ellipsis,
             '+' => {
                 if self.cursor.eat('=') {
                     TokenKind::PlusEq
@@ -605,7 +601,7 @@ impl<'a> Lexer<'a> {
         // Decimal number
         self.cursor.eat_while(|c| c.is_ascii_digit() || c == '_');
 
-        // WHY: Check for `.` followed by digit to distinguish floats from ranges (1..10)
+        // WHY: Check for `.` followed by digit to distinguish floats from member access.
         let is_float = if self.cursor.peek() == Some('.') && self.cursor.peek_next().is_some_and(|c| c.is_ascii_digit())
         {
             self.cursor.advance(); // consume '.'

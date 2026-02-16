@@ -714,7 +714,7 @@ pub enum ExprKind {
     Array(ArrayExpr),
     /// Object literal
     Object(ObjectExpr),
-    /// Range: x..y, x ante y, x usque y
+    /// Range: x‥y, x…y, x ante y, x usque y
     Intervallum(IntervallumExpr),
     /// Collection DSL: ab
     Ab(AbExpr),
@@ -1002,9 +1002,8 @@ pub struct IntervallumExpr {
 
 #[derive(Debug, Clone, Copy)]
 pub enum RangeKind {
-    Exclusive, // ..
-    Ante,      // ante (exclusive end)
-    Usque,     // usque (inclusive end)
+    Exclusive, // ‥ or ante
+    Inclusive, // … or usque
 }
 
 #[derive(Debug)]

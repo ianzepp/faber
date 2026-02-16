@@ -13,7 +13,7 @@
 #   bitwiseAnd := equality ('&' equality)*
 #   equality := comparison (('==' | '!=' | 'est') comparison)*
 #   comparison := range (('<' | '>') range)*
-#   range := additive (('..' | 'ante' | 'usque') additive)?
+#   range := additive (('‥' | '…' | 'ante' | 'usque') additive)?
 #   additive := multiplicative (('+' | '-') multiplicative)*
 #   multiplicative := unary (('*' | '/' | '%') unary)*
 #
@@ -346,7 +346,7 @@ functio parseComparatio(in Resolvitor r) → Expressia {
 
 # Parse range expression
 #
-# GRAMMAR: range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
+# GRAMMAR: range := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' additive)?)?
 @ publica
 functio parseAmbitus(in Resolvitor r) → Expressia {
     fixum p ← r.parser()

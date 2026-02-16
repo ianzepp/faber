@@ -84,7 +84,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) → textus {
         casu AmbitusExpressia ut e {
             fixum init ← genExpressia(g, e.initium)
             fixum fin ← genExpressia(g, e.finis)
-            fixum op ← (e.inclusivum qua bivalens) sic "usque" secus "ante"
+            fixum op ← (e.inclusivum qua bivalens) sic "…" secus "‥"
             si nonnihil e.gradus {
                 fixum step ← genExpressia(g, e.gradus qua Expressia)
                 redde scriptum("§ § § per §", init, op, fin, step)

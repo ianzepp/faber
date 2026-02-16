@@ -2,13 +2,13 @@
 
 fixum age ← 25
 
-# Basic intra with .. operator (exclusive end)
-si age intra 0..100 {
+# Basic intra with ‥ operator (exclusive end)
+si age intra 0‥100 {
     scribe "age is in valid range"
 }
 
-# intra with usque (inclusive end)
-si age intra 18 usque 65 {
+# intra with … (inclusive end)
+si age intra 18…65 {
     scribe "working age"
 }
 

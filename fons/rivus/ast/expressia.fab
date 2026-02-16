@@ -191,13 +191,13 @@ discretio Expressia {
     }
 
     # Range expression for slicing and iteration
-    # Examples: 1..10 (exclusive), 1 usque 10 (inclusive)
+    # Examples: 1‥10 (exclusive), 1…10 (inclusive)
     AmbitusExpressia {
         Locus locus
         Expressia initium
         Expressia finis
         si Expressia gradus
-        bivalens inclusivum      # true for 'usque', false for '..'
+        bivalens inclusivum      # true for '…/usque', false for '‥/ante'
     }
 
     # Type cast expression

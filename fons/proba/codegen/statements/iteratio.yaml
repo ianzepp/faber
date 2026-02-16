@@ -3,9 +3,9 @@
 #
 # Syntax:
 #   ex iterable pro item { body }       -- for-of loop
-#   ex 0..10 pro i { body }             -- range loop (exclusive)
-#   ex 0 usque 10 pro i { body }        -- range loop (inclusive)
-#   ex 0..10 per 2 pro i { body }       -- range with step
+#   ex 0‥10 pro i { body }              -- range loop (exclusive)
+#   ex 0…10 pro i { body }              -- range loop (inclusive)
+#   ex 0‥10 per 2 pro i { body }        -- range with step
 #   ex async fiet item { body }         -- async for-await
 
 # =============================================================================
@@ -39,9 +39,9 @@
 # Range Loops
 # =============================================================================
 
-# Exclusive range (0..10 means 0-9)
+# Exclusive range (0‥10 means 0-9)
 - name: exclusive range loop
-  source:'ex 0..10 pro i { scribe i }'
+  source:'ex 0‥10 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 0; i < 10; i++)'
@@ -58,12 +58,12 @@
       zig:
           - 'for (0..10) |i|'
       fab:
-          - 'ex 0..10 pro i'
+          - 'ex 0‥10 pro i'
           - 'scribe i'
 
-# Inclusive range (0 usque 10 means 0-10)
+# Inclusive range (0…10 means 0-10)
 - name: inclusive range loop
-  source:'ex 0 usque 10 pro i { scribe i }'
+  source:'ex 0…10 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 0; i <= 10; i++)'
@@ -80,12 +80,12 @@
       zig:
           - 'for (0..10 + 1) |i|'
       fab:
-          - 'ex 0 usque 10 pro i'
+          - 'ex 0…10 pro i'
           - 'scribe i'
 
 # Range with step
 - name: range loop with step
-  source:'ex 0..10 per 2 pro i { scribe i }'
+  source:'ex 0‥10 per 2 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 0; i < 10; i += 2)'
@@ -102,7 +102,7 @@
           - 'var i: usize = 0;'
           - 'while (i < 10) : (i += 2)'
       fab:
-          - 'ex 0..10 per 2 pro i'
+          - 'ex 0‥10 per 2 pro i'
           - 'scribe i'
 
 # =============================================================================
@@ -249,7 +249,7 @@
 
 # Iterate with descending range
 - name: descending range loop
-  source:'ex 10..0 per -1 pro i { scribe i }'
+  source:'ex 10‥0 per -1 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 10; i < 0; i += -1)'
@@ -258,7 +258,7 @@
           - 'for i in range(10, 0, -1):'
           - 'print(i)'
       fab:
-          - 'ex 10..0 per -1 pro i'
+          - 'ex 10‥0 per -1 pro i'
           - 'scribe i'
 
 # Iterate over member expression
@@ -336,7 +336,7 @@
 
 # Empty range iteration
 - name: empty range iteration
-  source:'ex 5..5 pro i { scribe i }'
+  source:'ex 5‥5 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 5; i < 5; i++)'
@@ -345,12 +345,12 @@
           - 'for i in range(5, 5):'
           - 'print(i)'
       fab:
-          - 'ex 5..5 pro i'
+          - 'ex 5‥5 pro i'
           - 'scribe i'
 
 # Large range iteration
 - name: large range iteration
-  source:'ex 0..1000 pro i { process(i) }'
+  source:'ex 0‥1000 pro i { process(i) }'
   expect:
       ts:
           - 'for (let i = 0; i < 1000; i++)'
@@ -359,7 +359,7 @@
           - 'for i in range(0, 1000):'
           - 'process(i)'
       fab:
-          - 'ex 0..1000 pro i'
+          - 'ex 0‥1000 pro i'
           - 'process(i)'
 
 # =============================================================================

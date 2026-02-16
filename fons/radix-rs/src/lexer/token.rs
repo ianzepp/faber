@@ -339,7 +339,8 @@ pub enum TokenKind {
     BangParen,       // !( (non-null assertion call)
 
     // === Range ===
-    DotDot, // .. (exclusive range)
+    DotDot,   // ‥ (exclusive range)
+    Ellipsis, // … (inclusive range)
 
     // === Comments ===
     LineComment(Symbol),  // // or #

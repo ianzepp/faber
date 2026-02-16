@@ -3,8 +3,8 @@
 # TRANSFORMS:
 #   ex lista fixum item { ... }   -> for _, item := range lista { ... }
 #   de tabula fixum key { ... }   -> for key := range tabula { ... }
-#   ex 0..10 fixum i { ... }      -> for i := 0; i < 10; i++ { ... }
-#   ex 0 usque 10 fixum i { ... } -> for i := 0; i <= 10; i++ { ... }
+#   ex 0‥10 fixum i { ... }       -> for i := 0; i < 10; i++ { ... }
+#   ex 0…10 fixum i { ... }       -> for i := 0; i <= 10; i++ { ... }
 
 importa ex "../../../ast/sententia" privata Sententia
 importa ex "../../../ast/sententia" privata IteratioGenus
