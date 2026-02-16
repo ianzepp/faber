@@ -37,97 +37,97 @@ importa ex "./index" privata genSententia
 importa ex "../typus" privata genTypus
 
 @ publica
-functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
+functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) → textus {
     # External declarations use TypeScript's 'declare' syntax
     si f.externa {
-        varia result = scriptum("§declare function §", g.ind(), f.nomen)
+        varia result ← scriptum("§declare function §", g.ind(), f.nomen)
 
         # Generic parameters
         si nonnihil f.generaParametra {
-            fixum gp = f.generaParametra
+            fixum gp ← f.generaParametra
             si gp.longitudo() > 0 {
-                varia names = [] innatum lista<textus>
+                varia names ← [] innatum lista<textus>
                 itera ex gp fixum p {
                     names.appende(p.nomen)
                 }
-                result = scriptum("§<§>", result, names.coniunge(", "))
+                result ← scriptum("§<§>", result, names.coniunge(", "))
             }
         }
 
         # Parameters
-        varia params = [] innatum lista<textus>
+        varia params ← [] innatum lista<textus>
         itera ex f.parametra fixum param {
             params.appende(genParametrum(g, param))
         }
-        result = scriptum("§(§)", result, params.coniunge(", "))
+        result ← scriptum("§(§)", result, params.coniunge(", "))
 
         # Return type
         si nonnihil f.typusReditus {
-            result = scriptum("§: §", result, genTypus(g, f.typusReditus novum TypusAnnotatio))
+            result ← scriptum("§: §", result, genTypus(g, f.typusReditus novum TypusAnnotatio))
         }
 
         redde scriptum("§;", result)
     }
 
-    varia result = g.ind()
+    varia result ← g.ind()
 
     # Return type verb flags
-    varia useFit = falsum
-    varia useFiunt = falsum
-    varia useFiet = falsum
-    varia useFient = falsum
+    varia useFit ← falsum
+    varia useFiunt ← falsum
+    varia useFiet ← falsum
+    varia useFient ← falsum
     si nonnihil f.reddeVerbum et non f.structor {
-        fixum rv = f.reddeVerbum qua ReddeVerbum
-        useFit = rv == ReddeVerbum.Fit
-        useFiunt = rv == ReddeVerbum.Fiunt
-        useFiet = rv == ReddeVerbum.Fiet
-        useFient = rv == ReddeVerbum.Fient
+        fixum rv ← f.reddeVerbum qua ReddeVerbum
+        useFit ← rv ≡ ReddeVerbum.Fit
+        useFiunt ← rv ≡ ReddeVerbum.Fiunt
+        useFiet ← rv ≡ ReddeVerbum.Fiet
+        useFient ← rv ≡ ReddeVerbum.Fient
     }
 
-    varia localAsync = f.asynca
-    varia localGenerator = f.generator
+    varia localAsync ← f.asynca
+    varia localGenerator ← f.generator
     si useFit {
-        localAsync = falsum
-        localGenerator = falsum
+        localAsync ← falsum
+        localGenerator ← falsum
     } sin useFiunt {
-        localAsync = falsum
-        localGenerator = verum
+        localAsync ← falsum
+        localGenerator ← verum
     } sin useFiet {
-        localAsync = verum
-        localGenerator = falsum
+        localAsync ← verum
+        localGenerator ← falsum
     } sin useFient {
-        localAsync = verum
-        localGenerator = verum
+        localAsync ← verum
+        localGenerator ← verum
     }
 
     # Visibility: class methods get public/private/protected, module-level gets export
     si g.inGenere et non f.structor {
         si nonnihil f.visibilitas {
-            fixum vis = f.visibilitas qua Visibilitas
-            si vis == Visibilitas.Publica {
-                result = scriptum("§public ", result)
-            } sin vis == Visibilitas.Protecta {
-                result = scriptum("§protected ", result)
+            fixum vis ← f.visibilitas qua Visibilitas
+            si vis ≡ Visibilitas.Publica {
+                result ← scriptum("§public ", result)
+            } sin vis ≡ Visibilitas.Protecta {
+                result ← scriptum("§protected ", result)
             } secus {
-                result = scriptum("§private ", result)
+                result ← scriptum("§private ", result)
             }
         }
         si f.abstracta {
-            result = scriptum("§abstract ", result)
+            result ← scriptum("§abstract ", result)
         }
     } secus {
         # Module-level: export when public
         si nonnihil f.visibilitas {
-            fixum vis = f.visibilitas qua Visibilitas
-            si vis == Visibilitas.Publica {
-                result = scriptum("§export ", result)
+            fixum vis ← f.visibilitas qua Visibilitas
+            si vis ≡ Visibilitas.Publica {
+                result ← scriptum("§export ", result)
             }
         }
     }
 
     # Async prefix
     si localAsync {
-        result = scriptum("§async ", result)
+        result ← scriptum("§async ", result)
     }
 
     # Function keyword (or constructor)
@@ -135,133 +135,133 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
     #      But nested functions inside method bodies DO need 'function'.
     #      inFunctioCorpus tracks whether we're inside a function body.
     si f.structor {
-        result = scriptum("§constructor", result)
+        result ← scriptum("§constructor", result)
     } sin g.inGenere et non g.inFunctioCorpus {
         si localGenerator {
-            result = scriptum("§*§", result, f.nomen)
+            result ← scriptum("§*§", result, f.nomen)
         } secus {
-            result = scriptum("§§", result, f.nomen)
+            result ← scriptum("§§", result, f.nomen)
         }
     } secus {
         si localGenerator {
-            result = scriptum("§function* §", result, f.nomen)
+            result ← scriptum("§function* §", result, f.nomen)
         } secus {
-            result = scriptum("§function §", result, f.nomen)
+            result ← scriptum("§function §", result, f.nomen)
         }
     }
 
     # Generic parameters
     si nonnihil f.generaParametra {
-        fixum gp = f.generaParametra
+        fixum gp ← f.generaParametra
         si gp.longitudo() > 0 {
-            varia names = [] innatum lista<textus>
+            varia names ← [] innatum lista<textus>
             itera ex gp fixum p {
                 names.appende(p.nomen)
             }
-            result = scriptum("§<§>", result, names.coniunge(", "))
+            result ← scriptum("§<§>", result, names.coniunge(", "))
         }
     }
 
     # Parameters
-    varia params = [] innatum lista<textus>
+    varia params ← [] innatum lista<textus>
     itera ex f.parametra fixum param {
         params.appende(genParametrum(g, param))
     }
-    result = scriptum("§(§)", result, params.coniunge(", "))
+    result ← scriptum("§(§)", result, params.coniunge(", "))
 
     si nonnihil f.typusReditus et non f.structor {
-        fixum base = genTypus(g, f.typusReditus novum TypusAnnotatio)
+        fixum base ← genTypus(g, f.typusReditus novum TypusAnnotatio)
         si useFiunt {
-            result = scriptum("§: Generator<§>", result, base)
+            result ← scriptum("§: Generator<§>", result, base)
         } sin useFient {
-            result = scriptum("§: AsyncGenerator<§>", result, base)
+            result ← scriptum("§: AsyncGenerator<§>", result, base)
         } sin useFiet {
-            result = scriptum("§: Promise<§>", result, base)
+            result ← scriptum("§: Promise<§>", result, base)
         } sin localGenerator {
             # Generator functions wrap yield type in Generator/AsyncGenerator.
             si localAsync {
-                result = scriptum("§: AsyncGenerator<§>", result, base)
+                result ← scriptum("§: AsyncGenerator<§>", result, base)
             } secus {
-                result = scriptum("§: Generator<§>", result, base)
+                result ← scriptum("§: Generator<§>", result, base)
             }
         } secus {
             # Async functions return Promise<T>.
             si localAsync {
-                result = scriptum("§: Promise<§>", result, base)
+                result ← scriptum("§: Promise<§>", result, base)
             } secus {
-                result = scriptum("§: §", result, base)
+                result ← scriptum("§: §", result, base)
             }
         }
     }
 
     # Body
     si f.abstracta aut nihil f.corpus {
-        result = scriptum("§;", result)
+        result ← scriptum("§;", result)
         redde result
     }
 
     si nonnihil f.corpus {
         # Context flags for cede/iace lowering
-        fixum prevInCursore = g.inCursore
-        fixum prevInFlumina = g.inFlumina
-        fixum prevInFiunt = g.inFiunt
-        fixum prevInFiet = g.inFiet
-        fixum prevInFient = g.inFient
-        fixum prevTabula = g.tabulaNominata
-        fixum prevInFunctioCorpus = g.inFunctioCorpus
+        fixum prevInCursore ← g.inCursore
+        fixum prevInFlumina ← g.inFlumina
+        fixum prevInFiunt ← g.inFiunt
+        fixum prevInFiet ← g.inFiet
+        fixum prevInFient ← g.inFient
+        fixum prevTabula ← g.tabulaNominata
+        fixum prevInFunctioCorpus ← g.inFunctioCorpus
 
-        varia localTabula = [] innatum lista<textus>
+        varia localTabula ← [] innatum lista<textus>
         itera ex f.parametra fixum param {
             si nonnihil param.typus {
-                fixum typus = param.typus novum TypusAnnotatio
-                si typus.nomen == "tabula" {
+                fixum typus ← param.typus novum TypusAnnotatio
+                si typus.nomen ≡ "tabula" {
                     localTabula.appende(param.nomen)
                 }
             }
         }
 
-        g.inCursore = localGenerator
-        g.tabulaNominata = localTabula
-        g.inFunctioCorpus = verum
+        g.inCursore ← localGenerator
+        g.tabulaNominata ← localTabula
+        g.inFunctioCorpus ← verum
 
         si nonnihil f.reddeVerbum {
-            g.inFlumina = useFit aut useFiet
-            g.inFiet = useFiet
-            g.inFiunt = useFiunt
-            g.inFient = useFient
+            g.inFlumina ← useFit aut useFiet
+            g.inFiet ← useFiet
+            g.inFiunt ← useFiunt
+            g.inFient ← useFient
             si g.inFlumina aut g.inFiet aut g.inFiunt aut g.inFient {
-                g.requisita.flumina = verum
+                g.requisita.flumina ← verum
             }
         }
 
         g.intraProfundum()
-        varia body = genSententia(g, f.corpus qua Sententia)
+        varia body ← genSententia(g, f.corpus qua Sententia)
 
         # fiunt/fient always end with done()
         si g.inFiunt aut g.inFient {
-            si body != "" {
-                body = scriptum("§\n§yield respond.done();", body, g.ind())
+            si body ≠ "" {
+                body ← scriptum("§\n§yield respond.done();", body, g.ind())
             } secus {
-                body = scriptum("§yield respond.done();", g.ind())
+                body ← scriptum("§yield respond.done();", g.ind())
             }
         }
 
         g.exiProfundum()
 
-        g.inCursore = prevInCursore
-        g.inFlumina = prevInFlumina
-        g.inFiunt = prevInFiunt
-        g.inFiet = prevInFiet
-        g.inFient = prevInFient
-        g.tabulaNominata = prevTabula
-        g.inFunctioCorpus = prevInFunctioCorpus
+        g.inCursore ← prevInCursore
+        g.inFlumina ← prevInFlumina
+        g.inFiunt ← prevInFiunt
+        g.inFiet ← prevInFiet
+        g.inFient ← prevInFient
+        g.tabulaNominata ← prevTabula
+        g.inFunctioCorpus ← prevInFunctioCorpus
 
         # Check for exitus modifier to wrap body with exit code handling
-        varia exitusNomen = nihil qua si textus
+        varia exitusNomen ← nihil qua si textus
         itera ex f.modificatores fixum mod {
             discerne mod {
                 casu ExitusModificator ut e {
-                    exitusNomen = e.nomen
+                    exitusNomen ← e.nomen
                     rumpe
                 }
                 casu _ tacet
@@ -269,25 +269,25 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
         }
 
         si nonnihil exitusNomen {
-            fixum ind = g.ind()
-            fixum codeName = exitusNomen qua textus
-            result = scriptum("§ {\n§  let § = 0;\n§\n§  process.exit(§);\n§}", result, ind, codeName, body, ind, codeName, ind)
+            fixum ind ← g.ind()
+            fixum codeName ← exitusNomen qua textus
+            result ← scriptum("§ {\n§  let § = 0;\n§\n§  process.exit(§);\n§}", result, ind, codeName, body, ind, codeName, ind)
         } sin useFit {
-            fixum ind = g.ind()
-            result = scriptum("§ {\n§  return asFit(function* () {\n§\n§  });\n§}", result, ind, body, ind, ind)
+            fixum ind ← g.ind()
+            result ← scriptum("§ {\n§  return asFit(function* () {\n§\n§  });\n§}", result, ind, body, ind, ind)
         } sin useFiunt {
-            fixum ind = g.ind()
-            result = scriptum("§ {\n§  yield* asFiunt((function* () {\n§\n§  })());\n§}", result, ind, body, ind, ind)
+            fixum ind ← g.ind()
+            result ← scriptum("§ {\n§  yield* asFiunt((function* () {\n§\n§  })());\n§}", result, ind, body, ind, ind)
         } sin useFiet {
-            fixum ind = g.ind()
-            result = scriptum("§ {\n§  return await asFiet(async function* () {\n§\n§  });\n§}", result, ind, body, ind, ind)
+            fixum ind ← g.ind()
+            result ← scriptum("§ {\n§  return await asFiet(async function* () {\n§\n§  });\n§}", result, ind, body, ind, ind)
         } sin useFient {
-            fixum ind = g.ind()
-            result = scriptum("§ {\n§  yield* asFient((async function* () {\n§\n§  })());\n§}", result, ind, body, ind, ind)
-        } sin body == "" {
-            result = scriptum("§ {}", result)
+            fixum ind ← g.ind()
+            result ← scriptum("§ {\n§  yield* asFient((async function* () {\n§\n§  })());\n§}", result, ind, body, ind, ind)
+        } sin body ≡ "" {
+            result ← scriptum("§ {}", result)
         } secus {
-            result = scriptum("§ {\n§\n§}", result, body, g.ind())
+            result ← scriptum("§ {\n§\n§}", result, body, g.ind())
         }
     }
 
@@ -295,33 +295,33 @@ functio genFunctio(in TsGenerator g, de FunctioDeclaratio f) -> textus {
 }
 
 @ publica
-functio genParametrum(in TsGenerator g, de Parametrum param) -> textus {
-    varia result = ""
+functio genParametrum(in TsGenerator g, de Parametrum param) → textus {
+    varia result ← ""
 
     si param.residuum {
-        result = "..."
+        result ← "..."
     }
 
     # Use alias if present
     si nonnihil param.alias {
-        result = scriptum("§§", result, param.alias qua textus)
+        result ← scriptum("§§", result, param.alias qua textus)
     } secus {
-        result = scriptum("§§", result, param.nomen)
+        result ← scriptum("§§", result, param.nomen)
     }
 
     # Optional marker (TypeScript `?:`), only if no default.
     si param.optionalis et nihil param.praedefinitum et non param.residuum {
-        result = scriptum("§?", result)
+        result ← scriptum("§?", result)
     }
 
     # Type
     si nonnihil param.typus {
-        result = scriptum("§: §", result, genTypus(g, param.typus novum TypusAnnotatio))
+        result ← scriptum("§: §", result, genTypus(g, param.typus novum TypusAnnotatio))
     }
 
     # Default value
     si nonnihil param.praedefinitum {
-        result = scriptum("§ = §", result, genExpressia(g, param.praedefinitum))
+        result ← scriptum("§ = §", result, genExpressia(g, param.praedefinitum))
     }
 
     redde result

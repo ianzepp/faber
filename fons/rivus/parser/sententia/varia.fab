@@ -35,20 +35,20 @@ importa ex "./imperium" privata parseCapeClausula
 
 # Parse an identifier (simple name reference)
 @ publica
-functio parseNomen(in Resolvitor r) -> textus {
-    fixum p = r.parser()
-    fixum symbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+functio parseNomen(in Resolvitor r) → textus {
+    fixum p ← r.parser()
+    fixum symbolum ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
     redde symbolum.valor
 }
 
 # Parse identifier or keyword (for import specifiers, property names)
 # Keywords like 'scribe' can be valid identifiers in some contexts
 @ publica
-functio parseNomenVelVerbum(in Resolvitor r) -> textus {
-    fixum p = r.parser()
-    fixum s = p.specta(0)
+functio parseNomenVelVerbum(in Resolvitor r) → textus {
+    fixum p ← r.parser()
+    fixum s ← p.specta(0)
 
-    si s.species === SymbolumGenus.Nomen aut s.species === SymbolumGenus.Verbum {
+    si s.species ≡ SymbolumGenus.Nomen aut s.species ≡ SymbolumGenus.Verbum {
         p.procede()
         redde s.valor
     }
@@ -69,40 +69,40 @@ functio parseNomenVelVerbum(in Resolvitor r) -> textus {
 #          | 'ex' expr (fixum|varia) '[' pattern ']' ('{' block '}' | '=' expr)
 # spec := IDENT ('ut' IDENT)? | 'ceteri' IDENT
 @ publica
-functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseDestructuraSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("ex", ParserErrorCodice.ExpectaturEx)
-    fixum fons = r.expressia()
+    fixum fons ← r.expressia()
 
     # Binding kind
-    fixum verbum = p.specta(0).verbum
-    varia species = VariaGenus.Fixum
+    fixum verbum ← p.specta(0).verbum
+    varia species ← VariaGenus.Fixum
     elige verbum {
-        casu "fixum" { species = VariaGenus.Fixum }
-        casu "varia" { species = VariaGenus.Varia }
+        casu "fixum" { species ← VariaGenus.Fixum }
+        casu "varia" { species ← VariaGenus.Varia }
     }
     p.procede()
 
     # Array destructuring: ex source fixum [a, b] or ex source fixum [k, v] { }
     si p.proba(SymbolumGenus.QuadratusSin) {
-        fixum elementa = parseSeriesDestructura(r)
+        fixum elementa ← parseSeriesDestructura(r)
 
         # Check for block body -> for-of loop with destructuring
         si p.proba(SymbolumGenus.UncusSin) {
-            fixum corpus = parseMassaSententia(r)
+            fixum corpus ← parseMassaSententia(r)
 
             # Optional catch
-            varia cape = nihil qua si CapeClausula
+            varia cape ← nihil qua si CapeClausula
             si p.probaVerbum("cape") {
-                cape = parseCapeClausula(r)
+                cape ← parseCapeClausula(r)
             }
 
-            fixum asynca = falsum
-            fixum mutabilis = species == VariaGenus.Varia
-            varia variabilis = nihil qua si IteratioVariabilis
-            variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+            fixum asynca ← falsum
+            fixum mutabilis ← species ≡ VariaGenus.Varia
+            varia variabilis ← nihil qua si IteratioVariabilis
+            variabilis ← finge Series { elementa: elementa } qua IteratioVariabilis
 
             redde finge IteratioSententia {
                 locus: locus,
@@ -126,23 +126,23 @@ functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
     }
 
     # Object destructuring: ex persona fixum nomen, aetas
-    varia specificatores = [] innatum lista<ImportaSpecificator>
+    varia specificatores ← [] innatum lista<ImportaSpecificator>
 
     fac {
-        fixum specLocus = p.locusActualis()
+        fixum specLocus ← p.locusActualis()
 
-        varia residuum = falsum
+        varia residuum ← falsum
         si p.probaVerbum("ceteri") {
-            residuum = verum
+            residuum ← verum
             p.procede()
         }
 
-        fixum importatum = parseNomenVelVerbum(r)
-        varia locale = importatum
+        fixum importatum ← parseNomenVelVerbum(r)
+        varia locale ← importatum
 
         si p.probaVerbum("ut") {
             p.procede()
-            locale = parseNomenVelVerbum(r)
+            locale ← parseNomenVelVerbum(r)
         }
 
         specificatores.appende({
@@ -164,31 +164,31 @@ functio parseDestructuraSententia(in Resolvitor r) -> Sententia {
 
 # Parse array destructuring pattern: [a, b, ceteri rest]
 @ publica
-functio parseSeriesDestructura(in Resolvitor r) -> lista<SeriesDestructuraElementum> {
-    fixum p = r.parser()
+functio parseSeriesDestructura(in Resolvitor r) → lista<SeriesDestructuraElementum> {
+    fixum p ← r.parser()
 
     p.expecta(SymbolumGenus.QuadratusSin, ParserErrorCodice.ExpectaturQuadratusSin)
 
-    varia elementa = [] innatum lista<SeriesDestructuraElementum>
+    varia elementa ← [] innatum lista<SeriesDestructuraElementum>
     si non p.proba(SymbolumGenus.QuadratusDex) {
         fac {
-            fixum locus = p.locusActualis()
-            varia residuum = falsum
-            varia omissum = falsum
-            varia nomen = nihil qua si textus
+            fixum locus ← p.locusActualis()
+            varia residuum ← falsum
+            varia omissum ← falsum
+            varia nomen ← nihil qua si textus
 
             si p.probaVerbum("ceteri") {
-                residuum = verum
+                residuum ← verum
                 p.procede()
             }
 
-            fixum s = p.specta(0)
-            si s.species === SymbolumGenus.Nomen aut s.species === SymbolumGenus.Verbum {
+            fixum s ← p.specta(0)
+            si s.species ≡ SymbolumGenus.Nomen aut s.species ≡ SymbolumGenus.Verbum {
                 p.procede()
-                si s.valor == "_" {
-                    omissum = verum
+                si s.valor ≡ "_" {
+                    omissum ← verum
                 } secus {
-                    nomen = s.valor
+                    nomen ← s.valor
                 }
             } secus {
                 p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", s.valor))
@@ -222,17 +222,17 @@ functio parseSeriesDestructura(in Resolvitor r) -> lista<SeriesDestructuraElemen
 # - Type-first: fixum numerus x = 42
 # - Array destructuring: fixum [a, b] = coords (TODO)
 @ publica
-functio parseVariaSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseVariaSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Get declaration kind from keyword
-    fixum verbum = p.specta(0).verbum
-    varia species = VariaGenus.Varia
+    fixum verbum ← p.specta(0).verbum
+    varia species ← VariaGenus.Varia
 
     elige verbum {
-        casu "varia" { species = VariaGenus.Varia }
-        casu "fixum" { species = VariaGenus.Fixum }
+        casu "varia" { species ← VariaGenus.Varia }
+        casu "fixum" { species ← VariaGenus.Fixum }
     }
 
     # Consume the keyword
@@ -242,9 +242,9 @@ functio parseVariaSententia(in Resolvitor r) -> Sententia {
     # Array destructuring: fixum [a, b] = coords
     # -------------------------------------------------------------------------
     si p.proba(SymbolumGenus.QuadratusSin) {
-        fixum elementa = parseSeriesDestructura(r)
+        fixum elementa ← parseSeriesDestructura(r)
         p.expecta(SymbolumGenus.Aequum, ParserErrorCodice.ExpectaturAequale)
-        fixum fons = r.expressia()
+        fixum fons ← r.expressia()
         redde finge SeriesDestructuraSententia {
             locus: locus,
             species: species,
@@ -256,25 +256,25 @@ functio parseVariaSententia(in Resolvitor r) -> Sententia {
     # -------------------------------------------------------------------------
     # Determine what follows: type or name
     # -------------------------------------------------------------------------
-    varia adnotatio = nihil qua si TypusAnnotatio
-    varia nomen = ""
+    varia adnotatio ← nihil qua si TypusAnnotatio
+    varia nomen ← ""
 
     si p.estTypusNomen(p.specta(0)) {
         # Builtin type: fixum numerus x = 42
-        adnotatio = r.adnotatio()
-        nomen = parseNomenVelVerbum(r)
+        adnotatio ← r.adnotatio()
+        nomen ← parseNomenVelVerbum(r)
     } sin p.probaVerbum("si") {
         # Nullable type: fixum si textus maybe = nihil
-        adnotatio = r.adnotatio()
-        nomen = parseNomenVelVerbum(r)
-    } sin p.proba(SymbolumGenus.Nomen) et p.specta(1).species === SymbolumGenus.Nomen {
+        adnotatio ← r.adnotatio()
+        nomen ← parseNomenVelVerbum(r)
+    } sin p.proba(SymbolumGenus.Nomen) et p.specta(1).species ≡ SymbolumGenus.Nomen {
         # Two identifiers: first is type, second is name
         # Handles user-defined types: fixum UserId id = 42
-        adnotatio = r.adnotatio()
-        nomen = parseNomenVelVerbum(r)
+        adnotatio ← r.adnotatio()
+        nomen ← parseNomenVelVerbum(r)
     } secus {
         # Just a name (type inference): fixum x = 42
-        nomen = parseNomenVelVerbum(r)
+        nomen ← parseNomenVelVerbum(r)
 
         # =====================================================================
         # SYNTAXIS ALIENA DETECTION: TypeScript-style colon type annotation
@@ -294,10 +294,10 @@ functio parseVariaSententia(in Resolvitor r) -> Sententia {
     # -------------------------------------------------------------------------
     # Parse optional initializer
     # -------------------------------------------------------------------------
-    varia valor = nihil qua si Expressia
+    varia valor ← nihil qua si Expressia
 
     si p.congruet(SymbolumGenus.Aequum) {
-        valor = r.expressia()
+        valor ← r.expressia()
     }
 
     redde finge VariaSententia {

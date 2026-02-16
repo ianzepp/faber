@@ -12,21 +12,21 @@ importa ex "../../../ast/expressia" privata LitteraGenus
 
 # Generate literal value
 @ publica
-functio genLittera(LitteraGenus species, de textus crudus) -> textus {
-    si species == LitteraGenus.Verum {
+functio genLittera(LitteraGenus species, de textus crudus) → textus {
+    si species ≡ LitteraGenus.Verum {
         redde "true"
     }
-    si species == LitteraGenus.Falsum {
+    si species ≡ LitteraGenus.Falsum {
         redde "false"
     }
-    si species == LitteraGenus.Nihil {
+    si species ≡ LitteraGenus.Nihil {
         redde "nil"
     }
-    si species == LitteraGenus.Textus {
+    si species ≡ LitteraGenus.Textus {
         # String literals need quotes
         redde scriptum("\"§\"", crudus)
     }
-    si species == LitteraGenus.Exemplar {
+    si species ≡ LitteraGenus.Exemplar {
         # Go doesn't have template literals, treat as regular string
         redde scriptum("\"§\"", crudus)
     }

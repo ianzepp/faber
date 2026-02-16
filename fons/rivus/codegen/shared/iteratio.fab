@@ -29,19 +29,19 @@ functio genAmbitusIteratio(
     in Generans g,
     de ScopusSyntaxis syn,
     de Revocata rev
-) -> textus {
-    fixum op = inclusivum sic "<=" secus "<"
+) → textus {
+    fixum op ← inclusivum sic "<=" secus "<"
 
-    varia incrementum = scriptum("§++", variabilis)
+    varia incrementum ← scriptum("§++", variabilis)
     si nonnihil gradusExpr {
-        incrementum = scriptum("§ += §", variabilis, rev.genExpr(g, gradusExpr qua Expressia))
+        incrementum ← scriptum("§ += §", variabilis, rev.genExpr(g, gradusExpr qua Expressia))
     }
 
-    fixum asyncPrefix = asynca et syn.habetAsync sic "await " secus ""
+    fixum asyncPrefix ← asynca et syn.habetAsync sic "await " secus ""
 
     # TS: for (let x = 0; x < 10; x++)
     # Go: for x := 0; x < 10; x++
-    fixum header = scriptum(
+    fixum header ← scriptum(
         "for §§§§§§; § § §; §§",
         asyncPrefix,
         syn.siCondicioPrae,
@@ -56,13 +56,13 @@ functio genAmbitusIteratio(
         syn.siCondicioPost
     )
 
-    fixum loop = scriptum("§§ {\n§\n§}", g.ind(), header, body, g.ind())
+    fixum loop ← scriptum("§§ {\n§\n§}", g.ind(), header, body, g.ind())
 
     # Wrap in try/catch if cape present and target supports it
     si nonnihil cape et syn.habetCape {
-        fixum c = cape novum CapeClausula
+        fixum c ← cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(g, c.corpus)
+        fixum catchBody ← rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

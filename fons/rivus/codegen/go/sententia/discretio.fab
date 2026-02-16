@@ -22,11 +22,11 @@ importa ex "../nucleus" privata GoGenerator
 importa ex "../typus" privata genTypus
 
 @ publica
-functio genDiscretio(in GoGenerator g, de textus nomen, de lista<VariansDeclaratio> variantes, si de ignotum generaParametra, si de ignotum visibilitas) -> textus {
-    varia lines = [] innatum lista<textus>
+functio genDiscretio(in GoGenerator g, de textus nomen, de lista<VariansDeclaratio> variantes, si de ignotum generaParametra, si de ignotum visibilitas) → textus {
+    varia lines ← [] innatum lista<textus>
 
     # Generate marker method name (lowercase for unexported)
-    fixum markerMethod = scriptum("is§", nomen)
+    fixum markerMethod ← scriptum("is§", nomen)
 
     # Generate interface type
     lines.appende(scriptum("§type § interface {", g.ind(), nomen))
@@ -39,7 +39,7 @@ functio genDiscretio(in GoGenerator g, de textus nomen, de lista<VariansDeclarat
     itera ex variantes fixum varians {
         lines.appende("")  # Blank line between types
 
-        si varians.campi.longitudo() == 0 {
+        si varians.campi.longitudo() ≡ 0 {
             # Unit variant: empty struct
             lines.appende(scriptum("§type § struct{}", g.ind(), varians.nomen))
         } secus {
@@ -47,8 +47,8 @@ functio genDiscretio(in GoGenerator g, de textus nomen, de lista<VariansDeclarat
             lines.appende(scriptum("§type § struct {", g.ind(), varians.nomen))
             g.intraProfundum()
             itera ex varians.campi fixum campus {
-                fixum fieldName = capitaliza(campus.nomen)
-                fixum fieldType = genTypus(g, campus.typus)
+                fixum fieldName ← capitaliza(campus.nomen)
+                fixum fieldType ← genTypus(g, campus.typus)
                 lines.appende(scriptum("§§ §", g.ind(), fieldName, fieldType))
             }
             g.exiProfundum()
@@ -63,13 +63,13 @@ functio genDiscretio(in GoGenerator g, de textus nomen, de lista<VariansDeclarat
 }
 
 # Capitalize first letter for Go field names
-functio capitaliza(de textus s) -> textus {
-    si s.longitudo() == 0 {
+functio capitaliza(de textus s) → textus {
+    si s.longitudo() ≡ 0 {
         redde s
     }
-    fixum primum = s.sectio(0, 1) qua textus
-    fixum first = primum.maiuscula()
-    si s.longitudo() == 1 {
+    fixum primum ← s.sectio(0, 1) qua textus
+    fixum first ← primum.maiuscula()
+    si s.longitudo() ≡ 1 {
         redde first
     }
     redde scriptum("§§", first, s.sectio(1, s.longitudo()))

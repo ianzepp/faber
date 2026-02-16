@@ -84,7 +84,7 @@ genus DiscretioDeclInfo {
 
 # Map Latin type name to semantic type
 @ publica
-functio latinTypusAd(de textus nomen) -> SemanticTypus {
+functio latinTypusAd(de textus nomen) → SemanticTypus {
     elige nomen {
         casu "textus" reddit TEXTUS
         casu "numerus" reddit NUMERUS
@@ -98,7 +98,7 @@ functio latinTypusAd(de textus nomen) -> SemanticTypus {
 
 # Check if a type name is a generic type
 @ publica
-functio estGenericusTypus(de textus nomen) -> bivalens {
+functio estGenericusTypus(de textus nomen) → bivalens {
     redde nomen inter ["lista", "tabula", "copia", "promissum", "cursor", "fluxus"]
 }
 
@@ -145,8 +145,8 @@ genus Analyzator {
     # These are intentionally noisy initially; later we can add CLI flags to
     # quiet/fail on them.
     @ publica
-    functio moneIgnotum(ex textus ratio, ex Locus locus) -> vacuum {
-        fixum key = scriptum("§:§:§:§", locus.linea, locus.columna, locus.index, ratio)
+    functio moneIgnotum(ex textus ratio, ex Locus locus) → vacuum {
+        fixum key ← scriptum("§:§:§:§", locus.linea, locus.columna, locus.index, ratio)
         si ego.ignotumMonita.habet(key) {
             redde
         }
@@ -161,21 +161,21 @@ genus Analyzator {
     # Enter a new scope
     @ publica
     functio intraScopum(ScopusSpecies species) {
-        ego.scopus = creaScopum(ego.scopus, species)
+        ego.scopus ← creaScopum(ego.scopus, species)
     }
 
     # Exit the current scope
     @ publica
     functio exiScopum() {
         si nonnihil ego.scopus.parens {
-            ego.scopus = ego.scopus.parens novum Scopus
+            ego.scopus ← ego.scopus.parens novum Scopus
         }
     }
 
     # Define a symbol in current scope (reports error if duplicate)
     @ publica
     functio definie(ex Symbolum symbolum) {
-        fixum err = definieSymbolum(ego.scopus, symbolum)
+        fixum err ← definieSymbolum(ego.scopus, symbolum)
         si nonnihil err {
             ego.error(err qua textus, symbolum.locus)
         }
@@ -183,7 +183,7 @@ genus Analyzator {
 
     # Look up a symbol in scope chain
     @ publica
-    functio quaere(de textus nomen) -> si Symbolum {
+    functio quaere(de textus nomen) → si Symbolum {
         redde quaereSymbolum(ego.scopus, nomen)
     }
 
@@ -194,7 +194,7 @@ genus Analyzator {
     # Define built-in functions (intrinsics) in global scope
     @ publica
     functio definieIntrinsica() {
-        fixum builtinLocus = { linea: 0, columna: 0, index: 0 } novum Locus
+        fixum builtinLocus ← { linea: 0, columna: 0, index: 0 } novum Locus
 
         # I/O Intrinsics (always available - prefixed with _ for internal use)
         ego.definieIntrinsicaFunctio("_scribe", [], VACUUM, builtinLocus)
@@ -203,7 +203,7 @@ genus Analyzator {
         ego.definieIntrinsicaFunctio("_lege", [], TEXTUS, builtinLocus)
 
         # Register morphology for built-in collection types
-        fixum formae = ["imperativus", "perfectum", "futurum_indicativum", "futurum_activum"] innatum lista<textus>
+        fixum formae ← ["imperativus", "perfectum", "futurum_indicativum", "futurum_activum"] innatum lista<textus>
 
         # lista verb stems
         ego.addeMorphologiam("lista", "add", formae)
@@ -219,8 +219,8 @@ genus Analyzator {
     # Helper to define a single intrinsic function
     @ publica
     functio definieIntrinsicaFunctio(ex textus nomen, ex lista<SemanticTypus> parametri, ex SemanticTypus reditus, ex Locus locus) {
-        fixum typusFunctionis = functioTypus(parametri, reditus, falsum, falsum)
-        ego.scopus.symbola[nomen] = {
+        fixum typusFunctionis ← functioTypus(parametri, reditus, falsum, falsum)
+        ego.scopus.symbola[nomen] ← {
             nomen: nomen,
             semanticTypus: typusFunctionis,
             species: SymbolumSpecies.Functio,
@@ -234,11 +234,11 @@ genus Analyzator {
     # ========================================================================
 
     @ publica
-    functio definieMorphologiaBuiltin() -> vacuum {
+    functio definieMorphologiaBuiltin() → vacuum {
         # WHY: lista is morphology-enabled by default for stdlib lowering.
-        fixum formaeMutantes = ["imperativus", "futurum_indicativum"] qua lista<textus>
-        fixum formaeNovae = ["perfectum", "futurum_activum"] qua lista<textus>
-        fixum formaeOmnes = ["imperativus", "perfectum", "futurum_indicativum", "futurum_activum"] qua lista<textus>
+        fixum formaeMutantes ← ["imperativus", "futurum_indicativum"] qua lista<textus>
+        fixum formaeNovae ← ["perfectum", "futurum_activum"] qua lista<textus>
+        fixum formaeOmnes ← ["imperativus", "perfectum", "futurum_indicativum", "futurum_activum"] qua lista<textus>
 
         ego.addeMorphologiam("lista", "add", formaeOmnes)
         ego.addeMorphologiam("lista", "praepon", formaeMutantes)
@@ -254,7 +254,7 @@ genus Analyzator {
     }
 
     @ publica
-    functio habetMorphologiam(de textus recipiens) -> bivalens {
+    functio habetMorphologiam(de textus recipiens) → bivalens {
         si nihil ego.morphologiaRegistra[recipiens] {
             redde falsum
         }
@@ -262,12 +262,12 @@ genus Analyzator {
     }
 
     @ publica
-    functio formaeMorphologiae(de textus recipiens, de textus radix) -> lista<textus> {
-        fixum perRecipiens = ego.morphologiaRegistra[recipiens]
+    functio formaeMorphologiae(de textus recipiens, de textus radix) → lista<textus> {
+        fixum perRecipiens ← ego.morphologiaRegistra[recipiens]
         si nihil perRecipiens {
             redde []
         }
-        fixum formae = perRecipiens[radix]
+        fixum formae ← perRecipiens[radix]
         si nihil formae {
             redde []
         }
@@ -275,22 +275,22 @@ genus Analyzator {
     }
 
     @ publica
-    functio addeMorphologiam(ex textus recipiens, ex textus radix, de lista<textus> formae) -> vacuum {
+    functio addeMorphologiam(ex textus recipiens, ex textus radix, de lista<textus> formae) → vacuum {
         si nihil ego.morphologiaRegistra[recipiens] {
-            ego.morphologiaRegistra[recipiens] = {} innatum tabula<textus, lista<textus>>
+            ego.morphologiaRegistra[recipiens] ← {} innatum tabula<textus, lista<textus>>
         }
 
-        fixum perRecipiens = ego.morphologiaRegistra[recipiens]
+        fixum perRecipiens ← ego.morphologiaRegistra[recipiens]
         si nihil perRecipiens[radix] {
-            perRecipiens[radix] = [] innatum lista<textus>
+            perRecipiens[radix] ← [] innatum lista<textus>
         }
 
-        fixum existentes = perRecipiens[radix]
+        fixum existentes ← perRecipiens[radix]
         itera ex formae fixum forma {
-            varia iam = falsum
+            varia iam ← falsum
             itera ex existentes fixum existens {
-                si existens == forma {
-                    iam = verum
+                si existens ≡ forma {
+                    iam ← verum
                 }
             }
             si non iam {
@@ -306,8 +306,8 @@ genus Analyzator {
 
 # Create a new analyzer
 @ publica
-functio novumAnalyzator(ex tabula<textus, Dependentia> dependentiae, si de textus viaIngressus) -> Analyzator {
-    fixum analyzator = novum Analyzator {
+functio novumAnalyzator(ex tabula<textus, Dependentia> dependentiae, si de textus viaIngressus) → Analyzator {
+    fixum analyzator ← novum Analyzator {
         errores: [] innatum lista<SemanticError>,
         scopus: creaScopumGlobalem(),
         currentFunctioReditus: nihil,

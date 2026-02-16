@@ -46,22 +46,22 @@ importa ex "./massa" privata parseMassaSententia
 #   incipit ergo cura arena { ... }
 #   incipit ergo runMain()
 @ publica
-functio parseIncipitSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseIncipitSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'incipit'
     p.expectaVerbum("incipit", ParserErrorCodice.ExpectaturIncipit)
 
     # Check for argumenta binding
-    varia argumenta = nihil qua si textus
+    varia argumenta ← nihil qua si textus
     si p.congruetVerbum("argumenta") {
-        fixum argSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        argumenta = argSym.valor
+        fixum argSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        argumenta ← argSym.valor
     }
 
     # Check for short form
-    fixum ergo = parseErgoVelReddit(r)
+    fixum ergo ← parseErgoVelReddit(r)
     si nonnihil ergo {
         redde finge IncipitSententia {
             locus: locus,
@@ -73,7 +73,7 @@ functio parseIncipitSententia(in Resolvitor r) -> Sententia {
     }
 
     # Block form
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     redde finge IncipitSententia {
         locus: locus,
@@ -94,22 +94,22 @@ functio parseIncipitSententia(in Resolvitor r) -> Sententia {
 #   incipiet argumenta args { ... }
 #   incipiet ergo cura arena { cede fetch() }
 @ publica
-functio parseIncipietSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseIncipietSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'incipiet'
     p.expectaVerbum("incipiet", ParserErrorCodice.ExpectaturIncipiet)
 
     # Check for argumenta binding
-    varia argumenta = nihil qua si textus
+    varia argumenta ← nihil qua si textus
     si p.congruetVerbum("argumenta") {
-        fixum argSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        argumenta = argSym.valor
+        fixum argSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        argumenta ← argSym.valor
     }
 
     # Check for short form
-    fixum ergo = parseErgoVelReddit(r)
+    fixum ergo ← parseErgoVelReddit(r)
     si nonnihil ergo {
         redde finge IncipietSententia {
             locus: locus,
@@ -121,7 +121,7 @@ functio parseIncipietSententia(in Resolvitor r) -> Sententia {
     }
 
     # Block form
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     redde finge IncipietSententia {
         locus: locus,
@@ -134,9 +134,9 @@ functio parseIncipietSententia(in Resolvitor r) -> Sententia {
 
 # Parse short entrypoint bodies: ergo, reddit, iacit, or moritor
 @ publica
-functio parseErgoVelReddit(in Resolvitor r) -> si Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseErgoVelReddit(in Resolvitor r) → si Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     si p.probaVerbum("ergo") {
         p.procede()
@@ -145,7 +145,7 @@ functio parseErgoVelReddit(in Resolvitor r) -> si Sententia {
 
     si p.probaVerbum("reddit") {
         p.procede()
-        fixum valor = r.expressia()
+        fixum valor ← r.expressia()
         redde finge ReddeSententia {
             locus: locus,
             valor: valor
@@ -156,7 +156,7 @@ functio parseErgoVelReddit(in Resolvitor r) -> si Sententia {
     #      iacit (it throws) = ergo iace, moritor (let it die) = ergo mori.
     si p.probaVerbum("iacit") {
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge IaceSententia {
             locus: locus,
             fatale: falsum,
@@ -166,7 +166,7 @@ functio parseErgoVelReddit(in Resolvitor r) -> si Sententia {
 
     si p.probaVerbum("moritor") {
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge IaceSententia {
             locus: locus,
             fatale: verum,
@@ -192,69 +192,69 @@ functio parseErgoVelReddit(in Resolvitor r) -> si Sententia {
 #   cura aperi("file.txt") fixum fd { lege(fd) }
 #   cura connect(url) varia conn { ... }
 @ publica
-functio parseCuraSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCuraSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'cura'
     p.expectaVerbum("cura", ParserErrorCodice.ExpectaturCura)
 
     # Check for curator kind: arena or pagina
-    varia curatorSpecies = nihil qua si CuratorGenus
+    varia curatorSpecies ← nihil qua si CuratorGenus
     si p.probaVerbum("arena") {
         p.procede()
-        curatorSpecies = CuratorGenus.Arena
+        curatorSpecies ← CuratorGenus.Arena
     } sin p.probaVerbum("page") aut p.probaVerbum("pagina") {
         # WHY: Grammar uses "page"; accept "pagina" for backward compatibility.
         p.procede()
-        curatorSpecies = CuratorGenus.Pagina
+        curatorSpecies ← CuratorGenus.Pagina
     }
 
     # Parse optional resource expression
     # Skip if next token starts a binding (fixum, varia) or block
-    varia res = nihil qua si Expressia
+    varia res ← nihil qua si Expressia
     si non p.probaVerbum("fixum") et non p.probaVerbum("varia") et non p.proba(SymbolumGenus.UncusSin) {
-        res = r.expressia()
+        res ← r.expressia()
     }
 
     # Parse binding keyword: fixum (const) or varia (let)
-    varia mutabilis = falsum
-    varia hasBinding = falsum
+    varia mutabilis ← falsum
+    varia hasBinding ← falsum
 
     si p.probaVerbum("varia") {
-        mutabilis = verum
-        hasBinding = verum
+        mutabilis ← verum
+        hasBinding ← verum
         p.procede()
     } sin p.probaVerbum("fixum") {
-        hasBinding = verum
+        hasBinding ← verum
         p.procede()
     }
 
     # Parse optional type and binding name
-    varia adnotatioTypus = nihil qua si TypusAnnotatio
-    varia vinculum = ""
+    varia adnotatioTypus ← nihil qua si TypusAnnotatio
+    varia vinculum ← ""
 
     si hasBinding {
         # Check for type annotation: if two identifiers before {, first is type
-        fixum hasType = p.proba(SymbolumGenus.Nomen) et p.specta(1).species === SymbolumGenus.Nomen
+        fixum hasType ← p.proba(SymbolumGenus.Nomen) et p.specta(1).species ≡ SymbolumGenus.Nomen
         si hasType {
-            adnotatioTypus = r.adnotatio()
+            adnotatioTypus ← r.adnotatio()
         }
 
-        fixum vincSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        vinculum = vincSym.valor
+        fixum vincSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        vinculum ← vincSym.valor
     } secus {
         # Auto-generate binding name
-        vinculum = "_cura"
+        vinculum ← "_cura"
     }
 
     # Parse body block
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     # Optional catch clause
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     redde finge CuraSententia {
@@ -284,21 +284,21 @@ functio parseCuraSententia(in Resolvitor r) -> Sententia {
 #   ad "fasciculus:lege" ("file.txt") -> textus pro content { scribe content }
 #   ad "http:pete" (url) fiet Response pro resp { ... }
 @ publica
-functio parseAdSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseAdSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'ad'
     p.expectaVerbum("ad", ParserErrorCodice.ExpectaturAd)
 
     # Parse target string
-    fixum scopusSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
-    fixum scopus = scopusSym.valor
+    fixum scopusSym ← p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
+    fixum scopus ← scopusSym.valor
 
     # Parse argument list
     p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
 
-    varia argumenta = [] innatum lista<Expressia>
+    varia argumenta ← [] innatum lista<Expressia>
     si non p.proba(SymbolumGenus.ParensDex) {
         fac {
             argumenta.appende(r.expressia())
@@ -308,44 +308,44 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
     p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
     # Parse optional binding clause
-    varia vinculum = nihil qua si AdVinculum
+    varia vinculum ← nihil qua si AdVinculum
     si p.probaVerbumId(VerbumId.Fit) aut p.probaVerbumId(VerbumId.Fiet) aut p.probaVerbumId(VerbumId.Fiunt) aut p.probaVerbumId(VerbumId.Fient) aut p.probaVerbum("pro") {
-        fixum vincLocus = p.locusActualis()
+        fixum vincLocus ← p.locusActualis()
 
         # Parse verb (default to fit)
-        varia verbum = AdVerbumVinculandi.Fit
+        varia verbum ← AdVerbumVinculandi.Fit
         si p.congruetVerbumId(VerbumId.Fit) {
-            verbum = AdVerbumVinculandi.Fit
+            verbum ← AdVerbumVinculandi.Fit
         } sin p.congruetVerbumId(VerbumId.Fiet) {
-            verbum = AdVerbumVinculandi.Fiet
+            verbum ← AdVerbumVinculandi.Fiet
         } sin p.congruetVerbumId(VerbumId.Fiunt) {
-            verbum = AdVerbumVinculandi.Fiunt
+            verbum ← AdVerbumVinculandi.Fiunt
         } sin p.congruetVerbumId(VerbumId.Fient) {
-            verbum = AdVerbumVinculandi.Fient
+            verbum ← AdVerbumVinculandi.Fient
         }
 
         # Optional type before 'pro'
-        varia adnotatioTypus = nihil qua si TypusAnnotatio
+        varia adnotatioTypus ← nihil qua si TypusAnnotatio
         si p.proba(SymbolumGenus.Nomen) et non p.probaVerbum("pro") {
-            adnotatioTypus = r.adnotatio()
+            adnotatioTypus ← r.adnotatio()
         }
 
         # Expect 'pro'
         p.expectaVerbum("pro", ParserErrorCodice.ExpectaturPro)
 
         # Parse binding name
-        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        fixum nomen = nomenSym.valor
+        fixum nomenSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        fixum nomen ← nomenSym.valor
 
         # Optional alias: ut alias
-        varia alias = nihil qua si textus
+        varia alias ← nihil qua si textus
         si p.probaVerbum("ut") {
             p.procede()
-            fixum aliasSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-            alias = aliasSym.valor
+            fixum aliasSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+            alias ← aliasSym.valor
         }
 
-        vinculum = {
+        vinculum ← {
             locus: vincLocus,
             verbum: verbum,
             typus: adnotatioTypus,
@@ -355,15 +355,15 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
     }
 
     # Parse optional body block
-    varia corpus = nihil qua si MassaSententia
+    varia corpus ← nihil qua si MassaSententia
     si p.proba(SymbolumGenus.UncusSin) {
-        corpus = parseMassaSententia(r)
+        corpus ← parseMassaSententia(r)
     }
 
     # Optional catch clause
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     redde finge AdSententia {
@@ -382,19 +382,19 @@ functio parseAdSententia(in Resolvitor r) -> Sententia {
 
 # Parse catch clause
 @ publica
-functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCapeClausula(in Resolvitor r) → CapeClausula {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # 'cape' already checked, consume it
     p.procede()
 
     # Parse error binding name
-    fixum paramSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-    fixum param = paramSym.valor
+    fixum paramSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum param ← paramSym.valor
 
     # Parse body
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     redde {
         locus: locus,

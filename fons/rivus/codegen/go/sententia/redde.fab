@@ -15,10 +15,10 @@ importa ex "../expressia/index" privata genExpressia
 importa ex "../typus" privata zeroValueForType
 
 @ publica
-functio genRedde(in GoGenerator g, si de ignotum valor) -> textus {
+functio genRedde(in GoGenerator g, si de ignotum valor) → textus {
     si g.inErrata {
         si nonnihil g.errataTypusReditus {
-            fixum zero = zeroValueForType(g.errataTypusReditus qua TypusAnnotatio, g)
+            fixum zero ← zeroValueForType(g.errataTypusReditus qua TypusAnnotatio, g)
             si nonnihil valor {
                 redde scriptum("§return §, nil", g.ind(), genExpressia(g, valor qua Expressia))
             }

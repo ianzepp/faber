@@ -12,17 +12,17 @@ importa ex "./nucleus" privata FaberGenerator
 # =============================================================================
 
 @ publica
-functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) -> textus {
-    varia result = typ.nomen qua textus
+functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) → textus {
+    varia result ← typ.nomen qua textus
 
     # Handle nullable (si) prefix
     si typ.nullabilis qua bivalens {
-        result = scriptum("si §", result)
+        result ← scriptum("si §", result)
     }
 
     # Handle type parameters
     si nonnulla typ.typusParametra {
-        varia paramTexti = [] innatum lista<textus>
+        varia paramTexti ← [] innatum lista<textus>
         itera ex typ.typusParametra fixum param {
             discerne param {
                 casu Typus ut t {
@@ -33,7 +33,7 @@ functio genTypus(in FaberGenerator g, de TypusAnnotatio typ) -> textus {
                 }
             }
         }
-        result = scriptum("§<§>", result, paramTexti.coniunge(", "))
+        result ← scriptum("§<§>", result, paramTexti.coniunge(", "))
     }
 
     redde result

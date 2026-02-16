@@ -106,7 +106,7 @@ genus TargetLowering {
 
 # TypeScript - full support for all features
 @ publica
-fixum CAPACITAS_TS = {
+fixum CAPACITAS_TS ← {
     controlFlow: {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Sustentum,
@@ -131,7 +131,7 @@ fixum CAPACITAS_TS = {
 
 # Python - most features, no optional chaining
 @ publica
-fixum CAPACITAS_PY = {
+fixum CAPACITAS_PY ← {
     controlFlow: {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Sustentum,
@@ -156,7 +156,7 @@ fixum CAPACITAS_PY = {
 
 # Rust - async yes, generators no, Result for errors
 @ publica
-fixum CAPACITAS_RS = {
+fixum CAPACITAS_RS ← {
     controlFlow: {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Insustentum,
@@ -181,7 +181,7 @@ fixum CAPACITAS_RS = {
 
 # Zig - no async, no generators, error unions
 @ publica
-fixum CAPACITAS_ZIG = {
+fixum CAPACITAS_ZIG ← {
     controlFlow: {
         asyncFunctio: Sustentatio.Insustentum,
         generatorFunctio: Sustentatio.Insustentum,
@@ -206,7 +206,7 @@ fixum CAPACITAS_ZIG = {
 
 # C++ - no async/generators, exceptions yes
 @ publica
-fixum CAPACITAS_CPP = {
+fixum CAPACITAS_CPP ← {
     controlFlow: {
         asyncFunctio: Sustentatio.Insustentum,
         generatorFunctio: Sustentatio.Insustentum,
@@ -231,7 +231,7 @@ fixum CAPACITAS_CPP = {
 
 # Faber (self-compile) - full support
 @ publica
-fixum CAPACITAS_FAB = {
+fixum CAPACITAS_FAB ← {
     controlFlow: {
         asyncFunctio: Sustentatio.Sustentum,
         generatorFunctio: Sustentatio.Sustentum,
@@ -256,7 +256,7 @@ fixum CAPACITAS_FAB = {
 
 # Go - GC'd, no async/generators, multi-return errors
 @ publica
-fixum CAPACITAS_GO = {
+fixum CAPACITAS_GO ← {
     controlFlow: {
         asyncFunctio: Sustentatio.Insustentum,
         generatorFunctio: Sustentatio.Insustentum,
@@ -284,43 +284,43 @@ fixum CAPACITAS_GO = {
 # =============================================================================
 
 @ publica
-fixum LOWERING_TS = {
+fixum LOWERING_TS ← {
     nullabilis: NullabilisModel.Innatum,
     errores: ErrorModel.Exceptiones
 } novum TargetLowering
 
 @ publica
-fixum LOWERING_PY = {
+fixum LOWERING_PY ← {
     nullabilis: NullabilisModel.Innatum,
     errores: ErrorModel.Exceptiones
 } novum TargetLowering
 
 @ publica
-fixum LOWERING_RS = {
+fixum LOWERING_RS ← {
     nullabilis: NullabilisModel.Optio,
     errores: ErrorModel.Resultatum
 } novum TargetLowering
 
 @ publica
-fixum LOWERING_ZIG = {
+fixum LOWERING_ZIG ← {
     nullabilis: NullabilisModel.Optio,
     errores: ErrorModel.Unio
 } novum TargetLowering
 
 @ publica
-fixum LOWERING_CPP = {
+fixum LOWERING_CPP ← {
     nullabilis: NullabilisModel.Optio,
     errores: ErrorModel.Exceptiones
 } novum TargetLowering
 
 @ publica
-fixum LOWERING_FAB = {
+fixum LOWERING_FAB ← {
     nullabilis: NullabilisModel.Innatum,
     errores: ErrorModel.Exceptiones
 } novum TargetLowering
 
 @ publica
-fixum LOWERING_GO = {
+fixum LOWERING_GO ← {
     nullabilis: NullabilisModel.Indicator,
     errores: ErrorModel.MultipleReditus
 } novum TargetLowering
@@ -331,7 +331,7 @@ fixum LOWERING_GO = {
 
 # Get capability matrix for a target
 @ publica
-functio getCapacitas(de textus target) -> TargetCapacitas {
+functio getCapacitas(de textus target) → TargetCapacitas {
     elige target {
         casu "ts" { redde CAPACITAS_TS }
         casu "py" { redde CAPACITAS_PY }
@@ -348,7 +348,7 @@ functio getCapacitas(de textus target) -> TargetCapacitas {
 
 # Get lowering model for a target
 @ publica
-functio getLowering(de textus target) -> TargetLowering {
+functio getLowering(de textus target) → TargetLowering {
     elige target {
         casu "ts" { redde LOWERING_TS }
         casu "py" { redde LOWERING_PY }

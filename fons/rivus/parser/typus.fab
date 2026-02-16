@@ -34,34 +34,34 @@ importa ex "./errores" privata ParserErrorCodice
 # Parse a type annotation
 # Handles generics, nullable, array shorthand, and union types
 @ publica
-functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseTypusAnnotatio(in Resolvitor r) → TypusAnnotatio {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # -------------------------------------------------------------------------
     # Check for nullable prefix: si textus -> nullable textus
     # -------------------------------------------------------------------------
-    varia nullabilisPraefix = falsum
+    varia nullabilisPraefix ← falsum
 
     si p.probaVerbum("si") {
-        nullabilisPraefix = verum
+        nullabilisPraefix ← verum
         p.procede()
     }
 
     # -------------------------------------------------------------------------
     # Check for borrow preposition (de/in for ownership semantics)
     # -------------------------------------------------------------------------
-    varia praepositio = nihil qua si textus
+    varia praepositio ← nihil qua si textus
 
     si p.estPraepositio(p.specta(0)) {
-        praepositio = p.procede().verbum
+        praepositio ← p.procede().verbum
     }
 
     # -------------------------------------------------------------------------
     # Function type annotation: (T, U) -> V
     # -------------------------------------------------------------------------
     si p.congruet(SymbolumGenus.ParensSin) {
-        varia parametra = [] innatum lista<TypusAnnotatio>
+        varia parametra ← [] innatum lista<TypusAnnotatio>
         si non p.proba(SymbolumGenus.ParensDex) {
             parametra.appende(r.adnotatio())
             dum p.congruet(SymbolumGenus.Coma) {
@@ -72,7 +72,7 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
         p.expecta(SymbolumGenus.Sagitta, ParserErrorCodice.ExpectaturSagitta)
 
-        fixum reditus = r.adnotatio()
+        fixum reditus ← r.adnotatio()
 
         redde {
             locus: locus,
@@ -90,43 +90,43 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # -------------------------------------------------------------------------
     # Parse type name (identifier or keyword like nihil/textus)
     # -------------------------------------------------------------------------
-    varia nomen = "" qua textus
+    varia nomen ← "" qua textus
 
     si p.proba(SymbolumGenus.Nomen) {
         # Regular identifier (Persona, MyType, etc.)
-        nomen = p.procede().valor
+        nomen ← p.procede().valor
     } sin p.proba(SymbolumGenus.Verbum) {
         # Keywords can be type names (textus, numerus, etc.)
-        nomen = p.procede().valor
+        nomen ← p.procede().valor
     } sin p.proba(SymbolumGenus.Nihil) {
         # EDGE: "nihil" is both a literal and a type name.
-        nomen = p.procede().valor
+        nomen ← p.procede().valor
     } secus {
         # Error: expected type name
         p.renuncia(ParserErrorCodice.ExpectaturTypusNomen, scriptum("got '§'", p.specta(0).valor))
-        nomen = p.specta(0).valor
+        nomen ← p.specta(0).valor
         p.procede()  # Skip to avoid infinite loop
     }
 
     # -------------------------------------------------------------------------
     # Parse optional type parameters: <T, U, ...>
     # -------------------------------------------------------------------------
-    varia lista<TypusParametrum> typusParametra = []
+    varia lista<TypusParametrum> typusParametra ← []
 
     si p.congruet(SymbolumGenus.Minor) {
-        fixum parametra = typusParametra
+        fixum parametra ← typusParametra
 
         # Parse first type parameter
         si p.proba(SymbolumGenus.Numerus) {
             # Numeric literal parameter (e.g., numerus<32>)
             # TODO: Handle numeric type params properly
-            fixum litSym = p.procede()
+            fixum litSym ← p.procede()
             parametra.appende(finge Littera {
                 valor: litSym.valor
             } qua TypusParametrum)
         } secus {
             # Recursive type annotation parameter - use Resolvitor
-            fixum param = r.adnotatio()
+            fixum param ← r.adnotatio()
             parametra.appende(finge Typus {
                 adnotatio: param
             } qua TypusParametrum)
@@ -135,12 +135,12 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
         # Parse remaining comma-separated type parameters
         dum p.congruet(SymbolumGenus.Coma) {
             si p.proba(SymbolumGenus.Numerus) {
-                fixum litSym = p.procede()
+                fixum litSym ← p.procede()
                 parametra.appende(finge Littera {
                     valor: litSym.valor
                 } qua TypusParametrum)
             } secus {
-                fixum param = r.adnotatio()
+                fixum param ← r.adnotatio()
                 parametra.appende(finge Typus {
                     adnotatio: param
                 } qua TypusParametrum)
@@ -154,22 +154,22 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # -------------------------------------------------------------------------
     # Nullable: either from 'si' prefix or legacy '?' suffix
     # -------------------------------------------------------------------------
-    varia nullabilis = nullabilisPraefix
+    varia nullabilis ← nullabilisPraefix
 
     # SYNTAXIS ALIENA: Type? suffix is deprecated, use 'si Type' prefix
     si p.proba(SymbolumGenus.Rogatio) {
         p.renuncia(ParserErrorCodice.SyntaxisAlienaNullabilis, scriptum("found '§?'", nomen))
         p.procede()
-        nullabilis = verum
+        nullabilis ← verum
     }
 
     # -------------------------------------------------------------------------
     # Handle unio<A, B> -> union type
     # Union types use type parameters as union members
     # -------------------------------------------------------------------------
-    si nomen === "unio" et nonnihil typusParametra {
-        fixum parametra = typusParametra
-        si parametra.longitudo() == 0 {
+    si nomen ≡ "unio" et nonnihil typusParametra {
+        fixum parametra ← typusParametra
+        si parametra.longitudo() ≡ 0 {
             redde {
                 locus: locus,
                 nomen: "union",
@@ -182,7 +182,7 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
             reditus: nihil
         } novum TypusAnnotatio
         }
-        varia unioParametra = [] innatum lista<TypusAnnotatio>
+        varia unioParametra ← [] innatum lista<TypusAnnotatio>
         itera ex parametra fixum param {
             discerne param {
                 casu Typus ut t {
@@ -207,7 +207,7 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # -------------------------------------------------------------------------
     # Build base type result
     # -------------------------------------------------------------------------
-    varia resultatum = {
+    varia resultatum ← {
         locus: locus,
         nomen: nomen,
         typusParametra: typusParametra,
@@ -223,21 +223,21 @@ functio parseTypusAnnotatio(in Resolvitor r) -> TypusAnnotatio {
     # Handle array shorthand: T[] -> lista<T>
     # Each [] wraps in lista, preserving arrayShorthand flag for round-trip
     # -------------------------------------------------------------------------
-    dum p.proba(SymbolumGenus.QuadratusSin) et p.specta(1).species === SymbolumGenus.QuadratusDex {
+    dum p.proba(SymbolumGenus.QuadratusSin) et p.specta(1).species ≡ SymbolumGenus.QuadratusDex {
         p.procede()  # [
         p.procede()  # ]
 
         # Check for nullable array: []?
         # SYNTAXIS ALIENA: T[]? is deprecated, use 'si T[]'
-        varia arrayNullabilis = falsum
+        varia arrayNullabilis ← falsum
         si p.proba(SymbolumGenus.Rogatio) {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaNullabilis, "found '[]?'")
             p.procede()
-            arrayNullabilis = verum
+            arrayNullabilis ← verum
         }
 
         # Wrap in lista<...> with shorthand flag
-        resultatum = {
+        resultatum ← {
             locus: locus,
             nomen: "lista",
             typusParametra: [finge Typus { adnotatio: resultatum } qua TypusParametrum],

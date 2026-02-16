@@ -17,34 +17,34 @@ importa ex "./index" privata genExpressia
 # Generate scriptum (format string) expression
 # Supports both § (positional) and §0, §1, etc. (indexed) placeholders
 @ publica
-functio genScriptum(in GoGenerator g, de textus exemplar, de lista<Expressia> argumenta) -> textus {
+functio genScriptum(in GoGenerator g, de textus exemplar, de lista<Expressia> argumenta) → textus {
     # No-arg scriptum should emit a plain string literal
-    si argumenta.longitudo() == 0 {
+    si argumenta.longitudo() ≡ 0 {
         redde scriptum("\"§\"", exemplar)
     }
 
     # Mark fmt import as required
-    g.requisita.fmt = verum
+    g.requisita.fmt ← verum
 
     # Build format string and args list
     # First pass: collect args in order they appear (handling §N indexing)
-    varia formatStr = ""
-    varia argOrder = [] innatum lista<numerus>
-    varia implicitIdx = 0
-    varia i = 0
+    varia formatStr ← ""
+    varia argOrder ← [] innatum lista<numerus>
+    varia implicitIdx ← 0
+    varia i ← 0
 
     dum i < exemplar.longitudo() {
-        fixum c = exemplar[i]
-        si c == "§" {
+        fixum c ← exemplar[i]
+        si c ≡ "§" {
             # Check for explicit index (§0, §1, etc.)
-            varia explicitIdxNum = 0
-            varia hasExplicitIdx = falsum
+            varia explicitIdxNum ← 0
+            varia hasExplicitIdx ← falsum
             dum i + 1 < exemplar.longitudo() {
-                fixum nextChar = exemplar[i + 1]
-                si nextChar >= "0" et nextChar <= "9" {
-                    fixum digit = nextChar.charCodeAt(0) - 48
-                    explicitIdxNum = explicitIdxNum * 10 + digit
-                    hasExplicitIdx = verum
+                fixum nextChar ← exemplar[i + 1]
+                si nextChar ≥ "0" et nextChar ≤ "9" {
+                    fixum digit ← nextChar.charCodeAt(0) - 48
+                    explicitIdxNum ← explicitIdxNum * 10 + digit
+                    hasExplicitIdx ← verum
                     i += 1
                 } secus {
                     rumpe
@@ -52,21 +52,21 @@ functio genScriptum(in GoGenerator g, de textus exemplar, de lista<Expressia> ar
             }
 
             # Use explicit index if provided, otherwise implicit
-            fixum idx = hasExplicitIdx sic explicitIdxNum secus implicitIdx
+            fixum idx ← hasExplicitIdx sic explicitIdxNum secus implicitIdx
             si non hasExplicitIdx {
                 implicitIdx += 1
             }
 
             argOrder.appende(idx)
-            formatStr = formatStr + "%v"
+            formatStr ← formatStr + "%v"
         } secus {
-            formatStr = formatStr + c
+            formatStr ← formatStr + c
         }
         i += 1
     }
 
     # Build args string in the order they appear in format
-    varia args = [] innatum lista<textus>
+    varia args ← [] innatum lista<textus>
     itera ex argOrder fixum idx {
         si idx < argumenta.longitudo() {
             args.appende(genExpressia(g, argumenta[idx]))

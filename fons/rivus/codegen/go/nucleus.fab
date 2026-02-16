@@ -43,11 +43,11 @@ genus GoGenerator implet Generans {
 
     # Generate indentation string for current depth
     @ publica
-    functio ind() -> textus {
-        varia result = ""
-        varia i = 0
+    functio ind() → textus {
+        varia result ← ""
+        varia i ← 0
         dum i < ego.profunditas {
-            result = result + ego.indentum
+            result ← result + ego.indentum
             i += 1
         }
         redde result
@@ -72,7 +72,7 @@ genus GoGenerator implet Generans {
 
 # Create a new GoGenerator with default settings
 @ publica
-functio creaGoGenerator() -> GoGenerator {
+functio creaGoGenerator() → GoGenerator {
     redde novum GoGenerator {
         profunditas: 0,
         indentum: "\t",
@@ -84,7 +84,7 @@ functio creaGoGenerator() -> GoGenerator {
 
 # Create required features with all flags false
 @ publica
-functio creaGoRequiredFeatures() -> GoRequiredFeatures {
+functio creaGoRequiredFeatures() → GoRequiredFeatures {
     redde {
         fmt: falsum,
         errors: falsum

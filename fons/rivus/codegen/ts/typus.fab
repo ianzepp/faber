@@ -12,7 +12,7 @@ importa ex "./nucleus" privata TsGenerator
 
 # Map a Latin type name to TypeScript type name
 @ publica
-functio mappaNomenTypi(de textus nomen) -> textus {
+functio mappaNomenTypi(de textus nomen) → textus {
     elige nomen {
         # Primitives
         casu "textus" reddit "string"
@@ -61,57 +61,57 @@ functio mappaNomenTypi(de textus nomen) -> textus {
 
 # Generate TypeScript type from type annotation
 @ publica
-functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
-    si adnotatio.nomen == "" et nonnihil adnotatio.reditus {
-        varia params = [] innatum lista<textus>
+functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) → textus {
+    si adnotatio.nomen ≡ "" et nonnihil adnotatio.reditus {
+        varia params ← [] innatum lista<textus>
         si nonnihil adnotatio.parametra {
-            varia index = 0
+            varia index ← 0
             itera ex adnotatio.parametra fixum param {
                 params.appende(scriptum("arg§: §", index, genTypus(g, param)))
-                index = index + 1
+                index ← index + 1
             }
         }
-        fixum paramStr = params.coniunge(", ")
-        fixum retStr = genTypus(g, adnotatio.reditus novum TypusAnnotatio)
+        fixum paramStr ← params.coniunge(", ")
+        fixum retStr ← genTypus(g, adnotatio.reditus novum TypusAnnotatio)
         redde scriptum("(§) => §", paramStr, retStr)
     }
 
     # Track feature usage for preamble
-    si adnotatio.nomen == "decimus" aut adnotatio.nomen == "decim" {
-        g.requisita.decimal = verum
+    si adnotatio.nomen ≡ "decimus" aut adnotatio.nomen ≡ "decim" {
+        g.requisita.decimal ← verum
     }
 
     # Map Latin type name to TypeScript
-    fixum base = mappaNomenTypi(adnotatio.nomen)
+    fixum base ← mappaNomenTypi(adnotatio.nomen)
 
     # Build result with generics
-    varia result = base
+    varia result ← base
 
     si nonnulla adnotatio.typusParametra {
-        varia params = [] innatum lista<textus>
+        varia params ← [] innatum lista<textus>
         itera ex adnotatio.typusParametra fixum param {
-            fixum paramStr = genTypusParametrum(g, param)
+            fixum paramStr ← genTypusParametrum(g, param)
             si nonnihil paramStr {
                 params.appende(paramStr qua textus)
             }
         }
         si params.longitudo() > 0 {
-            result = scriptum("§<§>", result, params.coniunge(", "))
+            result ← scriptum("§<§>", result, params.coniunge(", "))
         }
     }
 
     # Handle nullable: textus? -> string | null
     si adnotatio.nullabilis {
-        result = scriptum("§ | null", result)
+        result ← scriptum("§ | null", result)
     }
 
     # Handle union types
     si nonnulla adnotatio.unio {
-        varia parts = [] innatum lista<textus>
+        varia parts ← [] innatum lista<textus>
         itera ex adnotatio.unio fixum u {
             parts.appende(genTypus(g, u))
         }
-        result = parts.coniunge(" | ")
+        result ← parts.coniunge(" | ")
     }
 
     redde result
@@ -119,7 +119,7 @@ functio genTypus(in TsGenerator g, de TypusAnnotatio adnotatio) -> textus {
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(in TsGenerator g, de TypusParametrum param) -> si textus {
+functio genTypusParametrum(in TsGenerator g, de TypusParametrum param) → si textus {
     discerne param {
         casu Typus ut p {
             redde genTypus(g, p.adnotatio)
@@ -135,6 +135,6 @@ functio genTypusParametrum(in TsGenerator g, de TypusParametrum param) -> si tex
 # Generate type parameter declarations for generics
 # Example: <T, U, V>
 @ publica
-functio genTypusParametra(de lista<textus> parametra) -> textus {
+functio genTypusParametra(de lista<textus> parametra) → textus {
     redde scriptum("<§>", parametra.coniunge(", "))
 }

@@ -11,7 +11,7 @@ genus VerteTranslation {
 }
 
 # Registry data structure (type inferred)
-fixum norma = {
+fixum norma ← {
     "mathesis": {
         "methods": {
             "pavimentum": {
@@ -910,11 +910,11 @@ fixum norma = {
 
 # Lookup translation for target/collection/method
 @ publica
-functio getNormaTranslation(de textus target, de textus collection, de textus method) -> si VerteTranslation {
-    fixum coll = norma[collection]
+functio getNormaTranslation(de textus target, de textus collection, de textus method) → si VerteTranslation {
+    fixum coll ← norma[collection]
     si nihil coll { redde nihil }
 
-    fixum methodMap = coll.methods[method]
+    fixum methodMap ← coll.methods[method]
     si nihil methodMap { redde nihil }
 
     redde methodMap[target]

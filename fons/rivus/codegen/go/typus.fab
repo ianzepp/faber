@@ -12,7 +12,7 @@ importa ex "./nucleus" privata GoGenerator
 
 # Map a Latin type name to Go type name
 @ publica
-functio mappaNomenTypi(de textus nomen) -> textus {
+functio mappaNomenTypi(de textus nomen) → textus {
     elige nomen {
         # Primitives
         casu "textus" reddit "string"
@@ -48,23 +48,23 @@ functio mappaNomenTypi(de textus nomen) -> textus {
 
 # Generate Go type from type annotation
 @ publica
-functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
-    fixum base = mappaNomenTypi(adnotatio.nomen)
+functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) → textus {
+    fixum base ← mappaNomenTypi(adnotatio.nomen)
 
     # Handle vacuum (void) - returns empty string
-    si adnotatio.nomen == "vacuum" {
+    si adnotatio.nomen ≡ "vacuum" {
         redde ""
     }
 
     # Handle generic types
     si nonnulla adnotatio.typusParametra {
-        fixum parametra = adnotatio.typusParametra
+        fixum parametra ← adnotatio.typusParametra
         # lista<T> -> []T
-        si adnotatio.nomen == "lista" {
-                varia elemType = "interface{}"
+        si adnotatio.nomen ≡ "lista" {
+                varia elemType ← "interface{}"
                 discerne parametra[0] {
                     casu Typus ut t {
-                        elemType = genTypus(g, t.adnotatio)
+                        elemType ← genTypus(g, t.adnotatio)
                     }
                     casu _ tacet
                 }
@@ -72,21 +72,21 @@ functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
             }
 
             # tabula<K,V> -> map[K]V
-            si adnotatio.nomen == "tabula" {
-                varia keyType = "string"
-                varia valueType = "interface{}"
-                si parametra.longitudo() >= 1 {
+            si adnotatio.nomen ≡ "tabula" {
+                varia keyType ← "string"
+                varia valueType ← "interface{}"
+                si parametra.longitudo() ≥ 1 {
                     discerne parametra[0] {
                         casu Typus ut t {
-                            keyType = genTypus(g, t.adnotatio)
+                            keyType ← genTypus(g, t.adnotatio)
                         }
                         casu _ tacet
                     }
                 }
-                si parametra.longitudo() >= 2 {
+                si parametra.longitudo() ≥ 2 {
                     discerne parametra[1] {
                         casu Typus ut t {
-                            valueType = genTypus(g, t.adnotatio)
+                            valueType ← genTypus(g, t.adnotatio)
                         }
                         casu _ tacet
                     }
@@ -95,11 +95,11 @@ functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
             }
 
             # copia<T> -> map[T]struct{}
-            si adnotatio.nomen == "copia" {
-                varia elemType = "interface{}"
+            si adnotatio.nomen ≡ "copia" {
+                varia elemType ← "interface{}"
                 discerne parametra[0] {
                     casu Typus ut t {
-                        elemType = genTypus(g, t.adnotatio)
+                        elemType ← genTypus(g, t.adnotatio)
                     }
                     casu _ tacet
                 }
@@ -117,7 +117,7 @@ functio genTypus(in GoGenerator g, de TypusAnnotatio adnotatio) -> textus {
 
 # Generate Go zero value for a type annotation
 @ publica
-functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) -> textus {
+functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) → textus {
     # Nullables and pointer-like types default to nil
     si adnotatio.nullabilis {
         redde "nil"
@@ -138,20 +138,20 @@ functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) -> textu
         casu "objectum" reddit "nil"
     }
 
-    fixum typeName = genTypus(g, adnotatio)
-    si typeName == "" {
+    fixum typeName ← genTypus(g, adnotatio)
+    si typeName ≡ "" {
         redde "nil"
     }
-    si typeName == "interface{}" {
+    si typeName ≡ "interface{}" {
         redde "nil"
     }
-    si typeName.sectio(0, 1) == "*" {
+    si typeName.sectio(0, 1) ≡ "*" {
         redde "nil"
     }
-    si typeName.sectio(0, 2) == "[]" {
+    si typeName.sectio(0, 2) ≡ "[]" {
         redde "nil"
     }
-    si typeName.sectio(0, 4) == "map[" {
+    si typeName.sectio(0, 4) ≡ "map[" {
         redde "nil"
     }
 
@@ -160,7 +160,7 @@ functio zeroValueForType(de TypusAnnotatio adnotatio, in GoGenerator g) -> textu
 
 # Generate a single type parameter
 @ publica
-functio genTypusParametrum(in GoGenerator g, de TypusParametrum param) -> si textus {
+functio genTypusParametrum(in GoGenerator g, de TypusParametrum param) → si textus {
     discerne param {
         casu Typus ut p {
             redde genTypus(g, p.adnotatio)

@@ -11,8 +11,8 @@ importa ex "../ast/lexema" privata VerbumId
 
 # Check if a word is a reserved keyword
 @ publica
-functio estVerbum(textus v) -> bivalens {
-    fixum id = verbumId(v)
+functio estVerbum(textus v) → bivalens {
+    fixum id ← verbumId(v)
     redde nonnihil id
 }
 
@@ -22,7 +22,7 @@ functio estVerbum(textus v) -> bivalens {
 
 # Map a Faber (Latin surface) keyword spelling to canonical identity
 @ publica
-functio verbumFaberId(textus v) -> si VerbumId {
+functio verbumFaberId(textus v) → si VerbumId {
     elige v {
         # ---- Control Flow ----
         casu "si" reddit VerbumId.Si
@@ -185,7 +185,7 @@ functio verbumFaberId(textus v) -> si VerbumId {
 
 # Map surface keyword spelling to canonical identity
 @ publica
-functio verbumId(textus v) -> si VerbumId {
+functio verbumId(textus v) → si VerbumId {
     redde verbumFaberId(v)
 }
 
@@ -196,7 +196,7 @@ functio verbumId(textus v) -> si VerbumId {
 # Check if a word starts a statement (for error recovery sync points)
 # WHY: Parser error recovery skips tokens until hitting a statement boundary
 @ publica
-functio estVerbumSententiae(textus v) -> bivalens {
+functio estVerbumSententiae(textus v) → bivalens {
     elige v {
         # ---- Declarations ----
         casu "functio" reddit verum
@@ -254,7 +254,7 @@ functio estVerbumSententiae(textus v) -> bivalens {
 # Check if a word starts a genus member (for genus body error recovery)
 # WHY: When parsing a genus body fails, we skip to the next field/method
 @ publica
-functio estVerbumGeneris(textus v) -> bivalens {
+functio estVerbumGeneris(textus v) → bivalens {
     elige v {
         casu "functio" reddit verum      # method declaration
         casu "privatus" reddit verum     # visibility modifier

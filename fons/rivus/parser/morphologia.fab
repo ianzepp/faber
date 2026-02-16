@@ -28,7 +28,7 @@ genus RadixEtFlagga {
 
 # Map semantic flags to canonical form name
 @ publica
-functio formaExFlagga(de MorphologiaFlagga flagga) -> textus {
+functio formaExFlagga(de MorphologiaFlagga flagga) → textus {
     si flagga.mutare et non flagga.asynca et non flagga.reddeNovum {
         redde "imperativus"
     }
@@ -49,7 +49,7 @@ functio formaExFlagga(de MorphologiaFlagga flagga) -> textus {
 # ============================================================================
 
 # Imperative: adde, filtra, ordina - mutates in place, sync
-fixum FLAGGA_IMPERATIVUS = {
+fixum FLAGGA_IMPERATIVUS ← {
     mutare: verum,
     asynca: falsum,
     reddeNovum: falsum,
@@ -57,7 +57,7 @@ fixum FLAGGA_IMPERATIVUS = {
 } novum MorphologiaFlagga
 
 # Perfect passive participle: addita, filtrata, ordinata - returns new, sync
-fixum FLAGGA_PERFECTUM = {
+fixum FLAGGA_PERFECTUM ← {
     mutare: falsum,
     asynca: falsum,
     reddeNovum: verum,
@@ -65,7 +65,7 @@ fixum FLAGGA_PERFECTUM = {
 } novum MorphologiaFlagga
 
 # Future active participle: additura, filtratura - returns new, async
-fixum FLAGGA_FUTURUM_ACTIVUM = {
+fixum FLAGGA_FUTURUM_ACTIVUM ← {
     mutare: falsum,
     asynca: verum,
     reddeNovum: verum,
@@ -73,7 +73,7 @@ fixum FLAGGA_FUTURUM_ACTIVUM = {
 } novum MorphologiaFlagga
 
 # Future indicative: addet, filtrabit - mutates, async
-fixum FLAGGA_FUTURUM_INDICATIVUM = {
+fixum FLAGGA_FUTURUM_INDICATIVUM ← {
     mutare: verum,
     asynca: verum,
     reddeNovum: falsum,
@@ -109,8 +109,8 @@ fixum FLAGGA_FUTURUM_INDICATIVUM = {
 #
 # Returns nihil if no recognized morphology.
 @ publica
-functio parseMethodum(de textus nomen) -> si RadixEtFlagga {
-    fixum longitudo = nomen.longitudo()
+functio parseMethodum(de textus nomen) → si RadixEtFlagga {
+    fixum longitudo ← nomen.longitudo()
 
     # Need at least 2 chars (1 stem + 1 ending)
     si longitudo < 2 {
@@ -119,43 +119,43 @@ functio parseMethodum(de textus nomen) -> si RadixEtFlagga {
 
     # Future active participle: -atura, -itura (async, returns new)
     si longitudo > 5 {
-        fixum suffix5 = nomen.sectio(longitudo - 5, longitudo)
-        si suffix5 == "atura" aut suffix5 == "itura"
+        fixum suffix5 ← nomen.sectio(longitudo - 5, longitudo)
+        si suffix5 ≡ "atura" aut suffix5 ≡ "itura"
             reddit { radix: nomen.sectio(0, longitudo - 5), flagga: FLAGGA_FUTURUM_ACTIVUM } novum RadixEtFlagga
     }
 
     # Future indicative: -abit, -ebit (async, mutates)
     si longitudo > 4 {
-        fixum suffix4 = nomen.sectio(longitudo - 4, longitudo)
-        si suffix4 == "abit" aut suffix4 == "ebit"
+        fixum suffix4 ← nomen.sectio(longitudo - 4, longitudo)
+        si suffix4 ≡ "abit" aut suffix4 ≡ "ebit"
             reddit { radix: nomen.sectio(0, longitudo - 4), flagga: FLAGGA_FUTURUM_INDICATIVUM } novum RadixEtFlagga
     }
 
     # Also check -iet for 3rd conjugation futures
     si longitudo > 3 {
-        fixum suffix3 = nomen.sectio(longitudo - 3, longitudo)
-        si suffix3 == "iet"
+        fixum suffix3 ← nomen.sectio(longitudo - 3, longitudo)
+        si suffix3 ≡ "iet"
             reddit { radix: nomen.sectio(0, longitudo - 3), flagga: FLAGGA_FUTURUM_INDICATIVUM } novum RadixEtFlagga
     }
 
     # Perfect passive participle: -ata, -ita, -ta (sync, returns new)
     si longitudo > 3 {
-        fixum suffix3 = nomen.sectio(longitudo - 3, longitudo)
-        si suffix3 == "ata" aut suffix3 == "ita"
+        fixum suffix3 ← nomen.sectio(longitudo - 3, longitudo)
+        si suffix3 ≡ "ata" aut suffix3 ≡ "ita"
             reddit { radix: nomen.sectio(0, longitudo - 3), flagga: FLAGGA_PERFECTUM } novum RadixEtFlagga
     }
 
     # Check 2-char endings: -ta, -sa (some participles)
     # WHY: 3rd conjugation verbs like invertere → inversus have -sa participle
     si longitudo > 2 {
-        fixum suffix2 = nomen.sectio(longitudo - 2, longitudo)
-        si suffix2 == "ta" aut suffix2 == "sa"
+        fixum suffix2 ← nomen.sectio(longitudo - 2, longitudo)
+        si suffix2 ≡ "ta" aut suffix2 ≡ "sa"
             reddit { radix: nomen.sectio(0, longitudo - 2), flagga: FLAGGA_PERFECTUM } novum RadixEtFlagga
     }
 
     # Imperative: -a, -e, -i (sync, mutates)
-    fixum ultimum = nomen.sectio(longitudo - 1, longitudo)
-    si ultimum == "a" aut ultimum == "e" aut ultimum == "i"
+    fixum ultimum ← nomen.sectio(longitudo - 1, longitudo)
+    si ultimum ≡ "a" aut ultimum ≡ "e" aut ultimum ≡ "i"
         reddit { radix: nomen.sectio(0, longitudo - 1), flagga: FLAGGA_IMPERATIVUS } novum RadixEtFlagga
 
     # No recognized morphology
@@ -164,7 +164,7 @@ functio parseMethodum(de textus nomen) -> si RadixEtFlagga {
 
 # Check if a stem is a known lista verb
 @ publica
-functio estRadixListae(de textus radix) -> bivalens {
+functio estRadixListae(de textus radix) → bivalens {
     # Core action verbs for lista operations
     # WHY: Some verbs have different stems for different conjugations.
     #      e.g., invertere → invert- (present), invers- (perfect participle)

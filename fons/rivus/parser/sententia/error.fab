@@ -34,19 +34,19 @@ importa ex "../errores" privata ParserErrorCodice
 #
 # Binds the caught error to the identifier.
 @ publica
-functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCapeClausula(in Resolvitor r) → CapeClausula {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'cape' keyword
     p.expectaVerbum("cape", ParserErrorCodice.ExpectaturCape)
 
     # Parse error binding identifier
-    fixum nomenSymbolum = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-    fixum param = nomenSymbolum.valor
+    fixum nomenSymbolum ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum param ← nomenSymbolum.valor
 
     # Parse the handler block
-    fixum corpus = r.massa() qua MassaSententia
+    fixum corpus ← r.massa() qua MassaSententia
 
     redde {
         locus: locus,
@@ -62,28 +62,28 @@ functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
 # Both cape and demum are optional, but at least one should be present
 # for the statement to be useful.
 @ publica
-functio parseTemptaSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseTemptaSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'tempta' keyword
     p.expectaVerbum("tempta", ParserErrorCodice.ExpectaturTempta)
 
     # Parse the try block
-    fixum corpus = r.massa() qua MassaSententia
+    fixum corpus ← r.massa() qua MassaSententia
 
     # Parse optional catch clause
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
 
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     # Parse optional finally block
-    varia demum = nihil qua si MassaSententia
+    varia demum ← nihil qua si MassaSententia
 
     si p.congruetVerbum("demum") {
-        demum = r.massa() qua MassaSententia
+        demum ← r.massa() qua MassaSententia
     }
 
     redde finge TemptaSententia {
@@ -105,28 +105,28 @@ functio parseTemptaSententia(in Resolvitor r) -> Sententia {
 # Creates explicit scope boundary with optional error handling.
 # When 'dum' is present, creates a do-while loop.
 @ publica
-functio parseFacSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseFacSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'fac' keyword
     p.expectaVerbum("fac", ParserErrorCodice.ExpectaturFac)
 
     # Parse the block
-    fixum corpus = r.massa() qua MassaSententia
+    fixum corpus ← r.massa() qua MassaSententia
 
     # Parse optional catch clause
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
 
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     # Parse optional 'dum' for do-while loop
-    varia condicio = nihil qua si Expressia
+    varia condicio ← nihil qua si Expressia
 
     si p.congruetVerbum("dum") {
-        condicio = r.expressia()
+        condicio ← r.expressia()
     }
 
     redde finge FacSententia {
@@ -147,21 +147,21 @@ functio parseFacSententia(in Resolvitor r) -> Sententia {
 #
 # Runtime invariant check. Optional second expression is error message.
 @ publica
-functio parseAdfirmaSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseAdfirmaSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'adfirma' keyword
     p.expectaVerbum("adfirma", ParserErrorCodice.ExpectaturAdfirma)
 
     # Parse the condition expression
-    fixum condicio = r.expressia()
+    fixum condicio ← r.expressia()
 
     # Parse optional message expression
-    varia nuntius = nihil qua si Expressia
+    varia nuntius ← nihil qua si Expressia
 
     si p.congruet(SymbolumGenus.Coma) {
-        nuntius = r.expressia()
+        nuntius ← r.expressia()
     }
 
     redde finge AdfirmaSententia {

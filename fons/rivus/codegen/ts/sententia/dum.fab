@@ -12,6 +12,6 @@ importa ex "../../shared/dum" privata genDumLogica
 importa ex "../revocata" privata creaTsRevocata
 
 @ publica
-functio genDum(in TsGenerator g, de Expressia condicio, de Sententia corpus, de ignotum cape) -> textus {
+functio genDum(in TsGenerator g, de Expressia condicio, de Sententia corpus, de ignotum cape) → textus {
     redde genDumLogica(condicio, corpus, cape, g, SYNTAXIS_TS, creaTsRevocata())
 }

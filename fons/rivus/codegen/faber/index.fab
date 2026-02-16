@@ -18,12 +18,12 @@ importa ex "./sententia" privata genSententia
 
 # Generate canonical Faber source code from a list of statements
 @ publica
-functio generateFaber(de lista<Sententia> corpus) -> textus {
-    fixum g = creaFaberGenerator()
+functio generateFaber(de lista<Sententia> corpus) → textus {
+    fixum g ← creaFaberGenerator()
 
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
-        fixum line = genSententia(g, stmt)
+        fixum line ← genSententia(g, stmt)
         si line.longitudo() > 0 {
             lines.appende(line)
         }
@@ -34,13 +34,13 @@ functio generateFaber(de lista<Sententia> corpus) -> textus {
 
 # Generate Faber source with comments stripped
 @ publica
-functio generateFaberStripComments(de lista<Sententia> corpus) -> textus {
-    fixum g = creaFaberGenerator()
-    g.stripComments = verum
+functio generateFaberStripComments(de lista<Sententia> corpus) → textus {
+    fixum g ← creaFaberGenerator()
+    g.stripComments ← verum
 
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
-        fixum line = genSententia(g, stmt)
+        fixum line ← genSententia(g, stmt)
         si line.longitudo() > 0 {
             lines.appende(line)
         }

@@ -38,11 +38,11 @@ genus GlyphGenerator implet Generans {
 
     # Generate indentation string for current depth
     @ publica
-    functio ind() -> textus {
-        varia result = ""
-        varia i = 0
+    functio ind() → textus {
+        varia result ← ""
+        varia i ← 0
         dum i < ego.profunditas {
-            result = result + ego.indentum
+            result ← result + ego.indentum
             i += 1
         }
         redde result
@@ -66,7 +66,7 @@ genus GlyphGenerator implet Generans {
 
     # Format leading comments for a node (glyph format)
     @ publica
-    functio notaePrae(de ignotum nodus) -> textus {
+    functio notaePrae(de ignotum nodus) → textus {
         si ego.stripComments {
             redde ""
         }
@@ -75,7 +75,7 @@ genus GlyphGenerator implet Generans {
 
     # Format trailing comments for a node (glyph format)
     @ publica
-    functio notaePost(de ignotum nodus) -> textus {
+    functio notaePost(de ignotum nodus) → textus {
         si ego.stripComments {
             redde ""
         }
@@ -91,9 +91,9 @@ importa ex "../../ast/radix" privata Nota
 importa ex "../../ast/radix" privata NotaGenus
 importa ex "../../ast/radix" privata NodusRadix
 
-functio formataNotaGlyph(de Nota nota) -> textus {
+functio formataNotaGlyph(de Nota nota) → textus {
     # Comments use ⌗ (U+2317) followed by braille-encoded content
-    fixum commentGlyph = "\u2317"
+    fixum commentGlyph ← "\u2317"
 
     elige nota.species {
         casu NotaGenus.Massa {
@@ -108,39 +108,39 @@ functio formataNotaGlyph(de Nota nota) -> textus {
 }
 
 # Format leading comments (emitted on separate lines)
-functio formataNotaePraeGlyph(ignotum nodus, de textus indentum) -> textus {
+functio formataNotaePraeGlyph(ignotum nodus, de textus indentum) → textus {
     si nihil nodus {
         redde ""
     }
 
-    fixum radix = nodus novum NodusRadix
-    fixum notae = radix.notaePrae
+    fixum radix ← nodus novum NodusRadix
+    fixum notae ← radix.notaePrae
     si nihil notae {
         redde ""
     }
 
-    varia out = ""
+    varia out ← ""
     itera ex notae fixum nota {
-        out = out + indentum + formataNotaGlyph(nota) + "\n"
+        out ← out + indentum + formataNotaGlyph(nota) + "\n"
     }
     redde out
 }
 
 # Format trailing comments (emitted inline at end)
-functio formataNotaePostGlyph(ignotum nodus) -> textus {
+functio formataNotaePostGlyph(ignotum nodus) → textus {
     si nihil nodus {
         redde ""
     }
 
-    fixum radix = nodus novum NodusRadix
-    fixum notae = radix.notaePost
+    fixum radix ← nodus novum NodusRadix
+    fixum notae ← radix.notaePost
     si nihil notae {
         redde ""
     }
 
-    varia out = ""
+    varia out ← ""
     itera ex notae fixum nota {
-        out = out + " " + formataNotaGlyph(nota)
+        out ← out + " " + formataNotaGlyph(nota)
     }
     redde out
 }
@@ -151,7 +151,7 @@ functio formataNotaePostGlyph(ignotum nodus) -> textus {
 
 # Create a new GlyphGenerator with default settings
 @ publica
-functio creaGlyphGenerator() -> GlyphGenerator {
+functio creaGlyphGenerator() → GlyphGenerator {
     redde novum GlyphGenerator {
         profunditas: 0,
         indentum: "  ",

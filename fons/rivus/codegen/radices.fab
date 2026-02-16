@@ -14,7 +14,7 @@ importa ex "../parser/morphologia" privata MorphologiaFlagga
 # Generator for a verb stem - produces TS code based on flags
 @ publica
 pactum RadixGenerator {
-    functio genera(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus
+    functio genera(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus
 }
 
 # ============================================================================
@@ -25,7 +25,7 @@ pactum RadixGenerator {
 # Imperative: items.appende(x) -> items.push(x)
 # Participle: items.addita(x) -> [...items, x]
 @ publica
-functio genAdd(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
+functio genAdd(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
     si flagga.mutare {
         si flagga.asynca
             reddit scriptum("Promise.resolve().then(() => { §.push(§); })", obj, args[0])
@@ -41,7 +41,7 @@ functio genAdd(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga
 # Imperative: items.praepone(x) -> items.unshift(x)
 # Participle: items.praeposita(x) -> [x, ...items]
 @ publica
-functio genPraepon(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
+functio genPraepon(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
     si flagga.mutare {
         si flagga.asynca
             reddit scriptum("Promise.resolve().then(() => { §.unshift(§); })", obj, args[0])
@@ -57,7 +57,7 @@ functio genPraepon(de textus obj, de lista<textus> args, de MorphologiaFlagga fl
 # Imperative: items.remove() -> items.pop()
 # Participle: items.remota() -> items.slice(0, -1)
 @ publica
-functio genRemov(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
+functio genRemov(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
     si flagga.mutare {
         si flagga.asynca
             reddit scriptum("Promise.resolve().then(() => { §.pop(); })", obj)
@@ -73,7 +73,7 @@ functio genRemov(de textus obj, de lista<textus> args, de MorphologiaFlagga flag
 # Imperative: items.decapita() -> items.shift()
 # Participle: items.decapitata() -> items.slice(1)
 @ publica
-functio genDecapit(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
+functio genDecapit(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
     si flagga.mutare {
         si flagga.asynca
             reddit scriptum("Promise.resolve().then(() => { §.shift(); })", obj)
@@ -89,7 +89,7 @@ functio genDecapit(de textus obj, de lista<textus> args, de MorphologiaFlagga fl
 # Imperative: items.filtra(fn) -> in-place filter
 # Participle: items.filtrata(fn) -> items.filter(fn)
 @ publica
-functio genFiltr(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
+functio genFiltr(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
     si flagga.mutare {
         si flagga.asynca {
             # filtrabit - async in-place filter
@@ -111,7 +111,7 @@ functio genFiltr(de textus obj, de lista<textus> args, de MorphologiaFlagga flag
 # Always returns new (map is inherently non-mutating)
 # Participle: items.mappata(fn) -> items.map(fn)
 @ publica
-functio genMapp(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
+functio genMapp(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
     si flagga.asynca {
         # mappatura - async map
         redde scriptum("Promise.all(§.map(§))", obj, args[0])
@@ -124,8 +124,8 @@ functio genMapp(de textus obj, de lista<textus> args, de MorphologiaFlagga flagg
 # Imperative: items.ordina() -> items.sort()
 # Participle: items.ordinata() -> [...items].sort()
 @ publica
-functio genOrdin(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
-    fixum hasComparator = args.longitudo() > 0
+functio genOrdin(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
+    fixum hasComparator ← args.longitudo() > 0
 
     si flagga.mutare {
         si flagga.asynca {
@@ -156,7 +156,7 @@ functio genOrdin(de textus obj, de lista<textus> args, de MorphologiaFlagga flag
 # Imperative: items.inverte() -> items.reverse()
 # Participle: items.inversa() -> [...items].reverse()
 @ publica
-functio genInvert(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> textus {
+functio genInvert(de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → textus {
     si flagga.mutare {
         si flagga.asynca
             reddit scriptum("Promise.resolve().then(() => { §.reverse(); })", obj)
@@ -174,7 +174,7 @@ functio genInvert(de textus obj, de lista<textus> args, de MorphologiaFlagga fla
 
 # Generate TS code for a lista method by stem and flags
 @ publica
-functio generaListaMethodum(de textus radix, de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) -> si textus {
+functio generaListaMethodum(de textus radix, de textus obj, de lista<textus> args, de MorphologiaFlagga flagga) → si textus {
     # WHY: Some verbs have different stems for different conjugations.
     #      Map alternate stems to the same generator.
     elige radix {

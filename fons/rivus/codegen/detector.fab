@@ -60,15 +60,15 @@ genus FeatureDetector {
 
     # Detect all features used in a program
     @ publica
-    functio detect(de lista<Sententia> corpus) -> lista<UsitataFeatura> {
-        ego.featurae = {} innatum tabula<textus, UsitataFeatura>
+    functio detect(de lista<Sententia> corpus) → lista<UsitataFeatura> {
+        ego.featurae ← {} innatum tabula<textus, UsitataFeatura>
 
         itera ex corpus fixum stmt {
             ego.visitSententia(stmt)
         }
 
         # Return unique features
-        varia result = [] innatum lista<UsitataFeatura>
+        varia result ← [] innatum lista<UsitataFeatura>
         itera ex ego.featurae.claves() fixum clavis {
             result.appende(ego.featurae[clavis] qua UsitataFeatura)
         }
@@ -76,15 +76,15 @@ genus FeatureDetector {
     }
 
     # Add a feature if not already tracked (first occurrence wins)
-    functio registraFeatura(de UsitataFeatura f) -> vacuum {
-        fixum clavisTextus = featuraClavisAdTextus(f.clavis)
+    functio registraFeatura(de UsitataFeatura f) → vacuum {
+        fixum clavisTextus ← featuraClavisAdTextus(f.clavis)
         si nihil ego.featurae[clavisTextus] {
-            ego.featurae[clavisTextus] = f
+            ego.featurae[clavisTextus] ← f
         }
     }
 
     # Visit a statement node
-    functio visitSententia(de Sententia stmt) -> vacuum {
+    functio visitSententia(de Sententia stmt) → vacuum {
         discerne stmt {
             casu FunctioDeclaratio {
                 ego.visitFunctio(stmt)
@@ -244,11 +244,11 @@ genus FeatureDetector {
     }
 
     # Visit a function declaration
-    functio visitFunctio(de Sententia stmt) -> vacuum {
+    functio visitFunctio(de Sententia stmt) → vacuum {
         discerne stmt {
             casu FunctioDeclaratio ut f {
-                fixum isAsync = f.asynca
-                fixum isGenerator = f.generator
+                fixum isAsync ← f.asynca
+                fixum isGenerator ← f.generator
 
                 si isAsync et isGenerator {
                     ego.registraFeatura({
@@ -297,7 +297,7 @@ genus FeatureDetector {
     }
 
     # Visit an expression node
-    functio visitExpressia(de Expressia expr) -> vacuum {
+    functio visitExpressia(de Expressia expr) → vacuum {
         discerne expr {
             casu MembrumExpressia ut m {
                 si m.optivum {
@@ -330,7 +330,7 @@ genus FeatureDetector {
             }
 
             casu BinariaExpressia ut b {
-                si b.signum == "??" {
+                si b.signum ≡ "??" {
                     ego.registraFeatura({
                         clavis: FeaturaClavis.Expressiae_Coalescentio,
                         contextus: "null coalescing",
@@ -393,7 +393,7 @@ genus FeatureDetector {
 
 # Convert feature key to string for map lookup
 @ publica
-functio featuraClavisAdTextus(FeaturaClavis clavis) -> textus {
+functio featuraClavisAdTextus(FeaturaClavis clavis) → textus {
     elige clavis {
         casu FeaturaClavis.ControlFlow_AsyncFunctio { redde "controlFlow.asyncFunctio" }
         casu FeaturaClavis.ControlFlow_GeneratorFunctio { redde "controlFlow.generatorFunctio" }
@@ -411,7 +411,7 @@ functio featuraClavisAdTextus(FeaturaClavis clavis) -> textus {
 
 # Create a new feature detector
 @ publica
-functio novumDetector() -> FeatureDetector {
+functio novumDetector() → FeatureDetector {
     redde {
         featurae: {} innatum tabula<textus, UsitataFeatura>
     } novum FeatureDetector

@@ -18,14 +18,14 @@ importa ex "./index" privata genSententia
 importa ex "./index" privata genMassa
 
 @ publica
-functio genCustodi(in TsGenerator g, de lista<CustodiClausula> clausulae) -> textus {
-    varia result = ""
+functio genCustodi(in TsGenerator g, de lista<CustodiClausula> clausulae) → textus {
+    varia result ← ""
     itera ex clausulae fixum clausula {
-        varia vacuus = falsum
+        varia vacuus ← falsum
         discerne clausula.consequens {
             casu MassaSententia ut m {
-                si m.corpus.longitudo() == 0 {
-                    vacuus = verum
+                si m.corpus.longitudo() ≡ 0 {
+                    vacuus ← verum
                 }
             }
             ceterum tacet
@@ -33,29 +33,29 @@ functio genCustodi(in TsGenerator g, de lista<CustodiClausula> clausulae) -> tex
 
         si vacuus {
             # WHY: Empty guard bodies should compact to {} with no blank line.
-            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(g, clausula.condicio))
+            result ← scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(g, clausula.condicio))
             perge
         }
 
         g.intraProfundum()
-        varia body = "" qua textus
+        varia body ← "" qua textus
         discerne clausula.consequens {
             casu MassaSententia ut m {
-                body = genMassa(g, m.corpus)
+                body ← genMassa(g, m.corpus)
             }
             ceterum tacet
         }
-        si body == "" {
-            body = genSententia(g, clausula.consequens)
+        si body ≡ "" {
+            body ← genSententia(g, clausula.consequens)
         }
-        si body == "" aut nihil body aut body == "undefined" {
+        si body ≡ "" aut nihil body aut body ≡ "undefined" {
             # WHY: Defensive fallback if empty bodies stringify poorly.
-            result = scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(g, clausula.condicio))
+            result ← scriptum("§§if (§) {}\n", result, g.ind(), genExpressia(g, clausula.condicio))
             g.exiProfundum()
             perge
         }
         g.exiProfundum()
-        result = scriptum("§§if (§) {\n§\n§}\n", result, g.ind(), genExpressia(g, clausula.condicio), body, g.ind())
+        result ← scriptum("§§if (§) {\n§\n§}\n", result, g.ind(), genExpressia(g, clausula.condicio), body, g.ind())
     }
     redde result
 }

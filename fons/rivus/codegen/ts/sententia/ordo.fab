@@ -12,49 +12,49 @@ importa ex "../../../ast/sententia" privata Visibilitas
 importa ex "../nucleus" privata TsGenerator
 
 @ publica
-functio genOrdo(in TsGenerator g, de textus nomen, de lista<OrdoMembrum> membra, de ignotum visibilitas) -> textus {
-    varia result = g.ind()
+functio genOrdo(in TsGenerator g, de textus nomen, de lista<OrdoMembrum> membra, de ignotum visibilitas) → textus {
+    varia result ← g.ind()
 
     # Module-level: export when public
     si nonnihil visibilitas {
-        fixum vis = visibilitas qua Visibilitas
-        si vis == Visibilitas.Publica {
-            result = scriptum("§export ", result)
+        fixum vis ← visibilitas qua Visibilitas
+        si vis ≡ Visibilitas.Publica {
+            result ← scriptum("§export ", result)
         }
     }
 
-    result = scriptum("§enum § {\n", result, nomen)
+    result ← scriptum("§enum § {\n", result, nomen)
     g.intraProfundum()
 
     # If no member has an explicit value, keep them on one line.
-    varia habetValores = falsum
+    varia habetValores ← falsum
     itera ex membra fixum membrum {
         si nonnihil membrum.valor {
-            habetValores = verum
+            habetValores ← verum
         }
     }
 
     si non habetValores {
-        varia nomina = [] innatum lista<textus>
+        varia nomina ← [] innatum lista<textus>
         itera ex membra fixum membrum {
             nomina.appende(membrum.nomen)
         }
-        result = scriptum("§§§\n", result, g.ind(), nomina.coniunge(", "))
+        result ← scriptum("§§§\n", result, g.ind(), nomina.coniunge(", "))
         g.exiProfundum()
-        result = scriptum("§§}", result, g.ind())
+        result ← scriptum("§§}", result, g.ind())
         redde result
     }
 
     itera ex membra fixum membrum {
         si nonnihil membrum.valor {
-            result = scriptum("§§§ = §,\n", result, g.ind(), membrum.nomen, membrum.valor qua textus)
+            result ← scriptum("§§§ = §,\n", result, g.ind(), membrum.nomen, membrum.valor qua textus)
         } secus {
-            result = scriptum("§§§,\n", result, g.ind(), membrum.nomen)
+            result ← scriptum("§§§,\n", result, g.ind(), membrum.nomen)
         }
     }
 
     g.exiProfundum()
-    result = scriptum("§§}", result, g.ind())
+    result ← scriptum("§§}", result, g.ind())
 
     redde result
 }

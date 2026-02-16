@@ -18,12 +18,12 @@ importa ex "./sententia" privata genSententia
 
 # Generate glyph representation from a list of statements
 @ publica
-functio generateGlyph(de lista<Sententia> corpus) -> textus {
-    fixum g = creaGlyphGenerator()
+functio generateGlyph(de lista<Sententia> corpus) → textus {
+    fixum g ← creaGlyphGenerator()
 
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
-        fixum line = genSententia(g, stmt)
+        fixum line ← genSententia(g, stmt)
         si line.longitudo() > 0 {
             lines.appende(line)
         }
@@ -34,13 +34,13 @@ functio generateGlyph(de lista<Sententia> corpus) -> textus {
 
 # Generate glyph representation with comments stripped
 @ publica
-functio generateGlyphStripComments(de lista<Sententia> corpus) -> textus {
-    fixum g = creaGlyphGenerator()
-    g.stripComments = verum
+functio generateGlyphStripComments(de lista<Sententia> corpus) → textus {
+    fixum g ← creaGlyphGenerator()
+    g.stripComments ← verum
 
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
-        fixum line = genSententia(g, stmt)
+        fixum line ← genSententia(g, stmt)
         si line.longitudo() > 0 {
             lines.appende(line)
         }

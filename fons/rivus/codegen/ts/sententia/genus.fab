@@ -27,98 +27,98 @@ importa ex "./index" privata genSententia
 importa ex "../typus" privata genTypus
 
 @ publica
-functio genGenus(in TsGenerator g, de GenusDeclaratio s) -> textus {
-    varia result = g.ind()
+functio genGenus(in TsGenerator g, de GenusDeclaratio s) → textus {
+    varia result ← g.ind()
 
     # Determine class visibility for field inheritance
-    varia classVisibility = Visibilitas.Privata
+    varia classVisibility ← Visibilitas.Privata
     si nonnihil s.visibilitas {
-        classVisibility = s.visibilitas qua Visibilitas
+        classVisibility ← s.visibilitas qua Visibilitas
     }
 
     # Module-level: export when public
     si nonnihil s.visibilitas {
-        fixum vis = s.visibilitas qua Visibilitas
-        si vis == Visibilitas.Publica {
-            result = scriptum("§export ", result)
+        fixum vis ← s.visibilitas qua Visibilitas
+        si vis ≡ Visibilitas.Publica {
+            result ← scriptum("§export ", result)
         }
     }
 
     si s.abstractum {
-        result = scriptum("§abstract ", result)
+        result ← scriptum("§abstract ", result)
     }
 
-    result = scriptum("§class §", result, s.nomen)
+    result ← scriptum("§class §", result, s.nomen)
 
     # Generics
     si nonnulla s.generaParametra {
-        result = scriptum("§<§>", result, s.generaParametra.coniunge(", "))
+        result ← scriptum("§<§>", result, s.generaParametra.coniunge(", "))
     }
 
     # Extends
     si nonnihil s.extendit {
-        result = scriptum("§ extends §", result, s.extendit qua textus)
+        result ← scriptum("§ extends §", result, s.extendit qua textus)
     }
 
     # Implements
     si nonnulla s.implet {
-        result = scriptum("§ implements §", result, s.implet.coniunge(", "))
+        result ← scriptum("§ implements §", result, s.implet.coniunge(", "))
     }
 
-    result = scriptum("§ {\n", result)
+    result ← scriptum("§ {\n", result)
     g.intraProfundum()
-    g.inGenere = verum
+    g.inGenere ← verum
 
     # Fields
     itera ex s.campi fixum campus {
-        result = scriptum("§§\n", result, genCampus(g, campus, classVisibility))
+        result ← scriptum("§§\n", result, genCampus(g, campus, classVisibility))
     }
 
     # Split creo method from other methods
-    varia creo = nihil qua si FunctioDeclaratio
-    varia ceteri = [] innatum lista<FunctioDeclaratio>
+    varia creo ← nihil qua si FunctioDeclaratio
+    varia ceteri ← [] innatum lista<FunctioDeclaratio>
     itera ex s.methodi fixum m {
         si m.structor {
-            creo = m
+            creo ← m
         } secus {
             ceteri.appende(m)
         }
     }
 
     # Constructor (auto-merge)
-    result = scriptum("§§\n", result, genAutoMergeConstructor(g, s.campi, nonnihil creo))
+    result ← scriptum("§§\n", result, genAutoMergeConstructor(g, s.campi, nonnihil creo))
 
     # Private creo hook
     si nonnihil creo {
-        result = scriptum("§§\n", result, genCreoMethod(g, creo qua Sententia))
+        result ← scriptum("§§\n", result, genCreoMethod(g, creo qua Sententia))
     }
 
     # Methods
     itera ex ceteri fixum methodus {
-        result = scriptum("§§\n", result, genSententia(g, methodus))
+        result ← scriptum("§§\n", result, genSententia(g, methodus))
     }
 
-    g.inGenere = falsum
+    g.inGenere ← falsum
     g.exiProfundum()
-    result = scriptum("§§}", result, g.ind())
+    result ← scriptum("§§}", result, g.ind())
 
     redde result
 }
 
-functio genAutoMergeConstructor(in TsGenerator g, de lista<CampusDeclaratio> campi, bivalens hasCreo) -> textus {
-    varia lines = [] innatum lista<textus>
-    varia instFields = [] innatum lista<CampusDeclaratio>
+functio genAutoMergeConstructor(in TsGenerator g, de lista<CampusDeclaratio> campi, bivalens hasCreo) → textus {
+    varia lines ← [] innatum lista<textus>
+    varia instFields ← [] innatum lista<CampusDeclaratio>
     itera ex campi fixum campus {
         si non campus.staticum {
             instFields.appende(campus)
         }
     }
 
-    varia props = [] innatum lista<textus>
+    varia props ← [] innatum lista<textus>
     itera ex instFields fixum campus {
         props.appende(scriptum("§?: §", campus.nomen, genTypus(g, campus.typus)))
     }
-    fixum overridesType = (instFields.longitudo() > 0) sic scriptum("{ § }", props.coniunge(", ")) secus "Record<string, never>"
+    fixum overridesType ← (instFields.longitudo() > 0) sic scriptum("{ § }", props.coniunge(", ")) secus "Record<string, never>"
 
     lines.appende(scriptum("§constructor(overrides: § = {}) {", g.ind(), overridesType))
     g.intraProfundum()
@@ -136,15 +136,15 @@ functio genAutoMergeConstructor(in TsGenerator g, de lista<CampusDeclaratio> cam
     redde lines.coniunge("\n")
 }
 
-functio genCreoMethod(in TsGenerator g, de Sententia creo) -> textus {
+functio genCreoMethod(in TsGenerator g, de Sententia creo) → textus {
     discerne creo {
         casu FunctioDeclaratio ut f {
-            varia body = "{}"
+            varia body ← "{}"
             si nonnihil f.corpus {
                 g.intraProfundum()
-                fixum content = genSententia(g, f.corpus)
+                fixum content ← genSententia(g, f.corpus)
                 g.exiProfundum()
-                body = scriptum("{\n§\n§}", content, g.ind())
+                body ← scriptum("{\n§\n§}", content, g.ind())
             }
             redde scriptum("§private creo() §", g.ind(), body)
         }
@@ -154,37 +154,37 @@ functio genCreoMethod(in TsGenerator g, de Sententia creo) -> textus {
 }
 
 @ publica
-functio genCampus(in TsGenerator g, de CampusDeclaratio campus, Visibilitas classVisibility) -> textus {
-    varia result = g.ind()
+functio genCampus(in TsGenerator g, de CampusDeclaratio campus, Visibilitas classVisibility) → textus {
+    varia result ← g.ind()
 
     # Determine effective visibility
     # HEURISTIC: For public classes, only emit explicit private/protected modifiers
     # This matches TypeScript's default where public is implicit
-    varia effectiveVisibility = campus.visibilitas
+    varia effectiveVisibility ← campus.visibilitas
 
     # If class is public and field would be private (default), make it public instead
     # This implements field visibility inheritance from parent class
-    si classVisibility == Visibilitas.Publica et campus.visibilitas == Visibilitas.Privata {
+    si classVisibility ≡ Visibilitas.Publica et campus.visibilitas ≡ Visibilitas.Privata {
         # Fields without explicit visibility in public classes should be public
-        effectiveVisibility = Visibilitas.Publica
+        effectiveVisibility ← Visibilitas.Publica
     }
 
     # Only emit modifier if private or protected (public is default in TS)
-    si effectiveVisibility == Visibilitas.Privata {
-        result = scriptum("§private ", result)
-    } sin effectiveVisibility == Visibilitas.Protecta {
-        result = scriptum("§protected ", result)
+    si effectiveVisibility ≡ Visibilitas.Privata {
+        result ← scriptum("§private ", result)
+    } sin effectiveVisibility ≡ Visibilitas.Protecta {
+        result ← scriptum("§protected ", result)
     }
     # For public visibility, emit no modifier (public is implicit in TypeScript)
 
     si campus.staticum {
-        result = scriptum("§static ", result)
+        result ← scriptum("§static ", result)
     }
 
-    result = scriptum("§§: §", result, campus.nomen, genTypus(g, campus.typus))
+    result ← scriptum("§§: §", result, campus.nomen, genTypus(g, campus.typus))
 
     si nonnihil campus.valor {
-        result = scriptum("§ = §", result, genExpressia(g, campus.valor))
+        result ← scriptum("§ = §", result, genExpressia(g, campus.valor))
     }
 
     redde scriptum("§;", result)

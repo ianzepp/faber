@@ -26,7 +26,7 @@ importa ex "./sententia" privata genMassa
 
 # Generate Faber source for an expression
 @ publica
-functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
+functio genExpressia(in FaberGenerator g, de Expressia expr) → textus {
     discerne expr {
         # Identifiers
         casu Nomen ut e {
@@ -52,67 +52,67 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
 
         # Binary and unary
         casu BinariaExpressia ut e {
-            fixum sinister = genExpressia(g, e.sinister)
-            fixum dexter = genExpressia(g, e.dexter)
+            fixum sinister ← genExpressia(g, e.sinister)
+            fixum dexter ← genExpressia(g, e.dexter)
             redde scriptum("(§ § §)", sinister, e.signum, dexter)
         }
 
         casu UnariaExpressia ut e {
-            fixum arg = genExpressia(g, e.argumentum)
+            fixum arg ← genExpressia(g, e.argumentum)
             redde scriptum("§ §", e.signum, arg)
         }
 
         casu AssignatioExpressia ut e {
-            fixum sinister = genExpressia(g, e.sinister)
-            fixum dexter = genExpressia(g, e.dexter)
+            fixum sinister ← genExpressia(g, e.sinister)
+            fixum dexter ← genExpressia(g, e.dexter)
             redde scriptum("§ § §", sinister, e.signum, dexter)
         }
 
         casu CondicioExpressia ut e {
-            fixum cond = genExpressia(g, e.condicio)
-            fixum cons = genExpressia(g, e.consequens)
-            fixum alt = genExpressia(g, e.alternans)
+            fixum cond ← genExpressia(g, e.condicio)
+            fixum cons ← genExpressia(g, e.consequens)
+            fixum alt ← genExpressia(g, e.alternans)
             redde scriptum("§ sic § secus §", cond, cons, alt)
         }
 
         casu TranslatioExpressia ut e {
-            fixum exprText = genExpressia(g, e.expressia)
-            fixum quant = genExpressia(g, e.quantitas)
+            fixum exprText ← genExpressia(g, e.expressia)
+            fixum quant ← genExpressia(g, e.quantitas)
             redde scriptum("§ § §", exprText, e.directio, quant)
         }
 
         casu AmbitusExpressia ut e {
-            fixum init = genExpressia(g, e.initium)
-            fixum fin = genExpressia(g, e.finis)
-            fixum op = (e.inclusivum qua bivalens) sic "usque" secus "ante"
+            fixum init ← genExpressia(g, e.initium)
+            fixum fin ← genExpressia(g, e.finis)
+            fixum op ← (e.inclusivum qua bivalens) sic "usque" secus "ante"
             si nonnihil e.gradus {
-                fixum step = genExpressia(g, e.gradus qua Expressia)
+                fixum step ← genExpressia(g, e.gradus qua Expressia)
                 redde scriptum("§ § § per §", init, op, fin, step)
             }
             redde scriptum("§ § §", init, op, fin)
         }
 
         casu QuaExpressia ut e {
-            fixum exprText = genExpressia(g, e.expressia)
-            fixum typus = genTypus(g, e.scopus qua TypusAnnotatio)
+            fixum exprText ← genExpressia(g, e.expressia)
+            fixum typus ← genTypus(g, e.scopus qua TypusAnnotatio)
             redde scriptum("§ qua §", exprText, typus)
         }
 
         casu InnatumExpressia ut e {
-            fixum exprText = genExpressia(g, e.expressia)
-            fixum typus = genTypus(g, e.scopus qua TypusAnnotatio)
+            fixum exprText ← genExpressia(g, e.expressia)
+            fixum typus ← genTypus(g, e.scopus qua TypusAnnotatio)
             redde scriptum("§ innatum §", exprText, typus)
         }
 
         casu PostfixNovumExpressia ut e {
-            fixum exprText = genExpressia(g, e.expressia)
-            fixum typus = genTypus(g, e.scopus qua TypusAnnotatio)
+            fixum exprText ← genExpressia(g, e.expressia)
+            fixum typus ← genTypus(g, e.scopus qua TypusAnnotatio)
             redde scriptum("§ novum §", exprText, typus)
         }
 
         casu EstExpressia ut e {
-            fixum exprText = genExpressia(g, e.expressia)
-            fixum typus = genTypus(g, e.scopus qua TypusAnnotatio)
+            fixum exprText ← genExpressia(g, e.expressia)
+            fixum typus ← genTypus(g, e.scopus qua TypusAnnotatio)
             redde scriptum("§ est §", exprText, typus)
         }
 
@@ -122,7 +122,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
                     discerne m.valor {
                         casu MassaSententia ut body {
                             g.intraProfundum()
-                            fixum rendered = genMassa(g, body.corpus)
+                            fixum rendered ← genMassa(g, body.corpus)
                             g.exiProfundum()
                             redde scriptum("praefixum {\n§\n§}", rendered, g.ind())
                         }
@@ -138,19 +138,19 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
 
         # Calls and member access
         casu VocatioExpressia ut e {
-            varia args = [] innatum lista<textus>
+            varia args ← [] innatum lista<textus>
             itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
-            fixum vocatum = genExpressia(g, e.vocatum)
-            fixum optMark = (e.optivum qua bivalens) sic "?." secus ""
+            fixum vocatum ← genExpressia(g, e.vocatum)
+            fixum optMark ← (e.optivum qua bivalens) sic "?." secus ""
             redde scriptum("§§(§)", vocatum, optMark, args.coniunge(", "))
         }
 
         casu MembrumExpressia ut e {
-            fixum obj = genExpressia(g, e.obiectum)
+            fixum obj ← genExpressia(g, e.obiectum)
             si e.computatum qua bivalens {
-                fixum prop = genExpressia(g, e.proprietas)
+                fixum prop ← genExpressia(g, e.proprietas)
                 si e.optivum qua bivalens {
                     redde scriptum("§?[§]", obj, prop)
                 }
@@ -159,7 +159,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
                 }
                 redde scriptum("§[§]", obj, prop)
             }
-            fixum prop = genExpressia(g, e.proprietas)
+            fixum prop ← genExpressia(g, e.proprietas)
             si e.optivum qua bivalens {
                 redde scriptum("§?.§", obj, prop)
             }
@@ -170,11 +170,11 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
         }
 
         casu NovumExpressia ut e {
-            varia args = [] innatum lista<textus>
+            varia args ← [] innatum lista<textus>
             itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
-            fixum vocatum = genExpressia(g, e.vocatum)
+            fixum vocatum ← genExpressia(g, e.vocatum)
             si nonnihil e.initor {
                 args.appende(scriptum("de §", genExpressia(g, e.initor qua Expressia)))
             }
@@ -189,7 +189,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
         }
 
         casu ScriptumExpressia ut e {
-            varia args = [] innatum lista<textus>
+            varia args ← [] innatum lista<textus>
             itera ex e.argumenta fixum arg {
                 args.appende(genExpressia(g, arg))
             }
@@ -200,7 +200,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
         }
 
         casu LegeExpressia ut e {
-            si (e.modus qua textus) == "line" {
+            si (e.modus qua textus) ≡ "line" {
                 redde "lege lineam"
             }
             redde "lege"
@@ -212,7 +212,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
 
         # Collections
         casu SeriesExpressia ut e {
-            varia items = [] innatum lista<textus>
+            varia items ← [] innatum lista<textus>
             itera ex e.elementa fixum elem {
                 items.appende(genExpressia(g, elem))
             }
@@ -229,7 +229,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
 
         # Clausura
         casu ClausuraExpressia ut e {
-            varia params = [] innatum lista<textus>
+            varia params ← [] innatum lista<textus>
             itera ex e.parametra fixum p {
                 si nonnihil p.typus {
                     params.appende(scriptum("§ §", genTypus(g, p.typus qua TypusAnnotatio), p.nomen))
@@ -237,18 +237,18 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
                     params.appende(p.nomen)
                 }
             }
-            varia retType = ""
+            varia retType ← ""
             si nonnihil e.typusReditus {
-                retType = scriptum(" -> §", genTypus(g, e.typusReditus qua TypusAnnotatio))
+                retType ← scriptum(" → §", genTypus(g, e.typusReditus qua TypusAnnotatio))
             }
             discerne e.corpus {
                 casu Massa ut m {
                     discerne m.valor {
                         casu MassaSententia ut body {
                             g.intraProfundum()
-                            fixum rendered = genMassa(g, body.corpus)
+                            fixum rendered ← genMassa(g, body.corpus)
                             g.exiProfundum()
-                            si rendered == "" {
+                            si rendered ≡ "" {
                                 redde scriptum("clausura §§ {}", params.coniunge(", "), retType)
                             }
                             redde scriptum("clausura §§ {\n§\n§}", params.coniunge(", "), retType, rendered, g.ind())
@@ -265,15 +265,15 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
 
         # Discretio construction
         casu FingeExpressia ut e {
-            varia props = [] innatum lista<textus>
+            varia props ← [] innatum lista<textus>
             itera ex e.campi fixum campo {
-                fixum key = genExpressia(g, campo.clavis)
-                fixum val = genExpressia(g, campo.valor)
+                fixum key ← genExpressia(g, campo.clavis)
+                fixum val ← genExpressia(g, campo.valor)
                 props.appende(scriptum("§: §", key, val))
             }
-            varia scopus = ""
+            varia scopus ← ""
             si nonnihil e.scopus {
-                scopus = scriptum(" qua §", genTypus(g, e.scopus qua TypusAnnotatio))
+                scopus ← scriptum(" qua §", genTypus(g, e.scopus qua TypusAnnotatio))
             }
             si props.longitudo() > 0 {
                 redde scriptum("finge § { § }§", e.variansNomen, props.coniunge(", "), scopus)
@@ -283,16 +283,16 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
 
         # Type conversion
         casu ConversioExpressia ut e {
-            fixum src = genExpressia(g, e.expressia)
-            varia result = scriptum("§ §", src, e.signum)
+            fixum src ← genExpressia(g, e.expressia)
+            varia result ← scriptum("§ §", src, e.signum)
             si nonnihil e.scopusTypus {
-                result = scriptum("§<§>", result, genTypus(g, e.scopusTypus qua TypusAnnotatio))
+                result ← scriptum("§<§>", result, genTypus(g, e.scopusTypus qua TypusAnnotatio))
             }
             si nonnihil e.radix {
-                result = scriptum("§<§>", result, e.radix)
+                result ← scriptum("§<§>", result, e.radix)
             }
             si nonnihil e.fallback {
-                result = scriptum("§ vel §", result, genExpressia(g, e.fallback qua Expressia))
+                result ← scriptum("§ vel §", result, genExpressia(g, e.fallback qua Expressia))
             }
             redde result
         }
@@ -305,7 +305,7 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) -> textus {
 # HELPERS
 # =============================================================================
 
-functio genLittera(de LitteraGenus species, de textus crudus) -> textus {
+functio genLittera(de LitteraGenus species, de textus crudus) → textus {
     elige species {
         casu LitteraGenus.Numerus { redde crudus }
         casu LitteraGenus.Fractus { redde crudus }
@@ -318,25 +318,25 @@ functio genLittera(de LitteraGenus species, de textus crudus) -> textus {
     redde crudus
 }
 
-functio genLitteraExemplar(in FaberGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) -> textus {
-    varia result = "`"
-    varia i = 0
+functio genLitteraExemplar(in FaberGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) → textus {
+    varia result ← "`"
+    varia i ← 0
     dum i < partes.longitudo() {
-        result = result + partes[i]
+        result ← result + partes[i]
         si i < expressiae.longitudo() {
-            result = result + "${" + genExpressia(g, expressiae[i]) + "}"
+            result ← result + "${" + genExpressia(g, expressiae[i]) + "}"
         }
         i += 1
     }
     redde result + "`"
 }
 
-functio genObiectum(in FaberGenerator g, de lista<ObiectumProprietas> proprietates) -> textus {
-    si proprietates.longitudo() == 0 {
+functio genObiectum(in FaberGenerator g, de lista<ObiectumProprietas> proprietates) → textus {
+    si proprietates.longitudo() ≡ 0 {
         redde "{}"
     }
 
-    varia props = [] innatum lista<textus>
+    varia props ← [] innatum lista<textus>
     itera ex proprietates fixum prop {
         si prop.dispersum qua bivalens {
             props.appende(scriptum("sparge §", genExpressia(g, prop.valor)))
@@ -352,46 +352,46 @@ functio genObiectum(in FaberGenerator g, de lista<ObiectumProprietas> proprietat
     redde scriptum("{ § }", props.coniunge(", "))
 }
 
-functio genAbExpressia(in FaberGenerator g, de AbExpressia e) -> textus {
-    varia result = ""
+functio genAbExpressia(in FaberGenerator g, de AbExpressia e) → textus {
+    varia result ← ""
 
     si e.negata qua bivalens {
-        result = scriptum("ab non §", genExpressia(g, e.fons))
+        result ← scriptum("ab non §", genExpressia(g, e.fons))
     } secus {
-        result = scriptum("ab §", genExpressia(g, e.fons))
+        result ← scriptum("ab §", genExpressia(g, e.fons))
     }
 
     si nonnihil e.filtrum {
-        fixum f = e.filtrum novum AbFiltrum
+        fixum f ← e.filtrum novum AbFiltrum
         si f.habetUbi qua bivalens {
-            result = scriptum("§ ubi §", result, genExpressia(g, f.condicio))
+            result ← scriptum("§ ubi §", result, genExpressia(g, f.condicio))
         } secus {
-            result = scriptum("§ §", result, genExpressia(g, f.condicio))
+            result ← scriptum("§ §", result, genExpressia(g, f.condicio))
         }
     }
 
     si nonnihil e.gradus {
         itera ex e.gradus fixum step {
-            result = scriptum("§, §", result, genCatenaGradus(g, step))
+            result ← scriptum("§, §", result, genCatenaGradus(g, step))
         }
     }
 
     redde result
 }
 
-functio genCatenaGradus(in FaberGenerator g, de CatenaGradus step) -> textus {
-    varia result = step.verbum qua textus
+functio genCatenaGradus(in FaberGenerator g, de CatenaGradus step) → textus {
+    varia result ← step.verbum qua textus
 
     si nonnihil step.argumentum {
-        result = scriptum("§ §", result, genExpressia(g, step.argumentum qua Expressia))
+        result ← scriptum("§ §", result, genExpressia(g, step.argumentum qua Expressia))
     }
 
     si nonnihil step.proprietas {
-        result = scriptum("§ per §", result, genExpressia(g, step.proprietas qua Expressia))
+        result ← scriptum("§ per §", result, genExpressia(g, step.proprietas qua Expressia))
     }
 
     si nonnihil step.directio {
-        result = scriptum("§ §", result, step.directio)
+        result ← scriptum("§ §", result, step.directio)
     }
 
     redde result

@@ -20,110 +20,110 @@ importa ex "../ast/positio" privata Locus
 @ publica
 ordo ParserErrorCodice {
     # Token expectation errors (P001-P099)
-    ExpectaturParensDex = "P001",
-    ExpectaturUncusDex = "P002",
-    ExpectaturQuadratusDex = "P003",
-    ExpectaturAngulusDex = "P004",
-    ExpectaturVirgula = "P005",
-    ExpectaturColon = "P006",
-    ExpectaturAequale = "P007",
-    ExpectaturUncusSin = "P008",
-    ExpectaturParensSin = "P009",
-    ExpectaturQuadratusSin = "P014",
-    ExpectaturNomen = "P010",
-    ExpectaturTypusNomen = "P011",
-    ExpectaturSagitta = "P012",
+    ExpectaturParensDex ← "P001",
+    ExpectaturUncusDex ← "P002",
+    ExpectaturQuadratusDex ← "P003",
+    ExpectaturAngulusDex ← "P004",
+    ExpectaturVirgula ← "P005",
+    ExpectaturColon ← "P006",
+    ExpectaturAequale ← "P007",
+    ExpectaturUncusSin ← "P008",
+    ExpectaturParensSin ← "P009",
+    ExpectaturQuadratusSin ← "P014",
+    ExpectaturNomen ← "P010",
+    ExpectaturTypusNomen ← "P011",
+    ExpectaturSagitta ← "P012",
 
     # Keyword expectation errors (P020-P049)
-    ExpectaturEx = "P020",
-    ExpectaturImporta = "P021",
-    ExpectaturFunctio = "P022",
-    ExpectaturGenus = "P023",
-    ExpectaturPactum = "P024",
-    ExpectaturTypus = "P025",
-    ExpectaturSi = "P026",
-    ExpectaturDum = "P027",
-    ExpectaturPro = "P028",
-    ExpectaturFixum = "P057",
-    ExpectaturDe = "P043",
-    ExpectaturElige = "P030",
-    ExpectaturCustodi = "P031",
-    ExpectaturAdfirma = "P032",
-    ExpectaturRedde = "P033",
-    ExpectaturIace = "P034",
-    ExpectaturScribe = "P035",
-    ExpectaturTempta = "P036",
-    ExpectaturCape = "P037",
-    ExpectaturSecus = "P039",
-    ExpectaturFac = "P040",
-    ExpectaturFit = "P041",
-    ExpectaturOrdo = "P042",
-    ExpectaturDiscretio = "P048",
-    ExpectaturDiscerne = "P049",
-    ExpectaturProbandum = "P044",
-    ExpectaturProba = "P045",
-    ExpectaturCura = "P046",
-    ExpectaturAnteVelPost = "P047",
-    ExpectaturAd = "P052",
-    ExpectaturIncipit = "P054",
-    ExpectaturIncipiet = "P055",
-    ExpectaturClausura = "P056",
-    ExpectaturVisibilitas = "P058",
-    ExpectaturUt = "P059",
+    ExpectaturEx ← "P020",
+    ExpectaturImporta ← "P021",
+    ExpectaturFunctio ← "P022",
+    ExpectaturGenus ← "P023",
+    ExpectaturPactum ← "P024",
+    ExpectaturTypus ← "P025",
+    ExpectaturSi ← "P026",
+    ExpectaturDum ← "P027",
+    ExpectaturPro ← "P028",
+    ExpectaturFixum ← "P057",
+    ExpectaturDe ← "P043",
+    ExpectaturElige ← "P030",
+    ExpectaturCustodi ← "P031",
+    ExpectaturAdfirma ← "P032",
+    ExpectaturRedde ← "P033",
+    ExpectaturIace ← "P034",
+    ExpectaturScribe ← "P035",
+    ExpectaturTempta ← "P036",
+    ExpectaturCape ← "P037",
+    ExpectaturSecus ← "P039",
+    ExpectaturFac ← "P040",
+    ExpectaturFit ← "P041",
+    ExpectaturOrdo ← "P042",
+    ExpectaturDiscretio ← "P048",
+    ExpectaturDiscerne ← "P049",
+    ExpectaturProbandum ← "P044",
+    ExpectaturProba ← "P045",
+    ExpectaturCura ← "P046",
+    ExpectaturAnteVelPost ← "P047",
+    ExpectaturAd ← "P052",
+    ExpectaturIncipit ← "P054",
+    ExpectaturIncipiet ← "P055",
+    ExpectaturClausura ← "P056",
+    ExpectaturVisibilitas ← "P058",
+    ExpectaturUt ← "P059",
 
     # Module/source errors (P050-P059)
-    ExpectaturModulusNomen = "P050",
-    ExpectaturTextus = "P051",
-    ExpectaturTextusPostSed = "P053",
+    ExpectaturModulusNomen ← "P050",
+    ExpectaturTextus ← "P051",
+    ExpectaturTextusPostSed ← "P053",
 
     # Invalid construct errors (P100-P199)
-    InvalidumAssignatio = "P100",
-    InvalidumExDeInitium = "P101",
-    InvalidumEligeCasusInitium = "P102",
-    InvalidumDiscerneCasusInitium = "P106",
-    InvalidumCustodiClausulaInitium = "P103",
-    InexpectatumSymbolum = "P104",
-    ExpectaturUncusVelParens = "P105",
-    ExpectaturExpressia = "P107",
-    ExpectaturUncusVelErgo = "P108",
-    CompositumPostErgo = "P109",
+    InvalidumAssignatio ← "P100",
+    InvalidumExDeInitium ← "P101",
+    InvalidumEligeCasusInitium ← "P102",
+    InvalidumDiscerneCasusInitium ← "P106",
+    InvalidumCustodiClausulaInitium ← "P103",
+    InexpectatumSymbolum ← "P104",
+    ExpectaturUncusVelParens ← "P105",
+    ExpectaturExpressia ← "P107",
+    ExpectaturUncusVelErgo ← "P108",
+    CompositumPostErgo ← "P109",
 
     # Generic errors (P190-P199)
-    ErrorGeneralis = "P190",
-    ConflictumPraefixumVerbum = "P191",
+    ErrorGeneralis ← "P190",
+    ConflictumPraefixumVerbum ← "P191",
 
     # Declaration errors (P200-P299)
-    DeestFunctioNomen = "P200",
-    DeestParametrumNomen = "P201",
-    DeestGenusNomen = "P202",
-    DeestPactumNomen = "P203",
-    DeestTypusNomen = "P204",
-    DeestVariaNomen = "P205",
+    DeestFunctioNomen ← "P200",
+    DeestParametrumNomen ← "P201",
+    DeestGenusNomen ← "P202",
+    DeestPactumNomen ← "P203",
+    DeestTypusNomen ← "P204",
+    DeestVariaNomen ← "P205",
 
     # Annotation errors (P300-P399)
-    InvalidaRadixForma = "P300",
-    ExpectaturTargetNomen = "P301",
-    ExpectaturTargetValor = "P302",
-    ExpectaturVerteTarget = "P303",
-    ExpectaturVerteMethodAutTemplate = "P304",
-    ExpectaturVerteSagitta = "P305",
-    ExpectaturVerteTemplate = "P306",
-    VerteMultiplicemTargets = "P307",
-    ExpectaturVerteParam = "P308",
+    InvalidaRadixForma ← "P300",
+    ExpectaturTargetNomen ← "P301",
+    ExpectaturTargetValor ← "P302",
+    ExpectaturVerteTarget ← "P303",
+    ExpectaturVerteMethodAutTemplate ← "P304",
+    ExpectaturVerteSagitta ← "P305",
+    ExpectaturVerteTemplate ← "P306",
+    VerteMultiplicemTargets ← "P307",
+    ExpectaturVerteParam ← "P308",
 
     # Syntaxis aliena errors (P400-P499)
     # Foreign syntax patterns from other languages
-    SyntaxisAlienaColonTypus = "P400",
-    SyntaxisAlienaProDe = "P401",
-    SyntaxisAlienaSagittaCrassa = "P402",
-    SyntaxisAlienaNullabilis = "P403",
-    SyntaxisAlienaAliter = "P404",
-    SyntaxisAlienaRogatioBis = "P405",
-    SyntaxisAlienaTernaria = "P406",
-    SyntaxisAlienaExspecta = "P407",
-    SyntaxisAlienaAsynca = "P408",
-    SyntaxisAlienaSecusSi = "P409",
-    SyntaxisAlienaExDe = "P410"
+    SyntaxisAlienaColonTypus ← "P400",
+    SyntaxisAlienaProDe ← "P401",
+    SyntaxisAlienaSagittaCrassa ← "P402",
+    SyntaxisAlienaNullabilis ← "P403",
+    SyntaxisAlienaAliter ← "P404",
+    SyntaxisAlienaRogatioBis ← "P405",
+    SyntaxisAlienaTernaria ← "P406",
+    SyntaxisAlienaExspecta ← "P407",
+    SyntaxisAlienaAsynca ← "P408",
+    SyntaxisAlienaSecusSi ← "P409",
+    SyntaxisAlienaExDe ← "P410"
 }
 
 # Error message with help text
@@ -134,13 +134,13 @@ genus ParserErrorNuntius {
 }
 
 # Helper to construct error messages
-functio creoNuntium(textus t, textus a) -> ParserErrorNuntius {
+functio creoNuntium(textus t, textus a) → ParserErrorNuntius {
     redde novum ParserErrorNuntius { textus: t, auxilium: a }
 }
 
 # Get error message for a given error code
 @ publica
-functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
+functio nuntiumErroris(ParserErrorCodice codice) → ParserErrorNuntius {
     elige codice {
         # Token expectation errors
         casu ParserErrorCodice.ExpectaturParensDex {
@@ -162,7 +162,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected ':'", "Use colon for key:value or ternary alternate.")
         }
         casu ParserErrorCodice.ExpectaturAequale {
-            redde creoNuntium("Expected '='", "Use equals for assignments and type aliases.")
+            redde creoNuntium("Expected '←'", "Use arrow-left for assignments and type aliases.")
         }
         casu ParserErrorCodice.ExpectaturUncusSin {
             redde creoNuntium("Expected '{'", "Block statements require opening brace.")
@@ -180,7 +180,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected type name", "Type annotation required.")
         }
         casu ParserErrorCodice.ExpectaturSagitta {
-            redde creoNuntium("Expected '->'", "Use arrow for return type.")
+            redde creoNuntium("Expected '→'", "Use arrow for return type.")
         }
 
         # Keyword expectation errors
@@ -200,7 +200,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected 'pactum'", "Interfaces: pactum Legibilis { }")
         }
         casu ParserErrorCodice.ExpectaturTypus {
-            redde creoNuntium("Expected 'typus'", "Type aliases: typus ID = textus")
+            redde creoNuntium("Expected 'typus'", "Type aliases: typus ID ← textus")
         }
         casu ParserErrorCodice.ExpectaturSi {
             redde creoNuntium("Expected 'si'", "Conditionals: si x > 0 { }")
@@ -248,7 +248,7 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected 'fac'", "Block scope: fac { } cape { }")
         }
         casu ParserErrorCodice.ExpectaturFit {
-            redde creoNuntium("Expected 'fit'", "Return type: functio f() -> T { }")
+            redde creoNuntium("Expected 'fit'", "Return type: functio f() → T { }")
         }
         casu ParserErrorCodice.ExpectaturOrdo {
             redde creoNuntium("Expected 'ordo'", "Enum: ordo Color { R, G, B }")
@@ -355,10 +355,10 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Pactum requires name", "pactum Legibilis { }")
         }
         casu ParserErrorCodice.DeestTypusNomen {
-            redde creoNuntium("Typus requires name", "typus ID = textus")
+            redde creoNuntium("Typus requires name", "typus ID ← textus")
         }
         casu ParserErrorCodice.DeestVariaNomen {
-            redde creoNuntium("Variable requires name", "varia x = 5")
+            redde creoNuntium("Variable requires name", "varia x ← 5")
         }
         casu ParserErrorCodice.InvalidaRadixForma {
             redde creoNuntium("Unknown radix form", "Use: imperativus, perfectum, futurum_indicativum, futurum_activum")
@@ -373,19 +373,19 @@ functio nuntiumErroris(ParserErrorCodice codice) -> ParserErrorNuntius {
             redde creoNuntium("Expected target in @verte", "@ verte ts 'push'")
         }
         casu ParserErrorCodice.ExpectaturVerteMethodAutTemplate {
-            redde creoNuntium("Expected method name or template in @verte", "@ verte ts 'push' or @ verte ts (ego) -> '...'")
+            redde creoNuntium("Expected method name or template in @verte", "@ verte ts 'push' or @ verte ts (ego) → '...'")
         }
         casu ParserErrorCodice.ExpectaturVerteSagitta {
-            redde creoNuntium("Expected '->' after parameters in @verte", "@ verte ts (ego, elem) -> '...'")
+            redde creoNuntium("Expected '→' after parameters in @verte", "@ verte ts (ego, elem) → '...'")
         }
         casu ParserErrorCodice.ExpectaturVerteTemplate {
-            redde creoNuntium("Expected template string in @verte", "@ verte ts (ego) -> '[...S]'")
+            redde creoNuntium("Expected template string in @verte", "@ verte ts (ego) → '[...S]'")
         }
         casu ParserErrorCodice.VerteMultiplicemTargets {
             redde creoNuntium("@verte allows only one target per line", "Use separate @verte annotations")
         }
         casu ParserErrorCodice.ExpectaturVerteParam {
-            redde creoNuntium("Expected parameter name in @verte template", "@ verte ts (ego, elem) -> '...'")
+            redde creoNuntium("Expected parameter name in @verte template", "@ verte ts (ego, elem) → '...'")
         }
 
         # Syntaxis aliena errors (foreign syntax patterns)
@@ -441,13 +441,13 @@ genus ParserError {
 
 # Create a parser error at given location
 @ publica
-functio error(ParserErrorCodice codice, de Locus locus, si de textus contextus) -> ParserError {
-    fixum nuntium = nuntiumErroris(codice)
-    varia msg = nuntium.textus
+functio error(ParserErrorCodice codice, de Locus locus, si de textus contextus) → ParserError {
+    fixum nuntium ← nuntiumErroris(codice)
+    varia msg ← nuntium.textus
 
     # Append context if provided
     si nonnihil contextus {
-        msg = scriptum("§: §", msg, contextus)
+        msg ← scriptum("§: §", msg, contextus)
     }
 
     redde novum ParserError {

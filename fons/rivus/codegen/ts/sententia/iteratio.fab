@@ -23,12 +23,12 @@ importa ex "../expressia/index" privata genExpressia
 importa ex "./index" privata genSententia
 
 # Check if expression is a known tabula variable name
-functio estTabula(de Expressia expr, de TsGenerator g) -> bivalens {
+functio estTabula(de Expressia expr, de TsGenerator g) → bivalens {
     discerne expr {
         casu Nomen ut n {
-            fixum nomen = n.valor qua textus
+            fixum nomen ← n.valor qua textus
             itera ex g.tabulaNominata fixum item {
-                si item == nomen {
+                si item ≡ nomen {
                     redde verum
                 }
             }
@@ -39,14 +39,14 @@ functio estTabula(de Expressia expr, de TsGenerator g) -> bivalens {
 }
 
 @ publica
-functio genIteratio(in TsGenerator g, IteratioGenus species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape) -> textus {
-    fixum rev = creaTsRevocata()
+functio genIteratio(in TsGenerator g, IteratioGenus species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape) → textus {
+    fixum rev ← creaTsRevocata()
 
     # Convert IteratioVariabilis to string representation
-    fixum varStr = genLoopVariable(variabilis)
+    fixum varStr ← genLoopVariable(variabilis)
 
     # Determine binding keyword based on mutability
-    fixum bindKeyword = mutabilis sic "let" secus "const"
+    fixum bindKeyword ← mutabilis sic "let" secus "const"
 
     # Check for range expression - use shared handler (only for simple identifier)
     discerne variabilis {
@@ -54,11 +54,11 @@ functio genIteratio(in TsGenerator g, IteratioGenus species, de IteratioVariabil
             discerne iterabile {
                 casu AmbitusExpressia ut a {
                     g.intraProfundum()
-                    fixum body = genSententia(g, corpus)
+                    fixum body ← genSententia(g, corpus)
                     g.exiProfundum()
 
-                    fixum initium = genExpressia(g, a.initium)
-                    fixum finis = genExpressia(g, a.finis)
+                    fixum initium ← genExpressia(g, a.initium)
+                    fixum finis ← genExpressia(g, a.finis)
 
                     redde genAmbitusIteratio(
                         n.valor,
@@ -81,29 +81,29 @@ functio genIteratio(in TsGenerator g, IteratioGenus species, de IteratioVariabil
     }
 
     # Regular iteration - TS-specific for-of/for-in handling
-    varia keyword = "of"
-    varia iterStr = genExpressia(g, iterabile)
+    varia keyword ← "of"
+    varia iterStr ← genExpressia(g, iterabile)
 
-    si species == IteratioGenus.De {
+    si species ≡ IteratioGenus.De {
         si estTabula(iterabile, g) {
             # tabula: use for-of with .keys()
-            iterStr = scriptum("§.keys()", iterStr)
+            iterStr ← scriptum("§.keys()", iterStr)
         } secus {
             # Regular object: use for-in
-            keyword = "in"
+            keyword ← "in"
         }
     }
 
-    fixum asyncPrefix = asynca sic "await " secus ""
+    fixum asyncPrefix ← asynca sic "await " secus ""
 
     g.intraProfundum()
-    fixum body = genSententia(g, corpus)
+    fixum body ← genSententia(g, corpus)
     g.exiProfundum()
 
-    fixum loop = scriptum("§for §(§ § § §) {\n§\n§}", g.ind(), asyncPrefix, bindKeyword, varStr, keyword, iterStr, body, g.ind())
+    fixum loop ← scriptum("§for §(§ § § §) {\n§\n§}", g.ind(), asyncPrefix, bindKeyword, varStr, keyword, iterStr, body, g.ind())
 
     si nonnihil cape {
-        fixum c = cape novum CapeClausula
+        fixum c ← cape novum CapeClausula
         redde scriptum("§try {\n§\n§} catch (§) §", g.ind(), loop, g.ind(), c.param, genSententia(g, c.corpus))
     }
 
@@ -111,13 +111,13 @@ functio genIteratio(in TsGenerator g, IteratioGenus species, de IteratioVariabil
 }
 
 # Convert loop variable binding to string
-functio genLoopVariable(de IteratioVariabilis variabilis) -> textus {
+functio genLoopVariable(de IteratioVariabilis variabilis) → textus {
     discerne variabilis {
         casu Nomen ut n {
             redde n.valor
         }
         casu Series ut s {
-            varia parts = [] innatum lista<textus>
+            varia parts ← [] innatum lista<textus>
             itera ex s.elementa fixum elem {
                 si elem.omissum {
                     parts.appende("")

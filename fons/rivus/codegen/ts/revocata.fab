@@ -14,17 +14,17 @@ importa ex "./sententia/index" privata genSententia
 @ publica
 genus TsRevocata implet Revocata {
     @ publica
-    functio genExpr(in Generans g, de Expressia e) -> textus {
+    functio genExpr(in Generans g, de Expressia e) → textus {
         redde genExpressia(g qua TsGenerator, e)
     }
     @ publica
-    functio genStmt(in Generans g, de Sententia s) -> textus {
+    functio genStmt(in Generans g, de Sententia s) → textus {
         redde genSententia(g qua TsGenerator, s)
     }
 }
 
 # Factory function for creating the adapter
 @ publica
-functio creaTsRevocata() -> TsRevocata {
+functio creaTsRevocata() → TsRevocata {
     redde novum TsRevocata {}
 }

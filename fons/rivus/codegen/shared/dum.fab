@@ -19,12 +19,12 @@ functio genDumLogica(
     in Generans g,
     de ScopusSyntaxis syn,
     de Revocata rev
-) -> textus {
+) → textus {
     g.intraProfundum()
-    fixum body = rev.genStmt(g, corpus)
+    fixum body ← rev.genStmt(g, corpus)
     g.exiProfundum()
 
-    fixum loop = scriptum(
+    fixum loop ← scriptum(
         "§§ §§§ {\n§\n§}",
         g.ind(),
         syn.dumVerbum,
@@ -37,9 +37,9 @@ functio genDumLogica(
 
     # If target supports cape and cape is present, wrap in try/catch
     si nonnihil cape et syn.habetCape {
-        fixum c = cape novum CapeClausula
+        fixum c ← cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(g, c.corpus)
+        fixum catchBody ← rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

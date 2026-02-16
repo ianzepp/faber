@@ -11,12 +11,12 @@ importa ex "../ast/positio" privata Locus
 # Error codes for lexical failures (L-prefix distinguishes from parser/semantic)
 @ publica
 ordo LexorErrorCodice {
-    TextusNonClausa = "L001",           # Unterminated string
-    ExemplarNonClausum = "L002",        # Unterminated template string
-    SignumInopinatum = "L003",          # Unexpected character
-    NumerusHexMalus = "L004",           # Invalid hex literal
-    NumerusBinariusMalus = "L005",      # Invalid binary literal
-    NumerusOctalisMalus = "L006"        # Invalid octal literal
+    TextusNonClausa ← "L001",           # Unterminated string
+    ExemplarNonClausum ← "L002",        # Unterminated template string
+    SignumInopinatum ← "L003",          # Unexpected character
+    NumerusHexMalus ← "L004",           # Invalid hex literal
+    NumerusBinariusMalus ← "L005",      # Invalid binary literal
+    NumerusOctalisMalus ← "L006"        # Invalid octal literal
 }
 
 # ============================================================================
@@ -36,7 +36,7 @@ genus LexorErrorNuntius {
 
 # Get the human-readable message for a given error code
 @ publica
-functio nuntiumErroris(LexorErrorCodice codice) -> LexorErrorNuntius {
+functio nuntiumErroris(LexorErrorCodice codice) → LexorErrorNuntius {
     elige codice {
         casu LexorErrorCodice.TextusNonClausa {
             redde {
@@ -103,8 +103,8 @@ genus LexorError {
 
 # Create an error at a source position
 @ publica
-functio error(LexorErrorCodice codice, ex Locus locus) -> LexorError {
-    fixum nuntius = nuntiumErroris(codice)
+functio error(LexorErrorCodice codice, ex Locus locus) → LexorError {
+    fixum nuntius ← nuntiumErroris(codice)
     redde {
         codice: codice,
         textus: nuntius.textus,

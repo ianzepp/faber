@@ -47,9 +47,9 @@ genus SemanticErrorNuntius {
 
 # Undefined variable error
 @ publica
-functio undefinedVariableError(de textus nomen) -> SemanticErrorNuntius {
+functio undefinedVariableError(de textus nomen) → SemanticErrorNuntius {
     # Check for assumed globals from other languages
-    fixum hint = hintForAssumedGlobal(nomen)
+    fixum hint ← hintForAssumedGlobal(nomen)
     redde {
         textus: scriptum("Undefined variable '§'", nomen),
         auxilium: nonnihil hint sic hint secus "Variables must be declared with 'varia' or 'fixum' before use"
@@ -57,7 +57,7 @@ functio undefinedVariableError(de textus nomen) -> SemanticErrorNuntius {
 }
 
 # Get hint for commonly assumed globals from other languages
-functio hintForAssumedGlobal(de textus nomen) -> si textus {
+functio hintForAssumedGlobal(de textus nomen) → si textus {
     elige nomen {
         # JavaScript globals
         casu "JSON" reddit "JavaScript's JSON is not available."
@@ -116,7 +116,7 @@ functio hintForAssumedGlobal(de textus nomen) -> si textus {
 
 # Already defined error
 @ publica
-functio alreadyDefinedError(de textus nomen, numerus linea) -> SemanticErrorNuntius {
+functio alreadyDefinedError(de textus nomen, numerus linea) → SemanticErrorNuntius {
     redde {
         textus: scriptum("'§' is already defined at line §", nomen, linea),
         auxilium: "Each name can only be defined once in the same scope. Use a different name or assign to the existing variable."
@@ -125,7 +125,7 @@ functio alreadyDefinedError(de textus nomen, numerus linea) -> SemanticErrorNunt
 
 # Immutable assignment error
 @ publica
-functio immutableAssignmentError(de textus nomen) -> SemanticErrorNuntius {
+functio immutableAssignmentError(de textus nomen) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Cannot assign to immutable variable '§'", nomen),
         auxilium: "Variables declared with 'fixum' cannot be reassigned. Use 'varia' for mutable variables."
@@ -134,7 +134,7 @@ functio immutableAssignmentError(de textus nomen) -> SemanticErrorNuntius {
 
 # Type mismatch error
 @ publica
-functio typeMismatchError(de textus sourceType, de textus targetType) -> SemanticErrorNuntius {
+functio typeMismatchError(de textus sourceType, de textus targetType) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Type '§' is not assignable to type '§'", sourceType, targetType),
         auxilium: "Ensure the types are compatible. You may need a type conversion or to change the variable type."
@@ -143,7 +143,7 @@ functio typeMismatchError(de textus sourceType, de textus targetType) -> Semanti
 
 # Return type mismatch error
 @ publica
-functio returnTypeMismatchError(de textus returnType, de textus functionType) -> SemanticErrorNuntius {
+functio returnTypeMismatchError(de textus returnType, de textus functionType) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Return type '§' is not assignable to function return type '§'", returnType, functionType),
         auxilium: "The returned value must match the function return type annotation."
@@ -152,7 +152,7 @@ functio returnTypeMismatchError(de textus returnType, de textus functionType) ->
 
 # No type or initializer error
 @ publica
-functio noTypeOrInitializerError(de textus nomen) -> SemanticErrorNuntius {
+functio noTypeOrInitializerError(de textus nomen) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Variable '§' has no type annotation or initializer", nomen),
         auxilium: "Variables must have either a type annotation (e.g., 'numerus x') or an initializer (e.g., 'varia x = 5')."
@@ -161,7 +161,7 @@ functio noTypeOrInitializerError(de textus nomen) -> SemanticErrorNuntius {
 
 # Not exported from module error
 @ publica
-functio notExportedFromModuleError(de textus nomen, de textus modulus) -> SemanticErrorNuntius {
+functio notExportedFromModuleError(de textus nomen, de textus modulus) → SemanticErrorNuntius {
     redde {
         textus: scriptum("'§' is not exported from '§'", nomen, modulus),
         auxilium: "Check the module documentation for available exports. You may have a typo in the import name."
@@ -170,7 +170,7 @@ functio notExportedFromModuleError(de textus nomen, de textus modulus) -> Semant
 
 # Incompatible comparison error
 @ publica
-functio incompatibleComparisonError(de textus leftType, de textus rightType, de textus operator) -> SemanticErrorNuntius {
+functio incompatibleComparisonError(de textus leftType, de textus rightType, de textus operator) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Cannot compare '§' with '§' using '§'", leftType, rightType, operator),
         auxilium: "Comparison operators require operands of the same type. Both sides must be numbers or both must be strings."
@@ -179,7 +179,7 @@ functio incompatibleComparisonError(de textus leftType, de textus rightType, de 
 
 # Cede outside async error
 @ publica
-functio cedeOutsideAsyncError() -> SemanticErrorNuntius {
+functio cedeOutsideAsyncError() → SemanticErrorNuntius {
     redde {
         textus: "'cede' requires an async or generator function context",
         auxilium: "Use 'fiet' for async functions, 'fiunt' for generators, or 'fient' for async generators."
@@ -188,7 +188,7 @@ functio cedeOutsideAsyncError() -> SemanticErrorNuntius {
 
 # Await outside async error
 @ publica
-functio awaitOutsideAsyncError(de textus keyword) -> SemanticErrorNuntius {
+functio awaitOutsideAsyncError(de textus keyword) → SemanticErrorNuntius {
     redde {
         textus: scriptum("'§' requires an async function context", keyword),
         auxilium: "Use 'fiet' or 'fient' to declare an async function."
@@ -197,7 +197,7 @@ functio awaitOutsideAsyncError(de textus keyword) -> SemanticErrorNuntius {
 
 # Default with borrowed param error
 @ publica
-functio defaultWithBorrowedParamError(de textus preposition) -> SemanticErrorNuntius {
+functio defaultWithBorrowedParamError(de textus preposition) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Cannot use default value with '§' (borrowed) parameter", preposition),
         auxilium: "Default values require owned parameters. Remove the 'de' or 'in' preposition, or remove the default value."
@@ -206,7 +206,7 @@ functio defaultWithBorrowedParamError(de textus preposition) -> SemanticErrorNun
 
 # Module not found error
 @ publica
-functio moduleNotFoundError(de textus path) -> SemanticErrorNuntius {
+functio moduleNotFoundError(de textus path) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Cannot find module '§'", path),
         auxilium: "Verify the file path is correct and the file exists. Relative paths are resolved from the importing file."
@@ -215,7 +215,7 @@ functio moduleNotFoundError(de textus path) -> SemanticErrorNuntius {
 
 # Circular import error
 @ publica
-functio circularImportError(de textus path, de textus cycle) -> SemanticErrorNuntius {
+functio circularImportError(de textus path, de textus cycle) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Circular import detected: §", cycle),
         auxilium: "Break the cycle by restructuring your modules or using forward declarations for types."
@@ -224,7 +224,7 @@ functio circularImportError(de textus path, de textus cycle) -> SemanticErrorNun
 
 # Module parse error
 @ publica
-functio moduleParseError(de textus path) -> SemanticErrorNuntius {
+functio moduleParseError(de textus path) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Failed to parse module '§'", path),
         auxilium: "Fix the syntax errors in the imported module before importing it."
@@ -233,7 +233,7 @@ functio moduleParseError(de textus path) -> SemanticErrorNuntius {
 
 # Missing function body error
 @ publica
-functio missingFunctionBodyError(de textus nomen) -> SemanticErrorNuntius {
+functio missingFunctionBodyError(de textus nomen) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Function '§' has no body", nomen),
         auxilium: "Regular functions require a body. Use '@ externa' annotation for external declarations."
@@ -242,7 +242,7 @@ functio missingFunctionBodyError(de textus nomen) -> SemanticErrorNuntius {
 
 # Duplicate modifier error
 @ publica
-functio duplicateModifierError(de textus nomen) -> SemanticErrorNuntius {
+functio duplicateModifierError(de textus nomen) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Duplicate modifier '§'", nomen),
         auxilium: "Each modifier can appear at most once in a function signature."
@@ -251,7 +251,7 @@ functio duplicateModifierError(de textus nomen) -> SemanticErrorNuntius {
 
 # Invalid modifier context error
 @ publica
-functio invalidModifierContextError(de textus nomen, de textus contextus) -> SemanticErrorNuntius {
+functio invalidModifierContextError(de textus nomen, de textus contextus) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Modifier '§' is only allowed on §", nomen, contextus),
         auxilium: "Remove the modifier or move it to a valid context."
@@ -260,8 +260,8 @@ functio invalidModifierContextError(de textus nomen, de textus contextus) -> Sem
 
 # Morphologia stem not declared error
 @ publica
-functio morphologiaRadixNonDeclarataError(de textus methodus, de textus radix, de textus forma, de textus recipiens, de lista<textus> formae) -> SemanticErrorNuntius {
-    fixum aux = (formae.longitudo() == 0) sic "Allowed forms for this stem: (none)" secus scriptum("Allowed forms for this stem: §", formae.coniunge(", "))
+functio morphologiaRadixNonDeclarataError(de textus methodus, de textus radix, de textus forma, de textus recipiens, de lista<textus> formae) → SemanticErrorNuntius {
+    fixum aux ← (formae.longitudo() ≡ 0) sic "Allowed forms for this stem: (none)" secus scriptum("Allowed forms for this stem: §", formae.coniunge(", "))
     redde {
         textus: scriptum("Morphologia stem '§' is not declared for '§' (method '§', forma '§'). §", radix, recipiens, methodus, forma, aux),
         auxilium: aux
@@ -270,8 +270,8 @@ functio morphologiaRadixNonDeclarataError(de textus methodus, de textus radix, d
 
 # Morphologia form not permitted error
 @ publica
-functio morphologiaFormaNonPermissaError(de textus methodus, de textus radix, de textus forma, de textus recipiens, de lista<textus> formae) -> SemanticErrorNuntius {
-    fixum aux = scriptum("Allowed forms for this stem: §", formae.coniunge(", "))
+functio morphologiaFormaNonPermissaError(de textus methodus, de textus radix, de textus forma, de textus recipiens, de lista<textus> formae) → SemanticErrorNuntius {
+    fixum aux ← scriptum("Allowed forms for this stem: §", formae.coniunge(", "))
     redde {
         textus: scriptum("Morphologia forma '§' is not allowed for stem '§' on '§' (method '§'). §", forma, radix, recipiens, methodus, aux),
         auxilium: aux
@@ -280,7 +280,7 @@ functio morphologiaFormaNonPermissaError(de textus methodus, de textus radix, de
 
 # Nihil equality comparison warning
 @ publica
-functio nihilEqualityWarning(de textus signum) -> SemanticErrorNuntius {
+functio nihilEqualityWarning(de textus signum) → SemanticErrorNuntius {
     redde {
         textus: scriptum("Use 'nihil' or 'nonnihil' unary operators instead of '§ nihil'", signum),
         auxilium: "For null checks, prefer 'nihil x' (is null) or 'nonnihil x' (is not null) over '== nihil' or '!= nihil'."
@@ -289,7 +289,7 @@ functio nihilEqualityWarning(de textus signum) -> SemanticErrorNuntius {
 
 # Empty case block error
 @ publica
-functio emptyCaseBlockError() -> SemanticErrorNuntius {
+functio emptyCaseBlockError() → SemanticErrorNuntius {
     redde {
         textus: "Empty block in casu/ceterum",
         auxilium: "Use 'tacet' for intentional no-op cases instead of empty braces."
@@ -298,8 +298,8 @@ functio emptyCaseBlockError() -> SemanticErrorNuntius {
 
 # Unknown method error with hints for English method names
 @ publica
-functio unknownMethodError(de textus typus, de textus methodus) -> SemanticErrorNuntius {
-    fixum hint = hintForEnglishMethod(typus, methodus)
+functio unknownMethodError(de textus typus, de textus methodus) → SemanticErrorNuntius {
+    fixum hint ← hintForEnglishMethod(typus, methodus)
     redde {
         textus: scriptum("Unknown method '§' on type '§'", methodus, typus),
         auxilium: nonnihil hint sic hint secus scriptum("Check available methods for '§' in norma.", typus)
@@ -309,9 +309,9 @@ functio unknownMethodError(de textus typus, de textus methodus) -> SemanticError
 # Get hint for English method names on known collection types
 # Based on actual norma definitions in fons/norma/innatum/
 @ publica
-functio hintForEnglishMethod(de textus typus, de textus methodus) -> si textus {
+functio hintForEnglishMethod(de textus typus, de textus methodus) → si textus {
     # lista methods (from norma/innatum/lista.fab)
-    si typus == "lista" {
+    si typus ≡ "lista" {
         elige methodus {
             # Adding elements
             casu "push" reddit "Use appende(): lista.appende(elem)"
@@ -379,7 +379,7 @@ functio hintForEnglishMethod(de textus typus, de textus methodus) -> si textus {
     }
 
     # tabula methods (from norma/innatum/tabula.fab)
-    si typus == "tabula" {
+    si typus ≡ "tabula" {
         elige methodus {
             # Core operations
             casu "get" reddit "Use accipe(): tabula.accipe(clavis)"
@@ -420,7 +420,7 @@ functio hintForEnglishMethod(de textus typus, de textus methodus) -> si textus {
     }
 
     # copia (set) methods (from norma/innatum/copia.fab)
-    si typus == "copia" {
+    si typus ≡ "copia" {
         elige methodus {
             # Core operations
             casu "add" reddit "Use adde(): copia.adde(elem)"
@@ -460,7 +460,7 @@ functio hintForEnglishMethod(de textus typus, de textus methodus) -> si textus {
     }
 
     # textus methods (from norma/innatum/textus.fab)
-    si typus == "textus" {
+    si typus ≡ "textus" {
         elige methodus {
             # Properties
             casu "length" reddit "Use longitudo(): textus.longitudo()"

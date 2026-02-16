@@ -13,6 +13,6 @@ importa ex "../../shared/si" privata genSiLogica
 importa ex "../revocata" privata creaGoRevocata
 
 @ publica
-functio genSi(in GoGenerator g, de Expressia condicio, de Sententia consequens, si de ignotum alternans) -> textus {
+functio genSi(in GoGenerator g, de Expressia condicio, de Sententia consequens, si de ignotum alternans) → textus {
     redde genSiLogica(condicio, consequens, alternans, nihil, g, SYNTAXIS_GO, creaGoRevocata())
 }

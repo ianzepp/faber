@@ -30,20 +30,20 @@ importa ex "./index" privata genSententia
 # =============================================================================
 
 # Sanitize name for use as identifier (replace spaces/special chars with _)
-functio sanitizeNomen(de textus nomen) -> textus {
-    varia textus result = nomen
-    result = result.muta(" ", "_")
-    result = result.muta("-", "_")
-    result = result.muta(".", "_")
-    result = result.muta("/", "_")
-    result = result.muta("'", "")
-    result = result.muta("\"", "")
+functio sanitizeNomen(de textus nomen) → textus {
+    varia textus result ← nomen
+    result ← result.muta(" ", "_")
+    result ← result.muta("-", "_")
+    result ← result.muta(".", "_")
+    result ← result.muta("/", "_")
+    result ← result.muta("'", "")
+    result ← result.muta("\"", "")
     redde result
 }
 
 # Get full suite path from stack
-functio getSuitePath(de TsGenerator g) -> textus {
-    si g.probaSuiteStack.longitudo() == 0 {
+functio getSuitePath(de TsGenerator g) → textus {
+    si g.probaSuiteStack.longitudo() ≡ 0 {
         redde ""
     }
     redde g.probaSuiteStack.coniunge("_")
@@ -54,10 +54,10 @@ functio getSuitePath(de TsGenerator g) -> textus {
 # =============================================================================
 
 @ publica
-functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corpus, si bivalens ompitur, si de textus ratioOmissionis, si bivalens solum, si de lista<textus> tags) -> textus {
+functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corpus, si bivalens ompitur, si de textus ratioOmissionis, si bivalens solum, si de lista<textus> tags) → textus {
     # Legacy mode: generate describe()
     si non g.inProbaStandalone {
-        varia lines = [] innatum lista<textus>
+        varia lines ← [] innatum lista<textus>
         lines.appende(scriptum("§describe(\"§\", () => {", g.ind(), nomen))
 
         g.intraProfundum()
@@ -73,7 +73,7 @@ functio genProbandum(in TsGenerator g, de textus nomen, de lista<Sententia> corp
     # Standalone mode: push suite name, generate members, pop
     g.probaSuiteStack.appende(sanitizeNomen(nomen))
 
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     lines.appende(scriptum("§// Suite: §", g.ind(), nomen))
 
     itera ex corpus fixum stmt {
@@ -104,100 +104,100 @@ functio genProba(
     si numerus fragilis,
     si de textus requirit,
     si de textus solumIn
-) -> textus {
+) → textus {
     # Legacy mode: generate test()
     si non g.inProbaStandalone {
-        varia ratio = ""
+        varia ratio ← ""
         si nonnihil ratioModificatoris {
-            ratio = scriptum("§: ", ratioModificatoris)
+            ratio ← scriptum("§: ", ratioModificatoris)
         }
 
         si nonnihil modificator {
-            fixum mod = modificator qua ProbaModificator
-            fixum titulus = scriptum("§§", ratio, nomen)
+            fixum mod ← modificator qua ProbaModificator
+            fixum titulus ← scriptum("§§", ratio, nomen)
 
-            si mod == ProbaModificator.Omitte {
+            si mod ≡ ProbaModificator.Omitte {
                 g.intraProfundum()
-                fixum body = genSententia(g, corpus)
+                fixum body ← genSententia(g, corpus)
                 g.exiProfundum()
                 redde scriptum("§test.skip(\"§\", () => {\n§\n§});", g.ind(), titulus, body, g.ind())
             }
-            si mod == ProbaModificator.Futurum {
+            si mod ≡ ProbaModificator.Futurum {
                 redde scriptum("§test.todo(\"§\");", g.ind(), titulus)
             }
         }
 
         g.intraProfundum()
-        fixum body = genSententia(g, corpus)
+        fixum body ← genSententia(g, corpus)
         g.exiProfundum()
 
         redde scriptum("§test(\"§\", () => {\n§\n§});", g.ind(), nomen, body, g.ind())
     }
 
     # Standalone mode: generate function + registry entry
-    fixum suitePath = getSuitePath(g)
-    fixum sanitizedName = sanitizeNomen(nomen)
-    fixum funcName = (suitePath.longitudo() > 0) sic scriptum("__proba_§_§", suitePath, sanitizedName) secus scriptum("__proba_§", sanitizedName)
-    fixum suiteDisplay = (suitePath.longitudo() > 0) sic g.probaSuiteStack.coniunge(" > ") secus ""
+    fixum suitePath ← getSuitePath(g)
+    fixum sanitizedName ← sanitizeNomen(nomen)
+    fixum funcName ← (suitePath.longitudo() > 0) sic scriptum("__proba_§_§", suitePath, sanitizedName) secus scriptum("__proba_§", sanitizedName)
+    fixum suiteDisplay ← (suitePath.longitudo() > 0) sic g.probaSuiteStack.coniunge(" > ") secus ""
 
     # Build registry entry as plain object with bracket access
-    varia entry = {
+    varia entry ← {
         suite: suiteDisplay,
         name: nomen,
         funcName: funcName
     } qua ignotum
 
     si nonnihil modificator {
-        fixum mod = modificator qua ProbaModificator
-        si mod == ProbaModificator.Omitte {
-            entry["skip"] = verum
+        fixum mod ← modificator qua ProbaModificator
+        si mod ≡ ProbaModificator.Omitte {
+            entry["skip"] ← verum
             si nonnihil ratioModificatoris {
-                entry["skipReason"] = ratioModificatoris
+                entry["skipReason"] ← ratioModificatoris
             }
         }
-        si mod == ProbaModificator.Futurum {
-            entry["todo"] = verum
+        si mod ≡ ProbaModificator.Futurum {
+            entry["todo"] ← verum
             si nonnihil ratioModificatoris {
-                entry["todoReason"] = ratioModificatoris
+                entry["todoReason"] ← ratioModificatoris
             }
         }
     }
     si nonnihil solum et solum {
-        entry["only"] = verum
+        entry["only"] ← verum
     }
     si nonnulla tags {
-        entry["tags"] = tags
+        entry["tags"] ← tags
     }
     si nonnihil temporis {
-        entry["timeout"] = temporis
+        entry["timeout"] ← temporis
     }
     si nonnihil metior et metior {
-        entry["benchmark"] = verum
+        entry["benchmark"] ← verum
     }
     si nonnihil repete {
-        entry["repeat"] = repete
+        entry["repeat"] ← repete
     }
     si nonnihil fragilis {
-        entry["retries"] = fragilis
+        entry["retries"] ← fragilis
     }
     si nonnihil requirit {
-        entry["requireEnv"] = requirit
+        entry["requireEnv"] ← requirit
     }
     si nonnihil solumIn {
-        entry["platformOnly"] = solumIn
+        entry["platformOnly"] ← solumIn
     }
 
     g.probaRegistrum.appende(entry)
 
     # Generate standalone function
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     lines.appende(scriptum("§function §(): string | null {", g.ind(), funcName))
     g.intraProfundum()
     lines.appende(scriptum("§try {", g.ind()))
     g.intraProfundum()
 
     # Generate body
-    fixum body = genSententia(g, corpus)
+    fixum body ← genSententia(g, corpus)
     si body.longitudo() > 0 {
         lines.appende(body)
     }
@@ -220,34 +220,34 @@ functio genProba(
 # =============================================================================
 
 @ publica
-functio genPraepara(in TsGenerator g, PraeparaTempus tempus, bivalens asynca, bivalens omnia, de Sententia corpus) -> textus {
+functio genPraepara(in TsGenerator g, PraeparaTempus tempus, bivalens asynca, bivalens omnia, de Sententia corpus) → textus {
     # In standalone mode, setup/teardown become comments (not supported in simple harness)
     si g.inProbaStandalone {
-        fixum hookType = (tempus == PraeparaTempus.Praepara) sic "setup" secus "teardown"
-        fixum hookScope = (omnia) sic "all" secus "each"
+        fixum hookType ← (tempus ≡ PraeparaTempus.Praepara) sic "setup" secus "teardown"
+        fixum hookScope ← (omnia) sic "all" secus "each"
         redde scriptum("§// TODO: § § hook not supported in standalone mode", g.ind(), hookType, hookScope)
     }
 
     # Legacy mode
-    varia hook = "beforeEach"
-    si tempus == PraeparaTempus.Praepara {
+    varia hook ← "beforeEach"
+    si tempus ≡ PraeparaTempus.Praepara {
         si omnia {
-            hook = "beforeAll"
+            hook ← "beforeAll"
         } secus {
-            hook = "beforeEach"
+            hook ← "beforeEach"
         }
     } secus {
         si omnia {
-            hook = "afterAll"
+            hook ← "afterAll"
         } secus {
-            hook = "afterEach"
+            hook ← "afterEach"
         }
     }
 
-    fixum asyncPrefix = asynca sic "async " secus ""
+    fixum asyncPrefix ← asynca sic "async " secus ""
 
     g.intraProfundum()
-    fixum body = genSententia(g, corpus)
+    fixum body ← genSententia(g, corpus)
     g.exiProfundum()
 
     redde scriptum("§§(§() => {\n§\n§});", g.ind(), hook, asyncPrefix, body, g.ind())
@@ -260,12 +260,12 @@ functio genPraepara(in TsGenerator g, PraeparaTempus tempus, bivalens asynca, bi
 # Generate the test harness (registry + runner)
 # Call this after all statements have been generated
 @ publica
-functio genProbaHarness(in TsGenerator g) -> textus {
-    si g.probaRegistrum.longitudo() == 0 {
+functio genProbaHarness(in TsGenerator g) → textus {
+    si g.probaRegistrum.longitudo() ≡ 0 {
         redde ""
     }
 
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     lines.appende("")
     lines.appende("// =============================================================================")
     lines.appende("// TEST HARNESS")
@@ -295,7 +295,7 @@ functio genProbaHarness(in TsGenerator g) -> textus {
     # Generate registry (using bracket notation for plain object entries)
     lines.appende("const __tests: __TestEntry[] = [")
     itera ex g.probaRegistrum fixum entry {
-        varia parts = [] innatum lista<textus>
+        varia parts ← [] innatum lista<textus>
         parts.appende(scriptum("suite: \"§\"", entry["suite"] qua textus))
         parts.appende(scriptum("name: \"§\"", entry["name"] qua textus))
         parts.appende(scriptum("fn: §", entry["funcName"] qua textus))
@@ -316,8 +316,8 @@ functio genProbaHarness(in TsGenerator g) -> textus {
             parts.appende("only: true")
         }
         si nonnihil entry["tags"] {
-            fixum tagsArr = entry["tags"] qua lista<textus>
-            varia tagStrs = [] innatum lista<textus>
+            fixum tagsArr ← entry["tags"] qua lista<textus>
+            varia tagStrs ← [] innatum lista<textus>
             itera ex tagsArr fixum t {
                 tagStrs.appende(scriptum("\"§\"", t))
             }

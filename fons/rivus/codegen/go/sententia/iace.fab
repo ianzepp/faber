@@ -8,13 +8,13 @@ importa ex "../nucleus" privata GoGenerator
 importa ex "../expressia/index" privata genExpressia
 importa ex "../typus" privata zeroValueForType
 
-functio genErrataError(in GoGenerator g, de Expressia argumentum) -> textus {
-    g.requisita.errors = verum
-    fixum expr = genExpressia(g, argumentum)
+functio genErrataError(in GoGenerator g, de Expressia argumentum) → textus {
+    g.requisita.errors ← verum
+    fixum expr ← genExpressia(g, argumentum)
 
     discerne argumentum {
         casu Littera ut l {
-            si l.species == LitteraGenus.Textus aut l.species == LitteraGenus.Exemplar {
+            si l.species ≡ LitteraGenus.Textus aut l.species ≡ LitteraGenus.Exemplar {
                 redde scriptum("errors.New(§)", expr)
             }
         }
@@ -28,11 +28,11 @@ functio genErrataError(in GoGenerator g, de Expressia argumentum) -> textus {
 }
 
 @ publica
-functio genIace(in GoGenerator g, de Expressia argumentum, bivalens fatale) -> textus {
+functio genIace(in GoGenerator g, de Expressia argumentum, bivalens fatale) → textus {
     si g.inErrata {
-        fixum errExpr = genErrataError(g, argumentum)
+        fixum errExpr ← genErrataError(g, argumentum)
         si nonnihil g.errataTypusReditus {
-            fixum zero = zeroValueForType(g.errataTypusReditus, g)
+            fixum zero ← zeroValueForType(g.errataTypusReditus, g)
             redde scriptum("§return §, §", g.ind(), zero, errExpr)
         }
         redde scriptum("§return §", g.ind(), errExpr)

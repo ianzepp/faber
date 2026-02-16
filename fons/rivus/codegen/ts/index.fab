@@ -21,30 +21,30 @@ importa ex "./preamble/index" privata genPreamble
 
 # Generate TypeScript source code from a list of statements
 @ publica
-functio generateTs(de lista<Sententia> corpus, si de textus viaFons) -> textus {
+functio generateTs(de lista<Sententia> corpus, si de textus viaFons) → textus {
     redde generateTsWithOptions(corpus, falsum, falsum, viaFons)
 }
 
 # Generate TypeScript with options to strip test blocks and/or comments
 @ publica
-functio generateTsWithOptions(de lista<Sententia> corpus, bivalens stripTests, bivalens stripComments, si de textus viaFons) -> textus {
-    fixum g = creaTsGenerator(viaFons)
-    g.stripTests = stripTests
-    g.stripComments = stripComments
+functio generateTsWithOptions(de lista<Sententia> corpus, bivalens stripTests, bivalens stripComments, si de textus viaFons) → textus {
+    fixum g ← creaTsGenerator(viaFons)
+    g.stripTests ← stripTests
+    g.stripComments ← stripComments
 
     # Generate body from statements
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
-        fixum line = genSententia(g, stmt)
+        fixum line ← genSententia(g, stmt)
         # Skip empty lines from stripped tests
         si line.longitudo() > 0 {
             lines.appende(line)
         }
     }
 
-    fixum preamble = genPreamble(g.requisita)
-    fixum body = lines.coniunge("\n")
-    si preamble == "" {
+    fixum preamble ← genPreamble(g.requisita)
+    fixum body ← lines.coniunge("\n")
+    si preamble ≡ "" {
         redde body
     }
     redde scriptum("§§", preamble, body)
@@ -53,31 +53,31 @@ functio generateTsWithOptions(de lista<Sententia> corpus, bivalens stripTests, b
 # Generate TypeScript with standalone test harness
 # Enables standalone test mode and appends harness after all statements
 @ publica
-functio generateTsWithTests(de lista<Sententia> corpus, si de textus viaFons) -> textus {
-    fixum g = creaTsGenerator(viaFons)
+functio generateTsWithTests(de lista<Sententia> corpus, si de textus viaFons) → textus {
+    fixum g ← creaTsGenerator(viaFons)
 
     # Enable standalone test mode
-    g.inProbaStandalone = verum
+    g.inProbaStandalone ← verum
 
     # Generate body from statements
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
         lines.appende(genSententia(g, stmt))
     }
 
     # Add test harness if any tests were registered
-    fixum harness = genProbaHarness(g)
+    fixum harness ← genProbaHarness(g)
 
-    fixum preamble = genPreamble(g.requisita)
-    fixum body = lines.coniunge("\n")
+    fixum preamble ← genPreamble(g.requisita)
+    fixum body ← lines.coniunge("\n")
 
-    varia result = ""
-    si preamble != "" {
-        result = preamble
+    varia result ← ""
+    si preamble ≠ "" {
+        result ← preamble
     }
-    result = result + body
-    si harness != "" {
-        result = result + "\n" + harness
+    result ← result + body
+    si harness ≠ "" {
+        result ← result + "\n" + harness
     }
     redde result
 }

@@ -40,7 +40,7 @@ importa ex "./genus" privata genGenus
 
 # Generate Go code for a statement
 @ publica
-functio genSententia(in GoGenerator g, de Sententia stmt) -> textus {
+functio genSententia(in GoGenerator g, de Sententia stmt) → textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
@@ -158,11 +158,11 @@ functio genSententia(in GoGenerator g, de Sententia stmt) -> textus {
 # =============================================================================
 
 @ publica
-functio genMassa(in GoGenerator g, de lista<Sententia> corpus) -> textus {
-    si corpus.longitudo() == 0 {
+functio genMassa(in GoGenerator g, de lista<Sententia> corpus) → textus {
+    si corpus.longitudo() ≡ 0 {
         redde ""
     }
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
         lines.appende(genSententia(g, stmt))
     }

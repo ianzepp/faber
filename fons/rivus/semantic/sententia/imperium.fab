@@ -21,8 +21,8 @@ importa ex "../../ast/sententia" privata IteratioVariabilis
 
 # Analyze si (if) statement
 @ publica
-functio analyzeSi(Resolvitor r, Sententia siStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeSi(Resolvitor r, Sententia siStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne siStmt {
         casu SiSententia ut s {
@@ -61,8 +61,8 @@ functio analyzeSi(Resolvitor r, Sententia siStmt) -> vacuum {
 
 # Analyze dum (while) statement
 @ publica
-functio analyzeDum(Resolvitor r, Sententia dumStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeDum(Resolvitor r, Sententia dumStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne dumStmt {
         casu DumSententia ut d {
@@ -80,13 +80,13 @@ functio analyzeDum(Resolvitor r, Sententia dumStmt) -> vacuum {
 
 # Analyze iteratio (ex/de...pro) statement
 @ publica
-functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne iteratioStmt {
         casu IteratioSententia ut i {
             # Analyze source expression
-            fixum sourceTypus = r.synthesize(i.iterabile)
+            fixum sourceTypus ← r.synthesize(i.iterabile)
 
             # Enter block scope for loop variable
             a.intraScopum(ScopusSpecies.Massa)
@@ -95,17 +95,17 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
             discerne i.variabilis {
                 casu Nomen ut n {
                     # Simple identifier - infer type from source
-                    varia elemTypus = IGNOTUM qua SemanticTypus
+                    varia elemTypus ← IGNOTUM qua SemanticTypus
                     discerne sourceTypus {
                         casu Genericum ut g {
-                            si g.nomen == "lista" et g.parametri.longitudo() > 0 {
-                                elemTypus = g.parametri.primus()
+                            si g.nomen ≡ "lista" et g.parametri.longitudo() > 0 {
+                                elemTypus ← g.parametri.primus()
                             }
                         }
                         ceterum tacet
                     }
 
-                    a.scopus.symbola[n.valor] = {
+                    a.scopus.symbola[n.valor] ← {
                         nomen: n.valor,
                         semanticTypus: elemTypus,
                         species: SymbolumSpecies.Variabilis,
@@ -115,35 +115,35 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
                 }
                 casu Series ut s {
                     # Array pattern - define each element as a binding
-                    varia indice = 0
+                    varia indice ← 0
                     itera ex s.elementa fixum elem {
                         si elem.omissum aut nihil elem.nomen {
-                            indice = indice + 1
+                            indice ← indice + 1
                             perge
                         }
 
                         # Type inference: for tabula<K,V>, [0]=K, [1]=V
-                        varia posTypus = IGNOTUM qua SemanticTypus
+                        varia posTypus ← IGNOTUM qua SemanticTypus
                         discerne sourceTypus {
                             casu Genericum ut g {
-                                si g.nomen == "tabula" et g.parametri.longitudo() > 1 {
-                                    si indice == 0 { posTypus = g.parametri[0] }
-                                    sin indice == 1 { posTypus = g.parametri[1] }
-                                } sin g.nomen == "lista" et g.parametri.longitudo() > 0 {
-                                    posTypus = g.parametri[0]
+                                si g.nomen ≡ "tabula" et g.parametri.longitudo() > 1 {
+                                    si indice ≡ 0 { posTypus ← g.parametri[0] }
+                                    sin indice ≡ 1 { posTypus ← g.parametri[1] }
+                                } sin g.nomen ≡ "lista" et g.parametri.longitudo() > 0 {
+                                    posTypus ← g.parametri[0]
                                 }
                             }
                             ceterum tacet
                         }
 
-                        a.scopus.symbola[elem.nomen qua textus] = {
+                        a.scopus.symbola[elem.nomen qua textus] ← {
                             nomen: elem.nomen qua textus,
                             semanticTypus: posTypus,
                             species: SymbolumSpecies.Variabilis,
                             mutabilis: i.mutabilis,
                             locus: elem.locus
                         }
-                        indice = indice + 1
+                        indice ← indice + 1
                     }
                 }
             }
@@ -164,10 +164,10 @@ functio analyzeIteratio(Resolvitor r, Sententia iteratioStmt) -> vacuum {
 
 # Check if a statement is an empty block (MassaSententia with no body)
 # WHY: Empty blocks should use 'tacet' instead for intentional no-op.
-functio estVacuaMassa(de Sententia s) -> bivalens {
+functio estVacuaMassa(de Sententia s) → bivalens {
     discerne s {
         casu MassaSententia ut m {
-            redde m.corpus.longitudo() == 0
+            redde m.corpus.longitudo() ≡ 0
         }
         casu _ {
             redde falsum
@@ -177,8 +177,8 @@ functio estVacuaMassa(de Sententia s) -> bivalens {
 
 # Analyze elige (switch) statement
 @ publica
-functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeElige(Resolvitor r, Sententia eligeStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne eligeStmt {
         casu EligeSententia ut e {
@@ -189,7 +189,7 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
             itera ex e.casus fixum casus {
                 # Check for empty block
                 si estVacuaMassa(casus.consequens) {
-                    fixum err = emptyCaseBlockError()
+                    fixum err ← emptyCaseBlockError()
                     a.error(err.textus, casus.locus, err.auxilium)
                 }
 
@@ -206,7 +206,7 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
             si nonnihil e.praedefinitum {
                 # Check for empty block in default
                 si estVacuaMassa(e.praedefinitum qua Sententia) {
-                    fixum err = emptyCaseBlockError()
+                    fixum err ← emptyCaseBlockError()
                     a.error(err.textus, e.praedefinitum.locus, err.auxilium)
                 }
 
@@ -221,8 +221,8 @@ functio analyzeElige(Resolvitor r, Sententia eligeStmt) -> vacuum {
 
 # Analyze discerne (pattern match) statement
 @ publica
-functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne discerneStmt {
         casu DiscerneSententia ut d {
@@ -238,29 +238,29 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
 
                 # Define bound variables for all patterns in this case
                 # WHY: Each pattern can introduce 'ut' alias or 'pro' field bindings.
-                varia patternIndex = 0
+                varia patternIndex ← 0
                 itera ex casus.exemplaria fixum pattern {
                     # Skip wildcards - they have no bindings
                     si pattern.estWildcard {
-                        patternIndex = patternIndex + 1
+                        patternIndex ← patternIndex + 1
                         perge
                     }
 
                     # Get discriminant type for this pattern position
-                    varia discriminantTypus = IGNOTUM
+                    varia discriminantTypus ← IGNOTUM
                     si patternIndex < d.discriminantes.longitudo() {
-                        discriminantTypus = r.synthesize(d.discriminantes[patternIndex])
+                        discriminantTypus ← r.synthesize(d.discriminantes[patternIndex])
                     }
 
                     # Get variant type by resolving DiscretioNomen.VariantNomen
-                    varia variantTypus = IGNOTUM
+                    varia variantTypus ← IGNOTUM
                     discerne discriminantTypus {
                         casu Usitatum ut u {
                             # For discriminated union, lookup Discriminant.Variant
-                            fixum qualNomen = scriptum("§.§", u.nomen, pattern.variansNomen)
-                            fixum symbolum = quaereSymbolum(a.scopus, qualNomen)
+                            fixum qualNomen ← scriptum("§.§", u.nomen, pattern.variansNomen)
+                            fixum symbolum ← quaereSymbolum(a.scopus, qualNomen)
                             si nonnihil symbolum {
-                                variantTypus = (symbolum novum Symbolum).semanticTypus
+                                variantTypus ← (symbolum novum Symbolum).semanticTypus
                             }
                         }
                         casu _ {
@@ -270,8 +270,8 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
 
                     # Define alias if present
                     si nonnihil pattern.alias {
-                        fixum alias = pattern.alias qua textus
-                        a.scopus.symbola[alias] = {
+                        fixum alias ← pattern.alias qua textus
+                        a.scopus.symbola[alias] ← {
                             nomen: alias,
                             semanticTypus: variantTypus,  # Inferred from discriminant.variant
                             species: SymbolumSpecies.Variabilis,
@@ -281,38 +281,38 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
                     }
 
                     # Define field bindings if present
-                    varia fieldIndex = 0
+                    varia fieldIndex ← 0
                     itera ex pattern.vincula fixum vinculum {
                         # Extract field type from variant fields
-                        varia fieldTypus = IGNOTUM
+                        varia fieldTypus ← IGNOTUM
                         discerne variantTypus {
                             casu Genus ut g {
                                 # Get field names from the agri map keys (since order may not be preserved in map)
                                 # For now, use IGNOTUM since we need the original field order from variant declaration
                                 # TODO: Need access to original VariansDeclaratio.campi to get correct positional types
-                                fieldTypus = IGNOTUM
+                                fieldTypus ← IGNOTUM
                             }
                             casu _ {
                                 # Not a genus, can't extract field types
                             }
                         }
 
-                        a.scopus.symbola[vinculum] = {
+                        a.scopus.symbola[vinculum] ← {
                             nomen: vinculum,
                             semanticTypus: fieldTypus,  # Inferred from variant field
                             species: SymbolumSpecies.Variabilis,
                             mutabilis: falsum,
                             locus: pattern.locus
                         }
-                        fieldIndex = fieldIndex + 1
+                        fieldIndex ← fieldIndex + 1
                     }
 
-                    patternIndex = patternIndex + 1
+                    patternIndex ← patternIndex + 1
                 }
 
                 # Check for empty block
                 si estVacuaMassa(casus.consequens) {
-                    fixum err = emptyCaseBlockError()
+                    fixum err ← emptyCaseBlockError()
                     a.error(err.textus, casus.locus, err.auxilium)
                 }
 
@@ -325,70 +325,70 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
             # Exhaustiveness check (discerne omnia only)
             si d.exhaustiva {
                 # Treat all-wildcard case as catch-all (ceterum)
-                varia habetWildcardCasu = falsum
+                varia habetWildcardCasu ← falsum
                 itera ex d.casus fixum casus {
-                    varia habetExemplar = falsum
-                    varia omniaWildcard = verum
+                    varia habetExemplar ← falsum
+                    varia omniaWildcard ← verum
                     itera ex casus.exemplaria fixum exemplar {
-                        habetExemplar = verum
+                        habetExemplar ← verum
                         si non exemplar.estWildcard {
-                            omniaWildcard = falsum
+                            omniaWildcard ← falsum
                             rumpe
                         }
                     }
                     si habetExemplar et omniaWildcard {
-                        habetWildcardCasu = verum
+                        habetWildcardCasu ← verum
                         rumpe
                     }
                 }
 
-                si d.discriminantes.longitudo() != 1 {
+                si d.discriminantes.longitudo() ≠ 1 {
                     a.error("discerne omnia requires exactly one discriminant", d.locus)
                 }
                 sin non habetWildcardCasu {
                     # Resolve discriminant type name
-                    fixum discriminantTypus = r.synthesize(d.discriminantes[0])
-                    varia discretioNomen = nihil qua si textus
+                    fixum discriminantTypus ← r.synthesize(d.discriminantes[0])
+                    varia discretioNomen ← nihil qua si textus
                     discerne discriminantTypus {
                         casu Usitatum ut u {
-                            discretioNomen = u.nomen
+                            discretioNomen ← u.nomen
                         }
                         casu _ tacet
                     }
 
                     si nonnihil discretioNomen {
-                        fixum info = a.discretioIndex[discretioNomen qua textus]
+                        fixum info ← a.discretioIndex[discretioNomen qua textus]
                         si nonnihil info {
-                            varia handled = {} innatum tabula<textus, bivalens>
+                            varia handled ← {} innatum tabula<textus, bivalens>
                             itera ex d.casus fixum casus {
-                                varia primum = nihil qua si VariansExemplar
+                                varia primum ← nihil qua si VariansExemplar
                                 itera ex casus.exemplaria fixum exemplar {
-                                    primum = exemplar
+                                    primum ← exemplar
                                     rumpe
                                 }
                                 si nonnihil primum {
-                                    fixum exemplar = primum novum VariansExemplar
+                                    fixum exemplar ← primum novum VariansExemplar
                                     si non exemplar.estWildcard {
-                                        handled[exemplar.variansNomen] = verum
+                                        handled[exemplar.variansNomen] ← verum
                                     }
                                 }
                             }
 
-                            varia missingCount = 0
-                            varia firstMissing = "" qua textus
-                            varia quoted = [] innatum lista<textus>
+                            varia missingCount ← 0
+                            varia firstMissing ← "" qua textus
+                            varia quoted ← [] innatum lista<textus>
                             itera ex (info qua DiscretioDeclInfo).variantes fixum variansInfo {
                                 si nihil handled[variansInfo.nomen] {
-                                    missingCount = missingCount + 1
-                                    si missingCount == 1 {
-                                        firstMissing = variansInfo.nomen
+                                    missingCount ← missingCount + 1
+                                    si missingCount ≡ 1 {
+                                        firstMissing ← variansInfo.nomen
                                     }
                                     quoted.appende(scriptum("'§'", variansInfo.nomen))
                                 }
                             }
 
                             si missingCount > 0 {
-                                si missingCount == 1 {
+                                si missingCount ≡ 1 {
                                     a.error(
                                         scriptum("Non-exhaustive match in discerne omnia: missing variant '§'", firstMissing),
                                         d.locus
@@ -412,8 +412,8 @@ functio analyzeDiscerne(Resolvitor r, Sententia discerneStmt) -> vacuum {
 
 # Analyze custodi (guard) statement
 @ publica
-functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeCustodi(Resolvitor r, Sententia custodiStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne custodiStmt {
         casu CustodiSententia ut c {

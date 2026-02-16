@@ -43,34 +43,34 @@ genus ResolvitorImpl implet Resolvitor {
     Analyzator a
 
     @ publica
-    functio analyzator() -> Analyzator {
+    functio analyzator() → Analyzator {
         redde ego.a
     }
 
     @ publica
-    functio synthesize(de Expressia expr) -> SemanticTypus {
+    functio synthesize(de Expressia expr) → SemanticTypus {
         redde resolveExpressia(ego qua Resolvitor, expr)
     }
 
     @ publica
-    functio check(de Expressia expr, de SemanticTypus expected) -> SemanticTypus {
+    functio check(de Expressia expr, de SemanticTypus expected) → SemanticTypus {
         redde checkExpressia(ego qua Resolvitor, expr, expected)
     }
 
     @ publica
-    functio expressia(de Expressia expr) -> SemanticTypus {
+    functio expressia(de Expressia expr) → SemanticTypus {
         redde ego.synthesize(expr)
     }
 
     @ publica
-    functio sententia(de Sententia stmt) -> vacuum {
+    functio sententia(de Sententia stmt) → vacuum {
         analyzeSententia(ego qua Resolvitor, stmt)
     }
 }
 
 # Create a new Resolvitor
 @ publica
-functio novumResolvitor(in Analyzator a) -> Resolvitor {
+functio novumResolvitor(in Analyzator a) → Resolvitor {
     redde (novum ResolvitorImpl { a: a }) qua Resolvitor
 }
 
@@ -83,8 +83,8 @@ functio novumResolvitor(in Analyzator a) -> Resolvitor {
 functio mergeSectiones(
     si de lista<SectioAnnotatio> manifest,
     si de lista<SectioAnnotatio> source
-) -> lista<SectioAnnotatio> {
-    varia result = [] innatum lista<SectioAnnotatio>
+) → lista<SectioAnnotatio> {
+    varia result ← [] innatum lista<SectioAnnotatio>
 
     si nonnihil manifest {
         itera ex manifest fixum s { result.appende(s) }
@@ -105,16 +105,16 @@ functio analyze(
     de Programma programma,
     si de lista<SectioAnnotatio> manifestSectiones,
     si de textus viaIngressus
-) -> SemanticResultatum {
+) → SemanticResultatum {
     # Merge manifest and source sectiones
-    fixum mergedSectiones = mergeSectiones(manifestSectiones, programma.sectiones)
+    fixum mergedSectiones ← mergeSectiones(manifestSectiones, programma.sectiones)
 
     # Extract dependency registry from merged sectiones
-    fixum dependentiae = extractDependentiae(mergedSectiones)
+    fixum dependentiae ← extractDependentiae(mergedSectiones)
 
     # Create analyzer state with registry
-    fixum a = novumAnalyzator(dependentiae, viaIngressus)
-    fixum r = novumResolvitor(a)
+    fixum a ← novumAnalyzator(dependentiae, viaIngressus)
+    fixum r ← novumResolvitor(a)
 
     # Phase 1: Predeclare all top-level names
     # (allows forward references)
@@ -140,14 +140,14 @@ functio analyze(
 
 # Predeclare a top-level statement (registers placeholder types)
 @ publica
-functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
-    fixum a = r.analyzator()
+functio predeclare(in Resolvitor r, de Sententia stmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne stmt {
         # Function declaration - register name with function type
         casu FunctioDeclaratio ut f {
             # Build placeholder function type
-            varia paramTypi = [] innatum lista<SemanticTypus>
+            varia paramTypi ← [] innatum lista<SemanticTypus>
             itera ex f.parametra fixum param {
                 si nonnihil param.typus {
                     paramTypi.appende(resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio))
@@ -158,11 +158,11 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
             }
             # WHY: Preserve declared return types so callers can infer receiver types
             # from forward function calls (critical for norma method translation).
-            varia reditusTypus = VACUUM
+            varia reditusTypus ← VACUUM
             si nonnihil f.typusReditus {
-                reditusTypus = resolveTypusAnnotatio(r, f.typusReditus novum TypusAnnotatio)
+                reditusTypus ← resolveTypusAnnotatio(r, f.typusReditus novum TypusAnnotatio)
             }
-            fixum fnTypus = functioTypus(paramTypi, reditusTypus, f.asynca, falsum)
+            fixum fnTypus ← functioTypus(paramTypi, reditusTypus, f.asynca, falsum)
 
             a.definie({
                 nomen: f.nomen,
@@ -185,9 +185,9 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
 
             itera ex g.methodi fixum f {
                 si nonnihil f.morphologia {
-                    fixum parsed = parseMethodum(f.nomen)
+                    fixum parsed ← parseMethodum(f.nomen)
                     si nonnihil parsed {
-                        fixum nota = f.morphologia novum MorphologiaDeclaratio
+                        fixum nota ← f.morphologia novum MorphologiaDeclaratio
                         a.addeMorphologiam(g.nomen, parsed.radix, nota.formae)
                     }
                 }
@@ -206,9 +206,9 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
 
             itera ex p.methodi fixum methodus {
                 si nonnihil methodus.morphologia {
-                    fixum parsed = parseMethodum(methodus.nomen)
+                    fixum parsed ← parseMethodum(methodus.nomen)
                     si nonnihil parsed {
-                        fixum nota = methodus.morphologia novum MorphologiaDeclaratio
+                        fixum nota ← methodus.morphologia novum MorphologiaDeclaratio
                         a.addeMorphologiam(p.nomen, parsed.radix, nota.formae)
                     }
                 }
@@ -261,14 +261,14 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                 si nihil a.viaIngressus {
                     a.error(scriptum("Cannot resolve dependentia import without file context: §", imp.fons), imp.locus)
                 } secus {
-                    fixum resolvedPath = resolveDependentiaPath(imp.fons, a.dependentiae)
+                    fixum resolvedPath ← resolveDependentiaPath(imp.fons, a.dependentiae)
                     si nihil resolvedPath {
                         # Extract alias for error message
-                        fixum partes = imp.fons.divide(":")
+                        fixum partes ← imp.fons.divide(":")
                         a.error(scriptum("Unknown dependency alias: §", partes[0]), imp.locus)
                     } secus {
                         # Use resolved path with resolveModulum (same as local import)
-                        fixum modulus = resolveModulum(
+                        fixum modulus ← resolveModulum(
                             resolvedPath qua textus,
                             a.viaIngressus qua textus,
                             a.modulusCache,
@@ -280,9 +280,9 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                         } secus {
                             # Single named import
                             si nonnihil imp.importatum {
-                                fixum importatum = imp.importatum qua textus
+                                fixum importatum ← imp.importatum qua textus
                                 si nonnihil modulus.exporta[importatum] {
-                                    fixum exportum = modulus.exporta[importatum] qua ModulusExportum
+                                    fixum exportum ← modulus.exporta[importatum] qua ModulusExportum
                                     a.definie({
                                         nomen: imp.locale,
                                         semanticTypus: exportum.typus,
@@ -292,16 +292,16 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                                     } novum Symbolum)
 
                                     si nonnihil modulus.discretiones[importatum] {
-                                        a.discretioIndex[imp.locale] = modulus.discretiones[importatum] qua DiscretioDeclInfo
+                                        a.discretioIndex[imp.locale] ← modulus.discretiones[importatum] qua DiscretioDeclInfo
                                     }
 
                                     # Import variant types for discretio
-                                    fixum prefix = importatum + "."
+                                    fixum prefix ← importatum + "."
                                     itera ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
-                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
-                                            fixum suffix = nomen.slice(prefix.length)
-                                            fixum qualNomen = scriptum("§.§", imp.locale, suffix)
+                                            fixum exportum ← modulus.exporta[nomen] qua ModulusExportum
+                                            fixum suffix ← nomen.slice(prefix.length)
+                                            fixum qualNomen ← scriptum("§.§", imp.locale, suffix)
 
                                             si nihil a.scopus.symbola[qualNomen] {
                                                 a.definie({
@@ -328,7 +328,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                 si nihil a.viaIngressus {
                     a.error(scriptum("Cannot resolve local import without file context: §", imp.fons), imp.locus)
                 } secus {
-                    fixum modulus = resolveModulum(
+                    fixum modulus ← resolveModulum(
                         imp.fons,
                         a.viaIngressus qua textus,
                         a.modulusCache,
@@ -350,7 +350,7 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                             } novum Symbolum)
                             # Also add all individual exports to scope
                             itera ex modulus.exporta.claves() fixum nomen {
-                                fixum exportum = modulus.exporta[nomen] qua ModulusExportum
+                                fixum exportum ← modulus.exporta[nomen] qua ModulusExportum
                                 a.definie({
                                     nomen: exportum.nomen,
                                     semanticTypus: exportum.typus,
@@ -362,9 +362,9 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
                         } secus {
                             # Single named import: importa ex "path" privata T [ut alias]
                             si nonnihil imp.importatum {
-                                fixum importatum = imp.importatum qua textus
+                                fixum importatum ← imp.importatum qua textus
                                 si nonnihil modulus.exporta[importatum] {
-                                    fixum exportum = modulus.exporta[importatum] qua ModulusExportum
+                                    fixum exportum ← modulus.exporta[importatum] qua ModulusExportum
                                     a.definie({
                                         nomen: imp.locale,
                                         semanticTypus: exportum.typus,
@@ -375,16 +375,16 @@ functio predeclare(in Resolvitor r, de Sententia stmt) -> vacuum {
 
                                     # Record discretio metadata under the local alias
                                     si nonnihil modulus.discretiones[importatum] {
-                                        a.discretioIndex[imp.locale] = modulus.discretiones[importatum] qua DiscretioDeclInfo
+                                        a.discretioIndex[imp.locale] ← modulus.discretiones[importatum] qua DiscretioDeclInfo
                                     }
 
                                     # Import variant types for discretio
-                                    fixum prefix = importatum + "."
+                                    fixum prefix ← importatum + "."
                                     itera ex modulus.exporta.claves() fixum nomen {
                                         si nomen.startsWith(prefix) {
-                                            fixum exportum = modulus.exporta[nomen] qua ModulusExportum
-                                            fixum suffix = nomen.slice(prefix.length)
-                                            fixum qualNomen = scriptum("§.§", imp.locale, suffix)
+                                            fixum exportum ← modulus.exporta[nomen] qua ModulusExportum
+                                            fixum suffix ← nomen.slice(prefix.length)
+                                            fixum qualNomen ← scriptum("§.§", imp.locale, suffix)
 
                                             si nihil a.scopus.symbola[qualNomen] {
                                                 a.definie({

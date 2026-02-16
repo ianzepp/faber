@@ -18,8 +18,8 @@ importa ex "../expressia/index" privata genExpressia
 importa ex "./index" privata genSententia
 
 @ publica
-functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus) -> textus {
-    fixum rev = creaGoRevocata()
+functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabilis variabilis, de Expressia iterabile, de Sententia corpus) → textus {
+    fixum rev ← creaGoRevocata()
 
     # Check for range expression - use shared handler (only for simple identifier)
     discerne variabilis {
@@ -27,11 +27,11 @@ functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabil
             discerne iterabile {
                 casu AmbitusExpressia ut a {
                     g.intraProfundum()
-                    fixum body = genSententia(g, corpus)
+                    fixum body ← genSententia(g, corpus)
                     g.exiProfundum()
 
-                    fixum initium = genExpressia(g, a.initium)
-                    fixum finis = genExpressia(g, a.finis)
+                    fixum initium ← genExpressia(g, a.initium)
+                    fixum finis ← genExpressia(g, a.finis)
 
                     redde genAmbitusIteratio(
                         n.valor,
@@ -55,38 +55,38 @@ functio genIteratio(in GoGenerator g, IteratioGenus species, de IteratioVariabil
 
     # Regular iteration - Go-specific range syntax
     g.intraProfundum()
-    fixum body = genSententia(g, corpus)
+    fixum body ← genSententia(g, corpus)
     g.exiProfundum()
 
-    fixum iterStr = genExpressia(g, iterabile)
+    fixum iterStr ← genExpressia(g, iterabile)
 
     discerne variabilis {
         casu Nomen ut n {
-            si species == IteratioGenus.De {
+            si species ≡ IteratioGenus.De {
                 redde scriptum("§for § := range § {\n§\n§}", g.ind(), n.valor, iterStr, body, g.ind())
             }
             redde scriptum("§for _, § := range § {\n§\n§}", g.ind(), n.valor, iterStr, body, g.ind())
         }
         casu Series ut s {
             # For maps with 2 elements, use Go's native k,v syntax
-            si s.elementa.longitudo() == 2 {
-                fixum k = s.elementa[0].nomen vel "_"
-                fixum v = s.elementa[1].nomen vel "_"
+            si s.elementa.longitudo() ≡ 2 {
+                fixum k ← s.elementa[0].nomen vel "_"
+                fixum v ← s.elementa[1].nomen vel "_"
                 redde scriptum("§for §, § := range § {\n§\n§}", g.ind(), k, v, iterStr, body, g.ind())
             }
 
             # For other patterns, use temp var + unpacking
-            varia unpacks = [] innatum lista<textus>
-            varia indice = 0
+            varia unpacks ← [] innatum lista<textus>
+            varia indice ← 0
             itera ex s.elementa fixum elem {
                 si non elem.omissum et nonnihil elem.nomen {
                     g.intraProfundum()
                     unpacks.appende(scriptum("§§ := _item[§]", g.ind(), elem.nomen, indice))
                     g.exiProfundum()
                 }
-                indice = indice + 1
+                indice ← indice + 1
             }
-            fixum unpackStr = unpacks.coniunge("\n")
+            fixum unpackStr ← unpacks.coniunge("\n")
             redde scriptum("§for _, _item := range § {\n§\n§\n§}", g.ind(), iterStr, unpackStr, body, g.ind())
         }
     }

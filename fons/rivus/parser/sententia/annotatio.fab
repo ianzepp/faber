@@ -61,8 +61,8 @@ importa ex "../errores" privata ParserErrorCodice
 # ============================================================================
 
 # Check if token is identifier or keyword (both valid for annotation names)
-functio estNomenAutVerbum(SymbolumGenus species) -> bivalens {
-    redde species == SymbolumGenus.Nomen aut species == SymbolumGenus.Verbum
+functio estNomenAutVerbum(SymbolumGenus species) → bivalens {
+    redde species ≡ SymbolumGenus.Nomen aut species ≡ SymbolumGenus.Verbum
 }
 
 # ============================================================================
@@ -72,31 +72,31 @@ functio estNomenAutVerbum(SymbolumGenus species) -> bivalens {
 # Parse @ innatum or @ subsidia: target-to-value mappings
 # Grammar: targetMapping (',' targetMapping)*
 # Example: @ innatum ts "Array", py "list", zig "Lista"
-functio parseTargetMappingAnnotation(in Resolvitor r, de textus nomen, de Locus locus, numerus linea) -> Annotatio {
-    fixum p = r.parser()
-    varia targetMappings = {} innatum tabula<textus, textus>
+functio parseTargetMappingAnnotation(in Resolvitor r, de textus nomen, de Locus locus, numerus linea) → Annotatio {
+    fixum p ← r.parser()
+    varia targetMappings ← {} innatum tabula<textus, textus>
 
     # Parse first mapping (required)
-    si non p.estFinis() et p.specta(0).locus.linea == linea et estNomenAutVerbum(p.specta(0).species) {
+    si non p.estFinis() et p.specta(0).locus.linea ≡ linea et estNomenAutVerbum(p.specta(0).species) {
         fac {
             # Parse target identifier (ts, py, rs, cpp, zig)
-            si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+            si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea ≠ linea {
                 p.renuncia(ParserErrorCodice.ExpectaturTargetNomen, scriptum("got '§'", p.specta(0).valor))
                 rumpe
             }
-            fixum target = p.specta(0).valor
+            fixum target ← p.specta(0).valor
             p.procede()
 
             # Parse value string
-            si p.specta(0).species != SymbolumGenus.Textus aut p.specta(0).locus.linea != linea {
+            si p.specta(0).species ≠ SymbolumGenus.Textus aut p.specta(0).locus.linea ≠ linea {
                 p.renuncia(ParserErrorCodice.ExpectaturTargetValor, scriptum("after '§'", target))
                 rumpe
             }
-            fixum valor = p.specta(0).valor
+            fixum valor ← p.specta(0).valor
             p.procede()
 
-            targetMappings[target] = valor
-        } dum non p.estFinis() et p.specta(0).locus.linea == linea et p.congruet(SymbolumGenus.Coma)
+            targetMappings[target] ← valor
+        } dum non p.estFinis() et p.specta(0).locus.linea ≡ linea et p.congruet(SymbolumGenus.Coma)
     }
 
     redde {
@@ -126,20 +126,20 @@ functio parseTargetMappingAnnotation(in Resolvitor r, de textus nomen, de Locus 
 # Grammar: IDENTIFIER (',' IDENTIFIER)*
 # Example: @ radix filtr, imperativus, perfectum
 # Note: First identifier is stem, rest are form names (no validation)
-functio parseRadixAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
-    fixum p = r.parser()
-    varia radixForms = [] innatum lista<textus>
+functio parseRadixAnnotation(in Resolvitor r, de Locus locus, numerus linea) → Annotatio {
+    fixum p ← r.parser()
+    varia radixForms ← [] innatum lista<textus>
 
     # Parse comma-separated identifiers
-    si non p.estFinis() et p.specta(0).locus.linea == linea et estNomenAutVerbum(p.specta(0).species) {
+    si non p.estFinis() et p.specta(0).locus.linea ≡ linea et estNomenAutVerbum(p.specta(0).species) {
         fac {
-            si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+            si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea ≠ linea {
                 p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", p.specta(0).valor))
                 rumpe
             }
             radixForms.appende(p.specta(0).valor)
             p.procede()
-        } dum non p.estFinis() et p.specta(0).locus.linea == linea et p.congruet(SymbolumGenus.Coma)
+        } dum non p.estFinis() et p.specta(0).locus.linea ≡ linea et p.congruet(SymbolumGenus.Coma)
     }
 
     redde {
@@ -170,11 +170,11 @@ functio parseRadixAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
 # Examples:
 #   @ verte ts "push"
 #   @ verte ts (ego, elem) -> "[...S, S]"
-functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
-    fixum p = r.parser()
+functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) → Annotatio {
+    fixum p ← r.parser()
 
     # Parse target identifier (ts, py, rs, cpp, zig)
-    si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+    si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea ≠ linea {
         p.renuncia(ParserErrorCodice.ExpectaturVerteTarget, scriptum("got '§'", p.specta(0).valor))
         redde {
             locus: locus,
@@ -198,19 +198,19 @@ functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
             operandusDescriptio: nihil
         } novum Annotatio
     }
-    fixum verteTarget = p.specta(0).valor
+    fixum verteTarget ← p.specta(0).valor
     p.procede()
 
     # Check for template form: (params) -> "template"
-    si p.specta(0).species == SymbolumGenus.ParensSin et p.specta(0).locus.linea == linea {
+    si p.specta(0).species ≡ SymbolumGenus.ParensSin et p.specta(0).locus.linea ≡ linea {
         p.procede()  # consume '('
 
-        varia verteParams = [] innatum lista<textus>
+        varia verteParams ← [] innatum lista<textus>
 
         # Parse parameter list
-        si p.specta(0).species != SymbolumGenus.ParensDex {
+        si p.specta(0).species ≠ SymbolumGenus.ParensDex {
             fac {
-                si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea != linea {
+                si non estNomenAutVerbum(p.specta(0).species) aut p.specta(0).locus.linea ≠ linea {
                     p.renuncia(ParserErrorCodice.ExpectaturVerteParam, scriptum("got '§'", p.specta(0).valor))
                     rumpe
                 }
@@ -230,7 +230,7 @@ functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
         }
 
         # Parse template string
-        si p.specta(0).species != SymbolumGenus.Textus aut p.specta(0).locus.linea != linea {
+        si p.specta(0).species ≠ SymbolumGenus.Textus aut p.specta(0).locus.linea ≠ linea {
             p.renuncia(ParserErrorCodice.ExpectaturVerteTemplate, scriptum("got '§'", p.specta(0).valor))
             redde {
                 locus: locus,
@@ -253,11 +253,11 @@ functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
                 operandusDescriptio: nihil
             } novum Annotatio
         }
-        fixum verteTemplate = p.specta(0).valor
+        fixum verteTemplate ← p.specta(0).valor
         p.procede()
 
         # Reject multiple targets on one line
-        si p.specta(0).species == SymbolumGenus.Coma et p.specta(0).locus.linea == linea {
+        si p.specta(0).species ≡ SymbolumGenus.Coma et p.specta(0).locus.linea ≡ linea {
             p.renuncia(ParserErrorCodice.VerteMultiplicemTargets, "")
         }
 
@@ -285,7 +285,7 @@ functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Simple method form: "methodName"
-    si p.specta(0).species != SymbolumGenus.Textus aut p.specta(0).locus.linea != linea {
+    si p.specta(0).species ≠ SymbolumGenus.Textus aut p.specta(0).locus.linea ≠ linea {
         p.renuncia(ParserErrorCodice.ExpectaturVerteMethodAutTemplate, scriptum("got '§'", p.specta(0).valor))
         redde {
             locus: locus,
@@ -309,11 +309,11 @@ functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
             operandusDescriptio: nihil
         } novum Annotatio
     }
-    fixum verteMethod = p.specta(0).valor
+    fixum verteMethod ← p.specta(0).valor
     p.procede()
 
     # Reject multiple targets on one line
-    si p.specta(0).species == SymbolumGenus.Coma et p.specta(0).locus.linea == linea {
+    si p.specta(0).species ≡ SymbolumGenus.Coma et p.specta(0).locus.linea ≡ linea {
         p.renuncia(ParserErrorCodice.VerteMultiplicemTargets, "")
     }
 
@@ -342,12 +342,12 @@ functio parseVerteAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
 # Parse @ imperia: command re-export annotation
 # Grammar: @ imperia STRING 'ex' IDENTIFIER
 # Example: @ imperia "greet" ex greetModule
-functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
-    fixum p = r.parser()
-    varia argumenta = [] innatum lista<textus>
+functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) → Annotatio {
+    fixum p ← r.parser()
+    varia argumenta ← [] innatum lista<textus>
 
     # Parse subcommand name (string)
-    si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
+    si p.specta(0).species ≡ SymbolumGenus.Textus et p.specta(0).locus.linea ≡ linea {
         argumenta.appende(p.specta(0).valor)
         p.procede()
     } secus {
@@ -355,7 +355,7 @@ functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) -
     }
 
     # Parse 'ex' keyword
-    si p.probaVerbum("ex") et p.specta(0).locus.linea == linea {
+    si p.probaVerbum("ex") et p.specta(0).locus.linea ≡ linea {
         p.procede()
     } secus {
         # No 'ex' - that's fine, just return what we have
@@ -383,7 +383,7 @@ functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) -
     }
 
     # Parse module identifier
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea ≡ linea {
         argumenta.appende(p.specta(0).valor)
         p.procede()
     } secus {
@@ -422,34 +422,34 @@ functio parseImperiaAnnotation(in Resolvitor r, de Locus locus, numerus linea) -
 # Example (old): @ optio textus target brevis "t" longum "target" descriptio "Target language"
 # Example (new): @ optio target brevis "t" longum "target" descriptio "Target language"
 # Example (new): @ optio verbose brevis "v" longum "verbose" bivalens descriptio "Enable verbose"
-functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
-    fixum p = r.parser()
+functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) → Annotatio {
+    fixum p ← r.parser()
 
     # Type keywords that indicate old syntax
-    fixum typusVerba = ["textus", "bivalens", "numerus", "fractus", "lista"]
+    fixum typusVerba ← ["textus", "bivalens", "numerus", "fractus", "lista"]
 
     # Check if first token is a type keyword (old syntax) or name (new syntax)
-    varia optioTypus = nihil qua si textus
-    varia optioNomen = nihil qua si textus
-    varia optioBivalens = nihil qua si bivalens
+    varia optioTypus ← nihil qua si textus
+    varia optioNomen ← nihil qua si textus
+    varia optioBivalens ← nihil qua si bivalens
 
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
-        fixum primumValor = p.specta(0).valor
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea ≡ linea {
+        fixum primumValor ← p.specta(0).valor
         si primumValor inter typusVerba {
             # Old syntax: @ optio <type> <name> ...
-            optioTypus = primumValor
+            optioTypus ← primumValor
             p.procede()
 
             # Parse binding name (required)
-            si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
-                optioNomen = p.specta(0).valor
+            si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea ≡ linea {
+                optioNomen ← p.specta(0).valor
                 p.procede()
             } secus {
                 p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ optio requires binding name, got '§'", p.specta(0).valor))
             }
         } secus {
             # New syntax: @ optio <name> [brevis] [longum] [bivalens] [descriptio]
-            optioNomen = primumValor
+            optioNomen ← primumValor
             p.procede()
         }
     } secus {
@@ -457,11 +457,11 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Parse optional brevis "x"
-    varia optioBrevis = nihil qua si textus
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "brevis" et p.specta(0).locus.linea == linea {
+    varia optioBrevis ← nihil qua si textus
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor ≡ "brevis" et p.specta(0).locus.linea ≡ linea {
         p.procede()
-        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
-            optioBrevis = p.specta(0).valor
+        si p.specta(0).species ≡ SymbolumGenus.Textus et p.specta(0).locus.linea ≡ linea {
+            optioBrevis ← p.specta(0).valor
             p.procede()
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after brevis")
@@ -469,11 +469,11 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Parse optional longum "xxx"
-    varia optioLongum = nihil qua si textus
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "longum" et p.specta(0).locus.linea == linea {
+    varia optioLongum ← nihil qua si textus
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor ≡ "longum" et p.specta(0).locus.linea ≡ linea {
         p.procede()
-        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
-            optioLongum = p.specta(0).valor
+        si p.specta(0).species ≡ SymbolumGenus.Textus et p.specta(0).locus.linea ≡ linea {
+            optioLongum ← p.specta(0).valor
             p.procede()
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after longum")
@@ -481,9 +481,9 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Parse optional bivalens modifier (new syntax only)
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "bivalens" et p.specta(0).locus.linea == linea {
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor ≡ "bivalens" et p.specta(0).locus.linea ≡ linea {
         p.procede()
-        optioBivalens = verum
+        optioBivalens ← verum
     }
 
     # Validate: at least one of brevis/longum required
@@ -492,11 +492,11 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
     }
 
     # Parse optional descriptio "..."
-    varia optioDescriptio = nihil qua si textus
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "descriptio" et p.specta(0).locus.linea == linea {
+    varia optioDescriptio ← nihil qua si textus
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor ≡ "descriptio" et p.specta(0).locus.linea ≡ linea {
         p.procede()
-        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
-            optioDescriptio = p.specta(0).valor
+        si p.specta(0).species ≡ SymbolumGenus.Textus et p.specta(0).locus.linea ≡ linea {
+            optioDescriptio ← p.specta(0).valor
             p.procede()
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after descriptio")
@@ -529,40 +529,40 @@ functio parseOptioAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> 
 # Parse @ operandus annotation for CLI positional arguments
 # Grammar: @ operandus [ceteri] <type> <name> [descriptio "..."]
 # Example: @ operandus textus file descriptio "Input file"
-functio parseOperandusAnnotation(in Resolvitor r, de Locus locus, numerus linea) -> Annotatio {
-    fixum p = r.parser()
+functio parseOperandusAnnotation(in Resolvitor r, de Locus locus, numerus linea) → Annotatio {
+    fixum p ← r.parser()
 
     # Check for optional 'ceteri' prefix (rest/variadic)
-    varia operandusCeteri = falsum
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "ceteri" et p.specta(0).locus.linea == linea {
+    varia operandusCeteri ← falsum
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor ≡ "ceteri" et p.specta(0).locus.linea ≡ linea {
         p.procede()
-        operandusCeteri = verum
+        operandusCeteri ← verum
     }
 
     # Parse type (required)
-    varia operandusTypus = nihil qua si textus
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
-        operandusTypus = p.specta(0).valor
+    varia operandusTypus ← nihil qua si textus
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea ≡ linea {
+        operandusTypus ← p.specta(0).valor
         p.procede()
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ operandus requires type, got '§'", p.specta(0).valor))
     }
 
     # Parse name (required)
-    varia operandusNomen = nihil qua si textus
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea == linea {
-        operandusNomen = p.specta(0).valor
+    varia operandusNomen ← nihil qua si textus
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).locus.linea ≡ linea {
+        operandusNomen ← p.specta(0).valor
         p.procede()
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("@ operandus requires name, got '§'", p.specta(0).valor))
     }
 
     # Parse optional descriptio "..."
-    varia operandusDescriptio = nihil qua si textus
-    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor == "descriptio" et p.specta(0).locus.linea == linea {
+    varia operandusDescriptio ← nihil qua si textus
+    si estNomenAutVerbum(p.specta(0).species) et p.specta(0).valor ≡ "descriptio" et p.specta(0).locus.linea ≡ linea {
         p.procede()
-        si p.specta(0).species == SymbolumGenus.Textus et p.specta(0).locus.linea == linea {
-            operandusDescriptio = p.specta(0).valor
+        si p.specta(0).species ≡ SymbolumGenus.Textus et p.specta(0).locus.linea ≡ linea {
+            operandusDescriptio ← p.specta(0).valor
             p.procede()
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturTextus, "expected string after descriptio")
@@ -601,19 +601,19 @@ functio parseOperandusAnnotation(in Resolvitor r, de Locus locus, numerus linea)
 # Consumes @ directives until a non-@ token is found.
 # Dispatches to specialized parsers for stdlib annotations.
 @ publica
-functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
-    fixum p = r.parser()
-    varia annotationes = [] innatum lista<Annotatio>
+functio parseAnnotationes(in Resolvitor r) → lista<Annotatio> {
+    fixum p ← r.parser()
+    varia annotationes ← [] innatum lista<Annotatio>
 
     dum p.congruet(SymbolumGenus.At) {
-        fixum locus = p.praevius().locus
-        fixum linea = locus.linea
-        fixum sym = p.specta(0)
+        fixum locus ← p.praevius().locus
+        fixum linea ← locus.linea
+        fixum sym ← p.specta(0)
 
-        varia nomen = ""
+        varia nomen ← ""
         si estNomenAutVerbum(sym.species) {
             p.procede()
-            nomen = sym.valor
+            nomen ← sym.valor
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", sym.valor))
             p.procede()
@@ -621,55 +621,55 @@ functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
         }
 
         # SYNTAXIS ALIENA: '@ asynca' (false Latin for @ futura)
-        si nomen == "asynca" {
+        si nomen ≡ "asynca" {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaAsynca)
-            nomen = "futura"  # Normalize for downstream processing
+            nomen ← "futura"  # Normalize for downstream processing
         }
 
         # Dispatch to specialized parsers for stdlib annotations
-        si nomen == "innatum" aut nomen == "subsidia" {
+        si nomen ≡ "innatum" aut nomen ≡ "subsidia" {
             annotationes.appende(parseTargetMappingAnnotation(r, nomen, locus, linea))
             perge
         }
 
-        si nomen == "radix" {
+        si nomen ≡ "radix" {
             annotationes.appende(parseRadixAnnotation(r, locus, linea))
             perge
         }
 
-        si nomen == "verte" {
+        si nomen ≡ "verte" {
             annotationes.appende(parseVerteAnnotation(r, locus, linea))
             perge
         }
 
         # @ imperia "subcommand" ex moduleIdentifier
         # Mounts commands from imported module under a subcommand namespace
-        si nomen == "imperia" {
+        si nomen ≡ "imperia" {
             annotationes.appende(parseImperiaAnnotation(r, locus, linea))
             perge
         }
 
         # @ optio <type> <binding> [brevis "x"] [longum "xxx"] [descriptio "..."]
-        si nomen == "optio" {
+        si nomen ≡ "optio" {
             annotationes.appende(parseOptioAnnotation(r, locus, linea))
             perge
         }
 
         # @ operandus [ceteri] <type> <name> [descriptio "..."]
-        si nomen == "operandus" {
+        si nomen ≡ "operandus" {
             annotationes.appende(parseOperandusAnnotation(r, locus, linea))
             perge
         }
 
         # Standard annotation: collect any arguments on the same line
         # This handles test annotations like @ tag "slow", @ temporis 5000
-        varia argumenta = [] innatum lista<textus>
-        dum non p.estFinis() et p.specta(0).locus.linea == linea {
-            fixum argSym = p.specta(0)
-            si argSym.species == SymbolumGenus.Textus {
+        varia argumenta ← [] innatum lista<textus>
+        dum non p.estFinis() et p.specta(0).locus.linea ≡ linea {
+            fixum argSym ← p.specta(0)
+            si argSym.species ≡ SymbolumGenus.Textus {
                 argumenta.appende(argSym.valor)
                 p.procede()
-            } sin argSym.species == SymbolumGenus.Numerus {
+            } sin argSym.species ≡ SymbolumGenus.Numerus {
                 argumenta.appende(argSym.valor)
                 p.procede()
             } sin estNomenAutVerbum(argSym.species) {
@@ -717,19 +717,19 @@ functio parseAnnotationes(in Resolvitor r) -> lista<Annotatio> {
 # Consumes § directives until a non-§ token is found.
 # Section annotations are simpler than @ annotations - just name + arguments.
 @ publica
-functio parseSectiones(in Resolvitor r) -> lista<SectioAnnotatio> {
-    fixum p = r.parser()
-    varia sectiones = [] innatum lista<SectioAnnotatio>
+functio parseSectiones(in Resolvitor r) → lista<SectioAnnotatio> {
+    fixum p ← r.parser()
+    varia sectiones ← [] innatum lista<SectioAnnotatio>
 
     dum p.congruet(SymbolumGenus.Sectio) {
-        fixum locus = p.praevius().locus
-        fixum linea = locus.linea
-        fixum sym = p.specta(0)
+        fixum locus ← p.praevius().locus
+        fixum linea ← locus.linea
+        fixum sym ← p.specta(0)
 
-        varia nomen = ""
+        varia nomen ← ""
         si estNomenAutVerbum(sym.species) {
             p.procede()
-            nomen = sym.valor
+            nomen ← sym.valor
         } secus {
             p.renuncia(ParserErrorCodice.ExpectaturNomen, scriptum("got '§'", sym.valor))
             p.procede()
@@ -737,13 +737,13 @@ functio parseSectiones(in Resolvitor r) -> lista<SectioAnnotatio> {
         }
 
         # Collect all arguments on the same line (identifiers and strings)
-        varia argumenta = [] innatum lista<textus>
-        dum non p.estFinis() et p.specta(0).locus.linea == linea {
-            fixum argSym = p.specta(0)
+        varia argumenta ← [] innatum lista<textus>
+        dum non p.estFinis() et p.specta(0).locus.linea ≡ linea {
+            fixum argSym ← p.specta(0)
             si estNomenAutVerbum(argSym.species) {
                 argumenta.appende(argSym.valor)
                 p.procede()
-            } sin argSym.species == SymbolumGenus.Textus {
+            } sin argSym.species ≡ SymbolumGenus.Textus {
                 argumenta.appende(argSym.valor)
                 p.procede()
             } secus {

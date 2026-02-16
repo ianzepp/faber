@@ -9,15 +9,15 @@ importa ex "../nucleus" privata GoGenerator
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genAdfirma(in GoGenerator g, de Expressia condicio, si de ignotum nuntius) -> textus {
-    fixum test = genExpressia(g, condicio)
-    varia nuntiusTextus = "\"assertion failed\""
+functio genAdfirma(in GoGenerator g, de Expressia condicio, si de ignotum nuntius) → textus {
+    fixum test ← genExpressia(g, condicio)
+    varia nuntiusTextus ← "\"assertion failed\""
     si nonnihil nuntius {
-        nuntiusTextus = genExpressia(g, nuntius qua Expressia)
+        nuntiusTextus ← genExpressia(g, nuntius qua Expressia)
     }
 
     g.intraProfundum()
-    fixum panicLine = scriptum("§panic(§)", g.ind(), nuntiusTextus)
+    fixum panicLine ← scriptum("§panic(§)", g.ind(), nuntiusTextus)
     g.exiProfundum()
 
     redde scriptum("§if !(§) {\n§\n§}", g.ind(), test, panicLine, g.ind())

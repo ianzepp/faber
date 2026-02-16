@@ -49,34 +49,34 @@ importa ex "./imperium" privata parseCorpusAutSententia
 #       ceterum { scribe "unknown" }
 #   }
 @ publica
-functio parseEligeSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseEligeSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'elige'
     p.expectaVerbum("elige", ParserErrorCodice.ExpectaturElige)
 
     # Parse discriminant expression
-    fixum discriminans = r.expressia()
+    fixum discriminans ← r.expressia()
 
     # Expect opening brace
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
-    varia casus = [] innatum lista<EligeCasus>
-    varia praedefinitum = nihil qua si MassaSententia
+    varia casus ← [] innatum lista<EligeCasus>
+    varia praedefinitum ← nihil qua si MassaSententia
 
     # Parse cases until closing brace
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         # Check for 'casu' case
         si p.probaVerbum("casu") {
-            fixum casusLocus = p.locusActualis()
+            fixum casusLocus ← p.locusActualis()
             p.procede()
 
             # Parse condition expression
-            fixum condicio = r.expressia()
+            fixum condicio ← r.expressia()
 
             # Parse body: block, ergo stmt, or reddit expr
-            fixum consequens = parseCorpus(r)
+            fixum consequens ← parseCorpus(r)
 
             casus.appende({
                 locus: casusLocus,
@@ -87,7 +87,7 @@ functio parseEligeSententia(in Resolvitor r) -> Sententia {
         # Check for 'ceterum' (default case)
         sin p.probaVerbum("ceterum") {
             p.procede()
-            praedefinitum = parseCorpusAutSententia(r) qua MassaSententia
+            praedefinitum ← parseCorpusAutSententia(r) qua MassaSententia
             rumpe  # Default must be last
         }
         secus {
@@ -100,9 +100,9 @@ functio parseEligeSententia(in Resolvitor r) -> Sententia {
     p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
 
     # Optional catch clause
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     redde finge EligeSententia {
@@ -143,21 +143,21 @@ functio parseEligeSententia(in Resolvitor r) -> Sententia {
 #       casu _, _ { redde falsum }
 #   }
 @ publica
-functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseDiscerneSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'discerne'
     p.expectaVerbum("discerne", ParserErrorCodice.ExpectaturDiscerne)
 
-    varia exhaustiva = falsum
+    varia exhaustiva ← falsum
     si p.probaVerbum("omnia") {
         p.procede()
-        exhaustiva = verum
+        exhaustiva ← verum
     }
 
     # Parse comma-separated discriminants
-    varia discriminantes = [] innatum lista<Expressia>
+    varia discriminantes ← [] innatum lista<Expressia>
     discriminantes.appende(r.expressia())
     dum p.congruet(SymbolumGenus.Coma) {
         discriminantes.appende(r.expressia())
@@ -166,23 +166,23 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
     # Expect opening brace
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
-    varia casus = [] innatum lista<VariansCasus>
+    varia casus ← [] innatum lista<VariansCasus>
 
     # Parse variant cases
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         si p.probaVerbum("casu") {
-            fixum casusLocus = p.locusActualis()
+            fixum casusLocus ← p.locusActualis()
             p.procede()  # Consume 'casu'
 
             # Parse comma-separated patterns (one per discriminant)
-            varia exemplaria = [] innatum lista<VariansExemplar>
+            varia exemplaria ← [] innatum lista<VariansExemplar>
             exemplaria.appende(parseVariansExemplar(p))
             dum p.congruet(SymbolumGenus.Coma) {
                 exemplaria.appende(parseVariansExemplar(p))
             }
 
             # Parse body
-            fixum consequens = parseCorpus(r)
+            fixum consequens ← parseCorpus(r)
 
             casus.appende({
                 locus: casusLocus,
@@ -192,11 +192,11 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
         }
         # Check for 'ceterum' (default case) - converted to wildcard patterns
         sin p.probaVerbum("ceterum") {
-            fixum casusLocus = p.locusActualis()
+            fixum casusLocus ← p.locusActualis()
             p.procede()  # Consume 'ceterum'
 
             # Create wildcard patterns (one per discriminant)
-            varia exemplaria = [] innatum lista<VariansExemplar>
+            varia exemplaria ← [] innatum lista<VariansExemplar>
             itera ex discriminantes fixum _ {
                 exemplaria.appende({
                     locus: casusLocus,
@@ -208,7 +208,7 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
             }
 
             # Parse body (supports block, ergo, reddit, iacit)
-            fixum consequens = parseCorpusAutSententia(r)
+            fixum consequens ← parseCorpusAutSententia(r)
 
             casus.appende({
                 locus: casusLocus,
@@ -244,15 +244,15 @@ functio parseDiscerneSententia(in Resolvitor r) -> Sententia {
 #   - '_' (wildcard pattern)
 #   - An identifier followed by 'ut' or 'pro' (new pattern with binding)
 #   - '{', 'ergo', 'reddit' (end of patterns)
-functio parseVariansExemplar(in Parser p) -> VariansExemplar {
-    fixum locus = p.locusActualis()
+functio parseVariansExemplar(in Parser p) → VariansExemplar {
+    fixum locus ← p.locusActualis()
 
     # Parse variant name (or wildcard)
-    fixum variansNomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-    fixum variansNomen = variansNomenSym.valor
+    fixum variansNomenSym ← p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+    fixum variansNomen ← variansNomenSym.valor
 
     # Check for wildcard
-    si variansNomen == "_" {
+    si variansNomen ≡ "_" {
         redde {
             locus: locus,
             variansNomen: "_",
@@ -264,17 +264,17 @@ functio parseVariansExemplar(in Parser p) -> VariansExemplar {
 
     # Parse optional bindings: ut alias OR pro x, y, z
     # WHY: 'ut' binds the whole variant, 'pro' binds fields positionally.
-    varia alias = nihil qua si textus
-    varia vincula = [] innatum lista<textus>
+    varia alias ← nihil qua si textus
+    varia vincula ← [] innatum lista<textus>
 
     si p.probaVerbum("ut") {
         p.procede()
-        fixum aliasSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-        alias = aliasSym.valor
+        fixum aliasSym ← p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+        alias ← aliasSym.valor
     } sin p.probaVerbum("pro") {
         p.procede()
         fac {
-            fixum vincSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+            fixum vincSym ← p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
             vincula.appende(vincSym.valor)
         } dum estProximumVinculum(p)
     }
@@ -298,30 +298,30 @@ functio parseVariansExemplar(in Parser p) -> VariansExemplar {
 #   - Next token is '_' (wildcard)
 #   - Next token is identifier followed by 'ut' or 'pro' (pattern with binding)
 # Otherwise it's another binding.
-functio estProximumVinculum(in Parser p) -> bivalens {
+functio estProximumVinculum(in Parser p) → bivalens {
     # Must be at comma to continue
     si non p.proba(SymbolumGenus.Coma) {
         redde falsum
     }
 
-    fixum proximum = p.specta(1)
+    fixum proximum ← p.specta(1)
 
     # Comma followed by '_' is next pattern (wildcard)
-    si proximum.species == SymbolumGenus.Nomen et proximum.valor == "_" {
+    si proximum.species ≡ SymbolumGenus.Nomen et proximum.valor ≡ "_" {
         redde falsum
     }
 
     # Comma followed by non-identifier is not a binding
-    si proximum.species != SymbolumGenus.Nomen et proximum.species != SymbolumGenus.Verbum {
+    si proximum.species ≠ SymbolumGenus.Nomen et proximum.species ≠ SymbolumGenus.Verbum {
         redde falsum
     }
 
     # Look at what follows the identifier
-    fixum postIdent = p.specta(2)
+    fixum postIdent ← p.specta(2)
 
     # If followed by 'ut' or 'pro', it's a new pattern with binding
-    si postIdent.species == SymbolumGenus.Verbum {
-        si postIdent.valor == "ut" aut postIdent.valor == "pro" {
+    si postIdent.species ≡ SymbolumGenus.Verbum {
+        si postIdent.valor ≡ "ut" aut postIdent.valor ≡ "pro" {
             redde falsum
         }
     }
@@ -348,9 +348,9 @@ functio estProximumVinculum(in Parser p) -> bivalens {
 #       si user.aetas < 0 { iace "Invalid age" }
 #   }
 @ publica
-functio parseCustodiSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCustodiSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'custodi'
     p.expectaVerbum("custodi", ParserErrorCodice.ExpectaturCustodi)
@@ -358,16 +358,16 @@ functio parseCustodiSententia(in Resolvitor r) -> Sententia {
     # Expect opening brace
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
-    varia clausulae = [] innatum lista<CustodiClausula>
+    varia clausulae ← [] innatum lista<CustodiClausula>
 
     # Parse guard clauses
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
         si p.probaVerbum("si") {
-            fixum clausulaLocus = p.locusActualis()
+            fixum clausulaLocus ← p.locusActualis()
             p.procede()  # Consume 'si'
 
-            fixum condicio = r.expressia()
-            fixum consequens = parseCorpus(r)
+            fixum condicio ← r.expressia()
+            fixum consequens ← parseCorpus(r)
 
             clausulae.appende({
                 locus: clausulaLocus,
@@ -394,19 +394,19 @@ functio parseCustodiSententia(in Resolvitor r) -> Sententia {
 
 # Parse catch clause
 @ publica
-functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCapeClausula(in Resolvitor r) → CapeClausula {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # 'cape' already consumed by caller checking probaVerbum
     p.procede()
 
     # Parse error binding name
-    fixum paramSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-    fixum param = paramSym.valor
+    fixum paramSym ← p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+    fixum param ← paramSym.valor
 
     # Parse body
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     redde {
         locus: locus,

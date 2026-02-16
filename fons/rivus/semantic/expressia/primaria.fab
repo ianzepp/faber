@@ -22,8 +22,8 @@ importa ex "../../ast/expressia" privata LitteraGenus
 
 # Resolve an identifier (variable reference)
 @ publica
-functio resolveNomen(Resolvitor r, Expressia nomenExpr) -> SemanticTypus {
-    fixum a = r.analyzator()
+functio resolveNomen(Resolvitor r, Expressia nomenExpr) → SemanticTypus {
+    fixum a ← r.analyzator()
 
     discerne nomenExpr {
         casu Nomen ut n {
@@ -32,15 +32,15 @@ functio resolveNomen(Resolvitor r, Expressia nomenExpr) -> SemanticTypus {
                 redde BIVALENS
             }
 
-            si n.valor == "nihil" {
+            si n.valor ≡ "nihil" {
                 redde NIHIL
             }
 
             # Look up in symbol table
-            fixum symbolum = quaereSymbolum(a.scopus, n.valor)
+            fixum symbolum ← quaereSymbolum(a.scopus, n.valor)
 
             si nihil symbolum {
-                fixum err = undefinedVariableError(n.valor)
+                fixum err ← undefinedVariableError(n.valor)
                 a.error(err.textus, n.locus, err.auxilium)
                 a.moneIgnotum("undefined variable resolves to ignotum", n.locus)
                 redde IGNOTUM
@@ -60,7 +60,7 @@ functio resolveNomen(Resolvitor r, Expressia nomenExpr) -> SemanticTypus {
 
 # Resolve a literal value
 @ publica
-functio resolveLittera(Resolvitor r, Expressia litteraExpr) -> SemanticTypus {
+functio resolveLittera(Resolvitor r, Expressia litteraExpr) → SemanticTypus {
     discerne litteraExpr {
         casu Littera ut l {
             elige l.species {
@@ -96,17 +96,17 @@ functio resolveLittera(Resolvitor r, Expressia litteraExpr) -> SemanticTypus {
 
 # Resolve an array literal [1, 2, 3]
 @ publica
-functio resolveSeries(Resolvitor r, Expressia seriesExpr) -> SemanticTypus {
+functio resolveSeries(Resolvitor r, Expressia seriesExpr) → SemanticTypus {
     discerne seriesExpr {
         casu SeriesExpressia ut s {
             # Empty array: lista<ignotum>
-            si s.elementa.longitudo() == 0 {
+            si s.elementa.longitudo() ≡ 0 {
                 r.analyzator().moneIgnotum("empty array literal defaults to lista<ignotum>", s.locus)
                 redde genericumTypus("lista", [IGNOTUM], falsum)
             }
 
             # Resolve first element to infer type
-            fixum primumTypus = r.synthesize(s.elementa.primus())
+            fixum primumTypus ← r.synthesize(s.elementa.primus())
 
             # Resolve all other elements
             itera ex s.elementa fixum elem {
@@ -127,7 +127,7 @@ functio resolveSeries(Resolvitor r, Expressia seriesExpr) -> SemanticTypus {
 
 # Resolve an object literal { key: value }
 @ publica
-functio resolveObiectum(Resolvitor r, Expressia obiectumExpr) -> SemanticTypus {
+functio resolveObiectum(Resolvitor r, Expressia obiectumExpr) → SemanticTypus {
     discerne obiectumExpr {
         casu ObiectumExpressia ut o {
             # Resolve each property value
