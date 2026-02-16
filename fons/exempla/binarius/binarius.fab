@@ -85,20 +85,18 @@
 # GRAMMAR: Bitwise Operators
 # ----------------------------------------------------------------------------
 #
-#   bitwiseOr  :← bitwiseXor ('|' bitwiseXor)*
-#   bitwiseXor :← bitwiseAnd ('^' bitwiseAnd)*
-#   bitwiseAnd :← range ('&' range)*
+#   bitwiseOr  :← bitwiseXor ('∨' bitwiseXor)*
+#   bitwiseXor :← bitwiseAnd ('⊻' bitwiseAnd)*
+#   bitwiseAnd :← range ('∧' range)*
 #
 # Bitwise precedence is ABOVE comparison (unlike C), so:
-#   flags & MASK ≡ 0  parses as  (flags & MASK) ≡ 0
+#   flags ∧ MASK ≡ 0  parses as  (flags ∧ MASK) ≡ 0
 #
 # This matches programmer intent and avoids subtle bugs.
 #
-# Bit shift uses postfix keywords (see parseQuaExpression level):
-#   x sinistratum n  → x << n (shift left)
-#   x dextratum n    → x >> n (shift right)
-#
-# WHY: Latin keywords avoid ambiguity with nested generics like lista<lista<T>>.
+# Bit shift uses symbolic operators:
+#   x ≪ n  → x << n (shift left)
+#   x ≫ n  → x >> n (shift right)
 #
 # ----------------------------------------------------------------------------
 # GRAMMAR: Range
@@ -256,36 +254,34 @@ incipit {
     scribe grade
 
     # --------------------------------------------------------------------------
-    # Bitwise operators: & | ^
+    # Bitwise operators: ∧ ∨ ⊻
     # --------------------------------------------------------------------------
     # Note: Bitwise has higher precedence than comparison (unlike C)
 
     fixum flags ← 0b1010
     fixum mask ← 0b1100
 
-    fixum bitwiseAnd ← flags & mask
+    fixum bitwiseAnd ← flags ∧ mask
     scribe bitwiseAnd
 
-    fixum bitwiseOr ← flags | mask
+    fixum bitwiseOr ← flags ∨ mask
     scribe bitwiseOr
 
-    fixum bitwiseXor ← flags ^ mask
+    fixum bitwiseXor ← flags ⊻ mask
     scribe bitwiseXor
 
     # --------------------------------------------------------------------------
-    # Bit shift: sinistratum (<<), dextratum (>>)
+    # Bit shift: ≪ (<<), ≫ (>>)
     # --------------------------------------------------------------------------
-    # Uses postfix keywords to avoid ambiguity with nested generics
-
-    fixum leftShift ← 1 sinistratum 4
+    fixum leftShift ← 1 ≪ 4
     scribe leftShift
 
-    fixum rightShift ← 16 dextratum 2
+    fixum rightShift ← 16 ≫ 2
     scribe rightShift
 
-    # Precedence: (flags & mask) ≡ 0, not flags & (mask ≡ 0)
+    # Precedence: (flags ∧ mask) ≡ 0, not flags ∧ (mask ≡ 0)
     # Using explicit parens to avoid TS literal comparison warning
-    fixum checkMask ← (flags & mask) ≡ 0
+    fixum checkMask ← (flags ∧ mask) ≡ 0
     scribe checkMask
 }
 

@@ -146,19 +146,19 @@ discretio Expressia {
     # -------------------------------------------------------------------------
 
     # Binary expression - two operands with an operator
-    # Examples: a + b, x == y, foo && bar
+    # Examples: a + b, x == y, foo et bar
     BinariaExpressia {
         Locus locus
         Expressia sinister       # left operand
-        textus signum            # +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, ??
+        textus signum            # +, -, *, /, %, ==, !=, <, >, <=, >=, &, |, ^, et, aut, ??
         Expressia dexter         # right operand
     }
 
     # Unary expression - one operand with a prefix operator
-    # Examples: -x, !flag, ~bits
+    # Examples: -x, !flag, ¬bits
     UnariaExpressia {
         Locus locus
-        textus signum            # -, !, ~
+        textus signum            # -, !, ~ (¬ in source)
         Expressia argumentum
     }
 
@@ -182,11 +182,11 @@ discretio Expressia {
     }
 
     # Bit shift expression
-    # Examples: x dextratum 3 -> x >> 3, x sinistratum 3 -> x << 3
+    # Examples: x ≫ 3 -> x >> 3, x ≪ 3 -> x << 3
     TranslatioExpressia {
         Locus locus
         Expressia expressia          # the value being shifted
-        textus directio              # "dextratum" | "sinistratum"
+        textus directio              # internal: "dextratum" | "sinistratum" (source: ≫ | ≪)
         Expressia quantitas          # shift amount
     }
 

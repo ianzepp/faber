@@ -407,43 +407,43 @@
 # WHY: Tests bitwise AND, OR, XOR operators
 
 - name: bitwise and
-  source:a & b
+  source:a ∧ b
   expect:
       ts: '(a & b);'
       fab:
-          - 'a & b'
+          - 'a ∧ b'
 
 - name: bitwise or
-  source:a | b
+  source:a ∨ b
   expect:
       ts: '(a | b);'
       fab:
-          - 'a | b'
+          - 'a ∨ b'
 
 - name: bitwise xor
-  source:a ^ b
+  source:a ⊻ b
   expect:
       ts: '(a ^ b);'
       fab:
-          - 'a ^ b'
+          - 'a ⊻ b'
 
 - name: bitwise operators with precedence
-  source:a | b & c
+  source:a ∨ b ∧ c
   expect:
       ts: '(a | (b & c));'
       fab:
-          - 'a | b & c'
+          - 'a ∨ b ∧ c'
 
 - name: bitwise xor precedence
-  source:a ^ b | c
+  source:a ⊻ b ∨ c
   expect:
       ts: '((a ^ b) | c);'
       fab:
-          - 'a ^ b | c'
+          - 'a ⊻ b ∨ c'
 
 - name: combined bitwise operations
-  source:(flags & MASK) | DEFAULT
+  source:(flags ∧ MASK) ∨ DEFAULT
   expect:
       ts: '((flags & MASK) | DEFAULT);'
       fab:
-          - '(flags & MASK) | DEFAULT'
+          - '(flags ∧ MASK) ∨ DEFAULT'

@@ -174,6 +174,12 @@ impl<'a> Lexer<'a> {
             '.' => TokenKind::Dot,
             '‥' => TokenKind::DotDot,
             '…' => TokenKind::Ellipsis,
+            '∧' => TokenKind::Amp,
+            '∨' => TokenKind::Pipe,
+            '⊻' => TokenKind::Caret,
+            '¬' => TokenKind::Tilde,
+            '≪' => TokenKind::Sinistratum,
+            '≫' => TokenKind::Dextratum,
             '⊕' => TokenKind::PlusEq,
             '⊖' => TokenKind::MinusEq,
             '⊛' => TokenKind::StarEq,
@@ -195,7 +201,6 @@ impl<'a> Lexer<'a> {
                 }
             }
             '%' => TokenKind::Percent,
-            '^' => TokenKind::Caret,
             '-' => {
                 if self.cursor.eat('>') {
                     TokenKind::Arrow
@@ -266,24 +271,6 @@ impl<'a> Lexer<'a> {
             '≤' => TokenKind::LtEq,
             '≥' => TokenKind::GtEq,
             '→' => TokenKind::Arrow,
-            '&' => {
-                if self.cursor.eat('&') {
-                    TokenKind::AmpAmp
-                } else if self.cursor.eat('=') {
-                    TokenKind::AmpEq
-                } else {
-                    TokenKind::Amp
-                }
-            }
-            '|' => {
-                if self.cursor.eat('|') {
-                    TokenKind::PipePipe
-                } else if self.cursor.eat('=') {
-                    TokenKind::PipeEq
-                } else {
-                    TokenKind::Pipe
-                }
-            }
             '?' => {
                 if self.cursor.eat('.') {
                     TokenKind::QuestionDot
@@ -362,7 +349,6 @@ impl<'a> Lexer<'a> {
             ',' => TokenKind::Comma,
             ':' => TokenKind::Colon,
             ';' => TokenKind::Semicolon,
-            '~' => TokenKind::Tilde,
             '@' => {
                 self.mode = LexerMode::Annotation;
                 TokenKind::At
@@ -792,10 +778,6 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "fractatum" => TokenKind::Fractatum,
         "textatum" => TokenKind::Textatum,
         "bivalentum" => TokenKind::Bivalentum,
-
-        // Bitwise
-        "sinistratum" => TokenKind::Sinistratum,
-        "dextratum" => TokenKind::Dextratum,
 
         // Output
         "scribe" => TokenKind::Scribe,

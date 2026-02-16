@@ -54,12 +54,14 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) → textus {
         casu BinariaExpressia ut e {
             fixum sinister ← genExpressia(g, e.sinister)
             fixum dexter ← genExpressia(g, e.dexter)
-            redde scriptum("(§ § §)", sinister, e.signum, dexter)
+            fixum signum ← genFaberBinariaSignum(e.signum)
+            redde scriptum("(§ § §)", sinister, signum, dexter)
         }
 
         casu UnariaExpressia ut e {
             fixum arg ← genExpressia(g, e.argumentum)
-            redde scriptum("§ §", e.signum, arg)
+            fixum signum ← genFaberUnariaSignum(e.signum)
+            redde scriptum("§ §", signum, arg)
         }
 
         casu AssignatioExpressia ut e {
@@ -79,7 +81,8 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) → textus {
         casu TranslatioExpressia ut e {
             fixum exprText ← genExpressia(g, e.expressia)
             fixum quant ← genExpressia(g, e.quantitas)
-            redde scriptum("§ § §", exprText, e.directio, quant)
+            fixum directio ← genFaberTranslatioDirectio(e.directio)
+            redde scriptum("§ § §", exprText, directio, quant)
         }
 
         casu AmbitusExpressia ut e {
@@ -329,6 +332,30 @@ functio genFaberAssignatioSignum(de textus signum) → textus {
         casu "|=" { redde "⊚" }
     }
     redde signum
+}
+
+functio genFaberBinariaSignum(de textus signum) → textus {
+    elige signum {
+        casu "&" { redde "∧" }
+        casu "|" { redde "∨" }
+        casu "^" { redde "⊻" }
+    }
+    redde signum
+}
+
+functio genFaberUnariaSignum(de textus signum) → textus {
+    elige signum {
+        casu "~" { redde "¬" }
+    }
+    redde signum
+}
+
+functio genFaberTranslatioDirectio(de textus directio) → textus {
+    elige directio {
+        casu "sinistratum" { redde "≪" }
+        casu "dextratum" { redde "≫" }
+    }
+    redde directio
 }
 
 functio genLitteraExemplar(in FaberGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) → textus {

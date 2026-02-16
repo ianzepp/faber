@@ -803,7 +803,7 @@ pub struct UnaryExpr {
 pub enum UnOp {
     Neg,       // -
     Not,       // non
-    BitNot,    // ~
+    BitNot,    // ¬
     IsNull,    // nulla
     IsNotNull, // nonnulla
     IsNil,     // nihil (the check, not the literal)

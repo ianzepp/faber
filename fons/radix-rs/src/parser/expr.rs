@@ -25,14 +25,14 @@
 //! 4. Logical AND (et)
 //! 5. Equality (==, !=, est, non est)
 //! 6. Comparison (<, >, <=, >=, intra, inter)
-//! 7. Bitwise OR (|)
-//! 8. Bitwise XOR (^)
-//! 9. Bitwise AND (&)
-//! 10. Shift (sinistratum, dextratum)
+//! 7. Bitwise OR (∨)
+//! 8. Bitwise XOR (⊻)
+//! 9. Bitwise AND (∧)
+//! 10. Shift (≪, ≫)
 //! 11. Range (‥, …, ante, usque)
 //! 12. Additive (+, -)
 //! 13. Multiplicative (*, /, %)
-//! 14. Unary (-, ~, non, nulla, etc.)
+//! 14. Unary (-, ¬, non, nulla, etc.)
 //! 15. Postfix (calls, member access, indexing, casts)
 //! 16. Primary (literals, identifiers, arrays, objects, parenthesized)
 //!
@@ -330,10 +330,10 @@ impl Parser {
         let mut left = self.parse_range()?;
 
         loop {
-            let op = if self.check_keyword(TokenKind::Sinistratum) {
+            let op = if self.check(&TokenKind::Sinistratum) {
                 self.advance();
                 BinOp::Shl
-            } else if self.check_keyword(TokenKind::Dextratum) {
+            } else if self.check(&TokenKind::Dextratum) {
                 self.advance();
                 BinOp::Shr
             } else {
@@ -439,7 +439,7 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   unary := unary-op unary | postfix
-    ///   unary-op := '-' | '~' | 'non' | 'nulla' | 'nonnulla' | 'verum' | 'falsum'
+    ///   unary-op := '-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'verum' | 'falsum'
     ///             | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede'
     ///
     /// WHY: Some keywords (verum, falsum, nihil) can be either unary operators or

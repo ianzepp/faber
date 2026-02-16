@@ -16,7 +16,7 @@
           - 'non verum'
 
 - name: bitwise not
-  source:'~5'
+  source:'¬5'
   expect:
       ts: '~5;'
       py: '~5'
@@ -27,7 +27,7 @@
       zig:
           - '~5'
       fab:
-          - '~5'
+          - '¬5'
 
 - name: negation literal
   source:'-42'
@@ -106,12 +106,12 @@
           - 'non non verum'
 
 - name: double bitwise not
-  source:'~~x'
+  source:'¬¬x'
   expect:
       ts: '~~x;'
       py: '~~x'
       fab:
-          - '~~x'
+          - '¬¬x'
 
 - name: negation of grouped expression
   source:'-(a + b)'
@@ -130,12 +130,12 @@
           - 'non (a et b)'
 
 - name: chained unary operators
-  source:non ~x
+  source:non ¬x
   expect:
       ts: '!~x;'
       py: 'not ~x'
       fab:
-          - 'non ~x'
+          - 'non ¬x'
 
 - name: negation of call result
   source:'-getValue()'

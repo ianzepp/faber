@@ -190,8 +190,8 @@ pub enum TokenKind {
     Nihil,  // null/nil
 
     // === Keywords: Logical operators ===
-    Et,  // and (&&)
-    Aut, // or (||)
+    Et,  // and
+    Aut, // or
     Non, // not (!)
     Vel, // nullish coalesce (??)
     Est, // identity check (===)
@@ -211,9 +211,9 @@ pub enum TokenKind {
     Textatum,   // to string
     Bivalentum, // to boolean
 
-    // === Keywords: Bitwise ===
-    Sinistratum, // left shift
-    Dextratum,   // right shift
+    // === Shift operators ===
+    Sinistratum, // ≪
+    Dextratum,   // ≫
 
     // === Keywords: Output ===
     Scribe, // print
@@ -300,10 +300,10 @@ pub enum TokenKind {
     Star,     // *
     Slash,    // /
     Percent,  // %
-    Amp,      // & (bitwise AND)
-    Pipe,     // | (bitwise OR)
-    Caret,    // ^ (bitwise XOR)
-    Tilde,    // ~ (bitwise NOT)
+    Amp,      // ∧ (bitwise AND)
+    Pipe,     // ∨ (bitwise OR)
+    Caret,    // ⊻ (bitwise XOR)
+    Tilde,    // ¬ (bitwise NOT)
     Bang,     // !
     Question, // ?
 
@@ -325,10 +325,6 @@ pub enum TokenKind {
     SlashEq, // ⊘
     AmpEq,   // ⊜
     PipeEq,  // ⊚
-
-    // === Logical ===
-    AmpAmp,   // && (logical AND)
-    PipePipe, // || (logical OR)
 
     // === Optional chaining ===
     QuestionDot,     // ?. (optional member access)
@@ -434,8 +430,6 @@ impl TokenKind {
                 | Fractatum
                 | Textatum
                 | Bivalentum
-                | Sinistratum
-                | Dextratum
                 | Scribe
                 | Vide
                 | Mone

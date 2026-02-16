@@ -344,15 +344,14 @@ or         := and (('aut') and)* | and ('vel' and)*
 and        := equality (('et') equality)*
 equality   := comparison (('≡' | '≠' | 'est' | 'non' 'est') comparison)*
 comparison := bitwiseOr (('<' | '>' | '≤' | '≥' | 'intra' | 'inter') bitwiseOr)*
-bitwiseOr  := bitwiseXor ('|' bitwiseXor)*
-bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
-bitwiseAnd := shift ('&' shift)*
-shift      := range (shiftOp range)*
-shiftOp    := 'sinistratum' | 'dextratum'
+bitwiseOr  := bitwiseXor ('∨' bitwiseXor)*
+bitwiseXor := bitwiseAnd ('⊻' bitwiseAnd)*
+bitwiseAnd := shift ('∧' shift)*
+shift      := range (('≪' | '≫') range)*
 range      := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' additive)?)?
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
-unary      := ('-' | '~' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
+unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
 cast       := call ('qua' typeAnnotation | 'innatum' typeAnnotation | conversionOp)*
 conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
              | ('textatum' | 'bivalentum')
@@ -603,8 +602,8 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `textatum`                    | convert to string   |
 |                     | `bivalentum`                  | convert to boolean  |
 |                     | `Hex` / `Oct` / `Bin` / `Dec` | radix types         |
-| **Bitwise**         | `sinistratum`                 | left shift (<<)     |
-|                     | `dextratum`                   | right shift (>>)    |
+| **Bitwise**         | `∧` / `∨` / `⊻` / `¬`         | and/or/xor/not      |
+|                     | `≪` / `≫`                     | left/right shift    |
 | **Output**          | `scribe`                      | log                 |
 |                     | `vide`                        | debug               |
 |                     | `mone`                        | warn                |

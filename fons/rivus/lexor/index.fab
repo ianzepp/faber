@@ -721,6 +721,14 @@ genus Lexor {
                 ego.procede()
                 ego.addeVerbum("usque", loc, VerbumId.Usque)                     # inclusive range glyph alias
             }
+            casu "≪" {
+                ego.procede()
+                ego.addeVerbum("sinistratum", loc, VerbumId.Sinistratum)         # shift-left glyph alias
+            }
+            casu "≫" {
+                ego.procede()
+                ego.addeVerbum("dextratum", loc, VerbumId.Dextratum)             # shift-right glyph alias
+            }
 
             # ---- Compound assignment glyph operators ----
             casu "⊕" { ego.addeSymbolum(SymbolumGenus.PlusAequum, "+=", loc) }
@@ -825,8 +833,6 @@ genus Lexor {
             }
 
             # ---- Less than: < or <= ----
-            # NOTE: << is NOT tokenized as a shift operator.
-            # Use sinistratum keyword for left shift operations.
             casu "≤" {
                 ego.addeSymbolum(SymbolumGenus.MinorAequum, "≤", loc)
             }
@@ -840,9 +846,6 @@ genus Lexor {
             }
 
             # ---- Greater than: > or >= ----
-            # NOTE: >> and >>> are NOT tokenized as shift operators.
-            # This allows closing angle brackets in nested generics (e.g., lista<tabula<textus>>>)
-            # to be parsed correctly. Use dextratum keyword for right shift operations.
             casu "≥" {
                 ego.addeSymbolum(SymbolumGenus.MaiorAequum, "≥", loc)
             }
@@ -855,33 +858,11 @@ genus Lexor {
                 }
             }
 
-            # ---- Logical operators: & && | || and compound forms ----
-            casu "&" {
-                si ego.specta(0) ≡ "&" {
-                    ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.EtEt, "&&", loc)            # logical and
-                } sin ego.specta(0) ≡ "=" {
-                    ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.EtAequum, "&=", loc)
-                } secus {
-                    ego.addeSymbolum(SymbolumGenus.Et, c, loc)                 # bitwise and
-                }
-            }
-            casu "|" {
-                si ego.specta(0) ≡ "|" {
-                    ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.VelVel, "||", loc)          # logical or
-                } sin ego.specta(0) ≡ "=" {
-                    ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.VelAequum, "|=", loc)
-                } secus {
-                    ego.addeSymbolum(SymbolumGenus.Vel, c, loc)                # bitwise or
-                }
-            }
-
             # ---- Bitwise operators ----
-            casu "^" { ego.addeSymbolum(SymbolumGenus.Apex, c, loc) }   # bitwise xor (apex = point/tip)
-            casu "~" { ego.addeSymbolum(SymbolumGenus.Unda, c, loc) }   # bitwise not (unda = wave)
+            casu "∧" { ego.addeSymbolum(SymbolumGenus.Et, "&", loc) }      # bitwise and glyph alias
+            casu "∨" { ego.addeSymbolum(SymbolumGenus.Vel, "|", loc) }     # bitwise or glyph alias
+            casu "⊻" { ego.addeSymbolum(SymbolumGenus.Apex, "^", loc) }    # bitwise xor glyph alias
+            casu "¬" { ego.addeSymbolum(SymbolumGenus.Unda, "~", loc) }    # bitwise not glyph alias
 
             # ---- Unknown character ----
             ceterum {

@@ -124,13 +124,15 @@ impl<'a> Lexer<'a> {
 
         let operators = vec![
             // Multi-char first (greedy match)
-            "===", "!==", "==", "!=", "<=", ">=", "&&", "||", "??", "+=", "-=", "*=", "/=", "->",
+            "===", "!==", "==", "!=", "<=", ">=", "??", "+=", "-=", "*=", "/=", "->",
             // Unicode core operators
             "←", "≡", "≠", "≤", "≥", "→",
             // Unicode compound assignment operators + ASCII compatibility aliases
             "⊕", "⊖", "⊛", "⊘", "⊜", "⊚",
+            // Unicode bitwise + shift operators
+            "∧", "∨", "⊻", "¬", "≪", "≫",
             "‥", "…", "..", // Range glyphs + compatibility alias
-            "+", "-", "*", "/", "%", "<", ">", "=", "&", "|", "^", "~",
+            "+", "-", "*", "/", "%", "<", ">", "=",
         ];
 
         Self {
@@ -267,6 +269,12 @@ impl<'a> Lexer<'a> {
                         "⊘" => ("Operator", "/=".to_string()),
                         "⊜" => ("Operator", "&=".to_string()),
                         "⊚" => ("Operator", "|=".to_string()),
+                        "∧" => ("Operator", "&".to_string()),
+                        "∨" => ("Operator", "|".to_string()),
+                        "⊻" => ("Operator", "^".to_string()),
+                        "¬" => ("Operator", "~".to_string()),
+                        "≪" => ("Operator", "<<".to_string()),
+                        "≫" => ("Operator", ">>".to_string()),
                         // Accept glyph ranges while preserving parser compatibility.
                         "‥" => ("Operator", "..".to_string()),
                         "…" => ("Keyword", "usque".to_string()),
