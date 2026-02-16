@@ -363,3 +363,67 @@ fn discerne_cases_do_not_emit_nested_blocks() {
     assert!(output.code.contains("casu 200 {\n            redde \"OK\""));
     assert!(!output.code.contains("casu 200 {\n            {"));
 }
+
+#[test]
+fn emits_object_literal_fields_from_innatum_entries() {
+    let mut interner = Interner::new();
+    let nomen = interner.intern("nomen");
+    let activus = interner.intern("activus");
+    let marcus = interner.intern("Marcus");
+
+    let mut types = TypeTable::new();
+    let textus = types.primitive(Primitive::Textus);
+    let bivalens = types.primitive(Primitive::Bivalens);
+    let union_ty = types.intern(Type::Union(vec![textus, bivalens]));
+    let map_ty = types.map(textus, union_ty);
+
+    let expr = HirExpr {
+        id: crate::hir::HirId(1),
+        kind: HirExprKind::Innatum {
+            source: Box::new(HirExpr {
+                id: crate::hir::HirId(2),
+                kind: HirExprKind::Tuple(Vec::new()),
+                ty: None,
+                span: span(),
+            }),
+            target: map_ty,
+            map_entries: Some(vec![
+                (
+                    nomen,
+                    HirExpr {
+                        id: crate::hir::HirId(3),
+                        kind: HirExprKind::Literal(HirLiteral::String(marcus)),
+                        ty: Some(textus),
+                        span: span(),
+                    },
+                ),
+                (
+                    activus,
+                    HirExpr {
+                        id: crate::hir::HirId(4),
+                        kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                        ty: Some(bivalens),
+                        span: span(),
+                    },
+                ),
+            ]),
+        },
+        ty: Some(map_ty),
+        span: span(),
+    };
+
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt { id: crate::hir::HirId(5), kind: HirStmtKind::Expr(expr), span: span() }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("nomen: \"Marcus\""));
+    assert!(output.code.contains("activus: verum"));
+    assert!(!output.code.contains("innatum tabula"));
+}

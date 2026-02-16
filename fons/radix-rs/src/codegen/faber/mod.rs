@@ -779,10 +779,23 @@ impl FaberCodegen {
                 w.write(" qua ");
                 w.write(&self.type_to_faber(*target, types, names, interner));
             }
-            HirExprKind::Innatum { source, target, .. } => {
-                self.write_expr(source, types, names, interner, w);
-                w.write(" innatum ");
-                w.write(&self.type_to_faber(*target, types, names, interner));
+            HirExprKind::Innatum { source, target, map_entries } => {
+                if let Some(entries) = map_entries {
+                    w.write("{");
+                    for (idx, (name, value)) in entries.iter().enumerate() {
+                        if idx > 0 {
+                            w.write(", ");
+                        }
+                        w.write(&self.symbol_to_string(*name, interner));
+                        w.write(": ");
+                        self.write_expr(value, types, names, interner, w);
+                    }
+                    w.write("}");
+                } else {
+                    self.write_expr(source, types, names, interner, w);
+                    w.write(" innatum ");
+                    w.write(&self.type_to_faber(*target, types, names, interner));
+                }
             }
             HirExprKind::Ref(kind, inner) => {
                 match kind {
