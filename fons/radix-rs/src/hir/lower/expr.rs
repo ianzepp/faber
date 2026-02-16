@@ -299,7 +299,10 @@ impl<'a> Lowerer<'a> {
                     let key = match &field.key {
                         crate::syntax::ObjectKey::Ident(ident) => ident.name,
                         crate::syntax::ObjectKey::String(string) => *string,
-                        _ => continue,
+                        _ => {
+                            self.error("computed/spread keys not supported in innatum object");
+                            continue;
+                        }
                     };
                     let value = match &field.value {
                         Some(value) => lower_expr(self, value),
@@ -319,8 +322,16 @@ impl<'a> Lowerer<'a> {
                     entries.push((key, value));
                 }
 
+                // Use a placeholder source — entries already contain all lowered values.
+                // Re-lowering the object expression would produce duplicate HIR nodes.
+                let placeholder = HirExpr {
+                    id: self.next_hir_id(),
+                    kind: HirExprKind::Tuple(Vec::new()),
+                    ty: None,
+                    span: self.current_span,
+                };
                 HirExprKind::Verte {
-                    source: Box::new(lower_expr(self, &innatum.expr)),
+                    source: Box::new(placeholder),
                     target,
                     entries: Some(entries),
                 }
@@ -369,7 +380,10 @@ impl<'a> Lowerer<'a> {
             let key = match &field.key {
                 crate::syntax::ObjectKey::Ident(ident) => ident.name,
                 crate::syntax::ObjectKey::String(string) => *string,
-                _ => continue,
+                _ => {
+                    self.error("computed/spread keys not supported in object literal");
+                    continue;
+                }
             };
             let value = match &field.value {
                 Some(value) => lower_expr(self, value),
@@ -435,7 +449,10 @@ impl<'a> Lowerer<'a> {
                     let key = match &field.key {
                         crate::syntax::ObjectKey::Ident(ident) => ident.name,
                         crate::syntax::ObjectKey::String(string) => *string,
-                        _ => continue,
+                        _ => {
+                            self.error("computed/spread keys not supported in novum object");
+                            continue;
+                        }
                     };
                     let value = match &field.value {
                         Some(value) => lower_expr(self, value),
@@ -455,8 +472,16 @@ impl<'a> Lowerer<'a> {
                     entries.push((key, value));
                 }
 
+                // Use a placeholder source — entries already contain all lowered values.
+                // Re-lowering the object expression would produce duplicate HIR nodes.
+                let placeholder = HirExpr {
+                    id: self.next_hir_id(),
+                    kind: HirExprKind::Tuple(Vec::new()),
+                    ty: None,
+                    span: self.current_span,
+                };
                 HirExprKind::Verte {
-                    source: Box::new(lower_expr(self, &novum.expr)),
+                    source: Box::new(placeholder),
                     target,
                     entries: Some(entries),
                 }

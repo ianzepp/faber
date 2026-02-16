@@ -759,11 +759,27 @@ pub fn generate_expr(
                     w.write(">::new()");
                 }
             }
-            _ => {
-                // Cast — emit `source as TargetType`
+            // Primitive cast — `as` is valid for numeric/bool conversions in Rust
+            Type::Primitive(Primitive::Numerus)
+            | Type::Primitive(Primitive::Fractus)
+            | Type::Primitive(Primitive::Bivalens) => {
                 generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
                 w.write(" as ");
                 w.write(&type_to_rust(codegen, *target, types));
+            }
+            // Textus cast — use .to_string() instead of `as`
+            Type::Primitive(Primitive::Textus) => {
+                w.write("format!(\"{}\", ");
+                generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write(")");
+            }
+            // Enum/Interface — passthrough (trust the type checker)
+            Type::Enum(_) | Type::Interface(_) => {
+                generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            }
+            // All other types — passthrough with the source expression
+            _ => {
+                generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
         },
         HirExprKind::Ref(kind, expr) => {
