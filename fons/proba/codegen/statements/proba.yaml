@@ -134,7 +134,7 @@
   source: |
       proba "with setup" {
         varia counter ← 0
-        counter += 1
+        counter ⊕ 1
         adfirma counter ≡ 1
       }
   expect:
@@ -151,7 +151,7 @@
       fab:
           - 'proba "with setup"'
           - 'varia counter ← 0'
-          - 'counter += 1'
+          - 'counter ⊕ 1'
           - 'adfirma counter ≡ 1'
 
 # Test with multiple assertion types

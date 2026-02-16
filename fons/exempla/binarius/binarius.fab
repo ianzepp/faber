@@ -19,7 +19,7 @@
 # GRAMMAR: Assignment
 # ----------------------------------------------------------------------------
 #
-#   assignment :← ternary (('←' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=') assignment)?
+#   assignment :← ternary (('←' | '⊕' | '⊖' | '⊛' | '⊘' | '⊜' | '⊚') assignment)?
 #
 # Assignment is right-associative: a ← b ← c parses as a ← (b ← c).
 # Compound assignment operators combine operation with assignment.
@@ -169,13 +169,13 @@ incipit {
     scribe rem
 
     # --------------------------------------------------------------------------
-    # Compound assignment: += -= *= /= &= |=
+    # Compound assignment: ⊕ ⊖ ⊛ ⊘ ⊜ ⊚
     # --------------------------------------------------------------------------
 
     varia counter ← 0
-    counter += 10
-    counter -= 3
-    counter *= 2
+    counter ⊕ 10
+    counter ⊖ 3
+    counter ⊛ 2
     scribe counter
 
     # --------------------------------------------------------------------------

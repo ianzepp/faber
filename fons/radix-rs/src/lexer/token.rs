@@ -319,12 +319,12 @@ pub enum TokenKind {
     GtEq,     // >=
 
     // === Compound assignment ===
-    PlusEq,  // +=
-    MinusEq, // -=
-    StarEq,  // *=
-    SlashEq, // /=
-    AmpEq,   // &=
-    PipeEq,  // |=
+    PlusEq,  // ⊕
+    MinusEq, // ⊖
+    StarEq,  // ⊛
+    SlashEq, // ⊘
+    AmpEq,   // ⊜
+    PipeEq,  // ⊚
 
     // === Logical ===
     AmpAmp,   // && (logical AND)

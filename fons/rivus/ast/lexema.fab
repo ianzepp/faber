@@ -51,10 +51,10 @@ ordo SymbolumGenus {
     Stella        # *
     Virgula       # /
     Centum        # %
-    PlusAequum    # +=
-    MinusAequum   # -=
-    StellaAequum  # *=
-    VirgulaAequum # /=
+    PlusAequum    # ⊕ (+= alias)
+    MinusAequum   # ⊖ (-= alias)
+    StellaAequum  # ⊛ (*= alias)
+    VirgulaAequum # ⊘ (/= alias)
     CentumAequum  # %=
 
     # -------------------------------------------------------------------------
@@ -88,8 +88,8 @@ ordo SymbolumGenus {
     Vel           # |
     Apex          # ^
     Unda          # ~
-    EtAequum      # &=
-    VelAequum     # |=
+    EtAequum      # ⊜ (&= alias)
+    VelAequum     # ⊚ (|= alias)
 
     # -------------------------------------------------------------------------
     # Punctuation

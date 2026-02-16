@@ -16,7 +16,7 @@
           - 'x ← 5'
 
 - name: addition assignment
-  source:x += 1
+  source:x ⊕ 1
   expect:
       ts: 'x += 1;'
       py: 'x += 1'
@@ -27,10 +27,10 @@
       zig:
           - 'x += 1;'
       fab:
-          - 'x += 1'
+          - 'x ⊕ 1'
 
 - name: subtraction assignment
-  source:x -= 1
+  source:x ⊖ 1
   expect:
       ts: 'x -= 1;'
       py: 'x -= 1'
@@ -41,10 +41,10 @@
       zig:
           - 'x -= 1;'
       fab:
-          - 'x -= 1'
+          - 'x ⊖ 1'
 
 - name: multiplication assignment
-  source:x *= 2
+  source:x ⊛ 2
   expect:
       ts: 'x *= 2;'
       py: 'x *= 2'
@@ -55,10 +55,10 @@
       zig:
           - 'x *= 2;'
       fab:
-          - 'x *= 2'
+          - 'x ⊛ 2'
 
 - name: division assignment
-  source:x /= 2
+  source:x ⊘ 2
   expect:
       ts: 'x /= 2;'
       py: 'x /= 2'
@@ -69,7 +69,7 @@
       zig:
           - 'x = @divTrunc(x, 2)'
       fab:
-          - 'x /= 2'
+          - 'x ⊘ 2'
 
 - name: member assignment
   source:obj.prop ← value
@@ -178,7 +178,7 @@
           - 'total ← a + b + c'
 
 - name: compound with member
-  source:obj.count += 1
+  source:obj.count ⊕ 1
   expect:
       ts: 'obj.count += 1;'
       py: 'obj.count += 1'
@@ -189,4 +189,4 @@
       zig:
           - 'obj.count += 1;'
       fab:
-          - 'obj.count += 1'
+          - 'obj.count ⊕ 1'

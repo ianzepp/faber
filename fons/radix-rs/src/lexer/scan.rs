@@ -174,6 +174,12 @@ impl<'a> Lexer<'a> {
             '.' => TokenKind::Dot,
             '‥' => TokenKind::DotDot,
             '…' => TokenKind::Ellipsis,
+            '⊕' => TokenKind::PlusEq,
+            '⊖' => TokenKind::MinusEq,
+            '⊛' => TokenKind::StarEq,
+            '⊘' => TokenKind::SlashEq,
+            '⊜' => TokenKind::AmpEq,
+            '⊚' => TokenKind::PipeEq,
             '+' => {
                 if self.cursor.eat('=') {
                     TokenKind::PlusEq

@@ -19,7 +19,7 @@
 //!
 //! PRECEDENCE LEVELS (lowest to highest)
 //! ======================================
-//! 1. Assignment (=, +=, -=, etc.)
+//! 1. Assignment (=, ⊕, ⊖, etc.)
 //! 2. Ternary (? :, sic secus)
 //! 3. Logical OR (aut, vel)
 //! 4. Logical AND (et)
@@ -73,7 +73,7 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   assignment := ternary [assign-op assignment]
-    ///   assign-op := '←' | '+=' | '-=' | '*=' | '/=' | '&=' | '|='
+    ///   assign-op := '←' | '⊕' | '⊖' | '⊛' | '⊘' | '⊜' | '⊚'
     ///
     /// WHY: Right-associative via recursion on RHS. Allows `a = b = c`.
     fn parse_assignment(&mut self) -> Result<Expr, ParseError> {

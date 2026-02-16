@@ -4,7 +4,7 @@
 # Uses precedence climbing with left-to-right associativity (except assignment/ternary).
 #
 # GRAMMAR (low to high precedence):
-#   assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
+#   assignment := ternary (('←' | '⊕' | '⊖' | ...) assignment)?
 #   ternary := or (('?' expr ':' | 'sic' expr 'secus') ternary)?
 #   or := and (('||' | 'aut' | 'vel') and)*
 #   and := bitwiseOr (('&&' | 'et') bitwiseOr)*
@@ -50,7 +50,7 @@ functio estAssignabile(de Expressia expr) → bivalens {
 
 # Parse assignment expression
 #
-# GRAMMAR: assignment := ternary (('=' | '+=' | '-=' | ...) assignment)?
+# GRAMMAR: assignment := ternary (('←' | '⊕' | '⊖' | ...) assignment)?
 #
 # Assignment is right-associative: a = b = c parses as a = (b = c)
 @ publica

@@ -61,12 +61,12 @@ functio glyphOperator(de textus token) → textus {
 
         # Assignment
         casu "=" { redde "\u2190" }   # Leftwards arrow
-        casu "+=" { redde "\u219E" }  # Leftwards two headed arrow
-        casu "-=" { redde "\u21A2" }  # Leftwards arrow with tail
-        casu "*=" { redde "\u21A9" }  # Leftwards arrow with hook
-        casu "/=" { redde "\u21AB" }  # Leftwards arrow with loop
-        casu "&=" { redde "\u21A4" }  # Leftwards arrow from bar
-        casu "|=" { redde "\u219C" }  # Leftwards wave arrow
+        casu "+=" { redde "\u2295" }  # Circled plus
+        casu "-=" { redde "\u2296" }  # Circled minus
+        casu "*=" { redde "\u229B" }  # Circled asterisk
+        casu "/=" { redde "\u2298" }  # Circled division
+        casu "&=" { redde "\u229C" }  # Circled equals
+        casu "|=" { redde "\u229A" }  # Circled ring
 
         # Bitwise
         casu "&" { redde "\u2293" }   # Square cap

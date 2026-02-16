@@ -722,6 +722,14 @@ genus Lexor {
                 ego.addeVerbum("usque", loc, VerbumId.Usque)                     # inclusive range glyph alias
             }
 
+            # ---- Compound assignment glyph operators ----
+            casu "⊕" { ego.addeSymbolum(SymbolumGenus.PlusAequum, "+=", loc) }
+            casu "⊖" { ego.addeSymbolum(SymbolumGenus.MinusAequum, "-=", loc) }
+            casu "⊛" { ego.addeSymbolum(SymbolumGenus.StellaAequum, "*=", loc) }
+            casu "⊘" { ego.addeSymbolum(SymbolumGenus.VirgulaAequum, "/=", loc) }
+            casu "⊜" { ego.addeSymbolum(SymbolumGenus.EtAequum, "&=", loc) }
+            casu "⊚" { ego.addeSymbolum(SymbolumGenus.VelAequum, "|=", loc) }
+
             # ---- Arithmetic operators ----
             casu "+" {
                 # WHY: Compound assignments are single tokens (+=, -=, etc.).

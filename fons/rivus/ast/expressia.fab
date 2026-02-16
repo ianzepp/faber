@@ -167,7 +167,7 @@ discretio Expressia {
     AssignatioExpressia {
         Locus locus
         Expressia sinister       # must be assignable (identifier, member, etc.)
-        textus signum            # =, +=, -=, *=, /=, etc.
+        textus signum            # ←, +=, -=, *=, /= (glyph forms normalize internally)
         Expressia dexter
     }
 

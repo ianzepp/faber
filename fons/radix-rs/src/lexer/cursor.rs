@@ -86,7 +86,7 @@ impl<'a> Cursor<'a> {
 
     /// Consume the next character if it matches the expected value.
     ///
-    /// WHY: Common pattern for compound operators (e.g., `+=`, `==`). Returns
+    /// WHY: Common pattern for compound operators (e.g., `⊕`, `==`). Returns
     /// bool instead of Option to make conditional chains more ergonomic.
     pub fn eat(&mut self, expected: char) -> bool {
         if self.peek() == Some(expected) {

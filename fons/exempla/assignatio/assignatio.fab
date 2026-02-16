@@ -9,20 +9,20 @@ incipit {
     scribe x  # 20
 
     # Compound assignments
-    x += 5
+    x ⊕ 5
     scribe x  # 25
 
-    x -= 10
+    x ⊖ 10
     scribe x  # 15
 
-    x *= 2
+    x ⊛ 2
     scribe x  # 30
 
-    x /= 3
+    x ⊘ 3
     scribe x  # 10
 
     # String concatenation
     varia textus s ← "hello"
-    s += " world"
+    s ⊕ " world"
     scribe s  # hello world
 }

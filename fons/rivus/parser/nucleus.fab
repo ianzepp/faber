@@ -522,7 +522,7 @@ genus Parser {
     }
 
     # Check if token is an assignment operator
-    # Includes = and compound assignments (+=, -=, *=, /=, %=, &=, |=)
+    # Includes ← and compound assignments (⊕, ⊖, ⊛, ⊘, %=, ⊜, ⊚)
     @ publica
     functio estAssignatioSignum(de Symbolum s) → bivalens {
         # WHY: Compound assignment shares assignment precedence and associativity.

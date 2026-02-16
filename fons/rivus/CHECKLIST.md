@@ -218,7 +218,7 @@ Status: ● implemented, ◐ partial, ○ not implemented, — not applicable, �
 | Call spread (`sparge`)              | ● | ○ | ○ | ○ | ○ |
 | Method calls                        | ● | ● | ○ | ○ | ○ |
 | Assignment                          | ● | ● | ○ | ○ | ○ |
-| Compound assignment (`+=`, etc.)    | ● | ○ | ○ | ○ | ○ |
+| Compound assignment (`⊕`, etc.)     | ● | ○ | ○ | ○ | ○ |
 | Conditional (ternary)               | ● | ● | ○ | ○ | ○ |
 | `sic`/`secus` ternary syntax        | ● | ● | ○ | ○ | ○ |
 | `cede` (await/yield)                | ● | ○ | ○ | ○ | ○ |

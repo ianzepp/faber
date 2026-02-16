@@ -65,7 +65,8 @@ functio genExpressia(in FaberGenerator g, de Expressia expr) → textus {
         casu AssignatioExpressia ut e {
             fixum sinister ← genExpressia(g, e.sinister)
             fixum dexter ← genExpressia(g, e.dexter)
-            redde scriptum("§ § §", sinister, e.signum, dexter)
+            fixum signum ← genFaberAssignatioSignum(e.signum)
+            redde scriptum("§ § §", sinister, signum, dexter)
         }
 
         casu CondicioExpressia ut e {
@@ -316,6 +317,18 @@ functio genLittera(de LitteraGenus species, de textus crudus) → textus {
         casu LitteraGenus.Nihil { redde "nihil" }
     }
     redde crudus
+}
+
+functio genFaberAssignatioSignum(de textus signum) → textus {
+    elige signum {
+        casu "+=" { redde "⊕" }
+        casu "-=" { redde "⊖" }
+        casu "*=" { redde "⊛" }
+        casu "/=" { redde "⊘" }
+        casu "&=" { redde "⊜" }
+        casu "|=" { redde "⊚" }
+    }
+    redde signum
 }
 
 functio genLitteraExemplar(in FaberGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) → textus {

@@ -48,20 +48,24 @@ fn lexer_interns_equivalent_unicode_forms_as_one_symbol() {
 
 #[test]
 fn lexes_operator_tokens_consistently() {
-    let result = lex("+ += - -= -> → * *= / /= % ^ == ≡ === != ≠ !== !. ![ !( < <= ≤ > >= ≥ && &= || |= ?. ?[ ?( ?? = ←");
+    let result = lex("+ ⊕ += - ⊖ -= -> → * ⊛ *= / ⊘ /= % ^ == ≡ === != ≠ !== !. ![ !( < <= ≤ > >= ≥ && ⊜ &= || ⊚ |= ?. ?[ ?( ?? = ←");
     assert!(result.errors.is_empty());
 
     let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
     let expected = vec![
         TokenKind::Plus,
         TokenKind::PlusEq,
+        TokenKind::PlusEq,
         TokenKind::Minus,
+        TokenKind::MinusEq,
         TokenKind::MinusEq,
         TokenKind::Arrow,
         TokenKind::Arrow,
         TokenKind::Star,
         TokenKind::StarEq,
+        TokenKind::StarEq,
         TokenKind::Slash,
+        TokenKind::SlashEq,
         TokenKind::SlashEq,
         TokenKind::Percent,
         TokenKind::Caret,
@@ -82,7 +86,9 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::GtEq,
         TokenKind::AmpAmp,
         TokenKind::AmpEq,
+        TokenKind::AmpEq,
         TokenKind::PipePipe,
+        TokenKind::PipeEq,
         TokenKind::PipeEq,
         TokenKind::QuestionDot,
         TokenKind::QuestionBracket,

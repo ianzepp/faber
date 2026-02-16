@@ -189,7 +189,7 @@ fn compile_accepts_textus_concatenation_and_compound_add() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   varia textus s = "salve"
-  s += "!"
+  s ⊕ "!"
   scribe "dicit: " + s
 }"#;
     let result = compile(&session, "test.fab", source);

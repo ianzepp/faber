@@ -338,7 +338,7 @@ assertStmt  := 'adfirma' expression (',' expression)?
 
 ```ebnf
 expression := assignment
-assignment := ternary (('←' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=') assignment)?
+assignment := ternary (('←' | '⊕' | '⊖' | '⊛' | '⊘' | '⊜' | '⊚') assignment)?
 ternary    := or (('?' expression ':' | 'sic' expression 'secus') ternary)?
 or         := and (('aut') and)* | and ('vel' and)*
 and        := equality (('et') equality)*

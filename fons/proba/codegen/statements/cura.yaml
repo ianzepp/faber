@@ -108,7 +108,7 @@
 - name: cura with multiple body statements
   source: |
       cura mutex.lock() fit guard {
-        counter += 1
+        counter ⊕ 1
         scribe counter
         redde counter
       }
@@ -134,7 +134,7 @@
           - 'return counter;'
       fab:
           - 'cura mutex.lock() fit guard {'
-          - 'counter += 1'
+          - 'counter ⊕ 1'
           - 'scribe counter'
           - 'redde counter'
   skip: [py, cpp]

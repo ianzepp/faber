@@ -51,7 +51,7 @@
       - 'redde "hello"'
 
 - name: 'lowercase dum keyword'
-  source:'varia i ← 0; dum i < 5 { i += 1 }'
+  source:'varia i ← 0; dum i < 5 { i ⊕ 1 }'
   ts:
       - 'let i = 0'
       - 'while'
@@ -69,7 +69,7 @@
   fab:
       - 'varia i ← 0'
       - 'dum i < 5 {'
-      - 'i += 1'
+      - 'i ⊕ 1'
 
 - name: 'lowercase de-pro keywords'
   source: |

@@ -4,7 +4,7 @@
 # Entry point delegates to assignment (lowest precedence).
 #
 # PRECEDENCE HIERARCHY (lowest to highest):
-# 1. Assignment (=, +=, -=, etc.)
+# 1. Assignment (←, ⊕, ⊖, etc.)
 # 2. Ternary (? : or sic/secus)
 # 3. Logical OR (|| or aut) / Nullish (?? or vel)
 # 4. Logical AND (&& or et)

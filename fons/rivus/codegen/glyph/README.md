@@ -97,8 +97,8 @@ Operators map to **Math Operators** (U+2200–U+22FF, U+2A00–U+2AFF).
 | Faber | Glyph | Unicode |
 |-------|-------|---------|
 | `=`   | `←`   | U+2190 |
-| `+=`  | `↞`   | U+219E |
-| `-=`  | `↢`   | U+21A2 |
+| `+=`  | `⊕`   | U+2295 |
+| `-=`  | `⊖`   | U+2296 |
 
 ## Keyword Mapping
 
