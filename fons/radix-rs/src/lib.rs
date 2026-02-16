@@ -98,6 +98,7 @@ impl CompileResult {
 pub enum Output {
     Rust(RustOutput),
     Faber(FaberOutput),
+    TypeScript(TypeScriptOutput),
 }
 
 /// Rust compilation output.
@@ -107,6 +108,11 @@ pub struct RustOutput {
 
 /// Faber canonical output (pretty-printed Faber source).
 pub struct FaberOutput {
+    pub code: String,
+}
+
+/// TypeScript compilation output.
+pub struct TypeScriptOutput {
     pub code: String,
 }
 

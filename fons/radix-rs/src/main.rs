@@ -377,6 +377,7 @@ fn cmd_emit(args: &[String]) {
         target = match args[1].as_str() {
             "rust" | "rs" => radix::codegen::Target::Rust,
             "faber" | "fab" => radix::codegen::Target::Faber,
+            "ts" | "typescript" => radix::codegen::Target::TypeScript,
             other => {
                 eprintln!("unknown target: {}", other);
                 std::process::exit(1);
@@ -405,6 +406,9 @@ fn cmd_emit(args: &[String]) {
             println!("{}", out.code);
         }
         Some(radix::Output::Faber(out)) => {
+            println!("{}", out.code);
+        }
+        Some(radix::Output::TypeScript(out)) => {
             println!("{}", out.code);
         }
         None => {

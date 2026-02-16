@@ -31,6 +31,7 @@
 
 pub mod faber;
 pub mod rust;
+pub mod ts;
 mod writer;
 
 pub use writer::CodeWriter;
@@ -53,6 +54,7 @@ use crate::semantic::TypeTable;
 pub enum Target {
     Rust,
     Faber,
+    TypeScript,
 }
 
 /// Code generation error.
@@ -114,6 +116,11 @@ pub fn generate(
             let gen = faber::FaberCodegen::new();
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::Faber(output))
+        }
+        Target::TypeScript => {
+            let gen = ts::TsCodegen::new(hir, interner);
+            let output = gen.generate(hir, types, interner)?;
+            Ok(crate::Output::TypeScript(output))
         }
     }
 }
