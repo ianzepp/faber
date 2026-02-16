@@ -604,11 +604,28 @@ impl<'a> RustCodegen<'a> {
 }
 
 fn normalize_import_path(path: &str) -> String {
-    path.replace("::", "/")
-        .split('/')
-        .filter(|segment| !segment.is_empty())
-        .collect::<Vec<_>>()
-        .join("::")
+    let canonical = path.replace("::", "/");
+    if canonical.starts_with('@') {
+        return String::new();
+    }
+
+    let mut segments = Vec::new();
+    for segment in canonical.split('/') {
+        if segment.is_empty() || segment == "." || segment == ".." {
+            continue;
+        }
+        segments.push(segment);
+    }
+
+    if segments.is_empty() {
+        return String::new();
+    }
+
+    if matches!(segments[0], "crate" | "self" | "super" | "std" | "core" | "alloc") {
+        return segments.join("::");
+    }
+
+    format!("crate::{}", segments.join("::"))
 }
 
 // =============================================================================

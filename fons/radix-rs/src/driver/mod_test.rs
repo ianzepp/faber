@@ -445,6 +445,94 @@ fn rust_output_uses_format_macro_for_scriptum() {
 }
 
 #[test]
+fn rust_output_converts_textus_literals_to_owned_strings() {
+    let session = session(Target::Rust);
+    let source = r#"functio pick(bivalens flag) -> textus {
+  si flag {
+    redde "yes"
+  }
+  redde "no"
+}
+
+incipit {
+  varia textus name = "Marcus"
+  fixum textus[] words = ["a", "b"]
+  fixum si textus maybe = nihil
+  fixum fallback = maybe vel "x"
+  scribe pick(verum), name, words, fallback
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output
+        .code
+        .contains("let mut name: String = \"Marcus\".to_string();"));
+    assert!(output.code.contains("return \"yes\".to_string();"));
+    assert!(output
+        .code
+        .contains("vec![\"a\".to_string(), \"b\".to_string()]"));
+    assert!(output.code.contains("unwrap_or(\"x\".to_string())"));
+}
+
+#[test]
+fn rust_output_avoids_redundant_parentheses_in_common_contexts() {
+    let session = session(Target::Rust);
+    let source = r#"functio sum(numerus a, numerus b) -> numerus {
+  redde a + b
+}
+
+incipit {
+  varia numerus x = 1
+  x = x + 10
+  dum x > 0 {
+    si x > 5 {
+      scribe sum(x * 2, x + 1)
+      rumpe
+    }
+    x = x - 1
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(!output.code.contains("if ("));
+    assert!(!output.code.contains("while ("));
+    assert!(!output.code.contains("return (a + b);"));
+    assert!(!output.code.contains("sum((x * 2), (x + 1))"));
+}
+
+#[test]
+fn rust_output_normalizes_relative_import_paths() {
+    let session = session(Target::Rust);
+    let source = r#"importa ex "../../norma/hal/consolum" privata consolum
+importa ex "./commands/greet" privata greet
+importa ex "@hono/hono" privata Context
+
+incipit {
+  scribe "ok"
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output
+        .code
+        .contains("use crate::norma::hal::consolum::consolum;"));
+    assert!(output.code.contains("use crate::commands::greet::greet;"));
+    assert!(!output.code.contains("..::"));
+    assert!(!output.code.contains(".::"));
+    assert!(!output.code.contains("@hono"));
+}
+
+#[test]
 fn ego_field_access_no_longer_reports_non_struct_member_error() {
     let session = session(Target::Rust);
     let source = r#"genus Counter {

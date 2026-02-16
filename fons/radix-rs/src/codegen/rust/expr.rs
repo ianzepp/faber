@@ -52,114 +52,41 @@ pub fn generate_expr(
         }
         HirExprKind::Literal(lit) => {
             generate_literal(codegen, lit, w);
+            if matches!(lit, HirLiteral::String(_))
+                && expr
+                    .ty
+                    .is_some_and(|ty| matches!(types.get(ty), Type::Primitive(Primitive::Textus)))
+            {
+                w.write(".to_string()");
+            }
         }
-        HirExprKind::Binary(op, lhs, rhs) => match op {
-            HirBinOp::Coalesce => {
-                let lhs_ty = lhs.ty.map(|ty| types.get(ty));
-                match lhs_ty {
-                    Some(Type::Option(_)) => {
-                        w.write("(");
-                        generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                        w.write(").unwrap_or(");
-                        generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                        w.write(")");
-                    }
-                    Some(Type::Primitive(Primitive::Nihil)) => {
-                        generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    }
-                    _ => {
-                        generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    }
-                }
-            }
-            HirBinOp::InRange => {
-                if let HirExprKind::Tuple(bounds) = &rhs.kind {
-                    if bounds.len() >= 2 {
-                        w.write("(");
-                        generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                        w.write(" >= ");
-                        generate_expr(
-                            codegen,
-                            &bounds[0],
-                            types,
-                            w,
-                            in_failable_fn,
-                            in_entry,
-                            suppress_error_propagation,
-                        )?;
-                        w.write(" && ");
-                        generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                        w.write(" < ");
-                        generate_expr(
-                            codegen,
-                            &bounds[1],
-                            types,
-                            w,
-                            in_failable_fn,
-                            in_entry,
-                            suppress_error_propagation,
-                        )?;
-                        w.write(")");
-                    } else {
-                        w.write("false");
-                    }
-                } else {
-                    w.write("false");
-                }
-            }
-            HirBinOp::Between => {
-                w.write("(");
-                generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(").contains(&");
-                generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(")");
-            }
-            _ => {
-                w.write("(");
-                generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" ");
-                w.write(binop_to_rust(*op));
-                w.write(" ");
-                generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(")");
-            }
-        },
-        HirExprKind::Unary(op, operand) => match op {
-            HirUnOp::IsNull | HirUnOp::IsNil => {
-                w.write("(");
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" == None)");
-            }
-            HirUnOp::IsNotNull | HirUnOp::IsNotNil => {
-                w.write("(");
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" != None)");
-            }
-            HirUnOp::IsNeg => {
-                w.write("(");
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" < 0)");
-            }
-            HirUnOp::IsPos => {
-                w.write("(");
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" > 0)");
-            }
-            HirUnOp::IsTrue => {
-                w.write("(");
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" == true)");
-            }
-            HirUnOp::IsFalse => {
-                w.write("(");
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" == false)");
-            }
-            _ => {
-                w.write(unop_to_rust(*op));
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            }
-        },
+        HirExprKind::Binary(op, lhs, rhs) => {
+            generate_binary_expr(
+                codegen,
+                *op,
+                lhs,
+                rhs,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+                true,
+            )?;
+        }
+        HirExprKind::Unary(op, operand) => {
+            generate_unary_expr(
+                codegen,
+                *op,
+                operand,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+                true,
+            )?;
+        }
         HirExprKind::Call(callee, args) => {
             let is_failable_call =
                 matches!(&callee.kind, HirExprKind::Path(def_id) if codegen.is_failable_def(*def_id));
@@ -169,7 +96,7 @@ pub fn generate_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write(")");
             if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
@@ -194,7 +121,7 @@ pub fn generate_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write(")");
             if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
@@ -524,7 +451,7 @@ pub fn generate_expr(
         }
         HirExprKind::Si(cond, then, else_) => {
             w.write("if ");
-            generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_expr_unwrapped(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
             generate_block(codegen, then, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             if let Some(else_block) = else_ {
@@ -596,7 +523,7 @@ pub fn generate_expr(
         }
         HirExprKind::Dum(cond, block) => {
             w.write("while ");
-            generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_expr_unwrapped(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
             generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
@@ -611,14 +538,14 @@ pub fn generate_expr(
         HirExprKind::Assign(target, value) => {
             generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" = ");
-            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::AssignOp(op, target, value) => {
             generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
             w.write(binop_to_rust(*op));
             w.write("= ");
-            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Array(elements) => {
             w.write("vec![");
@@ -838,6 +765,221 @@ pub fn generate_expr(
             });
         }
     }
+    Ok(())
+}
+
+pub(super) fn generate_expr_unwrapped(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    match &expr.kind {
+        HirExprKind::Binary(op, lhs, rhs) => generate_binary_expr(
+            codegen,
+            *op,
+            lhs,
+            rhs,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+            false,
+        ),
+        HirExprKind::Unary(op, operand) => generate_unary_expr(
+            codegen,
+            *op,
+            operand,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+            false,
+        ),
+        _ => generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_binary_expr(
+    codegen: &RustCodegen<'_>,
+    op: HirBinOp,
+    lhs: &HirExpr,
+    rhs: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+    wrap: bool,
+) -> Result<(), CodegenError> {
+    match op {
+        HirBinOp::Coalesce => {
+            let lhs_ty = lhs.ty.map(|ty| types.get(ty));
+            match lhs_ty {
+                Some(Type::Option(_)) => {
+                    w.write("(");
+                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(").unwrap_or(");
+                    generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(")");
+                }
+                Some(Type::Primitive(Primitive::Nihil)) => {
+                    generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                }
+                _ => {
+                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                }
+            }
+        }
+        HirBinOp::InRange => {
+            if let HirExprKind::Tuple(bounds) = &rhs.kind {
+                if bounds.len() >= 2 {
+                    if wrap {
+                        w.write("(");
+                    }
+                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(" >= ");
+                    generate_expr(
+                        codegen,
+                        &bounds[0],
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
+                    w.write(" && ");
+                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(" < ");
+                    generate_expr(
+                        codegen,
+                        &bounds[1],
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
+                    if wrap {
+                        w.write(")");
+                    }
+                } else {
+                    w.write("false");
+                }
+            } else {
+                w.write("false");
+            }
+        }
+        HirBinOp::Between => {
+            w.write("(");
+            generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(").contains(&");
+            generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(")");
+        }
+        _ => {
+            if wrap {
+                w.write("(");
+            }
+            generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" ");
+            w.write(binop_to_rust(op));
+            w.write(" ");
+            generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            if wrap {
+                w.write(")");
+            }
+        }
+    }
+
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_unary_expr(
+    codegen: &RustCodegen<'_>,
+    op: HirUnOp,
+    operand: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+    wrap: bool,
+) -> Result<(), CodegenError> {
+    match op {
+        HirUnOp::IsNull | HirUnOp::IsNil => {
+            if wrap {
+                w.write("(");
+            }
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" == None");
+            if wrap {
+                w.write(")");
+            }
+        }
+        HirUnOp::IsNotNull | HirUnOp::IsNotNil => {
+            if wrap {
+                w.write("(");
+            }
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" != None");
+            if wrap {
+                w.write(")");
+            }
+        }
+        HirUnOp::IsNeg => {
+            if wrap {
+                w.write("(");
+            }
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" < 0");
+            if wrap {
+                w.write(")");
+            }
+        }
+        HirUnOp::IsPos => {
+            if wrap {
+                w.write("(");
+            }
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" > 0");
+            if wrap {
+                w.write(")");
+            }
+        }
+        HirUnOp::IsTrue => {
+            if wrap {
+                w.write("(");
+            }
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" == true");
+            if wrap {
+                w.write(")");
+            }
+        }
+        HirUnOp::IsFalse => {
+            if wrap {
+                w.write("(");
+            }
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" == false");
+            if wrap {
+                w.write(")");
+            }
+        }
+        _ => {
+            w.write(unop_to_rust(op));
+            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        }
+    }
+
     Ok(())
 }
 

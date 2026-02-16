@@ -952,9 +952,9 @@ fn expr_codegen_handles_control_flow_and_operators() {
     assert!(code.contains("&mut "));
     assert!(code.contains("*ptr"));
     assert!(code.contains("\"N\""));
-    assert!(code.contains("println!(\"{} {}\", \"N\", 3)"));
-    assert!(code.contains("assert!(true, \"{}\", \"N\")"));
-    assert!(code.contains("panic!(\"{}\", \"N\")"));
+    assert!(code.contains("println!(\"{} {}\", \"N\".to_string(), 3)"));
+    assert!(code.contains("assert!(true, \"{}\", \"N\".to_string())"));
+    assert!(code.contains("panic!(\"{}\", \"N\".to_string())"));
 }
 
 #[test]
@@ -1202,7 +1202,9 @@ fn emits_result_and_err_for_direct_iace() {
     };
 
     assert!(rust.code.contains("fn boom() -> Result<i64, String>"));
-    assert!(rust.code.contains("return Err(String::from(\"oops\"));"));
+    assert!(rust
+        .code
+        .contains("return Err(String::from(\"oops\".to_string()));"));
 }
 
 #[test]

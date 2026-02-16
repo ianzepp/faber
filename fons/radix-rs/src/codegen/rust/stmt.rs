@@ -18,7 +18,7 @@
 //!   WHY: Faber's loop control flow maps 1:1 to Rust.
 
 use super::super::CodeWriter;
-use super::expr::generate_expr;
+use super::expr::{generate_expr, generate_expr_unwrapped};
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
@@ -56,10 +56,26 @@ pub fn generate_stmt(
                 w.write("return ");
                 if in_failable_fn && !in_entry {
                     w.write("Ok(");
-                    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    generate_expr_unwrapped(
+                        codegen,
+                        expr,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
                     w.write(")");
                 } else {
-                    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    generate_expr_unwrapped(
+                        codegen,
+                        expr,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
                 }
                 w.writeln(";");
             } else if in_failable_fn && !in_entry {
