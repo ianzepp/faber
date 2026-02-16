@@ -1,6 +1,6 @@
 # Range containment operator: intra
 
-fixum age = 25
+fixum age ← 25
 
 # Basic intra with .. operator (exclusive end)
 si age intra 0..100 {

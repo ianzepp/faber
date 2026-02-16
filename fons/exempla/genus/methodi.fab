@@ -2,23 +2,23 @@
 #
 # genus <Name> {
 #     <type> <property>
-#     functio <method>() -> <type> { ... ego.<property> ... }
+#     functio <method>() → <type> { ... ego.<property> ... }
 # }
 
 genus Rectangle {
     numerus width: 1
     numerus height: 1
 
-    functio area() -> numerus {
+    functio area() → numerus {
         redde ego.width * ego.height
     }
 
-    functio perimeter() -> numerus {
+    functio perimeter() → numerus {
         redde 2 * (ego.width + ego.height)
     }
 
-    functio isSquare() -> bivalens {
-        redde ego.width == ego.height
+    functio isSquare() → bivalens {
+        redde ego.width ≡ ego.height
     }
 }
 
@@ -26,17 +26,17 @@ genus Counter {
     numerus count: 0
 
     functio increment() {
-        ego.count = ego.count + 1
+        ego.count ← ego.count + 1
     }
 
-    functio getValue() -> numerus {
+    functio getValue() → numerus {
         redde ego.count
     }
 }
 
 incipit {
     # Methods that return values
-    fixum rect = novum Rectangle {
+    fixum rect ← novum Rectangle {
         width: 10,
         height: 5
     }
@@ -46,7 +46,7 @@ incipit {
     scribe rect.isSquare()
 
     # Methods that modify state
-    varia counter = novum Counter
+    varia counter ← novum Counter
 
     scribe counter.getValue()
 

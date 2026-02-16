@@ -10,13 +10,13 @@
 
 # Helper async function
 @ futura
-functio fetchData() -> textus {
+functio fetchData() → textus {
     # Simulates async operation
     redde "data loaded"
 }
 
 @ futura
-functio processData(textus data) -> numerus {
+functio processData(textus data) → numerus {
     redde data.longitudo()
 }
 
@@ -25,10 +25,10 @@ incipiet {
     scribe "Starting async program..."
 
     # Await async functions with cede
-    fixum data = cede fetchData()
+    fixum data ← cede fetchData()
     scribe "Received:", data
 
-    fixum length = cede processData(data)
+    fixum length ← cede processData(data)
     scribe "Length:", length
 
     scribe "Program complete"

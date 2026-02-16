@@ -6,7 +6,7 @@
 
 # Multi-value sync function that yields values via cede
 @ cursor
-functio rangeSync(numerus n) -> numerus {
+functio rangeSync(numerus n) → numerus {
     itera pro 0..n fixum i {
         cede i
     }
@@ -15,7 +15,7 @@ functio rangeSync(numerus n) -> numerus {
 # Multi-value async function that yields values via cede
 @ futura
 @ cursor
-functio rangeAsync(numerus n) -> numerus {
+functio rangeAsync(numerus n) → numerus {
     itera pro 0..n fixum i {
         cede i
     }
@@ -29,7 +29,7 @@ incipit {
     }
 
     # Collect all results from generator function
-    varia syncResults = []
+    varia syncResults ← []
     itera ex rangeSync(5) fixum num {
         syncResults.appende(num * 2)
     }

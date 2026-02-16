@@ -2,28 +2,28 @@
 #
 # Functions that call themselves with a base case
 
-# Factorial: n! = n * (n-1)!
-functio factorial(numerus n) -> numerus {
-    si n <= 1 {
+# Factorial: n! ← n * (n-1)!
+functio factorial(numerus n) → numerus {
+    si n ≤ 1 {
         redde 1
     }
     redde n * factorial(n - 1)
 }
 
-# Fibonacci: fib(n) = fib(n-1) + fib(n-2)
-functio fibonacci(numerus n) -> numerus {
-    si n <= 0 {
+# Fibonacci: fib(n) ← fib(n-1) + fib(n-2)
+functio fibonacci(numerus n) → numerus {
+    si n ≤ 0 {
         redde 0
     }
-    si n == 1 {
+    si n ≡ 1 {
         redde 1
     }
     redde fibonacci(n - 1) + fibonacci(n - 2)
 }
 
 # Sum from 1 to n
-functio summatio(numerus n) -> numerus {
-    si n <= 0 {
+functio summatio(numerus n) → numerus {
+    si n ≤ 0 {
         redde 0
     }
     redde n + summatio(n - 1)

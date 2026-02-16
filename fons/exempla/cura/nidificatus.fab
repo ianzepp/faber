@@ -6,10 +6,10 @@
 
 incipit {
     cura arena fixum outer {
-        varia textus[] a = ["one"]
+        varia textus[] a ← ["one"]
 
         cura arena fixum inner {
-            varia textus[] b = ["two"]
+            varia textus[] b ← ["two"]
             scribe "Inner:", b
         }
         # inner freed here

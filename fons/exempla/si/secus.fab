@@ -5,9 +5,9 @@
 
 incipit {
     # Simple if-else
-    fixum score = 85
+    fixum score ← 85
 
-    si score >= 90 {
+    si score ≥ 90 {
         scribe "Grade: A"
     }
     secus {
@@ -15,7 +15,7 @@ incipit {
     }
 
     # Multiple statements in branches
-    fixum temperature = 22
+    fixum temperature ← 22
 
     si temperature > 30 {
         scribe "Hot"
@@ -27,18 +27,18 @@ incipit {
     }
 
     # If-else-if chain
-    fixum grade = 75
+    fixum grade ← 75
 
-    si grade >= 90 {
+    si grade ≥ 90 {
         scribe "A - Excellent"
     }
-    sin grade >= 80 {
+    sin grade ≥ 80 {
         scribe "B - Good"
     }
-    sin grade >= 70 {
+    sin grade ≥ 70 {
         scribe "C - Satisfactory"
     }
-    sin grade >= 60 {
+    sin grade ≥ 60 {
         scribe "D - Passing"
     }
     secus {

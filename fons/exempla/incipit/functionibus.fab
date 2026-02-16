@@ -3,11 +3,11 @@
 # Functions declared outside incipit become module-level declarations.
 # The incipit block calls them as needed.
 
-functio greet(textus name) curata alloc -> textus {
+functio greet(textus name) curata alloc → textus {
     redde scriptum("Salve, §!", name)
 }
 
-functio add(numerus a, numerus b) -> numerus {
+functio add(numerus a, numerus b) → numerus {
     redde a + b
 }
 

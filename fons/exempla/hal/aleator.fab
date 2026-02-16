@@ -6,22 +6,22 @@ importa ex "../../norma/hal/consolum" privata consolum
 importa ex "../../norma/hal/aleator" privata aleator
 
 incipit {
-    consolum.fundeLineam("=== Entropy / Random Demo ===\n")
+    consolum.fundeLineam("≡ Entropy / Random Demo ≡\n")
 
     # Basic random numbers
     consolum.fundeLineam("--- Basic Generation ---")
-    fixum f = aleator.fractus()
+    fixum f ← aleator.fractus()
     consolum.fundeLineam(scriptum("Random float [0,1): §", f))
 
-    fixum n = aleator.inter(1, 100)
+    fixum n ← aleator.inter(1, 100)
     consolum.fundeLineam(scriptum("Random int [1,100]: §", n))
 
     # Cryptographic
     consolum.fundeLineam("\n--- Cryptographic ---")
-    fixum id = aleator.uuid()
+    fixum id ← aleator.uuid()
     consolum.fundeLineam(scriptum("UUID v4: §", id))
 
-    fixum bytes = aleator.octeti(8)
+    fixum bytes ← aleator.octeti(8)
     consolum.fundeLineam(scriptum("Random 8 bytes: §", bytes))
 
     # Seeded (reproducible) random
@@ -37,5 +37,5 @@ incipit {
     aleator.semen(0)  # Reset to true random
     consolum.fundeLineam(scriptum("Reset, random:   §", aleator.inter(1, 100)))
 
-    consolum.fundeLineam("\n=== Demo Complete ===")
+    consolum.fundeLineam("\n≡ Demo Complete ≡")
 }

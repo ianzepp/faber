@@ -1,8 +1,8 @@
 # Nested si conditionals
 
 incipit {
-    fixum isLoggedIn = verum
-    fixum hasPermission = verum
+    fixum isLoggedIn ← verum
+    fixum hasPermission ← verum
 
     si isLoggedIn {
         si hasPermission {

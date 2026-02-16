@@ -3,7 +3,7 @@
 # Use custodi to group related precondition checks.
 # Each guard should return early or throw on invalid input.
 
-functio processAge(numerus age) -> textus {
+functio processAge(numerus age) → textus {
     custodi {
         si age < 0 {
             redde "Invalid: negative age"
@@ -21,12 +21,12 @@ functio processAge(numerus age) -> textus {
     }
 }
 
-functio createUser(textus name, textus email, numerus age) curata alloc -> textus {
+functio createUser(textus name, textus email, numerus age) curata alloc → textus {
     custodi {
-        si nihil name aut name == "" {
+        si nihil name aut name ≡ "" {
             redde "Error: name required"
         }
-        si nihil email aut email == "" {
+        si nihil email aut email ≡ "" {
             redde "Error: email required"
         }
         si age < 13 {
@@ -41,7 +41,7 @@ functio createUser(textus name, textus email, numerus age) curata alloc -> textu
 }
 
 # Guards can throw instead of returning
-functio sqrt(numerus n) -> numerus {
+functio sqrt(numerus n) → numerus {
     custodi {
         si n < 0 {
             iace "Cannot compute square root of negative number"

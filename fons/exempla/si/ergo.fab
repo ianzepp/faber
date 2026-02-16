@@ -3,23 +3,23 @@
 # si <condition> ergo <statement>
 # si <condition> ergo <statement> secus ergo <statement>
 #
-# ergo = "therefore, thus" (logical consequence)
+# ergo ← "therefore, thus" (logical consequence)
 
 incipit {
-    fixum x = 10
+    fixum x ← 10
 
     # Simple one-liner
     si x > 5 ergo scribe "x is big"
 
     # One-liner if-else
-    fixum age = 25
-    si age >= 18 ergo scribe "Adult" secus ergo scribe "Minor"
+    fixum age ← 25
+    si age ≥ 18 ergo scribe "Adult" secus ergo scribe "Minor"
 
     # Multiple conditions
-    fixum score = 85
-    si score >= 90 ergo scribe "A" secus ergo scribe "Not A"
+    fixum score ← 85
+    si score ≥ 90 ergo scribe "A" secus ergo scribe "Not A"
 
     # Simple validation
-    fixum valid = verum
+    fixum valid ← verum
     si valid ergo scribe "OK"
 }

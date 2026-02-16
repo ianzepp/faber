@@ -12,7 +12,7 @@ incipit {
     }
 
     # Throw with formatted message
-    fixum code = 404
+    fixum code ← 404
     tempta {
         iace scriptum("Error code: §", code)
     }
@@ -21,7 +21,7 @@ incipit {
     }
 
     # Throw from conditional
-    fixum value = -5
+    fixum value ← -5
     tempta {
         si value < 0 {
             iace "Value must be non-negative"

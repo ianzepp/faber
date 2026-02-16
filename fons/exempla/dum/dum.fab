@@ -3,19 +3,19 @@
 # dum <condition> { <body> }
 
 incipit {
-    varia numerus counter = 0
+    varia numerus counter ← 0
 
     dum counter < 5 {
         scribe counter
-        counter = counter + 1
+        counter ← counter + 1
     }
 
     # Countdown example
-    varia numerus countdown = 3
+    varia numerus countdown ← 3
 
     dum countdown > 0 {
         scribe "Countdown:", countdown
-        countdown = countdown - 1
+        countdown ← countdown - 1
     }
 
     scribe "Done!"

@@ -2,8 +2,8 @@
 
 incipit {
     # Nested array iteration
-    fixum rows = [1, 2, 3]
-    fixum cols = ["A", "B", "C"]
+    fixum rows ← [1, 2, 3]
+    fixum cols ← ["A", "B", "C"]
 
     itera ex rows fixum row {
         itera ex cols fixum col {
@@ -14,7 +14,7 @@ incipit {
     # Multiplication table
     itera pro 1..4 fixum i {
         itera pro 1..4 fixum j {
-            scribe i, "*", j, "=", i * j
+            scribe i, "*", j, "←", i * j
         }
     }
 

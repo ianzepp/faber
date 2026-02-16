@@ -1,12 +1,12 @@
 # si-sin-secus (poetic if-else-if chain)
 #
 # Poetic alternative to si/sin/secus:
-#   si   = if
-#   sin  = else if ("but if")
-#   secus = else ("otherwise")
+#   si   ← if
+#   sin  ← else if ("but if")
+#   secus ← else ("otherwise")
 
 incipit {
-    fixum hour = 14
+    fixum hour ← 14
 
     si hour < 6 {
         scribe "Late night"

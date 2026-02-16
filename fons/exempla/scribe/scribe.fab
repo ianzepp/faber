@@ -8,17 +8,17 @@ incipit {
     scribe "Hello, world!"
 
     # Variable output
-    fixum nomen = "Marcus"
+    fixum nomen ← "Marcus"
     scribe nomen
 
     # Multiple arguments
-    fixum aetas = 30
+    fixum aetas ← 30
     scribe "Name:", nomen
     scribe "Age:", aetas
 
     # Expressions
-    fixum x = 10
-    fixum y = 20
+    fixum x ← 10
+    fixum y ← 20
     scribe "Sum:", x + y
 
     # Multiple values in one statement

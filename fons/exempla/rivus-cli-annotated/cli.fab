@@ -35,7 +35,7 @@ incipit {}
 
 @ imperium "version"
 @ alias "v"
-functio version() -> vacuum {
+functio version() → vacuum {
     scribe "rivus v0.1.0"
 }
 
@@ -69,9 +69,9 @@ functio emit(
     si bivalens stripTests,
     si bivalens stripComments,
     si bivalens strict
-) exitus code -> vacuum {
-    fixum result = cede emitCommand(input, target, output, include, manifest, stdinFilename, json, dryRun, stripTests, stripComments, strict)
-    code = result
+) exitus code → vacuum {
+    fixum result ← cede emitCommand(input, target, output, include, manifest, stdinFilename, json, dryRun, stripTests, stripComments, strict)
+    code ← result
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -100,9 +100,9 @@ functio build(
     si bivalens dryRun,
     si bivalens listFiles,
     si bivalens stripComments
-) exitus code -> vacuum {
-    fixum result = cede buildCommand(input, target, output, include, manifest, json, dryRun, listFiles, stripComments)
-    code = result
+) exitus code → vacuum {
+    fixum result ← cede buildCommand(input, target, output, include, manifest, json, dryRun, listFiles, stripComments)
+    code ← result
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -121,9 +121,9 @@ functio parse(
     si textus output,
     si textus stdinFilename,
     si bivalens compact
-) exitus code -> vacuum {
-    fixum result = cede parseCommand(input, output, stdinFilename, compact)
-    code = result
+) exitus code → vacuum {
+    fixum result ← cede parseCommand(input, output, stdinFilename, compact)
+    code ← result
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -148,9 +148,9 @@ functio check(
     si textus stdinFilename,
     si bivalens json,
     si bivalens strict
-) exitus code -> vacuum {
-    fixum result = cede checkCommand(input, output, include, manifest, stdinFilename, json, strict)
-    code = result
+) exitus code → vacuum {
+    fixum result ← cede checkCommand(input, output, include, manifest, stdinFilename, json, strict)
+    code ← result
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -177,9 +177,9 @@ functio test(
     si bivalens json,
     si bivalens dryRun,
     si bivalens solo
-) exitus code -> vacuum {
-    fixum result = cede testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solo)
-    code = result
+) exitus code → vacuum {
+    fixum result ← cede testCommand(input, target, tag, exclude, stdinFilename, json, dryRun, solo)
+    code ← result
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -196,9 +196,9 @@ functio fetch(
     si textus manifest,
     si bivalens force,
     si bivalens json
-) exitus code -> vacuum {
-    fixum result = cede mandatumArcessere(manifest, force, json)
-    code = result
+) exitus code → vacuum {
+    fixum result ← cede mandatumArcessere(manifest, force, json)
+    code ← result
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -216,9 +216,9 @@ functio run(
     si textus manifest,
     si bivalens list,
     si bivalens json
-) exitus code -> vacuum {
+) exitus code → vacuum {
     # TODO: arg forwarding - for now, pass empty list
-    varia scriptArgs = [] innatum lista<textus>
-    fixum result = cede mandatumCurrere(script, manifest, list, json, scriptArgs)
-    code = result
+    varia scriptArgs ← [] innatum lista<textus>
+    fixum result ← cede mandatumCurrere(script, manifest, list, json, scriptArgs)
+    code ← result
 }

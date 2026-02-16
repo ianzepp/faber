@@ -13,15 +13,15 @@ genus BoundedValue {
 
     functio creo() {
         si ego.value < 0 {
-            ego.value = 0
+            ego.value ← 0
         }
 
         si ego.value > 100 {
-            ego.value = 100
+            ego.value ← 100
         }
     }
 
-    functio getValue() -> numerus {
+    functio getValue() → numerus {
         redde ego.value
     }
 }
@@ -32,27 +32,27 @@ genus Circle {
     numerus area: 0
 
     functio creo() {
-        ego.diameter = ego.radius * 2
-        ego.area = 3.14159 * ego.radius * ego.radius
+        ego.diameter ← ego.radius * 2
+        ego.area ← 3.14159 * ego.radius * ego.radius
     }
 }
 
 incipit {
     # Validation in creo
-    fixum normal = novum BoundedValue {
+    fixum normal ← novum BoundedValue {
         value: 50
     }
 
     scribe normal.getValue()
 
-    fixum clamped = novum BoundedValue {
+    fixum clamped ← novum BoundedValue {
         value: 200
     }
 
     scribe clamped.getValue()
 
     # Derived initialization in creo
-    fixum c = novum Circle {
+    fixum c ← novum Circle {
         radius: 5
     }
 

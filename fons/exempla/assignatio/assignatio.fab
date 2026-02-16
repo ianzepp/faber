@@ -2,10 +2,10 @@
 # Simple and compound assignment operators
 
 incipit {
-    varia numerus x = 10
+    varia numerus x ← 10
 
     # Simple assignment
-    x = 20
+    x ← 20
     scribe x  # 20
 
     # Compound assignments
@@ -22,7 +22,7 @@ incipit {
     scribe x  # 10
 
     # String concatenation
-    varia textus s = "hello"
+    varia textus s ← "hello"
     s += " world"
     scribe s  # hello world
 }
