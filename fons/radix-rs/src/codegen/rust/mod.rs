@@ -243,12 +243,11 @@ impl<'a> RustCodegen<'a> {
             }
             HirExprKind::Unary(_, operand)
             | HirExprKind::Cede(operand)
-            | HirExprKind::Qua(operand, _)
             | HirExprKind::Ref(_, operand)
             | HirExprKind::Deref(operand) => self.collect_expr_names(names, operand),
-            HirExprKind::Innatum { source, map_entries, .. } => {
+            HirExprKind::Verte { source, entries, .. } => {
                 self.collect_expr_names(names, source);
-                if let Some(entries) = map_entries {
+                if let Some(entries) = entries {
                     for (_, value) in entries {
                         self.collect_expr_names(names, value);
                     }
@@ -454,13 +453,12 @@ impl<'a> RustCodegen<'a> {
                 }
                 HirExprKind::Unary(_, operand)
                 | HirExprKind::Cede(operand)
-                | HirExprKind::Qua(operand, _)
                 | HirExprKind::Ref(_, operand)
                 | HirExprKind::Deref(operand)
                 | HirExprKind::Panic(operand) => visit_expr(operand, suppressed, deps),
-                HirExprKind::Innatum { source, map_entries, .. } => {
+                HirExprKind::Verte { source, entries, .. } => {
                     visit_expr(source, suppressed, deps);
-                    if let Some(entries) = map_entries {
+                    if let Some(entries) = entries {
                         for (_, value) in entries {
                             visit_expr(value, suppressed, deps);
                         }

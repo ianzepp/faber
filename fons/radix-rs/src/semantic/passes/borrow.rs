@@ -343,10 +343,9 @@ impl<'a> BorrowChecker<'a> {
                 self.pop_scope();
             }
             HirExprKind::Cede(expr) => self.check_expr(expr),
-            HirExprKind::Qua(expr, _) => self.check_expr(expr),
-            HirExprKind::Innatum { source, map_entries, .. } => {
+            HirExprKind::Verte { source, entries, .. } => {
                 self.check_expr(source);
-                if let Some(entries) = map_entries {
+                if let Some(entries) = entries {
                     for (_, value) in entries {
                         self.check_expr(value);
                     }

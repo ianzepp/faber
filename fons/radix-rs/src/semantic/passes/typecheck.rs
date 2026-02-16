@@ -422,16 +422,15 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirExprKind::Clausura(_, _, body) => self.finalize_expr(body),
-            HirExprKind::Innatum { source, map_entries, .. } => {
+            HirExprKind::Verte { source, entries, .. } => {
                 self.finalize_expr(source);
-                if let Some(entries) = map_entries {
+                if let Some(entries) = entries {
                     for (_, value) in entries {
                         self.finalize_expr(value);
                     }
                 }
             }
             HirExprKind::Cede(expr)
-            | HirExprKind::Qua(expr, _)
             | HirExprKind::Ref(_, expr)
             | HirExprKind::Deref(expr) => self.finalize_expr(expr),
             HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
@@ -629,6 +628,9 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::AssignOp(op, target, value) => self.check_assign_op(*op, target, value),
             HirExprKind::Array(elements) => self.check_array(elements, expr.span, expected),
             HirExprKind::Struct(def_id, fields) => self.check_struct_literal(*def_id, fields),
+            HirExprKind::Verte { source, target, entries } => {
+                self.check_verte(source, *target, entries.as_mut(), expr.span)
+            }
             HirExprKind::Tuple(items) => self.check_tuple(items),
             HirExprKind::Scribe(items) => {
                 for item in items {
@@ -671,10 +673,6 @@ impl<'a> TypeChecker<'a> {
             }
             HirExprKind::Clausura(params, ret, body) => self.check_closure(params, ret.as_mut(), body, expected),
             HirExprKind::Cede(inner) => self.check_expr(inner),
-            HirExprKind::Qua(inner, target) => self.check_cast(inner, *target),
-            HirExprKind::Innatum { source, target, map_entries } => {
-                self.check_innatum(source, *target, map_entries.as_mut(), expr.span)
-            }
             HirExprKind::Ref(kind, inner) => {
                 let inner_ty = self.check_expr(inner);
                 let mutability = match kind {
@@ -1472,23 +1470,29 @@ impl<'a> TypeChecker<'a> {
         self.types.function(sig)
     }
 
-    fn check_cast(&mut self, expr: &mut HirExpr, target: TypeId) -> TypeId {
-        let expr_ty = self.check_expr(expr);
-        if self.is_infer(self.resolve_type(target)) {
-            return self.unify(expr_ty, target, expr.span, "invalid cast");
-        }
-        target
-    }
-
-    fn check_innatum(
+    /// Unified type conversion check — dispatches on the resolved target type to determine
+    /// whether this is a cast (qua), native construction (innatum), or struct instantiation (novum).
+    fn check_verte(
         &mut self,
         source: &mut HirExpr,
         target: TypeId,
-        map_entries: Option<&mut Vec<(Symbol, HirExpr)>>,
+        entries: Option<&mut Vec<(Symbol, HirExpr)>>,
         span: crate::lexer::Span,
     ) -> TypeId {
         let target_resolved = self.resolve_type(target);
-        match (self.types.get(target_resolved).clone(), map_entries) {
+
+        // For infer-typed targets, unify with the source type
+        if self.is_infer(target_resolved) {
+            let expr_ty = self.check_expr(source);
+            return self.unify(expr_ty, target, source.span, "invalid cast");
+        }
+
+        match (self.types.get(target_resolved).clone(), entries) {
+            // Struct instantiation — validate field names and types
+            (Type::Struct(def_id), Some(entries)) => {
+                self.check_struct_fields(def_id, entries, span);
+            }
+            // Array construction — validate element types
             (Type::Array(elem_ty), _) => {
                 if let HirExprKind::Array(elements) = &mut source.kind {
                     for element in elements {
@@ -1499,6 +1503,7 @@ impl<'a> TypeChecker<'a> {
                     self.check_expr(source);
                 }
             }
+            // Map construction — validate key-value entry types
             (Type::Map(key_ty, value_ty), Some(entries)) => {
                 let mut inferred_values = Vec::new();
                 for (_, value) in entries {
@@ -1522,6 +1527,7 @@ impl<'a> TypeChecker<'a> {
                     return self.types.map(key_ty, inferred_value_ty);
                 }
             }
+            // Cast / other — check the source, trust the target type
             _ => {
                 self.check_expr(source);
             }
@@ -1529,6 +1535,36 @@ impl<'a> TypeChecker<'a> {
 
         let _ = span;
         target_resolved
+    }
+
+    /// Validate struct field entries against the struct definition.
+    /// Extracted from check_struct_literal so it can be used by both Verte and Struct paths.
+    fn check_struct_fields(
+        &mut self,
+        def_id: DefId,
+        fields: &mut Vec<(Symbol, HirExpr)>,
+        span: crate::lexer::Span,
+    ) {
+        let field_types = match self.structs.get(&def_id) {
+            Some(info) => info.fields.clone(),
+            None => {
+                self.error(
+                    SemanticErrorKind::UndefinedType,
+                    "unknown struct",
+                    fields.first().map(|(_, expr)| expr.span).unwrap_or(span),
+                );
+                return;
+            }
+        };
+
+        for (name, value) in fields.iter_mut() {
+            let Some(field_ty) = field_types.get(name).copied() else {
+                self.error(SemanticErrorKind::UndefinedMember, "unknown field", value.span);
+                continue;
+            };
+            let value_ty = self.check_expr(value);
+            self.unify(value_ty, field_ty, value.span, "field initializer type mismatch");
+        }
     }
 
     fn check_deref(&mut self, expr: &mut HirExpr, span: crate::lexer::Span) -> TypeId {

@@ -379,7 +379,7 @@ fn emits_object_literal_fields_from_innatum_entries() {
 
     let expr = HirExpr {
         id: crate::hir::HirId(1),
-        kind: HirExprKind::Innatum {
+        kind: HirExprKind::Verte {
             source: Box::new(HirExpr {
                 id: crate::hir::HirId(2),
                 kind: HirExprKind::Tuple(Vec::new()),
@@ -387,7 +387,7 @@ fn emits_object_literal_fields_from_innatum_entries() {
                 span: span(),
             }),
             target: map_ty,
-            map_entries: Some(vec![
+            entries: Some(vec![
                 (
                     nomen,
                     HirExpr {
@@ -425,7 +425,8 @@ fn emits_object_literal_fields_from_innatum_entries() {
     let output = gen.generate(&program, &types, &interner).expect("codegen");
     assert!(output.code.contains("nomen: \"Marcus\""));
     assert!(output.code.contains("activus: verum"));
-    assert!(!output.code.contains("innatum tabula"));
+    // With unified Verte, map construction now emits `{...} innatum Type`
+    assert!(output.code.contains("innatum"));
 }
 
 #[test]

@@ -145,15 +145,16 @@ fn warns_on_unnecessary_cast() {
                 id: crate::hir::HirId(1),
                 kind: HirStmtKind::Expr(HirExpr {
                     id: crate::hir::HirId(2),
-                    kind: HirExprKind::Qua(
-                        Box::new(HirExpr {
+                    kind: HirExprKind::Verte {
+                        source: Box::new(HirExpr {
                             id: crate::hir::HirId(3),
                             kind: HirExprKind::Literal(HirLiteral::Int(1)),
                             ty: Some(numerus),
                             span: span(),
                         }),
-                        numerus,
-                    ),
+                        target: numerus,
+                        entries: None,
+                    },
                     ty: Some(numerus),
                     span: span(),
                 }),

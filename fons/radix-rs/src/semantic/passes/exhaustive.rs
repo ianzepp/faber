@@ -244,12 +244,12 @@ fn check_expr(
             }
         }
         HirExprKind::Clausura(_, _, body) => check_expr(body, types, enum_variants, errors),
-        HirExprKind::Cede(expr) | HirExprKind::Qua(expr, _) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
+        HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
             check_expr(expr, types, enum_variants, errors)
         }
-        HirExprKind::Innatum { source, map_entries, .. } => {
+        HirExprKind::Verte { source, entries, .. } => {
             check_expr(source, types, enum_variants, errors);
-            if let Some(entries) = map_entries {
+            if let Some(entries) = entries {
                 for (_, value) in entries {
                     check_expr(value, types, enum_variants, errors);
                 }

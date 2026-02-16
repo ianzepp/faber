@@ -869,15 +869,16 @@ fn expr_codegen_handles_control_flow_and_operators() {
             },
             HirExpr {
                 id: HirId(342),
-                kind: HirExprKind::Qua(
-                    Box::new(HirExpr {
+                kind: HirExprKind::Verte {
+                    source: Box::new(HirExpr {
                         id: HirId(343),
                         kind: HirExprKind::Literal(HirLiteral::Int(5)),
                         ty: Some(numerus),
                         span: span(),
                     }),
-                    numerus,
-                ),
+                    target: numerus,
+                    entries: None,
+                },
                 ty: Some(numerus),
                 span: span(),
             },

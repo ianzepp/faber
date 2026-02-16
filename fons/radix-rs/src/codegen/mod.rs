@@ -212,7 +212,6 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
         | HirExprKind::Panic(inner)
         | HirExprKind::Throw(inner)
         | HirExprKind::Cede(inner)
-        | HirExprKind::Qua(inner, _)
         | HirExprKind::Ref(_, inner)
         | HirExprKind::Deref(inner) => find_error_expr_in_expr(inner),
         HirExprKind::Call(callee, args) | HirExprKind::MethodCall(callee, _, args) => {
@@ -271,8 +270,8 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
             .or_else(|| catch.as_ref().and_then(find_error_expr_in_block))
             .or_else(|| finally.as_ref().and_then(find_error_expr_in_block)),
         HirExprKind::Clausura(_, _, body) => find_error_expr_in_expr(body),
-        HirExprKind::Innatum { source, map_entries, .. } => find_error_expr_in_expr(source).or_else(|| {
-            map_entries.as_ref().and_then(|entries| {
+        HirExprKind::Verte { source, entries, .. } => find_error_expr_in_expr(source).or_else(|| {
+            entries.as_ref().and_then(|entries| {
                 entries
                     .iter()
                     .find_map(|(_, value)| find_error_expr_in_expr(value))

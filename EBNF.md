@@ -351,8 +351,8 @@ shift      := range (('≪' | '≫') range)*
 range      := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' additive)?)?
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
-unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'novum' | 'finge') unary | cast
-cast       := call ('qua' typeAnnotation | 'innatum' typeAnnotation | conversionOp)*
+unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'finge') unary | cast
+cast       := call ('qua' typeAnnotation | 'innatum' typeAnnotation | 'novum' typeAnnotation | conversionOp)*
 conversionOp := ('numeratum' | 'fractatum') typeParams? ('vel' unary)?
              | ('textatum' | 'bivalentum')
 ```
@@ -393,7 +393,7 @@ primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
 ### Special Expressions
 
 ```ebnf
-newExpr       := 'novum' IDENTIFIER ('(' argumentList ')')? (objectLiteral | 'de' expression)?
+// novum is now postfix — parsed in the cast production above as: expr 'novum' typeAnnotation
 fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('qua' IDENTIFIER)?
 praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
 scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'  # § placeholders filled positionally

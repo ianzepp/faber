@@ -243,6 +243,14 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
             visitor.visit_expr(&qua.expr);
             visitor.visit_type_expr(&qua.ty);
         }
+        ExprKind::Innatum(innatum) => {
+            visitor.visit_expr(&innatum.expr);
+            visitor.visit_type_expr(&innatum.ty);
+        }
+        ExprKind::Novum(novum) => {
+            visitor.visit_expr(&novum.expr);
+            visitor.visit_type_expr(&novum.ty);
+        }
         ExprKind::Paren(inner) => {
             visitor.visit_expr(inner);
         }

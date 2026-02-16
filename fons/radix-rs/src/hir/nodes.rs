@@ -354,13 +354,15 @@ pub enum HirExprKind {
     Clausura(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
     /// Await
     Cede(Box<HirExpr>),
-    /// Type cast
-    Qua(Box<HirExpr>, TypeId),
-    /// Native construction (innatum)
-    Innatum {
+    /// Unified type conversion / construction expression.
+    /// Subsumes qua (cast), innatum (native construction), and novum (struct instantiation).
+    /// The type checker and codegen dispatch on the resolved target TypeId to determine semantics.
+    Verte {
         source: Box<HirExpr>,
         target: TypeId,
-        map_entries: Option<Vec<(Symbol, HirExpr)>>,
+        /// Extracted key-value entries for map/struct construction.
+        /// Present when source is an object literal being constructed into a Map or Struct.
+        entries: Option<Vec<(Symbol, HirExpr)>>,
     },
     /// Reference
     Ref(HirRefKind, Box<HirExpr>),

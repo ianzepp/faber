@@ -617,7 +617,7 @@ fn ego_field_access_no_longer_reports_non_struct_member_error() {
 }
 
 incipit {
-  fixum c = novum Counter
+  fixum c = {} novum Counter
   scribe c.inc()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -662,7 +662,7 @@ functio render(Drawable d) -> vacuum {
 }
 
 incipit {
-  fixum c = novum Circle
+  fixum c = {} novum Circle
   render(c)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -969,7 +969,7 @@ fn ego_field_assignment_no_longer_reports_assignment_type_mismatch() {
 }
 
 incipit {
-  fixum c = novum Circulus
+  fixum c = {} novum Circulus
   c.crescere(2)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1000,7 +1000,7 @@ fn typed_array_index_assignment_no_longer_reports_assignment_type_mismatch() {
 fn ex_destructured_object_fields_can_be_used_in_arithmetic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum point = novum Point { x: 4, y: 6 }
+  fixum point = { x: 4, y: 6 } novum Point
   ex point fixum x, y
   fixum numerus sum = x + y
   scribe sum

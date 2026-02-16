@@ -911,15 +911,8 @@ pub struct InnatumExpr {
 
 #[derive(Debug)]
 pub struct NovumExpr {
-    pub ty: Ident,
-    pub args: Option<Vec<Argument>>,
-    pub init: Option<NovumInit>,
-}
-
-#[derive(Debug)]
-pub enum NovumInit {
-    Object(Vec<ObjectField>),
-    From(Box<Expr>), // de
+    pub expr: Box<Expr>,
+    pub ty: TypeExpr,
 }
 
 #[derive(Debug)]

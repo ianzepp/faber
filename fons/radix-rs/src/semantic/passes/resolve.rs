@@ -745,24 +745,8 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
             resolve_type(resolver, interner, &expr.ty, errors);
         }
         ExprKind::Novum(expr) => {
-            resolve_type_ident(resolver, interner, &expr.ty, errors);
-            if let Some(args) = &expr.args {
-                for arg in args {
-                    resolve_expr(resolver, interner, &arg.value, errors);
-                }
-            }
-            if let Some(init) = &expr.init {
-                match init {
-                    crate::syntax::NovumInit::Object(fields) => {
-                        for field in fields {
-                            if let Some(value) = &field.value {
-                                resolve_expr(resolver, interner, value, errors);
-                            }
-                        }
-                    }
-                    crate::syntax::NovumInit::From(expr) => resolve_expr(resolver, interner, expr, errors),
-                }
-            }
+            resolve_expr(resolver, interner, &expr.expr, errors);
+            resolve_type(resolver, interner, &expr.ty, errors);
         }
         ExprKind::Finge(expr) => {
             resolve_variant_ident(resolver, &expr.variant, errors);

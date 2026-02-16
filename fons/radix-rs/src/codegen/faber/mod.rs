@@ -775,27 +775,50 @@ impl FaberCodegen {
                 w.write("cede ");
                 self.write_expr(inner, types, names, interner, w);
             }
-            HirExprKind::Qua(inner, target) => {
-                self.write_expr(inner, types, names, interner, w);
-                w.write(" qua ");
-                w.write(&self.type_to_faber(*target, types, names, interner));
-            }
-            HirExprKind::Innatum { source, target, map_entries } => {
-                if let Some(entries) = map_entries {
-                    w.write("{");
-                    for (idx, (name, value)) in entries.iter().enumerate() {
-                        if idx > 0 {
-                            w.write(", ");
+            HirExprKind::Verte { source, target, entries } => {
+                match types.get(*target) {
+                    Type::Struct(_) => {
+                        if let Some(entries) = entries {
+                            w.write("{");
+                            for (idx, (name, value)) in entries.iter().enumerate() {
+                                if idx > 0 {
+                                    w.write(", ");
+                                }
+                                w.write(&self.symbol_to_string(*name, interner));
+                                w.write(": ");
+                                self.write_expr(value, types, names, interner, w);
+                            }
+                            w.write("} novum ");
+                            w.write(&self.type_to_faber(*target, types, names, interner));
+                        } else {
+                            self.write_expr(source, types, names, interner, w);
+                            w.write(" novum ");
+                            w.write(&self.type_to_faber(*target, types, names, interner));
                         }
-                        w.write(&self.symbol_to_string(*name, interner));
-                        w.write(": ");
-                        self.write_expr(value, types, names, interner, w);
                     }
-                    w.write("}");
-                } else {
-                    self.write_expr(source, types, names, interner, w);
-                    w.write(" innatum ");
-                    w.write(&self.type_to_faber(*target, types, names, interner));
+                    Type::Array(_) | Type::Map(_, _) | Type::Set(_) => {
+                        if let Some(entries) = entries {
+                            w.write("{");
+                            for (idx, (name, value)) in entries.iter().enumerate() {
+                                if idx > 0 {
+                                    w.write(", ");
+                                }
+                                w.write(&self.symbol_to_string(*name, interner));
+                                w.write(": ");
+                                self.write_expr(value, types, names, interner, w);
+                            }
+                            w.write("} innatum ");
+                        } else {
+                            self.write_expr(source, types, names, interner, w);
+                            w.write(" innatum ");
+                        }
+                        w.write(&self.type_to_faber(*target, types, names, interner));
+                    }
+                    _ => {
+                        self.write_expr(source, types, names, interner, w);
+                        w.write(" qua ");
+                        w.write(&self.type_to_faber(*target, types, names, interner));
+                    }
                 }
             }
             HirExprKind::Ref(kind, inner) => {
@@ -1049,12 +1072,11 @@ impl FaberCodegen {
             }
             HirExprKind::Unary(_, operand)
             | HirExprKind::Cede(operand)
-            | HirExprKind::Qua(operand, _)
             | HirExprKind::Ref(_, operand)
             | HirExprKind::Deref(operand) => self.collect_expr_names(names, operand),
-            HirExprKind::Innatum { source, map_entries, .. } => {
+            HirExprKind::Verte { source, entries, .. } => {
                 self.collect_expr_names(names, source);
-                if let Some(entries) = map_entries {
+                if let Some(entries) = entries {
                     for (_, value) in entries {
                         self.collect_expr_names(names, value);
                     }

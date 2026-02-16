@@ -193,16 +193,31 @@ pub fn generate_expr(
             w.write("await ");
             generate_expr(codegen, inner, types, w)?;
         }
-        HirExprKind::Qua(inner, ty) => {
-            generate_expr(codegen, inner, types, w)?;
-            w.write(" as ");
-            w.write(&types::type_to_ts(codegen, *ty, types));
-        }
-        HirExprKind::Innatum { source, target, .. } => {
-            generate_expr(codegen, source, types, w)?;
-            w.write(" as ");
-            w.write(&types::type_to_ts(codegen, *target, types));
-        }
+        HirExprKind::Verte { source, target, entries } => match types.get(*target) {
+            Type::Struct(_) => {
+                if let Some(entries) = entries {
+                    w.write("{ ");
+                    for (idx, (name, value)) in entries.iter().enumerate() {
+                        if idx > 0 {
+                            w.write(", ");
+                        }
+                        w.write(codegen.resolve_symbol(*name));
+                        w.write(": ");
+                        generate_expr(codegen, value, types, w)?;
+                    }
+                    w.write(" }");
+                } else {
+                    generate_expr(codegen, source, types, w)?;
+                    w.write(" as ");
+                    w.write(&types::type_to_ts(codegen, *target, types));
+                }
+            }
+            _ => {
+                generate_expr(codegen, source, types, w)?;
+                w.write(" as ");
+                w.write(&types::type_to_ts(codegen, *target, types));
+            }
+        },
         HirExprKind::Ref(_, inner) | HirExprKind::Deref(inner) => generate_expr(codegen, inner, types, w)?,
         HirExprKind::Block(block) => {
             w.write("(() => ");
@@ -648,8 +663,7 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
         | HirExprKind::Ref(_, operand)
         | HirExprKind::Deref(operand)
         | HirExprKind::Panic(operand)
-        | HirExprKind::Throw(operand)
-        | HirExprKind::Qua(operand, _) => contains_await_in_expr(operand),
+        | HirExprKind::Throw(operand) => contains_await_in_expr(operand),
         HirExprKind::Call(callee, args) | HirExprKind::MethodCall(callee, _, args) => {
             contains_await_in_expr(callee) || args.iter().any(contains_await_in_expr)
         }
@@ -701,9 +715,9 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                 || finally.as_ref().is_some_and(contains_await_in_block)
         }
         HirExprKind::Clausura(_, _, body) => contains_await_in_expr(body),
-        HirExprKind::Innatum { source, map_entries, .. } => {
+        HirExprKind::Verte { source, entries, .. } => {
             contains_await_in_expr(source)
-                || map_entries
+                || entries
                     .as_ref()
                     .is_some_and(|entries| entries.iter().any(|(_, value)| contains_await_in_expr(value)))
         }

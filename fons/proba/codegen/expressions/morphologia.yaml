@@ -23,7 +23,7 @@
     genus Calculator {
     functio adde(numerus x) { }
     }
-    fixum calc ← novum Calculator()
+    fixum calc ← {} novum Calculator
     calc.adde(1)
   expect:
       ts:

@@ -502,11 +502,6 @@ impl Parser {
             return Ok(Expr { id, kind: ExprKind::Cede(CedeExpr { expr }), span });
         }
 
-        // novum
-        if self.check_keyword(TokenKind::Novum) {
-            return self.parse_new_expr();
-        }
-
         // finge
         if self.check_keyword(TokenKind::Finge) {
             return self.parse_variant_expr();
@@ -537,7 +532,6 @@ impl Parser {
                 | TokenKind::Praefixum
                 | TokenKind::Sed
                 | TokenKind::Lege
-                | TokenKind::Novum
                 | TokenKind::Finge
                 | TokenKind::Non
                 | TokenKind::Minus
@@ -653,6 +647,13 @@ impl Parser {
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
                 expr = Expr { id, kind: ExprKind::Innatum(InnatumExpr { expr: Box::new(expr), ty }), span };
+            } else if self.check_keyword(TokenKind::Novum) {
+                // Struct instantiation (postfix)
+                self.advance();
+                let ty = self.parse_type()?;
+                let span = start.merge(self.previous_span());
+                let id = self.next_id();
+                expr = Expr { id, kind: ExprKind::Novum(NovumExpr { expr: Box::new(expr), ty }), span };
             } else if self.check_keyword(TokenKind::Numeratum)
                 || self.check_keyword(TokenKind::Fractatum)
                 || self.check_keyword(TokenKind::Textatum)
@@ -817,37 +818,6 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         Ok(Expr { id, kind, span })
-    }
-
-    fn parse_new_expr(&mut self) -> Result<Expr, ParseError> {
-        let start = self.current_span();
-        self.expect_keyword(TokenKind::Novum, "expected 'novum'")?;
-
-        let ty = self.parse_ident()?;
-
-        let args = if self.check(&TokenKind::LParen) {
-            self.advance();
-            let args = self.parse_argument_list()?;
-            self.expect(&TokenKind::RParen, "expected ')'")?;
-            Some(args)
-        } else {
-            None
-        };
-
-        let init = if self.check(&TokenKind::LBrace) {
-            self.advance();
-            let fields = self.parse_object_fields()?;
-            self.expect(&TokenKind::RBrace, "expected '}'")?;
-            Some(NovumInit::Object(fields))
-        } else if self.eat_keyword(TokenKind::De) {
-            Some(NovumInit::From(Box::new(self.parse_expression()?)))
-        } else {
-            None
-        };
-
-        let span = start.merge(self.previous_span());
-        let id = self.next_id();
-        Ok(Expr { id, kind: ExprKind::Novum(NovumExpr { ty, args, init }), span })
     }
 
     fn parse_variant_expr(&mut self) -> Result<Expr, ParseError> {

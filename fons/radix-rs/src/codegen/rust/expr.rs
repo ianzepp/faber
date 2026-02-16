@@ -659,12 +659,30 @@ pub fn generate_expr(
             generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(".await");
         }
-        HirExprKind::Qua(expr, ty) => {
-            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" as ");
-            w.write(&type_to_rust(codegen, *ty, types));
-        }
-        HirExprKind::Innatum { source, target, map_entries } => match types.get(*target) {
+        HirExprKind::Verte { source, target, entries } => match types.get(*target) {
+            Type::Struct(def_id) => {
+                if let Some(entries) = entries {
+                    w.write(codegen.resolve_def(*def_id));
+                    w.writeln(" {");
+                    let mut struct_result = Ok(());
+                    w.indented(|w| {
+                        for (name, value) in entries {
+                            w.write(codegen.resolve_symbol(*name));
+                            w.write(": ");
+                            if struct_result.is_err() {
+                                return;
+                            }
+                            struct_result =
+                                generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                            w.writeln(",");
+                        }
+                    });
+                    struct_result?;
+                    w.write("}");
+                } else {
+                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                }
+            }
             Type::Array(elem) => {
                 if let HirExprKind::Array(elements) = &source.kind {
                     if elements.is_empty() {
@@ -696,9 +714,9 @@ pub fn generate_expr(
                 }
             }
             Type::Map(key_ty, value_ty) => {
-                if let Some(entries) = map_entries {
+                if let Some(entries) = entries {
                     let suffix = expr.id.0;
-                    let map_name = format!("__faber_innatum_map_{}", suffix);
+                    let map_name = format!("__faber_verte_map_{}", suffix);
                     w.writeln("{");
                     let mut map_result = Ok(());
                     w.indented(|w| {
@@ -742,7 +760,10 @@ pub fn generate_expr(
                 }
             }
             _ => {
+                // Cast — emit `source as TargetType`
                 generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write(" as ");
+                w.write(&type_to_rust(codegen, *target, types));
             }
         },
         HirExprKind::Ref(kind, expr) => {

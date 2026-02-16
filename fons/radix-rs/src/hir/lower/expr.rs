@@ -319,15 +319,15 @@ impl<'a> Lowerer<'a> {
                     entries.push((key, value));
                 }
 
-                HirExprKind::Innatum {
+                HirExprKind::Verte {
                     source: Box::new(lower_expr(self, &innatum.expr)),
                     target,
-                    map_entries: Some(entries),
+                    entries: Some(entries),
                 }
             }
             _ => {
                 let source = lower_expr(self, &innatum.expr);
-                HirExprKind::Innatum { source: Box::new(source), target, map_entries: None }
+                HirExprKind::Verte { source: Box::new(source), target, entries: None }
             }
         }
     }
@@ -384,7 +384,7 @@ impl<'a> Lowerer<'a> {
         }
         let source =
             HirExpr { id: self.next_hir_id(), kind: HirExprKind::Tuple(Vec::new()), ty: None, span: self.current_span };
-        HirExprKind::Innatum { source: Box::new(source), target, map_entries: Some(entries) }
+        HirExprKind::Verte { source: Box::new(source), target, entries: Some(entries) }
     }
 
     fn guess_expr_type(&mut self, expr: &crate::syntax::Expr) -> crate::semantic::TypeId {
@@ -420,38 +420,52 @@ impl<'a> Lowerer<'a> {
     fn lower_qua(&mut self, cast: &crate::syntax::QuaExpr) -> HirExprKind {
         let expr = lower_expr(self, &cast.expr);
         let target = self.lower_type(&cast.ty);
-        HirExprKind::Qua(Box::new(expr), target)
+        HirExprKind::Verte { source: Box::new(expr), target, entries: None }
     }
 
-    /// Lower new expression (novum)
-    fn lower_novum(&mut self, new: &crate::syntax::NovumExpr) -> HirExprKind {
-        let Some(def_id) = self.resolver.lookup(new.ty.name) else {
-            return HirExprKind::Error;
-        };
+    /// Lower struct instantiation (novum) — postfix form: `expr novum Type`
+    fn lower_novum(&mut self, novum: &crate::syntax::NovumExpr) -> HirExprKind {
+        let target = self.lower_type(&novum.ty);
 
-        let mut fields = Vec::new();
-        if let Some(init) = &new.init {
-            match init {
-                crate::syntax::NovumInit::Object(init_fields) => {
-                    for field in init_fields {
-                        let name = match &field.key {
-                            crate::syntax::ObjectKey::Ident(ident) => ident.name,
-                            _ => continue,
-                        };
-                        let value = match &field.value {
-                            Some(value) => lower_expr(self, value),
-                            None => {
-                                HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span }
-                            }
-                        };
-                        fields.push((name, value));
-                    }
+        // Extract object literal entries from the source expression when present
+        match &novum.expr.kind {
+            crate::syntax::ExprKind::Object(object) => {
+                let mut entries = Vec::new();
+                for field in &object.fields {
+                    let key = match &field.key {
+                        crate::syntax::ObjectKey::Ident(ident) => ident.name,
+                        crate::syntax::ObjectKey::String(string) => *string,
+                        _ => continue,
+                    };
+                    let value = match &field.value {
+                        Some(value) => lower_expr(self, value),
+                        None => HirExpr {
+                            id: self.next_hir_id(),
+                            kind: HirExprKind::Path(match self.lookup_name(key) {
+                                Some(def_id) => def_id,
+                                None => {
+                                    self.error("undefined shorthand key in novum object");
+                                    return HirExprKind::Error;
+                                }
+                            }),
+                            ty: None,
+                            span: field.span,
+                        },
+                    };
+                    entries.push((key, value));
                 }
-                crate::syntax::NovumInit::From(_) => {}
+
+                HirExprKind::Verte {
+                    source: Box::new(lower_expr(self, &novum.expr)),
+                    target,
+                    entries: Some(entries),
+                }
+            }
+            _ => {
+                let source = lower_expr(self, &novum.expr);
+                HirExprKind::Verte { source: Box::new(source), target, entries: None }
             }
         }
-
-        HirExprKind::Struct(def_id, fields)
     }
 
     fn lower_finge(&mut self, finge: &crate::syntax::FingeExpr) -> HirExprKind {
@@ -501,7 +515,7 @@ impl<'a> Lowerer<'a> {
                     return HirExprKind::Error;
                 }
             };
-            return HirExprKind::Qua(Box::new(call), cast_ty);
+            return HirExprKind::Verte { source: Box::new(call), target: cast_ty, entries: None };
         }
 
         call.kind
@@ -586,7 +600,7 @@ impl<'a> Lowerer<'a> {
             crate::syntax::ConversioKind::Textatum => self.types.primitive(crate::semantic::Primitive::Textus),
             crate::syntax::ConversioKind::Bivalentum => self.types.primitive(crate::semantic::Primitive::Bivalens),
         };
-        HirExprKind::Qua(Box::new(expr), target)
+        HirExprKind::Verte { source: Box::new(expr), target, entries: None }
     }
 
     fn lower_scriptum(&mut self, scriptum: &crate::syntax::ScriptumExpr) -> HirExprKind {

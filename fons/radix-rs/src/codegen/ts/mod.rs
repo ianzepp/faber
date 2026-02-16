@@ -139,14 +139,13 @@ impl<'a> TsCodegen<'a> {
             }
             HirExprKind::Unary(_, operand)
             | HirExprKind::Cede(operand)
-            | HirExprKind::Qua(operand, _)
             | HirExprKind::Ref(_, operand)
             | HirExprKind::Deref(operand)
             | HirExprKind::Panic(operand)
             | HirExprKind::Throw(operand) => self.collect_expr_names(names, operand),
-            HirExprKind::Innatum { source, map_entries, .. } => {
+            HirExprKind::Verte { source, entries, .. } => {
                 self.collect_expr_names(names, source);
-                if let Some(entries) = map_entries {
+                if let Some(entries) = entries {
                     for (_, value) in entries {
                         self.collect_expr_names(names, value);
                     }

@@ -1,10 +1,13 @@
 # Novum expressions - new/constructor calls
 # Maps Faber novum to target-language object instantiation
 #
+# Postfix syntax: { fields } novum Type
+# Bare form: {} novum Type
+#
 # Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
 
-- name: novum without arguments
-  source:fixum p ← novum Persona
+- name: novum bare constructor
+  source:fixum p ← {} novum Persona
   expect:
       ts: 'const p = new Persona();'
       py: 'p = Persona()'
@@ -15,24 +18,24 @@
       zig:
           - 'Persona.init(.{})'
       fab:
-          - 'novum Persona'
+          - '{} novum Persona'
 
-- name: novum with positional arguments
-  source:'fixum e ← novum Error("message")'
+- name: novum bare constructor (Error)
+  source:'fixum e ← {} novum Error'
   expect:
-      ts: 'const e = new Error("message");'
-      py: 'e = Error("message")'
+      ts: 'const e = new Error();'
+      py: 'e = Error()'
       rs:
           - 'let e = Error::new();'
       cpp:
-          - 'Error("message")'
+          - 'Error{}'
       zig:
-          - 'Error.init("message")'
+          - 'Error.init(.{})'
       fab:
-          - 'novum Error("message")'
+          - '{} novum Error'
 
 - name: novum with object literal overrides
-  source:'fixum u ← novum User { nomen: "Marcus", aetas: 30 }'
+  source:'fixum u ← { nomen: "Marcus", aetas: 30 } novum User'
   expect:
       ts: 'const u = new User({ nomen: "Marcus", aetas: 30 });'
       py: 'u = User({"nomen": "Marcus", "aetas": 30})'
@@ -44,10 +47,10 @@
       zig:
           - 'User.init(.{ .nomen = "Marcus", .aetas = 30 })'
       fab:
-          - 'novum User de { nomen: "Marcus", aetas: 30 }'
+          - '{ nomen: "Marcus", aetas: 30 } novum User'
 
 - name: novum with single property override
-  source:'fixum item ← novum Item { pretium: 99 }'
+  source:'fixum item ← { pretium: 99 } novum Item'
   expect:
       ts: 'const item = new Item({ pretium: 99 });'
       py: 'item = Item({"pretium": 99})'
@@ -58,52 +61,36 @@
       zig:
           - 'Item.init(.{ .pretium = 99 })'
       fab:
-          - 'novum Item de { pretium: 99 }'
+          - '{ pretium: 99 } novum Item'
 
 - name: novum with spread in overrides
-  source:'fixum u ← novum User { sparge defaults, extra: 1 }'
+  source:'fixum u ← { sparge defaults, extra: 1 } novum User'
   expect:
       ts: 'const u = new User({ ...defaults, extra: 1 });'
       py: 'u = User({**defaults, "extra": 1})'
       fab:
-          - 'novum User de { sparge defaults, extra: 1 }'
+          - '{ sparge defaults, extra: 1 } novum User'
 
 - name: novum with nested object
-  source:'fixum c ← novum Config { database: { host: "localhost" } }'
+  source:'fixum c ← { database: { host: "localhost" } } novum Config'
   expect:
       ts: 'const c = new Config({ database: { host: "localhost" } });'
       py: 'c = Config({"database": {"host": "localhost"}})'
       fab:
-          - 'novum Config de { database: { host: "localhost" } }'
+          - '{ database: { host: "localhost" } } novum Config'
 
-- name: novum without parens (bare constructor)
-  source:'fixum e ← novum Error'
+- name: novum bare (Error, alternate)
+  source:'fixum e ← {} novum Error'
   expect:
       ts: 'const e = new Error();'
       py: 'e = Error()'
       fab:
-          - 'novum Error'
+          - '{} novum Error'
 
-- name: chained novum (nested constructor)
-  source:'fixum x ← novum Outer(novum Inner())'
+- name: novum bare (Point)
+  source:'fixum p ← {} novum Point'
   expect:
-      ts: 'const x = new Outer(new Inner());'
-      py: 'x = Outer(Inner())'
+      ts: 'const p = new Point();'
+      py: 'p = Point()'
       fab:
-          - 'novum Outer(novum Inner())'
-
-- name: novum with many args
-  source:'fixum p ← novum Point(1, 2, 3, 4)'
-  expect:
-      ts: 'const p = new Point(1, 2, 3, 4);'
-      py: 'p = Point(1, 2, 3, 4)'
-      fab:
-          - 'novum Point(1, 2, 3, 4)'
-
-- name: novum with expression arg
-  source:'fixum r ← novum Rectangle(width * 2, height * 2)'
-  expect:
-      ts: 'const r = new Rectangle((width * 2), (height * 2));'
-      py: 'r = Rectangle((width * 2), (height * 2))'
-      fab:
-          - 'novum Rectangle(width * 2, height * 2)'
+          - '{} novum Point'

@@ -18,10 +18,10 @@ genus User {
 
 incipit {
     # User with full address
-    fixum alice ← novum User {
+    fixum alice ← {
         name: "Alice",
-        address: novum Address { city: "Roma", state: "Italia" }
-    }
+        address: { city: "Roma", state: "Italia" } novum Address
+    } novum User
 
     # Optional chaining prevents errors when properties might be nihil
     fixum city ← alice?.address?.city
@@ -31,7 +31,7 @@ incipit {
     scribe state  # "Italia"
 
     # User with no address
-    fixum bob ← novum User { name: "Bob" }
+    fixum bob ← { name: "Bob" } novum User
     fixum bobCity ← bob?.address?.city
     scribe bobCity  # nihil (no error thrown)
 

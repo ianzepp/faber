@@ -359,18 +359,15 @@ impl<'a> LintContext<'a> {
             HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
                 self.check_expr(expr, in_loop)
             }
-            HirExprKind::Qua(inner, target) => {
-                self.check_expr(inner, in_loop);
-                if let Some(inner_ty) = inner.ty {
+            HirExprKind::Verte { source, target, entries } => {
+                self.check_expr(source, in_loop);
+                if let Some(inner_ty) = source.ty {
                     if inner_ty == *target {
                         self.warnings
                             .push((WarningKind::UnnecessaryCast, "unnecessary cast".to_owned(), expr.span));
                     }
                 }
-            }
-            HirExprKind::Innatum { source, map_entries, .. } => {
-                self.check_expr(source, in_loop);
-                if let Some(entries) = map_entries {
+                if let Some(entries) = entries {
                     for (_, value) in entries {
                         self.check_expr(value, in_loop);
                     }
