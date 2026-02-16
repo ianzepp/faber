@@ -801,8 +801,8 @@ fn compile_supports_extended_binary_operators() {
   fixum b = 2
   fixum si numerus maybe = nihil
 
-  scribe a === b
-  scribe a !== b
+  scribe a ≡ b
+  scribe a ≠ b
   scribe maybe est nihil
   scribe a intra 0..3
   scribe a inter [1, 2, 3]

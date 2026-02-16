@@ -21,9 +21,9 @@
 //! ======================================
 //! 1. Assignment (=, +=, -=, etc.)
 //! 2. Ternary (? :, sic secus)
-//! 3. Logical OR (||, aut, vel)
-//! 4. Logical AND (&&, et)
-//! 5. Equality (==, !=, ===, !==, est, non est)
+//! 3. Logical OR (aut, vel)
+//! 4. Logical AND (et)
+//! 5. Equality (==, !=, est, non est)
 //! 6. Comparison (<, >, <=, >=, intra, inter)
 //! 7. Bitwise OR (|)
 //! 8. Bitwise XOR (^)
@@ -73,7 +73,7 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   assignment := ternary [assign-op assignment]
-    ///   assign-op := '=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|='
+    ///   assign-op := '←' | '+=' | '-=' | '*=' | '/=' | '&=' | '|='
     ///
     /// WHY: Right-associative via recursion on RHS. Allows `a = b = c`.
     fn parse_assignment(&mut self) -> Result<Expr, ParseError> {
@@ -159,7 +159,7 @@ impl Parser {
         let start = self.current_span();
         let mut left = self.parse_and()?;
 
-        while self.check(&TokenKind::PipePipe) || self.check_keyword(TokenKind::Aut) {
+        while self.check_keyword(TokenKind::Aut) {
             self.advance();
             let right = self.parse_and()?;
             let span = start.merge(self.previous_span());
@@ -192,7 +192,7 @@ impl Parser {
         let start = self.current_span();
         let mut left = self.parse_equality()?;
 
-        while self.check(&TokenKind::AmpAmp) || self.check_keyword(TokenKind::Et) {
+        while self.check_keyword(TokenKind::Et) {
             self.advance();
             let right = self.parse_equality()?;
             let span = start.merge(self.previous_span());
@@ -216,8 +216,6 @@ impl Parser {
             let op = match self.peek().kind {
                 TokenKind::EqEq => BinOp::Eq,
                 TokenKind::BangEq => BinOp::NotEq,
-                TokenKind::EqEqEq => BinOp::StrictEq,
-                TokenKind::BangEqEq => BinOp::StrictNotEq,
                 TokenKind::Est => BinOp::Is,
                 _ => break,
             };
@@ -271,7 +269,7 @@ impl Parser {
         let start = self.current_span();
         let mut left = self.parse_bitwise_xor()?;
 
-        while self.check(&TokenKind::Pipe) && !self.check(&TokenKind::PipePipe) {
+        while self.check(&TokenKind::Pipe) {
             self.advance();
             let right = self.parse_bitwise_xor()?;
             let span = start.merge(self.previous_span());
@@ -311,7 +309,7 @@ impl Parser {
         let start = self.current_span();
         let mut left = self.parse_shift()?;
 
-        while self.check(&TokenKind::Amp) && !self.check(&TokenKind::AmpAmp) {
+        while self.check(&TokenKind::Amp) {
             self.advance();
             let right = self.parse_shift()?;
             let span = start.merge(self.previous_span());
