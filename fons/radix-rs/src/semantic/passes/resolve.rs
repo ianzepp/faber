@@ -48,7 +48,7 @@ use crate::semantic::{
     SemanticErrorKind, Symbol, SymbolKind, TypeId, TypeTable,
 };
 use crate::syntax::{
-    BindingPattern, BlockStmt, ClausuraBody, DiscerneStmt, Expr, ExprKind, IfBody, Pattern, PatternBind, ProbandumDecl,
+    BindingPattern, BlockStmt, ClausuraBody, ConversioTarget, DiscerneStmt, Expr, ExprKind, IfBody, Pattern, PatternBind, ProbandumDecl,
     Program, SiStmt, Stmt, StmtKind, TypeExpr, TypeExprKind,
 };
 
@@ -810,8 +810,13 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
         }
         ExprKind::Conversio(expr) => {
             resolve_expr(resolver, interner, &expr.expr, errors);
-            // WHY: conversio parameters (e.g., numeratum<i32, Hex>) are conversion
-            // specifiers, not normal type annotations that must resolve in scope.
+            // WHY: The glyph form (⇒ type) carries a real type expression that must
+            // be resolved. Keyword forms (numeratum etc.) have no type to resolve.
+            // Conversio parameters (e.g., numeratum<i32, Hex>) are codegen hints,
+            // not normal type annotations that must resolve in scope.
+            if let ConversioTarget::Explicit(ty) = &expr.target {
+                resolve_type(resolver, interner, ty, errors);
+            }
             if let Some(fallback) = &expr.fallback {
                 resolve_expr(resolver, interner, fallback, errors);
             }

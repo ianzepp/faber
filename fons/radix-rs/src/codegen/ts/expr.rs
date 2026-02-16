@@ -222,12 +222,14 @@ pub fn generate_expr(
             let target_resolved = types.get(*target);
             match target_resolved {
                 Type::Primitive(Primitive::Numerus) => {
-                    if let Some(fallback) = fallback {
-                        w.write("(Number(");
+                    if let Some(fb) = fallback {
+                        // WHY: Number("bad") returns NaN, not null — ?? won't catch it.
+                        // Use an IIFE with isNaN to correctly apply the fallback.
+                        w.write("((v) => isNaN(v) ? ");
+                        generate_expr(codegen, fb, types, w)?;
+                        w.write(" : v)(Number(");
                         generate_expr(codegen, source, types, w)?;
-                        w.write(") ?? ");
-                        generate_expr(codegen, fallback, types, w)?;
-                        w.write(")");
+                        w.write("))");
                     } else {
                         w.write("Number(");
                         generate_expr(codegen, source, types, w)?;
@@ -235,9 +237,17 @@ pub fn generate_expr(
                     }
                 }
                 Type::Primitive(Primitive::Fractus) => {
-                    w.write("parseFloat(");
-                    generate_expr(codegen, source, types, w)?;
-                    w.write(")");
+                    if let Some(fb) = fallback {
+                        w.write("((v) => isNaN(v) ? ");
+                        generate_expr(codegen, fb, types, w)?;
+                        w.write(" : v)(parseFloat(");
+                        generate_expr(codegen, source, types, w)?;
+                        w.write("))");
+                    } else {
+                        w.write("parseFloat(");
+                        generate_expr(codegen, source, types, w)?;
+                        w.write(")");
+                    }
                 }
                 Type::Primitive(Primitive::Textus) => {
                     w.write("String(");

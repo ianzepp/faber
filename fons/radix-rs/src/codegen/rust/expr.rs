@@ -810,9 +810,17 @@ pub fn generate_expr(
                 }
                 // textus → bivalens: !source.is_empty()
                 (Some(Type::Primitive(Primitive::Textus)), Type::Primitive(Primitive::Bivalens)) => {
-                    w.write("!");
-                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    w.write(".is_empty()");
+                    if let Some(fb) = fallback {
+                        w.write("if ");
+                        generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(".is_empty() { ");
+                        generate_expr(codegen, fb, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(" } else { true }");
+                    } else {
+                        w.write("!");
+                        generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(".is_empty()");
+                    }
                 }
                 // numerus → textus: source.to_string()
                 (Some(Type::Primitive(Primitive::Numerus)), Type::Primitive(Primitive::Textus))
@@ -827,8 +835,16 @@ pub fn generate_expr(
                 }
                 // numerus → bivalens: source != 0
                 (Some(Type::Primitive(Primitive::Numerus)), Type::Primitive(Primitive::Bivalens)) => {
-                    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    w.write(" != 0");
+                    if let Some(fb) = fallback {
+                        w.write("if ");
+                        generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(" == 0 { ");
+                        generate_expr(codegen, fb, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(" } else { true }");
+                    } else {
+                        generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                        w.write(" != 0");
+                    }
                 }
                 // any → textus: format!("{}", source)
                 (_, Type::Primitive(Primitive::Textus)) => {
