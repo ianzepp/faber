@@ -201,10 +201,13 @@ async function verifyRust(outputBase: string): Promise<{ total: number; failed: 
     const rsDir = join(outputBase, 'rs');
     const files = await findFiles(rsDir, '.rs');
     let failed = 0;
+    const tmpDir = join(outputBase, '.rustc-verify');
+    await mkdir(tmpDir, { recursive: true });
+    const tmpOut = join(tmpDir, 'out.rmeta');
 
     for (const file of files) {
         try {
-            await $`rustc --emit=metadata --edition=2021 -o /dev/null ${file}`.quiet();
+            await $`rustc --emit=metadata --edition=2021 -o ${tmpOut} ${file}`.quiet();
         } catch (err: any) {
             console.error(`  ${relative(outputBase, file)}: compile error`);
             const errText = err.stderr?.toString() || '';

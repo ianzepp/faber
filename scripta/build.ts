@@ -149,13 +149,46 @@ async function compileToRust(
 /**
  * Verify .rs files compile with rustc.
  */
-async function verifyRust(dir: string, verbose: boolean): Promise<{ total: number; failed: number }> {
+interface VerifyResult {
+    total: number;
+    failed: number;
+    errors: Map<string, string[]>;
+}
+
+function extractRustcErrors(stderr: string): string[] {
+    const codes: string[] = [];
+    for (const line of stderr.split('\n')) {
+        // Match "error[E0308]: mismatched types" or "warning: unnecessary parentheses ..."
+        const codeMatch = line.match(/^(error\[E\d+\]:\s*.+)/);
+        if (codeMatch) {
+            codes.push(codeMatch[1]);
+            continue;
+        }
+        const warnMatch = line.match(/^(warning:\s*.+)/);
+        if (warnMatch) {
+            codes.push(warnMatch[1]);
+            continue;
+        }
+        // Match "error: free function without a body" but skip "aborting due to" noise
+        const plainMatch = line.match(/^(error:\s*.+)/);
+        if (plainMatch && !line.includes('aborting due to')) {
+            codes.push(plainMatch[1]);
+        }
+    }
+    return codes;
+}
+
+async function verifyRust(dir: string, verbose: boolean): Promise<VerifyResult> {
     const rsFiles = await findFiles(dir, '.rs');
     let failed = 0;
+    const tmpDir = join(OPUS, '.rustc-verify');
+    await mkdir(tmpDir, { recursive: true });
+    const tmpOut = join(tmpDir, 'out.rmeta');
+    const errors = new Map<string, string[]>();
 
     for (const file of rsFiles) {
         try {
-            await $`rustc --emit=metadata --edition=2021 -o /dev/null ${file}`.quiet();
+            await $`rustc --emit=metadata --edition=2021 -o ${tmpOut} ${file}`.quiet();
         } catch (err: any) {
             const relPath = relative(dir, file);
             console.error(`    ${relPath}: compile error`);
@@ -165,10 +198,28 @@ async function verifyRust(dir: string, verbose: boolean): Promise<{ total: numbe
                 if (firstLines) console.error(`      ${firstLines}`);
             }
             failed++;
+
+            const errText = err.stderr?.toString() || '';
+            for (const code of extractRustcErrors(errText)) {
+                const files = errors.get(code) ?? [];
+                if (!files.includes(relPath)) files.push(relPath);
+                errors.set(code, files);
+            }
         }
     }
 
-    return { total: rsFiles.length, failed };
+    return { total: rsFiles.length, failed, errors };
+}
+
+function printErrorSummary(errors: Map<string, string[]>) {
+    if (errors.size === 0) return;
+
+    const sorted = [...errors.entries()].sort((a, b) => b[1].length - a[1].length);
+
+    console.log('\n    Error summary:');
+    for (const [code, files] of sorted) {
+        console.log(`      ${String(files.length).padStart(3)}x  ${code}`);
+    }
 }
 
 async function main() {
@@ -282,8 +333,9 @@ async function main() {
         console.log('\n--- Stage 5: exempla verify (rustc) ---\n');
 
         const result = await step('verify exempla .rs files', verbose, async () => {
-            const { total, failed } = await verifyRust(exemplaOutDir, verbose);
+            const { total, failed, errors } = await verifyRust(exemplaOutDir, verbose);
             console.log(`    ${total - failed}/${total} verified`);
+            printErrorSummary(errors);
         });
         allResults.push(result);
     }
