@@ -155,9 +155,167 @@ impl<'a> Lexer<'a> {
             self.scan_token();
         }
         // Always emit EOF token for parser convenience
-        self.tokens
-            .push(Token::new(TokenKind::Eof, Span::new(self.cursor.pos(), self.cursor.pos())));
+        self.emit_token(TokenKind::Eof, self.cursor.pos());
         LexResult { tokens: self.tokens, errors: self.errors, interner: self.interner }
+    }
+
+    fn emit_token(&mut self, kind: TokenKind, start: u32) {
+        self.tokens
+            .push(Token::new(kind, Span::new(start, self.cursor.pos())));
+    }
+
+    fn emit_error(&mut self, kind: LexErrorKind, start: u32, message: impl Into<String>) {
+        self.errors
+            .push(LexError { kind, span: Span::new(start, self.cursor.pos()), message: message.into() });
+    }
+
+    fn scan_operator(&mut self, start: u32, c: char) -> Option<TokenKind> {
+        let kind = match c {
+            '.' => {
+                if self.cursor.eat('.') {
+                    TokenKind::DotDot
+                } else {
+                    TokenKind::Dot
+                }
+            }
+            '+' => {
+                if self.cursor.eat('=') {
+                    TokenKind::PlusEq
+                } else {
+                    TokenKind::Plus
+                }
+            }
+            '*' => {
+                if self.cursor.eat('=') {
+                    TokenKind::StarEq
+                } else {
+                    TokenKind::Star
+                }
+            }
+            '%' => TokenKind::Percent,
+            '^' => TokenKind::Caret,
+            '-' => {
+                if self.cursor.eat('>') {
+                    TokenKind::Arrow
+                } else if self.cursor.eat('=') {
+                    TokenKind::MinusEq
+                } else {
+                    TokenKind::Minus
+                }
+            }
+            '/' => {
+                if self.cursor.eat('/') {
+                    self.scan_line_comment(start);
+                    return None;
+                } else if self.cursor.eat('*') {
+                    self.scan_block_comment(start);
+                    return None;
+                } else if self.cursor.eat('=') {
+                    TokenKind::SlashEq
+                } else {
+                    TokenKind::Slash
+                }
+            }
+            '=' => {
+                if self.cursor.eat('=') {
+                    if self.cursor.eat('=') {
+                        TokenKind::EqEqEq
+                    } else {
+                        TokenKind::EqEq
+                    }
+                } else {
+                    TokenKind::Eq
+                }
+            }
+            '!' => {
+                if self.cursor.eat('=') {
+                    if self.cursor.eat('=') {
+                        TokenKind::BangEqEq
+                    } else {
+                        TokenKind::BangEq
+                    }
+                } else if self.cursor.eat('.') {
+                    TokenKind::BangDot
+                } else if self.cursor.eat('[') {
+                    TokenKind::BangBracket
+                } else if self.cursor.eat('(') {
+                    TokenKind::BangParen
+                } else {
+                    TokenKind::Bang
+                }
+            }
+            '<' => {
+                if self.cursor.eat('=') {
+                    TokenKind::LtEq
+                } else {
+                    TokenKind::Lt
+                }
+            }
+            '>' => {
+                if self.cursor.eat('=') {
+                    TokenKind::GtEq
+                } else {
+                    TokenKind::Gt
+                }
+            }
+            '&' => {
+                if self.cursor.eat('&') {
+                    TokenKind::AmpAmp
+                } else if self.cursor.eat('=') {
+                    TokenKind::AmpEq
+                } else {
+                    TokenKind::Amp
+                }
+            }
+            '|' => {
+                if self.cursor.eat('|') {
+                    TokenKind::PipePipe
+                } else if self.cursor.eat('=') {
+                    TokenKind::PipeEq
+                } else {
+                    TokenKind::Pipe
+                }
+            }
+            '?' => {
+                if self.cursor.eat('.') {
+                    TokenKind::QuestionDot
+                } else if self.cursor.eat('[') {
+                    TokenKind::QuestionBracket
+                } else if self.cursor.eat('(') {
+                    TokenKind::QuestionParen
+                } else {
+                    TokenKind::Question
+                }
+            }
+            _ => return None,
+        };
+
+        Some(kind)
+    }
+
+    fn clean_numeric_text(text: &str) -> String {
+        text.chars().filter(|&c| c != '_').collect()
+    }
+
+    fn scan_radix_int<P>(&mut self, start: u32, radix: u32, predicate: P, error_message: &'static str)
+    where
+        P: Fn(char) -> bool,
+    {
+        self.cursor.eat_while(|c| predicate(c) || c == '_');
+        let text = self.cursor.slice(start + 2, self.cursor.pos());
+        let clean = Self::clean_numeric_text(text);
+
+        match i64::from_str_radix(&clean, radix) {
+            Ok(n) => self.emit_token(TokenKind::Integer(n), start),
+            Err(_) => self.emit_error(LexErrorKind::InvalidNumber, start, error_message),
+        }
+    }
+
+    fn extract_and_intern(&mut self, start: u32, prefix_len: u32, suffix_len: u32) -> Symbol {
+        let content_start = start + prefix_len;
+        let content_end = self.cursor.pos().saturating_sub(suffix_len);
+        let text = self.cursor.slice(content_start, content_end);
+        self.interner.intern(text)
     }
 
     /// Scan a single token from the current cursor position.
@@ -181,11 +339,12 @@ impl<'a> Lexer<'a> {
             return; // WHY: Newlines are whitespace in Faber, not tokens
         }
 
-        let kind = match c {
-            // Whitespace - skip (except newline handled above)
-            ' ' | '\t' | '\r' => return,
+        // Whitespace - skip (except newline handled above)
+        if matches!(c, ' ' | '\t' | '\r') {
+            return;
+        }
 
-            // Single-character punctuation
+        let kind = match c {
             '(' => TokenKind::LParen,
             ')' => TokenKind::RParen,
             '{' => TokenKind::LBrace,
@@ -197,176 +356,33 @@ impl<'a> Lexer<'a> {
             ';' => TokenKind::Semicolon,
             '~' => TokenKind::Tilde,
             '@' => {
-                // WHY: Switch to annotation mode until end of line
                 self.mode = LexerMode::Annotation;
                 TokenKind::At
             }
             '§' => {
-                // WHY: Switch to section mode until end of line
                 self.mode = LexerMode::Section;
                 TokenKind::Section
             }
-
-            // Dot or range
-            '.' => {
-                if self.cursor.eat('.') {
-                    TokenKind::DotDot
-                } else {
-                    TokenKind::Dot
-                }
-            }
-
-            // Operators with possible compound forms
-            '+' => {
-                if self.cursor.eat('=') {
-                    TokenKind::PlusEq
-                } else {
-                    TokenKind::Plus
-                }
-            }
-            '*' => {
-                if self.cursor.eat('=') {
-                    TokenKind::StarEq
-                } else {
-                    TokenKind::Star
-                }
-            }
-            '%' => TokenKind::Percent,
-            '^' => TokenKind::Caret,
-
-            // Minus or arrow
-            '-' => {
-                if self.cursor.eat('>') {
-                    TokenKind::Arrow
-                } else if self.cursor.eat('=') {
-                    TokenKind::MinusEq
-                } else {
-                    TokenKind::Minus
-                }
-            }
-
-            // Hash comment (# ... newline)
             '#' => return self.scan_hash_comment(start),
-
-            // Slash or comment
-            '/' => {
-                if self.cursor.eat('/') {
-                    return self.scan_line_comment(start);
-                } else if self.cursor.eat('*') {
-                    return self.scan_block_comment(start);
-                } else if self.cursor.eat('=') {
-                    TokenKind::SlashEq
-                } else {
-                    TokenKind::Slash
-                }
-            }
-
-            // Comparison and assignment
-            '=' => {
-                if self.cursor.eat('=') {
-                    if self.cursor.eat('=') {
-                        TokenKind::EqEqEq // WHY: Strict equality like JavaScript
-                    } else {
-                        TokenKind::EqEq
-                    }
-                } else {
-                    TokenKind::Eq
-                }
-            }
-
-            '!' => {
-                if self.cursor.eat('=') {
-                    if self.cursor.eat('=') {
-                        TokenKind::BangEqEq // WHY: Strict inequality
-                    } else {
-                        TokenKind::BangEq
-                    }
-                } else if self.cursor.eat('.') {
-                    TokenKind::BangDot // WHY: Non-null assertion x!.y
-                } else if self.cursor.eat('[') {
-                    TokenKind::BangBracket // WHY: Non-null assertion x![i]
-                } else if self.cursor.eat('(') {
-                    TokenKind::BangParen // WHY: Non-null assertion x!()
-                } else {
-                    TokenKind::Bang
-                }
-            }
-
-            '<' => {
-                if self.cursor.eat('=') {
-                    TokenKind::LtEq
-                } else {
-                    TokenKind::Lt
-                }
-            }
-
-            '>' => {
-                if self.cursor.eat('=') {
-                    TokenKind::GtEq
-                } else {
-                    TokenKind::Gt
-                }
-            }
-
-            // Logical and bitwise
-            '&' => {
-                if self.cursor.eat('&') {
-                    TokenKind::AmpAmp // WHY: Logical AND (short-circuits)
-                } else if self.cursor.eat('=') {
-                    TokenKind::AmpEq
-                } else {
-                    TokenKind::Amp // WHY: Bitwise AND
-                }
-            }
-
-            '|' => {
-                if self.cursor.eat('|') {
-                    TokenKind::PipePipe // WHY: Logical OR (short-circuits)
-                } else if self.cursor.eat('=') {
-                    TokenKind::PipeEq
-                } else {
-                    TokenKind::Pipe // WHY: Bitwise OR
-                }
-            }
-
-            // Optional chaining
-            '?' => {
-                if self.cursor.eat('.') {
-                    TokenKind::QuestionDot // WHY: Optional chaining x?.y
-                } else if self.cursor.eat('[') {
-                    TokenKind::QuestionBracket // WHY: Optional indexing x?[i]
-                } else if self.cursor.eat('(') {
-                    TokenKind::QuestionParen // WHY: Optional call x?()
-                } else {
-                    TokenKind::Question // WHY: Ternary conditional
-                }
-            }
-
-            // String literals (double or single quoted)
             '"' | '\'' => return self.scan_string(start, c),
-
-            // Template literals (backtick)
             '`' => return self.scan_template(start),
-
-            // Numbers
             '0'..='9' => return self.scan_number(start, c),
-
-            // Identifiers and keywords
             c if is_ident_start(c) => return self.scan_identifier(start),
-
-            _ => {
-                // WHY: Emit error but continue scanning for maximum error reporting
-                self.errors.push(LexError {
-                    kind: LexErrorKind::UnexpectedCharacter,
-                    span: Span::new(start, self.cursor.pos()),
-                    message: format!("unexpected character: '{}'", c),
-                });
-                TokenKind::Error
+            c => {
+                if let Some(kind) = self.scan_operator(start, c) {
+                    kind
+                } else {
+                    self.emit_error(
+                        LexErrorKind::UnexpectedCharacter,
+                        start,
+                        format!("unexpected character: '{}'", c),
+                    );
+                    TokenKind::Error
+                }
             }
         };
 
-        self.tokens
-            .push(Token::new(kind, Span::new(start, self.cursor.pos())));
+        self.emit_token(kind, start);
     }
 
     // =========================================================================
@@ -393,8 +409,7 @@ impl<'a> Lexer<'a> {
             TokenKind::LineComment(sym)
         };
 
-        self.tokens
-            .push(Token::new(kind, Span::new(start, self.cursor.pos())));
+        self.emit_token(kind, start);
     }
 
     /// Scan a hash comment starting with `#`.
@@ -407,8 +422,7 @@ impl<'a> Lexer<'a> {
         let text = self.cursor.slice(start + 1, self.cursor.pos());
         let sym = self.interner.intern(text.trim());
 
-        self.tokens
-            .push(Token::new(TokenKind::LineComment(sym), Span::new(start, self.cursor.pos())));
+        self.emit_token(TokenKind::LineComment(sym), start);
     }
 
     /// Scan a block comment with nesting support.
@@ -428,19 +442,11 @@ impl<'a> Lexer<'a> {
 
         if depth > 0 {
             // WHY: Emit error but still create a token for recovery
-            self.errors.push(LexError {
-                kind: LexErrorKind::UnterminatedComment,
-                span: Span::new(start, self.cursor.pos()),
-                message: "unterminated block comment".to_owned(),
-            });
+            self.emit_error(LexErrorKind::UnterminatedComment, start, "unterminated block comment");
         }
 
-        let text = self
-            .cursor
-            .slice(start + 2, self.cursor.pos().saturating_sub(2));
-        let sym = self.interner.intern(text);
-        self.tokens
-            .push(Token::new(TokenKind::BlockComment(sym), Span::new(start, self.cursor.pos())));
+        let sym = self.extract_and_intern(start, 2, 2);
+        self.emit_token(TokenKind::BlockComment(sym), start);
     }
 
     // =========================================================================
@@ -463,20 +469,16 @@ impl<'a> Lexer<'a> {
         loop {
             match self.cursor.peek() {
                 None => {
-                    self.errors.push(LexError {
-                        kind: LexErrorKind::UnterminatedString,
-                        span: Span::new(start, self.cursor.pos()),
-                        message: "unterminated string literal".to_owned(),
-                    });
+                    self.emit_error(LexErrorKind::UnterminatedString, start, "unterminated string literal");
                     break;
                 }
                 Some('\n') if !is_triple => {
                     // WHY: Single-line strings can't contain newlines
-                    self.errors.push(LexError {
-                        kind: LexErrorKind::UnterminatedString,
-                        span: Span::new(start, self.cursor.pos()),
-                        message: "unterminated string literal (newline in string)".to_owned(),
-                    });
+                    self.emit_error(
+                        LexErrorKind::UnterminatedString,
+                        start,
+                        "unterminated string literal (newline in string)",
+                    );
                     break;
                 }
                 Some('\\') => {
@@ -501,17 +503,12 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let content_start = if is_triple { start + 3 } else { start + 1 };
-        let content_end = if is_triple {
-            self.cursor.pos().saturating_sub(3)
+        let sym = if is_triple {
+            self.extract_and_intern(start, 3, 3)
         } else {
-            self.cursor.pos().saturating_sub(1)
+            self.extract_and_intern(start, 1, 1)
         };
-        let text = self.cursor.slice(content_start, content_end);
-        let sym = self.interner.intern(text);
-
-        self.tokens
-            .push(Token::new(TokenKind::String(sym), Span::new(start, self.cursor.pos())));
+        self.emit_token(TokenKind::String(sym), start);
     }
 
     /// Scan a template literal with embedded expressions.
@@ -525,11 +522,7 @@ impl<'a> Lexer<'a> {
         loop {
             match self.cursor.peek() {
                 None => {
-                    self.errors.push(LexError {
-                        kind: LexErrorKind::UnterminatedString,
-                        span: Span::new(start, self.cursor.pos()),
-                        message: "unterminated template literal".to_owned(),
-                    });
+                    self.emit_error(LexErrorKind::UnterminatedString, start, "unterminated template literal");
                     break;
                 }
                 Some('\\') => {
@@ -560,21 +553,12 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let content_start = start + 1;
-        let content_end = if terminated {
-            self.cursor.pos().saturating_sub(1)
+        let sym = if terminated {
+            self.extract_and_intern(start, 1, 1)
         } else {
-            self.cursor.pos()
+            self.extract_and_intern(start, 1, 0)
         };
-        let text = if content_end > content_start {
-            self.cursor.slice(content_start, content_end)
-        } else {
-            ""
-        };
-        let sym = self.interner.intern(text);
-
-        self.tokens
-            .push(Token::new(TokenKind::TemplateString(sym), Span::new(start, self.cursor.pos())));
+        self.emit_token(TokenKind::TemplateString(sym), start);
     }
 
     // =========================================================================
@@ -595,63 +579,17 @@ impl<'a> Lexer<'a> {
             match self.cursor.peek() {
                 Some('x') | Some('X') => {
                     self.cursor.advance();
-                    self.cursor.eat_while(|c| c.is_ascii_hexdigit() || c == '_');
-                    let text = self.cursor.slice(start + 2, self.cursor.pos());
-                    let clean: String = text.chars().filter(|&c| c != '_').collect();
-                    match i64::from_str_radix(&clean, 16) {
-                        Ok(n) => {
-                            self.tokens
-                                .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
-                        }
-                        Err(_) => {
-                            self.errors.push(LexError {
-                                kind: LexErrorKind::InvalidNumber,
-                                span: Span::new(start, self.cursor.pos()),
-                                message: "invalid hexadecimal number".to_owned(),
-                            });
-                        }
-                    }
+                    self.scan_radix_int(start, 16, |c| c.is_ascii_hexdigit(), "invalid hexadecimal number");
                     return;
                 }
                 Some('b') | Some('B') => {
                     self.cursor.advance();
-                    self.cursor.eat_while(|c| c == '0' || c == '1' || c == '_');
-                    let text = self.cursor.slice(start + 2, self.cursor.pos());
-                    let clean: String = text.chars().filter(|&c| c != '_').collect();
-                    match i64::from_str_radix(&clean, 2) {
-                        Ok(n) => {
-                            self.tokens
-                                .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
-                        }
-                        Err(_) => {
-                            self.errors.push(LexError {
-                                kind: LexErrorKind::InvalidNumber,
-                                span: Span::new(start, self.cursor.pos()),
-                                message: "invalid binary number".to_owned(),
-                            });
-                        }
-                    }
+                    self.scan_radix_int(start, 2, |c| c == '0' || c == '1', "invalid binary number");
                     return;
                 }
                 Some('o') | Some('O') => {
                     self.cursor.advance();
-                    self.cursor
-                        .eat_while(|c| ('0'..='7').contains(&c) || c == '_');
-                    let text = self.cursor.slice(start + 2, self.cursor.pos());
-                    let clean: String = text.chars().filter(|&c| c != '_').collect();
-                    match i64::from_str_radix(&clean, 8) {
-                        Ok(n) => {
-                            self.tokens
-                                .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
-                        }
-                        Err(_) => {
-                            self.errors.push(LexError {
-                                kind: LexErrorKind::InvalidNumber,
-                                span: Span::new(start, self.cursor.pos()),
-                                message: "invalid octal number".to_owned(),
-                            });
-                        }
-                    }
+                    self.scan_radix_int(start, 8, |c| ('0'..='7').contains(&c), "invalid octal number");
                     return;
                 }
                 _ => {}
@@ -684,35 +622,17 @@ impl<'a> Lexer<'a> {
         };
 
         let text = self.cursor.slice(start, self.cursor.pos());
-        let clean: String = text.chars().filter(|&c| c != '_').collect();
+        let clean = Self::clean_numeric_text(text);
 
         if is_float || has_exp {
             match clean.parse::<f64>() {
-                Ok(n) => {
-                    self.tokens
-                        .push(Token::new(TokenKind::Float(n), Span::new(start, self.cursor.pos())));
-                }
-                Err(_) => {
-                    self.errors.push(LexError {
-                        kind: LexErrorKind::InvalidNumber,
-                        span: Span::new(start, self.cursor.pos()),
-                        message: "invalid floating-point number".to_owned(),
-                    });
-                }
+                Ok(n) => self.emit_token(TokenKind::Float(n), start),
+                Err(_) => self.emit_error(LexErrorKind::InvalidNumber, start, "invalid floating-point number"),
             }
         } else {
             match clean.parse::<i64>() {
-                Ok(n) => {
-                    self.tokens
-                        .push(Token::new(TokenKind::Integer(n), Span::new(start, self.cursor.pos())));
-                }
-                Err(_) => {
-                    self.errors.push(LexError {
-                        kind: LexErrorKind::InvalidNumber,
-                        span: Span::new(start, self.cursor.pos()),
-                        message: "invalid integer".to_owned(),
-                    });
-                }
+                Ok(n) => self.emit_token(TokenKind::Integer(n), start),
+                Err(_) => self.emit_error(LexErrorKind::InvalidNumber, start, "invalid integer"),
             }
         }
     }
@@ -735,8 +655,7 @@ impl<'a> Lexer<'a> {
             LexerMode::Annotation => annotation_keyword_or_ident(text, &mut self.interner),
             LexerMode::Section => section_keyword_or_ident(text, &mut self.interner),
         };
-        self.tokens
-            .push(Token::new(kind, Span::new(start, self.cursor.pos())));
+        self.emit_token(kind, start);
     }
 }
 
