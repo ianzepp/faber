@@ -1,7 +1,7 @@
 use super::{Codegen, DefId, FaberCodegen, Interner, Primitive, Type, TypeTable};
 use crate::hir::{
-    HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode, HirProgram,
-    HirStmt, HirStmtKind,
+    HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode,
+    HirPattern, HirProgram, HirStmt, HirStmtKind,
 };
 use crate::lexer::Span;
 use crate::semantic::InferVar;
@@ -298,4 +298,68 @@ fn emits_si_sin_secus_chain_with_reddit_shorthand() {
     assert!(output.code.contains("sin falsum reddit \"B\""));
     assert!(output.code.contains("secus reddit \"F\""));
     assert!(!output.code.contains("aliter"));
+}
+
+#[test]
+fn discerne_cases_do_not_emit_nested_blocks() {
+    let mut interner = Interner::new();
+    let ok = interner.intern("OK");
+
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+
+    let arm_body = HirExpr {
+        id: crate::hir::HirId(3),
+        kind: HirExprKind::Block(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(4),
+                kind: HirStmtKind::Redde(Some(HirExpr {
+                    id: crate::hir::HirId(5),
+                    kind: HirExprKind::Literal(HirLiteral::String(ok)),
+                    ty: Some(textus),
+                    span: span(),
+                })),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+        ty: Some(textus),
+        span: span(),
+    };
+
+    let discerne = HirExpr {
+        id: crate::hir::HirId(1),
+        kind: HirExprKind::Discerne(
+            Box::new(HirExpr {
+                id: crate::hir::HirId(2),
+                kind: HirExprKind::Literal(HirLiteral::Int(200)),
+                ty: Some(numerus),
+                span: span(),
+            }),
+            vec![HirCasuArm {
+                pattern: HirPattern::Literal(HirLiteral::Int(200)),
+                guard: None,
+                body: arm_body,
+                span: span(),
+            }],
+        ),
+        ty: Some(textus),
+        span: span(),
+    };
+
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt { id: crate::hir::HirId(6), kind: HirStmtKind::Expr(discerne), span: span() }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("casu 200 {\n            redde \"OK\""));
+    assert!(!output.code.contains("casu 200 {\n            {"));
 }

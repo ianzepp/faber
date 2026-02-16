@@ -815,9 +815,12 @@ impl FaberCodegen {
                 self.write_expr(guard, types, names, interner, w);
             }
             w.writeln(" {");
-            w.indented(|w| {
-                self.write_expr(&arm.body, types, names, interner, w);
-                w.newline();
+            w.indented(|w| match &arm.body.kind {
+                HirExprKind::Block(block) => self.write_block(block, types, names, interner, w),
+                _ => {
+                    self.write_expr(&arm.body, types, names, interner, w);
+                    w.newline();
+                }
             });
             w.writeln("}");
         }
