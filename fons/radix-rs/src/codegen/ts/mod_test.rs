@@ -702,44 +702,62 @@ fn emits_collection_pipeline_ab_transforms() {
     let program = HirProgram {
         items: Vec::new(),
         entry: Some(HirBlock {
-            stmts: vec![HirStmt {
-                id: HirId(1),
-                kind: HirStmtKind::Expr(HirExpr {
-                    id: HirId(2),
-                    kind: HirExprKind::Ab {
-                        source: Box::new(HirExpr {
-                            id: HirId(3),
-                            kind: HirExprKind::Path(DefId(1)),
+            stmts: vec![
+                HirStmt {
+                    id: HirId(10),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(1),
+                        name: items,
+                        ty: Some(lista),
+                        init: Some(HirExpr {
+                            id: HirId(11),
+                            kind: HirExprKind::Array(vec![]),
                             ty: Some(lista),
                             span: span(),
                         }),
-                        filter: Some(HirCollectionFilter {
-                            negated: false,
-                            kind: HirCollectionFilterKind::Condition(Box::new(HirExpr {
-                                id: HirId(4),
-                                kind: HirExprKind::Literal(HirLiteral::Bool(true)),
-                                ty: Some(bivalens),
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(1),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(2),
+                        kind: HirExprKind::Ab {
+                            source: Box::new(HirExpr {
+                                id: HirId(3),
+                                kind: HirExprKind::Path(DefId(1)),
+                                ty: Some(lista),
                                 span: span(),
-                            })),
-                        }),
-                        transforms: vec![
-                            HirCollectionTransform {
-                                kind: HirTransformKind::First,
-                                arg: Some(Box::new(HirExpr {
-                                    id: HirId(5),
-                                    kind: HirExprKind::Literal(HirLiteral::Int(5)),
-                                    ty: Some(numerus),
+                            }),
+                            filter: Some(HirCollectionFilter {
+                                negated: false,
+                                kind: HirCollectionFilterKind::Condition(Box::new(HirExpr {
+                                    id: HirId(4),
+                                    kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                                    ty: Some(bivalens),
                                     span: span(),
                                 })),
-                            },
-                            HirCollectionTransform { kind: HirTransformKind::Sum, arg: None },
-                        ],
-                    },
-                    ty: Some(numerus),
+                            }),
+                            transforms: vec![
+                                HirCollectionTransform {
+                                    kind: HirTransformKind::First,
+                                    arg: Some(Box::new(HirExpr {
+                                        id: HirId(5),
+                                        kind: HirExprKind::Literal(HirLiteral::Int(5)),
+                                        ty: Some(numerus),
+                                        span: span(),
+                                    })),
+                                },
+                                HirCollectionTransform { kind: HirTransformKind::Sum, arg: None },
+                            ],
+                        },
+                        ty: Some(numerus),
+                        span: span(),
+                    }),
                     span: span(),
-                }),
-                span: span(),
-            }],
+                },
+            ],
             expr: None,
             span: span(),
         }),
@@ -749,4 +767,196 @@ fn emits_collection_pipeline_ab_transforms() {
     assert!(code.contains(".filter"));
     assert!(code.contains(".slice(0, 5)"));
     assert!(code.contains(".reduce((acc, value) => acc + value, 0)"));
+}
+
+#[test]
+fn translates_norma_methods_and_intrinsics() {
+    let mut interner = Interner::new();
+    let items = interner.intern("items");
+    let text = interner.intern("text");
+    let table = interner.intern("table");
+    let appende = interner.intern("appende");
+    let longitudo = interner.intern("longitudo");
+    let pone = interner.intern("pone");
+    let pavimentum = interner.intern("pavimentum");
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+    let lista = types.array(numerus);
+    let tabula = types.map(textus, numerus);
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: HirId(1),
+            def_id: DefId(50),
+            kind: HirItemKind::Import(HirImport {
+                path: interner.intern("norma/mathesis"),
+                items: vec![HirImportItem {
+                    def_id: DefId(51),
+                    name: pavimentum,
+                    alias: None,
+                }],
+            }),
+            span: span(),
+        }],
+        entry: Some(HirBlock {
+            stmts: vec![
+                HirStmt {
+                    id: HirId(2),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(2),
+                        name: items,
+                        ty: Some(lista),
+                        init: Some(HirExpr {
+                            id: HirId(3),
+                            kind: HirExprKind::Array(vec![]),
+                            ty: Some(lista),
+                            span: span(),
+                        }),
+                        mutable: true,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(4),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(4),
+                        name: text,
+                        ty: Some(textus),
+                        init: Some(HirExpr {
+                            id: HirId(5),
+                            kind: HirExprKind::Literal(HirLiteral::String(interner.intern("salve"))),
+                            ty: Some(textus),
+                            span: span(),
+                        }),
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(6),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(6),
+                        name: table,
+                        ty: Some(tabula),
+                        init: Some(HirExpr {
+                            id: HirId(7),
+                            kind: HirExprKind::Struct(DefId(0), vec![]),
+                            ty: Some(tabula),
+                            span: span(),
+                        }),
+                        mutable: true,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(8),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(9),
+                        kind: HirExprKind::MethodCall(
+                            Box::new(HirExpr {
+                                id: HirId(10),
+                                kind: HirExprKind::Path(DefId(2)),
+                                ty: Some(lista),
+                                span: span(),
+                            }),
+                            appende,
+                            vec![HirExpr {
+                                id: HirId(11),
+                                kind: HirExprKind::Literal(HirLiteral::Int(1)),
+                                ty: Some(numerus),
+                                span: span(),
+                            }],
+                        ),
+                        ty: Some(numerus),
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(12),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(13),
+                        kind: HirExprKind::MethodCall(
+                            Box::new(HirExpr {
+                                id: HirId(14),
+                                kind: HirExprKind::Path(DefId(4)),
+                                ty: Some(textus),
+                                span: span(),
+                            }),
+                            longitudo,
+                            vec![],
+                        ),
+                        ty: Some(numerus),
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(15),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(16),
+                        kind: HirExprKind::MethodCall(
+                            Box::new(HirExpr {
+                                id: HirId(17),
+                                kind: HirExprKind::Path(DefId(6)),
+                                ty: Some(tabula),
+                                span: span(),
+                            }),
+                            pone,
+                            vec![
+                                HirExpr {
+                                    id: HirId(18),
+                                    kind: HirExprKind::Literal(HirLiteral::String(interner.intern("k"))),
+                                    ty: Some(textus),
+                                    span: span(),
+                                },
+                                HirExpr {
+                                    id: HirId(19),
+                                    kind: HirExprKind::Literal(HirLiteral::Int(9)),
+                                    ty: Some(numerus),
+                                    span: span(),
+                                },
+                            ],
+                        ),
+                        ty: Some(numerus),
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(20),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(21),
+                        kind: HirExprKind::Call(
+                            Box::new(HirExpr {
+                                id: HirId(22),
+                                kind: HirExprKind::Path(DefId(51)),
+                                ty: None,
+                                span: span(),
+                            }),
+                            vec![HirExpr {
+                                id: HirId(23),
+                                kind: HirExprKind::Literal(HirLiteral::Float(3.9)),
+                                ty: Some(types.primitive(Primitive::Fractus)),
+                                span: span(),
+                            }],
+                        ),
+                        ty: Some(numerus),
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+            ],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let code = render_ts(&program, &types, &interner);
+    assert!(!code.contains("import { pavimentum } from"));
+    assert!(code.contains("items.push(1)"));
+    assert!(code.contains("text.length"));
+    assert!(code.contains("table[\"k\"] = 9"));
+    assert!(code.contains("Math.floor(3.9)"));
 }

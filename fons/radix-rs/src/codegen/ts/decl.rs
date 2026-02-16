@@ -201,6 +201,11 @@ pub fn generate_const(
 }
 
 pub fn generate_import(codegen: &TsCodegen<'_>, import: &HirImport, w: &mut CodeWriter) -> Result<(), CodegenError> {
+    let path = codegen.resolve_symbol(import.path);
+    if matches!(path, "norma/mathesis" | "norma/tempus") {
+        return Ok(());
+    }
+
     w.write("import { ");
     for (idx, item) in import.items.iter().enumerate() {
         if idx > 0 {
@@ -213,7 +218,7 @@ pub fn generate_import(codegen: &TsCodegen<'_>, import: &HirImport, w: &mut Code
         }
     }
     w.write(" } from ");
-    w.write(&format!("{:?}", codegen.resolve_symbol(import.path)));
+    w.write(&format!("{:?}", path));
     w.writeln(";");
     Ok(())
 }
