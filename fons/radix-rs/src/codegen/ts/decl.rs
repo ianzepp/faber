@@ -1,6 +1,6 @@
 use super::stmt::generate_block;
 use super::types::type_to_ts;
-use super::{generate_expr, CodeWriter, CodegenError, TsCodegen};
+use super::{expr::generate_expr, CodeWriter, CodegenError, TsCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 

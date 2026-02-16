@@ -383,3 +383,370 @@ fn emits_class_interface_import_and_variable_statements() {
     assert!(code.contains("let x: number = 1;"));
     assert!(code.contains("const y: number = 2;"));
 }
+
+#[test]
+fn lowers_logical_and_comparison_operators() {
+    let mut interner = Interner::new();
+    let x = interner.intern("x");
+    let y = interner.intern("y");
+    let z = interner.intern("z");
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let bivalens = types.primitive(Primitive::Bivalens);
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![
+                HirStmt {
+                    id: HirId(20),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(10),
+                        name: x,
+                        ty: Some(numerus),
+                        init: Some(HirExpr {
+                            id: HirId(21),
+                            kind: HirExprKind::Literal(HirLiteral::Int(1)),
+                            ty: Some(numerus),
+                            span: span(),
+                        }),
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(22),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(11),
+                        name: y,
+                        ty: Some(numerus),
+                        init: Some(HirExpr {
+                            id: HirId(23),
+                            kind: HirExprKind::Literal(HirLiteral::Int(2)),
+                            ty: Some(numerus),
+                            span: span(),
+                        }),
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(24),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(12),
+                        name: z,
+                        ty: Some(numerus),
+                        init: Some(HirExpr {
+                            id: HirId(25),
+                            kind: HirExprKind::Literal(HirLiteral::Int(3)),
+                            ty: Some(numerus),
+                            span: span(),
+                        }),
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(1),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(2),
+                        kind: HirExprKind::Binary(
+                            HirBinOp::Or,
+                            Box::new(HirExpr {
+                                id: HirId(3),
+                                kind: HirExprKind::Binary(
+                                    HirBinOp::And,
+                                    Box::new(HirExpr {
+                                        id: HirId(4),
+                                        kind: HirExprKind::Binary(
+                                            HirBinOp::Eq,
+                                            Box::new(HirExpr {
+                                                id: HirId(5),
+                                                kind: HirExprKind::Path(DefId(10)),
+                                                ty: Some(numerus),
+                                                span: span(),
+                                            }),
+                                            Box::new(HirExpr {
+                                                id: HirId(6),
+                                                kind: HirExprKind::Path(DefId(11)),
+                                                ty: Some(numerus),
+                                                span: span(),
+                                            }),
+                                        ),
+                                        ty: Some(bivalens),
+                                        span: span(),
+                                    }),
+                                    Box::new(HirExpr {
+                                        id: HirId(7),
+                                        kind: HirExprKind::Binary(
+                                            HirBinOp::LtEq,
+                                            Box::new(HirExpr {
+                                                id: HirId(8),
+                                                kind: HirExprKind::Path(DefId(12)),
+                                                ty: Some(numerus),
+                                                span: span(),
+                                            }),
+                                            Box::new(HirExpr {
+                                                id: HirId(9),
+                                                kind: HirExprKind::Literal(HirLiteral::Int(10)),
+                                                ty: Some(numerus),
+                                                span: span(),
+                                            }),
+                                        ),
+                                        ty: Some(bivalens),
+                                        span: span(),
+                                    }),
+                                ),
+                                ty: Some(bivalens),
+                                span: span(),
+                            }),
+                            Box::new(HirExpr {
+                                id: HirId(13),
+                                kind: HirExprKind::Binary(
+                                    HirBinOp::Coalesce,
+                                    Box::new(HirExpr {
+                                        id: HirId(14),
+                                        kind: HirExprKind::Path(DefId(10)),
+                                        ty: Some(numerus),
+                                        span: span(),
+                                    }),
+                                    Box::new(HirExpr {
+                                        id: HirId(15),
+                                        kind: HirExprKind::Path(DefId(11)),
+                                        ty: Some(numerus),
+                                        span: span(),
+                                    }),
+                                ),
+                                ty: Some(numerus),
+                                span: span(),
+                            }),
+                        ),
+                        ty: Some(bivalens),
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+            ],
+            expr: None,
+            span: span(),
+        }),
+    };
+    let code = render_ts(&program, &types, &interner);
+    assert!(code.contains("==="));
+    assert!(code.contains("<="));
+    assert!(code.contains("&&"));
+    assert!(code.contains("||"));
+    assert!(code.contains("??"));
+}
+
+#[test]
+fn emits_optional_chain_closure_template_and_await() {
+    let mut interner = Interner::new();
+    let obj = interner.intern("obj");
+    let field = interner.intern("nomen");
+    let arg = interner.intern("x");
+    let tmpl = interner.intern("salve §1");
+    let mut types = TypeTable::new();
+    let textus = types.primitive(Primitive::Textus);
+    let numerus = types.primitive(Primitive::Numerus);
+    let option_text = types.option(textus);
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: HirId(100),
+            def_id: DefId(3),
+            kind: HirItemKind::Function(HirFunction {
+                name: interner.intern("fetch"),
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(textus),
+                body: Some(HirBlock {
+                    stmts: Vec::new(),
+                    expr: Some(Box::new(HirExpr {
+                        id: HirId(101),
+                        kind: HirExprKind::Literal(HirLiteral::String(interner.intern("ok"))),
+                        ty: Some(textus),
+                        span: span(),
+                    })),
+                    span: span(),
+                }),
+                is_async: true,
+                is_generator: false,
+            }),
+            span: span(),
+        }],
+        entry: Some(HirBlock {
+            stmts: vec![
+                HirStmt {
+                    id: HirId(200),
+                    kind: HirStmtKind::Local(HirLocal {
+                        def_id: DefId(1),
+                        name: obj,
+                        ty: Some(option_text),
+                        init: Some(HirExpr {
+                            id: HirId(201),
+                            kind: HirExprKind::Literal(HirLiteral::Nil),
+                            ty: Some(option_text),
+                            span: span(),
+                        }),
+                        mutable: false,
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(1),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(2),
+                        kind: HirExprKind::OptionalChain(
+                            Box::new(HirExpr {
+                                id: HirId(3),
+                                kind: HirExprKind::Path(DefId(1)),
+                                ty: Some(option_text),
+                                span: span(),
+                            }),
+                            HirOptionalChainKind::Member(field),
+                        ),
+                        ty: Some(option_text),
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(4),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(5),
+                        kind: HirExprKind::Clausura(
+                            vec![HirParam {
+                                def_id: DefId(2),
+                                name: arg,
+                                ty: numerus,
+                                mode: HirParamMode::Owned,
+                                optional: false,
+                                span: span(),
+                            }],
+                            Some(numerus),
+                            Box::new(HirExpr {
+                                id: HirId(6),
+                                kind: HirExprKind::Path(DefId(2)),
+                                ty: Some(numerus),
+                                span: span(),
+                            }),
+                        ),
+                        ty: None,
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(7),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(8),
+                        kind: HirExprKind::Scriptum(
+                            tmpl,
+                            vec![HirExpr {
+                                id: HirId(9),
+                                kind: HirExprKind::Literal(HirLiteral::String(arg)),
+                                ty: Some(textus),
+                                span: span(),
+                            }],
+                        ),
+                        ty: Some(textus),
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+                HirStmt {
+                    id: HirId(10),
+                    kind: HirStmtKind::Expr(HirExpr {
+                        id: HirId(11),
+                        kind: HirExprKind::Cede(Box::new(HirExpr {
+                            id: HirId(12),
+                            kind: HirExprKind::Call(
+                                Box::new(HirExpr {
+                                    id: HirId(13),
+                                    kind: HirExprKind::Path(DefId(3)),
+                                    ty: None,
+                                    span: span(),
+                                }),
+                                vec![],
+                            ),
+                            ty: None,
+                            span: span(),
+                        })),
+                        ty: None,
+                        span: span(),
+                    }),
+                    span: span(),
+                },
+            ],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let code = render_ts(&program, &types, &interner);
+    assert!(code.contains("obj?.nomen"));
+    assert!(code.contains("(x: number): number => x"));
+    assert!(code.contains("`salve ${0}`"));
+    assert!(code.contains("(async () => {"));
+    assert!(code.contains("await "));
+}
+
+#[test]
+fn emits_collection_pipeline_ab_transforms() {
+    let mut interner = Interner::new();
+    let items = interner.intern("items");
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let lista = types.array(numerus);
+    let bivalens = types.primitive(Primitive::Bivalens);
+    let program = HirProgram {
+        items: Vec::new(),
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: HirId(1),
+                kind: HirStmtKind::Expr(HirExpr {
+                    id: HirId(2),
+                    kind: HirExprKind::Ab {
+                        source: Box::new(HirExpr {
+                            id: HirId(3),
+                            kind: HirExprKind::Path(DefId(1)),
+                            ty: Some(lista),
+                            span: span(),
+                        }),
+                        filter: Some(HirCollectionFilter {
+                            negated: false,
+                            kind: HirCollectionFilterKind::Condition(Box::new(HirExpr {
+                                id: HirId(4),
+                                kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                                ty: Some(bivalens),
+                                span: span(),
+                            })),
+                        }),
+                        transforms: vec![
+                            HirCollectionTransform {
+                                kind: HirTransformKind::First,
+                                arg: Some(Box::new(HirExpr {
+                                    id: HirId(5),
+                                    kind: HirExprKind::Literal(HirLiteral::Int(5)),
+                                    ty: Some(numerus),
+                                    span: span(),
+                                })),
+                            },
+                            HirCollectionTransform { kind: HirTransformKind::Sum, arg: None },
+                        ],
+                    },
+                    ty: Some(numerus),
+                    span: span(),
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let code = render_ts(&program, &types, &interner);
+    assert!(code.contains(".filter"));
+    assert!(code.contains(".slice(0, 5)"));
+    assert!(code.contains(".reduce((acc, value) => acc + value, 0)"));
+}
