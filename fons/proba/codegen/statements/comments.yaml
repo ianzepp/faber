@@ -17,7 +17,7 @@
 - name: leading line comment
   source: |
       # This is a comment
-      fixum x = 5
+      fixum x ← 5
   expect:
       ts:
           - '// This is a comment'
@@ -36,14 +36,14 @@
           - 'const x = 5'
       fab:
           - '# This is a comment'
-          - 'fixum x = 5'
+          - 'fixum x ← 5'
 
 # Multiple leading comments
 - name: multiple leading comments
   source: |
       # First comment
       # Second comment
-      fixum y = 10
+      fixum y ← 10
   expect:
       ts:
           - '// First comment'
@@ -56,7 +56,7 @@
       fab:
           - '# First comment'
           - '# Second comment'
-          - 'fixum y = 10'
+          - 'fixum y ← 10'
 
 # =============================================================================
 # Trailing Comments
@@ -64,7 +64,7 @@
 
 # Trailing comment on same line
 - name: trailing line comment
-  source: 'fixum z = 42  # magic number'
+  source:'fixum z ← 42  # magic number'
   expect:
       ts:
           - 'const z = 42; // magic number'
@@ -77,7 +77,7 @@
       zig:
           - 'const z = 42; // magic number'
       fab:
-          - 'fixum z = 42 # magic number'
+          - 'fixum z ← 42 # magic number'
 
 # =============================================================================
 # Multi-line Comments
@@ -88,7 +88,7 @@
   source: |
       # This is line one
       # This is line two
-      fixum a = 1
+      fixum a ← 1
   expect:
       ts:
           - '// This is line one'
@@ -110,7 +110,7 @@
       fab:
           - '# This is line one'
           - '# This is line two'
-          - 'fixum a = 1'
+          - 'fixum a ← 1'
 
 # =============================================================================
 # Comments on Functions

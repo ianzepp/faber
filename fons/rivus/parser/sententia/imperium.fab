@@ -51,40 +51,40 @@ importa ex "./varia" privata parseSeriesDestructura
 #   si x > 0 { ... } sin x < 0 { ... } secus { ... }
 #   si fetch() cape err { handle(err) }
 @ publica
-functio parseSiSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseSiSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'si'
     p.expectaVerbum("si", ParserErrorCodice.ExpectaturSi)
 
     # Parse condition
-    fixum condicio = r.expressia()
+    fixum condicio ← r.expressia()
 
     # Parse consequent body
-    fixum consequens = parseCorpus(r)
+    fixum consequens ← parseCorpus(r)
 
     # Check for optional catch (si expr { } cape err { })
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     # Check for else/else-if chain
-    varia alternans = nihil qua si Sententia
+    varia alternans ← nihil qua si Sententia
 
     si p.probaVerbum("sin") {
-        alternans = parseSinSententia(r)
+        alternans ← parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
         # SYNTAXIS ALIENA: 'secus si' (should be 'sin')
         si p.probaVerbum("si") {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaSecusSi)
             p.procede()  # si
-            fixum cond = r.expressia()
-            fixum cons = parseCorpus(r)
+            fixum cond ← r.expressia()
+            fixum cons ← parseCorpus(r)
             # Continue parsing the else-if chain
-            alternans = finge SiSententia {
+            alternans ← finge SiSententia {
                 locus: p.locusActualis(),
                 condicio: cond,
                 consequens: cons,
@@ -92,7 +92,7 @@ functio parseSiSententia(in Resolvitor r) -> Sententia {
                 cape: nihil
             } qua Sententia
         } secus {
-            alternans = parseCorpusAutSententia(r)
+            alternans ← parseCorpusAutSententia(r)
         }
     } sin p.probaVerbum("aliter") {
         # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
@@ -101,10 +101,10 @@ functio parseSiSententia(in Resolvitor r) -> Sententia {
         # Check for 'aliter si' (else-if) vs 'aliter' (else)
         si p.probaVerbum("si") {
             p.procede()  # si
-            fixum cond = r.expressia()
-            alternans = parseCorpus(r)
+            fixum cond ← r.expressia()
+            alternans ← parseCorpus(r)
         } secus {
-            alternans = parseCorpusAutSententia(r)
+            alternans ← parseCorpusAutSententia(r)
         }
     }
 
@@ -129,23 +129,23 @@ functio parseSiSententia(in Resolvitor r) -> Sententia {
 #   dum x > 0 { x = x - 1 }
 #   dum iter.sequens() cape err { handle(err) }
 @ publica
-functio parseDumSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseDumSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'dum'
     p.expectaVerbum("dum", ParserErrorCodice.ExpectaturDum)
 
     # Parse condition
-    fixum condicio = r.expressia()
+    fixum condicio ← r.expressia()
 
     # Parse body
-    fixum corpus = parseCorpus(r)
+    fixum corpus ← parseCorpus(r)
 
     # Optional catch
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     redde finge DumSententia {
@@ -165,70 +165,70 @@ functio parseDumSententia(in Resolvitor r) -> Sententia {
 #   itera pro 0 ante 10 varia i { scribe i }
 #   itera de obiectum fixum clavis { scribe clavis }
 @ publica
-functio parseIteraSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseIteraSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'itera'
     p.expectaVerbum("itera", ParserErrorCodice.ExpectaturEx)
 
     # Determine species: ex (values), de (keys), or pro (ranges)
-    varia species = IteratioGenus.Ex
+    varia species ← IteratioGenus.Ex
     si p.probaVerbum("ex") {
         p.procede()
-        species = IteratioGenus.Ex
+        species ← IteratioGenus.Ex
     } sin p.probaVerbum("de") {
         p.procede()
-        species = IteratioGenus.De
+        species ← IteratioGenus.De
     } sin p.probaVerbum("pro") {
         p.procede()
-        species = IteratioGenus.Pro
+        species ← IteratioGenus.Pro
     } secus {
         p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "expected 'ex', 'de', or 'pro' after 'itera'")
     }
 
     # Parse iterable expression
-    fixum iterabile = r.expressia()
+    fixum iterabile ← r.expressia()
 
     # Validate species-expression match
-    varia estAmbitus = falsum
+    varia estAmbitus ← falsum
     discerne iterabile {
-        casu AmbitusExpressia { estAmbitus = verum }
+        casu AmbitusExpressia { estAmbitus ← verum }
         ceterum tacet
     }
 
-    si species == IteratioGenus.Pro et non estAmbitus {
+    si species ≡ IteratioGenus.Pro et non estAmbitus {
         p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "'itera pro' requires a range expression (use .. or ante/usque)")
-    } sin estAmbitus et species != IteratioGenus.Pro {
-        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "range expressions require 'itera pro', not 'itera " + (species == IteratioGenus.Ex sic "ex" secus "de") + "'")
+    } sin estAmbitus et species ≠ IteratioGenus.Pro {
+        p.renuncia(ParserErrorCodice.InvalidumExDeInitium, "range expressions require 'itera pro', not 'itera " + (species ≡ IteratioGenus.Ex sic "ex" secus "de") + "'")
     }
 
     # Parse binding keyword: fixum (const) or varia (let)
-    varia mutabilis = falsum
+    varia mutabilis ← falsum
     si p.probaVerbum("varia") {
-        mutabilis = verum
+        mutabilis ← verum
         p.procede()
     } secus {
         p.expectaVerbum("fixum", ParserErrorCodice.ExpectaturFixum)
     }
 
     # Parse variable name or array pattern
-    varia variabilis = nihil qua si IteratioVariabilis
+    varia variabilis ← nihil qua si IteratioVariabilis
     si p.proba(SymbolumGenus.QuadratusSin) {
-        fixum elementa = parseSeriesDestructura(r)
-        variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+        fixum elementa ← parseSeriesDestructura(r)
+        variabilis ← finge Series { elementa: elementa } qua IteratioVariabilis
     } secus {
-        fixum nomenSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-        variabilis = finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
+        fixum nomenSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+        variabilis ← finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
     }
 
     # Parse body
-    fixum corpus = parseCorpus(r)
+    fixum corpus ← parseCorpus(r)
 
     # Optional catch
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     redde finge IteratioSententia {
@@ -249,9 +249,9 @@ functio parseIteraSententia(in Resolvitor r) -> Sententia {
 #
 # This function now emits an error directing users to use 'itera ex' syntax
 @ publica
-functio parseExSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseExSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Report deprecation error
     p.renuncia(ParserErrorCodice.SyntaxisAlienaExDe)
@@ -260,36 +260,36 @@ functio parseExSententia(in Resolvitor r) -> Sententia {
     p.procede()
 
     # Parse iterable expression
-    fixum iterabile = r.expressia()
+    fixum iterabile ← r.expressia()
 
     # Parse binding keyword: fixum (const) or varia (let)
-    varia mutabilis = falsum
+    varia mutabilis ← falsum
     si p.probaVerbum("varia") {
-        mutabilis = verum
+        mutabilis ← verum
         p.procede()
     } sin p.probaVerbum("fixum") {
         p.procede()
     }
 
     # Parse variable name or array pattern
-    varia variabilis = nihil qua si IteratioVariabilis
+    varia variabilis ← nihil qua si IteratioVariabilis
     si p.proba(SymbolumGenus.QuadratusSin) {
-        fixum elementa = parseSeriesDestructura(r)
-        variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+        fixum elementa ← parseSeriesDestructura(r)
+        variabilis ← finge Series { elementa: elementa } qua IteratioVariabilis
     } sin p.proba(SymbolumGenus.Nomen) {
-        fixum nomenSym = p.procede()
-        variabilis = finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
+        fixum nomenSym ← p.procede()
+        variabilis ← finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
     } secus {
-        variabilis = finge Nomen { valor: "_" } qua IteratioVariabilis
+        variabilis ← finge Nomen { valor: "_" } qua IteratioVariabilis
     }
 
     # Parse body
-    fixum corpus = parseCorpus(r)
+    fixum corpus ← parseCorpus(r)
 
     # Optional catch
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     redde finge IteratioSententia {
@@ -310,9 +310,9 @@ functio parseExSententia(in Resolvitor r) -> Sententia {
 #
 # This function now emits an error directing users to use 'itera de' syntax
 @ publica
-functio parseDeSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseDeSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Report deprecation error
     p.renuncia(ParserErrorCodice.SyntaxisAlienaExDe)
@@ -321,36 +321,36 @@ functio parseDeSententia(in Resolvitor r) -> Sententia {
     p.procede()
 
     # Parse iterable expression
-    fixum iterabile = r.expressia()
+    fixum iterabile ← r.expressia()
 
     # Parse binding keyword: fixum (const) or varia (let)
-    varia mutabilis = falsum
+    varia mutabilis ← falsum
     si p.probaVerbum("varia") {
-        mutabilis = verum
+        mutabilis ← verum
         p.procede()
     } sin p.probaVerbum("fixum") {
         p.procede()
     }
 
     # Parse variable name or array pattern
-    varia variabilis = nihil qua si IteratioVariabilis
+    varia variabilis ← nihil qua si IteratioVariabilis
     si p.proba(SymbolumGenus.QuadratusSin) {
-        fixum elementa = parseSeriesDestructura(r)
-        variabilis = finge Series { elementa: elementa } qua IteratioVariabilis
+        fixum elementa ← parseSeriesDestructura(r)
+        variabilis ← finge Series { elementa: elementa } qua IteratioVariabilis
     } sin p.proba(SymbolumGenus.Nomen) {
-        fixum nomenSym = p.procede()
-        variabilis = finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
+        fixum nomenSym ← p.procede()
+        variabilis ← finge Nomen { valor: nomenSym.valor } qua IteratioVariabilis
     } secus {
-        variabilis = finge Nomen { valor: "_" } qua IteratioVariabilis
+        variabilis ← finge Nomen { valor: "_" } qua IteratioVariabilis
     }
 
     # Parse body
-    fixum corpus = parseCorpus(r)
+    fixum corpus ← parseCorpus(r)
 
     # Optional catch
-    varia cape = nihil qua si CapeClausula
+    varia cape ← nihil qua si CapeClausula
     si p.probaVerbum("cape") {
-        cape = parseCapeClausula(r)
+        cape ← parseCapeClausula(r)
     }
 
     redde finge IteratioSententia {
@@ -375,18 +375,18 @@ functio parseDeSententia(in Resolvitor r) -> Sententia {
 #
 # Example: cape err { handle(err) }
 @ publica
-functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCapeClausula(in Resolvitor r) → CapeClausula {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("cape", ParserErrorCodice.ExpectaturCape)
 
     # Parse error binding name
-    fixum paramSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-    fixum param = paramSym.valor
+    fixum paramSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum param ← paramSym.valor
 
     # Parse catch body
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     redde {
         locus: locus,
@@ -402,9 +402,9 @@ functio parseCapeClausula(in Resolvitor r) -> CapeClausula {
 #
 # Used after conditions where a delimiter (ergo) is required for bare statements.
 @ publica
-functio parseCorpus(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCorpus(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     si p.probaVerbum("tacet") {
         p.procede()
@@ -413,19 +413,19 @@ functio parseCorpus(in Resolvitor r) -> Sententia {
 
     si p.probaVerbum("reddit") {
         p.procede()
-        fixum valor = r.expressia()
+        fixum valor ← r.expressia()
         redde finge ReddeSententia { locus: locus, valor: valor } qua Sententia
     }
 
     si p.probaVerbum("iacit") {
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge IaceSententia { locus: locus, fatale: falsum, argumentum: argumentum } qua Sententia
     }
 
     si p.probaVerbum("moritor") {
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge IaceSententia { locus: locus, fatale: verum, argumentum: argumentum } qua Sententia
     }
 
@@ -450,9 +450,9 @@ functio parseCorpus(in Resolvitor r) -> Sententia {
 #   - ergo + simple statement (not compound)
 #   - Shortcuts: tacet, reddit, iacit, moritor
 @ publica
-functio parseCorpusAutSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCorpusAutSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     si p.probaVerbum("tacet") {
         p.procede()
@@ -461,19 +461,19 @@ functio parseCorpusAutSententia(in Resolvitor r) -> Sententia {
 
     si p.probaVerbum("reddit") {
         p.procede()
-        fixum valor = r.expressia()
+        fixum valor ← r.expressia()
         redde finge ReddeSententia { locus: locus, valor: valor } qua Sententia
     }
 
     si p.probaVerbum("iacit") {
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge IaceSententia { locus: locus, fatale: falsum, argumentum: argumentum } qua Sententia
     }
 
     si p.probaVerbum("moritor") {
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge IaceSententia { locus: locus, fatale: verum, argumentum: argumentum } qua Sententia
     }
 
@@ -500,7 +500,7 @@ functio parseCorpusAutSententia(in Resolvitor r) -> Sententia {
 }
 
 # Check if current token is a compound statement keyword
-functio estCompositumVerbum(in Parser p) -> bivalens {
+functio estCompositumVerbum(in Parser p) → bivalens {
     si p.probaVerbum("si") { redde verum }
     si p.probaVerbum("sin") { redde verum }
     si p.probaVerbum("dum") { redde verum }
@@ -516,27 +516,27 @@ functio estCompositumVerbum(in Parser p) -> bivalens {
 
 # Parse a "sin" (else-if) clause
 @ publica
-functio parseSinSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseSinSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("sin", ParserErrorCodice.ExpectaturSi)
 
-    fixum condicio = r.expressia()
-    fixum consequens = parseCorpus(r)
+    fixum condicio ← r.expressia()
+    fixum consequens ← parseCorpus(r)
 
-    varia alternans = nihil qua si Sententia
+    varia alternans ← nihil qua si Sententia
     si p.probaVerbum("sin") {
-        alternans = parseSinSententia(r)
+        alternans ← parseSinSententia(r)
     } sin p.probaVerbum("secus") {
         p.procede()
         # SYNTAXIS ALIENA: 'secus si' (should be 'sin')
         si p.probaVerbum("si") {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaSecusSi)
             p.procede()  # si
-            fixum cond = r.expressia()
-            fixum cons = parseCorpus(r)
-            alternans = finge SiSententia {
+            fixum cond ← r.expressia()
+            fixum cons ← parseCorpus(r)
+            alternans ← finge SiSententia {
                 locus: p.locusActualis(),
                 condicio: cond,
                 consequens: cons,
@@ -544,7 +544,7 @@ functio parseSinSententia(in Resolvitor r) -> Sententia {
                 cape: nihil
             } qua Sententia
         } secus {
-            alternans = parseCorpusAutSententia(r)
+            alternans ← parseCorpusAutSententia(r)
         }
     } sin p.probaVerbum("aliter") {
         # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
@@ -553,10 +553,10 @@ functio parseSinSententia(in Resolvitor r) -> Sententia {
         # Check for 'aliter si' (else-if) vs 'aliter' (else)
         si p.probaVerbum("si") {
             p.procede()  # si
-            fixum cond = r.expressia()
-            alternans = parseCorpus(r)
+            fixum cond ← r.expressia()
+            alternans ← parseCorpus(r)
         } secus {
-            alternans = parseCorpusAutSententia(r)
+            alternans ← parseCorpusAutSententia(r)
         }
     }
 

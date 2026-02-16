@@ -34,7 +34,7 @@ importa ex "../../ast/lexema" privata SymbolumGenus
 importa ex "../errores" privata ParserErrorCodice
 importa ex "./unaria" privata parseUnaria
 
-functio estAssignabile(de Expressia expr) -> bivalens {
+functio estAssignabile(de Expressia expr) → bivalens {
     discerne expr {
         casu Nomen ut n {
             redde verum
@@ -54,23 +54,23 @@ functio estAssignabile(de Expressia expr) -> bivalens {
 #
 # Assignment is right-associative: a = b = c parses as a = (b = c)
 @ publica
-functio parseAssignatio(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseAssignatio(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Parse left side (could be ternary or lower)
-    varia sinister = parseCondicio(r)
+    varia sinister ← parseCondicio(r)
 
     # Check for assignment operator
     si p.estAssignatioSignum(p.specta(0)) {
-        fixum signum = p.procede().valor
+        fixum signum ← p.procede().valor
 
         si non estAssignabile(sinister) {
             p.renuncia(ParserErrorCodice.InvalidumAssignatio, nihil)
         }
 
         # Right-associative: recurse into assignment
-        fixum dexter = parseAssignatio(r)
+        fixum dexter ← parseAssignatio(r)
 
         redde finge AssignatioExpressia {
             locus: locus,
@@ -90,18 +90,18 @@ functio parseAssignatio(in Resolvitor r) -> Expressia {
 # Latin: condicio sic consequens secus alternans
 # JS:    condicio ? consequens : alternans
 @ publica
-functio parseCondicio(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseCondicio(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Parse condition
-    varia condicio = parseAut(r)
+    varia condicio ← parseAut(r)
 
     # Check for ternary operator (sic/secus or ?/:)
     si p.congruetVerbum("sic") {
-        fixum consequens = r.expressia()
+        fixum consequens ← r.expressia()
         p.expectaVerbum("secus", ParserErrorCodice.ExpectaturSecus)
-        fixum alternans = parseCondicio(r)
+        fixum alternans ← parseCondicio(r)
 
         redde finge CondicioExpressia {
             locus: locus,
@@ -115,9 +115,9 @@ functio parseCondicio(in Resolvitor r) -> Expressia {
     # Faber uses 'sic/secus': x sic y secus z
     si p.congruet(SymbolumGenus.Rogatio) {
         p.renuncia(ParserErrorCodice.SyntaxisAlienaTernaria)
-        fixum consequens = r.expressia()
+        fixum consequens ← r.expressia()
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
-        fixum alternans = parseCondicio(r)
+        fixum alternans ← parseCondicio(r)
 
         redde finge CondicioExpressia {
             locus: locus,
@@ -134,25 +134,25 @@ functio parseCondicio(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: or := and (('||' | 'aut' | '??') and)*
 @ publica
-functio parseAut(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseEt(r)
+functio parseAut(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseEt(r)
 
     dum p.congruet(SymbolumGenus.VelVel) aut p.congruetVerbum("aut") aut p.congruet(SymbolumGenus.RogatioBis) aut p.congruetVerbum("vel") {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        varia signum = operatorSym.valor
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        varia signum ← operatorSym.valor
 
         # SYNTAXIS ALIENA: '??' (JavaScript nullish coalescing)
         # Faber uses 'vel' for nullish coalescing
-        si operatorSym.species == SymbolumGenus.RogatioBis {
+        si operatorSym.species ≡ SymbolumGenus.RogatioBis {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaRogatioBis)
-            signum = "vel"  # Normalize to vel for codegen
+            signum ← "vel"  # Normalize to vel for codegen
         }
 
-        fixum dexter = parseEt(r)
+        fixum dexter ← parseEt(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -167,17 +167,17 @@ functio parseAut(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: and := bitwiseOr (('&&' | 'et') bitwiseOr)*
 @ publica
-functio parseEt(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseBitVel(r)
+functio parseEt(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseBitVel(r)
 
     dum p.congruet(SymbolumGenus.EtEt) aut p.congruetVerbum("et") {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseBitVel(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.valor
+        fixum dexter ← parseBitVel(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -192,17 +192,17 @@ functio parseEt(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: bitwiseOr := bitwiseXor ('|' bitwiseXor)*
 @ publica
-functio parseBitVel(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseBitApex(r)
+functio parseBitVel(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseBitApex(r)
 
     dum p.congruet(SymbolumGenus.Vel) {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseBitApex(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.valor
+        fixum dexter ← parseBitApex(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -217,17 +217,17 @@ functio parseBitVel(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
 @ publica
-functio parseBitApex(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseBitEt(r)
+functio parseBitApex(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseBitEt(r)
 
     dum p.congruet(SymbolumGenus.Apex) {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseBitEt(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.valor
+        fixum dexter ← parseBitEt(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -242,17 +242,17 @@ functio parseBitApex(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: bitwiseAnd := equality ('&' equality)*
 @ publica
-functio parseBitEt(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseAequale(r)
+functio parseBitEt(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseAequale(r)
 
     dum p.congruet(SymbolumGenus.Et) {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseAequale(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.valor
+        fixum dexter ← parseAequale(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -265,19 +265,19 @@ functio parseBitEt(in Resolvitor r) -> Expressia {
 
 # Parse equality expression
 #
-# GRAMMAR: equality := comparison (('==' | '!=' | '===' | '!==' | 'est') comparison)*
+# GRAMMAR: equality := comparison (('≡' | '≠' | 'est') comparison)*
 @ publica
-functio parseAequale(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseComparatio(r)
+functio parseAequale(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseComparatio(r)
 
     dum p.congruet(SymbolumGenus.AequumBis) aut p.congruet(SymbolumGenus.NonAequum) aut p.congruet(SymbolumGenus.AequumTer) aut p.congruet(SymbolumGenus.NonAequumBis) {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseComparatio(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.species ≡ SymbolumGenus.NonAequumBis sic "≠" secus operatorSym.species ≡ SymbolumGenus.AequumTer sic "≡" secus operatorSym.valor
+        fixum dexter ← parseComparatio(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -286,11 +286,11 @@ functio parseAequale(in Resolvitor r) -> Expressia {
     }
 
     # Handle 'non est' type check
-    si p.probaVerbum("non") et p.specta(1).species == SymbolumGenus.Verbum et p.specta(1).verbum == "est" {
+    si p.probaVerbum("non") et p.specta(1).species ≡ SymbolumGenus.Verbum et p.specta(1).verbum ≡ "est" {
         p.procede()
         p.procede()
-        fixum locus = p.praevius().locus
-        fixum scopus = r.adnotatio()
+        fixum locus ← p.praevius().locus
+        fixum scopus ← r.adnotatio()
         redde finge UnariaExpressia {
             locus: locus,
             signum: "!",
@@ -305,8 +305,8 @@ functio parseAequale(in Resolvitor r) -> Expressia {
 
     # Handle 'est' type check
     si p.congruetVerbum("est") {
-        fixum locus = p.praevius().locus
-        fixum scopus = r.adnotatio()
+        fixum locus ← p.praevius().locus
+        fixum scopus ← r.adnotatio()
 
         redde finge EstExpressia {
             locus: locus,
@@ -322,17 +322,17 @@ functio parseAequale(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: comparison := range (('<' | '>' | '<=' | '>=') range)*
 @ publica
-functio parseComparatio(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseAmbitus(r)
+functio parseComparatio(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseAmbitus(r)
 
     dum p.congruet(SymbolumGenus.Minor) aut p.congruet(SymbolumGenus.Maior) aut p.congruet(SymbolumGenus.MinorAequum) aut p.congruet(SymbolumGenus.MaiorAequum) aut p.congruetVerbum("intra") aut p.congruetVerbum("inter") {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseAmbitus(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.valor
+        fixum dexter ← parseAmbitus(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -348,34 +348,34 @@ functio parseComparatio(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
 @ publica
-functio parseAmbitus(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
-    varia initium = parseAdditio(r)
+functio parseAmbitus(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
+    varia initium ← parseAdditio(r)
 
-    varia inclusivum = falsum
-    varia habetAmbitum = falsum
+    varia inclusivum ← falsum
+    varia habetAmbitum ← falsum
 
     si p.congruet(SymbolumGenus.PunctumBis) {
-        habetAmbitum = verum
-        inclusivum = falsum
+        habetAmbitum ← verum
+        inclusivum ← falsum
     } sin p.probaVerbum("ante") {
         p.procede()
-        habetAmbitum = verum
-        inclusivum = falsum
+        habetAmbitum ← verum
+        inclusivum ← falsum
     } sin p.probaVerbum("usque") {
         p.procede()
-        habetAmbitum = verum
-        inclusivum = verum
+        habetAmbitum ← verum
+        inclusivum ← verum
     }
 
     si habetAmbitum {
-        fixum finis = parseAdditio(r)
-        varia gradus = nihil qua si Expressia
+        fixum finis ← parseAdditio(r)
+        varia gradus ← nihil qua si Expressia
 
         si p.probaVerbum("per") {
             p.procede()
-            gradus = parseAdditio(r)
+            gradus ← parseAdditio(r)
         }
 
         redde finge AmbitusExpressia {
@@ -394,17 +394,17 @@ functio parseAmbitus(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: additive := multiplicative (('+' | '-') multiplicative)*
 @ publica
-functio parseAdditio(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseMultiplicatio(r)
+functio parseAdditio(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseMultiplicatio(r)
 
     dum p.congruet(SymbolumGenus.Plus) aut p.congruet(SymbolumGenus.Minus) {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseMultiplicatio(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.valor
+        fixum dexter ← parseMultiplicatio(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,
@@ -419,17 +419,17 @@ functio parseAdditio(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: multiplicative := unary (('*' | '/' | '%') unary)*
 @ publica
-functio parseMultiplicatio(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia sinister = parseUnaria(r)
+functio parseMultiplicatio(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia sinister ← parseUnaria(r)
 
     dum p.congruet(SymbolumGenus.Stella) aut p.congruet(SymbolumGenus.Virgula) aut p.congruet(SymbolumGenus.Centum) {
-        fixum operatorSym = p.praevius()
-        fixum locus = operatorSym.locus
-        fixum signum = operatorSym.valor
-        fixum dexter = parseUnaria(r)
+        fixum operatorSym ← p.praevius()
+        fixum locus ← operatorSym.locus
+        fixum signum ← operatorSym.valor
+        fixum dexter ← parseUnaria(r)
 
-        sinister = finge BinariaExpressia {
+        sinister ← finge BinariaExpressia {
             locus: locus,
             sinister: sinister,
             signum: signum,

@@ -17,7 +17,7 @@
 # =============================================================================
 
 @ publica
-functio glyphDelimiter(de textus token) -> textus {
+functio glyphDelimiter(de textus token) → textus {
     elige token {
         casu "{" { redde "\u2590" }   # Right half block
         casu "}" { redde "\u258C" }   # Left half block
@@ -38,7 +38,7 @@ functio glyphDelimiter(de textus token) -> textus {
 # =============================================================================
 
 @ publica
-functio glyphOperator(de textus token) -> textus {
+functio glyphOperator(de textus token) → textus {
     elige token {
         # Arithmetic
         casu "+" { redde "\u2295" }   # Circled plus
@@ -92,7 +92,7 @@ functio glyphOperator(de textus token) -> textus {
 # =============================================================================
 
 @ publica
-functio glyphPunctuation(de textus token) -> textus {
+functio glyphPunctuation(de textus token) → textus {
     elige token {
         casu ";" { redde "\u204F" }   # Reversed semicolon
         casu "," { redde "\u2E34" }   # Raised comma
@@ -111,7 +111,7 @@ functio glyphPunctuation(de textus token) -> textus {
 # =============================================================================
 
 @ publica
-functio glyphKeyword(de textus token) -> textus {
+functio glyphKeyword(de textus token) → textus {
     elige token {
         # Declarations
         casu "fixum" { redde "\u2261" }       # Identical/immutable
@@ -263,25 +263,25 @@ functio glyphKeyword(de textus token) -> textus {
 # Encode a string to braille representation
 # Each UTF-8 byte maps to U+2800 + byte value
 @ publica
-functio encodeBraille(de textus content) -> textus {
-    varia result = ""
-    varia i = 0
+functio encodeBraille(de textus content) → textus {
+    varia result ← ""
+    varia i ← 0
 
     dum i < content.longitudo() {
-        fixum charCode = content.charCodeAt(i)
+        fixum charCode ← content.charCodeAt(i)
 
         # Handle multi-byte UTF-8 by treating each JS char as a unit
         # For ASCII range (0-127), this is straightforward
         # For extended chars, we encode the code point directly (simplified)
         si charCode < 256 {
             # U+2800 + byte value
-            fixum brailleCode = 10240 + charCode
-            result = result + fromCharCode(brailleCode)
+            fixum brailleCode ← 10240 + charCode
+            result ← result + fromCharCode(brailleCode)
         } secus {
             # For higher code points, encode as multiple braille chars
             # This is a simplification - full UTF-8 encoding would split bytes
-            fixum brailleCode = 10240 + (charCode % 256)
-            result = result + fromCharCode(brailleCode)
+            fixum brailleCode ← 10240 + (charCode % 256)
+            result ← result + fromCharCode(brailleCode)
         }
 
         i += 1
@@ -292,20 +292,20 @@ functio encodeBraille(de textus content) -> textus {
 
 # Decode braille back to text
 @ publica
-functio decodeBraille(de textus braille) -> textus {
-    varia result = ""
-    varia i = 0
+functio decodeBraille(de textus braille) → textus {
+    varia result ← ""
+    varia i ← 0
 
     dum i < braille.longitudo() {
-        fixum charCode = braille.charCodeAt(i)
+        fixum charCode ← braille.charCodeAt(i)
 
         # Check if in braille range
-        si charCode >= 10240 et charCode <= 10495 {
-            fixum originalCode = charCode - 10240
-            result = result + fromCharCode(originalCode)
+        si charCode ≥ 10240 et charCode ≤ 10495 {
+            fixum originalCode ← charCode - 10240
+            result ← result + fromCharCode(originalCode)
         } secus {
             # Pass through non-braille chars
-            result = result + braille[i]
+            result ← result + braille[i]
         }
 
         i += 1
@@ -315,13 +315,13 @@ functio decodeBraille(de textus braille) -> textus {
 }
 
 # Helper: Get char code
-functio charCodeAt(de textus s, de numerus i) -> numerus {
+functio charCodeAt(de textus s, de numerus i) → numerus {
     # This would be implemented by the runtime
     redde s.charCodeAt(i)
 }
 
 # Helper: Create char from code
-functio fromCharCode(de numerus code) -> textus {
+functio fromCharCode(de numerus code) → textus {
     # This would be implemented by the runtime
     redde String.fromCharCode(code)
 }

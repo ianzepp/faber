@@ -10,6 +10,6 @@ importa ex "./generans" privata Generans
 # Callback interface for codegen dispatch functions
 @ publica
 pactum Revocata {
-    functio genExpr(in Generans g, de Expressia e) -> textus
-    functio genStmt(in Generans g, de Sententia s) -> textus
+    functio genExpr(in Generans g, de Expressia e) → textus
+    functio genStmt(in Generans g, de Sententia s) → textus
 }

@@ -2,7 +2,7 @@
 # Maps Faber binary operators to target-language equivalents
 
 - name: addition
-  source: 1 + 2
+  source:1 + 2
   expect:
       ts: '(1 + 2);'
       py: '(1 + 2)'
@@ -16,7 +16,7 @@
           - '1 + 2'
 
 - name: subtraction
-  source: 5 - 3
+  source:5 - 3
   expect:
       ts: '(5 - 3);'
       py: '(5 - 3)'
@@ -30,7 +30,7 @@
           - '5 - 3'
 
 - name: multiplication
-  source: 4 * 2
+  source:4 * 2
   expect:
       ts: '(4 * 2);'
       py: '(4 * 2)'
@@ -44,7 +44,7 @@
           - '4 * 2'
 
 - name: division
-  source: 10 / 2
+  source:10 / 2
   expect:
       ts: '(10 / 2);'
       py: '(10 / 2)'
@@ -58,7 +58,7 @@
           - '10 / 2'
 
 - name: equality comparison
-  source: a == b
+  source:a ≡ b
   expect:
       ts: '(a == b);'
       py: '(a == b)'
@@ -67,10 +67,10 @@
       cpp:
           - '(a == b)'
       fab:
-          - 'a == b'
+          - 'a ≡ b'
 
 - name: logical and with et
-  source: a et b
+  source:a et b
   expect:
       ts: '(a && b);'
       py: '(a and b)'
@@ -81,10 +81,10 @@
       zig:
           - '(a and b)'
       fab:
-          - 'a && b'
+          - 'a et b'
 
 - name: operator precedence - multiplication before addition
-  source: 1 + 2 * 3
+  source:1 + 2 * 3
   expect:
       ts: '(1 + (2 * 3));'
       py: '(1 + (2 * 3))'
@@ -98,7 +98,7 @@
           - '1 + 2 * 3'
 
 - name: operator precedence with parentheses
-  source: (1 + 2) * 3
+  source:(1 + 2) * 3
   expect:
       ts: '((1 + 2) * 3);'
       py: '((1 + 2) * 3)'
@@ -112,7 +112,7 @@
           - '(1 + 2) * 3'
 
 - name: logical aut (OR) operator
-  source: a aut b
+  source:a aut b
   expect:
       ts: '(a || b);'
       py: '(a or b)'
@@ -123,10 +123,10 @@
       zig:
           - '(a or b)'
       fab:
-          - 'a || b'
+          - 'a aut b'
 
 - name: inequality comparison
-  source: a != b
+  source:a ≠ b
   expect:
       ts: '(a != b);'
       py: '(a != b)'
@@ -137,10 +137,10 @@
       zig:
           - '(a != b)'
       fab:
-          - 'a != b'
+          - 'a ≠ b'
 
 - name: less than or equal
-  source: a <= b
+  source:a ≤ b
   expect:
       ts: '(a <= b);'
       py: '(a <= b)'
@@ -151,10 +151,10 @@
       zig:
           - '(a <= b)'
       fab:
-          - 'a <= b'
+          - 'a ≤ b'
 
 - name: greater than or equal
-  source: a >= b
+  source:a ≥ b
   expect:
       ts: '(a >= b);'
       py: '(a >= b)'
@@ -165,10 +165,10 @@
       zig:
           - '(a >= b)'
       fab:
-          - 'a >= b'
+          - 'a ≥ b'
 
 - name: mixed logical operators (precedence)
-  source: a et b aut c
+  source:a et b aut c
   expect:
       ts: '((a && b) || c);'
       py: '((a and b) or c)'
@@ -179,10 +179,10 @@
       zig:
           - '((a and b) or c)'
       fab:
-          - 'a && b || c'
+          - 'a et b aut c'
 
 - name: chained comparisons pattern
-  source: a < b et b < c
+  source:a < b et b < c
   expect:
       ts: '((a < b) && (b < c));'
       py: '((a < b) and (b < c))'
@@ -193,10 +193,10 @@
       zig:
           - '((a < b) and (b < c))'
       fab:
-          - 'a < b && b < c'
+          - 'a < b et b < c'
 
 - name: deeply nested binary expressions
-  source: ((a + b) * (c - d)) / ((e + f) - (g * h))
+  source:((a + b) * (c - d)) / ((e + f) - (g * h))
   expect:
       ts: '(((a + b) * (c - d)) / ((e + f) - (g * h)));'
       py: '(((a + b) * (c - d)) / ((e + f) - (g * h)))'
@@ -213,7 +213,7 @@
 #      Users should use scriptum() for formatted strings instead.
 #      See proba/codegen/expressions/scriptum.yaml for Zig string formatting tests.
 - name: string concatenation
-  source: '"hello" + " " + "world"'
+  source:'"hello" + " " + "world"'
   skip: [zig]
   expect:
       ts: '(("hello" + " ") + "world");'
@@ -226,7 +226,7 @@
           - '"hello" + " " + "world"'
 
 - name: modulo operator
-  source: 10 % 3
+  source:10 % 3
   expect:
       ts: '(10 % 3);'
       py: '(10 % 3)'
@@ -240,7 +240,7 @@
           - '10 % 3'
 
 - name: nullish coalescing (vel)
-  source: value vel defaultValue
+  source:value vel defaultValue
   expect:
       ts: '(value ?? defaultValue);'
       py: '(value if value is not None else defaultValue)'
@@ -254,7 +254,7 @@
           - 'value ?? defaultValue'
 
 - name: range containment with intra (exclusive end)
-  source: x intra 0..100
+  source:x intra 0..100
   expect:
       ts: '(x >= 0 && x < 100);'
       py: '(x >= 0 and x < 100)'
@@ -268,7 +268,7 @@
           - 'x intra 0..100'
 
 - name: range containment with intra (inclusive end with usque)
-  source: age intra 18 usque 65
+  source:age intra 18 usque 65
   expect:
       ts: '(age >= 18 && age <= 65);'
       py: '(age >= 18 and age <= 65)'
@@ -282,7 +282,7 @@
           - 'age intra 18 usque 65'
 
 - name: range containment with intra (explicit exclusive with ante)
-  source: x intra 0 ante 10
+  source:x intra 0 ante 10
   expect:
       ts: '(x >= 0 && x < 10);'
       py: '(x >= 0 and x < 10)'
@@ -296,7 +296,7 @@
           - 'x intra 0 ante 10'
 
 - name: set membership with inter (numeric array)
-  source: age inter [18, 21, 65]
+  source:age inter [18, 21, 65]
   expect:
       ts: '[18, 21, 65].includes(age);'
       py: 'age in [18, 21, 65]'
@@ -310,7 +310,7 @@
           - 'age inter [18, 21, 65]'
 
 - name: set membership with inter (string array)
-  source: status inter ["pending", "active", "paused"]
+  source:status inter ["pending", "active", "paused"]
   expect:
       ts: '["pending", "active", "paused"].includes(status);'
       py: 'status in ["pending", "active", "paused"]'
@@ -324,7 +324,7 @@
           - 'status inter ["pending", "active", "paused"]'
 
 - name: character range containment with intra (exclusive)
-  source: c intra "a".."z"
+  source:c intra "a".."z"
   expect:
       ts: '(c >= "a" && c < "z");'
       py: '(c >= "a" and c < "z")'
@@ -338,7 +338,7 @@
           - 'c intra "a".."z"'
 
 - name: character range containment with intra (inclusive)
-  source: c intra "a" usque "z"
+  source:c intra "a" usque "z"
   expect:
       ts: '(c >= "a" && c <= "z");'
       py: '(c >= "a" and c <= "z")'
@@ -352,7 +352,7 @@
           - 'c intra "a" usque "z"'
 
 - name: character range containment for hex digits
-  source: c intra "0".."9" aut c intra "a".."f" aut c intra "A".."F"
+  source:c intra "0".."9" aut c intra "a".."f" aut c intra "A".."F"
   expect:
       ts: '(((c >= "0" && c < "9") || (c >= "a" && c < "f")) || (c >= "A" && c < "F"));'
       py: '(((c >= "0" and c < "9") or (c >= "a" and c < "f")) or (c >= "A" and c < "F"))'
@@ -363,41 +363,41 @@
       zig:
           - '(((c >= "0" and c < "9") or (c >= "a" and c < "f")) or (c >= "A" and c < "F"))'
       fab:
-          - 'c intra "0".."9" || c intra "a".."f" || c intra "A".."F"'
+          - 'c intra "0".."9" aut c intra "a".."f" aut c intra "A".."F"'
 
 # Ternary Expressions
 # WHY: Tests both symbolic (? :) and Latin (sic/secus) conditional forms
 
 - name: ternary with symbolic syntax
-  source: 'x > 0 ? 1 : 0'
+  source:'x > 0 ? 1 : 0'
   expect:
       ts: '(x > 0) ? 1 : 0;'
       fab:
           - 'x > 0 ? 1 : 0'
 
 - name: ternary with sic secus syntax
-  source: 'x > 0 sic 1 secus 0'
+  source:'x > 0 sic 1 secus 0'
   expect:
       ts: '(x > 0) ? 1 : 0;'
       fab:
           - 'x > 0 ? 1 : 0'
 
 - name: nested ternary expressions
-  source: 'a ? b ? 1 : 2 : 3'
+  source:'a ? b ? 1 : 2 : 3'
   expect:
       ts: 'a ? b ? 1 : 2 : 3;'
       fab:
           - 'a ? b ? 1 : 2 : 3'
 
 - name: ternary with complex condition
-  source: 'x > 0 et y > 0 sic "positive" secus "other"'
+  source:'x > 0 et y > 0 sic "positive" secus "other"'
   expect:
       ts: '((x > 0) && (y > 0)) ? "positive" : "other";'
       fab:
-          - 'x > 0 && y > 0 ? "positive" : "other"'
+          - 'x > 0 et y > 0 ? "positive" : "other"'
 
 - name: ternary with function calls
-  source: 'isValid() ? process(x) : fallback()'
+  source:'isValid() ? process(x) : fallback()'
   expect:
       ts: 'isValid() ? process(x) : fallback();'
       fab:
@@ -407,42 +407,42 @@
 # WHY: Tests bitwise AND, OR, XOR operators
 
 - name: bitwise and
-  source: a & b
+  source:a & b
   expect:
       ts: '(a & b);'
       fab:
           - 'a & b'
 
 - name: bitwise or
-  source: a | b
+  source:a | b
   expect:
       ts: '(a | b);'
       fab:
           - 'a | b'
 
 - name: bitwise xor
-  source: a ^ b
+  source:a ^ b
   expect:
       ts: '(a ^ b);'
       fab:
           - 'a ^ b'
 
 - name: bitwise operators with precedence
-  source: a | b & c
+  source:a | b & c
   expect:
       ts: '(a | (b & c));'
       fab:
           - 'a | b & c'
 
 - name: bitwise xor precedence
-  source: a ^ b | c
+  source:a ^ b | c
   expect:
       ts: '((a ^ b) | c);'
       fab:
           - 'a ^ b | c'
 
 - name: combined bitwise operations
-  source: (flags & MASK) | DEFAULT
+  source:(flags & MASK) | DEFAULT
   expect:
       ts: '((flags & MASK) | DEFAULT);'
       fab:

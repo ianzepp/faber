@@ -7,67 +7,67 @@
 # Run with: bun run faber compile exempla/morphologia.fab
 
 incipit {
-    varia items = [1, 2, 3, 4, 5] qua numerus[]
+    varia items ← [1, 2, 3, 4, 5] qua numerus[]
 
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # FILTER: filtr-
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # filtrata (participle) - returns new filtered list
-    fixum evens = items.filtrata(clausura numerus x: x % 2 == 0)
+    fixum evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)
     scribe "filtrata (returns new):", evens
 
     # TODO (type errors) - filtra (imperative) - mutates in place
-    # varia nums = [1, 2, 3, 4, 5]
+    # varia nums ← [1, 2, 3, 4, 5]
     # nums.filtra(clausura x: x > 2)
     # scribe "filtra (mutates):", nums
 
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # ADD: add-
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # addita (participle) - returns new list with element added
-    fixum extended = items.addita(6)
+    fixum extended ← items.addita(6)
     scribe "addita (returns new):", extended
 
     # appende (imperative) - mutates in place
-    varia list = [1, 2, 3]
+    varia list ← [1, 2, 3]
     list.appende(4)
     scribe "appende (mutates):", list
 
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # REVERSE: invert-/invers-
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # inversa (participle) - returns new reversed list
-    fixum reversed = items.inversa()
+    fixum reversed ← items.inversa()
     scribe "inversa (returns new):", reversed
 
     # inverte (imperative) - mutates in place
-    varia toReverse = [1, 2, 3]
+    varia toReverse ← [1, 2, 3]
     toReverse.inverte()
     scribe "inverte (mutates):", toReverse
 
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # SORT: ordin-
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # ordinata (participle) - returns new sorted list
-    fixum sorted = items.ordinata()
+    fixum sorted ← items.ordinata()
     scribe "ordinata (returns new):", sorted
 
     # NOTE: ordina (imperative) conflicts with keyword - use ordinata for now
 
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # MAP: mapp-
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # mappata (participle) - returns new mapped list
-    fixum doubled = items.mappata(clausura numerus x: x * 2)
+    fixum doubled ← items.mappata(clausura numerus x: x * 2)
     scribe "mappata (returns new):", doubled
 
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # Original list unchanged by participle operations
-    # ==========================================================================
+    # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     scribe "original items:", items
 }

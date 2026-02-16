@@ -24,8 +24,8 @@ importa ex "../../ast/typus" privata TypusAnnotatio
 
 # Resolve a clausura expression (clausura x: x + 1)
 @ publica
-functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
-    fixum a = r.analyzator()
+functio resolveClausura(Resolvitor r, Expressia clausuraExpr) → SemanticTypus {
+    fixum a ← r.analyzator()
 
     discerne clausuraExpr {
         casu ClausuraExpressia ut l {
@@ -33,18 +33,18 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
             a.intraScopum(ScopusSpecies.Functio)
 
             # Define parameters in scope with resolved types
-            varia paramTypi = [] innatum lista<SemanticTypus>
+            varia paramTypi ← [] innatum lista<SemanticTypus>
             itera ex l.parametra fixum param {
                 # Resolve parameter type from annotation if present
-                varia paramTypus = IGNOTUM qua SemanticTypus
+                varia paramTypus ← IGNOTUM qua SemanticTypus
                 si nonnihil param.typus {
-                    paramTypus = resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio)
+                    paramTypus ← resolveTypusAnnotatio(r, param.typus novum TypusAnnotatio)
                 } secus {
                     a.error("Closure parameter missing type annotation", param.locus, "Use type-first syntax: (numerus x) -> { ... }")
                 }
                 paramTypi.appende(paramTypus)
 
-                a.scopus.symbola[param.nomen] = {
+                a.scopus.symbola[param.nomen] ← {
                     nomen: param.nomen,
                     semanticTypus: paramTypus,
                     species: SymbolumSpecies.Parametrum,
@@ -54,23 +54,23 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
             }
 
             # Resolve body (expression or block)
-            varia reditusTypus = VACUUM
+            varia reditusTypus ← VACUUM
             discerne l.corpus {
                 casu Massa ut m {
                     r.sententia(m.valor)
                     discerne m.valor {
                         casu MassaSententia ut body {
-                            fixum corpusLista = body.corpus
+                            fixum corpusLista ← body.corpus
                             si corpusLista.longitudo() > 0 {
-                                fixum ult = corpusLista[corpusLista.longitudo() - 1]
+                                fixum ult ← corpusLista[corpusLista.longitudo() - 1]
                                 discerne ult {
                                     casu ReddeSententia ut s {
                                         si nonnihil s.valor {
-                                            reditusTypus = r.synthesize(s.valor qua Expressia)
+                                            reditusTypus ← r.synthesize(s.valor qua Expressia)
                                         }
                                     }
                                     casu ExpressiaSententia ut s {
-                                        reditusTypus = r.synthesize(s.expressia)
+                                        reditusTypus ← r.synthesize(s.expressia)
                                     }
                                     casu _ tacet
                                 }
@@ -80,7 +80,7 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
                     }
                 }
                 casu Expr ut e {
-                    reditusTypus = r.synthesize(e.valor)
+                    reditusTypus ← r.synthesize(e.valor)
                 }
             }
 
@@ -102,7 +102,7 @@ functio resolveClausura(Resolvitor r, Expressia clausuraExpr) -> SemanticTypus {
 
 # Resolve a finge expression (tagged union construction)
 @ publica
-functio resolveFingeExpr(Resolvitor r, Expressia fingeExpr) -> SemanticTypus {
+functio resolveFingeExpr(Resolvitor r, Expressia fingeExpr) → SemanticTypus {
     discerne fingeExpr {
         casu FingeExpressia ut f {
             # Resolve all field values
@@ -130,23 +130,23 @@ functio resolveFingeExpr(Resolvitor r, Expressia fingeExpr) -> SemanticTypus {
 
 # Resolve a cede (await) expression
 @ publica
-functio resolveCedeExpr(Resolvitor r, Expressia cedeExpr) -> SemanticTypus {
-    fixum a = r.analyzator()
+functio resolveCedeExpr(Resolvitor r, Expressia cedeExpr) → SemanticTypus {
+    fixum a ← r.analyzator()
 
     discerne cedeExpr {
         casu CedeExpressia ut c {
-            fixum promissumTypus = r.synthesize(c.argumentum)
+            fixum promissumTypus ← r.synthesize(c.argumentum)
 
             # Check we're in an async context
             si non a.currentFunctioAsync et non a.currentFunctioGenerator {
-                fixum err = cedeOutsideAsyncError()
+                fixum err ← cedeOutsideAsyncError()
                 a.error(err.textus, c.locus, err.auxilium)
             }
 
             # Unwrap promissum<T> to T
             discerne promissumTypus {
                 casu Genericum ut g {
-                    si g.nomen == "promissum" et g.parametri.longitudo() > 0 {
+                    si g.nomen ≡ "promissum" et g.parametri.longitudo() > 0 {
                         redde g.parametri.primus()
                     }
                 }
@@ -167,7 +167,7 @@ functio resolveCedeExpr(Resolvitor r, Expressia cedeExpr) -> SemanticTypus {
 
 # Resolve a novum (new) expression
 @ publica
-functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) -> SemanticTypus {
+functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) → SemanticTypus {
     discerne novumExpr {
         casu NovumExpressia ut n {
             # Resolve constructor arguments
@@ -197,11 +197,11 @@ functio resolveNovumExpr(Resolvitor r, Expressia novumExpr) -> SemanticTypus {
 
 # Resolve a ternary conditional expression
 @ publica
-functio resolveCondicio(Resolvitor r, Expressia condicioExpr) -> SemanticTypus {
+functio resolveCondicio(Resolvitor r, Expressia condicioExpr) → SemanticTypus {
     discerne condicioExpr {
         casu CondicioExpressia ut c {
             r.synthesize(c.condicio)
-            fixum consequensTypus = r.synthesize(c.consequens)
+            fixum consequensTypus ← r.synthesize(c.consequens)
             r.synthesize(c.alternans)
 
             # Return the consequent type (simplification)

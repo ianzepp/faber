@@ -35,19 +35,19 @@ importa ex "../errores" privata ParserErrorCodice
 # Return value is optional - bare 'redde' returns void.
 # Doesn't consume expression if next token is closing brace.
 @ publica
-functio parseReddeSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseReddeSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'redde' keyword
     p.expectaVerbum("redde", ParserErrorCodice.ExpectaturRedde)
 
     # Check if there's a return value
     # Don't parse expression if we hit closing brace or end
-    varia valor = nihil qua si Expressia
+    varia valor ← nihil qua si Expressia
 
     si non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
-        valor = r.expressia()
+        valor ← r.expressia()
     }
 
     redde finge ReddeSententia {
@@ -62,9 +62,9 @@ functio parseReddeSententia(in Resolvitor r) -> Sententia {
 #
 # Exits the innermost loop.
 @ publica
-functio parseRumpeSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseRumpeSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'rumpe' keyword (already validated by caller)
     p.procede()
@@ -80,9 +80,9 @@ functio parseRumpeSententia(in Resolvitor r) -> Sententia {
 #
 # Skips to next loop iteration.
 @ publica
-functio parsePergeSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parsePergeSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'perge' keyword (already validated by caller)
     p.procede()
@@ -100,15 +100,15 @@ functio parsePergeSententia(in Resolvitor r) -> Sententia {
 # - iace (throw): recoverable, can be caught
 # - mori (die): fatal/panic, unrecoverable
 @ publica
-functio parseIaceSententia(in Resolvitor r, bivalens fatale) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseIaceSententia(in Resolvitor r, bivalens fatale) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume keyword (iace or mori, already validated by caller)
     p.procede()
 
     # Parse the error expression
-    fixum argumentum = r.expressia()
+    fixum argumentum ← r.expressia()
 
     redde finge IaceSententia {
         locus: locus,
@@ -132,14 +132,14 @@ functio parseIaceSententia(in Resolvitor r, bivalens fatale) -> Sententia {
 #   scribe "Found § errors", count  →  scribe scriptum("Found § errors", count)
 #   scribe "hello"                  →  scribe scriptum("hello")
 @ publica
-functio parseScribeSententia(in Resolvitor r, ScribeGradus gradus) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseScribeSententia(in Resolvitor r, ScribeGradus gradus) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume keyword (already validated by caller)
     p.procede()
 
-    varia argumenta = [] innatum lista<Expressia>
+    varia argumenta ← [] innatum lista<Expressia>
     argumenta.appende(parseScribeElementum(r))
 
     # Parse additional comma-separated items
@@ -159,28 +159,28 @@ functio parseScribeSententia(in Resolvitor r, ScribeGradus gradus) -> Sententia 
 # WHY: Syntactic sugar - string literals in scribe statements are implicitly
 # wrapped in scriptum() for consistent formatting semantics. The § placeholder
 # count determines how many following comma-separated arguments are consumed.
-functio parseScribeElementum(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
+functio parseScribeElementum(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
 
     # String literals become scriptum expressions
     si p.proba(SymbolumGenus.Textus) {
-        fixum token = p.procede()
-        fixum locus = token.locus
-        fixum textus exemplar = token.valor
+        fixum token ← p.procede()
+        fixum locus ← token.locus
+        fixum textus exemplar ← token.valor
 
         # Count § placeholders to determine how many args to consume
-        varia placeholderNumerus = 0
-        varia numerus i = 0
+        varia placeholderNumerus ← 0
+        varia numerus i ← 0
         dum i < exemplar.longitudo() {
-            si exemplar[i] == "§" {
+            si exemplar[i] ≡ "§" {
                 placeholderNumerus += 1
             }
             i += 1
         }
 
-        varia scriptumArgumenta = [] innatum lista<Expressia>
+        varia scriptumArgumenta ← [] innatum lista<Expressia>
 
-        varia numerus j = 0
+        varia numerus j ← 0
         dum j < placeholderNumerus {
             si non p.congruet(SymbolumGenus.Coma) {
                 p.renuncia(

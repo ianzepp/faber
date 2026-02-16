@@ -18,7 +18,7 @@
 
 # Basic interface with one method
 - name: simple pactum with one method
-  source: 'pactum Greeter { functio greet() -> textus }'
+  source:'pactum Greeter { functio greet() → textus }'
   expect:
       ts:
           - 'interface Greeter'
@@ -38,15 +38,15 @@
           - '//   requires fn greet() []const u8'
       fab:
           - 'pactum Greeter'
-          - 'functio greet() -> textus'
+          - 'functio greet() → textus'
 
 # Multiple methods
 # WHY: 'lege' is now a reserved keyword for stdin reading, using 'accipe' (receive) instead
 - name: pactum with multiple methods
   source: |
       pactum Readable {
-        functio accipe() -> textus
-        functio claude() -> vacuum
+        functio accipe() → textus
+        functio claude() → vacuum
       }
   expect:
       ts:
@@ -67,13 +67,13 @@
           - '// pactum Readable'
       fab:
           - 'pactum Readable'
-          - 'functio accipe() -> textus'
-          - 'functio claude() -> vacuum'
+          - 'functio accipe() → textus'
+          - 'functio claude() → vacuum'
 
 - name: pactum method with post modifiers
   source: |
       pactum Guard {
-        functio check(textus data) errata err immutata -> bivalens
+        functio check(textus data) errata err immutata → bivalens
       }
   expect:
       ts:
@@ -86,7 +86,7 @@
 
 # Method with typed parameter
 - name: pactum method with parameter
-  source: 'pactum Comparable { functio compare(numerus other) -> numerus }'
+  source:'pactum Comparable { functio compare(numerus other) → numerus }'
   expect:
       ts:
           - 'interface Comparable'
@@ -103,7 +103,7 @@
           - '// pactum Comparable'
       fab:
           - 'pactum Comparable'
-          - 'functio compare(numerus other) -> numerus'
+          - 'functio compare(numerus other) → numerus'
 
 # =============================================================================
 # Type Parameters (Generics)
@@ -111,7 +111,7 @@
 
 # Generic pactum with type parameter
 - name: pactum with type parameter
-  source: 'pactum Container<T> { functio adde(T item) -> vacuum }'
+  source:'pactum Container<T> { functio adde(T item) → vacuum }'
   expect:
       ts:
           - 'interface Container<T>'
@@ -128,7 +128,7 @@
           - '// pactum Container'
       fab:
           - 'pactum Container<T>'
-          - 'functio adde(T item) -> vacuum'
+          - 'functio adde(T item) → vacuum'
 
 # =============================================================================
 # Async Methods
@@ -139,7 +139,7 @@
   source: |
       pactum Fetcher {
           @ futura
-          functio fetch() -> textus
+          functio fetch() → textus
       }
   expect:
       ts:
@@ -158,7 +158,7 @@
       fab:
           - 'pactum Fetcher'
           - '@ futura'
-          - 'functio fetch() -> textus'
+          - 'functio fetch() → textus'
 
 # =============================================================================
 # Empty Pactum
@@ -166,7 +166,7 @@
 
 # Empty pactum (marker interface)
 - name: empty pactum
-  source: 'pactum Marker { }'
+  source:'pactum Marker { }'
   expect:
       ts:
           - 'interface Marker {'
@@ -192,7 +192,7 @@
 - name: pactum with getter method
   source: |
       pactum Entity {
-        functio id() -> textus
+        functio id() → textus
       }
   expect:
       ts:
@@ -210,11 +210,11 @@
           - '// pactum Entity'
       fab:
           - 'pactum Entity'
-          - 'functio id() -> textus'
+          - 'functio id() → textus'
 
 # Pactum with multiple type parameters
 - name: pactum with multiple type parameters
-  source: 'pactum Mapper<K, V> { functio map(K key) -> V }'
+  source:'pactum Mapper<K, V> { functio map(K key) → V }'
   expect:
       ts:
           - 'interface Mapper<K, V>'
@@ -231,18 +231,18 @@
           - '// pactum Mapper'
       fab:
           - 'pactum Mapper<K, V>'
-          - 'functio map(K key) -> V'
+          - 'functio map(K key) → V'
 
 # Pactum with many methods (CRUD operations)
 # WHY: 'lege' is now a reserved keyword for stdin reading, using 'accipe' (receive) instead
 - name: pactum with many methods
   source: |
       pactum Repository {
-        functio crea() -> vacuum
-        functio accipe() -> textus
-        functio renova() -> vacuum
-        functio dele() -> vacuum
-        functio inveni() -> textus
+        functio crea() → vacuum
+        functio accipe() → textus
+        functio renova() → vacuum
+        functio dele() → vacuum
+        functio inveni() → textus
       }
   expect:
       ts:
@@ -272,19 +272,19 @@
           - '// pactum Repository'
       fab:
           - 'pactum Repository'
-          - 'functio crea() -> vacuum'
-          - 'functio accipe() -> textus'
-          - 'functio renova() -> vacuum'
-          - 'functio dele() -> vacuum'
-          - 'functio inveni() -> textus'
+          - 'functio crea() → vacuum'
+          - 'functio accipe() → textus'
+          - 'functio renova() → vacuum'
+          - 'functio dele() → vacuum'
+          - 'functio inveni() → textus'
 
 # Pactum with mixed async and sync methods
 - name: pactum with mixed async and sync methods
   source: |
       pactum DataService {
-        functio sync() -> textus
+        functio sync() → textus
         @ futura
-        functio async() -> textus
+        functio async() → textus
       }
   expect:
       ts:
@@ -305,13 +305,13 @@
           - '// pactum DataService'
       fab:
           - 'pactum DataService'
-          - 'functio sync() -> textus'
+          - 'functio sync() → textus'
           - '@ futura'
-          - 'functio async() -> textus'
+          - 'functio async() → textus'
 
 # Pactum with generic constraint
 - name: pactum with generic constraint
-  source: 'pactum Comparable<T> { functio compare(T other) -> numerus }'
+  source:'pactum Comparable<T> { functio compare(T other) → numerus }'
   expect:
       ts:
           - 'interface Comparable<T>'
@@ -328,16 +328,16 @@
           - '// pactum Comparable'
       fab:
           - 'pactum Comparable<T>'
-          - 'functio compare(T other) -> numerus'
+          - 'functio compare(T other) → numerus'
 
 # Pactum with void and value-returning methods
 - name: pactum with void and value-returning methods
   source: |
       pactum Service {
-        functio start() -> vacuum
-        functio status() -> textus
-        functio stop() -> vacuum
-        functio config() -> textus
+        functio start() → vacuum
+        functio status() → textus
+        functio stop() → vacuum
+        functio config() → textus
       }
   expect:
       ts:
@@ -364,7 +364,7 @@
           - '// pactum Service'
       fab:
           - 'pactum Service'
-          - 'functio start() -> vacuum'
-          - 'functio status() -> textus'
-          - 'functio stop() -> vacuum'
-          - 'functio config() -> textus'
+          - 'functio start() → vacuum'
+          - 'functio status() → textus'
+          - 'functio stop() → vacuum'
+          - 'functio config() → textus'

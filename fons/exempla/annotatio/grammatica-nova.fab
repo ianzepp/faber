@@ -6,9 +6,9 @@
 #
 # See: https://github.com/ianzepp/faber/issues/293
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # importa - Module Imports (NEW SYNTAX per issue #304)
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Syntax: importa ex "<path>" privata|publica <name> [ut <alias>]
 # Syntax: importa ex "<path>" privata|publica * ut <alias>  (wildcard)
 
@@ -19,15 +19,15 @@ importa ex "./utils" privata formata
 importa ex "./constants" privata * ut constants
 importa ex "./config" privata * ut cfg
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # § sectio - File Sections
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
 § sectio "types"
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ publica / @ privata - Visibility
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
 @ publica
 genus PublicaRes {}
@@ -35,19 +35,19 @@ genus PublicaRes {}
 @ privata
 genus PrivataRes {}
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ futura - Async Functions
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
 @ publica
 @ futura
-functio fetchData(textus url) -> textus {
+functio fetchData(textus url) → textus {
     redde ""
 }
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ cli - CLI Program Declaration
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Keyword: cli
 # Grammar: @ cli <string>
 
@@ -56,9 +56,9 @@ functio fetchData(textus url) -> textus {
 @ descriptio "An example CLI program"
 incipit argumenta args {}
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ optio - CLI Options
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Keyword: optio
 # Grammar: @ optio [type] <binding> [brevis <s>] [longum <s>] [descriptio <s>]
 
@@ -66,18 +66,18 @@ incipit argumenta args {}
 @ optio textus output brevis "o" longum "output" descriptio "Output file path"
 @ optio numerus count longum "count" descriptio "Number of iterations"
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ operandus - CLI Positional Arguments
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Keyword: operandus
 # Grammar: @ operandus [ceteri] <type> <binding> [descriptio <s>]
 
 @ operandus textus input descriptio "Input file"
 @ operandus ceteri textus files descriptio "Additional files"
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ imperium / @ alias - CLI Subcommands
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Keyword: imperium
 # Grammar: @ imperium <string>
 #
@@ -88,17 +88,17 @@ incipit argumenta args {}
 @ alias "b"
 @ descriptio "Build the project"
 @ optio bivalens release longum "release" descriptio "Build in release mode"
-functio build(si bivalens release) -> vacuum {}
+functio build(si bivalens release) → vacuum {}
 
 @ imperium "test"
 @ alias "t"
 @ descriptio "Run tests"
 @ optio textus filter brevis "f" longum "filter" descriptio "Filter tests by name"
-functio test(si textus filter) -> vacuum {}
+functio test(si textus filter) → vacuum {}
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ nomen - Named Blocks (for config)
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Keyword: nomen
 # Grammar: @ nomen <string>
 
@@ -118,9 +118,9 @@ fac {}
 @ nomen "genus"
 fac {}
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ innatum / @ verte / @ radix / @ subsidia - Stdlib Annotations
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # These follow the same keyword-dispatch pattern
 
 @ innatum ts "Map", py "dict", rs "HashMap"
@@ -132,9 +132,9 @@ genus Tabula {}
 @ externa
 functio sorta()
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ externa - External Declaration
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
 @ externa
-functio nativeFunction(numerus x) -> numerus
+functio nativeFunction(numerus x) → numerus

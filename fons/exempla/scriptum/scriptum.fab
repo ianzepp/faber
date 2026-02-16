@@ -1,18 +1,18 @@
 # Format string expressions using scriptum()
 
 incipit ergo cura arena {
-    fixum name = "Marcus"
-    fixum age = 30
+    fixum name ← "Marcus"
+    fixum age ← 30
 
     # Single placeholder
-    fixum greeting = scriptum("Salve, §!", name)
+    fixum greeting ← scriptum("Salve, §!", name)
     scribe greeting
 
     # Multiple placeholders
-    fixum info = scriptum("§ is § years old", name, age)
+    fixum info ← scriptum("§ is § years old", name, age)
     scribe info
 
     # With expression
-    fixum calc = scriptum("10 + 20 = §", 10 + 20)
+    fixum calc ← scriptum("10 + 20 ← §", 10 + 20)
     scribe calc
 }

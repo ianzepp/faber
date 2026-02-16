@@ -30,7 +30,7 @@ fn emit_stmt(stmt: &Stmt, indent: &str) -> String {
         } => {
             let pub_prefix = if *publica { "publica " } else { "" };
             format!(
-                "{}{}typus {} = {}",
+                "{}{}typus {} ← {}",
                 indent,
                 pub_prefix,
                 nomen,
@@ -210,7 +210,7 @@ fn emit_varia(stmt: &Stmt, indent: &str) -> String {
             result.push_str(&format!(": {}", emit_typus(t)));
         }
         if let Some(v) = valor {
-            result.push_str(&format!(" = {}", emit_expr(v)));
+            result.push_str(&format!(" ← {}", emit_expr(v)));
         }
         result
     } else {
@@ -251,7 +251,7 @@ fn emit_functio(stmt: &Stmt, indent: &str) -> String {
         result.push_str(&params_str.join(", "));
         result.push(')');
         if let Some(t) = typus_reditus {
-            result.push_str(" -> ");
+            result.push_str(" → ");
             result.push_str(&emit_typus(t));
         }
         if let Some(c) = corpus {
@@ -301,7 +301,7 @@ fn emit_genus(stmt: &Stmt, indent: &str) -> String {
                 result.push_str(&emit_typus(t));
             }
             if let Some(v) = &c.valor {
-                result.push_str(" = ");
+                result.push_str(" ← ");
                 result.push_str(&emit_expr(v));
             }
             result.push('\n');
@@ -353,7 +353,7 @@ fn emit_pactum(stmt: &Stmt, indent: &str) -> String {
             result.push_str(&params_str.join(", "));
             result.push(')');
             if let Some(t) = &m.typus_reditus {
-                result.push_str(" -> ");
+                result.push_str(" → ");
                 result.push_str(&emit_typus(t));
             }
             result.push('\n');
@@ -386,7 +386,7 @@ fn emit_ordo(stmt: &Stmt, indent: &str) -> String {
         for m in membra {
             result.push_str(&format!("{}{}", indent, m.nomen));
             if let Some(v) = &m.valor {
-                result.push_str(" = ");
+                result.push_str(" ← ");
                 result.push_str(v);
             }
             result.push('\n');
@@ -577,7 +577,7 @@ fn emit_expr(expr: &Expr) -> String {
         Expr::Binaria {
             signum, sin, dex, ..
         } => {
-            format!("{} {} {}", emit_expr(sin), signum, emit_expr(dex))
+            format!("{} {} {}", emit_expr(sin), faber_op(signum), emit_expr(dex))
         }
         Expr::Unaria { signum, arg, .. } => {
             if signum == "nihil" || signum == "non" || signum == "nonnihil" {
@@ -589,7 +589,7 @@ fn emit_expr(expr: &Expr) -> String {
         Expr::Assignatio {
             signum, sin, dex, ..
         } => {
-            format!("{} {} {}", emit_expr(sin), signum, emit_expr(dex))
+            format!("{} {} {}", emit_expr(sin), faber_op(signum), emit_expr(dex))
         }
         Expr::Vocatio { callee, args, .. } => {
             let args_str: Vec<String> = args.iter().map(|a| emit_expr(a)).collect();
@@ -651,7 +651,7 @@ fn emit_expr(expr: &Expr) -> String {
                 ClausuraCorpus::Stmt(s) => emit_stmt(s, ""),
                 ClausuraCorpus::Expr(e) => emit_expr(e),
             };
-            format!("({}) => {}", params_str.join(", "), body)
+            format!("({}) → {}", params_str.join(", "), body)
         }
         Expr::Novum {
             callee, args, init, ..
@@ -740,7 +740,7 @@ fn emit_typus(typus: &Typus) -> String {
         }
         Typus::Functio { params, returns } => {
             let params_str: Vec<String> = params.iter().map(emit_typus).collect();
-            let mut result = format!("({}) -> ", params_str.join(", "));
+            let mut result = format!("({}) → ", params_str.join(", "));
             if let Some(r) = returns {
                 result.push_str(&emit_typus(r));
             }
@@ -784,10 +784,24 @@ fn emit_param(p: &Param) -> String {
     }
     result.push_str(&p.nomen);
     if let Some(d) = &p.default {
-        result.push_str(" = ");
+        result.push_str(" ← ");
         result.push_str(&emit_expr(d));
     }
     result
+}
+
+fn faber_op(op: &str) -> &str {
+    match op {
+        "=" => "←",
+        "==" | "===" => "≡",
+        "!=" | "!==" => "≠",
+        "<=" => "≤",
+        ">=" => "≥",
+        "->" => "→",
+        "&&" => "et",
+        "||" => "aut",
+        _ => op,
+    }
 }
 
 fn escape_string(s: &str) -> String {

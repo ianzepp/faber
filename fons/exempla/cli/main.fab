@@ -14,6 +14,6 @@ incipit {}
 
 @ imperium "version"
 @ alias "v"
-functio version() -> vacuum {
+functio version() → vacuum {
     scribe "Example CLI v1.0.0"
 }

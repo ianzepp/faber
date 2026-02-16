@@ -15,10 +15,10 @@ importa ex "../../ast/expressia" privata Expressia
 
 # Resolve a unary expression
 @ publica
-functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
+functio resolveUnaria(Resolvitor r, Expressia unariaExpr) → SemanticTypus {
     discerne unariaExpr {
         casu UnariaExpressia ut u {
-            fixum argTypus = r.synthesize(u.argumentum)
+            fixum argTypus ← r.synthesize(u.argumentum)
 
             # Logical negation: !, non
             si u.signum inter ["!", "non"] {
@@ -36,7 +36,7 @@ functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
             }
 
             # Numeric negation - preserve the numeric type
-            si u.signum == "-" {
+            si u.signum ≡ "-" {
                 discerne argTypus {
                     casu Primitivum ut p {
                         si estNumericum(p.nomen) {
@@ -49,7 +49,7 @@ functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
             }
 
             # Bitwise NOT (~)
-            si u.signum == "~" {
+            si u.signum ≡ "~" {
                 redde NUMERUS
             }
 
@@ -67,6 +67,6 @@ functio resolveUnaria(Resolvitor r, Expressia unariaExpr) -> SemanticTypus {
 # ============================================================================
 
 @ publica
-functio estNumericum(textus nomen) -> bivalens {
+functio estNumericum(textus nomen) → bivalens {
     redde nomen inter ["numerus", "fractus", "decimus", "magnus"]
 }

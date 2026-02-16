@@ -1,31 +1,31 @@
 # Type checking with est, boolean checking with verum/falsum
 #
-# est = "is" (type check, like instanceof)
-# verum x = "x is true" (strict boolean check)
-# falsum x = "x is false" (strict boolean check)
+# est ← "is" (type check, like instanceof)
+# verum x ← "x is true" (strict boolean check)
+# falsum x ← "x is false" (strict boolean check)
 
 incipit {
     # Null checking with est
-    fixum si numerus maybeValue = nihil
-    fixum isNull = maybeValue est nihil
+    fixum si numerus maybeValue ← nihil
+    fixum isNull ← maybeValue est nihil
     scribe isNull
 
     # Boolean true check with verum prefix
-    fixum enabled = verum
-    fixum isTrue = verum enabled
+    fixum enabled ← verum
+    fixum isTrue ← verum enabled
     scribe isTrue
 
     # Boolean false check with falsum prefix
-    fixum disabled = falsum
-    fixum isFalse = falsum disabled
+    fixum disabled ← falsum
+    fixum isFalse ← falsum disabled
     scribe isFalse
 
     # Chained with logical operators
-    fixum si textus name = nihil
-    fixum needsDefault = name est nihil et verum enabled
+    fixum si textus name ← nihil
+    fixum needsDefault ← name est nihil et verum enabled
     scribe needsDefault
 
     # Parenthesized for clarity
-    fixum bothNull = (maybeValue est nihil) et (name est nihil)
+    fixum bothNull ← (maybeValue est nihil) et (name est nihil)
     scribe bothNull
 }

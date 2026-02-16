@@ -52,13 +52,13 @@ importa ex "../errores" privata ParserErrorCodice
 # Handles terminals: literals, identifiers, ego, grouped expressions.
 # Routes to specialized parsers for compound forms (arrays, objects, lambdas).
 @ publica
-functio parsePrimaria(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum sym = p.specta(0)
-    fixum locus = sym.locus
+functio parsePrimaria(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum sym ← p.specta(0)
+    fixum locus ← sym.locus
 
     # Numeric literal
-    si sym.species == SymbolumGenus.Numerus {
+    si sym.species ≡ SymbolumGenus.Numerus {
         p.procede()
         redde finge Littera {
             locus: locus,
@@ -68,7 +68,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Float literal
-    si sym.species == SymbolumGenus.Fractus {
+    si sym.species ≡ SymbolumGenus.Fractus {
         p.procede()
         redde finge Littera {
             locus: locus,
@@ -78,7 +78,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # String literal
-    si sym.species == SymbolumGenus.Textus {
+    si sym.species ≡ SymbolumGenus.Textus {
         p.procede()
         redde finge Littera {
             locus: locus,
@@ -88,7 +88,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Template literal
-    si sym.species == SymbolumGenus.Exemplar {
+    si sym.species ≡ SymbolumGenus.Exemplar {
         p.procede()
         redde finge Littera {
             locus: locus,
@@ -98,7 +98,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Boolean: verum
-    si sym.species == SymbolumGenus.Verum {
+    si sym.species ≡ SymbolumGenus.Verum {
         p.procede()
         redde finge Littera {
             locus: locus,
@@ -108,7 +108,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Boolean: falsum
-    si sym.species == SymbolumGenus.Falsum {
+    si sym.species ≡ SymbolumGenus.Falsum {
         p.procede()
         redde finge Littera {
             locus: locus,
@@ -118,7 +118,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Null: nihil
-    si sym.species == SymbolumGenus.Nihil {
+    si sym.species ≡ SymbolumGenus.Nihil {
         p.procede()
         redde finge Littera {
             locus: locus,
@@ -133,7 +133,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Identifier
-    si sym.species == SymbolumGenus.Nomen {
+    si sym.species ≡ SymbolumGenus.Nomen {
         p.procede()
         redde finge Nomen {
             locus: locus,
@@ -150,20 +150,20 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Grouped expression: ( expr )
-    si sym.species == SymbolumGenus.ParensSin {
+    si sym.species ≡ SymbolumGenus.ParensSin {
         p.procede()
-        fixum expr = r.expressia()
+        fixum expr ← r.expressia()
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
         redde expr
     }
 
     # Array literal: [ ... ]
-    si sym.species == SymbolumGenus.QuadratusSin {
+    si sym.species ≡ SymbolumGenus.QuadratusSin {
         redde parseSeriesExpressia(r)
     }
 
     # Object literal: { ... }
-    si sym.species == SymbolumGenus.UncusSin {
+    si sym.species ≡ SymbolumGenus.UncusSin {
         redde parseObiectumExpressia(r)
     }
 
@@ -198,7 +198,7 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
     }
 
     # Keyword identifiers (allow keywords as names in expression position)
-    si sym.species == SymbolumGenus.Verbum {
+    si sym.species ≡ SymbolumGenus.Verbum {
         p.procede()
         redde finge Nomen {
             locus: locus,
@@ -228,24 +228,24 @@ functio parsePrimaria(in Resolvitor r) -> Expressia {
 #   filter := ['non'] ('ubi' expression | IDENT)
 #   transform := ('prima' | 'ultima' | 'summa') expression?
 @ publica
-functio parseAbExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseAbExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("ab", ParserErrorCodice.ExpectaturExpressia)
 
-    fixum fons = r.expressia()
+    fixum fons ← r.expressia()
 
-    varia negata = falsum
+    varia negata ← falsum
     si p.probaVerbum("non") {
-        negata = verum
+        negata ← verum
         p.procede()
     }
 
-    varia filtrum = nihil qua si AbFiltrum
+    varia filtrum ← nihil qua si AbFiltrum
 
-    functio estCatenaVerbumSym(de Symbolum symbolum) -> bivalens {
-        si symbolum.species !== SymbolumGenus.Verbum {
+    functio estCatenaVerbumSym(de Symbolum symbolum) → bivalens {
+        si symbolum.species ≠ SymbolumGenus.Verbum {
             redde falsum
         }
         si symbolum.verbum inter ["prima", "ultima", "summa"] {
@@ -257,17 +257,17 @@ functio parseAbExpressia(in Resolvitor r) -> Expressia {
     si non p.proba(SymbolumGenus.Coma) {
         si p.probaVerbum("ubi") {
             p.procede()
-            fixum condicio = r.expressia()
-            filtrum = {
+            fixum condicio ← r.expressia()
+            filtrum ← {
                 locus: locus,
                 habetUbi: verum,
                 condicio: condicio
             } novum AbFiltrum
         } sin (p.proba(SymbolumGenus.Nomen) aut p.proba(SymbolumGenus.Verbum)) {
-            fixum prox = p.specta(0)
+            fixum prox ← p.specta(0)
             si non estCatenaVerbumSym(prox) et non p.probaVerbum("clausura") {
-                fixum nomenSym = p.procede()
-                filtrum = {
+                fixum nomenSym ← p.procede()
+                filtrum ← {
                     locus: nomenSym.locus,
                     habetUbi: falsum,
                     condicio: finge Nomen {
@@ -279,9 +279,9 @@ functio parseAbExpressia(in Resolvitor r) -> Expressia {
         }
     }
 
-    varia lista<CatenaGradus> gradus = []
+    varia lista<CatenaGradus> gradus ← []
     si p.congruet(SymbolumGenus.Coma) aut estCatenaVerbumSym(p.specta(0)) {
-        gradus = parseCatenaGradus(r)
+        gradus ← parseCatenaGradus(r)
     }
 
     redde finge AbExpressia {
@@ -294,12 +294,12 @@ functio parseAbExpressia(in Resolvitor r) -> Expressia {
 }
 
 @ publica
-functio parseCatenaGradus(in Resolvitor r) -> lista<CatenaGradus> {
-    fixum p = r.parser()
-    varia gradus = [] innatum lista<CatenaGradus>
+functio parseCatenaGradus(in Resolvitor r) → lista<CatenaGradus> {
+    fixum p ← r.parser()
+    varia gradus ← [] innatum lista<CatenaGradus>
 
-    functio estCatenaVerbumSym(de Symbolum symbolum) -> bivalens {
-        si symbolum.species !== SymbolumGenus.Verbum {
+    functio estCatenaVerbumSym(de Symbolum symbolum) → bivalens {
+        si symbolum.species ≠ SymbolumGenus.Verbum {
             redde falsum
         }
         si symbolum.verbum inter ["prima", "ultima", "summa", "ordina", "collige", "grupa", "maximum", "minimum", "medium", "numera"] {
@@ -309,43 +309,43 @@ functio parseCatenaGradus(in Resolvitor r) -> lista<CatenaGradus> {
     }
 
     dum estCatenaVerbumSym(p.specta(0)) {
-        fixum verbSym = p.procede()
-        fixum verbum = verbSym.verbum qua textus
-        fixum locus = verbSym.locus
+        fixum verbSym ← p.procede()
+        fixum verbum ← verbSym.verbum qua textus
+        fixum locus ← verbSym.locus
 
-        varia argumentum = nihil qua si Expressia
-        varia proprietas = nihil qua si Expressia
-        varia directio = nihil qua si textus
+        varia argumentum ← nihil qua si Expressia
+        varia proprietas ← nihil qua si Expressia
+        varia directio ← nihil qua si textus
 
         elige verbum {
             casu "prima" {
-                argumentum = r.expressia()
+                argumentum ← r.expressia()
             }
             casu "ultima" {
-                argumentum = r.expressia()
+                argumentum ← r.expressia()
             }
             casu "summa" {
                 # summa optionally takes property: summa pretium
-                si p.specta(0).species == SymbolumGenus.Nomen et non estCatenaVerbumSym(p.specta(0)) {
-                    proprietas = r.expressia()
+                si p.specta(0).species ≡ SymbolumGenus.Nomen et non estCatenaVerbumSym(p.specta(0)) {
+                    proprietas ← r.expressia()
                 }
             }
             casu "ordina" {
                 # ordina per property [ascendens|descendens]
                 p.expectaVerbum("per", ParserErrorCodice.ExpectaturNomen)
-                proprietas = r.expressia()
+                proprietas ← r.expressia()
                 si p.congruetVerbum("ascendens") {
-                    directio = "ascendens"
+                    directio ← "ascendens"
                 } sin p.congruetVerbum("descendens") {
-                    directio = "descendens"
+                    directio ← "descendens"
                 }
             }
             casu "collige" {
-                proprietas = r.expressia()
+                proprietas ← r.expressia()
             }
             casu "grupa" {
                 p.expectaVerbum("per", ParserErrorCodice.ExpectaturNomen)
-                proprietas = r.expressia()
+                proprietas ← r.expressia()
             }
             casu "maximum" { }
             casu "minimum" { }
@@ -379,13 +379,13 @@ functio parseCatenaGradus(in Resolvitor r) -> lista<CatenaGradus> {
 #
 # Example: [1, 2, 3], [sparge items, 4, 5]
 @ publica
-functio parseSeriesExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseSeriesExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expecta(SymbolumGenus.QuadratusSin, ParserErrorCodice.ExpectaturQuadratusSin)
 
-    varia elementa = [] innatum lista<Expressia>
+    varia elementa ← [] innatum lista<Expressia>
 
     si non p.proba(SymbolumGenus.QuadratusDex) {
         elementa.appende(parseElementumSeries(r))
@@ -409,14 +409,14 @@ functio parseSeriesExpressia(in Resolvitor r) -> Expressia {
 
 # Parse a single array element (supports sparge)
 @ publica
-functio parseElementumSeries(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseElementumSeries(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     si p.probaVerbum("sparge") {
         # WHY: Spread elements lower to DispersioElementum for codegen
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge DispersioElementum {
             locus: locus,
             argumentum: argumentum
@@ -435,14 +435,14 @@ functio parseElementumSeries(in Resolvitor r) -> Expressia {
 #             | IDENTIFIER ':' expression     # identifier key with value
 #             | IDENTIFIER                    # shorthand { name } = { name: name }
 @ publica
-functio parseObiectumProprietas(in Resolvitor r) -> ObiectumProprietas {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseObiectumProprietas(in Resolvitor r) → ObiectumProprietas {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Spread: sparge expr
     si p.probaVerbum("sparge") {
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
 
         # WHY: We wrap spread in ObiectumProprietas with special marker
         #      by using the spread expression as both key and value
@@ -457,19 +457,19 @@ functio parseObiectumProprietas(in Resolvitor r) -> ObiectumProprietas {
     }
 
     # Parse the key
-    varia clavis = nihil qua si Expressia
-    varia computatum = falsum
+    varia clavis ← nihil qua si Expressia
+    varia computatum ← falsum
 
     # Computed property: [expr]
     si p.congruet(SymbolumGenus.QuadratusSin) {
-        clavis = r.expressia()
+        clavis ← r.expressia()
         p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
-        computatum = verum
+        computatum ← verum
     }
     # String key: "name"
     sin p.proba(SymbolumGenus.Textus) {
-        fixum strSym = p.procede()
-        clavis = finge Littera {
+        fixum strSym ← p.procede()
+        clavis ← finge Littera {
             locus: strSym.locus,
             species: LitteraGenus.Textus,
             crudus: strSym.valor
@@ -477,8 +477,8 @@ functio parseObiectumProprietas(in Resolvitor r) -> ObiectumProprietas {
     }
     # Identifier key: name
     secus {
-        fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
-        clavis = finge Nomen {
+        fixum nomenSym ← p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+        clavis ← finge Nomen {
             locus: nomenSym.locus,
             valor: nomenSym.valor
         } qua Expressia
@@ -486,7 +486,7 @@ functio parseObiectumProprietas(in Resolvitor r) -> ObiectumProprietas {
 
     # Value follows colon, otherwise shorthand
     si p.congruet(SymbolumGenus.Colon) {
-        fixum valor = r.expressia()
+        fixum valor ← r.expressia()
 
         redde {
             locus: locus,
@@ -520,13 +520,13 @@ functio parseObiectumProprietas(in Resolvitor r) -> ObiectumProprietas {
 #   { [key]: value }              # computed
 #   { sparge base, extra: 1 }    # spread
 @ publica
-functio parseObiectumExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseObiectumExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
-    varia proprietates = [] innatum lista<ObiectumProprietas>
+    varia proprietates ← [] innatum lista<ObiectumProprietas>
 
     si non p.proba(SymbolumGenus.UncusDex) {
         fac {
@@ -560,43 +560,43 @@ functio parseObiectumExpressia(in Resolvitor r) -> Expressia {
 #
 # Note: Block form uses MassaSententia as corpus for later codegen.
 @ publica
-functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseClausuraExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     # Consume 'clausura'
     p.expectaVerbum("clausura", ParserErrorCodice.ExpectaturClausura)
 
-    varia parametra = [] innatum lista<ClausuraParametrum>
+    varia parametra ← [] innatum lista<ClausuraParametrum>
 
     # Check for immediate : or -> (zero-param clausura)
     si non p.proba(SymbolumGenus.Colon) et non p.proba(SymbolumGenus.Sagitta) {
         # Parse parameters until we hit : or ->
         fac {
-            fixum paramLocus = p.locusActualis()
+            fixum paramLocus ← p.locusActualis()
 
             # Type-first parameters: clausura <typus> <nomen>
-            varia paramTypus = nihil qua si TypusAnnotatio
+            varia paramTypus ← nihil qua si TypusAnnotatio
             si p.estTypusNomen(p.specta(0)) {
-                paramTypus = r.adnotatio()
+                paramTypus ← r.adnotatio()
             } sin p.proba(SymbolumGenus.ParensSin) {
                 # Function type annotation: (T) -> U
-                paramTypus = r.adnotatio()
-            } sin p.proba(SymbolumGenus.Verbum) et p.specta(1).species == SymbolumGenus.Nomen {
-                paramTypus = r.adnotatio()
+                paramTypus ← r.adnotatio()
+            } sin p.proba(SymbolumGenus.Verbum) et p.specta(1).species ≡ SymbolumGenus.Nomen {
+                paramTypus ← r.adnotatio()
             } sin p.proba(SymbolumGenus.Nomen) et (
-                p.specta(1).species == SymbolumGenus.Nomen aut
-                p.specta(1).species == SymbolumGenus.Minor aut
-                p.specta(1).species == SymbolumGenus.QuadratusSin aut
-                p.specta(1).species == SymbolumGenus.Rogatio
+                p.specta(1).species ≡ SymbolumGenus.Nomen aut
+                p.specta(1).species ≡ SymbolumGenus.Minor aut
+                p.specta(1).species ≡ SymbolumGenus.QuadratusSin aut
+                p.specta(1).species ≡ SymbolumGenus.Rogatio
             ) {
-                paramTypus = r.adnotatio()
+                paramTypus ← r.adnotatio()
             } secus {
                 p.renuncia(ParserErrorCodice.ExpectaturTypusNomen, scriptum("got '§'", p.specta(0).valor))
-                paramTypus = typusSimplicis("ignotum", paramLocus)
+                paramTypus ← typusSimplicis("ignotum", paramLocus)
             }
 
-            fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+            fixum nomenSym ← p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
 
             parametra.appende({
                 locus: paramLocus,
@@ -607,20 +607,20 @@ functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
     }
 
     # Optional return type: -> Type
-    varia typusReditus = nihil qua si TypusAnnotatio
+    varia typusReditus ← nihil qua si TypusAnnotatio
     si p.congruet(SymbolumGenus.Sagitta) {
-        typusReditus = r.adnotatio()
+        typusReditus ← r.adnotatio()
     }
 
     # Body: ':' expression or blockStmt
-    varia corpus = nihil qua si ClausuraCorpus
+    varia corpus ← nihil qua si ClausuraCorpus
     si p.congruet(SymbolumGenus.Colon) {
-        corpus = finge Expr { valor: r.expressia() } qua ClausuraCorpus
+        corpus ← finge Expr { valor: r.expressia() } qua ClausuraCorpus
     } sin p.proba(SymbolumGenus.UncusSin) {
-        corpus = finge Massa { valor: r.massa() } qua ClausuraCorpus
+        corpus ← finge Massa { valor: r.massa() } qua ClausuraCorpus
     } secus {
         p.expecta(SymbolumGenus.Colon, ParserErrorCodice.ExpectaturColon)
-        corpus = finge Expr { valor: r.expressia() } qua ClausuraCorpus
+        corpus ← finge Expr { valor: r.expressia() } qua ClausuraCorpus
     }
 
     redde finge ClausuraExpressia {
@@ -637,36 +637,36 @@ functio parseClausuraExpressia(in Resolvitor r) -> Expressia {
 #   fingeExpr := 'finge' IDENTIFIER ('{' fields? '}')? ('qua' typeAnnotation)?
 #   field := IDENTIFIER (':' expression)?
 @ publica
-functio parseFingeExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseFingeExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("finge", ParserErrorCodice.ExpectaturExpressia)
 
-    fixum variansSym = p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
-    fixum variansNomen = variansSym.valor
+    fixum variansSym ← p.expecta(SymbolumGenus.Nomen, ParserErrorCodice.ExpectaturNomen)
+    fixum variansNomen ← variansSym.valor
 
-    varia campi = [] innatum lista<ObiectumProprietas>
+    varia campi ← [] innatum lista<ObiectumProprietas>
 
     si p.congruet(SymbolumGenus.UncusSin) {
         si non p.proba(SymbolumGenus.UncusDex) {
             fac {
-                fixum campusLocus = p.locusActualis()
+                fixum campusLocus ← p.locusActualis()
 
-                fixum nomenSym = p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
+                fixum nomenSym ← p.expectaNomenAutVerbum(ParserErrorCodice.ExpectaturNomen)
                 # WHY: Keep Nomen as Expressia to avoid TS literal widening.
-                fixum Expressia clavis = finge Nomen {
+                fixum Expressia clavis ← finge Nomen {
                     locus: nomenSym.locus,
                     valor: nomenSym.valor
                 } qua Expressia
 
                 # WHY: Preserve Expressia union type when assigning later expressions.
-                varia Expressia valor = clavis
-                varia brevitas = verum
+                varia Expressia valor ← clavis
+                varia brevitas ← verum
 
                 si p.congruet(SymbolumGenus.Colon) {
-                    valor = r.expressia()
-                    brevitas = falsum
+                    valor ← r.expressia()
+                    brevitas ← falsum
                 }
 
                 campi.appende({
@@ -683,9 +683,9 @@ functio parseFingeExpressia(in Resolvitor r) -> Expressia {
         p.expecta(SymbolumGenus.UncusDex, ParserErrorCodice.ExpectaturUncusDex)
     }
 
-    varia scopus = nihil qua si TypusAnnotatio
+    varia scopus ← nihil qua si TypusAnnotatio
     si p.congruetVerbum("qua") {
-        scopus = r.adnotatio()
+        scopus ← r.adnotatio()
     }
 
     redde finge FingeExpressia {
@@ -706,25 +706,25 @@ functio parseFingeExpressia(in Resolvitor r) -> Expressia {
 #
 # Example: praefixum(VERSION), praefixum { computeConstant() }
 @ publica
-functio parsePraefixumExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parsePraefixumExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("praefixum", ParserErrorCodice.ExpectaturExpressia)
 
-    varia corpus = nihil qua si ClausuraCorpus
+    varia corpus ← nihil qua si ClausuraCorpus
 
     si p.proba(SymbolumGenus.UncusSin) {
         # WHY: Block form is allowed in grammar, but AST expects an expression.
-        fixum massa = r.massa()
-        corpus = finge Massa { valor: massa } qua ClausuraCorpus
+        fixum massa ← r.massa()
+        corpus ← finge Massa { valor: massa } qua ClausuraCorpus
     } sin p.congruet(SymbolumGenus.ParensSin) {
-        fixum expr = r.expressia()
+        fixum expr ← r.expressia()
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
-        corpus = finge Expr { valor: expr } qua ClausuraCorpus
+        corpus ← finge Expr { valor: expr } qua ClausuraCorpus
     } secus {
         p.renuncia(ParserErrorCodice.ExpectaturUncusVelParens, scriptum("got '§'", p.specta(0).valor))
-        corpus = finge Expr {
+        corpus ← finge Expr {
             valor: finge Littera {
                 locus: locus,
                 species: LitteraGenus.Nihil,
@@ -741,12 +741,12 @@ functio parsePraefixumExpressia(in Resolvitor r) -> Expressia {
 
 # Extract an expression from a block, preferring trailing redde/expr
 @ publica
-functio exMassaExpressia(de Sententia massa, de Locus locus) -> Expressia {
+functio exMassaExpressia(de Sententia massa, de Locus locus) → Expressia {
     # WHY: Blocks are statements; we salvage the last expression when present.
     discerne massa {
         casu MassaSententia ut m {
             si m.corpus.longitudo() > 0 {
-                fixum ult = m.corpus[m.corpus.longitudo() - 1]
+                fixum ult ← m.corpus[m.corpus.longitudo() - 1]
                 discerne ult {
                     casu ReddeSententia ut r {
                         si nonnihil r.valor {
@@ -776,17 +776,17 @@ functio exMassaExpressia(de Sententia massa, de Locus locus) -> Expressia {
 #
 # Example: scriptum("Hello, §!", name)
 @ publica
-functio parseScriptumExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseScriptumExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("scriptum", ParserErrorCodice.ExpectaturExpressia)
     p.expecta(SymbolumGenus.ParensSin, ParserErrorCodice.ExpectaturParensSin)
 
-    fixum exemplarSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
-    fixum exemplar = exemplarSym.valor
+    fixum exemplarSym ← p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
+    fixum exemplar ← exemplarSym.valor
 
-    varia argumenta = [] innatum lista<Expressia>
+    varia argumenta ← [] innatum lista<Expressia>
     dum p.congruet(SymbolumGenus.Coma) {
         argumenta.appende(r.expressia())
     }
@@ -806,16 +806,16 @@ functio parseScriptumExpressia(in Resolvitor r) -> Expressia {
 #
 # Example: lege (all stdin), lege lineam (one line)
 @ publica
-functio parseLegeExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseLegeExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("lege", ParserErrorCodice.ExpectaturExpressia)
 
-    varia modus = "all" qua textus
+    varia modus ← "all" qua textus
     si p.probaVerbum("lineam") {
         p.procede()
-        modus = "line"
+        modus ← "line"
     }
 
     redde finge LegeExpressia {
@@ -833,13 +833,13 @@ functio parseLegeExpressia(in Resolvitor r) -> Expressia {
 #
 # Example: sed "\\d+", sed "(?i)[a-z]+"
 @ publica
-functio parseRegexExpressia(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseRegexExpressia(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("sed", ParserErrorCodice.ExpectaturExpressia)
 
-    fixum patternSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextusPostSed)
+    fixum patternSym ← p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextusPostSed)
 
     redde finge LitteraRegex {
         locus: locus,

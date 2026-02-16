@@ -41,11 +41,11 @@ genus FaberGenerator implet Generans {
 
     # Generate indentation string for current depth
     @ publica
-    functio ind() -> textus {
-        varia result = ""
-        varia i = 0
+    functio ind() → textus {
+        varia result ← ""
+        varia i ← 0
         dum i < ego.profunditas {
-            result = result + ego.indentum
+            result ← result + ego.indentum
             i += 1
         }
         redde result
@@ -69,7 +69,7 @@ genus FaberGenerator implet Generans {
 
     # Format leading comments for a node
     @ publica
-    functio notaePrae(de ignotum nodus) -> textus {
+    functio notaePrae(de ignotum nodus) → textus {
         si ego.stripComments {
             redde ""
         }
@@ -78,7 +78,7 @@ genus FaberGenerator implet Generans {
 
     # Format trailing comments for a node
     @ publica
-    functio notaePost(de ignotum nodus) -> textus {
+    functio notaePost(de ignotum nodus) → textus {
         si ego.stripComments {
             redde ""
         }
@@ -94,7 +94,7 @@ importa ex "../../ast/radix" privata Nota
 importa ex "../../ast/radix" privata NotaGenus
 importa ex "../../ast/radix" privata NodusRadix
 
-functio formataNotaFaber(de Nota nota) -> textus {
+functio formataNotaFaber(de Nota nota) → textus {
     elige nota.species {
         casu NotaGenus.Massa reddit scriptum("/*§*/", nota.valor)
         casu NotaGenus.Docens reddit scriptum("/**§*/", nota.valor)
@@ -104,39 +104,39 @@ functio formataNotaFaber(de Nota nota) -> textus {
 }
 
 # Format leading comments (emitted on separate lines)
-functio formataNotaePraeFaber(ignotum nodus, de textus indentum) -> textus {
+functio formataNotaePraeFaber(ignotum nodus, de textus indentum) → textus {
     si nihil nodus {
         redde ""
     }
 
-    fixum radix = nodus novum NodusRadix
-    fixum notae = radix.notaePrae
+    fixum radix ← nodus novum NodusRadix
+    fixum notae ← radix.notaePrae
     si nihil notae {
         redde ""
     }
 
-    varia out = ""
+    varia out ← ""
     itera ex notae fixum nota {
-        out = out + indentum + formataNotaFaber(nota) + "\n"
+        out ← out + indentum + formataNotaFaber(nota) + "\n"
     }
     redde out
 }
 
 # Format trailing comments (emitted inline at end)
-functio formataNotaePostFaber(ignotum nodus) -> textus {
+functio formataNotaePostFaber(ignotum nodus) → textus {
     si nihil nodus {
         redde ""
     }
 
-    fixum radix = nodus novum NodusRadix
-    fixum notae = radix.notaePost
+    fixum radix ← nodus novum NodusRadix
+    fixum notae ← radix.notaePost
     si nihil notae {
         redde ""
     }
 
-    varia out = ""
+    varia out ← ""
     itera ex notae fixum nota {
-        out = out + " " + formataNotaFaber(nota)
+        out ← out + " " + formataNotaFaber(nota)
     }
     redde out
 }
@@ -147,7 +147,7 @@ functio formataNotaePostFaber(ignotum nodus) -> textus {
 
 # Create a new FaberGenerator with default settings
 @ publica
-functio creaFaberGenerator() -> FaberGenerator {
+functio creaFaberGenerator() → FaberGenerator {
     redde novum FaberGenerator {
         profunditas: 0,
         indentum: "  ",

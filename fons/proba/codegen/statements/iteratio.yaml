@@ -14,7 +14,7 @@
 
 # Iterate over array
 - name: iterate over array
-  source: 'ex items pro item { process(item) }'
+  source:'ex items pro item { process(item) }'
   expect:
       ts:
           - 'for (const item of items)'
@@ -41,7 +41,7 @@
 
 # Exclusive range (0..10 means 0-9)
 - name: exclusive range loop
-  source: 'ex 0..10 pro i { scribe i }'
+  source:'ex 0..10 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 0; i < 10; i++)'
@@ -63,7 +63,7 @@
 
 # Inclusive range (0 usque 10 means 0-10)
 - name: inclusive range loop
-  source: 'ex 0 usque 10 pro i { scribe i }'
+  source:'ex 0 usque 10 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 0; i <= 10; i++)'
@@ -85,7 +85,7 @@
 
 # Range with step
 - name: range loop with step
-  source: 'ex 0..10 per 2 pro i { scribe i }'
+  source:'ex 0..10 per 2 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 0; i < 10; i += 2)'
@@ -111,7 +111,7 @@
 
 # Async for-await-of
 - name: async for-await loop
-  source: 'ex stream fiet chunk { process(chunk) }'
+  source:'ex stream fiet chunk { process(chunk) }'
   expect:
       ts:
           - 'for await (const chunk of stream)'
@@ -213,7 +213,7 @@
 
 # Iterate over string characters
 - name: iterate over string characters
-  source: 'ex "hello" pro char { scribe char }'
+  source:'ex "hello" pro char { scribe char }'
   expect:
       ts:
           - 'for (const char of "hello")'
@@ -249,7 +249,7 @@
 
 # Iterate with descending range
 - name: descending range loop
-  source: 'ex 10..0 per -1 pro i { scribe i }'
+  source:'ex 10..0 per -1 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 10; i < 0; i += -1)'
@@ -263,7 +263,7 @@
 
 # Iterate over member expression
 - name: iterate over member expression
-  source: 'ex obj.items pro item { process(item) }'
+  source:'ex obj.items pro item { process(item) }'
   expect:
       ts:
           - 'for (const item of obj.items)'
@@ -277,7 +277,7 @@
 
 # Iterate over function result
 - name: iterate over function result
-  source: 'ex getItems() pro item { process(item) }'
+  source:'ex getItems() pro item { process(item) }'
   expect:
       ts:
           - 'for (const item of getItems())'
@@ -316,7 +316,7 @@
 
 # Iteration with perge (continue with condition)
 - name: continue with condition
-  source: 'ex items pro item { si item.skip { perge } process(item) }'
+  source:'ex items pro item { si item.skip { perge } process(item) }'
   expect:
       ts:
           - 'for (const item of items)'
@@ -336,7 +336,7 @@
 
 # Empty range iteration
 - name: empty range iteration
-  source: 'ex 5..5 pro i { scribe i }'
+  source:'ex 5..5 pro i { scribe i }'
   expect:
       ts:
           - 'for (let i = 5; i < 5; i++)'
@@ -350,7 +350,7 @@
 
 # Large range iteration
 - name: large range iteration
-  source: 'ex 0..1000 pro i { process(i) }'
+  source:'ex 0..1000 pro i { process(i) }'
   expect:
       ts:
           - 'for (let i = 0; i < 1000; i++)'
@@ -368,7 +368,7 @@
 # WHY: Tests 'de' keyword for iterating over object keys
 
 - name: for-in iterate object keys
-  source: 'de obj pro key { scribe key }'
+  source:'de obj pro key { scribe key }'
   expect:
       ts:
           - 'for (const key in obj)'
@@ -378,7 +378,7 @@
           - 'scribe key'
 
 - name: for-in with value access
-  source: 'de config pro key { scribe config[key] }'
+  source:'de config pro key { scribe config[key] }'
   expect:
       ts:
           - 'for (const key in config)'
@@ -390,7 +390,7 @@
 - name: for-in with condition
   source: |
       de settings pro key {
-          si key == "debug" { perge }
+          si key ≡ "debug" { perge }
           process(key)
       }
   expect:
@@ -401,12 +401,12 @@
           - 'process(key)'
       fab:
           - 'de settings pro key'
-          - 'si key == "debug"'
+          - 'si key ≡ "debug"'
           - 'perge'
           - 'process(key)'
 
 - name: for-in with ergo shorthand
-  source: 'de map pro k ergo results.push(k)'
+  source:'de map pro k ergo results.push(k)'
   expect:
       ts:
           - 'for (const k in map)'
@@ -418,7 +418,7 @@
 - name: for-in with block body
   source: |
       de data pro key {
-          varia value = data[key]
+          varia value ← data[key]
           process(key, value)
       }
   expect:
@@ -428,5 +428,5 @@
           - 'process(key, value)'
       fab:
           - 'de data pro key'
-          - 'varia value = data[key]'
+          - 'varia value ← data[key]'
           - 'process(key, value)'

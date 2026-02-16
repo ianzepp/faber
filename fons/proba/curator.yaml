@@ -8,7 +8,7 @@
 
 # curator maps to std.mem.Allocator in Zig
 - name: 'curator type annotation'
-  source: 'functio process(curator alloc) { }'
+  source:'functio process(curator alloc) { }'
   zig:
       - 'fn process(alloc: std.mem.Allocator) void'
   rs:
@@ -19,7 +19,7 @@
 
 # curator param with other params
 - name: 'curator with other params'
-  source: 'functio build(curator mem, textus name) { }'
+  source:'functio build(curator mem, textus name) { }'
   zig:
       - 'fn build(mem: std.mem.Allocator, name: []const u8) void'
   rs:
@@ -30,7 +30,7 @@
 
 # curator with return type
 - name: 'curator with return type'
-  source: 'functio create(curator alloc) -> numerus { redde 42 }'
+  source:'functio create(curator alloc) → numerus { redde 42 }'
   zig:
       - 'fn create(alloc: std.mem.Allocator) i64'
       - 'return 42;'
@@ -39,7 +39,7 @@
       - 'return 42;'
   skip: [ts, py, cpp]
   fab:
-      - 'functio create(curator alloc) -> numerus {'
+      - 'functio create(curator alloc) → numerus {'
       - 'redde 42'
 
 # =============================================================================
@@ -51,7 +51,7 @@
 - name: 'lista.adde uses curator param'
   source: |
       functio build(curator memoria) {
-        varia items = []
+        varia items ← []
         items.adde(1)
       }
   zig:
@@ -63,28 +63,28 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio build(curator memoria) {'
-      - 'varia items = []'
+      - 'varia items ← []'
       - 'items.adde(1)'
 
 # Without curator param, GC languages work but Zig requires cura block
 # WHY: Zig has no implicit global allocator; skip Zig for this test
 - name: 'lista.adde without curator param'
   source: |
-      varia items = []
+      varia items ← []
       items.adde(1)
   rs:
       - 'let mut items = vec![]'
       - 'items.push(1)'
   skip: [ts, py, cpp, zig]
   fab:
-      - 'varia items = []'
+      - 'varia items ← []'
       - 'items.adde(1)'
 
 # praepone - Lista methods receive allocator explicitly
 - name: 'lista.praepone uses curator param'
   source: |
       functio build(curator mem) {
-        varia items = []
+        varia items ← []
         items.praepone(1)
       }
   zig:
@@ -96,7 +96,7 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio build(curator mem) {'
-      - 'varia items = []'
+      - 'varia items ← []'
       - 'items.praepone(1)'
 
 # =============================================================================
@@ -111,7 +111,7 @@
 - name: 'tabula.pone uses curator param'
   source: |
       functio build(curator a) {
-        varia m = {}
+        varia m ← {}
         m.pone("key", 42)
       }
   zig:
@@ -124,7 +124,7 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio build(curator a) {'
-      - 'varia m = {}'
+      - 'varia m ← {}'
       - 'm.pone("key", 42)'
 
 # tabula.pone without type annotation - tabula isn't detected, falls through
@@ -132,14 +132,14 @@
 # WHY: Skip Zig - without curator, allocating ops fail
 - name: 'tabula.pone without type annotation'
   source: |
-      varia m = {}
+      varia m ← {}
       m.pone("key", 42)
   rs:
       - 'let mut m = {}'
       - 'm.pone("key", 42)'
   skip: [ts, py, cpp, zig]
   fab:
-      - 'varia m = {}'
+      - 'varia m ← {}'
       - 'm.pone("key", 42)'
 
 # =============================================================================
@@ -153,7 +153,7 @@
 - name: 'copia.adde uses curator param'
   source: |
       functio build(curator allocator) {
-        varia copia<textus> s = {}
+        varia copia<textus> s ← {}
         s.adde("item")
       }
   zig:
@@ -165,20 +165,20 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio build(curator allocator) {'
-      - 'varia copia<textus> s = {}'
+      - 'varia copia<textus> s ← {}'
       - 's.adde("item")'
 
 # copia.adde without curator param - skip Zig (requires cura block)
 - name: 'copia.adde without curator param'
   source: |
-      varia copia<textus> s = {}
+      varia copia<textus> s ← {}
       s.adde("item")
   rs:
       - 'HashSet<String>'
       - '.insert("item")'
   skip: [ts, py, cpp, zig]
   fab:
-      - 'varia copia<textus> s = {}'
+      - 'varia copia<textus> s ← {}'
       - 's.adde("item")'
 
 # =============================================================================
@@ -189,11 +189,11 @@
 - name: 'different curator names in different functions'
   source: |
       functio first(curator a) {
-        varia x = []
+        varia x ← []
         x.adde(1)
       }
       functio second(curator b) {
-        varia y = []
+        varia y ← []
         y.adde(2)
       }
   zig:
@@ -207,10 +207,10 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio first(curator a) {'
-      - 'varia x = []'
+      - 'varia x ← []'
       - 'x.adde(1)'
       - 'functio second(curator b) {'
-      - 'varia y = []'
+      - 'varia y ← []'
       - 'y.adde(2)'
 
 # =============================================================================
@@ -221,7 +221,7 @@
 - name: 'curator in nested if block'
   source: |
       functio process(curator mem) {
-        varia items = []
+        varia items ← []
         si verum {
           items.adde(1)
         }
@@ -236,7 +236,7 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio process(curator mem) {'
-      - 'varia items = []'
+      - 'varia items ← []'
       - 'si verum {'
       - 'items.adde(1)'
 
@@ -244,7 +244,7 @@
 - name: 'curator in loop body'
   source: |
       functio process(curator mem) {
-        varia items = []
+        varia items ← []
         dum verum {
           items.adde(1)
           rumpe
@@ -261,7 +261,7 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio process(curator mem) {'
-      - 'varia items = []'
+      - 'varia items ← []'
       - 'dum verum {'
       - 'items.adde(1)'
       - 'rumpe'
@@ -274,7 +274,7 @@
 - name: 'array literal with curator'
   source: |
       functio build(curator m) {
-        varia nums = [1, 2, 3]
+        varia nums ← [1, 2, 3]
         nums.adde(4)
       }
   zig:
@@ -286,20 +286,20 @@
   skip: [ts, py, cpp]
   fab:
       - 'functio build(curator m) {'
-      - 'varia nums = [1, 2, 3]'
+      - 'varia nums ← [1, 2, 3]'
       - 'nums.adde(4)'
 
 # Array literal without curator param - skip Zig (requires cura block)
 - name: 'array literal without curator param'
   source: |
-      varia nums = [1, 2, 3]
+      varia nums ← [1, 2, 3]
       nums.adde(4)
   rs:
       - 'let mut nums = vec![1, 2, 3]'
       - 'nums.push(4)'
   skip: [ts, py, cpp, zig]
   fab:
-      - 'varia nums = [1, 2, 3]'
+      - 'varia nums ← [1, 2, 3]'
       - 'nums.adde(4)'
 
 # =============================================================================
@@ -310,7 +310,7 @@
 - name: 'function without curator param'
   source: |
       functio noAlloc() {
-        varia items = []
+        varia items ← []
         items.adde(1)
       }
   rs:
@@ -320,18 +320,18 @@
   skip: [ts, py, cpp, zig]
   fab:
       - 'functio noAlloc() {'
-      - 'varia items = []'
+      - 'varia items ← []'
       - 'items.adde(1)'
 
 # Curator isolation between functions - skip Zig (second function has no allocator)
 - name: 'curator does not leak between functions'
   source: |
       functio withCurator(curator custom) {
-        varia a = []
+        varia a ← []
         a.adde(1)
       }
       functio withoutCurator() {
-        varia b = []
+        varia b ← []
         b.adde(2)
       }
   rs:
@@ -342,8 +342,8 @@
   skip: [ts, py, cpp, zig]
   fab:
       - 'functio withCurator(curator custom) {'
-      - 'varia a = []'
+      - 'varia a ← []'
       - 'a.adde(1)'
       - 'functio withoutCurator() {'
-      - 'varia b = []'
+      - 'varia b ← []'
       - 'b.adde(2)'

@@ -7,13 +7,13 @@
 incipit {}
 
 @ imperium "hello"
-functio hello(textus name) -> vacuum {
+functio hello(textus name) → vacuum {
     scribe "Hello, §!", name
 }
 
 @ imperium "goodbye"
 @ alias "bye"
-functio goodbye(textus name, si bivalens formal ut f) -> vacuum {
+functio goodbye(textus name, si bivalens formal ut f) → vacuum {
     si f {
         scribe "Farewell, §.", name
     }

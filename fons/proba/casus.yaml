@@ -7,7 +7,7 @@
 
 # Standard lowercase keywords work
 - name: 'lowercase si keyword'
-  source: 'si verum { scribe "yes" }'
+  source:'si verum { scribe "yes" }'
   ts:
       - 'if (true)'
       - 'console.log("yes")'
@@ -22,23 +22,23 @@
       - 'scribe("yes")'
 
 - name: 'lowercase fixum keyword'
-  source: 'fixum x = 1'
+  source:'fixum x ← 1'
   ts: 'const x = 1;'
   py: 'x = 1'
   rs:
       - 'let x = 1;'
-  fab: 'fixum x = 1'
+  fab:'fixum x ← 1'
 
 - name: 'lowercase varia keyword'
-  source: 'varia y = 2'
+  source:'varia y ← 2'
   ts: 'let y = 2;'
   py: 'y = 2'
   rs:
       - 'let mut y = 2;'
-  fab: 'varia y = 2'
+  fab:'varia y ← 2'
 
 - name: 'lowercase functio keyword'
-  source: 'functio greet() { redde "hello" }'
+  source:'functio greet() { redde "hello" }'
   skip: [rs]
   ts:
       - 'function greet()'
@@ -51,7 +51,7 @@
       - 'redde "hello"'
 
 - name: 'lowercase dum keyword'
-  source: 'varia i = 0; dum i < 5 { i += 1 }'
+  source:'varia i ← 0; dum i < 5 { i += 1 }'
   ts:
       - 'let i = 0'
       - 'while'
@@ -67,7 +67,7 @@
       - 'while (i < 5)'
       - 'i += 1'
   fab:
-      - 'varia i = 0'
+      - 'varia i ← 0'
       - 'dum i < 5 {'
       - 'i += 1'
 
@@ -93,47 +93,47 @@
 
 # SI is a valid identifier, not the 'if' keyword
 - name: 'SI is identifier not keyword'
-  source: 'fixum SI = "signal intelligence"'
+  source:'fixum SI ← "signal intelligence"'
   ts: 'const SI = "signal intelligence";'
   py: 'SI = "signal intelligence"'
   rs:
       - 'let SI = "signal intelligence";'
-  fab: 'fixum SI = "signal intelligence"'
+  fab:'fixum SI ← "signal intelligence"'
 
 # FIXUM is a valid identifier, not the 'const' keyword
 - name: 'FIXUM is identifier not keyword'
-  source: 'fixum FIXUM = 42'
+  source:'fixum FIXUM ← 42'
   ts: 'const FIXUM = 42;'
   py: 'FIXUM = 42'
   rs:
       - 'let FIXUM = 42;'
-  fab: 'fixum FIXUM = 42'
+  fab:'fixum FIXUM ← 42'
 
 # Mixed case identifiers work
 - name: 'Verum is identifier not keyword'
-  source: 'fixum Verum = "truth"'
+  source:'fixum Verum ← "truth"'
   ts: 'const Verum = "truth";'
   py: 'Verum = "truth"'
   rs:
       - 'let Verum = "truth";'
-  fab: 'fixum Verum = "truth"'
+  fab:'fixum Verum ← "truth"'
 
 - name: 'VERUM is identifier not keyword'
-  source: 'fixum VERUM = falsum'
+  source:'fixum VERUM ← falsum'
   ts: 'const VERUM = false;'
   py: 'VERUM = False'
   rs:
       - 'let VERUM = false;'
-  fab: 'fixum VERUM = falsum'
+  fab:'fixum VERUM ← falsum'
 
 # DUM as identifier
 - name: 'DUM is identifier not keyword'
-  source: 'fixum DUM = "while in Latin"'
+  source:'fixum DUM ← "while in Latin"'
   ts: 'const DUM = "while in Latin";'
   py: 'DUM = "while in Latin"'
   rs:
       - 'let DUM = "while in Latin";'
-  fab: 'fixum DUM = "while in Latin"'
+  fab:'fixum DUM ← "while in Latin"'
 
 # =============================================================================
 # Types are lowercase only
@@ -141,53 +141,53 @@
 
 # Standard lowercase types work
 - name: 'lowercase textus type'
-  source: 'fixum textus msg = "hello"'
+  source:'fixum textus msg ← "hello"'
   ts: 'const msg: string = "hello";'
   py: 'msg: str = "hello"'
   rs:
       - 'let msg: String = "hello";'
-  fab: 'fixum textus msg = "hello"'
+  fab:'fixum textus msg ← "hello"'
 
 - name: 'lowercase numerus type'
-  source: 'fixum numerus count = 42'
+  source:'fixum numerus count ← 42'
   ts: 'const count: number = 42;'
   py: 'count: int = 42'
   rs:
       - 'let count: i64 = 42;'
-  fab: 'fixum numerus count = 42'
+  fab:'fixum numerus count ← 42'
 
 - name: 'lowercase bivalens type'
-  source: 'fixum bivalens flag = verum'
+  source:'fixum bivalens flag ← verum'
   ts: 'const flag: boolean = true;'
   py: 'flag: bool = True'
   rs:
       - 'let flag: bool = true;'
-  fab: 'fixum bivalens flag = verum'
+  fab:'fixum bivalens flag ← verum'
 
 # Array syntax with lowercase types
 - name: 'lowercase array type'
-  source: 'fixum numerus[] nums = [1, 2, 3]'
+  source:'fixum numerus[] nums ← [1, 2, 3]'
   ts: 'const nums: Array<number> = [1, 2, 3];'
   py: 'nums: list[int] = [1, 2, 3]'
   rs:
       - 'let nums: Vec<i64> = vec![1, 2, 3];'
-  fab: 'fixum numerus[] nums = [1, 2, 3]'
+  fab:'fixum numerus[] nums ← [1, 2, 3]'
 
 # Map with lowercase types
 - name: 'lowercase tabula type'
-  source: 'fixum tabula<textus, numerus> scores = {}'
+  source:'fixum tabula<textus, numerus> scores ← {}'
   skip: [rs]
   ts: 'const scores: Map<string, number> = {};'
   py: 'scores: dict[str, int] = {}'
-  fab: 'fixum tabula<textus, numerus> scores = {}'
+  fab:'fixum tabula<textus, numerus> scores ← {}'
 
 # Set with lowercase types
 - name: 'lowercase copia type'
-  source: 'fixum copia<textus> names = {}'
+  source:'fixum copia<textus> names ← {}'
   skip: [rs]
   ts: 'const names: Set<string> = {};'
   py: 'names: set[str] = {}'
-  fab: 'fixum copia<textus> names = {}'
+  fab:'fixum copia<textus> names ← {}'
 
 # =============================================================================
 # Constants with type-like names
@@ -195,37 +195,37 @@
 
 # TEXTUS as constant identifier
 - name: 'TEXTUS is identifier not type'
-  source: 'fixum TEXTUS = "text type name"'
+  source:'fixum TEXTUS ← "text type name"'
   ts: 'const TEXTUS = "text type name";'
   py: 'TEXTUS = "text type name"'
   rs:
       - 'let TEXTUS = "text type name";'
-  fab: 'fixum TEXTUS = "text type name"'
+  fab:'fixum TEXTUS ← "text type name"'
 
 # NUMERUS as constant identifier
 - name: 'NUMERUS is identifier not type'
-  source: 'fixum NUMERUS = 123'
+  source:'fixum NUMERUS ← 123'
   ts: 'const NUMERUS = 123;'
   py: 'NUMERUS = 123'
   rs:
       - 'let NUMERUS = 123;'
-  fab: 'fixum NUMERUS = 123'
+  fab:'fixum NUMERUS ← 123'
 
 # Textus (PascalCase) as identifier
 - name: 'Textus is identifier not type'
-  source: 'fixum Textus = "PascalCase"'
+  source:'fixum Textus ← "PascalCase"'
   ts: 'const Textus = "PascalCase";'
   py: 'Textus = "PascalCase"'
   rs:
       - 'let Textus = "PascalCase";'
-  fab: 'fixum Textus = "PascalCase"'
+  fab:'fixum Textus ← "PascalCase"'
 
 # =============================================================================
 # Function names can use any case
 # =============================================================================
 
 - name: 'PascalCase function name'
-  source: 'functio GetUser() { redde "user" }'
+  source:'functio GetUser() { redde "user" }'
   skip: [rs]
   ts:
       - 'function GetUser()'
@@ -238,7 +238,7 @@
       - 'redde "user"'
 
 - name: 'SCREAMING_SNAKE function name'
-  source: 'functio GET_CONFIG() { redde {} }'
+  source:'functio GET_CONFIG() { redde {} }'
   skip: [rs]
   ts:
       - 'function GET_CONFIG()'
@@ -255,7 +255,7 @@
 # =============================================================================
 
 - name: 'lowercase et operator'
-  source: 'fixum result = verum et falsum'
+  source:'fixum result ← verum et falsum'
   ts:
       - 'const result'
       - 'true && false'
@@ -267,10 +267,10 @@
       - 'true && false'
   fab:
       - 'fixum result'
-      - 'verum && falsum'
+      - 'verum et falsum'
 
 - name: 'lowercase aut operator'
-  source: 'fixum result = verum aut falsum'
+  source:'fixum result ← verum aut falsum'
   ts:
       - 'const result'
       - 'true || false'
@@ -282,12 +282,12 @@
       - 'true || false'
   fab:
       - 'fixum result'
-      - 'verum || falsum'
+      - 'verum aut falsum'
 
 - name: 'lowercase non operator'
-  source: 'fixum result = non verum'
+  source:'fixum result ← non verum'
   ts: 'const result = !true;'
   py: 'result = not True'
   rs:
       - 'let result = !true;'
-  fab: 'fixum result = non verum'
+  fab:'fixum result ← non verum'

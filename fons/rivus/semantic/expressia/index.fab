@@ -43,7 +43,7 @@ importa ex "../sententia/declara" privata resolveTypusAnnotatio
 
 # Resolve any expression and return its semantic type
 @ publica
-functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
+functio resolveExpressia(Resolvitor r, Expressia expr) → SemanticTypus {
     discerne expr {
         # Identifiers (variable references)
         casu Nomen {
@@ -153,10 +153,10 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Self reference (ego/hoc)
         casu EgoExpressia ut e {
-            fixum a = r.analyzator()
+            fixum a ← r.analyzator()
             # ego type depends on enclosing class context
             si nonnihil a.currentGenusNomen {
-                fixum genusNomen = a.currentGenusNomen qua textus
+                fixum genusNomen ← a.currentGenusNomen qua textus
                 # WHY: ego refers to an instance of the class, not the class definition itself.
                 # Return Usitatum (instance type) not Genus (metatype).
                 redde usitatumTypus(genusNomen, falsum)
@@ -168,9 +168,9 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 
         # Type cast (expr qua Type)
         casu QuaExpressia ut q {
-            fixum a = r.analyzator()
-            fixum sourceTypus = r.synthesize(q.expressia)
-            fixum targetTypus = resolveTypusAnnotatio(r, q.scopus)
+            fixum a ← r.analyzator()
+            fixum sourceTypus ← r.synthesize(q.expressia)
+            fixum targetTypus ← resolveTypusAnnotatio(r, q.scopus)
 
             # Warn if cast is redundant (source already assignable to target)
             si assignabileAd(sourceTypus, targetTypus) et non typiAequales(sourceTypus, IGNOTUM) {
@@ -187,7 +187,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         # Native type construction ([] innatum lista<T>, {} innatum tabula<K,V>)
         casu InnatumExpressia ut i {
             r.synthesize(i.expressia)
-            fixum targetTypus = resolveTypusAnnotatio(r, i.scopus)
+            fixum targetTypus ← resolveTypusAnnotatio(r, i.scopus)
             redde targetTypus
         }
 
@@ -217,11 +217,11 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
         # Collection DSL (ab items activus, ab items prima 5)
         casu AbExpressia ut abExpr {
             # WHY: Filtering doesn't change element type, only reduces collection.
-            fixum fonsTypus = r.synthesize(abExpr.fons)
+            fixum fonsTypus ← r.synthesize(abExpr.fons)
 
             # Resolve filter condition if present (ubi form)
             si nonnihil abExpr.filtrum {
-                fixum filtrum = abExpr.filtrum
+                fixum filtrum ← abExpr.filtrum
                 si filtrum.habetUbi {
                     r.synthesize(filtrum.condicio)
                 }
@@ -266,7 +266,7 @@ functio resolveExpressia(Resolvitor r, Expressia expr) -> SemanticTypus {
 # Foundation for bidirectional inference: uses `expected` to guide inference for
 # otherwise-ambiguous expressions (notably empty arrays).
 @ publica
-functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) -> SemanticTypus {
+functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) → SemanticTypus {
     # If there is no meaningful expectation, fall back to synthesis.
     si typiAequales(expected, IGNOTUM) {
         redde resolveExpressia(r, expr)
@@ -277,13 +277,13 @@ functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) 
         casu SeriesExpressia ut s {
             discerne expected {
                 casu Genericum ut g {
-                    si g.nomen == "lista" et g.parametri.longitudo() == 1 {
-                        si s.elementa.longitudo() == 0 {
+                    si g.nomen ≡ "lista" et g.parametri.longitudo() ≡ 1 {
+                        si s.elementa.longitudo() ≡ 0 {
                             redde expected
                         }
 
                         # Check each element against the expected element type.
-                        fixum elemExpected = g.parametri.primus()
+                        fixum elemExpected ← g.parametri.primus()
                         itera ex s.elementa fixum elem {
                             r.check(elem, elemExpected)
                         }
@@ -307,29 +307,29 @@ functio checkExpressia(Resolvitor r, Expressia expr, de SemanticTypus expected) 
 
 # Resolve assignment expression
 @ publica
-functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTypus {
-    fixum a = r.analyzator()
+functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) → SemanticTypus {
+    fixum a ← r.analyzator()
 
     discerne assignatioExpr {
         casu AssignatioExpressia ut assign {
             discerne assign.sinister {
                 casu Nomen ut n {
-                    fixum symbolum = a.quaere(n.valor)
+                    fixum symbolum ← a.quaere(n.valor)
                     si nihil symbolum {
-                        fixum err = undefinedVariableError(n.valor)
+                        fixum err ← undefinedVariableError(n.valor)
                         a.error(err.textus, n.locus, err.auxilium)
                         redde IGNOTUM
                     }
 
-                    fixum dexterTypus = r.check(assign.dexter, symbolum.semanticTypus)
+                    fixum dexterTypus ← r.check(assign.dexter, symbolum.semanticTypus)
 
                     si non symbolum.mutabilis {
-                        fixum err = immutableAssignmentError(symbolum.nomen)
+                        fixum err ← immutableAssignmentError(symbolum.nomen)
                         a.error(err.textus, assign.locus, err.auxilium)
                     }
 
                     si non assignabileAd(dexterTypus, symbolum.semanticTypus) {
-                        fixum err = typeMismatchError(formaTypum(dexterTypus), formaTypum(symbolum.semanticTypus))
+                        fixum err ← typeMismatchError(formaTypum(dexterTypus), formaTypum(symbolum.semanticTypus))
                         a.error(err.textus, assign.locus, err.auxilium)
                     }
 
@@ -337,7 +337,7 @@ functio resolveAssignatio(Resolvitor r, Expressia assignatioExpr) -> SemanticTyp
                 }
 
                 casu MembrumExpressia ut m {
-                    fixum dexterTypus = r.synthesize(assign.dexter)
+                    fixum dexterTypus ← r.synthesize(assign.dexter)
                     # TODO: Resolve member types once genus metadata exists.
                     r.synthesize(m.obiectum)
                     # WHY: Only resolve property for computed (indexed) access.

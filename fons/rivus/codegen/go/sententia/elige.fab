@@ -13,6 +13,6 @@ importa ex "../../shared/elige" privata genEligeLogica
 importa ex "../revocata" privata creaGoRevocata
 
 @ publica
-functio genElige(in GoGenerator g, de Expressia discriminans, de lista<EligeCasus> casus, si de ignotum praedefinitum, si de ignotum cape) -> textus {
+functio genElige(in GoGenerator g, de Expressia discriminans, de lista<EligeCasus> casus, si de ignotum praedefinitum, si de ignotum cape) → textus {
     redde genEligeLogica(discriminans, casus, praedefinitum, cape, g, SYNTAXIS_GO, creaGoRevocata())
 }

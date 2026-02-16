@@ -73,15 +73,15 @@ importa ex "./proba" privata genProbaHarness
 #      appear before the statement, trailing comments on the same line.
 #      Currently stubbed (returns empty strings) for bootstrap.
 @ publica
-functio genSententia(in TsGenerator g, de Sententia stmt) -> textus {
-    fixum leading = g.notaePrae(stmt)
-    fixum trailing = g.notaePost(stmt)
-    fixum content = genSententiaContent(g, stmt)
+functio genSententia(in TsGenerator g, de Sententia stmt) → textus {
+    fixum leading ← g.notaePrae(stmt)
+    fixum trailing ← g.notaePost(stmt)
+    fixum content ← genSententiaContent(g, stmt)
     redde scriptum("§§§", leading, content, trailing)
 }
 
 # Generate statement content without comments
-functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
+functio genSententiaContent(in TsGenerator g, de Sententia stmt) → textus {
     discerne stmt {
         # Block
         casu MassaSententia ut s {
@@ -245,12 +245,12 @@ functio genSententiaContent(in TsGenerator g, de Sententia stmt) -> textus {
 # =============================================================================
 
 @ publica
-functio genMassa(in TsGenerator g, de lista<Sententia> corpus) -> textus {
-    si corpus.longitudo() == 0 {
+functio genMassa(in TsGenerator g, de lista<Sententia> corpus) → textus {
+    si corpus.longitudo() ≡ 0 {
         # WHY: Empty blocks should not stringify to undefined.
         redde ""
     }
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
     itera ex corpus fixum stmt {
         lines.appende(genSententia(g, stmt))
     }

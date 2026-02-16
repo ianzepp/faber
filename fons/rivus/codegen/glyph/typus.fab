@@ -16,22 +16,22 @@ importa ex "./lexicon" privata encodeBraille
 # =============================================================================
 
 @ publica
-functio genTypus(in GlyphGenerator g, de TypusAnnotatio typ) -> textus {
-    varia result = ""
+functio genTypus(in GlyphGenerator g, de TypusAnnotatio typ) → textus {
+    varia result ← ""
 
     # Handle nullable (si) prefix
     si typ.nullabilis qua bivalens {
-        result = glyphKeyword("si") + " "
+        result ← glyphKeyword("si") + " "
     }
 
     # Type name as braille
-    result = result + encodeBraille(typ.nomen qua textus)
+    result ← result + encodeBraille(typ.nomen qua textus)
 
     # Handle type parameters
     si nonnihil typ.typusParametra {
-        fixum params = typ.typusParametra
+        fixum params ← typ.typusParametra
         si params.longitudo() > 0 {
-            varia paramTexti = [] innatum lista<textus>
+            varia paramTexti ← [] innatum lista<textus>
             itera ex params fixum param {
                 discerne param {
                     casu Typus ut t {
@@ -42,8 +42,8 @@ functio genTypus(in GlyphGenerator g, de TypusAnnotatio typ) -> textus {
                     }
                 }
             }
-            fixum comma = glyphPunctuation(",")
-            result = scriptum("§§§ §", result, glyphDelimiter("<"), paramTexti.coniunge(comma + " "), glyphDelimiter(">"))
+            fixum comma ← glyphPunctuation(",")
+            result ← scriptum("§§§ §", result, glyphDelimiter("<"), paramTexti.coniunge(comma + " "), glyphDelimiter(">"))
         }
     }
 

@@ -36,27 +36,27 @@ importa ex "./glyph/index" privata generateGlyphStripComments
 # Generate code for target with validation
 # Throws if target compatibility validation fails
 @ publica
-functio generate(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
+functio generate(de lista<Sententia> corpus, de textus target, si de textus viaFons) → textus {
     redde generateWithPolicy(corpus, target, POLITIA_STRICTA, viaFons)
 }
 
 # Generate code with test blocks stripped (for production builds)
 @ publica
-functio generateStripTests(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
+functio generateStripTests(de lista<Sententia> corpus, de textus target, si de textus viaFons) → textus {
     redde generateWithStripping(corpus, target, verum, falsum, viaFons)
 }
 
 # Generate code with comments stripped
 @ publica
-functio generateStripComments(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
+functio generateStripComments(de lista<Sententia> corpus, de textus target, si de textus viaFons) → textus {
     redde generateWithStripping(corpus, target, falsum, verum, viaFons)
 }
 
 # Generate code with optional stripping of tests and/or comments
 @ publica
-functio generateWithStripping(de lista<Sententia> corpus, de textus target, bivalens stripTests, bivalens stripComments, si de textus viaFons) -> textus {
+functio generateWithStripping(de lista<Sententia> corpus, de textus target, bivalens stripTests, bivalens stripComments, si de textus viaFons) → textus {
     # Validate first
-    fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
+    fixum errores ← validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
         mori formatValidatioErrores(errores, target)
     }
@@ -83,9 +83,9 @@ functio generateWithStripping(de lista<Sententia> corpus, de textus target, biva
 
 # Generate code with explicit policy
 @ publica
-functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia, si de textus viaFons) -> textus {
+functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia, si de textus viaFons) → textus {
     # Validate target compatibility BEFORE codegen
-    fixum errores = validateCompatibilitatem(corpus, target, politia)
+    fixum errores ← validateCompatibilitatem(corpus, target, politia)
 
     si non validatioSuccessit(errores) {
         mori formatValidatioErrores(errores, target)
@@ -107,9 +107,9 @@ functio generateWithPolicy(de lista<Sententia> corpus, de textus target, de Vali
 # Generate code with standalone test harness (for `rivus test` command)
 # Currently only supports TypeScript target
 @ publica
-functio generateWithTests(de lista<Sententia> corpus, de textus target, si de textus viaFons) -> textus {
+functio generateWithTests(de lista<Sententia> corpus, de textus target, si de textus viaFons) → textus {
     # Validate first
-    fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
+    fixum errores ← validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     si non validatioSuccessit(errores) {
         mori formatValidatioErrores(errores, target)
     }
@@ -124,20 +124,20 @@ functio generateWithTests(de lista<Sententia> corpus, de textus target, si de te
 
 # Validate without generating - returns errors (empty if valid)
 @ publica
-functio validateOnly(de lista<Sententia> corpus, de textus target) -> lista<ValidatioError> {
+functio validateOnly(de lista<Sententia> corpus, de textus target) → lista<ValidatioError> {
     redde validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
 }
 
 # Validate with explicit policy
 @ publica
-functio validateOnlyWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia) -> lista<ValidatioError> {
+functio validateOnlyWithPolicy(de lista<Sententia> corpus, de textus target, de ValidatioPolitia politia) → lista<ValidatioError> {
     redde validateCompatibilitatem(corpus, target, politia)
 }
 
 # Check if code is compatible with target (convenience function)
 @ publica
-functio isCompatible(de lista<Sententia> corpus, de textus target) -> bivalens {
-    fixum errores = validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
+functio isCompatible(de lista<Sententia> corpus, de textus target) → bivalens {
+    fixum errores ← validateCompatibilitatem(corpus, target, POLITIA_STRICTA)
     redde validatioSuccessit(errores)
 }
 
@@ -147,6 +147,6 @@ functio isCompatible(de lista<Sententia> corpus, de textus target) -> bivalens {
 
 # Re-export policy constants for convenience
 @ publica
-fixum StrictPolicy = POLITIA_STRICTA
+fixum StrictPolicy ← POLITIA_STRICTA
 @ publica
-fixum RelaxedPolicy = POLITIA_RELAXATA
+fixum RelaxedPolicy ← POLITIA_RELAXATA

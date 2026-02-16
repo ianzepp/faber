@@ -16,8 +16,8 @@ importa ex "../../ast/expressia" privata Expressia
 
 # Analyze tempta (try) statement
 @ publica
-functio analyzeTempta(Resolvitor r, Sententia temptaStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeTempta(Resolvitor r, Sententia temptaStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne temptaStmt {
         casu TemptaSententia ut t {
@@ -26,13 +26,13 @@ functio analyzeTempta(Resolvitor r, Sententia temptaStmt) -> vacuum {
 
             # Analyze catch clause if present
             si nonnihil t.cape {
-                fixum cape = t.cape novum CapeClausula
+                fixum cape ← t.cape novum CapeClausula
 
                 # Enter scope for catch parameter
                 a.intraScopum(ScopusSpecies.Massa)
 
                 # Define error parameter
-                a.scopus.symbola[cape.param] = {
+                a.scopus.symbola[cape.param] ← {
                     nomen: cape.param,
                     semanticTypus: IGNOTUM,  # Error type
                     species: SymbolumSpecies.Variabilis,
@@ -61,7 +61,7 @@ functio analyzeTempta(Resolvitor r, Sententia temptaStmt) -> vacuum {
 
 # Analyze fac...dum (do-while) statement
 @ publica
-functio analyzeFac(Resolvitor r, Sententia facStmt) -> vacuum {
+functio analyzeFac(Resolvitor r, Sententia facStmt) → vacuum {
     discerne facStmt {
         casu FacSententia ut f {
             # Analyze body first (executed at least once)
@@ -75,12 +75,12 @@ functio analyzeFac(Resolvitor r, Sententia facStmt) -> vacuum {
             # Analyze catch clause if present
             # (fac can have catch for loop errors)
             si nonnihil f.cape {
-                fixum a = r.analyzator()
-                fixum cape = f.cape
+                fixum a ← r.analyzator()
+                fixum cape ← f.cape
 
                 a.intraScopum(ScopusSpecies.Massa)
 
-                a.scopus.symbola[cape.param] = {
+                a.scopus.symbola[cape.param] ← {
                     nomen: cape.param,
                     semanticTypus: IGNOTUM,
                     species: SymbolumSpecies.Variabilis,
@@ -103,22 +103,22 @@ functio analyzeFac(Resolvitor r, Sententia facStmt) -> vacuum {
 
 # Analyze cura (resource scope) statement
 @ publica
-functio analyzeCura(Resolvitor r, Sententia curaStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeCura(Resolvitor r, Sententia curaStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne curaStmt {
         casu CuraSententia ut c {
             # Analyze resource expression
-            varia resourceTypus = IGNOTUM
+            varia resourceTypus ← IGNOTUM
             si nonnihil c.res {
-                resourceTypus = r.synthesize(c.res qua Expressia)
+                resourceTypus ← r.synthesize(c.res qua Expressia)
             }
 
             # Enter scope for resource binding
             a.intraScopum(ScopusSpecies.Massa)
 
             # Define resource variable
-            a.scopus.symbola[c.vinculum] = {
+            a.scopus.symbola[c.vinculum] ← {
                 nomen: c.vinculum,
                 semanticTypus: resourceTypus,
                 species: SymbolumSpecies.Variabilis,

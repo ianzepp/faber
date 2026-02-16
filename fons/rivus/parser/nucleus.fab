@@ -59,8 +59,8 @@ genus Parser {
     # Generate unique identifier for synthetic bindings
     # Returns: _prefix_N where N is incremented each call
     @ publica
-    functio generaId(de textus prae) -> textus {
-        fixum id = scriptum("_§_§", prae, ego.idUnicum)
+    functio generaId(de textus prae) → textus {
+        fixum id ← scriptum("_§_§", prae, ego.idUnicum)
         ego.idUnicum += 1
         redde id
     }
@@ -72,13 +72,13 @@ genus Parser {
 
     # Convert a comment token to a Nota AST node
     @ publica
-    functio symbolumAdNotam(de Symbolum s) -> Nota {
+    functio symbolumAdNotam(de Symbolum s) → Nota {
         # Determine comment type from token species
-        varia notaGenus = NotaGenus.Linea
-        si s.species === SymbolumGenus.NotaMassa {
-            notaGenus = NotaGenus.Massa
-        } sin s.species === SymbolumGenus.NotaDocens {
-            notaGenus = NotaGenus.Docens
+        varia notaGenus ← NotaGenus.Linea
+        si s.species ≡ SymbolumGenus.NotaMassa {
+            notaGenus ← NotaGenus.Massa
+        } sin s.species ≡ SymbolumGenus.NotaDocens {
+            notaGenus ← NotaGenus.Docens
         }
 
         redde {
@@ -91,13 +91,13 @@ genus Parser {
     # Consume all pending comment tokens into buffer
     # Called before parsing statements/expressions to collect leading comments
     @ publica
-    functio colligeNotas() -> vacuum {
+    functio colligeNotas() → vacuum {
         # Keep consuming while current token is a comment
         dum ego.index < ego.symbola.longitudo() {
-            fixum s = ego.symbola[ego.index]
+            fixum s ← ego.symbola[ego.index]
 
             # Check if this is a comment token
-            si s.species !== SymbolumGenus.NotaLinea et s.species !== SymbolumGenus.NotaMassa et s.species !== SymbolumGenus.NotaDocens {
+            si s.species ≠ SymbolumGenus.NotaLinea et s.species ≠ SymbolumGenus.NotaMassa et s.species ≠ SymbolumGenus.NotaDocens {
                 rumpe
             }
 
@@ -110,27 +110,27 @@ genus Parser {
     # Consume pending comments buffer and return them
     # Called when creating AST node to attach as leading comments
     @ publica
-    functio consumeNotas() -> lista<Nota> {
+    functio consumeNotas() → lista<Nota> {
         # Take the pending list and replace with empty
-        fixum notae = ego.notaePendentes
-        ego.notaePendentes = []
+        fixum notae ← ego.notaePendentes
+        ego.notaePendentes ← []
         redde notae
     }
 
     # Check for trailing comment on same line after current position
     # Returns comment if found on same line as node, empty list otherwise
     @ publica
-    functio colligeNotamTrahentem(numerus lineaNodi) -> lista<Nota> {
-        si ego.index >= ego.symbola.longitudo() {
+    functio colligeNotamTrahentem(numerus lineaNodi) → lista<Nota> {
+        si ego.index ≥ ego.symbola.longitudo() {
             redde []
         }
 
-        fixum s = ego.symbola[ego.index]
+        fixum s ← ego.symbola[ego.index]
 
         # Check if comment token on same line
-        fixum estNota = s.species === SymbolumGenus.NotaLinea aut s.species === SymbolumGenus.NotaMassa aut s.species === SymbolumGenus.NotaDocens
+        fixum estNota ← s.species ≡ SymbolumGenus.NotaLinea aut s.species ≡ SymbolumGenus.NotaMassa aut s.species ≡ SymbolumGenus.NotaDocens
 
-        si estNota et s.locus.linea === lineaNodi {
+        si estNota et s.locus.linea ≡ lineaNodi {
             ego.index += 1
             redde [ego.symbolumAdNotam(s)]
         }
@@ -147,15 +147,15 @@ genus Parser {
     # distantia = lookahead offset (0 = current, 1 = next, etc.)
     # Returns Finis token if offset goes beyond stream end
     @ publica
-    functio specta(numerus distantia) -> Symbolum {
+    functio specta(numerus distantia) → Symbolum {
         # Start from current position
-        varia pos = ego.index
-        varia skipped = 0
+        varia pos ← ego.index
+        varia skipped ← 0
 
         # Skip initial comment tokens
         dum pos < ego.symbola.longitudo() {
-            fixum s = ego.symbola[pos]
-            si s.species !== SymbolumGenus.NotaLinea et s.species !== SymbolumGenus.NotaMassa et s.species !== SymbolumGenus.NotaDocens {
+            fixum s ← ego.symbola[pos]
+            si s.species ≠ SymbolumGenus.NotaLinea et s.species ≠ SymbolumGenus.NotaMassa et s.species ≠ SymbolumGenus.NotaDocens {
                 rumpe
             }
             pos += 1
@@ -167,8 +167,8 @@ genus Parser {
 
             # Skip any comments after advancing
             dum pos < ego.symbola.longitudo() {
-                fixum s = ego.symbola[pos]
-                si s.species !== SymbolumGenus.NotaLinea et s.species !== SymbolumGenus.NotaMassa et s.species !== SymbolumGenus.NotaDocens {
+                fixum s ← ego.symbola[pos]
+                si s.species ≠ SymbolumGenus.NotaLinea et s.species ≠ SymbolumGenus.NotaMassa et s.species ≠ SymbolumGenus.NotaDocens {
                     rumpe
                 }
                 pos += 1
@@ -187,8 +187,8 @@ genus Parser {
 
     # Check if at end of token stream (current token is Finis)
     @ publica
-    functio estFinis() -> bivalens {
-        redde ego.specta(0).species === SymbolumGenus.Finis
+    functio estFinis() → bivalens {
+        redde ego.specta(0).species ≡ SymbolumGenus.Finis
     }
 
     # Get the previous token (the one most recently consumed)
@@ -196,7 +196,7 @@ genus Parser {
     #      position or value. This avoids needing specta(-1).
     # EDGE: Returns first token if called before any advance (index=0)
     @ publica
-    functio praevius() -> Symbolum {
+    functio praevius() → Symbolum {
         si ego.index > 0 {
             redde ego.symbola[ego.index - 1]
         }
@@ -208,14 +208,14 @@ genus Parser {
     # WHY: Almost every parse function starts with `fixum locus = p.locusActualis()`
     #      This helper reduces boilerplate and clarifies intent.
     @ publica
-    functio locusActualis() -> Locus {
+    functio locusActualis() → Locus {
         redde ego.specta(0).locus
     }
 
     # Consume and return current token, collecting comments first
     # Never advances past Finis token
     @ publica
-    functio procede() -> Symbolum {
+    functio procede() → Symbolum {
         # Collect any comment tokens first
         ego.colligeNotas()
 
@@ -225,7 +225,7 @@ genus Parser {
         }
 
         # Return current and advance
-        fixum s = ego.symbola[ego.index]
+        fixum s ← ego.symbola[ego.index]
         ego.index += 1
         redde s
     }
@@ -237,29 +237,29 @@ genus Parser {
 
     # Check if current token matches given type without consuming
     @ publica
-    functio proba(SymbolumGenus species) -> bivalens {
-        redde ego.specta(0).species === species
+    functio proba(SymbolumGenus species) → bivalens {
+        redde ego.specta(0).species ≡ species
     }
 
     # Check if current token is a specific keyword without consuming
     # Keywords are stored in token.verbum field
     @ publica
-    functio probaVerbum(de textus verbum) -> bivalens {
-        fixum s = ego.specta(0)
-        redde s.species === SymbolumGenus.Verbum et s.verbum === verbum
+    functio probaVerbum(de textus verbum) → bivalens {
+        fixum s ← ego.specta(0)
+        redde s.species ≡ SymbolumGenus.Verbum et s.verbum ≡ verbum
     }
 
     # Check if current token is a keyword with canonical identity
     @ publica
-    functio probaVerbumId(VerbumId verbumId) -> bivalens {
-        fixum s = ego.specta(0)
-        redde s.species === SymbolumGenus.Verbum et s.verbumId === verbumId
+    functio probaVerbumId(VerbumId verbumId) → bivalens {
+        fixum s ← ego.specta(0)
+        redde s.species ≡ SymbolumGenus.Verbum et s.verbumId ≡ verbumId
     }
 
     # Match and consume token if type matches
     # Returns true if matched and consumed, false otherwise
     @ publica
-    functio congruet(SymbolumGenus species) -> bivalens {
+    functio congruet(SymbolumGenus species) → bivalens {
         si ego.proba(species) {
             ego.procede()
             redde verum
@@ -270,7 +270,7 @@ genus Parser {
     # Match and consume token if keyword matches
     # Returns true if matched and consumed, false otherwise
     @ publica
-    functio congruetVerbum(de textus verbum) -> bivalens {
+    functio congruetVerbum(de textus verbum) → bivalens {
         si ego.probaVerbum(verbum) {
             ego.procede()
             redde verum
@@ -280,7 +280,7 @@ genus Parser {
 
     # Match and consume keyword by canonical identity
     @ publica
-    functio congruetVerbumId(VerbumId verbumId) -> bivalens {
+    functio congruetVerbumId(VerbumId verbumId) → bivalens {
         si ego.probaVerbumId(verbumId) {
             ego.procede()
             redde verum
@@ -291,7 +291,7 @@ genus Parser {
     # Match any of several token types, consuming if matched
     # Returns true if any matched, false otherwise
     @ publica
-    functio congruetAliquod(de lista<SymbolumGenus> species) -> bivalens {
+    functio congruetAliquod(de lista<SymbolumGenus> species) → bivalens {
         itera ex species fixum s {
             si ego.proba(s) {
                 ego.procede()
@@ -309,9 +309,9 @@ genus Parser {
     # Report error at current position
     # contextus = optional additional context (e.g., "got 'x'")
     @ publica
-    functio renuncia(ParserErrorCodice codice, si de textus contextus) -> vacuum {
-        fixum s = ego.specta(0)
-        fixum err = error(codice, s.locus, contextus)
+    functio renuncia(ParserErrorCodice codice, si de textus contextus) → vacuum {
+        fixum s ← ego.specta(0)
+        fixum err ← error(codice, s.locus, contextus)
         ego.errores.appende(err)
     }
 
@@ -319,13 +319,13 @@ genus Parser {
     # Returns matched token if found, synthetic token after advancing if not
     # Advances past unexpected token to prevent infinite loops
     @ publica
-    functio expecta(SymbolumGenus species, ParserErrorCodice codice) -> Symbolum {
+    functio expecta(SymbolumGenus species, ParserErrorCodice codice) → Symbolum {
         si ego.proba(species) {
             redde ego.procede()
         }
 
         # Record error with context
-        fixum s = ego.specta(0)
+        fixum s ← ego.specta(0)
         ego.renuncia(codice, scriptum("got '§'", s.valor))
 
         # Advance past unexpected token (unless at end)
@@ -346,13 +346,13 @@ genus Parser {
     # Expect specific keyword or record error
     # Returns matched token if found, synthetic token after advancing if not
     @ publica
-    functio expectaVerbum(de textus verbum, ParserErrorCodice codice) -> Symbolum {
+    functio expectaVerbum(de textus verbum, ParserErrorCodice codice) → Symbolum {
         si ego.probaVerbum(verbum) {
             redde ego.procede()
         }
 
         # Record error with context
-        fixum s = ego.specta(0)
+        fixum s ← ego.specta(0)
         ego.renuncia(codice, scriptum("got '§'", s.valor))
 
         # Advance past unexpected token
@@ -376,16 +376,16 @@ genus Parser {
     #      E.g., { typus: value }, casu Type ut est { ... }, ex lib importa scribe
     # Returns matched token if found, synthetic token after advancing if not
     @ publica
-    functio expectaNomenAutVerbum(ParserErrorCodice codice) -> Symbolum {
-        fixum s = ego.specta(0)
+    functio expectaNomenAutVerbum(ParserErrorCodice codice) → Symbolum {
+        fixum s ← ego.specta(0)
 
         # Accept identifier tokens
-        si s.species === SymbolumGenus.Nomen {
+        si s.species ≡ SymbolumGenus.Nomen {
             redde ego.procede()
         }
 
         # Accept keyword tokens as identifiers in this context
-        si s.species === SymbolumGenus.Verbum {
+        si s.species ≡ SymbolumGenus.Verbum {
             redde ego.procede()
         }
 
@@ -419,15 +419,15 @@ genus Parser {
     #      of truth for statement-starting keywords. This prevents drift
     #      between the grammar and error recovery.
     @ publica
-    functio synchrona() -> vacuum {
+    functio synchrona() → vacuum {
         # Skip current problematic token
         ego.procede()
 
         # Keep advancing until we hit a statement-starting keyword or block boundary
         # WHY: Conservative iteration limit prevents infinite loop on malformed input
         #      containing no statement keywords (e.g., sequences of numeric literals)
-        varia iterationes = 0
-        fixum maxIterationes = 1000
+        varia iterationes ← 0
+        fixum maxIterationes ← 1000
 
         dum non ego.estFinis() et iterationes < maxIterationes {
             # Stop at block boundaries (closing brace ends current scope)
@@ -436,8 +436,8 @@ genus Parser {
             }
 
             # Stop at statement-starting keywords
-            fixum s = ego.specta(0)
-            si s.species === SymbolumGenus.Verbum et estVerbumSententiae(s.verbum) {
+            fixum s ← ego.specta(0)
+            si s.species ≡ SymbolumGenus.Verbum et estVerbumSententiae(s.verbum) {
                 redde
             }
 
@@ -452,7 +452,7 @@ genus Parser {
     # WHY: Uses estVerbumGeneris from lexicon/verba.fab as single source
     #      of truth for genus member boundaries.
     @ publica
-    functio synchronaGenusMembrum() -> vacuum {
+    functio synchronaGenusMembrum() → vacuum {
         ego.procede()
 
         dum non ego.estFinis() {
@@ -462,8 +462,8 @@ genus Parser {
             }
 
             # Stop at member-starting keywords
-            fixum s = ego.specta(0)
-            si s.species === SymbolumGenus.Verbum et estVerbumGeneris(s.verbum) {
+            fixum s ← ego.specta(0)
+            si s.species ≡ SymbolumGenus.Verbum et estVerbumGeneris(s.verbum) {
                 redde
             }
 
@@ -479,8 +479,8 @@ genus Parser {
     # Check if token is a builtin type name
     # Used to distinguish "fixum textus nomen" from "fixum nomen"
     @ publica
-    functio estTypusNomen(de Symbolum s) -> bivalens {
-        si s.species !== SymbolumGenus.Nomen et s.species !== SymbolumGenus.Verbum et s.species !== SymbolumGenus.Nihil { redde falsum }
+    functio estTypusNomen(de Symbolum s) → bivalens {
+        si s.species ≠ SymbolumGenus.Nomen et s.species ≠ SymbolumGenus.Verbum et s.species ≠ SymbolumGenus.Nihil { redde falsum }
 
         # Check against builtin type names
         # TODO: This should use a proper type registry
@@ -510,8 +510,8 @@ genus Parser {
     # Check if token is a preposition used in parameters
     # de = borrowed/read-only, in = mutable borrow, ex = source
     @ publica
-    functio estPraepositio(de Symbolum s) -> bivalens {
-        si s.species !== SymbolumGenus.Verbum { redde falsum }
+    functio estPraepositio(de Symbolum s) → bivalens {
+        si s.species ≠ SymbolumGenus.Verbum { redde falsum }
 
         elige s.verbum {
             casu "de" reddit verum
@@ -524,7 +524,7 @@ genus Parser {
     # Check if token is an assignment operator
     # Includes = and compound assignments (+=, -=, *=, /=, %=, &=, |=)
     @ publica
-    functio estAssignatioSignum(de Symbolum s) -> bivalens {
+    functio estAssignatioSignum(de Symbolum s) → bivalens {
         # WHY: Compound assignment shares assignment precedence and associativity.
         elige s.species {
             casu SymbolumGenus.Aequum reddit verum
@@ -542,7 +542,7 @@ genus Parser {
 
 # Create a new parser for the given token stream
 @ publica
-functio novumParser(ex lista<Symbolum> symbola) -> Parser {
+functio novumParser(ex lista<Symbolum> symbola) → Parser {
     redde novum Parser {
         symbola: symbola,
         index: 0,

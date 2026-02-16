@@ -14,6 +14,6 @@ importa ex "../../shared/elige" privata genEligeLogica
 importa ex "../revocata" privata creaTsRevocata
 
 @ publica
-functio genElige(in TsGenerator g, de Expressia discriminans, de lista<EligeCasus> casus, de ignotum praedefinitum, de ignotum cape) -> textus {
+functio genElige(in TsGenerator g, de Expressia discriminans, de lista<EligeCasus> casus, de ignotum praedefinitum, de ignotum cape) → textus {
     redde genEligeLogica(discriminans, casus, praedefinitum, cape, g, SYNTAXIS_TS, creaTsRevocata())
 }

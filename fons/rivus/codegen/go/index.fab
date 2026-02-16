@@ -16,12 +16,12 @@ importa ex "./sententia/index" privata genSententia
 
 # Generate Go source code from a list of statements
 @ publica
-functio generateGo(de lista<Sententia> corpus) -> textus {
-    fixum g = creaGoGenerator()
+functio generateGo(de lista<Sententia> corpus) → textus {
+    fixum g ← creaGoGenerator()
 
     # Separate declarations from executables, preserving source order
-    varia declarationes = [] innatum lista<Sententia>
-    varia mainSententiae = [] innatum lista<Sententia>
+    varia declarationes ← [] innatum lista<Sententia>
+    varia mainSententiae ← [] innatum lista<Sententia>
 
     itera ex corpus fixum stmt {
         discerne stmt {
@@ -62,35 +62,35 @@ functio generateGo(de lista<Sententia> corpus) -> textus {
     }
 
     # Generate declarations
-    varia declarationesLines = [] innatum lista<textus>
+    varia declarationesLines ← [] innatum lista<textus>
     itera ex declarationes fixum s {
         declarationesLines.appende(genSententia(g, s))
     }
-    fixum declsBody = declarationesLines.coniunge("\n")
+    fixum declsBody ← declarationesLines.coniunge("\n")
 
     # Generate func main
-    varia mainBody = ""
-    si mainSententiae.longitudo() == 0 {
-        mainBody = "func main() {}"
+    varia mainBody ← ""
+    si mainSententiae.longitudo() ≡ 0 {
+        mainBody ← "func main() {}"
     } secus {
         g.intraProfundum()
-        varia mainLines = [] innatum lista<textus>
+        varia mainLines ← [] innatum lista<textus>
         itera ex mainSententiae fixum s {
             mainLines.appende(genSententia(g, s))
         }
         g.exiProfundum()
-        fixum mainContent = mainLines.coniunge("\n")
-        mainBody = scriptum("func main() {\n§\n}", mainContent)
+        fixum mainContent ← mainLines.coniunge("\n")
+        mainBody ← scriptum("func main() {\n§\n}", mainContent)
     }
 
     # Combine: preamble + declarations + main
-    fixum preamble = genPreamble(g)
+    fixum preamble ← genPreamble(g)
 
-    varia parts = [] innatum lista<textus>
-    si preamble != "" {
+    varia parts ← [] innatum lista<textus>
+    si preamble ≠ "" {
         parts.appende(preamble)
     }
-    si declsBody != "" {
+    si declsBody ≠ "" {
         parts.appende(declsBody)
     }
     parts.appende(mainBody)
@@ -103,14 +103,14 @@ functio generateGo(de lista<Sententia> corpus) -> textus {
 # =============================================================================
 
 # Generate Go preamble (package declaration and imports)
-functio genPreamble(in GoGenerator g) -> textus {
-    varia parts = [] innatum lista<textus>
+functio genPreamble(in GoGenerator g) → textus {
+    varia parts ← [] innatum lista<textus>
 
     # Package declaration - always main for executables
     parts.appende("package main")
 
     # Imports based on required features
-    varia imports = [] innatum lista<textus>
+    varia imports ← [] innatum lista<textus>
 
     si g.requisita.fmt {
         imports.appende("\"fmt\"")
@@ -121,7 +121,7 @@ functio genPreamble(in GoGenerator g) -> textus {
     }
 
     si imports.longitudo() > 0 {
-        si imports.longitudo() == 1 {
+        si imports.longitudo() ≡ 1 {
             parts.appende(scriptum("import §", imports[0]))
         } secus {
             parts.appende(scriptum("import (\n\t§\n)", imports.coniunge("\n\t")))

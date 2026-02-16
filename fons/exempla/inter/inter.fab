@@ -1,7 +1,7 @@
 # Set membership operator: inter
 
-fixum status = "active"
-fixum age = 21
+fixum status ← "active"
+fixum age ← 21
 
 # Basic inter with string array
 si status inter ["pending", "active", "paused"] {

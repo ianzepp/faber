@@ -12,7 +12,7 @@
 # pone inserts or updates a key-value pair
 - name: 'pone -> insert_or_assign'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.pone("key", 42)
   wrap: 'cura arena fit alloc { $ }'
   cpp:
@@ -25,13 +25,13 @@
   zig:
       - '.pone(alloc, "key", 42)'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.pone("key", 42)'
 
 # accipe retrieves a value by key (throws if not found)
 - name: 'accipe -> at'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.accipe("key")
   cpp:
       - '.at('
@@ -43,13 +43,13 @@
   zig:
       - '.accipe("key")'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.accipe("key")'
 
 # habet checks if key exists
 - name: 'habet -> contains'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.habet("key")
   cpp:
       - '.contains('
@@ -61,13 +61,13 @@
   zig:
       - '.habet("key")'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.habet("key")'
 
 # dele removes a key-value pair
 - name: 'dele -> erase'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.dele("key")
   cpp:
       - '.erase('
@@ -79,13 +79,13 @@
   zig:
       - '.dele("key")'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.dele("key")'
 
 # longitudo returns the number of entries
 - name: 'longitudo -> size'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.longitudo()
   cpp:
       - '.size()'
@@ -97,13 +97,13 @@
   zig:
       - '.longitudo()'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.longitudo()'
 
 # vacua checks if the map is empty
 - name: 'vacua -> empty'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.vacua()
   cpp:
       - '.empty()'
@@ -115,13 +115,13 @@
   zig:
       - '.vacua()'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.vacua()'
 
 # purga clears the entire map
 - name: 'purga -> clear'
   source: |
-      varia tabula<textus, numerus> map = {}
+      varia tabula<textus, numerus> map ← {}
       map.purga()
   cpp:
       - '.clear()'
@@ -133,7 +133,7 @@
   zig:
       - '.purga()'
   fab:
-      - 'varia tabula<textus, numerus> map = {}'
+      - 'varia tabula<textus, numerus> map ← {}'
       - 'map.purga()'
 
 # =============================================================================
@@ -143,7 +143,7 @@
 # claves returns a view of all keys
 - name: 'claves -> views::keys'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.claves()
   cpp:
       - 'std::views::keys'
@@ -155,13 +155,13 @@
   zig:
       - '.claves()'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.claves()'
 
 # valores returns a view of all values
 - name: 'valores -> views::values'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.valores()
   cpp:
       - 'std::views::values'
@@ -173,7 +173,7 @@
   zig:
       - '.valores()'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.valores()'
 
 # =============================================================================
@@ -183,7 +183,7 @@
 # accipeAut returns value if exists, otherwise default
 - name: 'accipeAut -> contains + at with default'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.accipeAut("key", 0)
   cpp:
       - '.contains('
@@ -197,14 +197,14 @@
   zig:
       - '.accipeAut("key", 0)'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.accipeAut("key", 0)'
 
 # conflata merges maps (returns new map)
 - name: 'conflata -> merge maps'
   source: |
-      varia tabula<textus, numerus> map = {}
-      varia tabula<textus, numerus> other = {}
+      varia tabula<textus, numerus> map ← {}
+      varia tabula<textus, numerus> other ← {}
       map.conflata(other)
   cpp:
       - 'faber::tabula_conflata(map, other)'
@@ -216,14 +216,14 @@
   zig:
       - '.conflata(&other)'
   fab:
-      - 'varia tabula<textus, numerus> map = {}'
-      - 'varia tabula<textus, numerus> other = {}'
+      - 'varia tabula<textus, numerus> map ← {}'
+      - 'varia tabula<textus, numerus> other ← {}'
       - 'map.conflata(other)'
 
 # inLista converts map entries to a vector
 - name: 'inLista -> vector from map'
   source: |
-      varia tabula<textus, numerus> map = {}
+      varia tabula<textus, numerus> map ← {}
       map.inLista()
   wrap: 'cura arena fit alloc { $ }'
   cpp:
@@ -236,7 +236,7 @@
   zig:
       - '.inLista(alloc)'
   fab:
-      - 'varia tabula<textus, numerus> map = {}'
+      - 'varia tabula<textus, numerus> map ← {}'
       - 'map.inLista()'
 
 # =============================================================================
@@ -246,7 +246,7 @@
 # paria returns entries iterator
 - name: 'paria -> entries/items iterator'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.paria()
   cpp:
       - 'map'
@@ -258,13 +258,13 @@
   zig:
       - '.paria()'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.paria()'
 
 # selecta keeps only specified keys
 - name: 'selecta -> filter by keys'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.selecta(["key1", "key2"])
   cpp:
       - 'faber::tabula_selecta(map, '
@@ -275,14 +275,14 @@
       - 'HashMap<String, i64>'
       - 'faber::tabula_selecta(&map, &'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.selecta(["key1", "key2"])'
   skip: [zig]
 
 # omissa removes specified keys (returns new map)
 - name: 'omissa -> filter excluding keys'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.omissa(["key1", "key2"])
   cpp:
       - 'faber::tabula_omissa(map, '
@@ -294,14 +294,14 @@
       - 'HashMap<String, i64>'
       - 'faber::tabula_omissa(&map, &'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.omissa(["key1", "key2"])'
   skip: [zig]
 
 # inversa swaps keys and values
 - name: 'inversa -> invert map'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.inversa()
   cpp:
       - 'faber::tabula_inversa(map)'
@@ -311,28 +311,28 @@
       - 'HashMap<String, i64>'
       - 'faber::tabula_inversa(&map)'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.inversa()'
   skip: [zig]
 
 # mappaValores transforms values
 - name: 'mappaValores -> transform values'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.mappaValores(pro v: v * 2)
   ts:
       - '[...map].map(([k, v]) => [k, '
   rs:
       - 'HashMap<String, i64>'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.mappaValores(pro v: v * 2)'
   skip: [zig, rs, py, cpp]
 
 # mappaClaves transforms keys
 - name: 'mappaClaves -> transform keys'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.mappaClaves(pro k: k + "_new")
   ts:
       - '[...map].map(([k, v]) => ['
@@ -340,20 +340,20 @@
   rs:
       - 'HashMap<String, i64>'
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.mappaClaves(pro k: k + "_new")'
   skip: [zig, rs, py, cpp]
 
 # inObjectum converts to plain object (JS/Python only)
 - name: 'inObjectum -> object from map'
   source: |
-      fixum tabula<textus, numerus> map = {}
+      fixum tabula<textus, numerus> map ← {}
       map.inObjectum()
   cpp:
       - 'Object.fromEntries('
   ts:
       - 'Object.fromEntries('
   fab:
-      - 'fixum tabula<textus, numerus> map = {}'
+      - 'fixum tabula<textus, numerus> map ← {}'
       - 'map.inObjectum()'
   skip: [zig, rs, cpp]

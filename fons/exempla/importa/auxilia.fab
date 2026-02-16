@@ -1,12 +1,12 @@
 # Example utility module for local import testing
 
 # A simple greeting function (needs allocator for string formatting)
-functio greet(textus name) curata alloc -> textus {
+functio greet(textus name) curata alloc → textus {
     redde scriptum("Hello, §!", name)
 }
 
 # A constant value
-fixum numerus ANSWER = 42
+fixum numerus ANSWER ← 42
 
 # A genus for testing
 genus Point {

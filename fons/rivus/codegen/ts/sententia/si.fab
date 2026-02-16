@@ -14,6 +14,6 @@ importa ex "../../shared/si" privata genSiLogica
 importa ex "../revocata" privata creaTsRevocata
 
 @ publica
-functio genSi(in TsGenerator g, de Expressia condicio, de Sententia consequens, de ignotum alternans, de ignotum cape) -> textus {
+functio genSi(in TsGenerator g, de Expressia condicio, de Sententia consequens, de ignotum alternans, de ignotum cape) → textus {
     redde genSiLogica(condicio, consequens, alternans, cape, g, SYNTAXIS_TS, creaTsRevocata())
 }

@@ -66,7 +66,7 @@ genus Lexor {
 
     # locus = "place" - capture current source position
     # Returns a Locus struct with line, column, and byte offset
-    functio locus() -> Locus {
+    functio locus() → Locus {
         redde {
             linea: ego.linea,
             columna: ego.index - ego.columnaInitium + 1,
@@ -82,9 +82,9 @@ genus Lexor {
     # specta = "look at" - peek ahead without consuming
     # distantia = lookahead distance (0 = current char, 1 = next, etc.)
     # Returns empty string if past end of input
-    functio specta(numerus distantia) -> textus {
-        fixum pos = ego.index + distantia
-        si pos >= ego.fons.longitudo() {
+    functio specta(numerus distantia) → textus {
+        fixum pos ← ego.index + distantia
+        si pos ≥ ego.fons.longitudo() {
             redde ""
         }
         redde ego.fons[pos]
@@ -92,15 +92,15 @@ genus Lexor {
 
     # procede = "go forward" - consume current char and advance
     # Returns the consumed character
-    functio procede() -> textus {
-        fixum c = ego.fons[ego.index]
+    functio procede() → textus {
+        fixum c ← ego.fons[ego.index]
         ego.index += 1
         redde c
     }
 
     # estFinis = "is it the end?" - check if all input consumed
-    functio estFinis() -> bivalens {
-        redde ego.index >= ego.fons.longitudo()
+    functio estFinis() → bivalens {
+        redde ego.index ≥ ego.fons.longitudo()
     }
 
     # =========================================================================
@@ -109,32 +109,32 @@ genus Lexor {
     # =========================================================================
 
     # estDigitus = "is it a digit?" - decimal 0-9
-    functio estDigitus(de textus c) -> bivalens {
-        redde c >= "0" et c <= "9"
+    functio estDigitus(de textus c) → bivalens {
+        redde c ≥ "0" et c ≤ "9"
     }
 
     # estDigitusHex = "is it a hex digit?" - 0-9, a-f, A-F
-    functio estDigitusHex(de textus c) -> bivalens {
-        redde ego.estDigitus(c) aut (c >= "a" et c <= "f") aut (c >= "A" et c <= "F")
+    functio estDigitusHex(de textus c) → bivalens {
+        redde ego.estDigitus(c) aut (c ≥ "a" et c ≤ "f") aut (c ≥ "A" et c ≤ "F")
     }
 
     # estDigitusBinarius = "is it a binary digit?" - 0 or 1
-    functio estDigitusBinarius(de textus c) -> bivalens {
+    functio estDigitusBinarius(de textus c) → bivalens {
         redde c inter ["0", "1"]
     }
 
     # estDigitusOctalis = "is it an octal digit?" - 0-7
-    functio estDigitusOctalis(de textus c) -> bivalens {
-        redde c >= "0" et c <= "7"
+    functio estDigitusOctalis(de textus c) → bivalens {
+        redde c ≥ "0" et c ≤ "7"
     }
 
     # estLittera = "is it a letter?" - identifier start char (a-z, A-Z, _)
-    functio estLittera(de textus c) -> bivalens {
-        redde (c >= "a" et c <= "z") aut (c >= "A" et c <= "Z") aut c == "_"
+    functio estLittera(de textus c) → bivalens {
+        redde (c ≥ "a" et c ≤ "z") aut (c ≥ "A" et c ≤ "Z") aut c ≡ "_"
     }
 
     # estLitteraVelDigitus = "is it a letter or digit?" - identifier continuation
-    functio estLitteraVelDigitus(de textus c) -> bivalens {
+    functio estLitteraVelDigitus(de textus c) → bivalens {
         redde ego.estLittera(c) aut ego.estDigitus(c)
     }
 
@@ -145,7 +145,7 @@ genus Lexor {
 
     # addeSymbolum = "add a token" - append token to output stream
     # species = token type, valor = lexeme text, locus = source position
-    functio addeSymbolum(SymbolumGenus species, ex textus valor, ex Locus locus) -> vacuum {
+    functio addeSymbolum(SymbolumGenus species, ex textus valor, ex Locus locus) → vacuum {
         ego.symbola.appende({
             species: species,
             valor: valor,
@@ -157,7 +157,7 @@ genus Lexor {
 
     # addeVerbum = "add a keyword" - special case for reserved words
     # verbum = "word" - the keyword text (e.g., "si", "functio")
-    functio addeVerbum(ex textus verbum, ex Locus locus, si ex VerbumId id) -> vacuum {
+    functio addeVerbum(ex textus verbum, ex Locus locus, si ex VerbumId id) → vacuum {
         ego.symbola.appende({
             species: SymbolumGenus.Verbum,
             valor: verbum,
@@ -168,7 +168,7 @@ genus Lexor {
     }
 
     # addeErrorem = "add an error" - record lexical error without stopping
-    functio addeErrorem(LexorErrorCodice codice, ex Locus locus) -> vacuum {
+    functio addeErrorem(LexorErrorCodice codice, ex Locus locus) → vacuum {
         ego.errores.appende(error(codice, locus))
     }
 
@@ -179,69 +179,69 @@ genus Lexor {
 
     # omitteSpatium = "skip whitespace" - consume spaces, tabs, newlines, comments
     # Comments are preserved as tokens (NotaLinea, NotaMassa, NotaDocens)
-    functio omitteSpatium() -> vacuum {
+    functio omitteSpatium() → vacuum {
         dum non ego.estFinis() {
-            fixum c = ego.specta(0)
+            fixum c ← ego.specta(0)
 
             # Skip horizontal whitespace (space, tab, carriage return)
             si c inter [" ", "\t", "\r"] {
                 ego.procede()
             }
             # Handle newline - update line tracking
-            sin c == "\n" {
+            sin c ≡ "\n" {
                 ego.procede()
                 ego.linea += 1
-                ego.columnaInitium = ego.index
+                ego.columnaInitium ← ego.index
             }
             # Single-line comment: # ... until newline
-            sin c == "#" {
+            sin c ≡ "#" {
                 # WHY: Faber uses # for line comments across targets.
-                fixum loc = ego.locus()
-                varia textus nota = ""
+                fixum loc ← ego.locus()
+                varia textus nota ← ""
 
                 ego.procede()  # consume #
 
-                dum non ego.estFinis() et ego.specta(0) != "\n" {
-                    nota = nota + ego.procede()
+                dum non ego.estFinis() et ego.specta(0) ≠ "\n" {
+                    nota ← nota + ego.procede()
                 }
 
                 ego.addeSymbolum(SymbolumGenus.NotaLinea, nota, loc)
             }
             # Single-line comment: // ... until newline
-            sin c == "/" et ego.specta(1) == "/" {
-                fixum loc = ego.locus()
-                varia textus nota = ""      # nota = "note/comment"
+            sin c ≡ "/" et ego.specta(1) ≡ "/" {
+                fixum loc ← ego.locus()
+                varia textus nota ← ""      # nota = "note/comment"
 
                 ego.procede()  # consume first /
                 ego.procede()  # consume second /
 
                 # Collect comment text until end of line
-                dum non ego.estFinis() et ego.specta(0) != "\n" {
-                    nota = nota + ego.procede()
+                dum non ego.estFinis() et ego.specta(0) ≠ "\n" {
+                    nota ← nota + ego.procede()
                 }
 
                 # NotaLinea = single-line comment token
                 ego.addeSymbolum(SymbolumGenus.NotaLinea, nota, loc)
             }
             # Multi-line comment: /* ... */ or doc comment: /** ... */
-            sin c == "/" et ego.specta(1) == "*" {
-                fixum loc = ego.locus()
-                varia textus nota = ""
+            sin c ≡ "/" et ego.specta(1) ≡ "*" {
+                fixum loc ← ego.locus()
+                varia textus nota ← ""
 
                 ego.procede()  # consume /
                 ego.procede()  # consume *
 
                 # estDocens = "is it a doc comment?" - check for /** pattern
-                fixum estDocens = ego.specta(0) == "*" et ego.specta(1) != "/"
+                fixum estDocens ← ego.specta(0) ≡ "*" et ego.specta(1) ≠ "/"
 
                 # Collect until closing */
-                dum non ego.estFinis() et non (ego.specta(0) == "*" et ego.specta(1) == "/") {
+                dum non ego.estFinis() et non (ego.specta(0) ≡ "*" et ego.specta(1) ≡ "/") {
                     # Track newlines inside multi-line comments
-                    si ego.specta(0) == "\n" {
+                    si ego.specta(0) ≡ "\n" {
                         ego.linea += 1
-                        ego.columnaInitium = ego.index + 1
+                        ego.columnaInitium ← ego.index + 1
                     }
-                    nota = nota + ego.procede()
+                    nota ← nota + ego.procede()
                 }
 
                 # Consume closing */ if not at EOF
@@ -251,7 +251,7 @@ genus Lexor {
                 }
 
                 # NotaDocens = doc comment, NotaMassa = block comment
-                fixum species = estDocens sic SymbolumGenus.NotaDocens secus SymbolumGenus.NotaMassa
+                fixum species ← estDocens sic SymbolumGenus.NotaDocens secus SymbolumGenus.NotaMassa
                 ego.addeSymbolum(species, nota, loc)
             }
             # Not whitespace or comment - stop skipping
@@ -275,22 +275,22 @@ genus Lexor {
         de textus radix,
         LexorErrorCodice errorCodice,
         ex Locus loc
-    ) -> bivalens {
+    ) → bivalens {
         # Check for prefix: 0x, 0b, 0o (case insensitive)
-        si ego.specta(0) != "0" {
+        si ego.specta(0) ≠ "0" {
             redde falsum
         }
-        si ego.specta(1) != praefixumMinor et ego.specta(1) != praefixumMaior {
+        si ego.specta(1) ≠ praefixumMinor et ego.specta(1) ≠ praefixumMaior {
             redde falsum
         }
 
-        varia valor = ego.procede() + ego.procede()  # consume '0' and prefix
+        varia valor ← ego.procede() + ego.procede()  # consume '0' and prefix
 
         # Capture ego for nested function (JS functions don't preserve this)
-        fixum self = ego
+        fixum self ← ego
 
         # Dispatch to appropriate validator
-        functio estValidus(textus c) -> bivalens {
+        functio estValidus(textus c) → bivalens {
             elige radix {
                 casu "hex" reddit self.estDigitusHex(c)
                 casu "bin" reddit self.estDigitusBinarius(c)
@@ -307,13 +307,13 @@ genus Lexor {
 
         # Consume all valid digits
         dum estValidus(ego.specta(0)) {
-            valor = valor + ego.procede()
+            valor ← valor + ego.procede()
         }
 
         # Optional bigint suffix 'n'
-        si ego.specta(0) == "n" {
+        si ego.specta(0) ≡ "n" {
             ego.procede()
-            valor = valor + "n"
+            valor ← valor + "n"
         }
 
         ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
@@ -323,8 +323,8 @@ genus Lexor {
     # legeNumerum = "scan a number" - handles all numeric literal formats
     # Supports: decimal (42), hex (0xFF), binary (0b101), octal (0o77),
     #           float (3.14), scientific (1e10), bigint suffix (42n)
-    functio legeNumerum() -> vacuum {
-        fixum loc = ego.locus()
+    functio legeNumerum() → vacuum {
+        fixum loc ← ego.locus()
 
         # Radix prefixes: hex (0x), binary (0b), octal (0o)
         si ego.legeNumerumRadix("x", "X", "hex", LexorErrorCodice.NumerusHexMalus, loc) {
@@ -338,43 +338,43 @@ genus Lexor {
         }
 
         # ---- Decimal literal ----
-        varia textus valor = ""
+        varia textus valor ← ""
         # Consume integer part (digits before decimal point)
         dum ego.estDigitus(ego.specta(0)) {
-            valor = valor + ego.procede()
+            valor ← valor + ego.procede()
         }
 
-        varia estFractus = falsum
+        varia estFractus ← falsum
 
         # Check for fractional part: must be "." followed by digit
         # (distinguishes 42.method() from 42.5)
-        si ego.specta(0) == "." et ego.estDigitus(ego.specta(1)) {
-            valor = valor + ego.procede()  # consume '.'
+        si ego.specta(0) ≡ "." et ego.estDigitus(ego.specta(1)) {
+            valor ← valor + ego.procede()  # consume '.'
 
             # Consume fractional digits
             dum ego.estDigitus(ego.specta(0)) {
-                valor = valor + ego.procede()
+                valor ← valor + ego.procede()
             }
 
-            estFractus = verum
+            estFractus ← verum
         }
 
         # Check for scientific notation: e or E followed by optional sign and digits
-        si ego.specta(0) == "e" aut ego.specta(0) == "E" {
-            fixum next = ego.specta(1)
+        si ego.specta(0) ≡ "e" aut ego.specta(0) ≡ "E" {
+            fixum next ← ego.specta(1)
             # Valid: 1e5, 1e+5, 1e-5
-            si ego.estDigitus(next) aut ((next == "+" aut next == "-") et ego.estDigitus(ego.specta(2))) {
-                valor = valor + ego.procede()  # consume 'e'
-                estFractus = verum
+            si ego.estDigitus(next) aut ((next ≡ "+" aut next ≡ "-") et ego.estDigitus(ego.specta(2))) {
+                valor ← valor + ego.procede()  # consume 'e'
+                estFractus ← verum
 
                 # Consume optional sign
-                si ego.specta(0) == "+" aut ego.specta(0) == "-" {
-                    valor = valor + ego.procede()
+                si ego.specta(0) ≡ "+" aut ego.specta(0) ≡ "-" {
+                    valor ← valor + ego.procede()
                 }
 
                 # Consume exponent digits
                 dum ego.estDigitus(ego.specta(0)) {
-                    valor = valor + ego.procede()
+                    valor ← valor + ego.procede()
                 }
 
                 # Scientific notation is always float
@@ -384,10 +384,10 @@ genus Lexor {
         }
 
         # Check for bigint suffix on decimal
-        si ego.specta(0) == "n" {
+        si ego.specta(0) ≡ "n" {
             ego.procede()
             # WHY: Preserve bigint suffix for TS codegen parity.
-            valor = valor + "n"
+            valor ← valor + "n"
             ego.addeSymbolum(SymbolumGenus.Numerus, valor, loc)
             redde
         }
@@ -403,22 +403,22 @@ genus Lexor {
     # legeEscapeSequentia = "scan an escape sequence"
     # Handles backslash escapes including unicode \uXXXX
     # Returns the consumed characters (backslash + escaped content)
-    functio legeEscapeSequentia() -> textus {
-        varia result = ego.procede()  # Consume backslash
-        si non ego.estFinis() et ego.specta(0) != "\n" {
-            fixum escaped = ego.specta(0)
+    functio legeEscapeSequentia() → textus {
+        varia result ← ego.procede()  # Consume backslash
+        si non ego.estFinis() et ego.specta(0) ≠ "\n" {
+            fixum escaped ← ego.specta(0)
             # Unicode escape \uXXXX - consume u + up to 4 hex digits
-            si escaped == "u" {
-                result = result + ego.procede()
-                varia numerus i = 0
+            si escaped ≡ "u" {
+                result ← result + ego.procede()
+                varia numerus i ← 0
                 dum i < 4 et ego.estDigitusHex(ego.specta(0)) {
-                    result = result + ego.procede()
+                    result ← result + ego.procede()
                     i += 1
                 }
             }
             # Other escapes: \n, \t, \", etc. - just consume the char
             secus {
-                result = result + ego.procede()
+                result ← result + ego.procede()
             }
         }
         redde result
@@ -427,27 +427,27 @@ genus Lexor {
     # legeTextum = "scan a string" - handles single and double quoted strings
     # clausa = "closing" - the quote character that ends this string
     # Preserves escape sequences (backslash + char) in the output
-    functio legeTextum(de textus clausa) -> vacuum {
-        fixum loc = ego.locus()
-        varia textus valor = ""     # Accumulates string content (without quotes)
+    functio legeTextum(de textus clausa) → vacuum {
+        fixum loc ← ego.locus()
+        varia textus valor ← ""     # Accumulates string content (without quotes)
 
         ego.procede()  # Consume opening quote
 
         # Scan until closing quote or end of input
-        dum non ego.estFinis() et ego.specta(0) != clausa {
+        dum non ego.estFinis() et ego.specta(0) ≠ clausa {
             # Error: newline in non-template string
-            si ego.specta(0) == "\n" {
+            si ego.specta(0) ≡ "\n" {
                 ego.addeErrorem(LexorErrorCodice.TextusNonClausa, loc)
                 redde
             }
 
             # Handle escape sequences
-            si ego.specta(0) == "\\" {
-                valor = valor + ego.legeEscapeSequentia()
+            si ego.specta(0) ≡ "\\" {
+                valor ← valor + ego.legeEscapeSequentia()
             }
             # Regular character
             secus {
-                valor = valor + ego.procede()
+                valor ← valor + ego.procede()
             }
         }
 
@@ -469,33 +469,33 @@ genus Lexor {
     # - No escape processing (literal content)
     # - Leading/trailing newlines adjacent to delimiters stripped
     # Emits as Exemplar (template) for proper multi-line codegen
-    functio legeTriplumTextum() -> vacuum {
-        fixum loc = ego.locus()
-        varia textus valor = ""
+    functio legeTriplumTextum() → vacuum {
+        fixum loc ← ego.locus()
+        varia textus valor ← ""
 
         ego.procede()  # First "
         ego.procede()  # Second "
         ego.procede()  # Third "
 
         # Skip leading newline immediately after opening """
-        si ego.specta(0) == "\n" {
+        si ego.specta(0) ≡ "\n" {
             ego.linea += 1
-            ego.columnaInitium = ego.index + 1
+            ego.columnaInitium ← ego.index + 1
             ego.procede()
         }
 
         dum non ego.estFinis() {
             # Check for closing """
-            si ego.specta(0) == "\"" et ego.specta(1) == "\"" et ego.specta(2) == "\"" {
+            si ego.specta(0) ≡ "\"" et ego.specta(1) ≡ "\"" et ego.specta(2) ≡ "\"" {
                 rumpe
             }
 
-            si ego.specta(0) == "\n" {
+            si ego.specta(0) ≡ "\n" {
                 ego.linea += 1
-                ego.columnaInitium = ego.index + 1
+                ego.columnaInitium ← ego.index + 1
             }
 
-            valor = valor + ego.procede()
+            valor ← valor + ego.procede()
         }
 
         si ego.estFinis() {
@@ -505,7 +505,7 @@ genus Lexor {
 
         # Strip trailing newline immediately before closing """
         si valor.endsWith("\n") {
-            valor = valor.slice(0, -1)
+            valor ← valor.slice(0, -1)
         }
 
         ego.procede()  # First closing "
@@ -513,9 +513,9 @@ genus Lexor {
         ego.procede()  # Third closing "
 
         # Escape backticks and ${ for template string output
-        valor = valor.muta("\\", "\\\\")
-        valor = valor.muta("`", "\\`")
-        valor = valor.muta("${", "\\${")
+        valor ← valor.muta("\\", "\\\\")
+        valor ← valor.muta("`", "\\`")
+        valor ← valor.muta("${", "\\${")
 
         ego.addeSymbolum(SymbolumGenus.Exemplar, valor, loc)
     }
@@ -523,14 +523,14 @@ genus Lexor {
     # legeInterpolatio = "scan an interpolation"
     # Handles ${...} with brace depth tracking for nested objects/blocks
     # Returns the consumed characters (${...} including braces)
-    functio legeInterpolatio() -> textus {
-        varia result = ego.procede()  # Consume '$'
-        result = result + ego.procede()  # Consume '{'
-        varia numerus depth = 1
+    functio legeInterpolatio() → textus {
+        varia result ← ego.procede()  # Consume '$'
+        result ← result + ego.procede()  # Consume '{'
+        varia numerus depth ← 1
         dum non ego.estFinis() et depth > 0 {
-            si ego.specta(0) == "{" { depth += 1 }
-            si ego.specta(0) == "}" { depth -= 1 }
-            result = result + ego.procede()
+            si ego.specta(0) ≡ "{" { depth += 1 }
+            si ego.specta(0) ≡ "}" { depth -= 1 }
+            result ← result + ego.procede()
         }
         redde result
     }
@@ -538,31 +538,31 @@ genus Lexor {
     # legeExemplar = "scan a template" - handles backtick template strings
     # exemplar = "template" - template strings with interpolation
     # Unlike regular strings, templates can span multiple lines and contain ${...}
-    functio legeExemplar() -> vacuum {
-        fixum loc = ego.locus()
-        varia textus valor = ""
+    functio legeExemplar() → vacuum {
+        fixum loc ← ego.locus()
+        varia textus valor ← ""
 
         ego.procede()  # Consume opening backtick
 
-        dum non ego.estFinis() et ego.specta(0) != "`" {
+        dum non ego.estFinis() et ego.specta(0) ≠ "`" {
             # Template strings CAN span lines (unlike regular strings)
-            si ego.specta(0) == "\n" {
+            si ego.specta(0) ≡ "\n" {
                 ego.linea += 1
-                ego.columnaInitium = ego.index + 1
-                valor = valor + ego.procede()
+                ego.columnaInitium ← ego.index + 1
+                valor ← valor + ego.procede()
             }
             # Escape sequences in templates
-            sin ego.specta(0) == "\\" {
+            sin ego.specta(0) ≡ "\\" {
                 ego.procede()  # Skip backslash
-                valor = valor + ego.procede()  # Keep escaped char
+                valor ← valor + ego.procede()  # Keep escaped char
             }
             # Interpolation: ${...}
-            sin ego.specta(0) == "$" et ego.specta(1) == "{" {
-                valor = valor + ego.legeInterpolatio()
+            sin ego.specta(0) ≡ "$" et ego.specta(1) ≡ "{" {
+                valor ← valor + ego.legeInterpolatio()
             }
             # Regular template character
             secus {
-                valor = valor + ego.procede()
+                valor ← valor + ego.procede()
             }
         }
 
@@ -580,13 +580,13 @@ genus Lexor {
     # legeNomen = "scan a name" - handles identifiers and keywords
     # nomen = "name" - user-defined identifiers
     # verbum = "word" - reserved keywords (si, functio, genus, etc.)
-    functio legeNomen() -> vacuum {
-        fixum loc = ego.locus()
-        varia textus valor = ""
+    functio legeNomen() → vacuum {
+        fixum loc ← ego.locus()
+        varia textus valor ← ""
 
         # Consume all identifier characters (letters, digits, underscore)
         dum ego.estLitteraVelDigitus(ego.specta(0)) {
-            valor = valor + ego.procede()
+            valor ← valor + ego.procede()
         }
 
         # Boolean/null literals are tokens, not keywords.
@@ -610,7 +610,7 @@ genus Lexor {
 
         # Check if the identifier is a reserved keyword
         # verbumId() is defined in lexicon/verba.fab
-        fixum id = verbumId(valor)
+        fixum id ← verbumId(valor)
         si nonnihil id {
             ego.addeVerbum(valor, loc, id)
         } secus {
@@ -626,7 +626,7 @@ genus Lexor {
 
     # legeSymbolum = "scan a token" - main dispatch: determine token type and delegate
     # Called repeatedly by scanOmnia() until input exhausted
-    functio legeSymbolum() -> vacuum {
+    functio legeSymbolum() → vacuum {
         # First skip any whitespace and comments
         ego.omitteSpatium()
 
@@ -635,8 +635,8 @@ genus Lexor {
             redde
         }
 
-        fixum loc = ego.locus()
-        fixum c = ego.specta(0)     # Current character (not consumed yet)
+        fixum loc ← ego.locus()
+        fixum c ← ego.specta(0)     # Current character (not consumed yet)
 
         # ---- Dispatch by first character ----
 
@@ -654,8 +654,8 @@ genus Lexor {
 
         # String literal: single or double quote
         # Triple-quote strings (""") allow multi-line content
-        si c == "\"" aut c == "'" {
-            si c == "\"" et ego.specta(1) == "\"" et ego.specta(2) == "\"" {
+        si c ≡ "\"" aut c ≡ "'" {
+            si c ≡ "\"" et ego.specta(1) ≡ "\"" et ego.specta(2) ≡ "\"" {
                 ego.legeTriplumTextum()
             } secus {
                 ego.legeTextum(c)
@@ -664,7 +664,7 @@ genus Lexor {
         }
 
         # Template string: backtick
-        si c == "`" {
+        si c ≡ "`" {
             ego.legeExemplar()
             redde
         }
@@ -691,7 +691,7 @@ genus Lexor {
             casu "§" { ego.addeSymbolum(SymbolumGenus.Sectio, c, loc) }     # section annotation
             casu "?" {
                 # WHY: Distinguish ?? (nullish) from ? (ternary/optional chain)
-                si ego.specta(0) == "?" {
+                si ego.specta(0) ≡ "?" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.RogatioBis, "??", loc)
                 } secus {
@@ -701,9 +701,9 @@ genus Lexor {
 
             # ---- Dot operators: . or .. or ... ----
             casu "." {
-                si ego.specta(0) == "." {
+                si ego.specta(0) ≡ "." {
                     ego.procede()
-                    si ego.specta(0) == "." {
+                    si ego.specta(0) ≡ "." {
                         ego.procede()
                         ego.addeSymbolum(SymbolumGenus.PunctumTer, "...", loc)  # spread/rest
                     } secus {
@@ -717,7 +717,7 @@ genus Lexor {
             # ---- Arithmetic operators ----
             casu "+" {
                 # WHY: Compound assignments are single tokens (+=, -=, etc.).
-                si ego.specta(0) == "=" {
+                si ego.specta(0) ≡ "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.PlusAequum, "+=", loc)
                 } secus {
@@ -725,7 +725,7 @@ genus Lexor {
                 }
             }
             casu "*" {
-                si ego.specta(0) == "=" {
+                si ego.specta(0) ≡ "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.StellaAequum, "*=", loc)
                 } secus {
@@ -733,7 +733,7 @@ genus Lexor {
                 }
             }
             casu "/" {
-                si ego.specta(0) == "=" {
+                si ego.specta(0) ≡ "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.VirgulaAequum, "/=", loc)
                 } secus {
@@ -741,7 +741,7 @@ genus Lexor {
                 }
             }
             casu "%" {
-                si ego.specta(0) == "=" {
+                si ego.specta(0) ≡ "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.CentumAequum, "%=", loc)
                 } secus {
@@ -751,44 +751,56 @@ genus Lexor {
 
             # ---- Minus: - or -> (arrow) or -= ----
             casu "-" {
-                si ego.specta(0) == ">" {
+                si ego.specta(0) ≡ ">" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.Sagitta, "->", loc)  # sagitta = arrow
-                } sin ego.specta(0) == "=" {
+                    ego.addeSymbolum(SymbolumGenus.Sagitta, "→", loc)  # sagitta = arrow
+                } sin ego.specta(0) ≡ "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.MinusAequum, "-=", loc)
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Minus, c, loc)
                 }
             }
+            casu "→" {
+                ego.addeSymbolum(SymbolumGenus.Sagitta, "→", loc)
+            }
 
             # ---- Equals: = or == or === or => ----
+            casu "←" {
+                ego.addeSymbolum(SymbolumGenus.Aequum, "←", loc)
+            }
+            casu "≡" {
+                ego.addeSymbolum(SymbolumGenus.AequumBis, "≡", loc)
+            }
             casu "=" {
-                si ego.specta(0) == "=" et ego.specta(1) == "=" {
+                si ego.specta(0) ≡ "=" et ego.specta(1) ≡ "=" {
                     ego.procede()
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.AequumTer, "===", loc)      # strict equality
-                } sin ego.specta(0) == "=" {
+                    ego.addeSymbolum(SymbolumGenus.AequumTer, "≡", loc)      # strict equality (compat)
+                } sin ego.specta(0) ≡ "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.AequumBis, "==", loc)       # equality
-                } sin ego.specta(0) == ">" {
+                    ego.addeSymbolum(SymbolumGenus.AequumBis, "≡", loc)       # equality
+                } sin ego.specta(0) ≡ ">" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.SagittaCrassa, "=>", loc)   # fat arrow (crassa = thick)
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Aequum, c, loc)             # assignment
+                    ego.addeSymbolum(SymbolumGenus.Aequum, "←", loc)             # assignment
                 }
             }
 
             # ---- Bang: ! or != or !== or !. ----
+            casu "≠" {
+                ego.addeSymbolum(SymbolumGenus.NonAequum, "≠", loc)
+            }
             casu "!" {
-                si ego.specta(0) == "=" et ego.specta(1) == "=" {
+                si ego.specta(0) ≡ "=" et ego.specta(1) ≡ "=" {
                     ego.procede()
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.NonAequumBis, "!==", loc)   # strict inequality
-                } sin ego.specta(0) == "=" {
+                    ego.addeSymbolum(SymbolumGenus.NonAequumBis, "≠", loc)   # strict inequality (compat)
+                } sin ego.specta(0) ≡ "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.NonAequum, "!=", loc)       # inequality
-                } sin ego.specta(0) == "." {
+                    ego.addeSymbolum(SymbolumGenus.NonAequum, "≠", loc)       # inequality
+                } sin ego.specta(0) ≡ "." {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.NonPunctum, "!.", loc)      # non-null assertion access
                 } secus {
@@ -799,10 +811,13 @@ genus Lexor {
             # ---- Less than: < or <= ----
             # NOTE: << is NOT tokenized as a shift operator.
             # Use sinistratum keyword for left shift operations.
+            casu "≤" {
+                ego.addeSymbolum(SymbolumGenus.MinorAequum, "≤", loc)
+            }
             casu "<" {
-                si ego.specta(0) == "=" {
+                si ego.specta(0) ≡ "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.MinorAequum, "<=", loc)     # less or equal
+                    ego.addeSymbolum(SymbolumGenus.MinorAequum, "≤", loc)     # less or equal
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Minor, c, loc)              # less than
                 }
@@ -812,10 +827,13 @@ genus Lexor {
             # NOTE: >> and >>> are NOT tokenized as shift operators.
             # This allows closing angle brackets in nested generics (e.g., lista<tabula<textus>>>)
             # to be parsed correctly. Use dextratum keyword for right shift operations.
+            casu "≥" {
+                ego.addeSymbolum(SymbolumGenus.MaiorAequum, "≥", loc)
+            }
             casu ">" {
-                si ego.specta(0) == "=" {
+                si ego.specta(0) ≡ "=" {
                     ego.procede()
-                    ego.addeSymbolum(SymbolumGenus.MaiorAequum, ">=", loc)     # greater or equal
+                    ego.addeSymbolum(SymbolumGenus.MaiorAequum, "≥", loc)     # greater or equal
                 } secus {
                     ego.addeSymbolum(SymbolumGenus.Maior, c, loc)              # greater than
                 }
@@ -823,10 +841,10 @@ genus Lexor {
 
             # ---- Logical operators: & && | || and compound forms ----
             casu "&" {
-                si ego.specta(0) == "&" {
+                si ego.specta(0) ≡ "&" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.EtEt, "&&", loc)            # logical and
-                } sin ego.specta(0) == "=" {
+                } sin ego.specta(0) ≡ "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.EtAequum, "&=", loc)
                 } secus {
@@ -834,10 +852,10 @@ genus Lexor {
                 }
             }
             casu "|" {
-                si ego.specta(0) == "|" {
+                si ego.specta(0) ≡ "|" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.VelVel, "||", loc)          # logical or
-                } sin ego.specta(0) == "=" {
+                } sin ego.specta(0) ≡ "=" {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.VelAequum, "|=", loc)
                 } secus {
@@ -864,7 +882,7 @@ genus Lexor {
     # scanOmnia = "scan all" - main loop: tokenize entire input
     # Returns LexorResultatum with token stream and any errors
     @ publica
-    functio scanOmnia() -> LexorResultatum {
+    functio scanOmnia() → LexorResultatum {
         # Scan tokens until end of input
         dum non ego.estFinis() {
             ego.legeSymbolum()
@@ -895,8 +913,8 @@ genus Lexor {
 #   ex result.symbola fixum sym { ... }
 #
 @ publica
-functio lexare(ex textus fons) -> LexorResultatum {
-    varia lexor = novum Lexor {
+functio lexare(ex textus fons) → LexorResultatum {
+    varia lexor ← novum Lexor {
         fons: fons,             # Source text to tokenize
         index: 0,               # Start at beginning
         linea: 1,               # Lines are 1-based

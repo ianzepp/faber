@@ -166,7 +166,7 @@
 
 # Empty resource body
 - name: cura with empty body
-  source: 'cura getResource() fit r { }'
+  source:'cura getResource() fit r { }'
   expect:
       ts:
           - 'const r = getResource();'
@@ -187,7 +187,7 @@
 - name: async cura with cape and operations
   source: |
       cura acquire(lock) fiet handle {
-        varia data = cede fetch()
+        varia data ← cede fetch()
         process(data)
         redde data
       }
@@ -220,7 +220,7 @@
           - 'return data;'
       fab:
           - 'cura acquire(lock) fiet handle {'
-          - 'varia data = cede fetch()'
+          - 'varia data ← cede fetch()'
           - 'process(data)'
           - 'redde data'
           - 'cape err {'
@@ -236,7 +236,7 @@
 - name: cura arena basic
   source: |
       cura arena fit mem {
-        varia x = 42
+        varia x ← 42
         process(x)
       }
   expect:
@@ -252,7 +252,7 @@
           - 'const mem = mem_arena.allocator();'
       fab:
           - 'cura arena fit mem {'
-          - 'varia x = 42'
+          - 'varia x ← 42'
           - 'process(x)'
   skip: [py, cpp]
 
@@ -260,7 +260,7 @@
 - name: cura page basic
   source: |
       cura page fit mem {
-        fixum buffer = allocate(1024)
+        fixum buffer ← allocate(1024)
       }
   expect:
       ts:
@@ -272,17 +272,17 @@
           - 'const buffer = allocate(1024);'
       fab:
           - 'cura page fit mem {'
-          - 'fixum buffer = allocate(1024)'
+          - 'fixum buffer ← allocate(1024)'
   skip: [py, cpp]
 
 # Nested arena blocks
 - name: nested cura arena
   source: |
       cura arena fit outer {
-        varia a = 1
+        varia a ← 1
         process(a)
         cura arena fit inner {
-          varia b = 2
+          varia b ← 2
           process(b)
         }
         process(a)
@@ -307,10 +307,10 @@
           - 'const inner = inner_arena.allocator();'
       fab:
           - 'cura arena fit outer {'
-          - 'varia a = 1'
+          - 'varia a ← 1'
           - 'process(a)'
           - 'cura arena fit inner {'
-          - 'varia b = 2'
+          - 'varia b ← 2'
           - 'process(b)'
   skip: [py, cpp]
 

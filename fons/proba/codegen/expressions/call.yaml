@@ -2,7 +2,7 @@
 # Maps Faber call syntax to target-language equivalents
 
 - name: simple function call
-  source: salve(nomen)
+  source:salve(nomen)
   expect:
       ts: 'salve(nomen);'
       py: 'salve(nomen)'
@@ -16,7 +16,7 @@
           - 'salve(nomen)'
 
 - name: function call with multiple args
-  source: add(1, 2, 3)
+  source:add(1, 2, 3)
   expect:
       ts: 'add(1, 2, 3);'
       py: 'add(1, 2, 3)'
@@ -30,7 +30,7 @@
           - 'add(1, 2, 3)'
 
 - name: method call on object
-  source: lista.filter(f)
+  source:lista.filter(f)
   expect:
       ts: 'lista.filter(f);'
       py: 'lista.filter(f)'
@@ -44,7 +44,7 @@
           - 'lista.filter(f)'
 
 - name: function call with spread
-  source: fn(sparge args)
+  source:fn(sparge args)
   expect:
       ts: 'fn(...args);'
       py: 'fn(*args)'
@@ -59,7 +59,7 @@
           - 'fn(sparge args)'
 
 - name: optional call
-  source: callback?()
+  source:callback?()
   expect:
       ts: 'callback?.();'
       py:
@@ -76,7 +76,7 @@
           - 'callback?()'
 
 - name: nested function call
-  source: outer(inner(x))
+  source:outer(inner(x))
   expect:
       ts: 'outer(inner(x));'
       py: 'outer(inner(x))'
@@ -90,7 +90,7 @@
           - 'outer(inner(x))'
 
 - name: deeply nested calls
-  source: a(b(c(d(e(f())))))
+  source:a(b(c(d(e(f())))))
   expect:
       ts: 'a(b(c(d(e(f())))));'
       py: 'a(b(c(d(e(f())))))'
@@ -100,7 +100,7 @@
           - 'a(b(c(d(e(f())))))'
 
 - name: mixed spread and regular args
-  source: fn(a, sparge b, c, sparge d)
+  source:fn(a, sparge b, c, sparge d)
   expect:
       ts: 'fn(a, ...b, c, ...d);'
       py: 'fn(a, *b, c, *d)'
@@ -108,7 +108,7 @@
           - 'fn(a, sparge b, c, sparge d)'
 
 - name: chained method calls
-  source: obj.a().b().c().d()
+  source:obj.a().b().c().d()
   expect:
       ts: 'obj.a().b().c().d();'
       py: 'obj.a().b().c().d()'
@@ -118,7 +118,7 @@
           - 'obj.a().b().c().d()'
 
 - name: call with object literal argument
-  source: 'fn({ x: 1, y: 2 })'
+  source:'fn({ x: 1, y: 2 })'
   expect:
       ts: 'fn({ x: 1, y: 2 });'
       py: 'fn({"x": 1, "y": 2})'
@@ -129,7 +129,7 @@
           - '})'
 
 - name: call with lambda argument
-  source: 'items.map(pro x: x * 2)'
+  source:'items.map(pro x: x * 2)'
   expect:
       ts: 'items.map((x) => (x * 2));'
       py: 'items.map(lambda x: (x * 2))'
@@ -137,7 +137,7 @@
           - 'items.map(pro x: x * 2)'
 
 - name: call on computed member
-  source: obj[methodName](args)
+  source:obj[methodName](args)
   expect:
       ts: 'obj[methodName](args);'
       py: 'obj[methodName](args)'
@@ -145,7 +145,7 @@
           - 'obj[methodName](args)'
 
 - name: empty call on method
-  source: obj.method()
+  source:obj.method()
   expect:
       ts: 'obj.method();'
       py: 'obj.method()'
@@ -155,7 +155,7 @@
           - 'obj.method()'
 
 - name: call with single argument
-  source: process(data)
+  source:process(data)
   expect:
       ts: 'process(data);'
       py: 'process(data)'

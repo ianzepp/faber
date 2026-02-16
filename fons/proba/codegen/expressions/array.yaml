@@ -2,7 +2,7 @@
 # Maps Faber array syntax to target-language equivalents
 
 - name: empty array
-  source: fixum arr = []
+  source:fixum arr ← []
   expect:
       ts: 'const arr = [];'
       py: 'arr = []'
@@ -13,10 +13,10 @@
       zig:
           - 'const arr = .{};'
       fab:
-          - 'fixum arr = []'
+          - 'fixum arr ← []'
 
 - name: array with elements
-  source: fixum nums = [1, 2, 3]
+  source:fixum nums ← [1, 2, 3]
   expect:
       ts: 'const nums = [1, 2, 3];'
       py: 'nums = [1, 2, 3]'
@@ -27,10 +27,10 @@
       zig:
           - '.{ 1, 2, 3 }'
       fab:
-          - 'fixum nums = [1, 2, 3]'
+          - 'fixum nums ← [1, 2, 3]'
 
 - name: array with string elements
-  source: fixum names = ["a", "b", "c"]
+  source:fixum names ← ["a", "b", "c"]
   expect:
       ts: 'const names = ["a", "b", "c"];'
       py: 'names = ["a", "b", "c"]'
@@ -41,10 +41,10 @@
       zig:
           - '.{ "a", "b", "c" }'
       fab:
-          - 'fixum names = ["a", "b", "c"]'
+          - 'fixum names ← ["a", "b", "c"]'
 
 - name: spread in array
-  source: fixum combined = [sparge a, sparge b]
+  source:fixum combined ← [sparge a, sparge b]
   expect:
       ts: 'const combined = [...a, ...b];'
       py: 'combined = [*a, *b]'
@@ -54,12 +54,12 @@
           # TODO: C++ spread is broken - should expand a and b into combined
           - 'const auto combined = {};'
       fab:
-          - 'fixum combined = ['
+          - 'fixum combined ← ['
           - '...a'
           - '...b'
 
 - name: deeply nested arrays (3 levels)
-  source: fixum matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
+  source:fixum matrix ← [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
   expect:
       ts: 'const matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]];'
       py: 'matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]'
@@ -70,10 +70,10 @@
       zig:
           - '.{ .{ .{ 1, 2 }, .{ 3, 4 } }, .{ .{ 5, 6 }, .{ 7, 8 } } }'
       fab:
-          - 'fixum matrix = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]'
+          - 'fixum matrix ← [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]'
 
 - name: single element array
-  source: fixum single = [42]
+  source:fixum single ← [42]
   expect:
       ts: 'const single = [42];'
       py: 'single = [42]'
@@ -84,10 +84,10 @@
       zig:
           - '.{ 42 }'
       fab:
-          - 'fixum single = [42]'
+          - 'fixum single ← [42]'
 
 - name: spread in middle of array
-  source: fixum arr = [1, sparge middle, 2]
+  source:fixum arr ← [1, sparge middle, 2]
   expect:
       ts: 'const arr = [1, ...middle, 2];'
       py: 'arr = [1, *middle, 2]'
@@ -99,11 +99,11 @@
       zig:
           - '.{ 1, middle, 2 }'
       fab:
-          - 'fixum arr = ['
+          - 'fixum arr ← ['
           - '...middle'
 
 - name: spread with function call
-  source: fixum arr = [sparge getItems(), 99]
+  source:fixum arr ← [sparge getItems(), 99]
   expect:
       ts: 'const arr = [...getItems(), 99];'
       py: 'arr = [*getItems(), 99]'
@@ -115,21 +115,21 @@
       zig:
           - '.{ getItems(), 99 }'
       fab:
-          - 'fixum arr = ['
+          - 'fixum arr ← ['
           - '...getItems()'
           - '99'
 
 - name: mixed types in array
-  source: fixum mixed = [1, "text", verum, nihil]
+  source:fixum mixed ← [1, "text", verum, nihil]
   skip: [cpp, rs, zig] # These targets don't support mixed-type arrays
   expect:
       ts: 'const mixed = [1, "text", true, null];'
       py: 'mixed = [1, "text", True, None]'
       fab:
-          - 'fixum mixed = [1, "text", verum, nihil]'
+          - 'fixum mixed ← [1, "text", verum, nihil]'
 
 - name: array with trailing comma
-  source: fixum arr = [1, 2, 3,]
+  source:fixum arr ← [1, 2, 3,]
   expect:
       ts: 'const arr = [1, 2, 3];'
       py: 'arr = [1, 2, 3]'
@@ -140,10 +140,10 @@
       zig:
           - '.{ 1, 2, 3 }'
       fab:
-          - 'fixum arr = [1, 2, 3]'
+          - 'fixum arr ← [1, 2, 3]'
 
 - name: nested spread
-  source: fixum arr = [[sparge inner], outer]
+  source:fixum arr ← [[sparge inner], outer]
   expect:
       ts: 'const arr = [[...inner], outer];'
       py: 'arr = [[*inner], outer]'
@@ -155,12 +155,12 @@
       zig:
           - '.{ .{ inner }, outer }'
       fab:
-          - 'fixum arr = ['
+          - 'fixum arr ← ['
           - '[...inner]'
           - 'outer'
 
 - name: array of arrays
-  source: fixum grid = [[1, 2], [3, 4], [5, 6]]
+  source:fixum grid ← [[1, 2], [3, 4], [5, 6]]
   expect:
       ts: 'const grid = [[1, 2], [3, 4], [5, 6]];'
       py: 'grid = [[1, 2], [3, 4], [5, 6]]'
@@ -171,10 +171,10 @@
       zig:
           - '.{ .{ 1, 2 }, .{ 3, 4 }, .{ 5, 6 } }'
       fab:
-          - 'fixum grid = [[1, 2], [3, 4], [5, 6]]'
+          - 'fixum grid ← [[1, 2], [3, 4], [5, 6]]'
 
 - name: large array (many elements)
-  source: fixum nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  source:fixum nums ← [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   expect:
       ts: 'const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];'
       py: 'nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]'
@@ -185,4 +185,4 @@
       zig:
           - '.{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }'
       fab:
-          - 'fixum nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]'
+          - 'fixum nums ← [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]'

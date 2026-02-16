@@ -11,17 +11,17 @@ importa ex "../expressia/index" privata genExpressia
 importa ex "./index" privata genSententia
 
 @ publica
-functio genFac(in GoGenerator g, de Sententia corpus, si de ignotum condicio) -> textus {
+functio genFac(in GoGenerator g, de Sententia corpus, si de ignotum condicio) → textus {
     g.intraProfundum()
-    fixum body = genSententia(g, corpus)
+    fixum body ← genSententia(g, corpus)
     g.exiProfundum()
 
     si nonnihil condicio {
         # Do-while: Go doesn't have do-while, emulate with for + break
-        fixum test = genExpressia(g, condicio qua Expressia)
+        fixum test ← genExpressia(g, condicio qua Expressia)
 
         g.intraProfundum()
-        fixum breakCheck = scriptum("§if !(§) {\n§\tbreak\n§}", g.ind(), test, g.ind(), g.ind())
+        fixum breakCheck ← scriptum("§if !(§) {\n§\tbreak\n§}", g.ind(), test, g.ind(), g.ind())
         g.exiProfundum()
 
         redde scriptum("§for {\n§\n§\n§}", g.ind(), body, breakCheck, g.ind())

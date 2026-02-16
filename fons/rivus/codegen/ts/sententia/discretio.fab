@@ -12,39 +12,39 @@ importa ex "../nucleus" privata TsGenerator
 importa ex "../typus" privata genTypus
 
 @ publica
-functio genDiscretio(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<VariansDeclaratio> variantes, de ignotum visibilitas) -> textus {
+functio genDiscretio(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<VariansDeclaratio> variantes, de ignotum visibilitas) → textus {
     # TS: prefer inline union members so tests can match exact fragments.
 
     # Module-level: export when public
-    varia exportPrefix = ""
+    varia exportPrefix ← ""
     si nonnihil visibilitas {
-        fixum vis = visibilitas qua Visibilitas
-        si vis == Visibilitas.Publica {
-            exportPrefix = "export "
+        fixum vis ← visibilitas qua Visibilitas
+        si vis ≡ Visibilitas.Publica {
+            exportPrefix ← "export "
         }
     }
 
-    varia params = ""
+    varia params ← ""
     si nonnihil generaParametra {
-        fixum p = generaParametra qua lista<textus>
-        params = scriptum("<§>", p.coniunge(", "))
+        fixum p ← generaParametra qua lista<textus>
+        params ← scriptum("<§>", p.coniunge(", "))
     }
 
     # Emit each variant as a named type, then build the union from those.
     # WHY: `Extract<Union, ...>` aliases become circular when variants reference
     #      sibling variants (Union -> VariantAlias -> Union).
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
 
     itera ex variantes fixum varians {
-        varia member = scriptum("{ tag: '§'", varians.nomen)
+        varia member ← scriptum("{ tag: '§'", varians.nomen)
         itera ex varians.campi fixum campus {
-            member = scriptum("§; §: §", member, campus.nomen, genTypus(g, campus.typus))
+            member ← scriptum("§; §: §", member, campus.nomen, genTypus(g, campus.typus))
         }
-        member = scriptum("§ }", member)
+        member ← scriptum("§ }", member)
         lines.appende(scriptum("§§type §§ = §;", g.ind(), exportPrefix, varians.nomen, params, member))
     }
 
-    varia unionMembers = [] innatum lista<textus>
+    varia unionMembers ← [] innatum lista<textus>
     itera ex variantes fixum varians {
         unionMembers.appende(scriptum("§§", varians.nomen, params))
     }

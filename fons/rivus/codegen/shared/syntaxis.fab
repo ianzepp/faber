@@ -29,7 +29,7 @@ genus ScopusSyntaxis {
 
 # TypeScript syntax
 @ publica
-fixum SYNTAXIS_TS = finge ScopusSyntaxis {
+fixum SYNTAXIS_TS ← finge ScopusSyntaxis {
     siCondicioPrae: "(",
     siCondicioPost: ")",
     secusVerbum: "else",
@@ -44,7 +44,7 @@ fixum SYNTAXIS_TS = finge ScopusSyntaxis {
 
 # Go syntax
 @ publica
-fixum SYNTAXIS_GO = finge ScopusSyntaxis {
+fixum SYNTAXIS_GO ← finge ScopusSyntaxis {
     siCondicioPrae: "",
     siCondicioPost: "",
     secusVerbum: "else",

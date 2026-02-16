@@ -8,7 +8,7 @@
 
 incipit {
     # String matching
-    fixum status = "active"
+    fixum status ← "active"
 
     elige status {
         casu "pending" {
@@ -23,7 +23,7 @@ incipit {
     }
 
     # Number matching
-    fixum code = 200
+    fixum code ← 200
 
     elige code {
         casu 200 {
@@ -38,7 +38,7 @@ incipit {
     }
 
     # Multiple statements per case
-    fixum mode = "production"
+    fixum mode ← "production"
 
     elige mode {
         casu "development" {

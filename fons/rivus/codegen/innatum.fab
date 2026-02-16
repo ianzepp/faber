@@ -16,14 +16,14 @@ genus InnatumTranslation {
 
 # Get translation for a builtin type method
 @ publica
-functio getInnatumTranslation(de textus target, de textus recipiens, de textus methodum) -> si InnatumTranslation {
+functio getInnatumTranslation(de textus target, de textus recipiens, de textus methodum) → si InnatumTranslation {
     # Only TypeScript target for now (self-hosting requirement)
-    si target != "ts" {
+    si target ≠ "ts" {
         redde nihil
     }
 
     # lista methods
-    si recipiens == "lista" {
+    si recipiens ≡ "lista" {
         elige methodum {
             casu "longitudo" reddit { template: "§.length", params: ["ego"] } novum InnatumTranslation
             casu "appende" reddit { method: "push" } novum InnatumTranslation
@@ -47,7 +47,7 @@ functio getInnatumTranslation(de textus target, de textus recipiens, de textus m
     }
 
     # textus methods
-    si recipiens == "textus" {
+    si recipiens ≡ "textus" {
         elige methodum {
             casu "longitudo" reddit { template: "§.length", params: ["ego"] } novum InnatumTranslation
             casu "divide" reddit { method: "split" } novum InnatumTranslation
@@ -68,7 +68,7 @@ functio getInnatumTranslation(de textus target, de textus recipiens, de textus m
     }
 
     # tabula methods
-    si recipiens == "tabula" {
+    si recipiens ≡ "tabula" {
         elige methodum {
             casu "longitudo" reddit { template: "§.size", params: ["ego"] } novum InnatumTranslation
             casu "claves" reddit { template: "[...§.keys()]", params: ["ego"] } novum InnatumTranslation
@@ -83,7 +83,7 @@ functio getInnatumTranslation(de textus target, de textus recipiens, de textus m
     }
 
     # copia (Set) methods
-    si recipiens == "copia" {
+    si recipiens ≡ "copia" {
         elige methodum {
             casu "longitudo" reddit { template: "§.size", params: ["ego"] } novum InnatumTranslation
             casu "continet" reddit { method: "has" } novum InnatumTranslation

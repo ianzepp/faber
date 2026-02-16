@@ -1,7 +1,7 @@
 # array + object literals, member access, calls
 
-fixum lista = [1, 2, 3]
-fixum tabula = { a: 1, b: 2 }
+fixum lista ← [1, 2, 3]
+fixum tabula ← { a: 1, b: 2 }
 
 scribe lista.longitudo()
 scribe tabula.a

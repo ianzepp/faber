@@ -60,7 +60,7 @@
 - name: incipit with multiple statements
   source: |
       incipit {
-        fixum x = 42
+        fixum x ← 42
         scribe x
       }
   expect:
@@ -83,5 +83,5 @@
           - 'const x = 42;'
       fab:
           - 'incipit {'
-          - 'fixum x = 42'
+          - 'fixum x ← 42'
           - 'scribe x'

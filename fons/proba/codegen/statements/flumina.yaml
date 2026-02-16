@@ -159,7 +159,7 @@
 - name: arrow async function not transformed
   source: |
       @ futura
-      functio fetchData() -> textus {
+      functio fetchData() → textus {
         redde "data"
       }
   skip: [py, rs, cpp, zig]
@@ -174,7 +174,7 @@
       fab:
           contains:
               - '@ futura'
-              - 'functio fetchData() -> textus'
+              - 'functio fetchData() → textus'
               - 'redde "data"'
 
 # =============================================================================
@@ -285,10 +285,10 @@
 - name: fiunt function with loop
   source: |
       functio range(numerus n) fiunt numerus {
-        varia numerus i = 0
+        varia numerus i ← 0
         dum i < n {
           cede i
-          i = i + 1
+          i ← i + 1
         }
       }
   skip: [py, rs, cpp, zig]
@@ -303,10 +303,10 @@
       fab:
           contains:
               - 'functio range(numerus n) fiunt numerus'
-              - 'varia numerus i = 0'
+              - 'varia numerus i ← 0'
               - 'dum i < n'
               - 'cede i'
-              - 'i = i + 1'
+              - 'i ← i + 1'
 
 # =============================================================================
 # fiet Functions (async single-value streams with Responsum protocol)
@@ -332,7 +332,7 @@
 - name: fiet function with cede and redde
   source: |
       functio fetchAndReturn() fiet textus {
-        fixum result = cede getData()
+        fixum result ← cede getData()
         redde result
       }
   skip: [py, rs, cpp, zig]
@@ -346,7 +346,7 @@
       fab:
           contains:
               - 'functio fetchAndReturn() fiet textus'
-              - 'fixum result = cede getData()'
+              - 'fixum result ← cede getData()'
               - 'redde result'
 
 - name: fiet function with iace

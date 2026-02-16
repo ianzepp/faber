@@ -4,30 +4,30 @@
 
 incipit ergo cura arena {
     # Break when reaching 5
-    varia i = 0
+    varia i ← 0
 
     dum i < 10 {
-        si i == 5 {
+        si i ≡ 5 {
             rumpe
         }
         scribe i
-        i = i + 1
+        i ← i + 1
     }
 
     # Break in nested loop (exits inner only)
-    varia outer = 0
+    varia outer ← 0
 
     dum outer < 3 {
-        varia inner = 0
+        varia inner ← 0
 
         dum inner < 10 {
-            si inner == 2 {
+            si inner ≡ 2 {
                 rumpe
             }
-            scribe "outer=§, inner=§", outer, inner
-            inner = inner + 1
+            scribe "outer←§, inner←§", outer, inner
+            inner ← inner + 1
         }
 
-        outer = outer + 1
+        outer ← outer + 1
     }
 }

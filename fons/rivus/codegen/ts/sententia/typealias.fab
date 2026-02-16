@@ -15,13 +15,13 @@ importa ex "../nucleus" privata TsGenerator
 importa ex "../typus" privata genTypus
 
 @ publica
-functio genTypusAlias(in TsGenerator g, de textus nomen, de TypusAnnotatio adnotatioTypus, de ignotum scopusNomen, de ignotum visibilitas) -> textus {
+functio genTypusAlias(in TsGenerator g, de textus nomen, de TypusAnnotatio adnotatioTypus, de ignotum scopusNomen, de ignotum visibilitas) → textus {
     # Module-level: export when public
-    varia exportPrefix = ""
+    varia exportPrefix ← ""
     si nonnihil visibilitas {
-        fixum vis = visibilitas qua Visibilitas
-        si vis == Visibilitas.Publica {
-            exportPrefix = "export "
+        fixum vis ← visibilitas qua Visibilitas
+        si vis ≡ Visibilitas.Publica {
+            exportPrefix ← "export "
         }
     }
 

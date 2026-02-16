@@ -42,29 +42,29 @@ importa ex "./massa" privata parseMassaSententia
 #       proba "parses literals" { ... }
 #   }
 @ publica
-functio parseProbandumSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseProbandumSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("probandum", ParserErrorCodice.ExpectaturProbandum)
 
-    varia nomen = "" qua textus
+    varia nomen ← "" qua textus
 
     si p.proba(SymbolumGenus.Textus) {
-        fixum nomenSym = p.procede()
-        nomen = nomenSym.valor
+        fixum nomenSym ← p.procede()
+        nomen ← nomenSym.valor
     } secus {
-        fixum nomenSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
-        nomen = nomenSym.valor
+        fixum nomenSym ← p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
+        nomen ← nomenSym.valor
     }
 
     p.expecta(SymbolumGenus.UncusSin, ParserErrorCodice.ExpectaturUncusSin)
 
-    varia corpus = [] innatum lista<Sententia>
+    varia corpus ← [] innatum lista<Sententia>
 
     dum non p.proba(SymbolumGenus.UncusDex) et non p.estFinis() {
-        fixum sym = p.specta(0)
-        si sym.species == SymbolumGenus.Verbum {
+        fixum sym ← p.specta(0)
+        si sym.species ≡ SymbolumGenus.Verbum {
             elige sym.verbum {
                 casu "probandum" {
                     corpus.appende(parseProbandumSententia(r))
@@ -112,40 +112,40 @@ functio parseProbandumSententia(in Resolvitor r) -> Sententia {
 #   proba omitte "reason" "skipped test" { }
 #   proba futurum "todo" "future test" { }
 @ publica
-functio parseProbaSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseProbaSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     p.expectaVerbum("proba", ParserErrorCodice.ExpectaturProba)
 
-    varia modificator = nihil qua si ProbaModificator
-    varia ratio = nihil qua si textus
+    varia modificator ← nihil qua si ProbaModificator
+    varia ratio ← nihil qua si textus
 
     si p.probaVerbum("omitte") {
         p.procede()
-        modificator = ProbaModificator.Omitte
-        fixum ratioSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
-        ratio = ratioSym.valor
+        modificator ← ProbaModificator.Omitte
+        fixum ratioSym ← p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
+        ratio ← ratioSym.valor
     } sin p.probaVerbum("futurum") {
         p.procede()
-        modificator = ProbaModificator.Futurum
-        fixum ratioSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
-        ratio = ratioSym.valor
+        modificator ← ProbaModificator.Futurum
+        fixum ratioSym ← p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
+        ratio ← ratioSym.valor
     }
 
-    varia nomen = "" qua textus
+    varia nomen ← "" qua textus
     si p.proba(SymbolumGenus.Textus) {
-        fixum nomenSym = p.procede()
-        nomen = nomenSym.valor
-    } sin modificator == ProbaModificator.Futurum et p.proba(SymbolumGenus.UncusSin) {
+        fixum nomenSym ← p.procede()
+        nomen ← nomenSym.valor
+    } sin modificator ≡ ProbaModificator.Futurum et p.proba(SymbolumGenus.UncusSin) {
         # WHY: Futurum allows omission of test name.
-        nomen = ""
+        nomen ← ""
     } secus {
-        fixum nomenSym = p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
-        nomen = nomenSym.valor
+        fixum nomenSym ← p.expecta(SymbolumGenus.Textus, ParserErrorCodice.ExpectaturTextus)
+        nomen ← nomenSym.valor
     }
 
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     redde finge ProbaSententia {
         locus: locus,
@@ -176,36 +176,36 @@ functio parseProbaSententia(in Resolvitor r) -> Sententia {
 #   postpara { cleanup() }         -> afterEach
 #   praepara omnia { initOnce() }  -> beforeAll
 @ publica
-functio parsePraeparaMassa(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parsePraeparaMassa(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
-    fixum verbum = p.expecta(SymbolumGenus.Verbum, ParserErrorCodice.ExpectaturAnteVelPost).verbum
+    fixum verbum ← p.expecta(SymbolumGenus.Verbum, ParserErrorCodice.ExpectaturAnteVelPost).verbum
 
-    varia tempus = PraeparaTempus.Praepara
-    varia asynca = falsum
+    varia tempus ← PraeparaTempus.Praepara
+    varia asynca ← falsum
 
     elige verbum {
-        casu "praepara" { tempus = PraeparaTempus.Praepara }
+        casu "praepara" { tempus ← PraeparaTempus.Praepara }
         casu "praeparabit" {
-            tempus = PraeparaTempus.Praepara
-            asynca = verum
+            tempus ← PraeparaTempus.Praepara
+            asynca ← verum
         }
-        casu "postpara" { tempus = PraeparaTempus.Postpara }
+        casu "postpara" { tempus ← PraeparaTempus.Postpara }
         casu "postparabit" {
-            tempus = PraeparaTempus.Postpara
-            asynca = verum
+            tempus ← PraeparaTempus.Postpara
+            asynca ← verum
         }
     }
 
-    varia omnia = falsum
+    varia omnia ← falsum
     si p.probaVerbum("omnia") {
         # WHY: "omnia" marks per-suite hooks.
         p.procede()
-        omnia = verum
+        omnia ← verum
     }
 
-    fixum corpus = parseMassaSententia(r)
+    fixum corpus ← parseMassaSententia(r)
 
     redde finge PraeparaMassa {
         locus: locus,

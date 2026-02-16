@@ -7,7 +7,7 @@
 # ceterum reddit <expression>
 
 # HTTP status code lookup using reddit
-functio getStatusText(numerus code) -> textus {
+functio getStatusText(numerus code) → textus {
     elige code {
         casu 200 reddit "OK"
         casu 201 reddit "Created"
@@ -24,7 +24,7 @@ functio getStatusText(numerus code) -> textus {
 }
 
 # Type mapping using reddit
-functio getTypeCode(textus name) -> numerus {
+functio getTypeCode(textus name) → numerus {
     elige name {
         casu "textus" reddit 1
         casu "numerus" reddit 2
@@ -36,7 +36,7 @@ functio getTypeCode(textus name) -> numerus {
 
 # Mixed reddit and blocks
 # Use reddit for simple returns, blocks for complex logic
-functio processCode(numerus code) -> textus {
+functio processCode(numerus code) → textus {
     elige code {
         casu 1 reddit "simple"
         casu 2 {

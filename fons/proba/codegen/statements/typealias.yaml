@@ -12,7 +12,7 @@
 
 # Simple type alias for string
 - name: type alias for string
-  source: 'typus ID = textus'
+  source:'typus ID ← textus'
   expect:
       ts:
           - 'type ID = string;'
@@ -25,11 +25,11 @@
       zig:
           - 'const ID = []const u8;'
       fab:
-          - 'typus ID = textus'
+          - 'typus ID ← textus'
 
 # Type alias for number
 - name: type alias for number
-  source: 'typus Count = numerus'
+  source:'typus Count ← numerus'
   expect:
       ts:
           - 'type Count = number;'
@@ -42,11 +42,11 @@
       zig:
           - 'const Count = i64;'
       fab:
-          - 'typus Count = numerus'
+          - 'typus Count ← numerus'
 
 # Type alias for boolean
 - name: type alias for boolean
-  source: 'typus Flag = bivalens'
+  source:'typus Flag ← bivalens'
   expect:
       ts:
           - 'type Flag = boolean;'
@@ -59,7 +59,7 @@
       zig:
           - 'const Flag = bool;'
       fab:
-          - 'typus Flag = bivalens'
+          - 'typus Flag ← bivalens'
 
 # =============================================================================
 # Generic Type Aliases
@@ -67,7 +67,7 @@
 
 # Type alias for array/list
 - name: type alias for array
-  source: 'typus Items = lista<textus>'
+  source:'typus Items ← lista<textus>'
   expect:
       ts:
           - 'type Items = Array<string>;'
@@ -80,11 +80,11 @@
       zig:
           - 'const Items = Lista([]const u8);'
       fab:
-          - 'typus Items = lista<textus>'
+          - 'typus Items ← lista<textus>'
 
 # Type alias for map/dictionary (StringHashMap for string keys)
 - name: type alias for map
-  source: 'typus Cache = tabula<textus, numerus>'
+  source:'typus Cache ← tabula<textus, numerus>'
   expect:
       ts:
           - 'type Cache = Map<string, number>;'
@@ -97,7 +97,7 @@
       zig:
           - 'const Cache = std.StringHashMap(i64);'
       fab:
-          - 'typus Cache = tabula<textus, numerus>'
+          - 'typus Cache ← tabula<textus, numerus>'
 
 # =============================================================================
 # Typeof Aliases (TypeScript-specific feature)
@@ -105,7 +105,7 @@
 
 # Type alias using typeof (not yet implemented for Python/Rust/C++/Zig, falls back to ignotum/anytype)
 - name: type alias with typeof
-  source: 'typus ConfigType = typus config'
+  source:'typus ConfigType ← typus config'
   expect:
       ts:
           - 'type ConfigType = typeof config;'
@@ -118,7 +118,7 @@
       zig:
           - 'const ConfigType = anytype;'
       fab:
-          - 'typus ConfigType = typus config'
+          - 'typus ConfigType ← typus config'
 
 # =============================================================================
 # Union Type Aliases
@@ -128,14 +128,14 @@
 # TODO: Parser doesn't yet support union types in type expressions
 - name: type alias for union
   skip: [ts, py, rs, cpp, zig] # Parser limitation
-  source: 'typus StringOrNumber = textus | numerus'
+  source:'typus StringOrNumber ← textus | numerus'
   expect:
       ts:
           - 'type StringOrNumber = string | number;'
       py:
           - 'StringOrNumber = str | int'
       fab:
-          - 'typus StringOrNumber = textus | numerus'
+          - 'typus StringOrNumber ← textus | numerus'
 
 # =============================================================================
 # Function Type Aliases
@@ -145,14 +145,14 @@
 # TODO: Parser doesn't yet support function types in type expressions
 - name: type alias for function type
   skip: [ts, py, rs, cpp, zig] # Parser limitation
-  source: 'typus Handler = (textus, numerus) -> vacuum'
+  source:'typus Handler ← (textus, numerus) → vacuum'
   expect:
       ts:
           - 'type Handler = (arg0: string, arg1: number) => void;'
       py:
           - 'Handler = Callable[[str, int], None]'
       fab:
-          - 'typus Handler = (textus, numerus) -> vacuum'
+          - 'typus Handler ← (textus, numerus) → vacuum'
 
 # =============================================================================
 # Nullable Type Aliases
@@ -160,14 +160,14 @@
 
 # Type alias for nullable type
 - name: type alias for nullable
-  source: 'typus OptionalString = textus?'
+  source:'typus OptionalString ← textus?'
   expect:
       ts:
           - 'type OptionalString = string | null;'
       py:
           - 'OptionalString = str | None'
       fab:
-          - 'typus OptionalString = textus?'
+          - 'typus OptionalString ← textus?'
 
 # =============================================================================
 # Array Type Aliases
@@ -175,14 +175,14 @@
 
 # Type alias for list/array (additional test case)
 - name: type alias for string list
-  source: 'typus StringList = lista<textus>'
+  source:'typus StringList ← lista<textus>'
   expect:
       ts:
           - 'type StringList = Array<string>;'
       py:
           - 'StringList = list[str]'
       fab:
-          - 'typus StringList = lista<textus>'
+          - 'typus StringList ← lista<textus>'
 
 # =============================================================================
 # Generic Type Aliases with Multiple Parameters
@@ -192,14 +192,14 @@
 # TODO: Parser doesn't yet support generic parameters on type alias definitions
 - name: type alias with multiple generics
   skip: [ts, py, rs, cpp, zig] # Parser limitation
-  source: 'typus Pair<A, B> = (A, B)'
+  source:'typus Pair<A, B> ← (A, B)'
   expect:
       ts:
           - 'type Pair<A, B> = [A, B];'
       py:
           - 'Pair = tuple[A, B]'
       fab:
-          - 'typus Pair<A, B> = (A, B)'
+          - 'typus Pair<A, B> ← (A, B)'
 
 # =============================================================================
 # Object Shape Type Aliases
@@ -209,11 +209,11 @@
 # TODO: Parser doesn't yet support inline object shape types
 - name: type alias for object shape
   skip: [ts, py, rs, cpp, zig] # Parser limitation
-  source: 'typus Config = { host: textus, port: numerus }'
+  source:'typus Config ← { host: textus, port: numerus }'
   expect:
       ts:
           - 'type Config = { host: string; port: number };'
       py:
           - 'Config = TypedDict("Config", {"host": str, "port": int})'
       fab:
-          - 'typus Config = { host: textus, port: numerus }'
+          - 'typus Config ← { host: textus, port: numerus }'

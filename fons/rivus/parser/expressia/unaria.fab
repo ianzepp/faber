@@ -39,12 +39,12 @@ importa ex "./primaria" privata parsePrimaria
 #
 # GRAMMAR: unary := prefixOp unary | postfix
 @ publica
-functio parseUnaria(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
-    fixum prox = p.specta(1)
+functio parseUnaria(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
+    fixum prox ← p.specta(1)
 
-    functio estInitiumExpressiae(de Symbolum s) -> bivalens {
+    functio estInitiumExpressiae(de Symbolum s) → bivalens {
         si s.species inter [
             SymbolumGenus.Nomen,
             SymbolumGenus.Numerus,
@@ -61,7 +61,7 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
             redde verum
         }
 
-        si s.species == SymbolumGenus.Verbum {
+        si s.species ≡ SymbolumGenus.Verbum {
             redde verum
         }
 
@@ -70,7 +70,7 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
 
     # Check for prefix operators
     si p.congruetVerbum("non") {
-        fixum argumentum = parseUnaria(r)
+        fixum argumentum ← parseUnaria(r)
         redde finge UnariaExpressia {
             locus: locus,
             signum: "!",
@@ -79,7 +79,7 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
     }
 
     si p.congruet(SymbolumGenus.Minus) {
-        fixum argumentum = parseUnaria(r)
+        fixum argumentum ← parseUnaria(r)
         redde finge UnariaExpressia {
             locus: locus,
             signum: "-",
@@ -88,7 +88,7 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
     }
 
     si p.congruet(SymbolumGenus.Unda) {
-        fixum argumentum = parseUnaria(r)
+        fixum argumentum ← parseUnaria(r)
         redde finge UnariaExpressia {
             locus: locus,
             signum: "~",
@@ -97,8 +97,8 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
     }
 
     si p.probaVerbum("nulla") aut p.probaVerbum("nonnulla") aut p.probaVerbum("nonnihil") aut p.probaVerbum("negativum") aut p.probaVerbum("positivum") {
-        fixum signum = p.procede().verbum
-        fixum argumentum = parseUnaria(r)
+        fixum signum ← p.procede().verbum
+        fixum argumentum ← parseUnaria(r)
         redde finge UnariaExpressia {
             locus: locus,
             signum: signum,
@@ -106,8 +106,8 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
         } qua Expressia
     }
 
-    functio estInitiumPostNihil(de Symbolum s) -> bivalens {
-        si s.species == SymbolumGenus.Verbum {
+    functio estInitiumPostNihil(de Symbolum s) → bivalens {
+        si s.species ≡ SymbolumGenus.Verbum {
             # WHY: Only allow keywords that start expressions as nihil operands.
             si s.verbum inter ["clausura", "finge", "praefixum", "scriptum", "lege", "sed", "novum", "ego"] {
                 redde verum
@@ -123,13 +123,13 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
 
     # WHY: Only treat these as prefix unary operators if operand is on the same line.
     #      This prevents `verum\ni += 1` from being parsed as `(verum i) += 1`.
-    fixum actualis = p.specta(0)
-    fixum eademLinea = actualis.locus.linea == prox.locus.linea
+    fixum actualis ← p.specta(0)
+    fixum eademLinea ← actualis.locus.linea ≡ prox.locus.linea
 
-    si p.proba(SymbolumGenus.Nihil) et eademLinea et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
+    si p.proba(SymbolumGenus.Nihil) et eademLinea et estInitiumPostNihil(prox) et prox.species ≠ SymbolumGenus.UncusSin {
         # WHY: Avoid treating block starts as unary operands (si nihil x { ... }).
         p.procede()
-        fixum argumentum = parseUnaria(r)
+        fixum argumentum ← parseUnaria(r)
         redde finge UnariaExpressia {
             locus: locus,
             signum: "nihil",
@@ -138,9 +138,9 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
     }
 
     # Boolean true check: verum x -> x === true
-    si p.proba(SymbolumGenus.Verum) et eademLinea et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
+    si p.proba(SymbolumGenus.Verum) et eademLinea et estInitiumPostNihil(prox) et prox.species ≠ SymbolumGenus.UncusSin {
         p.procede()
-        fixum argumentum = parseUnaria(r)
+        fixum argumentum ← parseUnaria(r)
         redde finge UnariaExpressia {
             locus: locus,
             signum: "verum",
@@ -149,9 +149,9 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
     }
 
     # Boolean false check: falsum x -> x === false
-    si p.proba(SymbolumGenus.Falsum) et eademLinea et estInitiumPostNihil(prox) et prox.species !== SymbolumGenus.UncusSin {
+    si p.proba(SymbolumGenus.Falsum) et eademLinea et estInitiumPostNihil(prox) et prox.species ≠ SymbolumGenus.UncusSin {
         p.procede()
-        fixum argumentum = parseUnaria(r)
+        fixum argumentum ← parseUnaria(r)
         redde finge UnariaExpressia {
             locus: locus,
             signum: "falsum",
@@ -161,7 +161,7 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
 
     # Await expression
     si p.congruetVerbum("cede") {
-        fixum argumentum = parseUnaria(r)
+        fixum argumentum ← parseUnaria(r)
         redde finge CedeExpressia {
             locus: locus,
             argumentum: argumentum
@@ -187,13 +187,13 @@ functio parseUnaria(in Resolvitor r) -> Expressia {
 #
 # GRAMMAR: postfix := primary (callSuffix | memberSuffix | quaSuffix)*
 @ publica
-functio parsePostfix(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    varia expressia = parsePrimaria(r)
+functio parsePostfix(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    varia expressia ← parsePrimaria(r)
 
     # Loop to handle chained postfix operations
     dum verum {
-        fixum locus = p.locusActualis()
+        fixum locus ← p.locusActualis()
 
         # ---------------------------------------------------------------
         # Optional chaining: ?. ?[ ?(
@@ -203,8 +203,8 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
             p.procede()
 
             si p.congruet(SymbolumGenus.Punctum) {
-                fixum propSymbolum = parseNomenVelVerbum(r)
-                expressia = finge MembrumExpressia {
+                fixum propSymbolum ← parseNomenVelVerbum(r)
+                expressia ← finge MembrumExpressia {
                     locus: locus,
                     obiectum: expressia,
                     proprietas: propSymbolum,
@@ -216,10 +216,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
             }
 
             si p.congruet(SymbolumGenus.QuadratusSin) {
-                fixum proprietas = r.expressia()
+                fixum proprietas ← r.expressia()
                 p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
 
-                expressia = finge MembrumExpressia {
+                expressia ← finge MembrumExpressia {
                     locus: locus,
                     obiectum: expressia,
                     proprietas: proprietas,
@@ -231,10 +231,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
             }
 
             si p.congruet(SymbolumGenus.ParensSin) {
-                fixum argumenta = parseArgumenta(r)
+                fixum argumenta ← parseArgumenta(r)
                 p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
-                expressia = finge VocatioExpressia {
+                expressia ← finge VocatioExpressia {
                     locus: locus,
                     vocatum: expressia,
                     argumenta: argumenta,
@@ -250,8 +250,8 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
         # WHY: '!' alone is not supported, only non-null accessors
         # ---------------------------------------------------------------
         si p.congruet(SymbolumGenus.NonPunctum) {
-            fixum proprietas = parseNomenVelVerbum(r)
-            expressia = finge MembrumExpressia {
+            fixum proprietas ← parseNomenVelVerbum(r)
+            expressia ← finge MembrumExpressia {
                 locus: locus,
                 obiectum: expressia,
                 proprietas: proprietas,
@@ -266,8 +266,8 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
             p.procede()
 
             si p.congruet(SymbolumGenus.Punctum) {
-                fixum propSymbolum = parseNomenVelVerbum(r)
-                expressia = finge MembrumExpressia {
+                fixum propSymbolum ← parseNomenVelVerbum(r)
+                expressia ← finge MembrumExpressia {
                     locus: locus,
                     obiectum: expressia,
                     proprietas: propSymbolum,
@@ -279,10 +279,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
             }
 
             si p.congruet(SymbolumGenus.QuadratusSin) {
-                fixum proprietas = r.expressia()
+                fixum proprietas ← r.expressia()
                 p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
 
-                expressia = finge MembrumExpressia {
+                expressia ← finge MembrumExpressia {
                     locus: locus,
                     obiectum: expressia,
                     proprietas: proprietas,
@@ -294,10 +294,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
             }
 
             si p.congruet(SymbolumGenus.ParensSin) {
-                fixum argumenta = parseArgumenta(r)
+                fixum argumenta ← parseArgumenta(r)
                 p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
-                expressia = finge VocatioExpressia {
+                expressia ← finge VocatioExpressia {
                     locus: locus,
                     vocatum: expressia,
                     argumenta: argumenta,
@@ -310,10 +310,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
 
         # Function call: expr(args)
         si p.congruet(SymbolumGenus.ParensSin) {
-            fixum argumenta = parseArgumenta(r)
+            fixum argumenta ← parseArgumenta(r)
             p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
 
-            expressia = finge VocatioExpressia {
+            expressia ← finge VocatioExpressia {
                 locus: locus,
                 vocatum: expressia,
                 argumenta: argumenta,
@@ -325,9 +325,9 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
 
         # Member access: expr.property
         si p.congruet(SymbolumGenus.Punctum) {
-            fixum proprietas = parseNomenVelVerbum(r)
+            fixum proprietas ← parseNomenVelVerbum(r)
 
-            expressia = finge MembrumExpressia {
+            expressia ← finge MembrumExpressia {
                 locus: locus,
                 obiectum: expressia,
                 proprietas: proprietas,
@@ -340,10 +340,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
 
         # Computed member access: expr[index]
         si p.congruet(SymbolumGenus.QuadratusSin) {
-            fixum proprietas = r.expressia()
+            fixum proprietas ← r.expressia()
             p.expecta(SymbolumGenus.QuadratusDex, ParserErrorCodice.ExpectaturQuadratusDex)
 
-            expressia = finge MembrumExpressia {
+            expressia ← finge MembrumExpressia {
                 locus: locus,
                 obiectum: expressia,
                 proprietas: proprietas,
@@ -356,9 +356,9 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
 
         # Type cast: expr qua Type
         si p.congruetVerbum("qua") {
-            fixum scopus = r.adnotatio()
+            fixum scopus ← r.adnotatio()
 
-            expressia = finge QuaExpressia {
+            expressia ← finge QuaExpressia {
                 locus: locus,
                 expressia: expressia,
                 scopus: scopus
@@ -369,9 +369,9 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
         # Native type construction: expr innatum Type
         # Example: {} innatum tabula<textus, numerus>
         si p.congruetVerbum("innatum") {
-            fixum scopus = r.adnotatio()
+            fixum scopus ← r.adnotatio()
 
-            expressia = finge InnatumExpressia {
+            expressia ← finge InnatumExpressia {
                 locus: locus,
                 expressia: expressia,
                 scopus: scopus
@@ -382,9 +382,9 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
         # Postfix construction: expr novum Type
         # Example: { x: 1 } novum MyClass
         si p.congruetVerbum("novum") {
-            fixum scopus = r.adnotatio()
+            fixum scopus ← r.adnotatio()
 
-            expressia = finge PostfixNovumExpressia {
+            expressia ← finge PostfixNovumExpressia {
                 locus: locus,
                 expressia: expressia,
                 scopus: scopus
@@ -395,19 +395,19 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
         # Type conversion: expr numeratum, expr fractatum, expr textatum, expr bivalentum
         si p.probaVerbum("numeratum") aut p.probaVerbum("fractatum") aut
            p.probaVerbum("textatum") aut p.probaVerbum("bivalentum") {
-            fixum signum = p.procede().verbum
-            varia scopusTypus = nihil qua si TypusAnnotatio
-            varia radix = nihil qua si textus
-            varia fallback = nihil qua si Expressia
+            fixum signum ← p.procede().verbum
+            varia scopusTypus ← nihil qua si TypusAnnotatio
+            varia radix ← nihil qua si textus
+            varia fallback ← nihil qua si Expressia
 
             # Type params for numeratum/fractatum only: <i32, Hex>
-            si (signum == "numeratum" aut signum == "fractatum") et p.congruet(SymbolumGenus.Minor) {
-                scopusTypus = r.adnotatio()
+            si (signum ≡ "numeratum" aut signum ≡ "fractatum") et p.congruet(SymbolumGenus.Minor) {
+                scopusTypus ← r.adnotatio()
                 si p.congruet(SymbolumGenus.Coma) {
-                    fixum radixSym = p.specta(0)
+                    fixum radixSym ← p.specta(0)
                     # Radix types are parsed as identifiers, not keywords
-                    si radixSym.species == SymbolumGenus.Nomen et radixSym.valor inter ["Dec", "Hex", "Oct", "Bin"] {
-                        radix = p.procede().valor
+                    si radixSym.species ≡ SymbolumGenus.Nomen et radixSym.valor inter ["Dec", "Hex", "Oct", "Bin"] {
+                        radix ← p.procede().valor
                     }
                 }
                 p.expecta(SymbolumGenus.Maior, ParserErrorCodice.ExpectaturAngulusDex)
@@ -415,10 +415,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
 
             # Fallback clause: vel expr
             si p.congruetVerbum("vel") {
-                fallback = parseUnaria(r)
+                fallback ← parseUnaria(r)
             }
 
-            expressia = finge ConversioExpressia {
+            expressia ← finge ConversioExpressia {
                 locus: locus,
                 expressia: expressia,
                 signum: signum,
@@ -431,10 +431,10 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
 
         # Bit shift: expr dextratum n, expr sinistratum n
         si p.probaVerbum("dextratum") aut p.probaVerbum("sinistratum") {
-            fixum directio = p.procede().verbum
-            fixum quantitas = parseUnaria(r)
+            fixum directio ← p.procede().verbum
+            fixum quantitas ← parseUnaria(r)
 
-            expressia = finge TranslatioExpressia {
+            expressia ← finge TranslatioExpressia {
                 locus: locus,
                 expressia: expressia,
                 directio: directio,
@@ -470,26 +470,26 @@ functio parsePostfix(in Resolvitor r) -> Expressia {
 #
 # WHY: novum binds to the constructor name, not to a call expression.
 @ publica
-functio parseNovumExpressia(in Resolvitor r, de Locus locus) -> Expressia {
-    fixum p = r.parser()
+functio parseNovumExpressia(in Resolvitor r, de Locus locus) → Expressia {
+    fixum p ← r.parser()
 
     # Constructor name
-    fixum vocatum = parseNomenVelVerbum(r)
+    fixum vocatum ← parseNomenVelVerbum(r)
 
     # Optional arguments
-    varia argumenta = [] innatum lista<Expressia>
+    varia argumenta ← [] innatum lista<Expressia>
     si p.congruet(SymbolumGenus.ParensSin) {
-        argumenta = parseArgumenta(r)
+        argumenta ← parseArgumenta(r)
         p.expecta(SymbolumGenus.ParensDex, ParserErrorCodice.ExpectaturParensDex)
     }
 
     # Optional overrides: { ... } or de expr
-    varia initor = nihil qua si Expressia
+    varia initor ← nihil qua si Expressia
     si p.proba(SymbolumGenus.UncusSin) {
-        initor = parsePrimaria(r)
+        initor ← parsePrimaria(r)
     } sin p.probaVerbum("de") {
         p.procede()
-        initor = r.expressia()
+        initor ← r.expressia()
     }
 
     redde finge NovumExpressia {
@@ -504,9 +504,9 @@ functio parseNovumExpressia(in Resolvitor r, de Locus locus) -> Expressia {
 #
 # GRAMMAR: arguments := (expression (',' expression)*)?
 @ publica
-functio parseArgumenta(in Resolvitor r) -> lista<Expressia> {
-    fixum p = r.parser()
-    varia argumenta = [] innatum lista<Expressia>
+functio parseArgumenta(in Resolvitor r) → lista<Expressia> {
+    fixum p ← r.parser()
+    varia argumenta ← [] innatum lista<Expressia>
 
     # Check for empty arguments
     si p.proba(SymbolumGenus.ParensDex) {
@@ -530,14 +530,14 @@ functio parseArgumenta(in Resolvitor r) -> lista<Expressia> {
 
 # Parse a single argument (supports sparge)
 @ publica
-functio parseArgumentum(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum locus = p.locusActualis()
+functio parseArgumentum(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum locus ← p.locusActualis()
 
     si p.probaVerbum("sparge") {
         # WHY: Spread arguments lower to ...expr in targets
         p.procede()
-        fixum argumentum = r.expressia()
+        fixum argumentum ← r.expressia()
         redde finge DispersioElementum {
             locus: locus,
             argumentum: argumentum
@@ -553,12 +553,12 @@ functio parseArgumentum(in Resolvitor r) -> Expressia {
 
 # Parse property name as identifier or keyword
 @ publica
-functio parseNomenVelVerbum(in Resolvitor r) -> Expressia {
-    fixum p = r.parser()
-    fixum sym = p.specta(0)
+functio parseNomenVelVerbum(in Resolvitor r) → Expressia {
+    fixum p ← r.parser()
+    fixum sym ← p.specta(0)
 
     # WHY: Allow keywords as property names (e.g., items.omitte)
-    si sym.species == SymbolumGenus.Nomen aut sym.species == SymbolumGenus.Verbum {
+    si sym.species ≡ SymbolumGenus.Nomen aut sym.species ≡ SymbolumGenus.Verbum {
         p.procede()
         redde finge Nomen {
             locus: sym.locus,
@@ -576,6 +576,6 @@ functio parseNomenVelVerbum(in Resolvitor r) -> Expressia {
 
 # Check for postfix accessor start after '?' or '!'
 @ publica
-functio estAccessorInitium(de Symbolum s) -> bivalens {
-    redde s.species == SymbolumGenus.Punctum aut s.species == SymbolumGenus.QuadratusSin aut s.species == SymbolumGenus.ParensSin
+functio estAccessorInitium(de Symbolum s) → bivalens {
+    redde s.species ≡ SymbolumGenus.Punctum aut s.species ≡ SymbolumGenus.QuadratusSin aut s.species ≡ SymbolumGenus.ParensSin
 }

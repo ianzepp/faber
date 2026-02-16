@@ -17,12 +17,12 @@ importa ex "./index" privata genExpressia
 
 # Generate object literal
 @ publica
-functio genObiectum(in TsGenerator g, de lista<ObiectumProprietas> proprietates) -> textus {
-    si proprietates.longitudo() == 0 {
+functio genObiectum(in TsGenerator g, de lista<ObiectumProprietas> proprietates) → textus {
+    si proprietates.longitudo() ≡ 0 {
         redde "{}"
     }
 
-    varia props = [] innatum lista<textus>
+    varia props ← [] innatum lista<textus>
     itera ex proprietates fixum prop {
         si prop.dispersum {
             # WHY: Spread properties lower to ...expr in JS object literals.

@@ -16,7 +16,7 @@
 
 # Mutable variable without type
 - name: mutable variable without type
-  source: 'varia x = 5'
+  source:'varia x ← 5'
   expect:
       ts:
           - 'let x = 5;'
@@ -29,11 +29,11 @@
       zig:
           - 'var x: i64 = 5;'
       fab:
-          - 'varia x = 5'
+          - 'varia x ← 5'
 
 # Immutable variable without type (module-level for Zig)
 - name: immutable variable without type
-  source: 'fixum y = 10'
+  source:'fixum y ← 10'
   expect:
       ts:
           - 'const y = 10;'
@@ -46,7 +46,7 @@
       zig:
           - 'const y = 10;'
       fab:
-          - 'fixum y = 10'
+          - 'fixum y ← 10'
 
 # =============================================================================
 # Typed Variable Declarations
@@ -54,7 +54,7 @@
 
 # Mutable typed variable
 - name: mutable typed variable
-  source: 'varia numerus count = 0'
+  source:'varia numerus count ← 0'
   expect:
       ts:
           - 'let count: number = 0;'
@@ -67,11 +67,11 @@
       zig:
           - 'var count: i64 = 0;'
       fab:
-          - 'varia numerus count = 0'
+          - 'varia numerus count ← 0'
 
 # Immutable typed string (module-level for Zig)
 - name: immutable typed string
-  source: 'fixum textus name = "Marcus"'
+  source:'fixum textus name ← "Marcus"'
   expect:
       ts:
           - 'const name: string = "Marcus";'
@@ -84,7 +84,7 @@
       zig:
           - 'const name: []const u8 = "Marcus";'
       fab:
-          - 'fixum textus name = "Marcus"'
+          - 'fixum textus name ← "Marcus"'
 
 # =============================================================================
 # Array Destructuring
@@ -92,7 +92,7 @@
 
 # Basic array destructuring
 - name: basic array destructuring
-  source: 'fixum [a, b, c] = coords'
+  source:'fixum [a, b, c] ← coords'
   expect:
       ts:
           - 'const [a, b, c] = coords;'
@@ -111,11 +111,11 @@
           - 'const b = _tmp[1];'
           - 'const c = _tmp[2];'
       fab:
-          - 'fixum [a, b, c] = coords'
+          - 'fixum [a, b, c] ← coords'
 
 # Array destructuring with rest
 - name: array destructuring with rest
-  source: 'fixum [first, ceteri rest] = items'
+  source:'fixum [first, ceteri rest] ← items'
   expect:
       ts:
           - 'const [first, ...rest] = items;'
@@ -132,11 +132,11 @@
           - 'const first = _tmp[0];'
           - 'const rest = _tmp[1..];'
       fab:
-          - 'fixum [first, ceteri rest] = items'
+          - 'fixum [first, ceteri rest] ← items'
 
 # Array destructuring with skips
 - name: array destructuring with skips
-  source: 'fixum [_, second, _] = values'
+  source:'fixum [_, second, _] ← values'
   expect:
       ts:
           - 'const [, second, ] = values;'
@@ -151,7 +151,7 @@
           - 'const _tmp = values;'
           - 'const second = _tmp[1];'
       fab:
-          - 'fixum [_, second, _] = values'
+          - 'fixum [_, second, _] ← values'
 
 # =============================================================================
 # Variables Without Initializers
@@ -159,7 +159,7 @@
 
 # Variable declaration without init (TypeScript/Python allow undefined)
 - name: variable without initializer
-  source: 'varia numerus counter'
+  source:'varia numerus counter'
   expect:
       ts:
           - 'let counter: number;'
@@ -180,65 +180,65 @@
 
 # Declaration with complex chained expression
 - name: declaration with complex chained expression
-  source: 'fixum result = items.filter(fn).map(fn2).first'
+  source:'fixum result ← items.filter(fn).map(fn2).first'
   expect:
       ts:
           - 'const result = items.filter(fn).map(fn2).first;'
       py:
           - 'result = items.filter(fn).map(fn2).first'
       fab:
-          - 'fixum result = items.filter(fn).map(fn2).first'
+          - 'fixum result ← items.filter(fn).map(fn2).first'
 
 # Declaration with nullish coalescing
 - name: declaration with nullish coalescing
-  source: 'fixum name = input vel "default"'
+  source:'fixum name ← input vel "default"'
   expect:
       ts:
           - 'const name = (input ?? "default");'
       py:
           - 'name = (input if input is not None else "default")'
       fab:
-          - 'fixum name = input vel "default"'
+          - 'fixum name ← input vel "default"'
 
 # Destructure with many elements (5+)
 - name: destructure with many elements
-  source: 'fixum [a, b, c, d, e] = values'
+  source:'fixum [a, b, c, d, e] ← values'
   expect:
       ts:
           - 'const [a, b, c, d, e] = values;'
       py:
           - 'a, b, c, d, e = values'
       fab:
-          - 'fixum [a, b, c, d, e] = values'
+          - 'fixum [a, b, c, d, e] ← values'
 
 # Declaration with spread copy (array)
 - name: declaration with array spread copy
-  source: 'fixum copy = [sparge original]'
+  source:'fixum copy ← [sparge original]'
   expect:
       ts:
           - 'const copy = [...original];'
       py:
           - 'copy = [*original]'
       fab:
-          - 'fixum copy = [sparge original]'
+          - 'fixum copy ← [sparge original]'
 
 # Declaration with object spread copy
 - name: declaration with object spread copy
-  source: 'fixum copy = { sparge original }'
+  source:'fixum copy ← { sparge original }'
   expect:
       ts:
           - 'const copy = { ...original };'
       py:
           - 'copy = {**original}'
       fab:
-          - 'fixum copy = { sparge original }'
+          - 'fixum copy ← { sparge original }'
 
 # Multiple declarations in sequence
 - name: multiple declarations in sequence
   source: |
-      fixum a = 1
-      fixum b = 2
-      fixum c = 3
+      fixum a ← 1
+      fixum b ← 2
+      fixum c ← 3
   expect:
       ts:
           - 'const a = 1;'
@@ -249,39 +249,39 @@
           - 'b = 2'
           - 'c = 3'
       fab:
-          - 'fixum a = 1'
-          - 'fixum b = 2'
-          - 'fixum c = 3'
+          - 'fixum a ← 1'
+          - 'fixum b ← 2'
+          - 'fixum c ← 3'
 
 # Declaration with binary expression
 - name: declaration with binary expression
-  source: 'fixum sum = a + b + c'
+  source:'fixum sum ← a + b + c'
   expect:
       ts:
           - 'const sum = ((a + b) + c);'
       py:
           - 'sum = ((a + b) + c)'
       fab:
-          - 'fixum sum = a + b + c'
+          - 'fixum sum ← a + b + c'
 
 # Declaration with lambda
 - name: declaration with lambda
-  source: 'fixum fn = pro x: x * 2'
+  source:'fixum fn ← pro x: x * 2'
   expect:
       ts:
           - 'const fn = (x) => (x * 2);'
       py:
           - 'fn = lambda x: (x * 2)'
       fab:
-          - 'fixum fn = pro x: x * 2'
+          - 'fixum fn ← pro x: x * 2'
 
 # Declaration with function call
 - name: declaration with function call
-  source: 'fixum data = fetchData()'
+  source:'fixum data ← fetchData()'
   expect:
       ts:
           - 'const data = fetchData();'
       py:
           - 'data = fetchData()'
       fab:
-          - 'fixum data = fetchData()'
+          - 'fixum data ← fetchData()'

@@ -7,7 +7,7 @@
 
 incipit ergo cura arena {
     # ceterum handles unmatched cases
-    fixum day = "wednesday"
+    fixum day ← "wednesday"
 
     elige day {
         casu "monday" {
@@ -22,7 +22,7 @@ incipit ergo cura arena {
     }
 
     # ceterum with error handling
-    fixum command = "unknown"
+    fixum command ← "unknown"
 
     elige command {
         casu "start" {
@@ -40,7 +40,7 @@ incipit ergo cura arena {
     }
 
     # Multiple statements in ceterum
-    fixum level = 99
+    fixum level ← 99
 
     elige level {
         casu 1 {

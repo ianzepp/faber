@@ -18,7 +18,7 @@
 # =============================================================================
 
 - name: finge payload variant with qua
-  source: 'fixum e = finge Click { x: 10, y: 20 } qua Event'
+  source:'fixum e ← finge Click { x: 10, y: 20 } qua Event'
   expect:
       ts:
           - "{ tag: 'Click', x: 10, y: 20 }"
@@ -38,7 +38,7 @@
 # =============================================================================
 
 - name: finge unit variant with qua
-  source: 'fixum s = finge Active qua Status'
+  source:'fixum s ← finge Active qua Status'
   expect:
       ts:
           - "{ tag: 'Active' }"
@@ -58,7 +58,7 @@
 # =============================================================================
 
 - name: finge payload variant without qua
-  source: 'fixum e = finge Click { x: 5, y: 15 }'
+  source:'fixum e ← finge Click { x: 5, y: 15 }'
   expect:
       ts:
           - "{ tag: 'Click', x: 5, y: 15 }"
@@ -74,7 +74,7 @@
           - 'finge Click { x: 5, y: 15 }'
 
 - name: finge unit variant without qua
-  source: 'fixum s = finge Pending'
+  source:'fixum s ← finge Pending'
   expect:
       ts:
           - "{ tag: 'Pending' }"
@@ -94,7 +94,7 @@
 # =============================================================================
 
 - name: finge single field variant
-  source: 'fixum r = finge Success { message: "done" } qua Result'
+  source:'fixum r ← finge Success { message: "done" } qua Result'
   expect:
       ts:
           - "{ tag: 'Success', message: \"done\" }"
@@ -114,7 +114,7 @@
 # =============================================================================
 
 - name: finge with expression fields
-  source: 'fixum e = finge Move { x: a + b, y: c * 2 } qua Action'
+  source:'fixum e ← finge Move { x: a + b, y: c * 2 } qua Action'
   expect:
       ts:
           - "{ tag: 'Move', x: (a + b), y: (c * 2) }"

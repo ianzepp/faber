@@ -8,6 +8,7 @@ use std::collections::HashMap;
 fn precedence() -> HashMap<&'static str, i32> {
     let mut m = HashMap::new();
     m.insert("=", 1);
+    m.insert("←", 1);
     m.insert("+=", 1);
     m.insert("-=", 1);
     m.insert("*=", 1);
@@ -20,12 +21,16 @@ fn precedence() -> HashMap<&'static str, i32> {
     m.insert("&&", 4);
     m.insert("==", 5);
     m.insert("!=", 5);
+    m.insert("≡", 5);
+    m.insert("≠", 5);
     m.insert("===", 5);
     m.insert("!==", 5);
     m.insert("<", 6);
     m.insert(">", 6);
     m.insert("<=", 6);
     m.insert(">=", 6);
+    m.insert("≤", 6);
+    m.insert("≥", 6);
     m.insert("inter", 6);
     m.insert("intra", 6);
     m.insert("+", 7);
@@ -61,6 +66,7 @@ fn unary_ops() -> HashMap<&'static str, ()> {
 fn assign_ops() -> HashMap<&'static str, ()> {
     let mut m = HashMap::new();
     m.insert("=", ());
+    m.insert("←", ());
     m.insert("+=", ());
     m.insert("-=", ());
     m.insert("*=", ());
@@ -405,7 +411,9 @@ impl Parser {
             (None, first)
         };
 
-        let valor = if self.match_token(TOKEN_OPERATOR, Some("=")).is_some() {
+        let valor = if self.match_token(TOKEN_OPERATOR, Some("←")).is_some()
+            || self.match_token(TOKEN_OPERATOR, Some("=")).is_some()
+        {
             Some(self.parse_expr(0)?)
         } else {
             None
@@ -494,7 +502,9 @@ impl Parser {
         let params = self.parse_params()?;
         self.expect(TOKEN_PUNCTUATOR, Some(")"))?;
 
-        let typus_reditus = if self.match_token(TOKEN_OPERATOR, Some("->")).is_some() {
+        let typus_reditus = if self.match_token(TOKEN_OPERATOR, Some("→")).is_some()
+            || self.match_token(TOKEN_OPERATOR, Some("->")).is_some()
+        {
             Some(self.parse_typus()?)
         } else {
             None
@@ -585,7 +595,9 @@ impl Parser {
                 }
             }
 
-            let default = if self.match_token(TOKEN_OPERATOR, Some("=")).is_some() {
+            let default = if self.match_token(TOKEN_OPERATOR, Some("←")).is_some()
+                || self.match_token(TOKEN_OPERATOR, Some("=")).is_some()
+            {
                 Some(self.parse_expr(0)?)
             } else {
                 None
@@ -712,7 +724,9 @@ impl Parser {
                         }
                     };
 
-                let valor = if self.match_token(TOKEN_OPERATOR, Some("=")).is_some() {
+                let valor = if self.match_token(TOKEN_OPERATOR, Some("←")).is_some()
+                    || self.match_token(TOKEN_OPERATOR, Some("=")).is_some()
+                {
                     Some(self.parse_expr(0)?)
                 } else {
                     None
@@ -769,7 +783,9 @@ impl Parser {
             self.expect(TOKEN_PUNCTUATOR, Some("("))?;
             let params = self.parse_params()?;
             self.expect(TOKEN_PUNCTUATOR, Some(")"))?;
-            let typus_reditus = if self.match_token(TOKEN_OPERATOR, Some("->")).is_some() {
+            let typus_reditus = if self.match_token(TOKEN_OPERATOR, Some("→")).is_some()
+                || self.match_token(TOKEN_OPERATOR, Some("->")).is_some()
+            {
                 Some(self.parse_typus()?)
             } else {
                 None
@@ -804,7 +820,9 @@ impl Parser {
         while !self.check(TOKEN_PUNCTUATOR, Some("}")) && !self.check(TOKEN_EOF, None) {
             let loc = self.peek(0).locus;
             let name = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-            let valor = if self.match_token(TOKEN_OPERATOR, Some("=")).is_some() {
+            let valor = if self.match_token(TOKEN_OPERATOR, Some("←")).is_some()
+                || self.match_token(TOKEN_OPERATOR, Some("=")).is_some()
+            {
                 let tok = self.peek(0);
                 let v = if tok.tag == TOKEN_TEXTUS {
                     format!("\"{}\"", tok.valor)
@@ -916,7 +934,9 @@ impl Parser {
         let locus = self.peek(0).locus;
         self.expect(TOKEN_KEYWORD, Some("typus"))?;
         let nomen = self.expect(TOKEN_IDENTIFIER, None)?.valor;
-        self.expect(TOKEN_OPERATOR, Some("="))?;
+        if self.match_token(TOKEN_OPERATOR, Some("←")).is_none() {
+            self.expect(TOKEN_OPERATOR, Some("="))?;
+        }
         let typus = self.parse_typus()?;
         Ok(Stmt::TypusAlias {
             locus,

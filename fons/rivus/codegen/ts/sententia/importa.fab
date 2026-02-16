@@ -20,22 +20,22 @@ importa ex "../../../semantic/modulus" privata estNormaImportum
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genImporta(in TsGenerator g, de textus fons, si de textus importatum, de textus locale, bivalens totum, bivalens publica) -> textus {
+functio genImporta(in TsGenerator g, de textus fons, si de textus importatum, de textus locale, bivalens totum, bivalens publica) → textus {
     # Skip norma imports (norma/ prefix) - they are compiler intrinsics, not real modules
     si estNormaImportum(fons) {
         redde ""
     }
 
     # Resolve norma:* imports to HAL paths
-    varia importPath = fons
+    varia importPath ← fons
     si fons.initium("norma:") {
-        fixum resolved = resolveNormaHal(fons, g.viaFons)
+        fixum resolved ← resolveNormaHal(fons, g.viaFons)
         si nonnihil resolved {
-            importPath = resolved
+            importPath ← resolved
         }
     }
 
-    varia lines = [] innatum lista<textus>
+    varia lines ← [] innatum lista<textus>
 
     # Wildcard import: * ut alias
     si totum {
@@ -48,7 +48,7 @@ functio genImporta(in TsGenerator g, de textus fons, si de textus importatum, de
 
     # Named import with optional alias
     si nonnihil importatum {
-        si importatum == locale {
+        si importatum ≡ locale {
             lines.appende(scriptum("§import { § } from \"§\";", g.ind(), importatum, importPath))
             si publica {
                 lines.appende(scriptum("§export { § };", g.ind(), locale))
@@ -68,14 +68,14 @@ functio genImporta(in TsGenerator g, de textus fons, si de textus importatum, de
 }
 
 @ publica
-functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, de lista<ImportaSpecificator> specificatores) -> textus {
-    fixum keyword = species == VariaGenus.Fixum sic "const" secus "let"
+functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, de lista<ImportaSpecificator> specificatores) → textus {
+    fixum keyword ← species ≡ VariaGenus.Fixum sic "const" secus "let"
 
-    varia specs = [] innatum lista<textus>
+    varia specs ← [] innatum lista<textus>
     itera ex specificatores fixum spec {
         si spec.residuum {
             specs.appende(scriptum("...§", spec.locale))
-        } sin spec.importatum == spec.locale {
+        } sin spec.importatum ≡ spec.locale {
             specs.appende(spec.importatum)
         } secus {
             specs.appende(scriptum("§: §", spec.importatum, spec.locale))
@@ -86,10 +86,10 @@ functio genDestructura(in TsGenerator g, de Expressia fons, VariaGenus species, 
 }
 
 @ publica
-functio genSeriesDestructura(in TsGenerator g, de lista<SeriesDestructuraElementum> elementa, de Expressia fons, VariaGenus species) -> textus {
-    fixum keyword = species == VariaGenus.Fixum sic "const" secus "let"
+functio genSeriesDestructura(in TsGenerator g, de lista<SeriesDestructuraElementum> elementa, de Expressia fons, VariaGenus species) → textus {
+    fixum keyword ← species ≡ VariaGenus.Fixum sic "const" secus "let"
 
-    varia items = [] innatum lista<textus>
+    varia items ← [] innatum lista<textus>
     itera ex elementa fixum elem {
         si elem.omissum {
             items.appende("")

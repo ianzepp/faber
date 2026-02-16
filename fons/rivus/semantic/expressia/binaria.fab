@@ -21,21 +21,21 @@ importa ex "../../ast/expressia" privata LitteraGenus
 
 # Resolve a binary expression
 @ publica
-functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
-    fixum a = r.analyzator()
+functio resolveBinaria(Resolvitor r, Expressia binariaExpr) → SemanticTypus {
+    fixum a ← r.analyzator()
 
     discerne binariaExpr {
         casu BinariaExpressia ut b {
-            fixum sinisterTypus = r.synthesize(b.sinister)
-            fixum dexterTypus = r.synthesize(b.dexter)
+            fixum sinisterTypus ← r.synthesize(b.sinister)
+            fixum dexterTypus ← r.synthesize(b.dexter)
 
             # Arithmetic operators: +, -, *, /, %
             si estArithmeticum(b.signum) {
                 # String concatenation with +
-                si b.signum == "+" {
+                si b.signum ≡ "+" {
                     discerne sinisterTypus {
                         casu Primitivum ut p {
-                            si p.nomen == "textus" {
+                            si p.nomen ≡ "textus" {
                                 redde TEXTUS
                             }
                         }
@@ -50,7 +50,7 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
                             casu Primitivum ut pd {
                                 si estNumericum(ps.nomen) et estNumericum(pd.nomen) {
                                     # Same type: preserve it
-                                    si ps.nomen == pd.nomen {
+                                    si ps.nomen ≡ pd.nomen {
                                         redde sinisterTypus
                                     }
                                     # Mixed numeric: use left type
@@ -74,8 +74,8 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
                     casu Primitivum ut ps {
                         discerne dexterTypus {
                             casu Primitivum ut pd {
-                                si ps.nomen != pd.nomen {
-                                    fixum err = incompatibleComparisonError(
+                                si ps.nomen ≠ pd.nomen {
+                                    fixum err ← incompatibleComparisonError(
                                         formaTypum(sinisterTypus),
                                         formaTypum(dexterTypus),
                                         b.signum
@@ -95,11 +95,11 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
             # Equality operators: ==, !=
             si b.signum inter ["==", "!="] {
                 # Warn about == nihil / != nihil patterns
-                fixum sinisterNihil = estNihilLittera(b.sinister)
-                fixum dexterNihil = estNihilLittera(b.dexter)
+                fixum sinisterNihil ← estNihilLittera(b.sinister)
+                fixum dexterNihil ← estNihilLittera(b.dexter)
 
                 si sinisterNihil aut dexterNihil {
-                    fixum warn = nihilEqualityWarning(b.signum)
+                    fixum warn ← nihilEqualityWarning(b.signum)
                     a.error(warn.textus, b.locus, warn.auxilium)
                 }
 
@@ -114,19 +114,19 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
             # Bitwise operators: &, |, ^
             si estBitwise(b.signum) {
                 # Both operands must be numerus (integer)
-                varia sinisterOk = falsum
-                varia dexterOk = falsum
+                varia sinisterOk ← falsum
+                varia dexterOk ← falsum
 
                 discerne sinisterTypus {
                     casu Primitivum ut p {
-                        sinisterOk = p.nomen == "numerus"
+                        sinisterOk ← p.nomen ≡ "numerus"
                     }
                     casu _ tacet
                 }
 
                 discerne dexterTypus {
                     casu Primitivum ut p {
-                        dexterOk = p.nomen == "numerus"
+                        dexterOk ← p.nomen ≡ "numerus"
                     }
                     casu _ tacet
                 }
@@ -143,7 +143,7 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
             }
 
             # Nullish coalescing: vel
-            si b.signum == "vel" {
+            si b.signum ≡ "vel" {
                 redde sineNullabilitate(sinisterTypus)
             }
 
@@ -162,35 +162,35 @@ functio resolveBinaria(Resolvitor r, Expressia binariaExpr) -> SemanticTypus {
 # ============================================================================
 
 @ publica
-functio estArithmeticum(textus signum) -> bivalens {
+functio estArithmeticum(textus signum) → bivalens {
     redde signum inter ["+", "-", "*", "/", "%"]
 }
 
 @ publica
-functio estComparatio(textus signum) -> bivalens {
+functio estComparatio(textus signum) → bivalens {
     redde signum inter ["<", ">", "<=", ">="]
 }
 
 @ publica
-functio estLogicum(textus signum) -> bivalens {
+functio estLogicum(textus signum) → bivalens {
     redde signum inter ["&&", "||", "et", "aut"]
 }
 
 @ publica
-functio estBitwise(textus signum) -> bivalens {
+functio estBitwise(textus signum) → bivalens {
     redde signum inter ["&", "|", "^"]
 }
 
 @ publica
-functio estNumericum(textus nomen) -> bivalens {
+functio estNumericum(textus nomen) → bivalens {
     redde nomen inter ["numerus", "fractus", "decimus", "magnus"]
 }
 
 # Check if an expression is a nihil literal
-functio estNihilLittera(Expressia expr) -> bivalens {
+functio estNihilLittera(Expressia expr) → bivalens {
     discerne expr {
         casu Littera ut lit {
-            redde lit.species == LitteraGenus.Nihil
+            redde lit.species ≡ LitteraGenus.Nihil
         }
         ceterum {
             redde falsum

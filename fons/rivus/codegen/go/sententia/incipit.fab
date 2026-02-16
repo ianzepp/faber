@@ -12,33 +12,33 @@ importa ex "../nucleus" privata GoGenerator
 importa ex "./index" privata genSententia
 
 @ publica
-functio genIncipit(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) -> textus {
+functio genIncipit(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) → textus {
     # Generate main function body
     # For simple incipit { ... }, body is in corpus
     # For incipit ergo cura..., actual statements are in ergo
 
-    varia body = ""
+    varia body ← ""
 
     # Check corpus first (simple incipit { ... })
     si nonnihil corpus {
         g.intraProfundum()
-        body = genSententia(g, corpus qua Sententia)
+        body ← genSententia(g, corpus qua Sententia)
         g.exiProfundum()
     }
 
     # Then check ergo (incipit ergo ... { ... })
     si nonnihil ergo {
         g.intraProfundum()
-        fixum ergoBody = genSententia(g, ergo qua Sententia)
+        fixum ergoBody ← genSententia(g, ergo qua Sententia)
         g.exiProfundum()
-        si body != "" {
-            body = scriptum("§\n§", body, ergoBody)
+        si body ≠ "" {
+            body ← scriptum("§\n§", body, ergoBody)
         } secus {
-            body = ergoBody
+            body ← ergoBody
         }
     }
 
-    si body == "" {
+    si body ≡ "" {
         redde scriptum("§func main() {}", g.ind())
     }
 
@@ -47,7 +47,7 @@ functio genIncipit(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) -
 
 # Async entry point - Go doesn't have async main, just use regular main
 @ publica
-functio genIncipiet(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) -> textus {
+functio genIncipiet(in GoGenerator g, si de ignotum corpus, si de ignotum ergo) → textus {
     # Go doesn't have async main - generate regular main
     redde genIncipit(g, corpus, ergo)
 }

@@ -8,17 +8,17 @@
 
 # scribe is the print statement (console.log in TS, print in Python)
 - name: 'scribe single arg'
-  source: 'scribe x'
+  source:'scribe x'
   ts: 'console.log(x);'
   py: 'print(x)'
   cpp:
       - 'std::print'
   skip: [rs]
-  fab: 'scribe x'
+  fab:'scribe x'
 
 # Multiple arguments are comma-separated
 - name: 'scribe multiple args'
-  source: 'scribe "a", "b", "c"'
+  source:'scribe "a", "b", "c"'
   ts: 'console.log("a", "b", "c");'
   py: 'print("a", "b", "c")'
   cpp:
@@ -32,7 +32,7 @@
 
 # Expressions are evaluated before printing
 - name: 'scribe with expression'
-  source: 'scribe x + y'
+  source:'scribe x + y'
   ts:
       - 'console.log'
       - 'x + y'
@@ -51,22 +51,22 @@
 
 # scribe generates required includes for print and string
 - name: 'cpp generates required includes'
-  source: 'scribe "hello"'
+  source:'scribe "hello"'
   cpp:
       - '#include <print>'
       - '#include <string>'
   rs:
       - 'println!'
-  fab: 'scribe "hello"'
+  fab:'scribe "hello"'
 
 # adfirma adds cassert include
 - name: 'cpp optional includes added when used'
-  source: 'adfirma verum'
+  source:'adfirma verum'
   cpp:
       - '#include <cassert>'
   rs:
       - 'assert!(true);'
-  fab: 'adfirma verum'
+  fab:'adfirma verum'
 
 # =============================================================================
 # Entry Point (incipit)
@@ -188,11 +188,11 @@
 - name: 'mutual recursion'
   source: |
       functio isEven(numerus n) fit bivalens {
-        si n == 0 { redde verum }
+        si n ≡ 0 { redde verum }
         redde isOdd(n - 1)
       }
       functio isOdd(numerus n) fit bivalens {
-        si n == 0 { redde falsum }
+        si n ≡ 0 { redde falsum }
         redde isEven(n - 1)
       }
   ts:
@@ -269,7 +269,7 @@
 # Keywords can be used as variable names
 - name: 'keyword typus as variable name'
   source: |
-      fixum numerus typus = 42
+      fixum numerus typus ← 42
       scribe typus
   ts:
       - 'const typus: number = 42'
@@ -287,12 +287,12 @@
       - 'const typus: i64 = 42'
       - 'print("{d}\n", .{ typus });'
   fab:
-      - 'fixum numerus typus = 42'
+      - 'fixum numerus typus ← 42'
       - 'scribe typus'
 
 - name: 'keyword genus as variable name'
   source: |
-      fixum textus genus = "species"
+      fixum textus genus ← "species"
       scribe genus
   ts:
       - 'const genus: string = "species"'
@@ -310,5 +310,5 @@
       - 'const genus: []const u8 = "species"'
       - 'print("{s}\n", .{ genus });'
   fab:
-      - 'fixum textus genus = "species"'
+      - 'fixum textus genus ← "species"'
       - 'scribe genus'

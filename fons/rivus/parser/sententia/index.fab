@@ -72,47 +72,47 @@ importa ex "./proba" privata parsePraeparaMassa
 # Main dispatcher that routes to appropriate parser based on leading token.
 # Collects and attaches leading/trailing comments.
 @ publica
-functio parseSententia(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
+functio parseSententia(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
 
     # Capture any leading comments before the statement.
     p.colligeNotas()
 
-    fixum stmt = parseSententiaSineNotis(r)
+    fixum stmt ← parseSententiaSineNotis(r)
 
     # Attach leading/trailing comments (if any).
-    fixum radix = stmt qua ignotum novum NodusRadix
-    radix.notaePrae = p.consumeNotas()
-    radix.notaePost = p.colligeNotamTrahentem(radix.locus.linea)
+    fixum radix ← stmt qua ignotum novum NodusRadix
+    radix.notaePrae ← p.consumeNotas()
+    radix.notaePost ← p.colligeNotamTrahentem(radix.locus.linea)
 
     redde stmt
 }
 
-functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
-    fixum p = r.parser()
-    fixum sym = p.specta(0)
+functio parseSententiaSineNotis(in Resolvitor r) → Sententia {
+    fixum p ← r.parser()
+    fixum sym ← p.specta(0)
 
     # Section annotation prefix (§) - file-level build configuration only
     # NOTE: § import syntax is deprecated; use: importa ex "path" privata|publica T
-    si sym.species === SymbolumGenus.Sectio {
-        fixum nextSym = p.specta(1)
+    si sym.species ≡ SymbolumGenus.Sectio {
+        fixum nextSym ← p.specta(1)
 
         # Deprecation error for old import syntax
-        si (nextSym.species === SymbolumGenus.Verbum) et (nextSym.verbumId === VerbumId.Importa) {
+        si (nextSym.species ≡ SymbolumGenus.Verbum) et (nextSym.verbumId ≡ VerbumId.Importa) {
             p.renuncia(ParserErrorCodice.ErrorGeneralis, "§ import syntax is deprecated; use: importa ex \"path\" privata|publica T")
         }
-        si (nextSym.species === SymbolumGenus.Verbum) et (nextSym.verbumId === VerbumId.Ex) {
-            fixum sourceSym = p.specta(2)
-            si (sourceSym.species === SymbolumGenus.Nomen) aut (sourceSym.species === SymbolumGenus.Textus) {
-                fixum importaSym = p.specta(3)
-                si (importaSym.species === SymbolumGenus.Verbum) et (importaSym.verbumId === VerbumId.Importa) {
+        si (nextSym.species ≡ SymbolumGenus.Verbum) et (nextSym.verbumId ≡ VerbumId.Ex) {
+            fixum sourceSym ← p.specta(2)
+            si (sourceSym.species ≡ SymbolumGenus.Nomen) aut (sourceSym.species ≡ SymbolumGenus.Textus) {
+                fixum importaSym ← p.specta(3)
+                si (importaSym.species ≡ SymbolumGenus.Verbum) et (importaSym.verbumId ≡ VerbumId.Importa) {
                     p.renuncia(ParserErrorCodice.ErrorGeneralis, "§ ex ... importa syntax is deprecated; use: importa ex \"path\" privata|publica T")
                 }
             }
         }
 
         # Otherwise it's file-level build configuration
-        fixum sectiones = parseSectiones(r)
+        fixum sectiones ← parseSectiones(r)
         # Accumulate on parser for later extraction by parseProgramma
         itera ex sectiones fixum s {
             p.sectiones.appende(s)
@@ -121,21 +121,21 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
     }
 
     # Annotation prefix (e.g. `@ futura`)
-    si sym.species === SymbolumGenus.At {
-        fixum annotationes = parseAnnotationes(r)
+    si sym.species ≡ SymbolumGenus.At {
+        fixum annotationes ← parseAnnotationes(r)
 
-        fixum stmt = parseSententiaSineNotis(r)
+        fixum stmt ← parseSententiaSineNotis(r)
 
         # Store all annotations on statements that support the annotationes field
         discerne stmt {
             casu FunctioDeclaratio ut f {
-                f.annotationes = annotationes
+                f.annotationes ← annotationes
             }
             casu IncipitSententia ut i {
-                i.annotationes = annotationes
+                i.annotationes ← annotationes
             }
             casu IncipietSententia ut i {
-                i.annotationes = annotationes
+                i.annotationes ← annotationes
             }
             casu _ tacet
         }
@@ -143,137 +143,137 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         # Process individual annotation effects
         itera ex annotationes fixum a {
             # Check for visibility annotations
-            varia visibilitas = nihil qua si Visibilitas
+            varia visibilitas ← nihil qua si Visibilitas
             si a.nomen inter ["publicum", "publica", "publicus"] {
-                visibilitas = Visibilitas.Publica
+                visibilitas ← Visibilitas.Publica
             } sin a.nomen inter ["protectum", "protecta", "protectus"] {
-                visibilitas = Visibilitas.Protecta
+                visibilitas ← Visibilitas.Protecta
             } sin a.nomen inter ["privatum", "privata", "privatus"] {
-                visibilitas = Visibilitas.Privata
+                visibilitas ← Visibilitas.Privata
             }
 
             discerne stmt {
                 casu FunctioDeclaratio ut f {
-                    si a.nomen == "futura" {
-                        f.asynca = verum
+                    si a.nomen ≡ "futura" {
+                        f.asynca ← verum
                     }
-                    si a.nomen == "cursor" {
-                        f.generator = verum
+                    si a.nomen ≡ "cursor" {
+                        f.generator ← verum
                     }
-                    si a.nomen == "radix" {
-                        f.morphologia = { locus: a.locus, formae: a.argumenta } novum MorphologiaDeclaratio
+                    si a.nomen ≡ "radix" {
+                        f.morphologia ← { locus: a.locus, formae: a.argumenta } novum MorphologiaDeclaratio
                     }
-                    si a.nomen == "externa" {
-                        f.externa = verum
+                    si a.nomen ≡ "externa" {
+                        f.externa ← verum
                     }
                     si nonnihil visibilitas {
-                        f.visibilitas = visibilitas
+                        f.visibilitas ← visibilitas
                     }
                 }
                 casu VariaSententia ut v {
-                    si a.nomen == "externa" {
-                        v.externa = verum
+                    si a.nomen ≡ "externa" {
+                        v.externa ← verum
                     }
                     si nonnihil visibilitas {
-                        v.visibilitas = visibilitas
+                        v.visibilitas ← visibilitas
                     }
                 }
                 casu GenusDeclaratio ut g {
                     si a.nomen inter ["abstractum", "abstracta", "abstractus"] {
-                        g.abstractum = verum
+                        g.abstractum ← verum
                     }
                     si nonnihil visibilitas {
-                        g.visibilitas = visibilitas
+                        g.visibilitas ← visibilitas
                     }
                 }
                 casu PactumDeclaratio ut p {
                     si nonnihil visibilitas {
-                        p.visibilitas = visibilitas
+                        p.visibilitas ← visibilitas
                     }
                 }
                 casu OrdoDeclaratio ut o {
                     si nonnihil visibilitas {
-                        o.visibilitas = visibilitas
+                        o.visibilitas ← visibilitas
                     }
                 }
                 casu DiscretioDeclaratio ut d {
                     si nonnihil visibilitas {
-                        d.visibilitas = visibilitas
+                        d.visibilitas ← visibilitas
                     }
                 }
                 casu TypusAliasDeclaratio ut t {
                     si nonnihil visibilitas {
-                        t.visibilitas = visibilitas
+                        t.visibilitas ← visibilitas
                     }
                 }
                 casu ProbaSententia ut p {
                     # Test annotations
-                    si a.nomen == "omitte" {
-                        p.modificator = ProbaModificator.Omitte
+                    si a.nomen ≡ "omitte" {
+                        p.modificator ← ProbaModificator.Omitte
                         si positivum a.argumenta.longitudo() {
-                            p.ratioModificatoris = a.argumenta[0]
+                            p.ratioModificatoris ← a.argumenta[0]
                         }
                     }
-                    si a.nomen == "futurum" {
-                        p.modificator = ProbaModificator.Futurum
+                    si a.nomen ≡ "futurum" {
+                        p.modificator ← ProbaModificator.Futurum
                         si positivum a.argumenta.longitudo() {
-                            p.ratioModificatoris = a.argumenta[0]
+                            p.ratioModificatoris ← a.argumenta[0]
                         }
                     }
-                    si a.nomen == "solum" {
-                        p.solum = verum
+                    si a.nomen ≡ "solum" {
+                        p.solum ← verum
                     }
-                    si a.nomen == "tag" {
+                    si a.nomen ≡ "tag" {
                         si nihil p.tags {
-                            p.tags = [] innatum lista<textus>
+                            p.tags ← [] innatum lista<textus>
                         }
                         si positivum a.argumenta.longitudo() {
                             p.tags.appende(a.argumenta[0])
                         }
                     }
-                    si a.nomen == "temporis" {
+                    si a.nomen ≡ "temporis" {
                         si positivum a.argumenta.longitudo() {
-                            p.temporis = a.argumenta[0] numeratum
+                            p.temporis ← a.argumenta[0] numeratum
                         }
                     }
-                    si a.nomen == "metior" {
-                        p.metior = verum
+                    si a.nomen ≡ "metior" {
+                        p.metior ← verum
                     }
-                    si a.nomen == "repete" {
+                    si a.nomen ≡ "repete" {
                         si positivum a.argumenta.longitudo() {
-                            p.repete = a.argumenta[0] numeratum
+                            p.repete ← a.argumenta[0] numeratum
                         }
                     }
-                    si a.nomen == "fragilis" {
+                    si a.nomen ≡ "fragilis" {
                         si positivum a.argumenta.longitudo() {
-                            p.fragilis = a.argumenta[0] numeratum
+                            p.fragilis ← a.argumenta[0] numeratum
                         }
                     }
-                    si a.nomen == "requirit" {
+                    si a.nomen ≡ "requirit" {
                         si positivum a.argumenta.longitudo() {
-                            p.requirit = a.argumenta[0]
+                            p.requirit ← a.argumenta[0]
                         }
                     }
-                    si a.nomen == "solum_in" {
+                    si a.nomen ≡ "solum_in" {
                         si positivum a.argumenta.longitudo() {
-                            p.solumIn = a.argumenta[0]
+                            p.solumIn ← a.argumenta[0]
                         }
                     }
                 }
                 casu ProbandumSententia ut s {
                     # Suite annotations
-                    si a.nomen == "omitte" {
-                        s.ompitur = verum
+                    si a.nomen ≡ "omitte" {
+                        s.ompitur ← verum
                         si positivum a.argumenta.longitudo() {
-                            s.ratioOmissionis = a.argumenta[0]
+                            s.ratioOmissionis ← a.argumenta[0]
                         }
                     }
-                    si a.nomen == "solum" {
-                        s.solum = verum
+                    si a.nomen ≡ "solum" {
+                        s.solum ← verum
                     }
-                    si a.nomen == "tag" {
+                    si a.nomen ≡ "tag" {
                         si nihil s.tags {
-                            s.tags = [] innatum lista<textus>
+                            s.tags ← [] innatum lista<textus>
                         }
                         si positivum a.argumenta.longitudo() {
                             s.tags.appende(a.argumenta[0])
@@ -288,13 +288,13 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
     }
 
     # Block statement
-    si sym.species === SymbolumGenus.UncusSin {
+    si sym.species ≡ SymbolumGenus.UncusSin {
         redde parseMassaSententia(r) qua Sententia
     }
 
     # Keyword-based dispatch
-    si sym.species === SymbolumGenus.Verbum {
-        fixum verbumId = sym.verbumId
+    si sym.species ≡ SymbolumGenus.Verbum {
+        fixum verbumId ← sym.verbumId
 
         # Variable declarations
         si verbumId inter [VerbumId.Varia, VerbumId.Fixum] {
@@ -302,72 +302,72 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         }
 
         # Return statement
-        si verbumId === VerbumId.Redde {
+        si verbumId ≡ VerbumId.Redde {
             redde parseReddeSententia(r)
         }
 
         # Break/continue
-        si verbumId === VerbumId.Rumpe {
+        si verbumId ≡ VerbumId.Rumpe {
             redde parseRumpeSententia(r)
         }
-        si verbumId === VerbumId.Perge {
+        si verbumId ≡ VerbumId.Perge {
             redde parsePergeSententia(r)
         }
 
         # Throw/panic (skip if followed by LPAREN - treat as function call)
-        si verbumId === VerbumId.Iace et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Iace et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseIaceSententia(r, falsum)
         }
-        si verbumId === VerbumId.Mori et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Mori et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseIaceSententia(r, verum)
         }
 
         # Output statements (skip if followed by LPAREN - treat as function call)
-        si verbumId === VerbumId.Scribe et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Scribe et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseScribeSententia(r, ScribeGradus.Scribe)
         }
-        si verbumId === VerbumId.Vide et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Vide et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseScribeSententia(r, ScribeGradus.Vide)
         }
-        si verbumId === VerbumId.Mone et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Mone et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseScribeSententia(r, ScribeGradus.Mone)
         }
 
         # Error handling
-        si verbumId === VerbumId.Tempta {
+        si verbumId ≡ VerbumId.Tempta {
             redde parseTemptaSententia(r)
         }
-        si verbumId === VerbumId.Fac {
+        si verbumId ≡ VerbumId.Fac {
             redde parseFacSententia(r)
         }
-        si verbumId === VerbumId.Adfirma {
+        si verbumId ≡ VerbumId.Adfirma {
             redde parseAdfirmaSententia(r)
         }
 
         # Control flow
-        si verbumId === VerbumId.Si {
+        si verbumId ≡ VerbumId.Si {
             redde parseSiSententia(r)
         }
-        si verbumId === VerbumId.Dum {
+        si verbumId ≡ VerbumId.Dum {
             redde parseDumSententia(r)
         }
         # 'itera' for iteration loops (itera ex / itera de)
-        si verbumId === VerbumId.Itera {
+        si verbumId ≡ VerbumId.Itera {
             redde parseIteraSententia(r)
         }
         # 'ex' for for-of loops and destructuring
         # NOTE: imports use § ex sectional syntax, not bare ex
-        si verbumId === VerbumId.Ex {
+        si verbumId ≡ VerbumId.Ex {
             # Disambiguate: ex <expr> fixum/varia IDENT { } → loop
             #              ex <expr> fixum/varia IDENT, IDENT → destructure
-            varia i = 1
+            varia i ← 1
             dum i < 32 et non p.estFinis() {
-                fixum s = p.specta(i)
-                si s.species === SymbolumGenus.Verbum {
+                fixum s ← p.specta(i)
+                si s.species ≡ SymbolumGenus.Verbum {
                     si s.verbumId inter [VerbumId.Fixum, VerbumId.Varia] {
                         # Found binding keyword - check what follows: IDENT then { or ,?
-                        fixum afterIdent = p.specta(i + 2)
-                        si afterIdent.species === SymbolumGenus.UncusSin {
+                        fixum afterIdent ← p.specta(i + 2)
+                        si afterIdent.species ≡ SymbolumGenus.UncusSin {
                             # Block follows -> for-of loop
                             rumpe
                         }
@@ -381,13 +381,13 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
             # For-of loop
             redde parseExSententia(r)
         }
-        si verbumId === VerbumId.De {
+        si verbumId ≡ VerbumId.De {
             redde parseDeSententia(r)
         }
 
         # SYNTAXIS ALIENA: 'pro...de' loop (Python/JS style)
         # Faber uses 'ex collection fixum item { }' not 'pro item de collection { }'
-        si verbumId === VerbumId.Pro {
+        si verbumId ≡ VerbumId.Pro {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaProDe)
             # Skip tokens to attempt recovery (pro IDENT de EXPR { })
             p.procede()  # pro
@@ -399,7 +399,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
 
         # SYNTAXIS ALIENA: 'aliter' / 'aliter si' (false Latin for else/else-if)
         # Faber uses 'secus' for else, 'sin' for else-if
-        si verbumId === VerbumId.Aliter {
+        si verbumId ≡ VerbumId.Aliter {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaAliter)
             # Skip tokens to attempt recovery (aliter { } or aliter si EXPR { })
             p.procede()  # aliter
@@ -409,7 +409,7 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         }
 
         # SYNTAXIS ALIENA: 'exspecta' (Latin for await, but Faber uses cede)
-        si verbumId === VerbumId.Exspecta {
+        si verbumId ≡ VerbumId.Exspecta {
             p.renuncia(ParserErrorCodice.SyntaxisAlienaExspecta)
             p.procede()  # exspecta
             # Let expression parsing handle the awaited value
@@ -417,69 +417,69 @@ functio parseSententiaSineNotis(in Resolvitor r) -> Sententia {
         }
 
         # Declarations
-        si verbumId === VerbumId.Functio {
+        si verbumId ≡ VerbumId.Functio {
             redde parseFunctioDeclaratio(r)
         }
-        si verbumId === VerbumId.Genus {
+        si verbumId ≡ VerbumId.Genus {
             redde parseGenusDeclaratio(r, falsum)
         }
-        si verbumId === VerbumId.Abstractus {
+        si verbumId ≡ VerbumId.Abstractus {
             # WHY: Allow abstract genus modifier before the declaration keyword.
-            si p.specta(1).species == SymbolumGenus.Verbum et p.specta(1).verbumId == VerbumId.Genus {
+            si p.specta(1).species ≡ SymbolumGenus.Verbum et p.specta(1).verbumId ≡ VerbumId.Genus {
                 p.procede()
                 redde parseGenusDeclaratio(r, verum)
             }
         }
-        si verbumId === VerbumId.Pactum {
+        si verbumId ≡ VerbumId.Pactum {
             redde parsePactumDeclaratio(r)
         }
-        si verbumId === VerbumId.Ordo {
+        si verbumId ≡ VerbumId.Ordo {
             redde parseOrdoDeclaratio(r)
         }
-        si verbumId === VerbumId.Discretio {
+        si verbumId ≡ VerbumId.Discretio {
             redde parseDiscretioDeclaratio(r)
         }
-        si verbumId === VerbumId.Typus {
+        si verbumId ≡ VerbumId.Typus {
             redde parseTypusAliasDeclaratio(r)
         }
 
         # Import declaration (new syntax: importa ex "path" privata|publica T)
-        si verbumId === VerbumId.Importa {
+        si verbumId ≡ VerbumId.Importa {
             redde parseImportaSententia(r)
         }
 
         # Pattern matching and flow control
-        si verbumId === VerbumId.Elige {
+        si verbumId ≡ VerbumId.Elige {
             redde parseEligeSententia(r)
         }
-        si verbumId === VerbumId.Discerne {
+        si verbumId ≡ VerbumId.Discerne {
             redde parseDiscerneSententia(r)
         }
-        si verbumId === VerbumId.Custodi {
+        si verbumId ≡ VerbumId.Custodi {
             redde parseCustodiSententia(r)
         }
 
         # Entry points (skip if followed by LPAREN - treat as function call)
-        si verbumId === VerbumId.Incipit et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Incipit et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseIncipitSententia(r)
         }
-        si verbumId === VerbumId.Incipiet et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Incipiet et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseIncipietSententia(r)
         }
 
         # Resource management and dispatch (skip if followed by LPAREN - treat as function call)
-        si verbumId === VerbumId.Cura et p.specta(1).species !== SymbolumGenus.ParensSin {
+        si verbumId ≡ VerbumId.Cura et p.specta(1).species ≠ SymbolumGenus.ParensSin {
             redde parseCuraSententia(r)
         }
-        si verbumId === VerbumId.Ad {
+        si verbumId ≡ VerbumId.Ad {
             redde parseAdSententia(r)
         }
 
         # Testing
-        si verbumId === VerbumId.Probandum {
+        si verbumId ≡ VerbumId.Probandum {
             redde parseProbandumSententia(r)
         }
-        si verbumId === VerbumId.Proba {
+        si verbumId ≡ VerbumId.Proba {
             redde parseProbaSententia(r)
         }
         si verbumId inter [VerbumId.Praepara, VerbumId.Praeparabit, VerbumId.Postpara, VerbumId.Postparabit] {

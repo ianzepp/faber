@@ -3,9 +3,9 @@
 # Functions can use tempta-cape to handle errors internally
 # or let errors propagate to callers
 
-functio safeDivide(numerus a, numerus b) -> numerus {
+functio safeDivide(numerus a, numerus b) → numerus {
     tempta {
-        si b == 0 {
+        si b ≡ 0 {
             iace "Division by zero"
         }
         redde a / b
@@ -16,7 +16,7 @@ functio safeDivide(numerus a, numerus b) -> numerus {
     }
 }
 
-functio validatePositive(numerus value) -> numerus {
+functio validatePositive(numerus value) → numerus {
     tempta {
         si value < 0 {
             iace "Negative value not allowed"
@@ -30,13 +30,13 @@ functio validatePositive(numerus value) -> numerus {
 }
 
 functio processWithCleanup(textus name) {
-    varia resource = "pending"
+    varia resource ← "pending"
 
     tempta {
         scribe "Opening:", name
-        resource = name
+        resource ← name
 
-        si name == "" {
+        si name ≡ "" {
             iace "Empty name"
         }
 
@@ -50,7 +50,7 @@ functio processWithCleanup(textus name) {
     }
 }
 
-functio withReturnInDemum() -> textus {
+functio withReturnInDemum() → textus {
     tempta {
         scribe "Starting operation"
         redde "success"

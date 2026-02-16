@@ -1,23 +1,23 @@
 # Using itera ex inside functions
 
 # Sum all numbers in an array
-functio sumArray(numerus[] nums) -> numerus {
-    varia numerus total = 0
+functio sumArray(numerus[] nums) → numerus {
+    varia numerus total ← 0
 
     itera ex nums fixum n {
-        total = total + n
+        total ← total + n
     }
 
     redde total
 }
 
 # Find the maximum value
-functio maxValue(numerus[] nums) -> numerus {
-    varia numerus max = nums[0]
+functio maxValue(numerus[] nums) → numerus {
+    varia numerus max ← nums[0]
 
     itera ex nums fixum n {
         si n > max {
-            max = n
+            max ← n
         }
     }
 
@@ -25,12 +25,12 @@ functio maxValue(numerus[] nums) -> numerus {
 }
 
 # Count items matching a condition
-functio countAbove(numerus[] nums, numerus threshold) -> numerus {
-    varia numerus count = 0
+functio countAbove(numerus[] nums, numerus threshold) → numerus {
+    varia numerus count ← 0
 
     itera ex nums fixum n {
         si n > threshold {
-            count = count + 1
+            count ← count + 1
         }
     }
 
@@ -38,7 +38,7 @@ functio countAbove(numerus[] nums, numerus threshold) -> numerus {
 }
 
 incipit {
-    fixum numbers = [1, 2, 3, 4, 5]
+    fixum numbers ← [1, 2, 3, 4, 5]
 
     scribe sumArray(numbers)
     scribe maxValue(numbers)

@@ -78,7 +78,7 @@ impl FaberCodegen {
             HirItemKind::TypeAlias(a) => {
                 w.write("typus ");
                 w.write(&self.symbol_to_string(a.name, interner));
-                w.write(" = ");
+                w.write(" ← ");
                 w.write(&self.type_to_faber(a.ty, types, names, interner));
                 w.newline();
             }
@@ -89,7 +89,7 @@ impl FaberCodegen {
                     w.write(" ");
                 }
                 w.write(&self.symbol_to_string(c.name, interner));
-                w.write(" = ");
+                w.write(" ← ");
                 self.write_expr(&c.value, types, names, interner, w);
                 w.newline();
             }
@@ -160,7 +160,7 @@ impl FaberCodegen {
         w.write(")");
 
         if let Some(ret) = func.ret_ty {
-            w.write(" -> ");
+            w.write(" → ");
             w.write(&self.type_to_faber(ret, types, names, interner));
         }
 
@@ -223,7 +223,7 @@ impl FaberCodegen {
                 w.write(" ");
                 w.write(&self.symbol_to_string(field.name, interner));
                 if let Some(init) = &field.init {
-                    w.write(" = ");
+                    w.write(" ← ");
                     self.write_expr(init, types, names, interner, w);
                 }
                 w.newline();
@@ -327,7 +327,7 @@ impl FaberCodegen {
                 }
                 w.write(")");
                 if let Some(ret) = method.ret_ty {
-                    w.write(" -> ");
+                    w.write(" → ");
                     w.write(&self.type_to_faber(ret, types, names, interner));
                 }
                 w.newline();
@@ -408,7 +408,7 @@ impl FaberCodegen {
                     .map(|p| self.type_to_faber(p.ty, types, names, interner))
                     .collect();
                 let ret = self.type_to_faber(sig.ret, types, names, interner);
-                format!("({}) -> {}", params.join(", "), ret)
+                format!("({}) → {}", params.join(", "), ret)
             }
 
             Type::Param(sym) => self.symbol_to_string(*sym, interner),
@@ -466,7 +466,7 @@ impl FaberCodegen {
                 }
                 w.write(&self.symbol_to_string(local.name, interner));
                 if let Some(init) = &local.init {
-                    w.write(" = ");
+                    w.write(" ← ");
                     self.write_expr(init, types, names, interner, w);
                 }
                 w.newline();
@@ -652,7 +652,7 @@ impl FaberCodegen {
             }
             HirExprKind::Assign(lhs, rhs) => {
                 self.write_expr(lhs, types, names, interner, w);
-                w.write(" = ");
+                w.write(" ← ");
                 self.write_expr(rhs, types, names, interner, w);
             }
             HirExprKind::AssignOp(op, lhs, rhs) => {
@@ -761,7 +761,7 @@ impl FaberCodegen {
                 }
                 w.write(")");
                 if let Some(ret) = ret {
-                    w.write(" -> ");
+                    w.write(" → ");
                     w.write(&self.type_to_faber(*ret, types, names, interner));
                 }
                 w.writeln(" {");
@@ -905,14 +905,14 @@ impl FaberCodegen {
             crate::hir::HirBinOp::Mul => "*",
             crate::hir::HirBinOp::Div => "/",
             crate::hir::HirBinOp::Mod => "%",
-            crate::hir::HirBinOp::Eq => "==",
-            crate::hir::HirBinOp::NotEq => "!=",
-            crate::hir::HirBinOp::StrictEq => "===",
-            crate::hir::HirBinOp::StrictNotEq => "!==",
+            crate::hir::HirBinOp::Eq => "≡",
+            crate::hir::HirBinOp::NotEq => "≠",
+            crate::hir::HirBinOp::StrictEq => "≡",
+            crate::hir::HirBinOp::StrictNotEq => "≠",
             crate::hir::HirBinOp::Lt => "<",
             crate::hir::HirBinOp::Gt => ">",
-            crate::hir::HirBinOp::LtEq => "<=",
-            crate::hir::HirBinOp::GtEq => ">=",
+            crate::hir::HirBinOp::LtEq => "≤",
+            crate::hir::HirBinOp::GtEq => "≥",
             crate::hir::HirBinOp::And => "et",
             crate::hir::HirBinOp::Or => "aut",
             crate::hir::HirBinOp::Coalesce => "vel",

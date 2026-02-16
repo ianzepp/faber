@@ -960,7 +960,8 @@ impl<'a> RsEmitter<'a> {
             Expr::Assignatio {
                 signum, sin, dex, ..
             } => {
-                format!("{} {} {}", self.emit_expr(sin), signum, self.emit_expr(dex))
+                let assign_op = if signum == "←" { "=" } else { signum };
+                format!("{} {} {}", self.emit_expr(sin), assign_op, self.emit_expr(dex))
             }
             Expr::Condicio {
                 cond, cons, alt, ..
@@ -1325,12 +1326,12 @@ fn map_binary_op(op: &str) -> &'static str {
         "*" => "*",
         "/" => "/",
         "%" => "%",
-        "==" | "===" => "==",
-        "!=" | "!==" => "!=",
+        "==" | "===" | "≡" => "==",
+        "!=" | "!==" | "≠" => "!=",
         "<" => "<",
         ">" => ">",
-        "<=" => "<=",
-        ">=" => ">=",
+        "<=" | "≤" => "<=",
+        ">=" | "≥" => ">=",
         _ => "/* unknown op */",
     }
 }

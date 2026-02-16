@@ -1,7 +1,7 @@
 # Basic function declarations
 #
 # functio <name>() { <body> }
-# functio <name>() -> <type> { <body> }
+# functio <name>() → <type> { <body> }
 
 # Function with no parameters, no return
 functio saluta() {
@@ -14,12 +14,12 @@ functio dic(textus verbum) {
 }
 
 # Function with return type
-functio nomen() -> textus {
+functio nomen() → textus {
     redde "Marcus Aurelius"
 }
 
 # Function with parameter and return type
-functio duplica(numerus n) -> numerus {
+functio duplica(numerus n) → numerus {
     redde n * 2
 }
 
@@ -28,7 +28,7 @@ incipit {
 
     dic("Bonum diem!")
 
-    fixum rex = nomen()
+    fixum rex ← nomen()
     scribe rex
 
     scribe duplica(21)

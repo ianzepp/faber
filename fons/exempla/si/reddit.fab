@@ -8,39 +8,39 @@
 # secus reddit <expression>
 
 # Early return pattern
-functio classify(numerus x) -> textus {
+functio classify(numerus x) → textus {
     si x < 0 reddit "negative"
-    si x == 0 reddit "zero"
+    si x ≡ 0 reddit "zero"
     redde "positive"
 }
 
 # Guard clause pattern
-functio divide(numerus a, numerus b) -> si numerus {
-    si b == 0 reddit nihil
+functio divide(numerus a, numerus b) → si numerus {
+    si b ≡ 0 reddit nihil
     redde a / b
 }
 
 # Sin/secus chain with reddit
-functio grade(numerus score) -> textus {
-    si score >= 90 reddit "A"
-    sin score >= 80 reddit "B"
-    sin score >= 70 reddit "C"
-    sin score >= 60 reddit "D"
+functio grade(numerus score) → textus {
+    si score ≥ 90 reddit "A"
+    sin score ≥ 80 reddit "B"
+    sin score ≥ 70 reddit "C"
+    sin score ≥ 60 reddit "D"
     secus reddit "F"
 }
 
 # Find first in list (early return from loop)
-functio findFirst(lista<numerus> items, numerus target) -> si numerus {
+functio findFirst(lista<numerus> items, numerus target) → si numerus {
     itera ex items fixum item {
-        si item == target reddit item
+        si item ≡ target reddit item
     }
     redde nihil
 }
 
 # Check if key exists (early return from iteration)
-functio hasKey(tabula<textus, numerus> obj, textus key) -> bivalens {
+functio hasKey(tabula<textus, numerus> obj, textus key) → bivalens {
     itera de obj fixum k {
-        si k == key reddit verum
+        si k ≡ key reddit verum
     }
     redde falsum
 }
@@ -57,7 +57,7 @@ incipit {
     scribe grade(85)  # B
     scribe grade(55)  # F
 
-    fixum nums = [1, 2, 3, 4, 5]
+    fixum nums ← [1, 2, 3, 4, 5]
     scribe findFirst(nums, 3)  # 3
     scribe findFirst(nums, 9)  # nihil
 }

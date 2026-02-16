@@ -17,15 +17,15 @@ importa ex "../nucleus" privata TsGenerator
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genIace(in TsGenerator g, bivalens fatale, de Expressia argumentum) -> textus {
-    fixum expr = genExpressia(g, argumentum)
+functio genIace(in TsGenerator g, bivalens fatale, de Expressia argumentum) → textus {
+    fixum expr ← genExpressia(g, argumentum)
 
     si fatale {
         # WHY: mori is fatal - use Panic and string coercion for non-literals.
-        g.requisita.panic = verum
+        g.requisita.panic ← verum
         discerne argumentum {
             casu Littera ut lit {
-                si lit.species == LitteraGenus.Textus {
+                si lit.species ≡ LitteraGenus.Textus {
                     redde scriptum("§throw new Panic(§);", g.ind(), expr)
                 }
             }
@@ -36,11 +36,11 @@ functio genIace(in TsGenerator g, bivalens fatale, de Expressia argumentum) -> t
 
     # WHY: In flumina mode, iace yields an error response and exits.
     si g.inFlumina aut g.inFiunt aut g.inFiet aut g.inFient {
-        varia message = scriptum("String(§)", expr)
+        varia message ← scriptum("String(§)", expr)
         discerne argumentum {
             casu Littera ut lit {
-                si lit.species == LitteraGenus.Textus {
-                    message = expr
+                si lit.species ≡ LitteraGenus.Textus {
+                    message ← expr
                 }
             }
             ceterum tacet

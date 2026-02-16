@@ -14,9 +14,9 @@ importa ex "../nucleus" privata TsGenerator
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genRedde(in TsGenerator g, de ignotum valor) -> textus {
+functio genRedde(in TsGenerator g, de ignotum valor) → textus {
     si g.inFlumina {
-        fixum data = nonnihil valor sic genExpressia(g, valor qua Expressia) secus "undefined"
+        fixum data ← nonnihil valor sic genExpressia(g, valor qua Expressia) secus "undefined"
         redde scriptum("§yield respond.ok(§);", g.ind(), data)
     }
     si nonnihil valor {

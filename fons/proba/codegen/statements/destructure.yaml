@@ -12,7 +12,7 @@
 
 # Simple field extraction
 - name: extract two fields
-  source: 'ex persona fixum nomen, aetas'
+  source:'ex persona fixum nomen, aetas'
   expect:
       ts:
           - 'const { nomen, aetas } = persona;'
@@ -35,7 +35,7 @@
 
 # Mutable destructuring
 - name: extract with mutable binding
-  source: 'ex config varia host, port'
+  source:'ex config varia host, port'
   expect:
       ts:
           - 'let { host, port } = config;'
@@ -62,7 +62,7 @@
 
 # Extract field with alias
 - name: extract with alias
-  source: 'ex persona fixum nomen ut n, aetas ut a'
+  source:'ex persona fixum nomen ut n, aetas ut a'
   expect:
       ts:
           - 'const { nomen: n, aetas: a } = persona;'
@@ -89,7 +89,7 @@
 
 # Extract fields with rest
 - name: extract with rest pattern
-  source: 'ex config fixum host, ceteri rest'
+  source:'ex config fixum host, ceteri rest'
   expect:
       ts:
           - 'const { host, ...rest } = config;'
@@ -116,7 +116,7 @@
 
 # Destructure single field
 - name: destructure single field
-  source: 'ex obj fixum singleField'
+  source:'ex obj fixum singleField'
   expect:
       ts:
           - 'const { singleField } = obj;'
@@ -135,7 +135,7 @@
 
 # Destructure from nested access
 - name: destructure from nested access
-  source: 'ex response.data.user fixum name, email'
+  source:'ex response.data.user fixum name, email'
   expect:
       ts:
           - 'const { name, email } = response.data.user;'
@@ -158,7 +158,7 @@
 
 # Destructure function result
 - name: destructure function result
-  source: 'ex getConfig() fixum host, port'
+  source:'ex getConfig() fixum host, port'
   expect:
       ts:
           - 'const { host, port } = getConfig();'
@@ -181,7 +181,7 @@
 
 # Mixed alias and regular
 - name: mixed alias and regular fields
-  source: 'ex obj fixum a, b ut bee, c'
+  source:'ex obj fixum a, b ut bee, c'
   expect:
       ts:
           - 'const { a, b: bee, c } = obj;'
@@ -208,7 +208,7 @@
 
 # Destructure from computed access
 - name: destructure from computed access
-  source: 'ex objects[0] fixum id, name'
+  source:'ex objects[0] fixum id, name'
   expect:
       ts:
           - 'const { id, name } = objects[0];'
@@ -231,7 +231,7 @@
 
 # Destructure with rest and alias
 - name: destructure with rest and alias
-  source: 'ex obj fixum first ut f, ceteri rest'
+  source:'ex obj fixum first ut f, ceteri rest'
   expect:
       ts:
           - 'const { first: f, ...rest } = obj;'
@@ -254,7 +254,7 @@
 
 # Destructure many fields (5+)
 - name: destructure many fields
-  source: 'ex config fixum a, b, c, d, e'
+  source:'ex config fixum a, b, c, d, e'
   expect:
       ts:
           - 'const { a, b, c, d, e } = config;'
@@ -289,7 +289,7 @@
 
 # Mutable destructure with alias
 - name: mutable destructure with alias
-  source: 'ex obj varia x ut ex, y ut why'
+  source:'ex obj varia x ut ex, y ut why'
   expect:
       ts:
           - 'let { x: ex, y: why } = obj;'

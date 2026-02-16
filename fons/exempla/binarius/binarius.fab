@@ -1,6 +1,6 @@
-# ============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡←
 # Binary Expressions
-# ============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡←
 #
 # Binary expressions combine two operands with an operator. This file covers
 # arithmetic, comparison, logical, bitwise, and nullish coalescing operations.
@@ -19,16 +19,16 @@
 # GRAMMAR: Assignment
 # ----------------------------------------------------------------------------
 #
-#   assignment := ternary (('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=') assignment)?
+#   assignment :← ternary (('←' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=') assignment)?
 #
-# Assignment is right-associative: a = b = c parses as a = (b = c).
+# Assignment is right-associative: a ← b ← c parses as a ← (b ← c).
 # Compound assignment operators combine operation with assignment.
 #
 # ----------------------------------------------------------------------------
 # GRAMMAR: Ternary
 # ----------------------------------------------------------------------------
 #
-#   ternary := or (('?' expression ':' | 'sic' expression 'secus') ternary)?
+#   ternary :← or (('?' expression ':' | 'sic' expression 'secus') ternary)?
 #
 # Two styles supported (do not mix within one expression):
 #   - Symbolic: condition ? consequent : alternate
@@ -40,44 +40,44 @@
 # GRAMMAR: Logical Or
 # ----------------------------------------------------------------------------
 #
-#   or := and (('||' | 'aut') and)* | and ('vel' and)*
+#   or :← and (('aut' | 'aut') and)* | and ('vel' and)*
 #
-# PREFER: 'aut' over '||' for logical or.
+# PREFER: 'aut' over 'aut' for logical or.
 # PREFER: 'vel' for nullish coalescing (replaces JavaScript's '??').
 #
 # 'aut' and 'vel' cannot be mixed without parentheses (same restriction as
-# JavaScript's || and ?? to prevent precedence confusion).
+# JavaScript's aut and ?? to prevent precedence confusion).
 #
-# Latin: 'aut' = "or" (exclusive sense), 'vel' = "or" (either/or, nullable).
+# Latin: 'aut' ← "or" (exclusive sense), 'vel' ← "or" (either/or, nullable).
 #
 # ----------------------------------------------------------------------------
 # GRAMMAR: Logical And
 # ----------------------------------------------------------------------------
 #
-#   and := equality ('&&' equality | 'et' equality)*
+#   and :← equality ('et' equality | 'et' equality)*
 #
-# PREFER: 'et' over '&&' for logical and.
+# PREFER: 'et' over 'et' for logical and.
 #
-# Latin: 'et' = "and".
+# Latin: 'et' ← "and".
 #
 # ----------------------------------------------------------------------------
 # GRAMMAR: Equality
 # ----------------------------------------------------------------------------
 #
-#   equality := comparison (('==' | '!=' | '===' | '!==' | 'est' | 'non' 'est') comparison)*
+#   equality :← comparison (('≡' | '≠' | '≡' | '≠' | 'est' | 'non' 'est') comparison)*
 #
-# Use '===' and '!==' for value equality (strict).
+# Use '≡' and '≠' for value equality (strict).
 # Use 'est' for type checking (instanceof/typeof).
 # Use 'non est' for negative type checking.
 # Use 'nihil x' or 'nonnihil x' as unary prefix for null checks.
 #
-# Latin: 'est' = "is" (type), 'non' = "not".
+# Latin: 'est' ← "is" (type), 'non' ← "not".
 #
 # ----------------------------------------------------------------------------
 # GRAMMAR: Comparison
 # ----------------------------------------------------------------------------
 #
-#   comparison := bitwiseOr (('<' | '>' | '<=' | '>=') bitwiseOr)*
+#   comparison :← bitwiseOr (('<' | '>' | '≤' | '≥') bitwiseOr)*
 #
 # Standard comparison operators. Chains left-to-right: a < b < c is valid.
 #
@@ -85,12 +85,12 @@
 # GRAMMAR: Bitwise Operators
 # ----------------------------------------------------------------------------
 #
-#   bitwiseOr  := bitwiseXor ('|' bitwiseXor)*
-#   bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
-#   bitwiseAnd := range ('&' range)*
+#   bitwiseOr  :← bitwiseXor ('|' bitwiseXor)*
+#   bitwiseXor :← bitwiseAnd ('^' bitwiseAnd)*
+#   bitwiseAnd :← range ('&' range)*
 #
 # Bitwise precedence is ABOVE comparison (unlike C), so:
-#   flags & MASK == 0  parses as  (flags & MASK) == 0
+#   flags & MASK ≡ 0  parses as  (flags & MASK) ≡ 0
 #
 # This matches programmer intent and avoids subtle bugs.
 #
@@ -104,20 +104,20 @@
 # GRAMMAR: Range
 # ----------------------------------------------------------------------------
 #
-#   range := additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
+#   range :← additive (('..' | 'ante' | 'usque') additive ('per' additive)?)?
 #
 # Range operators for numeric iteration:
 #   - '..' and 'ante': exclusive end (0..10 yields 0-9)
 #   - 'usque': inclusive end (0 usque 10 yields 0-10)
 #   - 'per': step value (0..10 per 2 yields 0, 2, 4, 6, 8)
 #
-# Latin: 'ante' = "before", 'usque' = "up to", 'per' = "by/through".
+# Latin: 'ante' ← "before", 'usque' ← "up to", 'per' ← "by/through".
 #
 # ----------------------------------------------------------------------------
 # GRAMMAR: Additive
 # ----------------------------------------------------------------------------
 #
-#   additive := multiplicative (('+' | '-') multiplicative)*
+#   additive :← multiplicative (('+' | '-') multiplicative)*
 #
 # Standard addition and subtraction.
 #
@@ -125,104 +125,104 @@
 # GRAMMAR: Multiplicative
 # ----------------------------------------------------------------------------
 #
-#   multiplicative := unary (('*' | '/' | '%') unary)*
+#   multiplicative :← unary (('*' | '/' | '%') unary)*
 #
 # Standard multiplication, division, and modulo.
 #
-# ============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡←
 # LLM GUIDANCE
-# ============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡←
 #
 # ALWAYS prefer Latin keywords over symbols:
-#   - 'et' over '&&'
-#   - 'aut' over '||'
+#   - 'et' over 'et'
+#   - 'aut' over 'aut'
 #   - 'vel' over '??' (nullish coalescing)
 #   - 'non' over '!' (see unary.fab)
 #   - 'sic...secus' over '?:' (ternary, when clarity helps)
 #
 # NEVER use JavaScript/TypeScript patterns:
 #   - '??' does not exist — use 'vel'
-#   - '&&' and '||' work but 'et' and 'aut' are preferred
+#   - 'et' and 'aut' work but 'et' and 'aut' are preferred
 #
-# ============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡←
 # EXAMPLES
-# ============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡←
 
 incipit {
     # --------------------------------------------------------------------------
     # Arithmetic operators: + - * / %
     # --------------------------------------------------------------------------
 
-    fixum sum = 10 + 5
+    fixum sum ← 10 + 5
     scribe sum
 
-    fixum diff = 10 - 5
+    fixum diff ← 10 - 5
     scribe diff
 
-    fixum prod = 10 * 5
+    fixum prod ← 10 * 5
     scribe prod
 
-    fixum quot = 10 / 5
+    fixum quot ← 10 / 5
     scribe quot
 
-    fixum rem = 10 % 3
+    fixum rem ← 10 % 3
     scribe rem
 
     # --------------------------------------------------------------------------
     # Compound assignment: += -= *= /= &= |=
     # --------------------------------------------------------------------------
 
-    varia counter = 0
+    varia counter ← 0
     counter += 10
     counter -= 3
     counter *= 2
     scribe counter
 
     # --------------------------------------------------------------------------
-    # Comparison operators: < > <= >= == != === !==
+    # Comparison operators: < > ≤ ≥ ≡ ≠ ≡ ≠
     # --------------------------------------------------------------------------
 
-    fixum isEqual = 10 == 10
+    fixum isEqual ← 10 ≡ 10
     scribe isEqual
 
-    fixum isNotEqual = 10 != 5
+    fixum isNotEqual ← 10 ≠ 5
     scribe isNotEqual
 
-    fixum isStrictEqual = 10 === 10
+    fixum isStrictEqual ← 10 ≡ 10
     scribe isStrictEqual
 
-    fixum isLess = 5 < 10
+    fixum isLess ← 5 < 10
     scribe isLess
 
-    fixum isGreater = 10 > 5
+    fixum isGreater ← 10 > 5
     scribe isGreater
 
-    fixum isLessOrEqual = 5 <= 5
+    fixum isLessOrEqual ← 5 ≤ 5
     scribe isLessOrEqual
 
-    fixum isGreaterOrEqual = 10 >= 10
+    fixum isGreaterOrEqual ← 10 ≥ 10
     scribe isGreaterOrEqual
 
     # Comparison chaining
-    fixum inRange = 0 < 5 et 5 < 10
+    fixum inRange ← 0 < 5 et 5 < 10
     scribe inRange
 
     # --------------------------------------------------------------------------
     # Logical operators: et (and), aut (or), non (not)
     # --------------------------------------------------------------------------
-    # PREFER: 'et' over '&&', 'aut' over '||'
+    # PREFER: 'et' over 'et', 'aut' over 'aut'
 
-    fixum both = verum et verum
+    fixum both ← verum et verum
     scribe both
 
-    fixum either = falsum aut verum
+    fixum either ← falsum aut verum
     scribe either
 
-    fixum neither = falsum et falsum
+    fixum neither ← falsum et falsum
     scribe neither
 
     # Short-circuit evaluation works as expected
-    fixum shortCircuit = falsum et expensiveCheck()
+    fixum shortCircuit ← falsum et expensiveCheck()
     scribe shortCircuit
 
     # --------------------------------------------------------------------------
@@ -230,15 +230,15 @@ incipit {
     # --------------------------------------------------------------------------
     # PREFER: 'vel' — the '??' operator does not exist in Faber
 
-    fixum si textus maybeName = nihil
-    fixum resolvedName = maybeName vel "default"
+    fixum si textus maybeName ← nihil
+    fixum resolvedName ← maybeName vel "default"
     scribe resolvedName
 
     # Chain multiple fallbacks
-    fixum si textus first = nihil
-    fixum si textus second = nihil
-    fixum textus third = "fallback"
-    fixum fallbackResult = first vel second vel third
+    fixum si textus first ← nihil
+    fixum si textus second ← nihil
+    fixum textus third ← "fallback"
+    fixum fallbackResult ← first vel second vel third
     scribe fallbackResult
 
     # --------------------------------------------------------------------------
@@ -246,13 +246,13 @@ incipit {
     # --------------------------------------------------------------------------
     # Latin form for ternary expressions.
 
-    fixum age = 25
-    fixum ageCategory = age >= 18 sic "adult" secus "minor"
+    fixum age ← 25
+    fixum ageCategory ← age ≥ 18 sic "adult" secus "minor"
     scribe ageCategory
 
     # Nested ternary (right-associative)
-    fixum score = 85
-    fixum grade = score >= 90 sic "A" secus score >= 80 sic "B" secus score >= 70 sic "C" secus "F"
+    fixum score ← 85
+    fixum grade ← score ≥ 90 sic "A" secus score ≥ 80 sic "B" secus score ≥ 70 sic "C" secus "F"
     scribe grade
 
     # --------------------------------------------------------------------------
@@ -260,16 +260,16 @@ incipit {
     # --------------------------------------------------------------------------
     # Note: Bitwise has higher precedence than comparison (unlike C)
 
-    fixum flags = 0b1010
-    fixum mask = 0b1100
+    fixum flags ← 0b1010
+    fixum mask ← 0b1100
 
-    fixum bitwiseAnd = flags & mask
+    fixum bitwiseAnd ← flags & mask
     scribe bitwiseAnd
 
-    fixum bitwiseOr = flags | mask
+    fixum bitwiseOr ← flags | mask
     scribe bitwiseOr
 
-    fixum bitwiseXor = flags ^ mask
+    fixum bitwiseXor ← flags ^ mask
     scribe bitwiseXor
 
     # --------------------------------------------------------------------------
@@ -277,15 +277,15 @@ incipit {
     # --------------------------------------------------------------------------
     # Uses postfix keywords to avoid ambiguity with nested generics
 
-    fixum leftShift = 1 sinistratum 4
+    fixum leftShift ← 1 sinistratum 4
     scribe leftShift
 
-    fixum rightShift = 16 dextratum 2
+    fixum rightShift ← 16 dextratum 2
     scribe rightShift
 
-    # Precedence: (flags & mask) == 0, not flags & (mask == 0)
+    # Precedence: (flags & mask) ≡ 0, not flags & (mask ≡ 0)
     # Using explicit parens to avoid TS literal comparison warning
-    fixum checkMask = (flags & mask) == 0
+    fixum checkMask ← (flags & mask) ≡ 0
     scribe checkMask
 }
 
@@ -293,7 +293,7 @@ incipit {
 # Helper function for short-circuit demonstration
 # --------------------------------------------------------------------------
 
-functio expensiveCheck() -> bivalens {
+functio expensiveCheck() → bivalens {
     scribe "This should not print if short-circuited"
     redde verum
 }

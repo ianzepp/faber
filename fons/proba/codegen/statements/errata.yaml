@@ -11,7 +11,7 @@
 # =============================================================================
 
 - name: L001 unterminated string
-  source: 'fixum x = "hello'
+  source:'fixum x ← "hello'
   errata:
       - 'Tokenizer errors'
       - 'L001'
@@ -22,46 +22,46 @@
 # =============================================================================
 
 - name: P001 missing closing paren in function call
-  source: 'f(a, b'
+  source:'f(a, b'
   errata:
       - 'Parse errors'
       - "Expected ')'"
 
 - name: P001 missing closing paren in grouped expression
-  source: 'fixum x = (1 + 2'
+  source:'fixum x ← (1 + 2'
   errata:
       - "Expected ')'"
 
 - name: P002 missing closing brace in function
-  source: 'functio test() { redde 1'
+  source:'functio test() { redde 1'
   errata:
       - 'Parse errors'
       - "Expected '}'"
 
 - name: P002 missing closing brace in si block
-  source: 'si verum { scribe("yes")'
+  source:'si verum { scribe("yes")'
   errata:
       - "Expected '}'"
 
 - name: P003 missing closing bracket in array
-  source: 'fixum arr = [1, 2, 3'
+  source:'fixum arr ← [1, 2, 3'
   errata:
       - "Expected ']'"
 
 - name: P004 missing closing angle in generic
-  source: 'fixum lista<numerus x = []'
+  source:'fixum lista<numerus x ← []'
   errata:
       - "Expected '>'"
 
 # WHY: Bodyless functions now parse successfully but fail semantic check
 - name: S002 function missing body
-  source: 'functio f() redde 1'
+  source:'functio f() redde 1'
   errata:
       - "Semantic errors"
       - "has no body"
 
 - name: P008 missing opening brace in si block
-  source: 'si verum redde 1'
+  source:'si verum redde 1'
   errata:
       - "Expected '{'"
 
@@ -69,12 +69,12 @@
 # Removed: "P010 expected identifier got keyword" - 'functio si() { }' is now valid
 
 - name: P010 expected identifier got number
-  source: 'functio 123() { }'
+  source:'functio 123() { }'
   errata:
       - 'Expected identifier'
 
 - name: P010 expected identifier in parameter
-  source: 'functio f(123) { }'
+  source:'functio f(123) { }'
   errata:
       - 'Expected identifier'
 
@@ -83,7 +83,7 @@
 # =============================================================================
 
 - name: P028 for loop missing pro
-  source: 'ex items { }'
+  source:'ex items { }'
   errata:
       - "Expected 'pro'"
 
@@ -92,17 +92,17 @@
 # =============================================================================
 
 - name: P100 invalid assignment to literal
-  source: '1 = x'
+  source:'1 ← x'
   errata:
       - 'Invalid assignment target'
 
 - name: P100 invalid assignment to binary expression
-  source: 'x + y = 5'
+  source:'x + y ← 5'
   errata:
       - 'Invalid assignment target'
 
 - name: P100 invalid assignment to string
-  source: '"hello" = x'
+  source:'"hello" ← x'
   errata:
       - 'Invalid assignment target'
 
@@ -112,42 +112,42 @@
 
 # These produce P010 "Expected identifier" rather than specific "requires a name" errors
 - name: P200 function missing name
-  source: 'functio() { }'
+  source:'functio() { }'
   errata:
       - 'Parse errors'
       - 'P010'
       - 'Expected identifier'
 
 - name: P010 missing curator name after curata
-  source: 'functio f() curata -> numerus { redde 1 }'
+  source:'functio f() curata → numerus { redde 1 }'
   errata:
       - 'Parse errors'
       - 'P010'
       - 'Expected identifier'
 
 - name: P010 missing errata name after errata
-  source: 'functio f() errata -> numerus { redde 1 }'
+  source:'functio f() errata → numerus { redde 1 }'
   errata:
       - 'Parse errors'
       - 'P010'
       - 'Expected identifier'
 
 - name: P202 genus missing name
-  source: 'genus { textus nomen }'
+  source:'genus { textus nomen }'
   errata:
       - 'Parse errors'
       - 'P010'
       - 'Expected identifier'
 
 - name: P203 pactum missing name
-  source: 'pactum { }'
+  source:'pactum { }'
   errata:
       - 'Parse errors'
       - 'P010'
       - 'Expected identifier'
 
 - name: P205 variable missing name
-  source: 'varia = 5'
+  source:'varia ← 5'
   errata:
       - 'Parse errors'
       - 'P010'
@@ -158,19 +158,19 @@
 # =============================================================================
 
 - name: S001 undefined variable in expression
-  source: 'fixum x = unknownVar'
+  source:'fixum x ← unknownVar'
   errata:
       - 'Semantic errors'
       - "Undefined variable 'unknownVar'"
 
 - name: S001 undefined variable in function call
-  source: 'scribe(missingVar)'
+  source:'scribe(missingVar)'
   errata:
       - 'Semantic errors'
       - "Undefined variable 'missingVar'"
 
 - name: S001 undefined function
-  source: 'unknownFunc()'
+  source:'unknownFunc()'
   errata:
       - 'Semantic errors'
       - "Undefined variable 'unknownFunc'"
@@ -181,8 +181,8 @@
 
 - name: S002 duplicate variable in same scope
   source: |
-      varia x = 1
-      varia x = 2
+      varia x ← 1
+      varia x ← 2
   errata:
       - 'Semantic errors'
       - 'is already defined'
@@ -201,16 +201,16 @@
 
 - name: S003 reassign fixum variable
   source: |
-      fixum x = 5
-      x = 10
+      fixum x ← 5
+      x ← 10
   errata:
       - 'Semantic errors'
       - 'Cannot assign to immutable variable'
 
 - name: S003 reassign fixum in loop
   source: |
-      fixum counter = 0
-      dum counter < 10 { counter = counter + 1 }
+      fixum counter ← 0
+      dum counter < 10 { counter ← counter + 1 }
   errata:
       - 'Semantic errors'
       - 'Cannot assign to immutable variable'
@@ -221,14 +221,14 @@
 
 - name: S004 assign string to number variable
   source: |
-      varia numerus x = 5
-      x = "hello"
+      varia numerus x ← 5
+      x ← "hello"
   errata:
       - 'Semantic errors'
       - 'is not assignable to type'
 
 - name: S004 initialize with wrong type
-  source: 'fixum numerus x = "text"'
+  source:'fixum numerus x ← "text"'
   errata:
       - 'Semantic errors'
       - 'is not assignable to type'
@@ -239,7 +239,7 @@
 
 - name: S005 return number from string function
   source: |
-      functio greet() -> textus {
+      functio greet() → textus {
         redde 42
       }
   errata:
@@ -248,7 +248,7 @@
 
 - name: S005 return string from number function
   source: |
-      functio count() -> numerus {
+      functio count() → numerus {
         redde "five"
       }
   errata:
@@ -260,13 +260,13 @@
 # =============================================================================
 
 - name: S006 variable without type or init
-  source: 'varia x'
+  source:'varia x'
   errata:
       - 'Semantic errors'
       - 'has no type annotation or initializer'
 
 - name: S006 fixum without type or init
-  source: 'fixum y'
+  source:'fixum y'
   errata:
       - 'Semantic errors'
       - 'has no type annotation or initializer'
@@ -276,13 +276,13 @@
 # =============================================================================
 
 - name: S008 compare number with string using less than
-  source: 'fixum result = 5 < "text"'
+  source:'fixum result ← 5 < "text"'
   errata:
       - 'Semantic errors'
       - 'Cannot compare'
 
 - name: S008 compare string with number using greater than
-  source: 'fixum result = "hello" > 10'
+  source:'fixum result ← "hello" > 10'
   errata:
       - 'Semantic errors'
       - 'Cannot compare'
@@ -292,19 +292,19 @@
 # =============================================================================
 
 - name: S009 cede in sync non-generator function
-  source: 'functio bad() fit numerus { cede 1 }'
+  source:'functio bad() fit numerus { cede 1 }'
   errata:
       - 'Semantic errors'
       - "'cede' requires an async or generator function context"
 
 - name: S009 cede at top level
-  source: 'cede 1'
+  source:'cede 1'
   errata:
       - 'Semantic errors'
       - "'cede' requires"
 
 - name: S009 cede in plain function with arrow return
-  source: 'functio bad() -> numerus { cede 1 }'
+  source:'functio bad() → numerus { cede 1 }'
   errata:
       - 'Semantic errors'
       - "'cede' requires"
@@ -320,7 +320,7 @@
         Inactive
         Pending
       }
-      functio check(Status s) -> vacuum {
+      functio check(Status s) → vacuum {
         discerne omnia s {
           casu Active { scribe "active" }
           casu Inactive { scribe "inactive" }
@@ -339,7 +339,7 @@
         Scroll { numerus delta }
         Quit
       }
-      functio handle(Event e) -> vacuum {
+      functio handle(Event e) → vacuum {
         discerne omnia e {
           casu Click pro x, y { scribe x }
         }
@@ -355,7 +355,7 @@
         Success { textus msg }
         Failure { textus err }
       }
-      functio process(Result r) -> vacuum {
+      functio process(Result r) → vacuum {
         discerne omnia r {
           casu Success pro m { scribe m }
           casu Failure pro e { mone e }

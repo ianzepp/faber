@@ -26,15 +26,15 @@ genus Scriptum {
 # Extract script registry from sectiones
 # Returns a map of name -> Scriptum
 @ publica
-functio extractScripta(si de lista<SectioAnnotatio> sectiones) -> tabula<textus, Scriptum> {
-    varia result = {} innatum tabula<textus, Scriptum>
+functio extractScripta(si de lista<SectioAnnotatio> sectiones) → tabula<textus, Scriptum> {
+    varia result ← {} innatum tabula<textus, Scriptum>
     si nihil sectiones { redde result }
 
     itera ex sectiones fixum s {
-        si s.nomen == "scriptum" {
-            fixum scr = parseScriptumArgs(s.argumenta)
+        si s.nomen ≡ "scriptum" {
+            fixum scr ← parseScriptumArgs(s.argumenta)
             si nonnihil scr {
-                result[scr.nomen] = scr
+                result[scr.nomen] ← scr
             }
         }
     }
@@ -43,21 +43,21 @@ functio extractScripta(si de lista<SectioAnnotatio> sectiones) -> tabula<textus,
 
 # Parse scriptum arguments into a Scriptum
 # Arguments: ["name", "via", "path"]
-functio parseScriptumArgs(de lista<textus> args) -> si Scriptum {
+functio parseScriptumArgs(de lista<textus> args) → si Scriptum {
     si args.longitudo() < 1 { redde nihil }
 
-    fixum nomen = args[0]
-    varia via = nihil qua si textus
+    fixum nomen ← args[0]
+    varia via ← nihil qua si textus
 
     # Parse keyword-value pairs: via "..."
-    varia i = 1
+    varia i ← 1
     dum i < args.longitudo() {
-        fixum arg = args[i]
-        si arg == "via" et i + 1 < args.longitudo() {
-            via = args[i + 1]
-            i = i + 2
+        fixum arg ← args[i]
+        si arg ≡ "via" et i + 1 < args.longitudo() {
+            via ← args[i + 1]
+            i ← i + 2
         } secus {
-            i = i + 1
+            i ← i + 1
         }
     }
 
@@ -72,8 +72,8 @@ functio parseScriptumArgs(de lista<textus> args) -> si Scriptum {
 
 # Get a sorted list of script names
 @ publica
-functio nominaScriptorum(de tabula<textus, Scriptum> scripta) -> lista<textus> {
-    varia nomina = [] innatum lista<textus>
+functio nominaScriptorum(de tabula<textus, Scriptum> scripta) → lista<textus> {
+    varia nomina ← [] innatum lista<textus>
     itera ex scripta.claves() fixum nomen {
         nomina.push(nomen)
     }

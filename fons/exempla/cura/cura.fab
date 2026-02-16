@@ -9,7 +9,7 @@
 incipit {
     cura arena fixum mem {
         # All allocations in this block use the arena
-        varia textus[] items = ["hello", "world"]
+        varia textus[] items ← ["hello", "world"]
         scribe items
     }
     # Arena freed, all allocations released

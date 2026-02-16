@@ -20,48 +20,48 @@ importa ex "./index" privata genExpressia
 
 # Generate est (type check) expression
 @ publica
-functio genEstExpressia(in TsGenerator g, de Expressia expr, de TypusAnnotatio scopus) -> textus {
+functio genEstExpressia(in TsGenerator g, de Expressia expr, de TypusAnnotatio scopus) → textus {
     redde genEstExpressiaCum(expr, scopus, g, falsum)
 }
 
 @ publica
-functio genEstExpressiaNegata(in TsGenerator g, de Expressia expr, de TypusAnnotatio scopus) -> textus {
+functio genEstExpressiaNegata(in TsGenerator g, de Expressia expr, de TypusAnnotatio scopus) → textus {
     redde genEstExpressiaCum(expr, scopus, g, verum)
 }
 
-functio genEstExpressiaCum(de Expressia expr, de TypusAnnotatio scopus, in TsGenerator g, bivalens negatum) -> textus {
-    fixum val = genExpressia(g, expr)
+functio genEstExpressiaCum(de Expressia expr, de TypusAnnotatio scopus, in TsGenerator g, bivalens negatum) → textus {
+    fixum val ← genExpressia(g, expr)
 
     # Primitive type checks use typeof
-    si scopus.nomen == "textus" {
-        fixum op = negatum sic "!==" secus "==="
-        fixum check = scriptum("typeof § § \"string\"", val, op)
+    si scopus.nomen ≡ "textus" {
+        fixum op ← negatum sic "!==" secus "==="
+        fixum check ← scriptum("typeof § § \"string\"", val, op)
         si scopus.nullabilis {
             redde negatum sic scriptum("§ && § !== null", check, val) secus scriptum("§ || § === null", check, val)
         }
         redde check
     }
-    si scopus.nomen == "numerus" aut scopus.nomen == "fractus" {
-        fixum op = negatum sic "!==" secus "==="
-        fixum check = scriptum("typeof § § \"number\"", val, op)
+    si scopus.nomen ≡ "numerus" aut scopus.nomen ≡ "fractus" {
+        fixum op ← negatum sic "!==" secus "==="
+        fixum check ← scriptum("typeof § § \"number\"", val, op)
         si scopus.nullabilis {
             redde negatum sic scriptum("§ && § !== null", check, val) secus scriptum("§ || § === null", check, val)
         }
         redde check
     }
-    si scopus.nomen == "bivalens" {
-        fixum op = negatum sic "!==" secus "==="
-        fixum check = scriptum("typeof § § \"boolean\"", val, op)
+    si scopus.nomen ≡ "bivalens" {
+        fixum op ← negatum sic "!==" secus "==="
+        fixum check ← scriptum("typeof § § \"boolean\"", val, op)
         si scopus.nullabilis {
             redde negatum sic scriptum("§ && § !== null", check, val) secus scriptum("§ || § === null", check, val)
         }
         redde check
     }
-    si scopus.nomen == "nihil" {
-        fixum op = negatum sic "!==" secus "==="
+    si scopus.nomen ≡ "nihil" {
+        fixum op ← negatum sic "!==" secus "==="
         redde scriptum("§ § null", val, op)
     }
-    si scopus.nomen == "lista" {
+    si scopus.nomen ≡ "lista" {
         si negatum {
             redde scriptum("!Array.isArray(§)", val)
         }

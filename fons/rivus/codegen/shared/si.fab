@@ -18,12 +18,12 @@ functio genSiCatena(
     in Generans g,
     de ScopusSyntaxis syn,
     de Revocata rev
-) -> textus {
+) → textus {
     g.intraProfundum()
-    fixum consBody = rev.genStmt(g, consequens)
+    fixum consBody ← rev.genStmt(g, consequens)
     g.exiProfundum()
 
-    varia result = scriptum(
+    varia result ← scriptum(
         "§if §§§ {\n§\n§}",
         g.ind(),
         syn.siCondicioPrae,
@@ -33,28 +33,28 @@ functio genSiCatena(
         g.ind()
     )
 
-    varia next = alternans
+    varia next ← alternans
     dum nonnihil next {
-        fixum stmt = next qua Sententia
+        fixum stmt ← next qua Sententia
 
-        si stmt.tag == "SiSententia" {
-            fixum s = stmt
+        si stmt.tag ≡ "SiSententia" {
+            fixum s ← stmt
 
             # Nested si with cape gets wrapped in else block
             si nonnihil s.cape et syn.habetCape {
                 g.intraProfundum()
-                fixum elseBody = rev.genStmt(g, s)
+                fixum elseBody ← rev.genStmt(g, s)
                 g.exiProfundum()
-                result = scriptum("§ § {\n§\n§}", result, syn.secusVerbum, elseBody, g.ind())
-                next = nihil
+                result ← scriptum("§ § {\n§\n§}", result, syn.secusVerbum, elseBody, g.ind())
+                next ← nihil
                 perge
             }
 
             g.intraProfundum()
-            fixum body = rev.genStmt(g, s.consequens)
+            fixum body ← rev.genStmt(g, s.consequens)
             g.exiProfundum()
 
-            result = scriptum(
+            result ← scriptum(
                 "§ § §§§ {\n§\n§}",
                 result,
                 syn.sinVerbum,
@@ -64,17 +64,17 @@ functio genSiCatena(
                 body,
                 g.ind()
             )
-            next = s.alternans
+            next ← s.alternans
             perge
         }
 
         # Plain else block
         g.intraProfundum()
-        fixum body = rev.genStmt(g, stmt)
+        fixum body ← rev.genStmt(g, stmt)
         g.exiProfundum()
 
-        result = scriptum("§ § {\n§\n§}", result, syn.secusVerbum, body, g.ind())
-        next = nihil
+        result ← scriptum("§ § {\n§\n§}", result, syn.secusVerbum, body, g.ind())
+        next ← nihil
     }
 
     redde result
@@ -90,13 +90,13 @@ functio genSiLogica(
     in Generans g,
     de ScopusSyntaxis syn,
     de Revocata rev
-) -> textus {
+) → textus {
     # If target supports cape and cape is present, wrap in try/catch
     si nonnihil cape et syn.habetCape {
-        fixum c = cape novum CapeClausula
-        fixum ifBody = genSiCatena(condicio, consequens, alternans, g, syn, rev)
+        fixum c ← cape novum CapeClausula
+        fixum ifBody ← genSiCatena(condicio, consequens, alternans, g, syn, rev)
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(g, c.corpus)
+        fixum catchBody ← rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

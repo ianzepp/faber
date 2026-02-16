@@ -20,23 +20,23 @@ importa ex "../typus" privata genTypus
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genVaria(in GoGenerator g, VariaGenus species, de textus nomen, bivalens externa, si de ignotum adnotatioTypus, si de ignotum valor, si de ignotum visibilitas) -> textus {
+functio genVaria(in GoGenerator g, VariaGenus species, de textus nomen, bivalens externa, si de ignotum adnotatioTypus, si de ignotum valor, si de ignotum visibilitas) → textus {
     # External declarations - Go doesn't have declare syntax
     si externa {
         redde scriptum("§// extern: §", g.ind(), nomen)
     }
 
     # All declarations use var (Go's const is too limited for general use)
-    varia result = scriptum("§var §", g.ind(), nomen)
+    varia result ← scriptum("§var §", g.ind(), nomen)
 
     # Type annotation
     si nonnihil adnotatioTypus {
-        result = scriptum("§ §", result, genTypus(g, adnotatioTypus qua TypusAnnotatio))
+        result ← scriptum("§ §", result, genTypus(g, adnotatioTypus qua TypusAnnotatio))
     }
 
     # Initializer
     si nonnihil valor {
-        result = scriptum("§ = §", result, genExpressia(g, valor qua Expressia))
+        result ← scriptum("§ = §", result, genExpressia(g, valor qua Expressia))
     }
 
     redde result
@@ -45,16 +45,16 @@ functio genVaria(in GoGenerator g, VariaGenus species, de textus nomen, bivalens
 # Generate array destructuring
 # Go doesn't support array destructuring syntax, so emit individual assignments
 @ publica
-functio genSeriesDestructura(in GoGenerator g, VariaGenus species, de lista<SeriesDestructuraElementum> elementa, de Expressia fons) -> textus {
-    fixum fonsStr = genExpressia(g, fons)
+functio genSeriesDestructura(in GoGenerator g, VariaGenus species, de lista<SeriesDestructuraElementum> elementa, de Expressia fons) → textus {
+    fixum fonsStr ← genExpressia(g, fons)
 
-    varia assignments = [] innatum lista<textus>
-    varia indice = 0
+    varia assignments ← [] innatum lista<textus>
+    varia indice ← 0
     itera ex elementa fixum elem {
         si non elem.omissum et nonnihil elem.nomen {
             assignments.appende(scriptum("§var § = §[§]", g.ind(), elem.nomen, fonsStr, indice))
         }
-        indice = indice + 1
+        indice ← indice + 1
     }
 
     redde assignments.coniunge("\n")

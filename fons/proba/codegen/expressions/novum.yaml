@@ -4,7 +4,7 @@
 # Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
 
 - name: novum without arguments
-  source: fixum p = novum Persona
+  source:fixum p ← novum Persona
   expect:
       ts: 'const p = new Persona();'
       py: 'p = Persona()'
@@ -18,7 +18,7 @@
           - 'novum Persona'
 
 - name: novum with positional arguments
-  source: 'fixum e = novum Error("message")'
+  source:'fixum e ← novum Error("message")'
   expect:
       ts: 'const e = new Error("message");'
       py: 'e = Error("message")'
@@ -32,7 +32,7 @@
           - 'novum Error("message")'
 
 - name: novum with object literal overrides
-  source: 'fixum u = novum User { nomen: "Marcus", aetas: 30 }'
+  source:'fixum u ← novum User { nomen: "Marcus", aetas: 30 }'
   expect:
       ts: 'const u = new User({ nomen: "Marcus", aetas: 30 });'
       py: 'u = User({"nomen": "Marcus", "aetas": 30})'
@@ -47,7 +47,7 @@
           - 'novum User de { nomen: "Marcus", aetas: 30 }'
 
 - name: novum with single property override
-  source: 'fixum item = novum Item { pretium: 99 }'
+  source:'fixum item ← novum Item { pretium: 99 }'
   expect:
       ts: 'const item = new Item({ pretium: 99 });'
       py: 'item = Item({"pretium": 99})'
@@ -61,7 +61,7 @@
           - 'novum Item de { pretium: 99 }'
 
 - name: novum with spread in overrides
-  source: 'fixum u = novum User { sparge defaults, extra: 1 }'
+  source:'fixum u ← novum User { sparge defaults, extra: 1 }'
   expect:
       ts: 'const u = new User({ ...defaults, extra: 1 });'
       py: 'u = User({**defaults, "extra": 1})'
@@ -69,7 +69,7 @@
           - 'novum User de { sparge defaults, extra: 1 }'
 
 - name: novum with nested object
-  source: 'fixum c = novum Config { database: { host: "localhost" } }'
+  source:'fixum c ← novum Config { database: { host: "localhost" } }'
   expect:
       ts: 'const c = new Config({ database: { host: "localhost" } });'
       py: 'c = Config({"database": {"host": "localhost"}})'
@@ -77,7 +77,7 @@
           - 'novum Config de { database: { host: "localhost" } }'
 
 - name: novum without parens (bare constructor)
-  source: 'fixum e = novum Error'
+  source:'fixum e ← novum Error'
   expect:
       ts: 'const e = new Error();'
       py: 'e = Error()'
@@ -85,7 +85,7 @@
           - 'novum Error'
 
 - name: chained novum (nested constructor)
-  source: 'fixum x = novum Outer(novum Inner())'
+  source:'fixum x ← novum Outer(novum Inner())'
   expect:
       ts: 'const x = new Outer(new Inner());'
       py: 'x = Outer(Inner())'
@@ -93,7 +93,7 @@
           - 'novum Outer(novum Inner())'
 
 - name: novum with many args
-  source: 'fixum p = novum Point(1, 2, 3, 4)'
+  source:'fixum p ← novum Point(1, 2, 3, 4)'
   expect:
       ts: 'const p = new Point(1, 2, 3, 4);'
       py: 'p = Point(1, 2, 3, 4)'
@@ -101,7 +101,7 @@
           - 'novum Point(1, 2, 3, 4)'
 
 - name: novum with expression arg
-  source: 'fixum r = novum Rectangle(width * 2, height * 2)'
+  source:'fixum r ← novum Rectangle(width * 2, height * 2)'
   expect:
       ts: 'const r = new Rectangle((width * 2), (height * 2));'
       py: 'r = Rectangle((width * 2), (height * 2))'

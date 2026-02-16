@@ -35,7 +35,7 @@ importa ex "./error" privata analyzeCura
 
 # Analyze any statement
 @ publica
-functio analyzeSententia(Resolvitor r, Sententia stmt) -> vacuum {
+functio analyzeSententia(Resolvitor r, Sententia stmt) → vacuum {
     discerne stmt {
         # Declarations
         casu VariaSententia {
@@ -151,17 +151,17 @@ functio analyzeSententia(Resolvitor r, Sententia stmt) -> vacuum {
             # their morphologia resolved for norma translation.
             si nonnihil i.corpus {
                 # WHY: incipiet is async, so cede should be allowed in body
-                fixum a = r.analyzator()
-                fixum prevAsync = a.currentFunctioAsync
-                fixum prevGenerator = a.currentFunctioGenerator
+                fixum a ← r.analyzator()
+                fixum prevAsync ← a.currentFunctioAsync
+                fixum prevGenerator ← a.currentFunctioGenerator
 
-                a.currentFunctioAsync = verum
-                a.currentFunctioGenerator = falsum
+                a.currentFunctioAsync ← verum
+                a.currentFunctioGenerator ← falsum
 
                 r.sententia(i.corpus)
 
-                a.currentFunctioAsync = prevAsync
-                a.currentFunctioGenerator = prevGenerator
+                a.currentFunctioAsync ← prevAsync
+                a.currentFunctioGenerator ← prevGenerator
             }
         }
 

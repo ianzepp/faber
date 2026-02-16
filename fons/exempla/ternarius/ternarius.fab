@@ -4,33 +4,33 @@
 #   condition ? then : else
 #   condition sic then secus else
 #
-# Latin: sic = "thus/so", secus = "otherwise"
+# Latin: sic ← "thus/so", secus ← "otherwise"
 
 incipit {
-    fixum age = 25
+    fixum age ← 25
 
     # Latin ternary
-    fixum statusLatin = age >= 18 sic "adult" secus "minor"
+    fixum statusLatin ← age ≥ 18 sic "adult" secus "minor"
     scribe statusLatin  # "adult"
 
     # Latin nested (reads more clearly)
-    fixum score = 85
-    fixum gradeLatin =
-        score >= 90 sic "A" secus
-        score >= 80 sic "B" secus
-        score >= 70 sic "C" secus "F"
+    fixum score ← 85
+    fixum gradeLatin ←
+        score ≥ 90 sic "A" secus
+        score ≥ 80 sic "B" secus
+        score ≥ 70 sic "C" secus "F"
     scribe gradeLatin  # "B"
 
     # In expressions
-    fixum max = age > 30 sic age secus 30
+    fixum max ← age > 30 sic age secus 30
     scribe "Max:", max
 
     # With nullish values
-    varia maybe = nihil qua si textus
-    fixum result = nonnihil maybe sic maybe secus "default"
+    varia maybe ← nihil qua si textus
+    fixum result ← nonnihil maybe sic maybe secus "default"
     scribe result  # "default"
 
     # Prefer sic/secus for clarity
-    fixum readable = age >= 21 sic "can drink" secus "cannot drink"
+    fixum readable ← age ≥ 21 sic "can drink" secus "cannot drink"
     scribe readable
 }

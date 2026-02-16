@@ -15,19 +15,19 @@ importa ex "../../ast/sententia" privata Sententia
 
 # Analyze redde (return) statement
 @ publica
-functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
-    fixum a = r.analyzator()
+functio analyzeRedde(Resolvitor r, Sententia reddeStmt) → vacuum {
+    fixum a ← r.analyzator()
 
     discerne reddeStmt {
         casu ReddeSententia ut rd {
             # Resolve return value if present
             si nonnihil rd.valor {
-                varia valorTypus = nonnihil a.currentFunctioReditus sic r.check(rd.valor, a.currentFunctioReditus qua SemanticTypus) secus r.synthesize(rd.valor)
+                varia valorTypus ← nonnihil a.currentFunctioReditus sic r.check(rd.valor, a.currentFunctioReditus qua SemanticTypus) secus r.synthesize(rd.valor)
 
                 # Check against function return type
                 si nonnihil a.currentFunctioReditus {
                     si non assignabileAd(valorTypus, a.currentFunctioReditus qua SemanticTypus) {
-                        fixum err = returnTypeMismatchError(
+                        fixum err ← returnTypeMismatchError(
                             formaTypum(valorTypus),
                             formaTypum(a.currentFunctioReditus qua SemanticTypus)
                         )
@@ -46,7 +46,7 @@ functio analyzeRedde(Resolvitor r, Sententia reddeStmt) -> vacuum {
 
 # Analyze iace (throw) statement
 @ publica
-functio analyzeIace(Resolvitor r, Sententia iaceStmt) -> vacuum {
+functio analyzeIace(Resolvitor r, Sententia iaceStmt) → vacuum {
     discerne iaceStmt {
         casu IaceSententia ut i {
             # Resolve thrown expression
@@ -62,7 +62,7 @@ functio analyzeIace(Resolvitor r, Sententia iaceStmt) -> vacuum {
 
 # Analyze scribe/vide/mone statement
 @ publica
-functio analyzeScribe(Resolvitor r, Sententia scribeStmt) -> vacuum {
+functio analyzeScribe(Resolvitor r, Sententia scribeStmt) → vacuum {
     discerne scribeStmt {
         casu ScribeSententia ut s {
             # Resolve all arguments
@@ -80,7 +80,7 @@ functio analyzeScribe(Resolvitor r, Sententia scribeStmt) -> vacuum {
 
 # Analyze adfirma (assert) statement
 @ publica
-functio analyzeAdfirma(Resolvitor r, Sententia adfirmaStmt) -> vacuum {
+functio analyzeAdfirma(Resolvitor r, Sententia adfirmaStmt) → vacuum {
     discerne adfirmaStmt {
         casu AdfirmaSententia ut adf {
             # Resolve condition

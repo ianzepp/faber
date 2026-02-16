@@ -54,19 +54,19 @@ genus ModulusResolutum {
 
 # Check if import source is a local file (starts with ./ or ../)
 @ publica
-functio estLocaleImportum(de textus fons) -> bivalens {
+functio estLocaleImportum(de textus fons) → bivalens {
     redde fons.startsWith("./") aut fons.startsWith("../")
 }
 
 # Check if import source is norma stdlib
 @ publica
-functio estNormaImportum(de textus fons) -> bivalens {
-    redde fons == "norma" aut fons.startsWith("norma/")
+functio estNormaImportum(de textus fons) → bivalens {
+    redde fons ≡ "norma" aut fons.startsWith("norma/")
 }
 
 # Check if import source is a dependentia alias import (alias:subpath)
 @ publica
-functio estDependentiaImportum(de textus fons) -> bivalens {
+functio estDependentiaImportum(de textus fons) → bivalens {
     # Has colon and doesn't start with ./ or ../
     si fons.continet(":") {
         redde non estLocaleImportum(fons)
@@ -81,15 +81,15 @@ functio estDependentiaImportum(de textus fons) -> bivalens {
 functio resolveDependentiaPath(
     de textus fons,
     de tabula<textus, Dependentia> registry
-) -> si textus {
+) → si textus {
     # Split on colon: "alias:subpath" -> ["alias", "subpath"]
-    fixum partes = fons.divide(":") qua lista<textus>
-    si partes.longitudo() != 2 { redde nihil }
+    fixum partes ← fons.divide(":") qua lista<textus>
+    si partes.longitudo() ≠ 2 { redde nihil }
 
-    fixum alias = partes[0]
-    fixum subpath = partes[1]
+    fixum alias ← partes[0]
+    fixum subpath ← partes[1]
 
-    fixum dep = registry[alias]
+    fixum dep ← registry[alias]
     si nihil dep { redde nihil }
 
     # For now, only support local via paths
@@ -102,17 +102,17 @@ functio resolveDependentiaPath(
 # Resolve import path to absolute filesystem path
 # Adds .fab extension if not present, resolves relative to base path
 @ publica
-functio resolveViaModuli(de textus fons, de textus viaBasica) -> si textus {
-    fixum baseDir = solum.directorium(viaBasica)
+functio resolveViaModuli(de textus fons, de textus viaBasica) → si textus {
+    fixum baseDir ← solum.directorium(viaBasica)
 
     # Add .fab extension if not present
-    varia targetPath = fons
+    varia targetPath ← fons
     si non fons.finis(".fab") {
-        targetPath = fons + ".fab"
+        targetPath ← fons + ".fab"
     }
 
     # Resolve to absolute path
-    fixum absolutePath = solum.iunge([baseDir, targetPath])
+    fixum absolutePath ← solum.iunge([baseDir, targetPath])
 
     # Check if file exists
     si non solum.exstat(absolutePath) {
@@ -127,17 +127,17 @@ functio resolveViaModuli(de textus fons, de textus viaBasica) -> si textus {
 # ============================================================================
 
 # Known generic collection types
-fixum GENERICI = ["lista", "tabula", "copia"]
+fixum GENERICI ← ["lista", "tabula", "copia"]
 
 # Known primitive types
-fixum PRIMITIVI = ["textus", "numerus", "fractus", "decimus", "magnus", "bivalens", "nihil", "vacuum", "octeti"]
+fixum PRIMITIVI ← ["textus", "numerus", "fractus", "decimus", "magnus", "bivalens", "nihil", "vacuum", "octeti"]
 
 # Resolve a type annotation to SemanticTypus without full semantic analysis.
 # WHY: During export extraction we don't have a Resolvitor, but we need to
 # build Genus types with proper field types so cross-module member access works.
-functio resolveTypusShallow(de TypusAnnotatio annotatio) -> SemanticTypus {
+functio resolveTypusShallow(de TypusAnnotatio annotatio) → SemanticTypus {
     # Generic types: lista<T>, tabula<K,V>, etc.
-    varia resolvedParametri = [] innatum lista<SemanticTypus>
+    varia resolvedParametri ← [] innatum lista<SemanticTypus>
     si nonnihil annotatio.typusParametra {
         itera ex annotatio.typusParametra fixum p {
             discerne p {
@@ -171,21 +171,21 @@ functio resolveTypusShallow(de TypusAnnotatio annotatio) -> SemanticTypus {
 # Extract exports from a parsed program
 # All top-level declarations become exports
 @ publica
-functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutum {
-    varia exporta = {} innatum tabula<textus, ModulusExportum>
-    varia discretiones = {} innatum tabula<textus, DiscretioDeclInfo>
+functio extraheExporta(de Programma programma, de textus via) → ModulusResolutum {
+    varia exporta ← {} innatum tabula<textus, ModulusExportum>
+    varia discretiones ← {} innatum tabula<textus, DiscretioDeclInfo>
 
     itera ex programma.corpus fixum stmt {
         discerne stmt {
             casu FunctioDeclaratio ut f {
                 # WHY: Resolve return type so callers can infer variable types
                 # from function calls for proper norma translation.
-                varia reditusTypus = VACUUM qua SemanticTypus
+                varia reditusTypus ← VACUUM qua SemanticTypus
                 si nonnihil f.typusReditus {
-                    reditusTypus = resolveTypusShallow(f.typusReditus novum TypusAnnotatio)
+                    reditusTypus ← resolveTypusShallow(f.typusReditus novum TypusAnnotatio)
                 }
 
-                exporta[f.nomen] = {
+                exporta[f.nomen] ← {
                     nomen: f.nomen,
                     species: SymbolumSpecies.Functio,
                     typus: functioTypus([], reditusTypus, f.asynca, falsum),
@@ -195,21 +195,21 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
             casu GenusDeclaratio ut g {
                 # WHY: Build proper Genus type with field types so cross-module
                 # member access can resolve field types for norma translation.
-                varia agri = {} innatum tabula<textus, SemanticTypus>
+                varia agri ← {} innatum tabula<textus, SemanticTypus>
                 itera ex g.campi fixum campo {
                     si nonnihil campo.typus {
-                        agri[campo.nomen] = resolveTypusShallow(campo.typus novum TypusAnnotatio)
+                        agri[campo.nomen] ← resolveTypusShallow(campo.typus novum TypusAnnotatio)
                     } secus {
-                        agri[campo.nomen] = IGNOTUM
+                        agri[campo.nomen] ← IGNOTUM
                     }
                 }
 
                 # Empty maps for methods (not needed for field type resolution)
-                varia methodi = {} innatum tabula<textus, SemanticTypus>
-                varia agriStatici = {} innatum tabula<textus, SemanticTypus>
-                varia methodiStatici = {} innatum tabula<textus, SemanticTypus>
+                varia methodi ← {} innatum tabula<textus, SemanticTypus>
+                varia agriStatici ← {} innatum tabula<textus, SemanticTypus>
+                varia methodiStatici ← {} innatum tabula<textus, SemanticTypus>
 
-                exporta[g.nomen] = {
+                exporta[g.nomen] ← {
                     nomen: g.nomen,
                     species: SymbolumSpecies.Genus,
                     typus: genusTypus(g.nomen, agri, methodi, agriStatici, methodiStatici, falsum),
@@ -219,9 +219,9 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
             casu PactumDeclaratio ut p {
                 # WHY: Preserve method return types so callers can infer types from calls
                 # (needed for norma translation when compiling in dependency order).
-                varia methodi = {} innatum tabula<textus, SemanticTypus>
+                varia methodi ← {} innatum tabula<textus, SemanticTypus>
                 itera ex p.methodi fixum methodSignum {
-                    varia paramTypi = [] innatum lista<SemanticTypus>
+                    varia paramTypi ← [] innatum lista<SemanticTypus>
                     itera ex methodSignum.parametra fixum param {
                         si nonnihil param.typus {
                             paramTypi.appende(resolveTypusShallow(param.typus novum TypusAnnotatio))
@@ -230,15 +230,15 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                         }
                     }
 
-                    varia reditusTypus = VACUUM qua SemanticTypus
+                    varia reditusTypus ← VACUUM qua SemanticTypus
                     si nonnihil methodSignum.typusReditus {
-                        reditusTypus = resolveTypusShallow(methodSignum.typusReditus novum TypusAnnotatio)
+                        reditusTypus ← resolveTypusShallow(methodSignum.typusReditus novum TypusAnnotatio)
                     }
 
-                    methodi[methodSignum.nomen] = functioTypus(paramTypi, reditusTypus, methodSignum.asynca, falsum)
+                    methodi[methodSignum.nomen] ← functioTypus(paramTypi, reditusTypus, methodSignum.asynca, falsum)
                 }
 
-                exporta[p.nomen] = {
+                exporta[p.nomen] ← {
                     nomen: p.nomen,
                     species: SymbolumSpecies.Pactum,
                     typus: pactumTypus(p.nomen, methodi, falsum),
@@ -246,7 +246,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                 } novum ModulusExportum
             }
             casu OrdoDeclaratio ut o {
-                exporta[o.nomen] = {
+                exporta[o.nomen] ← {
                     nomen: o.nomen,
                     species: SymbolumSpecies.Ordo,
                     typus: usitatumTypus(o.nomen, falsum),
@@ -254,21 +254,21 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                 } novum ModulusExportum
             }
             casu DiscretioDeclaratio ut d {
-                exporta[d.nomen] = {
+                exporta[d.nomen] ← {
                     nomen: d.nomen,
                     species: SymbolumSpecies.TypusAlias,
                     typus: usitatumTypus(d.nomen, falsum),
                     locus: d.locus
                 } novum ModulusExportum
 
-                varia variantInfos = [] innatum lista<DiscretioVariansInfo>
+                varia variantInfos ← [] innatum lista<DiscretioVariansInfo>
                 itera ex d.variantes fixum variante {
                     variantInfos.appende({
                         nomen: variante.nomen,
                         locus: variante.locus
                     } novum DiscretioVariansInfo)
                 }
-                discretiones[d.nomen] = {
+                discretiones[d.nomen] ← {
                     nomen: d.nomen,
                     locus: d.locus,
                     variantes: variantInfos
@@ -277,12 +277,12 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                 # WHY: Pattern matching (`discerne`) expects variant types to be resolvable as
                 # `DiscretioNomen.VariansNomen`, even across module boundaries.
                 itera ex d.variantes fixum variante {
-                    varia campi = {} innatum tabula<textus, SemanticTypus>
+                    varia campi ← {} innatum tabula<textus, SemanticTypus>
                     itera ex variante.campi fixum campo {
-                        campi[campo.nomen] = resolveTypusShallow(campo.typus)
+                        campi[campo.nomen] ← resolveTypusShallow(campo.typus)
                     }
 
-                    fixum variantTypus = genusTypus(
+                    fixum variantTypus ← genusTypus(
                         variante.nomen,
                         campi,
                         {} innatum tabula<textus, SemanticTypus>,
@@ -295,8 +295,8 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                     # WHY: Target codegen emits variants as standalone types, and
                     #      user code (and internal AST) frequently imports variants
                     #      directly (e.g. `ex "./sententia" importa MassaSententia`).
-                    fixum qualNomen = scriptum("§.§", d.nomen, variante.nomen)
-                    exporta[qualNomen] = {
+                    fixum qualNomen ← scriptum("§.§", d.nomen, variante.nomen)
+                    exporta[qualNomen] ← {
                         nomen: qualNomen,
                         species: SymbolumSpecies.Genus,
                         typus: variantTypus,
@@ -305,9 +305,9 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
 
                     # Avoid clobbering a pre-existing export (would be an error in TS too).
                     # EDGE: `exporta` is a reserved verb; use an alias for nil-check.
-                    fixum exportaTabula = exporta
+                    fixum exportaTabula ← exporta
                     si nihil exportaTabula[variante.nomen] {
-                        exporta[variante.nomen] = {
+                        exporta[variante.nomen] ← {
                             nomen: variante.nomen,
                             species: SymbolumSpecies.Genus,
                             typus: variantTypus,
@@ -317,7 +317,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
                 }
             }
             casu TypusAliasDeclaratio ut t {
-                exporta[t.nomen] = {
+                exporta[t.nomen] ← {
                     nomen: t.nomen,
                     species: SymbolumSpecies.TypusAlias,
                     typus: usitatumTypus(t.nomen, falsum),
@@ -326,7 +326,7 @@ functio extraheExporta(de Programma programma, de textus via) -> ModulusResolutu
             }
             casu VariaSententia ut v {
                 # VariaSententia.nomen is a string (destructuring has separate types)
-                exporta[v.nomen] = {
+                exporta[v.nomen] ← {
                     nomen: v.nomen,
                     species: SymbolumSpecies.Variabilis,
                     typus: IGNOTUM,
@@ -357,9 +357,9 @@ functio resolveModulum(
     de textus viaBasica,
     in tabula<textus, ModulusResolutum> cache,
     in copia<textus> inProgressu
-) -> si ModulusResolutum {
+) → si ModulusResolutum {
     # Resolve to absolute path
-    fixum absolutePath = resolveViaModuli(fons, viaBasica)
+    fixum absolutePath ← resolveViaModuli(fons, viaBasica)
     si nihil absolutePath {
         redde nihil
     }
@@ -385,23 +385,23 @@ functio resolveModulum(
     inProgressu.adde(absolutePath)
 
     # Read the source file (sync to avoid async cascade)
-    varia sourceCode = ""
+    varia sourceCode ← ""
     tempta {
-        sourceCode = solum.lege(absolutePath)
+        sourceCode ← solum.lege(absolutePath)
     } cape e {
         inProgressu.dele(absolutePath)
         redde nihil
     }
 
     # Tokenize
-    fixum lexResult = lexare(sourceCode)
+    fixum lexResult ← lexare(sourceCode)
     si lexResult.errores.longitudo() > 0 {
         inProgressu.dele(absolutePath)
         redde nihil
     }
 
     # Parse
-    fixum parseResult = resolvere(lexResult.symbola)
+    fixum parseResult ← resolvere(lexResult.symbola)
     si parseResult.errores.longitudo() > 0 {
         inProgressu.dele(absolutePath)
         redde nihil
@@ -413,10 +413,10 @@ functio resolveModulum(
     }
 
     # Extract exports
-    fixum moduleExports = extraheExporta(parseResult.programma, absolutePath)
+    fixum moduleExports ← extraheExporta(parseResult.programma, absolutePath)
 
     # Cache the result
-    cache[absolutePath] = moduleExports
+    cache[absolutePath] ← moduleExports
 
     # Remove from in-progress
     inProgressu.dele(absolutePath)

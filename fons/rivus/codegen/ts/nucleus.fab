@@ -89,11 +89,11 @@ genus TsGenerator implet Generans {
 
     # Generate indentation string for current depth
     @ publica
-    functio ind() -> textus {
-        varia result = ""
-        varia i = 0
+    functio ind() → textus {
+        varia result ← ""
+        varia i ← 0
         dum i < ego.profunditas {
-            result = result + ego.indentum
+            result ← result + ego.indentum
             i += 1
         }
         redde result
@@ -117,7 +117,7 @@ genus TsGenerator implet Generans {
 
     # Format leading comments for a node
     @ publica
-    functio notaePrae(de ignotum nodus) -> textus {
+    functio notaePrae(de ignotum nodus) → textus {
         si ego.stripComments {
             redde ""
         }
@@ -126,7 +126,7 @@ genus TsGenerator implet Generans {
 
     # Format trailing comments for a node
     @ publica
-    functio notaePost(de ignotum nodus) -> textus {
+    functio notaePost(de ignotum nodus) → textus {
         si ego.stripComments {
             redde ""
         }
@@ -139,17 +139,17 @@ genus TsGenerator implet Generans {
 # =============================================================================
 
 # Find project root by looking for fons/norma-ts/hal directory
-functio findProjectRoot(de textus fromPath) -> si textus {
-    varia dir = solum.directorium(fromPath)
-    varia i = 0
+functio findProjectRoot(de textus fromPath) → si textus {
+    varia dir ← solum.directorium(fromPath)
+    varia i ← 0
     dum i < 20 {
-        fixum halPath = solum.iunge([dir, "fons", "norma-ts", "hal"])
+        fixum halPath ← solum.iunge([dir, "fons", "norma-ts", "hal"])
         si solum.exstat(halPath) {
             redde dir
         }
-        fixum parent = solum.directorium(dir)
-        si parent == dir { rumpe }
-        dir = parent
+        fixum parent ← solum.directorium(dir)
+        si parent ≡ dir { rumpe }
+        dir ← parent
         i += 1
     }
     redde nihil
@@ -160,18 +160,18 @@ functio findProjectRoot(de textus fromPath) -> si textus {
 # Output structure: opus/COMPILER/fons/X/Y.ts (without rivus/ level)
 # HAL is at: opus/COMPILER/norma/hal/
 @ publica
-functio resolveNormaHal(de textus importPath, si de textus viaFons) -> si textus {
+functio resolveNormaHal(de textus importPath, si de textus viaFons) → si textus {
     si nihil viaFons { redde nihil }
     si non importPath.initium("norma:") { redde nihil }
 
-    fixum moduleName = importPath.sectio(6, importPath.longitudo())
+    fixum moduleName ← importPath.sectio(6, importPath.longitudo())
 
     # Find the "fons/rivus/" marker in the path to calculate output depth
     # Source: fons/rivus/X/Y.fab -> Output: fons/X/Y.ts
     # We need depth from "fons/" in output, which is depth after "fons/rivus/" in source
 
-    fixum marker = "fons/rivus/"
-    fixum markerIdx = viaFons.indiceDe(marker)
+    fixum marker ← "fons/rivus/"
+    fixum markerIdx ← viaFons.indiceDe(marker)
 
     si markerIdx < 0 {
         # Fallback: not a rivus source file, use simple calculation
@@ -179,24 +179,24 @@ functio resolveNormaHal(de textus importPath, si de textus viaFons) -> si textus
     }
 
     # Get path after "fons/rivus/": e.g., "codegen/ts/nucleus.fab"
-    fixum afterMarker = viaFons.sectio(markerIdx + marker.longitudo(), viaFons.longitudo())
+    fixum afterMarker ← viaFons.sectio(markerIdx + marker.longitudo(), viaFons.longitudo())
 
     # Count directory separators to get depth
     # e.g., "codegen/ts/nucleus.fab" has 2 separators -> depth 2, plus 1 for fons/ = 3
-    varia depth = 1  # Start at 1 for the "fons/" level in output
-    varia i = 0
+    varia depth ← 1  # Start at 1 for the "fons/" level in output
+    varia i ← 0
     dum i < afterMarker.longitudo() {
-        si afterMarker[i] == "/" {
+        si afterMarker[i] ≡ "/" {
             depth += 1
         }
         i += 1
     }
 
     # Build relative path: ../../../norma-ts/hal/module
-    varia prefix = ""
-    varia j = 0
+    varia prefix ← ""
+    varia j ← 0
     dum j < depth {
-        prefix = prefix + "../"
+        prefix ← prefix + "../"
         j += 1
     }
 
@@ -209,7 +209,7 @@ functio resolveNormaHal(de textus importPath, si de textus viaFons) -> si textus
 
 # Create a new TsGenerator with default settings
 @ publica
-functio creaTsGenerator(si de textus viaFons) -> TsGenerator {
+functio creaTsGenerator(si de textus viaFons) → TsGenerator {
     redde novum TsGenerator {
         viaFons: viaFons,
         profunditas: 0,
@@ -235,7 +235,7 @@ functio creaTsGenerator(si de textus viaFons) -> TsGenerator {
 
 # Create a TsGenerator with custom indentation
 @ publica
-functio creaTsGeneratorCum(de textus indentum, si de textus viaFons) -> TsGenerator {
+functio creaTsGeneratorCum(de textus indentum, si de textus viaFons) → TsGenerator {
     redde novum TsGenerator {
         viaFons: viaFons,
         profunditas: 0,

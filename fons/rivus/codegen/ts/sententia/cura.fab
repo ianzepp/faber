@@ -20,61 +20,61 @@ importa ex "./index" privata genSententia
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genCura(in TsGenerator g, de ignotum curatorSpecies, de ignotum res, de textus vinculum, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape) -> textus {
+functio genCura(in TsGenerator g, de ignotum curatorSpecies, de ignotum res, de textus vinculum, de Sententia corpus, bivalens asynca, bivalens mutabilis, de ignotum cape) → textus {
     # WHY: For arena/page curator kinds, just emit the block contents.
     # GC targets don't need allocator management - memory is automatic.
     si nonnihil curatorSpecies {
-        fixum species = curatorSpecies qua CuratorGenus
-        si species == CuratorGenus.Arena aut species == CuratorGenus.Pagina {
+        fixum species ← curatorSpecies qua CuratorGenus
+        si species ≡ CuratorGenus.Arena aut species ≡ CuratorGenus.Pagina {
             redde genSententia(g, corpus)
         }
     }
 
     # Determine binding keyword based on mutability
-    fixum bindKeyword = mutabilis sic "let" secus "const"
+    fixum bindKeyword ← mutabilis sic "let" secus "const"
 
     # Generic resource management with try/finally
-    varia result = scriptum("§{\n", g.ind())
+    varia result ← scriptum("§{\n", g.ind())
     g.intraProfundum()
 
     # Resource acquisition: const/let <binding> = [await] <resource>;
-    fixum awaitPrefix = asynca sic "await " secus ""
+    fixum awaitPrefix ← asynca sic "await " secus ""
     si nonnihil res {
-        result = scriptum("§§§ § = §§;\n", result, g.ind(), bindKeyword, vinculum, awaitPrefix, genExpressia(g, res qua Expressia))
+        result ← scriptum("§§§ § = §§;\n", result, g.ind(), bindKeyword, vinculum, awaitPrefix, genExpressia(g, res qua Expressia))
     } secus {
-        result = scriptum("§§§ § = undefined;\n", result, g.ind(), bindKeyword, vinculum)
+        result ← scriptum("§§§ § = undefined;\n", result, g.ind(), bindKeyword, vinculum)
     }
 
     # Try block
     g.intraProfundum()
-    fixum tryBody = genSententia(g, corpus)
+    fixum tryBody ← genSententia(g, corpus)
     g.exiProfundum()
-    si tryBody == "" {
-        result = scriptum("§§try {}\n", result, g.ind())
+    si tryBody ≡ "" {
+        result ← scriptum("§§try {}\n", result, g.ind())
     } secus {
-        result = scriptum("§§try {\n§\n§}\n", result, g.ind(), tryBody, g.ind())
+        result ← scriptum("§§try {\n§\n§}\n", result, g.ind(), tryBody, g.ind())
     }
 
     # Optional catch clause
     si nonnihil cape {
-        fixum capeClause = cape novum CapeClausula
-        fixum catchParam = capeClause.param
+        fixum capeClause ← cape novum CapeClausula
+        fixum catchParam ← capeClause.param
         g.intraProfundum()
-        fixum catchBody = genSententia(g, capeClause.corpus)
+        fixum catchBody ← genSententia(g, capeClause.corpus)
         g.exiProfundum()
-        result = scriptum("§§catch (§) {\n§\n§}\n", result, g.ind(), catchParam, catchBody, g.ind())
+        result ← scriptum("§§catch (§) {\n§\n§}\n", result, g.ind(), catchParam, catchBody, g.ind())
     }
 
     # Finally block with solve?.()
-    result = scriptum("§§finally {\n", result, g.ind())
+    result ← scriptum("§§finally {\n", result, g.ind())
     g.intraProfundum()
-    fixum cleanup = scriptum("§.solve?.();", vinculum)
-    result = scriptum("§§§\n", result, g.ind(), cleanup)
+    fixum cleanup ← scriptum("§.solve?.();", vinculum)
+    result ← scriptum("§§§\n", result, g.ind(), cleanup)
     g.exiProfundum()
-    result = scriptum("§§}\n", result, g.ind())
+    result ← scriptum("§§}\n", result, g.ind())
 
     g.exiProfundum()
-    result = scriptum("§§}", result, g.ind())
+    result ← scriptum("§§}", result, g.ind())
 
     redde result
 }

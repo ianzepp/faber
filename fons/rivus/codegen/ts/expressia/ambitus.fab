@@ -15,16 +15,16 @@ importa ex "./index" privata genExpressia
 
 # Generate range expression as array
 @ publica
-functio genAmbitusExpressia(in TsGenerator g, de Expressia expr) -> textus {
+functio genAmbitusExpressia(in TsGenerator g, de Expressia expr) → textus {
     # WHY: Ranges become arrays outside of for-loops.
     discerne expr {
         casu AmbitusExpressia ut e {
-            fixum initium = genExpressia(g, e.initium)
-            fixum finis = genExpressia(g, e.finis)
-            fixum adj = (e.inclusivum qua bivalens) sic " + 1" secus ""
+            fixum initium ← genExpressia(g, e.initium)
+            fixum finis ← genExpressia(g, e.finis)
+            fixum adj ← (e.inclusivum qua bivalens) sic " + 1" secus ""
 
             si nonnihil e.gradus {
-                fixum gradus = genExpressia(g, e.gradus qua Expressia)
+                fixum gradus ← genExpressia(g, e.gradus qua Expressia)
                 si e.inclusivum qua bivalens {
                     redde scriptum("Array.from({length: Math.floor((§ - §) / §) + 1}, (_, i) => § + i * §)", finis, initium, gradus, initium, gradus)
                 }

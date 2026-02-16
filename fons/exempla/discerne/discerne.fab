@@ -20,7 +20,7 @@ discretio Event {
 }
 
 # Functions demonstrating discerne
-functio describe_status(Status s) -> textus {
+functio describe_status(Status s) → textus {
     discerne s {
         casu Active { redde "active" }
         casu Inactive { redde "inactive" }
@@ -28,7 +28,7 @@ functio describe_status(Status s) -> textus {
     }
 }
 
-functio handle_event(Event e) -> nihil {
+functio handle_event(Event e) → nihil {
     discerne e {
         casu Click fixum x, y {
             scribe "Clicked at:", x, y

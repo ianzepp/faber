@@ -4,24 +4,24 @@
 
 incipit {
     # Iterate over number array
-    fixum numbers = [1, 2, 3, 4, 5]
+    fixum numbers ← [1, 2, 3, 4, 5]
 
     itera ex numbers fixum n {
         scribe n
     }
 
     # Iterate over string array
-    fixum names = ["Marcus", "Julia", "Claudia"]
+    fixum names ← ["Marcus", "Julia", "Claudia"]
 
     itera ex names fixum name {
         scribe name
     }
 
     # Process items
-    fixum values = [10, 20, 30]
+    fixum values ← [10, 20, 30]
 
     itera ex values fixum v {
-        fixum doubled = v * 2
+        fixum doubled ← v * 2
         scribe doubled
     }
 }

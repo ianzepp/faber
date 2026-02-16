@@ -15,11 +15,11 @@ importa ex "../nucleus" privata GoGenerator
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genScribe(in GoGenerator g, ScribeGradus gradus, de lista<Expressia> argumenta) -> textus {
+functio genScribe(in GoGenerator g, ScribeGradus gradus, de lista<Expressia> argumenta) → textus {
     # Mark fmt import as required
-    g.requisita.fmt = verum
+    g.requisita.fmt ← verum
 
-    varia args = [] innatum lista<textus>
+    varia args ← [] innatum lista<textus>
     itera ex argumenta fixum arg {
         args.appende(genExpressia(g, arg))
     }

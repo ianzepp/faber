@@ -17,7 +17,7 @@
 
 - name: predicate parameter
   source: |
-      functio filtrata((T) -> bivalens pred) -> T {
+      functio filtrata((T) → bivalens pred) → T {
         redde pred
       }
   expect:
@@ -32,11 +32,11 @@
       zig:
           - 'fn filtrata(pred: *const fn(T) bool) T'
       fab:
-          - 'functio filtrata((T) -> bivalens pred) -> T'
+          - 'functio filtrata((T) → bivalens pred) → T'
 
 - name: transformer parameter
   source: |
-      functio mappata((T) -> U transformer) -> U {
+      functio mappata((T) → U transformer) → U {
         redde transformer
       }
   expect:
@@ -51,11 +51,11 @@
       zig:
           - 'fn mappata(transformer: *const fn(T) U) U'
       fab:
-          - 'functio mappata((T) -> U transformer) -> U'
+          - 'functio mappata((T) → U transformer) → U'
 
 - name: multi-param function type
   source: |
-      functio reducta((U, T) -> U fn, U init) -> U {
+      functio reducta((U, T) → U fn, U init) → U {
         redde init
       }
   expect:
@@ -70,7 +70,7 @@
       zig:
           - 'fn reducta(fn: *const fn(U, T) U, init: U) U'
       fab:
-          - 'functio reducta((U, T) -> U fn, U init) -> U'
+          - 'functio reducta((U, T) → U fn, U init) → U'
 
 # =============================================================================
 # Function Type Returns
@@ -78,7 +78,7 @@
 
 - name: function returning function type
   source: |
-      functio compose((A) -> B f, (B) -> C g) -> (A) -> C {
+      functio compose((A) → B f, (B) → C g) → (A) → C {
         redde f
       }
   expect:
@@ -93,7 +93,7 @@
       zig:
           - 'fn compose(f: *const fn(A) B, g: *const fn(B) C) *const fn(A) C'
       fab:
-          - 'functio compose((A) -> B f, (B) -> C g) -> (A) -> C'
+          - 'functio compose((A) → B f, (B) → C g) → (A) → C'
 
 # =============================================================================
 # Void/Vacuum Return Types
@@ -101,7 +101,7 @@
 
 - name: callback with no return
   source: |
-      functio forEach((T) -> vacuum callback) -> vacuum {
+      functio forEach((T) → vacuum callback) → vacuum {
         redde nihil
       }
   expect:
@@ -116,4 +116,4 @@
       zig:
           - 'fn forEach(callback: *const fn(T) void) void'
       fab:
-          - 'functio forEach((T) -> vacuum callback) -> vacuum'
+          - 'functio forEach((T) → vacuum callback) → vacuum'

@@ -3,7 +3,7 @@
 # si <condition> { <body> }
 
 incipit {
-    fixum x = 10
+    fixum x ← 10
 
     si x > 5 {
         scribe "x is greater than 5"
@@ -14,9 +14,9 @@ incipit {
     }
 
     # Multiple statements in block
-    fixum age = 25
+    fixum age ← 25
 
-    si age >= 18 {
+    si age ≥ 18 {
         scribe "Adult"
         scribe "Can vote"
     }

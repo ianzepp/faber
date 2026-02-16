@@ -5,7 +5,7 @@
 incipit {
     # Basic fac with cape for error handling
     fac {
-        fixum x = 10
+        fixum x ← 10
         scribe x
     } cape err {
         scribe err
@@ -13,7 +13,7 @@ incipit {
 
     # Scope block that might throw
     fac {
-        fixum value = 42
+        fixum value ← 42
         scribe value
     } cape error {
         scribe "Error occurred:"

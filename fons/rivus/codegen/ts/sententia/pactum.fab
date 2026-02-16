@@ -21,57 +21,57 @@ importa ex "./functio" privata genParametrum
 importa ex "../typus" privata genTypus
 
 @ publica
-functio genPactum(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<PactumMethodus> methodi, de ignotum visibilitas) -> textus {
-    varia result = g.ind()
+functio genPactum(in TsGenerator g, de textus nomen, de ignotum generaParametra, de lista<PactumMethodus> methodi, de ignotum visibilitas) → textus {
+    varia result ← g.ind()
 
     # Module-level: export when public
     si nonnihil visibilitas {
-        fixum vis = visibilitas qua Visibilitas
-        si vis == Visibilitas.Publica {
-            result = scriptum("§export ", result)
+        fixum vis ← visibilitas qua Visibilitas
+        si vis ≡ Visibilitas.Publica {
+            result ← scriptum("§export ", result)
         }
     }
 
-    result = scriptum("§interface §", result, nomen)
+    result ← scriptum("§interface §", result, nomen)
 
     si nonnulla generaParametra {
-        result = scriptum("§<§>", result, (generaParametra qua lista<textus>).coniunge(", "))
+        result ← scriptum("§<§>", result, (generaParametra qua lista<textus>).coniunge(", "))
     }
 
-    result = scriptum("§ {\n", result)
+    result ← scriptum("§ {\n", result)
     g.intraProfundum()
 
     itera ex methodi fixum methodus {
-        varia params = [] innatum lista<textus>
+        varia params ← [] innatum lista<textus>
         itera ex methodus.parametra fixum param {
             params.appende(genParametrum(g, param))
         }
 
-        varia line = scriptum("§§(§)", g.ind(), methodus.nomen, params.coniunge(", "))
-        varia reditus = ""
+        varia line ← scriptum("§§(§)", g.ind(), methodus.nomen, params.coniunge(", "))
+        varia reditus ← ""
         si nonnihil methodus.typusReditus {
-            reditus = genTypus(g, methodus.typusReditus novum TypusAnnotatio)
+            reditus ← genTypus(g, methodus.typusReditus novum TypusAnnotatio)
         }
 
-        si reditus == "" et (methodus.generator aut methodus.asynca) {
-            reditus = "void"
+        si reditus ≡ "" et (methodus.generator aut methodus.asynca) {
+            reditus ← "void"
         }
 
         si methodus.generator {
-            reditus = methodus.asynca sic scriptum("AsyncGenerator<§>", reditus) secus scriptum("Generator<§>", reditus)
+            reditus ← methodus.asynca sic scriptum("AsyncGenerator<§>", reditus) secus scriptum("Generator<§>", reditus)
         } sin methodus.asynca {
-            reditus = scriptum("Promise<§>", reditus)
+            reditus ← scriptum("Promise<§>", reditus)
         }
 
-        si reditus != "" {
-            line = scriptum("§: §", line, reditus)
+        si reditus ≠ "" {
+            line ← scriptum("§: §", line, reditus)
         }
 
-        result = scriptum("§§;\n", result, line)
+        result ← scriptum("§§;\n", result, line)
     }
 
     g.exiProfundum()
-    result = scriptum("§§}", result, g.ind())
+    result ← scriptum("§§}", result, g.ind())
 
     redde result
 }

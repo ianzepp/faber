@@ -7,17 +7,17 @@
 #   iace - can be caught with cape
 #   mori - terminates program immediately
 
-functio divide(numerus a, numerus b) -> fractus {
+functio divide(numerus a, numerus b) → fractus {
     # Use mori for invariant violations
-    si b == 0 {
+    si b ≡ 0 {
         mori "Division by zero is a fatal error"
     }
     redde a / b
 }
 
-functio accessArray(lista<numerus> items, numerus index) -> numerus {
+functio accessArray(lista<numerus> items, numerus index) → numerus {
     # Bounds check with panic
-    si index < 0 aut index >= items.longitudo() {
+    si index < 0 aut index ≥ items.longitudo() {
         mori "Index out of bounds"
     }
     redde items[index]
@@ -25,17 +25,17 @@ functio accessArray(lista<numerus> items, numerus index) -> numerus {
 
 incipit {
     # Normal operation
-    fixum result = divide(10, 2)
+    fixum result ← divide(10, 2)
     scribe "Result:", result  # 5.0
 
     # This would panic (uncomment to test):
-    # fixum bad = divide(10, 0)  # Fatal: Division by zero
+    # fixum bad ← divide(10, 0)  # Fatal: Division by zero
 
     # Array access
-    fixum nums = [1, 2, 3]
-    fixum val = accessArray(nums, 1)
+    fixum nums ← [1, 2, 3]
+    fixum val ← accessArray(nums, 1)
     scribe "Value:", val  # 2
 
     # This would panic (uncomment to test):
-    # fixum bad = accessArray(nums, 10)  # Fatal: Index out of bounds
+    # fixum bad ← accessArray(nums, 10)  # Fatal: Index out of bounds
 }

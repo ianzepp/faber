@@ -13,15 +13,15 @@ importa ex "../nucleus" privata TsGenerator
 importa ex "../expressia/index" privata genExpressia
 
 @ publica
-functio genAdfirma(in TsGenerator g, de Expressia condicio, de ignotum nuntius) -> textus {
-    fixum test = genExpressia(g, condicio)
+functio genAdfirma(in TsGenerator g, de Expressia condicio, de ignotum nuntius) → textus {
+    fixum test ← genExpressia(g, condicio)
 
-    varia nuntiusTextus = ""
+    varia nuntiusTextus ← ""
     si nonnihil nuntius {
-        nuntiusTextus = genExpressia(g, nuntius qua Expressia)
+        nuntiusTextus ← genExpressia(g, nuntius qua Expressia)
     } secus {
         # WHY: Auto-generate assertion message from expression.
-        nuntiusTextus = scriptum("\"Assertion failed: §\"", test.muta("\"", "\\\""))
+        nuntiusTextus ← scriptum("\"Assertion failed: §\"", test.muta("\"", "\\\""))
     }
 
     redde scriptum("§if (!(§)) { throw new Error(§); }", g.ind(), test, nuntiusTextus)

@@ -11,9 +11,9 @@
 # declared with @ externa since they have no bodies - actual implementations
 # come from the target language runtime or @ subsidia files.
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ innatum - Native Type Mapping
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Maps a Faber genus to native types in each target language.
 
 @ innatum ts "Array", py "list", zig "Lista", rs "Vec", cpp "std::vector"
@@ -22,18 +22,18 @@ genus ExemplarLista { }
 @ innatum ts "Map", py "dict", zig "Tabula", rs "HashMap"
 genus ExemplarTabula { }
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ subsidia - External Implementation Files
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Specifies implementation files for targets where inline codegen is complex.
 
 @ innatum ts "Array", zig "Lista"
 @ subsidia zig "subsidia/zig/lista.zig"
 genus ExemplarListaExterna { }
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ radix - Morphology Declaration
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Declares the verb stem and valid conjugation forms.
 
 # Full morphology: imperative (mutates) + participle (returns new)
@@ -51,9 +51,9 @@ functio purgaExemplar()
 @ externa
 functio mappataExemplar()
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ verte - Codegen Transformation
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Defines how method calls compile to target code.
 
 # Simple rename: method name maps directly
@@ -62,27 +62,27 @@ functio mappataExemplar()
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "§.appende(§, §)"
+@ verte zig (ego, elem, alloc) → "§.appende(§, §)"
 @ externa
 functio addeExemplar()
 
 # Template form: § placeholders filled positionally
-@ verte ts (ego, elem) -> "[...§, §]"
-@ verte py (ego, elem) -> "[*§, §]"
-@ verte zig (ego, elem, alloc) -> "§.addita(§, §)"
+@ verte ts (ego, elem) → "[...§, §]"
+@ verte py (ego, elem) → "[*§, §]"
+@ verte zig (ego, elem, alloc) → "§.addita(§, §)"
 @ externa
 functio additaExemplar()
 
 # Properties (no morphology - read-only accessors)
-@ verte ts (ego) -> "§.length"
-@ verte py (ego) -> "len(§)"
-@ verte zig (ego) -> "§.longitudo()"
+@ verte ts (ego) → "§.length"
+@ verte py (ego) → "len(§)"
+@ verte zig (ego) → "§.longitudo()"
 @ externa
-functio longitudoExemplar() -> numerus
+functio longitudoExemplar() → numerus
 
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Combined Example: Full Method Definition
-# =============================================================================
+# ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
 @ innatum ts "Array", py "list", zig "Lista"
 @ subsidia zig "subsidia/zig/lista.zig"
@@ -91,12 +91,12 @@ genus ExemplarListaCompleta { }
 @ radix ordin, imperativus, perfectum
 @ verte ts "sort"
 @ verte py "sort"
-@ verte zig (ego) -> "§.ordina()"
+@ verte zig (ego) → "§.ordina()"
 @ externa
 functio ordinaExemplar()
 
-@ verte ts (ego) -> "[...§].sort()"
-@ verte py (ego) -> "sorted(§)"
-@ verte zig (ego, alloc) -> "§.ordinata(§)"
+@ verte ts (ego) → "[...§].sort()"
+@ verte py (ego) → "sorted(§)"
+@ verte zig (ego, alloc) → "§.ordinata(§)"
 @ externa
 functio ordinataExemplar()

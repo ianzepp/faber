@@ -14,18 +14,18 @@ importa ex "../nucleus" privata TsGenerator
 importa ex "./index" privata genSententia
 
 @ publica
-functio genIncipit(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de textus argNomen) -> textus {
-    varia result = ""
+functio genIncipit(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de textus argNomen) → textus {
+    varia result ← ""
 
     # Emit argumenta binding if present
     si nonnihil argNomen {
-        result = scriptum("§const § = process.argv.slice(2);\n", g.ind(), argNomen)
+        result ← scriptum("§const § = process.argv.slice(2);\n", g.ind(), argNomen)
     }
 
     si nonnihil corpus {
-        result = scriptum("§§", result, genSententia(g, corpus qua Sententia))
+        result ← scriptum("§§", result, genSententia(g, corpus qua Sententia))
         si nonnihil ergo {
-            result = scriptum("§\n§", result, genSententia(g, ergo qua Sententia))
+            result ← scriptum("§\n§", result, genSententia(g, ergo qua Sententia))
         }
         redde result
     }
@@ -36,25 +36,25 @@ functio genIncipit(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de t
 }
 
 @ publica
-functio genIncipiet(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de textus argNomen) -> textus {
+functio genIncipiet(in TsGenerator g, de ignotum corpus, de ignotum ergo, si de textus argNomen) → textus {
     g.intraProfundum()
 
-    varia body = ""
+    varia body ← ""
 
     # Emit argumenta binding if present
     si nonnihil argNomen {
-        body = scriptum("§const § = process.argv.slice(2);\n", g.ind(), argNomen)
+        body ← scriptum("§const § = process.argv.slice(2);\n", g.ind(), argNomen)
     }
 
     si nonnihil corpus {
-        body = scriptum("§§", body, genSententia(g, corpus qua Sententia))
+        body ← scriptum("§§", body, genSententia(g, corpus qua Sententia))
     }
     g.exiProfundum()
 
-    varia result = scriptum("§(async () => {\n§\n§})();", g.ind(), body, g.ind())
+    varia result ← scriptum("§(async () => {\n§\n§})();", g.ind(), body, g.ind())
 
     si nonnihil ergo {
-        result = scriptum("§\n§", result, genSententia(g, ergo qua Sententia))
+        result ← scriptum("§\n§", result, genSententia(g, ergo qua Sententia))
     }
 
     redde result

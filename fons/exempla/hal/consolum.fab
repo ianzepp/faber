@@ -5,7 +5,7 @@
 importa ex "../../norma/hal/consolum" privata consolum
 
 incipit {
-    consolum.fundeLineam("=== Console I/O Demo ===\n")
+    consolum.fundeLineam("≡ Console I/O Demo ≡\n")
 
     # Basic text output
     consolum.fundeTextum("Text without newline... ")
@@ -34,10 +34,10 @@ incipit {
 
     # Byte output
     consolum.fundeLineam("\n--- Byte output ---")
-    consolum.fundeLineam("Writing raw bytes: [72, 101, 108, 108, 111] = 'Hello'")
+    consolum.fundeLineam("Writing raw bytes: [72, 101, 108, 108, 111] ← 'Hello'")
     # TODO: Need octeti literal syntax to demonstrate fundeOctetos
     # consolum.fundeOctetos([72, 101, 108, 108, 111])
 
-    consolum.fundeLineam("\n=== Demo Complete ===")
+    consolum.fundeLineam("\n≡ Demo Complete ≡")
     consolum.fundeLineam("(Note: stdin reading functions like hauriLineam() require interactive input)")
 }

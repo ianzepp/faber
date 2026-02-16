@@ -24,23 +24,23 @@ functio genEligeLogica(
     in Generans g,
     de ScopusSyntaxis syn,
     de Revocata rev
-) -> textus {
-    fixum disc = rev.genExpr(g, discriminans)
-    varia wrapTry = nonnihil cape et syn.habetCape
+) → textus {
+    fixum disc ← rev.genExpr(g, discriminans)
+    varia wrapTry ← nonnihil cape et syn.habetCape
 
     si wrapTry {
         g.intraProfundum()
     }
 
-    varia result = ""
-    varia primus = verum
+    varia result ← ""
+    varia primus ← verum
 
     itera ex casus fixum c {
-        fixum cond = rev.genExpr(g, c.condicio)
+        fixum cond ← rev.genExpr(g, c.condicio)
 
         si primus {
             # First case: if (disc === cond) {
-            result = scriptum(
+            result ← scriptum(
                 "§if §§ § §§ {\n",
                 g.ind(),
                 syn.siCondicioPrae,
@@ -49,10 +49,10 @@ functio genEligeLogica(
                 cond,
                 syn.siCondicioPost
             )
-            primus = falsum
+            primus ← falsum
         } secus {
             # Subsequent cases: } else if (disc === cond) {
-            result = scriptum(
+            result ← scriptum(
                 "§} § §§ § §§ {\n",
                 result,
                 syn.sinVerbum,
@@ -65,30 +65,30 @@ functio genEligeLogica(
         }
 
         g.intraProfundum()
-        fixum body = rev.genStmt(g, c.consequens)
+        fixum body ← rev.genStmt(g, c.consequens)
         g.exiProfundum()
 
-        si body != "" {
-            result = scriptum("§§\n", result, body)
+        si body ≠ "" {
+            result ← scriptum("§§\n", result, body)
         }
-        result = scriptum("§§", result, g.ind())
+        result ← scriptum("§§", result, g.ind())
     }
 
     # Default case: } else { or close final case with }
     si nonnihil praedefinitum {
-        result = scriptum("§} § {\n", result, syn.secusVerbum)
+        result ← scriptum("§} § {\n", result, syn.secusVerbum)
 
         g.intraProfundum()
-        fixum defBody = rev.genStmt(g, praedefinitum qua Sententia)
+        fixum defBody ← rev.genStmt(g, praedefinitum qua Sententia)
         g.exiProfundum()
 
-        si defBody != "" {
-            result = scriptum("§§\n", result, defBody)
+        si defBody ≠ "" {
+            result ← scriptum("§§\n", result, defBody)
         }
-        result = scriptum("§§}\n", result, g.ind())
+        result ← scriptum("§§}\n", result, g.ind())
     } secus {
         # No default - just close the final case
-        result = scriptum("§}\n", result)
+        result ← scriptum("§}\n", result)
     }
 
     si wrapTry {
@@ -97,9 +97,9 @@ functio genEligeLogica(
 
     # Wrap in try/catch if cape is present and target supports it
     si nonnihil cape et syn.habetCape {
-        fixum c = cape novum CapeClausula
+        fixum c ← cape novum CapeClausula
         g.intraProfundum()
-        fixum catchBody = rev.genStmt(g, c.corpus)
+        fixum catchBody ← rev.genStmt(g, c.corpus)
         g.exiProfundum()
         redde scriptum(
             "§try {\n§\n§} catch (§) {\n§\n§}",

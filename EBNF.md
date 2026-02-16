@@ -41,13 +41,13 @@ paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := 'si'? ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('ut' IDENTIFIER)? ('vel' expression)?
 funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
-returnClause := '->' typeAnnotation
-clausuraExpr   := 'clausura' clausuraParams? ('->' typeAnnotation)? (':' expression | blockStmt)
+returnClause := '→' typeAnnotation
+clausuraExpr   := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
 clausuraParams := clausuraParam (',' clausuraParam)*
 clausuraParam  := typeAnnotation IDENTIFIER
 ```
 
-- Return syntax: `->` (arrow) with optional `@ futura`/`@ cursor` annotations for async/generator
+- Return syntax: `→` (arrow) with optional `@ futura`/`@ cursor` annotations for async/generator
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - `si` marks optional, `ceteri` marks rest parameter
 - `curata NAME` declares allocator requirement; NAME is auto-injected at call sites within `cura` blocks
@@ -72,7 +72,7 @@ cliAnnotation    := imperiumAnnotation | optioAnnotation | operandusAnnotation |
 innatumAnnotation  := '@' 'innatum' targetMapping (',' targetMapping)*
 subsidiaAnnotation := '@' 'subsidia' targetMapping (',' targetMapping)*
 radixAnnotation    := '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
-verteAnnotation    := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '->' STRING)
+verteAnnotation    := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '→' STRING)
 externaAnnotation  := '@' 'externa'
 
 imperiumAnnotation := '@' 'imperium' | '@' 'cli'
@@ -193,7 +193,7 @@ importa ex "./types" publica User               # re-export
 
 ```ebnf
 typeAnnotation := 'si'? ('de' | 'in')? (functionType | IDENTIFIER typeParams? arrayBrackets*)
-functionType   := '(' typeList? ')' '->' typeAnnotation
+functionType   := '(' typeList? ')' '→' typeAnnotation
 typeList       := typeAnnotation (',' typeAnnotation)*
 typeParams     := '<' typeParameter (',' typeParameter)* '>'
 typeParameter  := typeAnnotation | NUMBER | MODIFIER
@@ -207,8 +207,8 @@ arrayBrackets  := '[]'
 Function types enable higher-order function signatures:
 
 ```fab
-functio filtrata((T) -> bivalens pred) -> lista<T>
-functio compose((A) -> B f, (B) -> C g) -> (A) -> C
+functio filtrata((T) → bivalens pred) → lista<T>
+functio compose((A) → B f, (B) → C g) → (A) → C
 ```
 
 ### Primitive Types
@@ -338,12 +338,12 @@ assertStmt  := 'adfirma' expression (',' expression)?
 
 ```ebnf
 expression := assignment
-assignment := ternary (('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=') assignment)?
+assignment := ternary (('←' | '+=' | '-=' | '*=' | '/=' | '&=' | '|=') assignment)?
 ternary    := or (('?' expression ':' | 'sic' expression 'secus') ternary)?
-or         := and (('||' | 'aut') and)* | and ('vel' and)*
-and        := equality (('&&' | 'et') equality)*
-equality   := comparison (('==' | '!=' | '===' | '!==' | 'est' | 'non' 'est') comparison)*
-comparison := bitwiseOr (('<' | '>' | '<=' | '>=' | 'intra' | 'inter') bitwiseOr)*
+or         := and (('aut') and)* | and ('vel' and)*
+and        := equality (('et') equality)*
+equality   := comparison (('≡' | '≠' | 'est' | 'non' 'est') comparison)*
+comparison := bitwiseOr (('<' | '>' | '≤' | '≥' | 'intra' | 'inter') bitwiseOr)*
 bitwiseOr  := bitwiseXor ('|' bitwiseXor)*
 bitwiseXor := bitwiseAnd ('^' bitwiseAnd)*
 bitwiseAnd := shift ('&' shift)*
@@ -492,7 +492,7 @@ functio deploy(
 
 ```ebnf
 adStmt        := 'ad' STRING '(' argumentList ')' adBinding? blockStmt? catchClause?
-adBinding     := '->' typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
+adBinding     := '→' typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
 ```
 
 **Note:** `ad` statement is parsed but codegen is not yet implemented. See `consilia/futura/ad.md`.

@@ -4,7 +4,7 @@
 # Note: ts/py use exact match; rs/cpp/zig use contains (they wrap in main)
 
 - name: empty object
-  source: 'fixum obj = {}'
+  source:'fixum obj ← {}'
   expect:
       ts: 'const obj = {};'
       py: 'obj = {}'
@@ -15,11 +15,11 @@
       zig:
           - '.{}'
       fab:
-          - 'fixum obj = {}'
+          - 'fixum obj ← {}'
 
 - name: object with string property
   source: |
-      fixum user = { nomen: "Marcus" }
+      fixum user ← { nomen: "Marcus" }
   expect:
       ts: 'const user = { nomen: "Marcus" };'
       py: 'user = {"nomen": "Marcus"}'
@@ -30,11 +30,11 @@
       zig:
           - '.nomen = "Marcus"'
       fab:
-          - 'fixum user = { nomen: "Marcus" }'
+          - 'fixum user ← { nomen: "Marcus" }'
 
 - name: object with multiple properties
   source: |
-      fixum data = { x: 1, y: 2, z: 3 }
+      fixum data ← { x: 1, y: 2, z: 3 }
   expect:
       ts: 'const data = { x: 1, y: 2, z: 3 };'
       py: 'data = {"x": 1, "y": 2, "z": 3}'
@@ -51,11 +51,11 @@
           - '.y = 2'
           - '.z = 3'
       fab:
-          - 'fixum data = { x: 1, y: 2, z: 3 }'
+          - 'fixum data ← { x: 1, y: 2, z: 3 }'
 
 - name: object with expression values
   source: |
-      fixum calc = { sum: 1 + 2, active: verum }
+      fixum calc ← { sum: 1 + 2, active: verum }
   expect:
       ts:
           - 'sum: (1 + 2)'
@@ -78,7 +78,7 @@
 
 - name: object with spread
   source: |
-      fixum merged = { sparge defaults, extra: 42 }
+      fixum merged ← { sparge defaults, extra: 42 }
   expect:
       ts: 'const merged = { ...defaults, extra: 42 };'
       py: 'merged = {**defaults, "extra": 42}'
@@ -91,7 +91,7 @@
 
 - name: method in object (lambda as property)
   source: |
-      fixum obj = { greet: pro name: name }
+      fixum obj ← { greet: pro name: name }
   expect:
       ts:
           - 'greet: (name) => name'
@@ -102,7 +102,7 @@
 
 - name: deeply nested objects (4 levels)
   source: |
-      fixum deep = { a: { b: { c: { d: 1 } } } }
+      fixum deep ← { a: { b: { c: { d: 1 } } } }
   expect:
       ts: 'const deep = { a: { b: { c: { d: 1 } } } };'
       py: 'deep = {"a": {"b": {"c": {"d": 1}}}}'
@@ -111,7 +111,7 @@
 
 - name: multiple spreads in object
   source: |
-      fixum obj = { a: 1, sparge middle, b: 2, sparge end }
+      fixum obj ← { a: 1, sparge middle, b: 2, sparge end }
   expect:
       ts: 'const obj = { a: 1, ...middle, b: 2, ...end };'
       py: 'obj = {"a": 1, **middle, "b": 2, **end}'
@@ -123,7 +123,7 @@
 
 - name: object with many properties (6+)
   source: |
-      fixum obj = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 }
+      fixum obj ← { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 }
   expect:
       ts: 'const obj = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 };'
       py: 'obj = {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "f": 6}'
@@ -132,7 +132,7 @@
 
 - name: object with arithmetic expression values
   source: |
-      fixum obj = { sum: a + b, product: a * b }
+      fixum obj ← { sum: a + b, product: a * b }
   expect:
       ts:
           - 'sum: (a + b)'

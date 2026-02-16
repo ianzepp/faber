@@ -18,21 +18,21 @@ importa ex "./index" privata genExpressia
 
 # Generate literal value
 @ publica
-functio genLittera(LitteraGenus species, de textus crudus) -> textus {
-    si species == LitteraGenus.Verum {
+functio genLittera(LitteraGenus species, de textus crudus) → textus {
+    si species ≡ LitteraGenus.Verum {
         redde "true"
     }
-    si species == LitteraGenus.Falsum {
+    si species ≡ LitteraGenus.Falsum {
         redde "false"
     }
-    si species == LitteraGenus.Nihil {
+    si species ≡ LitteraGenus.Nihil {
         redde "null"
     }
-    si species == LitteraGenus.Textus {
+    si species ≡ LitteraGenus.Textus {
         # String literals need quotes - lexer strips them
         redde scriptum("\"§\"", crudus)
     }
-    si species == LitteraGenus.Exemplar {
+    si species ≡ LitteraGenus.Exemplar {
         # Template literals need backticks - lexer strips them
         redde scriptum("\x60§\x60", crudus)
     }
@@ -42,16 +42,16 @@ functio genLittera(LitteraGenus species, de textus crudus) -> textus {
 
 # Generate template literal with interpolation
 @ publica
-functio genLitteraExemplar(in TsGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) -> textus {
-    varia result = "`"
-    varia i = 0
+functio genLitteraExemplar(in TsGenerator g, de lista<textus> partes, de lista<Expressia> expressiae) → textus {
+    varia result ← "`"
+    varia i ← 0
     itera ex partes fixum pars {
-        result = scriptum("§§", result, pars)
+        result ← scriptum("§§", result, pars)
         si i < expressiae.longitudo() {
-            result = scriptum("§\x24\x7b§\x7d", result, genExpressia(g, expressiae[i]))
+            result ← scriptum("§\x24\x7b§\x7d", result, genExpressia(g, expressiae[i]))
         }
         i += 1
     }
-    result = scriptum("§\x60", result)
+    result ← scriptum("§\x60", result)
     redde result
 }
