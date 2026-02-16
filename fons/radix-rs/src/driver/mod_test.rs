@@ -24,6 +24,15 @@ fn compile_faber_success_emits_output() {
 }
 
 #[test]
+fn compile_typescript_success_emits_output() {
+    let session = session(Target::TypeScript);
+    let result = compile(&session, "test.fab", "incipit {}");
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::TypeScript(_))));
+}
+
+#[test]
 fn compile_reports_lex_errors() {
     let session = session(Target::Rust);
     let result = compile(&session, "test.fab", "😀");
@@ -147,6 +156,18 @@ fn rust_target_reports_cura_arena_noop_warning() {
         !d.is_error()
             && d.message
                 .contains("cura arena has no effect for Rust targets")
+    }));
+}
+
+#[test]
+fn typescript_target_skips_rust_specific_cura_arena_warning() {
+    let session = session(Target::TypeScript);
+    let source = "incipit {\n  cura arena fixum mem {\n  }\n}";
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.diagnostics.iter().all(|d| {
+        !d.message
+            .contains("cura arena has no effect for Rust targets")
     }));
 }
 
