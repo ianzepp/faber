@@ -33,7 +33,7 @@
 //! rather than panicking, allowing continued analysis and error reporting.
 
 use super::Lowerer;
-use crate::semantic::{FuncSig, Mutability, ParamMode, ParamType, Primitive, Type, TypeId};
+use crate::semantic::{CollectionKind, FuncSig, Mutability, ParamMode, ParamType, Primitive, Type, TypeId};
 use crate::syntax::{Ident, TypeExpr, TypeExprKind};
 
 impl<'a> Lowerer<'a> {
@@ -79,7 +79,7 @@ impl<'a> Lowerer<'a> {
 
         let name_str = self.interner.resolve(name.name);
 
-        if let Some(prim) = primitive_from_name(name_str) {
+        if let Some(prim) = Primitive::from_name(name_str) {
             if !params.is_empty() {
                 self.error("primitive type cannot accept parameters");
                 return self.types.intern(Type::Error);
@@ -87,8 +87,16 @@ impl<'a> Lowerer<'a> {
             return self.types.primitive(prim);
         }
 
-        if let Some(collection_id) = self.lower_collection_type(name_str, params) {
-            return collection_id;
+        if let Some(collection) = CollectionKind::from_name(name_str) {
+            if params.len() != collection.arity() {
+                self.error(collection.arity_error());
+                return self.types.intern(Type::Error);
+            }
+            let lowered = params
+                .iter()
+                .map(|param| self.lower_type(param))
+                .collect::<Vec<_>>();
+            return collection.lower(self.types, &lowered);
         }
 
         let Some(def_id) = self.resolver.lookup(name.name) else {
@@ -125,54 +133,5 @@ impl<'a> Lowerer<'a> {
 
         let args = params.iter().map(|param| self.lower_type(param)).collect();
         self.types.intern(Type::Applied(base, args))
-    }
-
-    fn lower_collection_type(&mut self, name: &str, params: &[TypeExpr]) -> Option<TypeId> {
-        match name {
-            "lista" => {
-                if params.len() != 1 {
-                    self.error("lista requires one type parameter");
-                    return Some(self.types.intern(Type::Error));
-                }
-                let inner = self.lower_type(&params[0]);
-                Some(self.types.array(inner))
-            }
-            "tabula" => {
-                if params.len() != 2 {
-                    self.error("tabula requires two type parameters");
-                    return Some(self.types.intern(Type::Error));
-                }
-                let key = self.lower_type(&params[0]);
-                let value = self.lower_type(&params[1]);
-                Some(self.types.map(key, value))
-            }
-            "copia" => {
-                if params.len() != 1 {
-                    self.error("copia requires one type parameter");
-                    return Some(self.types.intern(Type::Error));
-                }
-                let inner = self.lower_type(&params[0]);
-                Some(self.types.set(inner))
-            }
-            _ => None,
-        }
-    }
-}
-
-fn primitive_from_name(name: &str) -> Option<Primitive> {
-    match name {
-        "textus" => Some(Primitive::Textus),
-        "numerus" => Some(Primitive::Numerus),
-        "fractus" => Some(Primitive::Fractus),
-        "bivalens" => Some(Primitive::Bivalens),
-        "nihil" => Some(Primitive::Nihil),
-        "vacuum" => Some(Primitive::Vacuum),
-        "numquam" => Some(Primitive::Numquam),
-        "ignotum" => Some(Primitive::Ignotum),
-        "octeti" => Some(Primitive::Octeti),
-        "objectum" => Some(Primitive::Ignotum),
-        "quidlibet" => Some(Primitive::Ignotum),
-        "curator" => Some(Primitive::Ignotum),
-        _ => None,
     }
 }

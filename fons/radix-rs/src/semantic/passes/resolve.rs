@@ -44,8 +44,8 @@
 use crate::hir::DefId;
 use crate::lexer::Interner;
 use crate::semantic::{
-    FuncSig, Mutability, ParamMode, ParamType, Resolver, ScopeKind, SemanticError, SemanticErrorKind, Symbol,
-    SymbolKind, TypeId, TypeTable,
+    CollectionKind, FuncSig, Mutability, ParamMode, ParamType, Primitive, Resolver, ScopeKind, SemanticError,
+    SemanticErrorKind, Symbol, SymbolKind, TypeId, TypeTable,
 };
 use crate::syntax::{
     BindingPattern, BlockStmt, ClausuraBody, DiscerneStmt, Expr, ExprKind, IfBody, Pattern, PatternBind, ProbandumDecl,
@@ -1117,15 +1117,22 @@ fn lower_named_type(
 ) -> Result<TypeId, TypeLowerError> {
     let name_str = interner.resolve(name.name);
 
-    if let Some(prim) = primitive_from_name(name_str) {
+    if let Some(prim) = Primitive::from_name(name_str) {
         if !params.is_empty() {
             return Err(TypeLowerError::Error("primitive type cannot accept parameters".to_owned()));
         }
         return Ok(types.primitive(prim));
     }
 
-    if let Some(collection_id) = lower_collection_type(name_str, params, resolver, interner, types)? {
-        return Ok(collection_id);
+    if let Some(collection) = CollectionKind::from_name(name_str) {
+        if params.len() != collection.arity() {
+            return Err(TypeLowerError::Error(collection.arity_error().to_owned()));
+        }
+        let lowered = params
+            .iter()
+            .map(|param| lower_type_expr(param, resolver, interner, types))
+            .collect::<Result<Vec<_>, _>>()?;
+        return Ok(collection.lower(types, &lowered));
     }
 
     let Some(def_id) = resolver.lookup(name.name) else {
@@ -1157,59 +1164,6 @@ fn lower_named_type(
         .map(|param| lower_type_expr(param, resolver, interner, types))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(types.intern(crate::semantic::Type::Applied(base, args)))
-}
-
-fn lower_collection_type(
-    name: &str,
-    params: &[TypeExpr],
-    resolver: &Resolver,
-    interner: &Interner,
-    types: &mut TypeTable,
-) -> Result<Option<TypeId>, TypeLowerError> {
-    let result = match name {
-        "lista" => {
-            if params.len() != 1 {
-                return Err(TypeLowerError::Error("lista requires one type parameter".to_owned()));
-            }
-            let inner = lower_type_expr(&params[0], resolver, interner, types)?;
-            Some(types.array(inner))
-        }
-        "tabula" => {
-            if params.len() != 2 {
-                return Err(TypeLowerError::Error("tabula requires two type parameters".to_owned()));
-            }
-            let key = lower_type_expr(&params[0], resolver, interner, types)?;
-            let value = lower_type_expr(&params[1], resolver, interner, types)?;
-            Some(types.map(key, value))
-        }
-        "copia" => {
-            if params.len() != 1 {
-                return Err(TypeLowerError::Error("copia requires one type parameter".to_owned()));
-            }
-            let inner = lower_type_expr(&params[0], resolver, interner, types)?;
-            Some(types.set(inner))
-        }
-        _ => None,
-    };
-    Ok(result)
-}
-
-fn primitive_from_name(name: &str) -> Option<crate::semantic::Primitive> {
-    match name {
-        "textus" => Some(crate::semantic::Primitive::Textus),
-        "numerus" => Some(crate::semantic::Primitive::Numerus),
-        "fractus" => Some(crate::semantic::Primitive::Fractus),
-        "bivalens" => Some(crate::semantic::Primitive::Bivalens),
-        "nihil" => Some(crate::semantic::Primitive::Nihil),
-        "vacuum" => Some(crate::semantic::Primitive::Vacuum),
-        "numquam" => Some(crate::semantic::Primitive::Numquam),
-        "ignotum" => Some(crate::semantic::Primitive::Ignotum),
-        "octeti" => Some(crate::semantic::Primitive::Octeti),
-        "objectum" => Some(crate::semantic::Primitive::Ignotum),
-        "quidlibet" => Some(crate::semantic::Primitive::Ignotum),
-        "curator" => Some(crate::semantic::Primitive::Ignotum),
-        _ => None,
-    }
 }
 
 fn modifier_bindings(modifiers: &[crate::syntax::FuncModifier]) -> Vec<&crate::syntax::Ident> {

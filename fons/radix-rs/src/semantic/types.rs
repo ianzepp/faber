@@ -293,6 +293,66 @@ pub enum Primitive {
     Octeti,   // bytes
 }
 
+impl Primitive {
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "textus" => Some(Self::Textus),
+            "numerus" => Some(Self::Numerus),
+            "fractus" => Some(Self::Fractus),
+            "bivalens" => Some(Self::Bivalens),
+            "nihil" => Some(Self::Nihil),
+            "vacuum" => Some(Self::Vacuum),
+            "numquam" => Some(Self::Numquam),
+            "ignotum" => Some(Self::Ignotum),
+            "octeti" => Some(Self::Octeti),
+            "objectum" | "quidlibet" | "curator" => Some(Self::Ignotum),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CollectionKind {
+    Lista,
+    Tabula,
+    Copia,
+}
+
+impl CollectionKind {
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "lista" => Some(Self::Lista),
+            "tabula" => Some(Self::Tabula),
+            "copia" => Some(Self::Copia),
+            _ => None,
+        }
+    }
+
+    pub fn arity(self) -> usize {
+        match self {
+            Self::Lista | Self::Copia => 1,
+            Self::Tabula => 2,
+        }
+    }
+
+    pub fn arity_error(self) -> &'static str {
+        match self {
+            Self::Lista => "lista requires one type parameter",
+            Self::Tabula => "tabula requires two type parameters",
+            Self::Copia => "copia requires one type parameter",
+        }
+    }
+
+    pub fn lower(self, types: &mut TypeTable, params: &[TypeId]) -> TypeId {
+        debug_assert_eq!(params.len(), self.arity());
+        match self {
+            Self::Lista => types.array(params[0]),
+            Self::Tabula => types.map(params[0], params[1]),
+            Self::Copia => types.set(params[0]),
+        }
+    }
+}
+
 /// Mutability for references
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mutability {
