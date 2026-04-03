@@ -1,6 +1,6 @@
 # Faber Romanus
 
-**The Roman Craftsman** — An LLM-oriented intermediate representation that compiles to Zig, Rust, C++, TypeScript, or Python.
+**The Roman Craftsman** — An LLM-oriented intermediate representation for compiling reviewed Faber programs into production target code.
 
 **[faberlang.dev](https://faberlang.dev)** — Official project website
 
@@ -27,7 +27,7 @@ itera ex items fixum item {
 
 - **LLMs write Faber.** Word-based, regular syntax. No lifetime annotations, no pointer semantics, no template noise. One language regardless of compile target.
 - **Humans skim Faber.** You see `si` (if), `itera` (iterate), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
-- **Compiler emits target code.** Zig, Rust, C++, TypeScript, or Python. The generated code is what actually runs — you never need to read it.
+- **Compiler emits target code.** The active `radix-rs` compiler currently targets Rust and canonical Faber output. Bootstrap compilers in this repository still cover additional targets such as TypeScript, Go, and Python. The generated code is what actually runs.
 
 The workflow: LLM drafts Faber → Human approves → Compiler emits production code.
 
@@ -88,9 +88,9 @@ The `§` symbol (section marker) distinguishes file-level configuration and impo
 
 **Compiler as Safety Net.** The compiler never crashes on malformed input — it collects errors and continues. When an LLM generates broken code, you see all the issues at once, not one at a time.
 
-**Target Transparency.** You pick a compile target (TypeScript, Zig, etc.) and use that ecosystem directly. Faber is a skin over the target, not a replacement for it.
+**Target Transparency.** You pick a compile target and use that ecosystem directly. Faber is a skin over the target, not a replacement for it.
 
-**Target Compatibility.** Not all targets support all features — the compiler validates your code against target capabilities and reports clear errors. See [docs/grammatica/targets.md](docs/grammatica/targets.md) for the compatibility matrix.
+**Target Compatibility.** Not all targets support all features, and not all compiler implementations in this repository are equally current. See [docs/grammatica/targets.md](docs/grammatica/targets.md) for the language-level compatibility matrix, and treat [`compilers/radix-rs`](compilers/radix-rs) as the primary delivery surface.
 
 ## Repository Contract
 
@@ -112,7 +112,8 @@ Current status model:
 ```bash
 # radix-rs (primary compiler — Rust target)
 cd compilers/radix-rs && cargo build --release
-cargo run -- emit examples/exempla/salve-munde.fab        # Emit Rust
+cargo run -- emit ../../examples/exempla/salve-munde.fab          # Emit one file as Rust
+cargo run -- emit-package ../../examples/exempla/cli/main.fab     # Emit a local multi-file package
 
 # Root-scoped primary checks
 bun run check:radix-rs
@@ -133,20 +134,26 @@ bun run lint:nanus-ts
 
 ## Project Structure
 
-| Component               | Description                                           |
-| ----------------------- | ----------------------------------------------------- |
-| **radix-rs**            | Primary compiler in Rust (~17k LOC, 39 tests)         |
-| **rivus**               | Self-hosting compiler in Faber (deprioritized)         |
-| **nanus-{ts,go,py,rs}** | Bootstrap compilers (minimal, stable)                  |
-| **norma/**              | Stdlib definitions with `@ verte` annotations          |
-| **norma-{ts,go,py,rs}** | Target-specific stdlib runtimes                        |
-| **proba/**              | YAML test specs (~75 files)                            |
-| **exempla/**            | Example .fab programs (~90 files)                      |
-| **golden/**             | Golden test outputs                                    |
-| **grammatica/**         | Language documentation (prose tutorials)               |
+The repository is organized as a family repo with isolated component domains:
 
-**Primary Compiler:** radix-rs (Rust, emits Rust and Faber targets)
-**Bootstrap Compilers:** nanus-go, nanus-ts, nanus-py, nanus-rs (emit TS, Go, Python, Rust)
+| Root                     | Description |
+| ------------------------ | ----------- |
+| [`compilers/`](compilers) | Compiler implementations, including active [`radix-rs`](compilers/radix-rs), bootstrap `nanus-*`, and experimental `rivus` surfaces |
+| [`stdlib/`](stdlib) | Standard library definitions, especially [`stdlib/norma`](stdlib/norma) and its `@ verte` translation metadata |
+| [`runtimes/`](runtimes) | Target-specific runtime support such as [`runtimes/norma-rs`](runtimes/norma-rs) and [`runtimes/norma-ts`](runtimes/norma-ts) |
+| [`tests/`](tests) | Shared validation assets including [`tests/proba`](tests/proba) and [`tests/golden`](tests/golden) |
+| [`examples/`](examples) | Example Faber programs in [`examples/exempla`](examples/exempla) |
+| [`docs/`](docs) | Language documentation and references, including [`docs/grammatica`](docs/grammatica) |
+| [`opus/`](opus) | Build outputs and generated artifacts |
+| [`project.yaml`](project.yaml) | Repo inventory and per-project status model |
+
+**Primary compiler:** [`compilers/radix-rs`](compilers/radix-rs)
+
+Current reality:
+- `radix-rs` is the active compiler and current delivery focus.
+- `radix-rs` currently emits Rust and canonical Faber output.
+- `nanus-*` compilers remain useful for older or secondary target paths.
+- `rivus` and related tooling are informative but not current delivery gates.
 
 ## Block Syntax Patterns
 

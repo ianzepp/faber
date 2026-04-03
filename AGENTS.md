@@ -33,8 +33,8 @@ functio adde(T elem) -> vacuum
 ## Project Layout
 
 ```
-fons/                   # Source code ("fons" = source/spring)
-├── radix-rs/           # Primary compiler (Rust, ~17k LOC)
+compilers/
+├── radix-rs/           # Primary compiler (Rust)
 │   └── src/
 │       ├── lexer/      # Tokenization (Unicode XID, NFC)
 │       ├── parser/     # Recursive descent parser
@@ -58,16 +58,26 @@ fons/                   # Source code ("fons" = source/spring)
 │   └── codegen/        # Code generation (.fab)
 │       ├── norma.gen.fab  # Generated stdlib
 │       └── ts/, go/    # Target-specific codegen
-├── rivus-cli/          # Rivus CLI entry point
-├── proba/              # Shared test suite (YAML specs, ~75 files)
+└── rivus-cli/          # Rivus CLI entry point
+
+tests/
+├── proba/              # Shared test suite (YAML specs)
 │   ├── codegen/        # Codegen tests by target
 │   ├── capabilities/   # Feature capability tests
 │   ├── harness/        # Test runner infrastructure
 │   └── norma/          # Stdlib tests
-├── exempla/            # Example .fab programs (~90 files)
-├── golden/             # Golden test outputs
-├── grammatica/         # Language documentation (prose tutorials)
-├── norma/              # Standard library definitions (@ verte annotations)
+└── golden/             # Golden test outputs
+
+examples/
+└── exempla/            # Example .fab programs
+
+docs/
+└── grammatica/         # Language documentation (prose tutorials)
+
+stdlib/
+└── norma/              # Standard library definitions (@ verte annotations)
+
+runtimes/
 ├── norma-ts/           # TypeScript stdlib runtime
 ├── norma-go/           # Go stdlib runtime
 ├── norma-py/           # Python stdlib runtime
@@ -106,8 +116,9 @@ The production compiler at `compilers/radix-rs/`. **Use this for all new develop
 
 ```
 cd compilers/radix-rs && cargo build --release             # Build
-cd compilers/radix-rs && cargo test                        # Run tests (39 tests)
+cd compilers/radix-rs && cargo test                        # Run tests
 cd compilers/radix-rs && cargo run -- emit <file.fab>      # Emit Rust
+cd compilers/radix-rs && cargo run -- emit-package <path>  # Emit local multi-file package as Rust
 cd compilers/radix-rs && cargo run -- parse <file.fab>     # Parse only
 cd compilers/radix-rs && cargo run -- check <file.fab>     # Semantic analysis
 ```

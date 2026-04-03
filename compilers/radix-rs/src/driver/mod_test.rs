@@ -111,6 +111,58 @@ incipit {
 }
 
 #[test]
+fn inline_iacit_moritor_and_tacet_compile_for_faber_target() {
+    let session = session(Target::Faber);
+    let source = r#"functio probe(bivalens ok) -> vacuum {
+  si ok iacit "boom"
+  secus moritor "bad"
+
+  si ok tacet
+}
+
+incipit {
+  probe(verum)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(matches!(result.output, Some(crate::Output::Faber(_))));
+    assert!(result.diagnostics.iter().all(|d| !d
+        .message
+        .contains("invalid expression produced during lowering")));
+}
+
+#[test]
+fn rust_target_rejects_exception_constructs() {
+    let session = session(Target::Rust);
+    let source = r#"functio probe(bivalens ok) -> vacuum {
+  si ok iacit "boom"
+
+  tempta {
+    iace "bad"
+  } cape err {
+    scribe err
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("iacit is not supported for Rust targets")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("tempta is not supported for Rust targets")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("cape is not supported for Rust targets")));
+}
+
+#[test]
 fn unsupported_expression_kind_reports_lowering_error() {
     let session = session(Target::Rust);
     let source = r#"incipit {
@@ -548,6 +600,60 @@ incipit {
         .code
         .contains("vec![\"a\".to_string(), \"b\".to_string()]"));
     assert!(output.code.contains("unwrap_or(\"x\".to_string())"));
+}
+
+#[test]
+fn rust_output_wraps_optional_local_initializers_in_some() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum si textus actualName = "Marcus"
+  fixum si textus maybe = nihil
+  scribe actualName, maybe
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output
+        .code
+        .contains("let actualName: Option<String> = Some(\"Marcus\".to_string());"));
+    assert!(output.code.contains("let maybe: Option<String> = None;"));
+}
+
+#[test]
+fn rust_output_uses_or_for_option_coalesce() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum si textus a = nihil
+  fixum si textus b = nihil
+  fixum first = a vel b
+  scribe first
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".or("));
+}
+
+#[test]
+fn rust_output_uses_debug_format_for_collection_scribe() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum textus[] names = ["a", "b"]
+  scribe names
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("println!(\"{:?}\", names);"));
 }
 
 #[test]

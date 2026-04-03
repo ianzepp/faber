@@ -32,13 +32,17 @@
 
 mod session;
 mod source;
+mod project;
 
+pub use project::compile_package;
 pub use session::{Config, Session};
 pub use source::SourceFile;
 
 use crate::codegen::{self, Target};
 use crate::diagnostics::Diagnostic;
+use crate::hir::HirProgram;
 use crate::lexer;
+use crate::lexer::Interner;
 use crate::parser;
 use crate::semantic::{self, PassConfig};
 use crate::syntax::*;
@@ -62,47 +66,62 @@ use crate::CompileResult;
 /// - Semantic: Analyze types and borrows
 /// - Codegen: Emit target code
 pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
-    let mut diagnostics = Vec::new();
+    let mut analysis = match analyze_source(session, name, source) {
+        Ok(analysis) => analysis,
+        Err(diagnostics) => return CompileResult { output: None, diagnostics },
+    };
 
     // -------------------------------------------------------------------------
-    // PHASE 1: LEXING
-    // Tokenize the source into a stream of tokens
+    // PHASE 4: CODE GENERATION
+    // Emit target-specific source code
     // -------------------------------------------------------------------------
+    match codegen::generate(session.config.target, &analysis.hir, &analysis.types, &analysis.interner) {
+        Ok(output) => CompileResult { output: Some(output), diagnostics: analysis.diagnostics },
+        Err(err) => {
+            analysis.diagnostics.push(Diagnostic::codegen_error(&err.message));
+            CompileResult { output: None, diagnostics: analysis.diagnostics }
+        }
+    }
+}
+
+pub(crate) struct AnalyzedUnit {
+    pub interner: Interner,
+    pub types: semantic::TypeTable,
+    pub hir: HirProgram,
+    pub diagnostics: Vec<Diagnostic>,
+}
+
+pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Result<AnalyzedUnit, Vec<Diagnostic>> {
+    let mut diagnostics = Vec::new();
+
     let lex_result = lexer::lex(source);
     if !lex_result.success() {
         for err in &lex_result.errors {
             diagnostics.push(Diagnostic::from_lex_error(name, source, err));
         }
-        return CompileResult { output: None, diagnostics };
+        return Err(diagnostics);
     }
 
-    // -------------------------------------------------------------------------
-    // PHASE 2: PARSING
-    // Build the abstract syntax tree from tokens
-    // -------------------------------------------------------------------------
     let parse_result = parser::parse(lex_result);
     if !parse_result.success() {
         for err in &parse_result.errors {
             diagnostics.push(Diagnostic::from_parse_error(name, source, err));
         }
-        return CompileResult { output: None, diagnostics };
+        return Err(diagnostics);
     }
 
     let parser::ParseResult { program, interner, .. } = parse_result;
-    let program = program.unwrap();
+    let program = program.expect("successful parse result must contain a program");
 
-    // -------------------------------------------------------------------------
-    // TARGET-SPECIFIC WARNINGS
-    // Scan for constructs that are no-ops in the target (e.g., arena in Rust)
-    // -------------------------------------------------------------------------
     if session.config.target == Target::Rust {
+        diagnostics.extend(collect_rust_unsupported_errors(&program, name));
         diagnostics.extend(collect_rust_noop_warnings(&program, name));
     }
 
-    // -------------------------------------------------------------------------
-    // PHASE 3: SEMANTIC ANALYSIS
-    // Name resolution, type checking, borrow analysis
-    // -------------------------------------------------------------------------
+    if diagnostics.iter().any(Diagnostic::is_error) {
+        return Err(diagnostics);
+    }
+
     let pass_config = PassConfig::for_target(session.config.target);
     let semantic_result = semantic::analyze(&program, &pass_config, &interner);
 
@@ -111,29 +130,457 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     }
 
     if !semantic_result.success() {
-        return CompileResult { output: None, diagnostics };
+        return Err(diagnostics);
     }
 
-    let hir = semantic_result.hir.unwrap();
-
-    // -------------------------------------------------------------------------
-    // PHASE 4: CODE GENERATION
-    // Emit target-specific source code
-    // -------------------------------------------------------------------------
-    match codegen::generate(session.config.target, &hir, &semantic_result.types, &interner) {
-        Ok(output) => CompileResult { output: Some(output), diagnostics },
-        Err(err) => {
-            diagnostics.push(Diagnostic::codegen_error(&err.message));
-            CompileResult { output: None, diagnostics }
-        }
-    }
+    Ok(AnalyzedUnit {
+        interner,
+        types: semantic_result.types,
+        hir: semantic_result
+            .hir
+            .expect("successful semantic result must contain lowered HIR"),
+        diagnostics,
+    })
 }
 
 // =============================================================================
 // HELPERS
 // =============================================================================
 //
-// Target-specific warning detection.
+// Target-specific validation and warning detection.
+
+fn collect_rust_unsupported_errors(program: &Program, file: &str) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    for stmt in &program.stmts {
+        scan_stmt_for_rust_unsupported_errors(stmt, file, &mut diagnostics);
+    }
+    diagnostics
+}
+
+fn scan_stmt_for_rust_unsupported_errors(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+    match &stmt.kind {
+        StmtKind::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
+        StmtKind::Func(func) => {
+            if let Some(body) = &func.body {
+                scan_block_for_rust_unsupported_errors(body, file, diagnostics);
+            }
+        }
+        StmtKind::Class(class) => {
+            for member in &class.members {
+                if let ClassMemberKind::Method(method) = &member.kind {
+                    if let Some(body) = &method.body {
+                        scan_block_for_rust_unsupported_errors(body, file, diagnostics);
+                    }
+                }
+            }
+        }
+        StmtKind::Probandum(test) => {
+            for setup in &test.body.setup {
+                scan_block_for_rust_unsupported_errors(&setup.body, file, diagnostics);
+            }
+            for case in &test.body.tests {
+                scan_block_for_rust_unsupported_errors(&case.body, file, diagnostics);
+            }
+            for nested in &test.body.nested {
+                scan_probandum_for_rust_unsupported_errors(nested, file, diagnostics);
+            }
+        }
+        StmtKind::Proba(test) => scan_block_for_rust_unsupported_errors(&test.body, file, diagnostics),
+        StmtKind::Si(if_stmt) => {
+            scan_expr_for_rust_unsupported_errors(&if_stmt.cond, file, diagnostics);
+            scan_if_body_for_rust_unsupported_errors(&if_stmt.then, file, diagnostics);
+            if let Some(catch) = &if_stmt.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+            if let Some(else_) = &if_stmt.else_ {
+                scan_else_for_rust_unsupported_errors(else_, file, diagnostics);
+            }
+        }
+        StmtKind::Dum(while_stmt) => {
+            scan_expr_for_rust_unsupported_errors(&while_stmt.cond, file, diagnostics);
+            scan_if_body_for_rust_unsupported_errors(&while_stmt.body, file, diagnostics);
+            if let Some(catch) = &while_stmt.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+        }
+        StmtKind::Itera(iter_stmt) => {
+            scan_expr_for_rust_unsupported_errors(&iter_stmt.iterable, file, diagnostics);
+            scan_if_body_for_rust_unsupported_errors(&iter_stmt.body, file, diagnostics);
+            if let Some(catch) = &iter_stmt.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+        }
+        StmtKind::Elige(switch_stmt) => {
+            scan_expr_for_rust_unsupported_errors(&switch_stmt.expr, file, diagnostics);
+            for case in &switch_stmt.cases {
+                scan_expr_for_rust_unsupported_errors(&case.value, file, diagnostics);
+                scan_if_body_for_rust_unsupported_errors(&case.body, file, diagnostics);
+            }
+            if let Some(default) = &switch_stmt.default {
+                scan_if_body_for_rust_unsupported_errors(&default.body, file, diagnostics);
+            }
+            if let Some(catch) = &switch_stmt.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+        }
+        StmtKind::Discerne(match_stmt) => {
+            for subject in &match_stmt.subjects {
+                scan_expr_for_rust_unsupported_errors(subject, file, diagnostics);
+            }
+            for arm in &match_stmt.arms {
+                scan_if_body_for_rust_unsupported_errors(&arm.body, file, diagnostics);
+            }
+            if let Some(default) = &match_stmt.default {
+                scan_if_body_for_rust_unsupported_errors(&default.body, file, diagnostics);
+            }
+        }
+        StmtKind::Custodi(guard_stmt) => {
+            for clause in &guard_stmt.clauses {
+                scan_expr_for_rust_unsupported_errors(&clause.cond, file, diagnostics);
+                scan_if_body_for_rust_unsupported_errors(&clause.body, file, diagnostics);
+            }
+        }
+        StmtKind::Fac(fac_stmt) => {
+            scan_block_for_rust_unsupported_errors(&fac_stmt.body, file, diagnostics);
+            if let Some(catch) = &fac_stmt.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+            if let Some(cond) = &fac_stmt.while_ {
+                scan_expr_for_rust_unsupported_errors(cond, file, diagnostics);
+            }
+        }
+        StmtKind::Redde(ret) => {
+            if let Some(value) = &ret.value {
+                scan_expr_for_rust_unsupported_errors(value, file, diagnostics);
+            }
+        }
+        StmtKind::Iace(stmt) => {
+            diagnostics.push(rust_target_exception_diagnostic(
+                file,
+                stmt.value.span,
+                "iace is not supported for Rust targets",
+            ));
+            scan_expr_for_rust_unsupported_errors(&stmt.value, file, diagnostics);
+        }
+        StmtKind::Mori(stmt) => scan_expr_for_rust_unsupported_errors(&stmt.value, file, diagnostics),
+        StmtKind::Tempta(stmt) => {
+            diagnostics.push(rust_target_exception_diagnostic(
+                file,
+                stmt.body.span,
+                "tempta is not supported for Rust targets",
+            ));
+            scan_block_for_rust_unsupported_errors(&stmt.body, file, diagnostics);
+            if let Some(catch) = &stmt.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+            if let Some(finally) = &stmt.finally {
+                scan_block_for_rust_unsupported_errors(finally, file, diagnostics);
+            }
+        }
+        StmtKind::Adfirma(stmt) => {
+            scan_expr_for_rust_unsupported_errors(&stmt.cond, file, diagnostics);
+            if let Some(message) = &stmt.message {
+                scan_expr_for_rust_unsupported_errors(message, file, diagnostics);
+            }
+        }
+        StmtKind::Scribe(stmt) => {
+            for arg in &stmt.args {
+                scan_expr_for_rust_unsupported_errors(arg, file, diagnostics);
+            }
+        }
+        StmtKind::Incipit(entry) => {
+            if let Some(exitus) = &entry.exitus {
+                scan_expr_for_rust_unsupported_errors(exitus, file, diagnostics);
+            }
+            scan_if_body_for_rust_unsupported_errors(&entry.body, file, diagnostics);
+        }
+        StmtKind::Cura(resource) => {
+            if let Some(init) = &resource.init {
+                scan_expr_for_rust_unsupported_errors(init, file, diagnostics);
+            }
+            scan_block_for_rust_unsupported_errors(&resource.body, file, diagnostics);
+            if let Some(catch) = &resource.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+        }
+        StmtKind::Ad(endpoint) => {
+            for arg in &endpoint.args {
+                scan_expr_for_rust_unsupported_errors(&arg.value, file, diagnostics);
+            }
+            if let Some(body) = &endpoint.body {
+                scan_block_for_rust_unsupported_errors(body, file, diagnostics);
+            }
+            if let Some(catch) = &endpoint.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+        }
+        StmtKind::Expr(expr) => scan_expr_for_rust_unsupported_errors(&expr.expr, file, diagnostics),
+        StmtKind::Var(decl) => {
+            if let Some(init) = &decl.init {
+                scan_expr_for_rust_unsupported_errors(init, file, diagnostics);
+            }
+        }
+        StmtKind::Import(_) | StmtKind::TypeAlias(_) | StmtKind::Enum(_) | StmtKind::Union(_) | StmtKind::Interface(_)
+        | StmtKind::Rumpe(_) | StmtKind::Perge(_) => {}
+        StmtKind::Ex(stmt) => scan_expr_for_rust_unsupported_errors(&stmt.source, file, diagnostics),
+    }
+}
+
+fn scan_probandum_for_rust_unsupported_errors(test: &ProbandumDecl, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+    for setup in &test.body.setup {
+        scan_block_for_rust_unsupported_errors(&setup.body, file, diagnostics);
+    }
+    for case in &test.body.tests {
+        scan_block_for_rust_unsupported_errors(&case.body, file, diagnostics);
+    }
+    for nested in &test.body.nested {
+        scan_probandum_for_rust_unsupported_errors(nested, file, diagnostics);
+    }
+}
+
+fn scan_block_for_rust_unsupported_errors(block: &BlockStmt, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+    for stmt in &block.stmts {
+        scan_stmt_for_rust_unsupported_errors(stmt, file, diagnostics);
+    }
+}
+
+fn scan_if_body_for_rust_unsupported_errors(body: &IfBody, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+    match body {
+        IfBody::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
+        IfBody::Ergo(stmt) => scan_stmt_for_rust_unsupported_errors(stmt, file, diagnostics),
+        IfBody::InlineReturn(ret) => scan_inline_return_for_rust_unsupported_errors(ret, file, diagnostics),
+    }
+}
+
+fn scan_else_for_rust_unsupported_errors(clause: &SecusClause, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+    match clause {
+        SecusClause::Sin(stmt) => {
+            scan_expr_for_rust_unsupported_errors(&stmt.cond, file, diagnostics);
+            scan_if_body_for_rust_unsupported_errors(&stmt.then, file, diagnostics);
+            if let Some(catch) = &stmt.catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+            if let Some(else_) = &stmt.else_ {
+                scan_else_for_rust_unsupported_errors(else_, file, diagnostics);
+            }
+        }
+        SecusClause::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
+        SecusClause::Stmt(stmt) => scan_stmt_for_rust_unsupported_errors(stmt, file, diagnostics),
+        SecusClause::InlineReturn(ret) => scan_inline_return_for_rust_unsupported_errors(ret, file, diagnostics),
+    }
+}
+
+fn scan_inline_return_for_rust_unsupported_errors(
+    ret: &InlineReturn,
+    file: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    match ret {
+        InlineReturn::Reddit(expr) | InlineReturn::Moritor(expr) => {
+            scan_expr_for_rust_unsupported_errors(expr, file, diagnostics);
+        }
+        InlineReturn::Iacit(expr) => {
+            diagnostics.push(rust_target_exception_diagnostic(
+                file,
+                expr.span,
+                "iacit is not supported for Rust targets",
+            ));
+            scan_expr_for_rust_unsupported_errors(expr, file, diagnostics);
+        }
+        InlineReturn::Tacet => {}
+    }
+}
+
+fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &mut Vec<Diagnostic>) {
+    use crate::syntax::{
+        ArrayElement, ClausuraBody, CollectionFilterKind, ExprKind, NonNullKind, ObjectKey, OptionalChainKind,
+        PraefixumBody,
+    };
+
+    match &expr.kind {
+        ExprKind::Binary(binary) => {
+            scan_expr_for_rust_unsupported_errors(&binary.lhs, file, diagnostics);
+            scan_expr_for_rust_unsupported_errors(&binary.rhs, file, diagnostics);
+        }
+        ExprKind::Unary(unary) => scan_expr_for_rust_unsupported_errors(&unary.operand, file, diagnostics),
+        ExprKind::Call(call) => {
+            scan_expr_for_rust_unsupported_errors(&call.callee, file, diagnostics);
+            for arg in &call.args {
+                scan_expr_for_rust_unsupported_errors(&arg.value, file, diagnostics);
+            }
+        }
+        ExprKind::Member(member) => scan_expr_for_rust_unsupported_errors(&member.object, file, diagnostics),
+        ExprKind::Index(index) => {
+            scan_expr_for_rust_unsupported_errors(&index.object, file, diagnostics);
+            scan_expr_for_rust_unsupported_errors(&index.index, file, diagnostics);
+        }
+        ExprKind::OptionalChain(chain) => {
+            scan_expr_for_rust_unsupported_errors(&chain.object, file, diagnostics);
+            match &chain.chain {
+                OptionalChainKind::Member(_) => {}
+                OptionalChainKind::Index(index) => scan_expr_for_rust_unsupported_errors(index, file, diagnostics),
+                OptionalChainKind::Call(args) => {
+                    for arg in args {
+                        scan_expr_for_rust_unsupported_errors(&arg.value, file, diagnostics);
+                    }
+                }
+            }
+        }
+        ExprKind::NonNull(chain) => {
+            scan_expr_for_rust_unsupported_errors(&chain.object, file, diagnostics);
+            match &chain.chain {
+                NonNullKind::Member(_) => {}
+                NonNullKind::Index(index) => scan_expr_for_rust_unsupported_errors(index, file, diagnostics),
+                NonNullKind::Call(args) => {
+                    for arg in args {
+                        scan_expr_for_rust_unsupported_errors(&arg.value, file, diagnostics);
+                    }
+                }
+            }
+        }
+        ExprKind::Assign(assign) => {
+            scan_expr_for_rust_unsupported_errors(&assign.target, file, diagnostics);
+            scan_expr_for_rust_unsupported_errors(&assign.value, file, diagnostics);
+        }
+        ExprKind::Ternary(ternary) => {
+            scan_expr_for_rust_unsupported_errors(&ternary.cond, file, diagnostics);
+            scan_expr_for_rust_unsupported_errors(&ternary.then, file, diagnostics);
+            scan_expr_for_rust_unsupported_errors(&ternary.else_, file, diagnostics);
+        }
+        ExprKind::Array(items) => {
+            for item in &items.elements {
+                match item {
+                    ArrayElement::Expr(expr) | ArrayElement::Spread(expr) => {
+                        scan_expr_for_rust_unsupported_errors(expr, file, diagnostics);
+                    }
+                }
+            }
+        }
+        ExprKind::Object(fields) => {
+            for field in &fields.fields {
+                match &field.key {
+                    ObjectKey::Computed(expr) | ObjectKey::Spread(expr) => {
+                        scan_expr_for_rust_unsupported_errors(expr, file, diagnostics);
+                    }
+                    ObjectKey::Ident(_) | ObjectKey::String(_) => {}
+                }
+                if let Some(value) = &field.value {
+                    scan_expr_for_rust_unsupported_errors(value, file, diagnostics);
+                }
+            }
+        }
+        ExprKind::Scriptum(scriptum) => {
+            for arg in &scriptum.args {
+                scan_expr_for_rust_unsupported_errors(arg, file, diagnostics);
+            }
+        }
+        ExprKind::Ab(ab) => {
+            scan_expr_for_rust_unsupported_errors(&ab.source, file, diagnostics);
+            if let Some(filter) = &ab.filter {
+                match &filter.kind {
+                    CollectionFilterKind::Condition(pred) => {
+                        scan_expr_for_rust_unsupported_errors(pred, file, diagnostics);
+                    }
+                    CollectionFilterKind::Property(_) => {}
+                }
+            }
+            for transform in &ab.transforms {
+                if let Some(arg) = &transform.arg {
+                    scan_expr_for_rust_unsupported_errors(arg, file, diagnostics);
+                }
+            }
+        }
+        ExprKind::Clausura(clausura) => {
+            match &clausura.body {
+                ClausuraBody::Expr(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
+                ClausuraBody::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
+            }
+        }
+        ExprKind::Conversio(conversio) => {
+            scan_expr_for_rust_unsupported_errors(&conversio.expr, file, diagnostics);
+            if let Some(fallback) = &conversio.fallback {
+                scan_expr_for_rust_unsupported_errors(fallback, file, diagnostics);
+            }
+        }
+        ExprKind::Cede(cede) => scan_expr_for_rust_unsupported_errors(&cede.expr, file, diagnostics),
+        ExprKind::Verte(verte) => scan_expr_for_rust_unsupported_errors(&verte.expr, file, diagnostics),
+        ExprKind::Intervallum(range) => {
+            scan_expr_for_rust_unsupported_errors(&range.start, file, diagnostics);
+            scan_expr_for_rust_unsupported_errors(&range.end, file, diagnostics);
+            if let Some(step) = &range.step {
+                scan_expr_for_rust_unsupported_errors(step, file, diagnostics);
+            }
+        }
+        ExprKind::Finge(finge) => {
+            for field in &finge.fields {
+                scan_expr_for_rust_unsupported_errors(&field.value, file, diagnostics);
+            }
+        }
+        ExprKind::Praefixum(praefixum) => match &praefixum.body {
+            PraefixumBody::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
+            PraefixumBody::Expr(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
+        },
+        ExprKind::Paren(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
+        ExprKind::Literal(_)
+        | ExprKind::Ident(_)
+        | ExprKind::Lege(_)
+        | ExprKind::Sed(_)
+        | ExprKind::Ego(_) => {}
+    }
+}
+
+fn rust_target_exception_diagnostic(file: &str, span: crate::lexer::Span, message: &str) -> Diagnostic {
+    Diagnostic::error(message)
+        .with_code("TARGET001")
+        .with_file(file)
+        .with_span(span)
+        .with_help("use 'mori'/'moritor' for panic-style aborts, or target Faber/TypeScript for exception flow")
+}
 
 /// Collect warnings for Rust-specific no-ops.
 ///

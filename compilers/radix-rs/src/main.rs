@@ -44,6 +44,7 @@ fn main() {
         "hir" => cmd_hir(&args[2..]),
         "check" => cmd_check(&args[2..]),
         "emit" => cmd_emit(&args[2..]),
+        "emit-package" => cmd_emit_package(&args[2..]),
         "help" | "--help" | "-h" => print_usage(),
         _ => {
             eprintln!("unknown command: {}", command);
@@ -64,6 +65,7 @@ fn print_usage() {
     eprintln!("  hir <file>              Lower AST to HIR and output as JSON");
     eprintln!("  check [--permissive] <file> Run semantic analysis");
     eprintln!("  emit [-t target] <file> Compile to target (rust, faber)");
+    eprintln!("  emit-package [-t target] <path> Compile a local multi-file package");
     eprintln!();
     eprintln!("If no file is given, reads from stdin.");
 }
@@ -418,6 +420,51 @@ fn cmd_emit(args: &[String]) {
     }
 }
 
+fn cmd_emit_package(args: &[String]) {
+    let mut target = radix::codegen::Target::Rust;
+    let mut file_args = args;
+
+    if args.len() >= 2 && (args[0] == "-t" || args[0] == "--target") {
+        target = match args[1].as_str() {
+            "rust" | "rs" => radix::codegen::Target::Rust,
+            "faber" | "fab" => radix::codegen::Target::Faber,
+            "ts" | "typescript" => radix::codegen::Target::TypeScript,
+            other => {
+                eprintln!("unknown target: {}", other);
+                std::process::exit(1);
+            }
+        };
+        file_args = &args[2..];
+    }
+
+    if file_args.is_empty() {
+        eprintln!("emit-package requires a package entry file, directory, or faber.fab manifest");
+        std::process::exit(1);
+    }
+
+    let config = radix::driver::Config::default().with_target(target);
+    let compiler = radix::Compiler::new(config);
+    let result = compiler.compile_package(&PathBuf::from(&file_args[0]));
+
+    for diag in &result.diagnostics {
+        if diag.is_error() {
+            eprintln!("error: {}", diag.message);
+        } else {
+            eprintln!("warning: {}", diag.message);
+        }
+    }
+
+    match result.output {
+        Some(radix::Output::Rust(out)) => println!("{}", out.code),
+        Some(radix::Output::Faber(out)) => println!("{}", out.code),
+        Some(radix::Output::TypeScript(out)) => println!("{}", out.code),
+        None => {
+            eprintln!("compilation failed");
+            std::process::exit(1);
+        }
+    }
+}
+
 /// Escape special characters for JSON strings.
 fn escape_json(s: &str) -> String {
     s.replace('\\', "\\\\")
@@ -482,5 +529,11 @@ mod tests {
         let file = write_temp_fab("emit-faber", "incipit {}");
         let args = vec!["-t".to_owned(), "faber".to_owned(), file];
         cmd_emit(&args);
+    }
+
+    #[test]
+    fn cmd_emit_package_supports_cli_example() {
+        let args = vec!["../../examples/exempla/cli/main.fab".to_owned()];
+        cmd_emit_package(&args);
     }
 }

@@ -590,7 +590,11 @@ pub fn generate_expr(
             if args.is_empty() {
                 w.write("println!()");
             } else {
-                let format = vec!["{}"; args.len()].join(" ");
+                let format = args
+                    .iter()
+                    .map(|arg| rust_scribe_format(arg, types))
+                    .collect::<Vec<_>>()
+                    .join(" ");
                 w.write("println!(\"");
                 w.write(&format);
                 w.write("\"");
@@ -982,12 +986,17 @@ fn generate_binary_expr(
 ) -> Result<(), CodegenError> {
     match op {
         HirBinOp::Coalesce => {
-            let lhs_ty = lhs.ty.map(|ty| types.get(ty));
+            let lhs_ty = lhs.ty.map(|ty| resolve_type(ty, types));
             match lhs_ty {
                 Some(Type::Option(_)) => {
                     w.write("(");
                     generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    w.write(").unwrap_or(");
+                    let rhs_ty = rhs.ty.map(|ty| resolve_type(ty, types));
+                    if matches!(rhs_ty, Some(Type::Option(_))) {
+                        w.write(").or(");
+                    } else {
+                        w.write(").unwrap_or(");
+                    }
                     generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
                     w.write(")");
                 }
@@ -1209,6 +1218,35 @@ fn apply_regex_flags(pattern: &str, flags: Option<&str>) -> String {
         pattern.to_owned()
     } else {
         format!("(?{}){}", mapped, pattern)
+    }
+}
+
+fn rust_scribe_format(expr: &HirExpr, types: &TypeTable) -> &'static str {
+    if matches!(
+        expr.kind,
+        HirExprKind::Literal(HirLiteral::String(_))
+            | HirExprKind::Literal(HirLiteral::Int(_))
+            | HirExprKind::Literal(HirLiteral::Float(_))
+            | HirExprKind::Literal(HirLiteral::Bool(_))
+    ) {
+        return "{}";
+    }
+
+    match expr.ty.map(|ty| resolve_type(ty, types)) {
+        Some(Type::Primitive(Primitive::Textus))
+        | Some(Type::Primitive(Primitive::Numerus))
+        | Some(Type::Primitive(Primitive::Fractus))
+        | Some(Type::Primitive(Primitive::Bivalens))
+        | Some(Type::Primitive(Primitive::Vacuum))
+        | Some(Type::Primitive(Primitive::Nihil)) => "{}",
+        _ => "{:?}",
+    }
+}
+
+fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
+    match types.get(type_id) {
+        Type::Alias(_, resolved) => resolve_type(*resolved, types),
+        ty => ty.clone(),
     }
 }
 

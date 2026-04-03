@@ -40,3 +40,11 @@ fn compiler_compile_reports_io_error_for_missing_file() {
         .iter()
         .any(|d| d.message.contains("cannot read")));
 }
+
+#[test]
+fn compiler_compile_package_supports_cli_example() {
+    let compiler = Compiler::new(Config::default());
+    let result = compiler.compile_package(Path::new("../../examples/exempla/cli/main.fab"));
+
+    assert!(result.success(), "expected package compile success");
+}

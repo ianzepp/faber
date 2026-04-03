@@ -331,14 +331,17 @@ impl<'a> Lowerer<'a> {
                 HirBlock { stmts, expr: None, span: self.current_span }
             }
             crate::syntax::IfBody::InlineReturn(ret) => {
-                let stmt = self.lower_inline_return(ret);
-                HirBlock { stmts: vec![stmt], expr: None, span: self.current_span }
+                let stmts = self.lower_inline_return(ret).into_iter().collect();
+                HirBlock { stmts, expr: None, span: self.current_span }
             }
         }
     }
 
-    /// Lower inline return to statement
-    fn lower_inline_return(&mut self, ret: &crate::syntax::InlineReturn) -> HirStmt {
+    /// Lower inline control-flow to an optional statement.
+    ///
+    /// WHY: `reddit`, `iacit`, and `moritor` are distinct exits, while `tacet`
+    /// is an explicit no-op and should not be rewritten into an implicit return.
+    fn lower_inline_return(&mut self, ret: &crate::syntax::InlineReturn) -> Option<HirStmt> {
         let id = self.next_hir_id();
         let (kind, span) = match ret {
             crate::syntax::InlineReturn::Reddit(expr) => {
@@ -346,16 +349,32 @@ impl<'a> Lowerer<'a> {
                 (HirStmtKind::Redde(Some(expr_hir)), expr.span)
             }
             crate::syntax::InlineReturn::Iacit(expr) => {
-                let expr_hir = self.lower_expr(expr);
-                (HirStmtKind::Redde(Some(expr_hir)), expr.span)
+                let value = self.lower_expr(expr);
+                (
+                    HirStmtKind::Expr(HirExpr {
+                        id: self.next_hir_id(),
+                        kind: HirExprKind::Throw(Box::new(value)),
+                        ty: None,
+                        span: expr.span,
+                    }),
+                    expr.span,
+                )
             }
             crate::syntax::InlineReturn::Moritor(expr) => {
-                let expr_hir = self.lower_expr(expr);
-                (HirStmtKind::Redde(Some(expr_hir)), expr.span)
+                let value = self.lower_expr(expr);
+                (
+                    HirStmtKind::Expr(HirExpr {
+                        id: self.next_hir_id(),
+                        kind: HirExprKind::Panic(Box::new(value)),
+                        ty: None,
+                        span: expr.span,
+                    }),
+                    expr.span,
+                )
             }
-            crate::syntax::InlineReturn::Tacet => (HirStmtKind::Redde(None), self.current_span),
+            crate::syntax::InlineReturn::Tacet => return None,
         };
-        HirStmt { id, kind, span }
+        Some(HirStmt { id, kind, span })
     }
 
     /// Lower a block statement

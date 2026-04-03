@@ -697,8 +697,8 @@ impl<'a> Lowerer<'a> {
                 HirBlock { stmts: lower_stmt_expanded(self, stmt), expr: None, span: stmt.span }
             }
             crate::syntax::SecusClause::InlineReturn(ret) => {
-                let stmt = self.lower_inline_return(ret);
-                HirBlock { stmts: vec![stmt], expr: None, span: self.current_span }
+                let stmts = self.lower_inline_return(ret).into_iter().collect();
+                HirBlock { stmts, expr: None, span: self.current_span }
             }
         }
     }

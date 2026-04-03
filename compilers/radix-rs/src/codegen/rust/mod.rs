@@ -695,6 +695,12 @@ impl Codegen for RustCodegen<'_> {
     type Output = RustOutput;
 
     fn generate(&self, hir: &HirProgram, types: &TypeTable, _interner: &Interner) -> Result<RustOutput, CodegenError> {
+        self.generate_output(hir, types, false)
+    }
+}
+
+impl RustCodegen<'_> {
+    fn generate_output(&self, hir: &HirProgram, types: &TypeTable, module_mode: bool) -> Result<RustOutput, CodegenError> {
         let mut body = CodeWriter::new();
 
         for item in &hir.items {
@@ -730,11 +736,27 @@ impl Codegen for RustCodegen<'_> {
         imports.extend(collect_prelude_imports(&body_code));
 
         let mut w = CodeWriter::new();
-        self.generate_prelude(&mut w, &imports);
+        if module_mode {
+            for import in &imports {
+                w.write("use ");
+                w.write(import);
+                w.writeln(";");
+            }
+            if !imports.is_empty() {
+                w.newline();
+            }
+        } else {
+            self.generate_prelude(&mut w, &imports);
+        }
         w.write(&body_code);
 
         Ok(RustOutput { code: w.finish() })
     }
+}
+
+pub fn generate_module(hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<RustOutput, CodegenError> {
+    super::reject_hir_errors(hir)?;
+    RustCodegen::new(hir, interner).generate_output(hir, types, true)
 }
 
 #[cfg(test)]

@@ -151,6 +151,11 @@ impl Compiler {
         self.compile_str(&name, &source)
     }
 
+    /// Compile a local multi-file package rooted at an entry file, directory, or manifest.
+    pub fn compile_package(&self, path: &Path) -> CompileResult {
+        driver::compile_package(&self.session.config, path)
+    }
+
     /// Compile source code from a string.
     ///
     /// WHY: Core compilation path. File-based compilation delegates to this

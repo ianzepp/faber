@@ -116,9 +116,44 @@ fn generate_local(
 
     if let Some(init) = &local.init {
         w.write(" = ");
-        generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        if local_init_requires_some_wrapper(codegen, local, init, types) {
+            w.write("Some(");
+            generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            if matches!(init.kind, HirExprKind::Literal(HirLiteral::String(_))) {
+                w.write(".to_string()");
+            }
+            w.write(")");
+        } else {
+            generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        }
     }
 
     w.writeln(";");
     Ok(())
+}
+
+fn local_init_requires_some_wrapper(
+    codegen: &RustCodegen<'_>,
+    local: &HirLocal,
+    init: &HirExpr,
+    types: &TypeTable,
+) -> bool {
+    let Some(local_ty) = local.ty else {
+        return false;
+    };
+
+    if !type_to_rust(codegen, local_ty, types).starts_with("Option<") {
+        return false;
+    }
+
+    match &init.kind {
+        HirExprKind::Literal(HirLiteral::Nil) => false,
+        HirExprKind::Path(_)
+        | HirExprKind::Call(_, _)
+        | HirExprKind::MethodCall(_, _, _)
+        | HirExprKind::Field(_, _)
+        | HirExprKind::Index(_, _)
+        | HirExprKind::Binary(_, _, _) => false,
+        _ => true,
+    }
 }
