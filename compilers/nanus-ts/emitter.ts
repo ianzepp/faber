@@ -1,0 +1,841 @@
+/**
+ * NANUS - Minimal Faber Compiler
+ *
+ * Emitter: AST → TypeScript source
+ * Direct code generation, no intermediate representation.
+ *
+ * Supports the subset of Faber needed to compile rivus.
+ */
+
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, resolve, relative } from 'node:path';
+
+import type {
+    Typus,
+    Expr,
+    Stmt,
+    Param,
+    ObiectumProp,
+    Modulus,
+    CampusDecl,
+    OrdoMembrum,
+    VariansDecl,
+    EligeCasus,
+    DiscerneCasus,
+    CustodiClausula,
+} from './ast';
+
+// Operator translation: Faber → TypeScript
+const BINARY_OPS: Record<string, string> = {
+    et: '&&',
+    aut: '||',
+    vel: '??',
+    inter: 'in',
+    intra: 'instanceof',
+};
+
+const UNARY_OPS: Record<string, string> = {
+    non: '!', // non x → !x (logical not)
+    positivum: '+', // positivum x → +x (to number)
+    negativum: '-', // negativum x → -x (negate)
+};
+
+// Null check operators need special handling (not simple prefix)
+const NULL_CHECK_OPS: Set<string> = new Set(['nihil', 'nonnihil', 'nulla', 'nonnulla']);
+
+// Method/property name translations from norma (Faber → TypeScript)
+const METHOD_MAP: Record<string, string> = {
+    // lista (Array)
+    appende: 'push',
+    praepone: 'unshift',
+    remove: 'pop',
+    decapita: 'shift',
+    coniunge: 'join',
+    continet: 'includes',
+    indiceDe: 'indexOf',
+    inveni: 'find',
+    inveniIndicem: 'findIndex',
+    omnes: 'every',
+    aliquis: 'some',
+    filtrata: 'filter',
+    mappata: 'map',
+    explanata: 'flatMap',
+    plana: 'flat',
+    sectio: 'slice',
+    reducta: 'reduce',
+    perambula: 'forEach',
+    inverte: 'reverse',
+    ordina: 'sort',
+    // tabula (Map) / copia (Set)
+    pone: 'set',
+    accipe: 'get',
+    habet: 'has',
+    dele: 'delete',
+    purga: 'clear',
+    claves: 'keys',
+    valores: 'values',
+    paria: 'entries',
+    adde: 'add',
+    // textus (string)
+    initium: 'startsWith',
+    finis: 'endsWith',
+    maiuscula: 'toUpperCase',
+    minuscula: 'toLowerCase',
+    recide: 'trim',
+    divide: 'split',
+    muta: 'replaceAll',
+    // Properties (not methods, but accessed the same way)
+    longitudo: 'length',
+};
+
+// Properties that should NOT be called as methods (emit without parentheses)
+const PROPERTY_ONLY: Set<string> = new Set([
+    'longitudo', // .length (arrays, strings)
+    'primus', // [0] (first element)
+    'ultimus', // .at(-1) (last element)
+]);
+
+// Emitter options
+export interface EmitOptions {
+    sourceFile?: string; // Source file path for resolving imports
+}
+
+// Cache for resolved HAL paths
+const halPathCache = new Map<string, string | null>();
+
+/**
+ * Find project root by looking for stdlib/norma/hal directory.
+ * Walks up from the source file directory.
+ */
+function findProjectRoot(fromPath: string): string | null {
+    let dir = dirname(fromPath);
+    for (let i = 0; i < 20; i++) { // Max 20 levels up
+        const halPath = resolve(dir, 'stdlib', 'norma', 'hal');
+        if (existsSync(halPath)) {
+            return dir;
+        }
+        const parent = dirname(dir);
+        if (parent === dir) break;
+        dir = parent;
+    }
+    return null;
+}
+
+/**
+ * Resolve a norma:X import to its HAL implementation path.
+ * Reads the HAL .fab file and extracts the @subsidia annotation.
+ */
+function resolveNormaImport(importPath: string, sourceFile: string): string | null {
+    // Only handle norma: imports
+    if (!importPath.startsWith('norma:')) {
+        return null;
+    }
+
+    const modulePath = importPath.slice(6); // Remove "norma:" prefix (e.g., "hal/solum")
+    const cacheKey = `${modulePath}:${sourceFile}`;
+
+    if (halPathCache.has(cacheKey)) {
+        return halPathCache.get(cacheKey)!;
+    }
+
+    const projectRoot = findProjectRoot(sourceFile);
+    if (!projectRoot) {
+        halPathCache.set(cacheKey, null);
+        return null;
+    }
+
+    // modulePath is relative to stdlib/norma/, e.g., "hal/solum" -> "stdlib/norma/hal/solum.fab"
+    const halFabPath = resolve(projectRoot, 'stdlib', 'norma', `${modulePath}.fab`);
+    if (!existsSync(halFabPath)) {
+        halPathCache.set(cacheKey, null);
+        return null;
+    }
+
+    // Read the HAL .fab file and find @subsidia ts annotation
+    try {
+        const content = readFileSync(halFabPath, 'utf-8');
+        const match = content.match(/@\s*subsidia\s+ts\s+"([^"]+)"/);
+        if (!match) {
+            halPathCache.set(cacheKey, null);
+            return null;
+        }
+
+        // The subsidia path is relative to the HAL .fab file
+        const subsidiaPath = match[1];
+        const halDir = dirname(halFabPath);
+        const absoluteSubsidiaPath = resolve(halDir, subsidiaPath);
+
+        // Make relative to the source file's output location
+        const sourceDir = dirname(sourceFile);
+        let relativePath = relative(sourceDir, absoluteSubsidiaPath);
+
+        // Rewrite norma-{target} to norma for output (build copies norma-ts -> norma)
+        relativePath = relativePath.replace(/norma-(ts|go|rs|py)\//g, 'norma/');
+
+        // Ensure it starts with ./ for relative imports
+        const result = relativePath.startsWith('.') ? relativePath : './' + relativePath;
+        halPathCache.set(cacheKey, result);
+        return result;
+    } catch {
+        halPathCache.set(cacheKey, null);
+        return null;
+    }
+}
+
+// Current emit options (set during emit call)
+let currentOptions: EmitOptions = {};
+
+export function emit(mod: Modulus, options: EmitOptions = {}): string {
+    currentOptions = options;
+    const lines: string[] = [];
+
+    for (const stmt of mod.corpus) {
+        lines.push(emitStmt(stmt));
+    }
+
+    return lines.join('\n');
+}
+
+function emitStmt(stmt: Stmt, indent = ''): string {
+    switch (stmt.tag) {
+        case 'Massa':
+            return `{\n${stmt.corpus.map(s => emitStmt(s, indent + '  ')).join('\n')}\n${indent}}`;
+
+        case 'Expressia':
+            return `${indent}${emitExpr(stmt.expr)};`;
+
+        case 'Varia': {
+            const decl = stmt.externa ? 'declare ' : '';
+            const kw = stmt.species === 'Varia' ? 'let' : 'const';
+            // For externa with ignotum type, use 'any' for usability (allows property access)
+            let typ = '';
+            if (stmt.typus) {
+                if (stmt.externa && stmt.typus.tag === 'Nomen' && stmt.typus.nomen === 'ignotum') {
+                    typ = ': any';
+                } else {
+                    typ = `: ${emitTypus(stmt.typus)}`;
+                }
+            }
+            const val = stmt.valor && !stmt.externa ? ` = ${emitExpr(stmt.valor)}` : '';
+            const exp = stmt.publica ? 'export ' : '';
+            return `${indent}${exp}${decl}${kw} ${stmt.nomen}${typ}${val};`;
+        }
+
+        case 'Functio': {
+            const decl = stmt.externa ? 'declare ' : '';
+            const exp = stmt.publica ? 'export ' : '';
+            const async = stmt.asynca ? 'async ' : '';
+            const generics = stmt.generics.length > 0 ? `<${stmt.generics.join(', ')}>` : '';
+            const params = stmt.params.map(emitParam).join(', ');
+            const ret = stmt.typusReditus ? `: ${emitTypus(stmt.typusReditus)}` : '';
+            const body = stmt.corpus && !stmt.externa ? ` ${emitStmt(stmt.corpus)}` : ';';
+            return `${indent}${exp}${decl}${async}function ${stmt.nomen}${generics}(${params})${ret}${body}`;
+        }
+
+        case 'Genus': {
+            const exp = stmt.publica ? 'export ' : '';
+            const abs = stmt.abstractus ? 'abstract ' : '';
+            const generics = stmt.generics.length > 0 ? `<${stmt.generics.join(', ')}>` : '';
+            const impl = stmt.implet.length > 0 ? ` implements ${stmt.implet.join(', ')}` : '';
+            const lines: string[] = [];
+            lines.push(`${indent}${exp}${abs}class ${stmt.nomen}${generics}${impl} {`);
+
+            // Fields (default to public; only emit visibility if explicitly specified)
+            for (const campo of stmt.campi) {
+                const vis = campo.visibilitas === 'Protecta' ? 'protected ' : campo.visibilitas === 'Privata' ? 'private ' : '';
+                const val = campo.valor ? ` = ${emitExpr(campo.valor)}` : '';
+                lines.push(`${indent}  ${vis}${campo.nomen}: ${emitTypus(campo.typus)}${val};`);
+            }
+
+            // Auto-generate constructor if there are fields
+            if (stmt.campi.length > 0) {
+                lines.push('');
+                const overrideFields = stmt.campi.map(c => `${c.nomen}?: ${emitTypus(c.typus)}`).join(', ');
+                lines.push(`${indent}  constructor(overrides: { ${overrideFields} } = {}) {`);
+                for (const campo of stmt.campi) {
+                    lines.push(`${indent}    if (overrides.${campo.nomen} !== undefined) { this.${campo.nomen} = overrides.${campo.nomen}; }`);
+                }
+                lines.push(`${indent}  }`);
+            }
+
+            // Methods (default to private)
+            for (const method of stmt.methodi) {
+                if (method.tag === 'Functio') {
+                    lines.push('');
+                    const vis = method.publica ? '' : 'private ';
+                    const async = method.asynca ? 'async ' : '';
+                    const params = method.params.map(emitParam).join(', ');
+                    const ret = method.typusReditus ? `: ${emitTypus(method.typusReditus)}` : '';
+                    const body = method.corpus ? ` ${emitStmt(method.corpus, indent + '  ')}` : ';';
+                    lines.push(`${indent}  ${vis}${async}${method.nomen}(${params})${ret}${body}`);
+                }
+            }
+
+            lines.push(`${indent}}`);
+            return lines.join('\n');
+        }
+
+        case 'Pactum': {
+            const exp = stmt.publica ? 'export ' : '';
+            const generics = stmt.generics.length > 0 ? `<${stmt.generics.join(', ')}>` : '';
+            const lines: string[] = [];
+            lines.push(`${indent}${exp}interface ${stmt.nomen}${generics} {`);
+
+            for (const method of stmt.methodi) {
+                const params = method.params.map(emitParam).join(', ');
+                const ret = method.typusReditus ? `: ${emitTypus(method.typusReditus)}` : '';
+                lines.push(`${indent}  ${method.nomen}(${params})${ret};`);
+            }
+
+            lines.push(`${indent}}`);
+            return lines.join('\n');
+        }
+
+        case 'Ordo': {
+            const exp = stmt.publica ? 'export ' : '';
+            const members = stmt.membra
+                .map(m => {
+                    const val = m.valor ? ` = ${m.valor}` : '';
+                    return `${m.nomen}${val}`;
+                })
+                .join(', ');
+            return `${indent}${exp}enum ${stmt.nomen} { ${members} }`;
+        }
+
+        case 'Discretio': {
+            const exp = stmt.publica ? 'export ' : '';
+            const generics = stmt.generics.length > 0 ? `<${stmt.generics.join(', ')}>` : '';
+            const lines: string[] = [];
+
+            // First, export each variant as a separate type alias
+            const variantNames: string[] = [];
+            for (const v of stmt.variantes) {
+                variantNames.push(v.nomen);
+                if (v.campi.length === 0) {
+                    lines.push(`${indent}${exp}type ${v.nomen} = { tag: '${v.nomen}' };`);
+                } else {
+                    const fields = v.campi.map(f => `${f.nomen}: ${emitTypus(f.typus)}`).join('; ');
+                    lines.push(`${indent}${exp}type ${v.nomen} = { tag: '${v.nomen}'; ${fields} };`);
+                }
+            }
+
+            // Then generate the union type referencing the variant types
+            lines.push(`${indent}${exp}type ${stmt.nomen}${generics} = ${variantNames.join(' | ')};`);
+
+            return lines.join('\n');
+        }
+
+        case 'Importa': {
+            // Try to resolve norma: imports to HAL implementations
+            let importPath = stmt.fons;
+            if (currentOptions.sourceFile && importPath.startsWith('norma:')) {
+                const resolved = resolveNormaImport(importPath, currentOptions.sourceFile);
+                if (resolved) {
+                    importPath = resolved.replace(/\.ts$/, '');
+                }
+            }
+
+            const lines: string[] = [];
+
+            if (stmt.totum) {
+                // Wildcard import: import * as local from "path"
+                lines.push(`${indent}import * as ${stmt.local} from "${importPath}";`);
+                if (stmt.publica) {
+                    lines.push(`${indent}export { ${stmt.local} };`);
+                }
+            } else {
+                // Named import
+                const spec = stmt.imported === stmt.local ? stmt.imported : `${stmt.imported} as ${stmt.local}`;
+                lines.push(`${indent}import { ${spec} } from "${importPath}";`);
+                if (stmt.publica) {
+                    // Re-export under original name (if aliased, need to re-alias back)
+                    const exportSpec = stmt.imported === stmt.local ? stmt.local : `${stmt.local} as ${stmt.imported}`;
+                    lines.push(`${indent}export { ${exportSpec} };`);
+                }
+            }
+
+            return lines.join('\n');
+        }
+
+        case 'Si': {
+            let code = `${indent}if (${emitExpr(stmt.cond)}) ${emitStmt(stmt.cons, indent)}`;
+            if (stmt.alt) {
+                if (stmt.alt.tag === 'Si') {
+                    code += ` else ${emitStmt(stmt.alt, indent)}`;
+                } else {
+                    code += ` else ${emitStmt(stmt.alt, indent)}`;
+                }
+            }
+            return code;
+        }
+
+        case 'Dum':
+            return `${indent}while (${emitExpr(stmt.cond)}) ${emitStmt(stmt.corpus, indent)}`;
+
+        case 'FacDum':
+            return `${indent}do ${emitStmt(stmt.corpus, indent)} while (${emitExpr(stmt.cond)});`;
+
+        case 'Iteratio': {
+            const kw = stmt.species === 'Ex' ? 'of' : 'in';
+            const async = stmt.asynca ? 'await ' : '';
+            return `${indent}for ${async}(const ${stmt.binding} ${kw} ${emitExpr(stmt.iter)}) ${emitStmt(stmt.corpus, indent)}`;
+        }
+
+        case 'Elige': {
+            // Emit as if/else chain (matching faber)
+            const discrim = emitExpr(stmt.discrim);
+            const lines: string[] = [];
+            for (let i = 0; i < stmt.casus.length; i++) {
+                const c = stmt.casus[i];
+                const kw = i === 0 ? 'if' : 'else if';
+                lines.push(`${indent}${kw} (${discrim} === ${emitExpr(c.cond)}) ${emitStmt(c.corpus, indent)}`);
+            }
+            if (stmt.default_) {
+                lines.push(`${indent}else ${emitStmt(stmt.default_, indent)}`);
+            }
+            return lines.join('\n');
+        }
+
+        case 'Discerne': {
+            // Pattern matching → if/else chain (matching faber)
+            const lines: string[] = [];
+            const numDiscrim = stmt.discrim.length;
+
+            // For single discriminant, use expression directly; for multi, create temp vars
+            const discrimVars: string[] = [];
+            if (numDiscrim === 1) {
+                discrimVars.push(emitExpr(stmt.discrim[0]));
+            } else {
+                for (let i = 0; i < numDiscrim; i++) {
+                    const varName = `discriminant_${i}`;
+                    discrimVars.push(varName);
+                    lines.push(`${indent}const ${varName} = ${emitExpr(stmt.discrim[i])};`);
+                }
+            }
+
+            for (let ci = 0; ci < stmt.casus.length; ci++) {
+                const c = stmt.casus[ci];
+                const firstPattern = c.patterns[0];
+                const kw = ci === 0 ? 'if' : 'else if';
+
+                if (firstPattern.wildcard) {
+                    lines.push(`${indent}else {`);
+                } else {
+                    lines.push(`${indent}${kw} (${discrimVars[0]}.tag === '${firstPattern.variant}') {`);
+                }
+
+                // Extract bindings from ALL patterns
+                for (let i = 0; i < c.patterns.length && i < numDiscrim; i++) {
+                    const pattern = c.patterns[i];
+                    const discrimVar = discrimVars[i];
+
+                    if (pattern.alias) {
+                        lines.push(`${indent}  const ${pattern.alias} = ${discrimVar};`);
+                    }
+                    for (const b of pattern.bindings) {
+                        lines.push(`${indent}  const ${b} = ${discrimVar}.${b};`);
+                    }
+                }
+
+                // Emit body contents (unwrap Massa if present)
+                if (c.corpus.tag === 'Massa') {
+                    for (const s of c.corpus.corpus) {
+                        lines.push(emitStmt(s, indent + '  '));
+                    }
+                } else {
+                    lines.push(emitStmt(c.corpus, indent + '  '));
+                }
+                lines.push(`${indent}}`);
+            }
+
+            return lines.join('\n');
+        }
+
+        case 'Custodi': {
+            const lines: string[] = [];
+            for (const c of stmt.clausulae) {
+                lines.push(`${indent}if (${emitExpr(c.cond)}) ${emitStmt(c.corpus, indent)}`);
+            }
+            return lines.join('\n');
+        }
+
+        case 'Tempta': {
+            let code = `${indent}try ${emitStmt(stmt.corpus, indent)}`;
+            if (stmt.cape) {
+                code += ` catch (${stmt.cape.param}) ${emitStmt(stmt.cape.corpus, indent)}`;
+            }
+            if (stmt.demum) {
+                code += ` finally ${emitStmt(stmt.demum, indent)}`;
+            }
+            return code;
+        }
+
+        case 'Redde':
+            return stmt.valor ? `${indent}return ${emitExpr(stmt.valor)};` : `${indent}return;`;
+
+        case 'Iace': {
+            const kw = stmt.fatale ? 'throw new Error' : 'throw';
+            return stmt.fatale ? `${indent}${kw}(${emitExpr(stmt.arg)});` : `${indent}${kw} ${emitExpr(stmt.arg)};`;
+        }
+
+        case 'Scribe': {
+            const method = stmt.gradus === 'Vide' ? 'debug' : stmt.gradus === 'Mone' ? 'warn' : 'log';
+            const args = stmt.args.map(emitExpr).join(', ');
+            return `${indent}console.${method}(${args});`;
+        }
+
+        case 'Adfirma': {
+            const msg = stmt.msg ? `, ${emitExpr(stmt.msg)}` : '';
+            return `${indent}console.assert(${emitExpr(stmt.cond)}${msg});`;
+        }
+
+        case 'Rumpe':
+            return `${indent}break;`;
+
+        case 'Perge':
+            return `${indent}continue;`;
+
+        case 'Incipit': {
+            // Async: wrap in async IIFE (required for await)
+            // Sync: emit body statements directly (no wrapper needed in ES modules)
+            if (stmt.asynca) {
+                return `${indent}(async () => ${emitStmt(stmt.corpus, indent)})();`;
+            }
+            // Emit body content without braces
+            if (stmt.corpus.tag === 'Massa') {
+                return stmt.corpus.corpus.map(s => emitStmt(s, indent)).join('\n');
+            }
+            return emitStmt(stmt.corpus, indent);
+        }
+
+        case 'Probandum': {
+            const lines: string[] = [];
+            lines.push(`${indent}describe(${JSON.stringify(stmt.nomen)}, () => {`);
+            for (const s of stmt.corpus) {
+                lines.push(emitStmt(s, indent + '  '));
+            }
+            lines.push(`${indent}});`);
+            return lines.join('\n');
+        }
+
+        case 'Proba':
+            return `${indent}it(${JSON.stringify(stmt.nomen)}, () => ${emitStmt(stmt.corpus, indent)});`;
+
+        case 'TypusAlias': {
+            const exp = stmt.publica ? 'export ' : '';
+            return `${indent}${exp}type ${stmt.nomen} = ${emitTypus(stmt.typus)};`;
+        }
+
+        default:
+            return `${indent}/* unhandled: ${(stmt as Stmt).tag} */`;
+    }
+}
+
+function emitExpr(expr: Expr): string {
+    switch (expr.tag) {
+        case 'Nomen':
+            return expr.valor;
+
+        case 'Ego':
+            return 'this';
+
+        case 'Littera':
+            switch (expr.species) {
+                case 'Textus':
+                    return JSON.stringify(expr.valor);
+                case 'Verum':
+                    return 'true';
+                case 'Falsum':
+                    return 'false';
+                case 'Nihil':
+                    return 'null';
+                default:
+                    return expr.valor;
+            }
+
+        case 'Binaria': {
+            // Special case: 'inter' with array → .includes()
+            // JavaScript 'in' checks object properties, not array membership
+            if (expr.signum === 'inter') {
+                return `${emitExpr(expr.dex)}.includes(${emitExpr(expr.sin)})`;
+            }
+            const op = BINARY_OPS[expr.signum] ?? expr.signum;
+            return `(${emitExpr(expr.sin)} ${op} ${emitExpr(expr.dex)})`;
+        }
+
+        case 'Unaria': {
+            // Null check operators need proper null comparison, not truthiness
+            if (NULL_CHECK_OPS.has(expr.signum)) {
+                const arg = emitExpr(expr.arg);
+                if (expr.signum === 'nihil' || expr.signum === 'nulla') {
+                    return `(${arg} == null)`;
+                } else {
+                    // nonnihil, nonnulla
+                    return `(${arg} != null)`;
+                }
+            }
+            const op = UNARY_OPS[expr.signum] ?? expr.signum;
+            return `(${op}${emitExpr(expr.arg)})`;
+        }
+
+        case 'Assignatio':
+            return `${emitExpr(expr.sin)} ${expr.signum} ${emitBareExpr(expr.dex)}`;
+
+        case 'Condicio':
+            return `(${emitExpr(expr.cond)} ? ${emitExpr(expr.cons)} : ${emitExpr(expr.alt)})`;
+
+        case 'Vocatio': {
+            // Check if callee is a method call that needs translation
+            if (expr.callee.tag === 'Membrum' && !expr.callee.computed) {
+                const propName = expr.callee.prop.tag === 'Littera' ? expr.callee.prop.valor : null;
+                if (propName) {
+                    // Property-only access (e.g., .longitudo() → .length)
+                    if (PROPERTY_ONLY.has(propName)) {
+                        return emitExpr(expr.callee);
+                    }
+                    // Special case: .claves() on tabula → Object.keys(obj)
+                    // Records don't have .keys() method, need Object.keys()
+                    if (propName === 'claves') {
+                        const obj = emitExpr(expr.callee.obj);
+                        return `Object.keys(${obj})`;
+                    }
+                    // Method name translation (only for method calls, not field access)
+                    const translated = METHOD_MAP[propName];
+                    if (translated) {
+                        const obj = emitExpr(expr.callee.obj);
+                        const access = expr.callee.nonNull ? '!.' : '.';
+                        const args = expr.args.map(emitExpr).join(', ');
+                        return `${obj}${access}${translated}(${args})`;
+                    }
+                }
+            }
+            const args = expr.args.map(emitExpr).join(', ');
+            return `${emitExpr(expr.callee)}(${args})`;
+        }
+
+        case 'Membrum': {
+            const obj = emitExpr(expr.obj);
+            if (expr.computed) {
+                return `${obj}[${emitExpr(expr.prop)}]`;
+            }
+            let prop = expr.prop.tag === 'Littera' ? expr.prop.valor : emitExpr(expr.prop);
+            // Special property translations (templates)
+            if (prop === 'primus') {
+                return `${obj}[0]`;
+            }
+            if (prop === 'ultimus') {
+                return `${obj}.at(-1)`;
+            }
+            // Only translate property-like names (longitudo), not method names
+            // Method name translations are handled in Vocatio case
+            if (PROPERTY_ONLY.has(prop)) {
+                prop = METHOD_MAP[prop] ?? prop;
+            }
+            const access = expr.nonNull ? '!.' : '.';
+            return `${obj}${access}${prop}`;
+        }
+
+        case 'Series': {
+            const elems = expr.elementa.map(emitExpr).join(', ');
+            return `[${elems}]`;
+        }
+
+        case 'Obiectum': {
+            const props = expr.props
+                .map(p => {
+                    if (p.shorthand) {
+                        return p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    }
+                    const key = p.computed ? `[${emitExpr(p.key)}]` : p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    return `${key}: ${emitExpr(p.valor)}`;
+                })
+                .join(', ');
+            return `{ ${props} }`;
+        }
+
+        case 'Clausura': {
+            const params = expr.params.map(p => (p.typus ? `${p.nomen}: ${emitTypus(p.typus)}` : p.nomen)).join(', ');
+            if ('tag' in expr.corpus && expr.corpus.tag === 'Massa') {
+                return `(${params}) => ${emitStmt(expr.corpus as Stmt)}`;
+            }
+            return `(${params}) => ${emitExpr(expr.corpus as Expr)}`;
+        }
+
+        case 'Novum': {
+            const args = expr.args.map(emitExpr).join(', ');
+            let code = `new ${emitExpr(expr.callee)}(${args})`;
+            if (expr.init) {
+                // Object.assign pattern for 'de' initializer
+                code = `Object.assign(${code}, ${emitExpr(expr.init)})`;
+            }
+            return code;
+        }
+
+        case 'Cede':
+            return `await ${emitExpr(expr.arg)}`;
+
+        case 'Qua':
+            return `(${emitExpr(expr.expr)} as ${emitTypus(expr.typus)})`;
+
+        case 'Innatum': {
+            // For native types, emit constructor calls instead of casts
+            // {} innatum tabula<K,V> → ({} as Record<K,V>) - use Record for bracket access
+            // {} innatum copia<T> → new Set<T>()
+            // [] innatum lista<T> → [] (arrays are fine as literals)
+            if (expr.typus.tag === 'Genericus') {
+                const name = expr.typus.nomen;
+                if (name === 'tabula') {
+                    const args = expr.typus.args.map(emitTypus).join(', ');
+                    return `({} as Record<${args}>)`;
+                }
+                if (name === 'copia' || name === 'collectio') {
+                    const args = expr.typus.args.map(emitTypus).join(', ');
+                    return `new Set<${args}>()`;
+                }
+            }
+            // Default: cast (for lista and other types)
+            return `(${emitExpr(expr.expr)} as ${emitTypus(expr.typus)})`;
+        }
+
+        case 'PostfixNovum':
+            return `new ${emitTypus(expr.typus)}(${emitExpr(expr.expr)})`;
+
+        case 'Finge': {
+            const fields = expr.campi
+                .map(p => {
+                    const key = p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
+                    return `${key}: ${emitExpr(p.valor)}`;
+                })
+                .join(', ');
+            const cast = expr.typus ? ` as ${emitTypus(expr.typus)}` : '';
+            return `{ tag: '${expr.variant}', ${fields} }${cast}`;
+        }
+
+        case 'Scriptum': {
+            // scriptum("Hello, §!", name) → `Hello, ${name}!`
+            const parts = expr.template.split('§');
+            if (parts.length === 1) {
+                return JSON.stringify(expr.template);
+            }
+            let result = '`';
+            for (let i = 0; i < parts.length; i++) {
+                // Escape backticks and $ (to prevent ${...} interpretation)
+                result += parts[i].replace(/`/g, '\\`').replace(/\$/g, '\\$');
+                if (i < expr.args.length) {
+                    result += '${' + emitExpr(expr.args[i]) + '}';
+                }
+            }
+            result += '`';
+            return result;
+        }
+
+        case 'Ambitus': {
+            // Range → array generation (simplified)
+            const start = emitExpr(expr.start);
+            const end = emitExpr(expr.end);
+            if (expr.inclusive) {
+                return `Array.from({ length: ${end} - ${start} + 1 }, (_, i) => ${start} + i)`;
+            }
+            return `Array.from({ length: ${end} - ${start} }, (_, i) => ${start} + i)`;
+        }
+
+        case 'Conversio': {
+            // Convert expr to target type with optional fallback
+            const inner = emitExpr(expr.expr);
+            let conversion: string;
+            switch (expr.species) {
+                case 'numeratum':
+                    conversion = `parseInt(${inner}, 10)`;
+                    break;
+                case 'fractatum':
+                    conversion = `parseFloat(${inner})`;
+                    break;
+                case 'textatum':
+                    conversion = `String(${inner})`;
+                    break;
+                case 'bivalentum':
+                    conversion = `Boolean(${inner})`;
+                    break;
+                default:
+                    conversion = inner;
+            }
+            if (expr.fallback) {
+                return `(${conversion} ?? ${emitExpr(expr.fallback)})`;
+            }
+            return conversion;
+        }
+
+        default:
+            return `/* unhandled: ${(expr as Expr).tag} */`;
+    }
+}
+
+/**
+ * Emit expression without outer parens on binary expressions.
+ * Used for assignment RHS where parens are unnecessary.
+ */
+function emitBareExpr(expr: Expr): string {
+    if (expr.tag === 'Binaria') {
+        const op = BINARY_OPS[expr.signum] ?? expr.signum;
+        return `${emitBareExpr(expr.sin)} ${op} ${emitBareExpr(expr.dex)}`;
+    }
+    return emitExpr(expr);
+}
+
+function emitTypus(typus: Typus): string {
+    switch (typus.tag) {
+        case 'Nomen':
+            return mapTypeName(typus.nomen);
+
+        case 'Nullabilis':
+            return `${emitTypus(typus.inner)} | null`;
+
+        case 'Genericus':
+            return `${mapTypeName(typus.nomen)}<${typus.args.map(emitTypus).join(', ')}>`;
+
+        case 'Functio':
+            return `(${typus.params.map((p, i) => `arg${i}: ${emitTypus(p)}`).join(', ')}) => ${emitTypus(typus.returns)}`;
+
+        case 'Unio':
+            return typus.members.map(emitTypus).join(' | ');
+
+        case 'Litteralis':
+            return typus.valor;
+
+        default:
+            return 'unknown';
+    }
+}
+
+function mapTypeName(name: string): string {
+    const MAP: Record<string, string> = {
+        textus: 'string',
+        numerus: 'number',
+        fractus: 'number',
+        bivalens: 'boolean',
+        nihil: 'null',
+        vacuum: 'void',
+        vacuus: 'void',
+        ignotum: 'unknown',
+        quodlibet: 'any',
+        quidlibet: 'any',
+        lista: 'Array',
+        tabula: 'Record',
+        collectio: 'Set',
+        copia: 'Set',
+    };
+    return MAP[name] ?? name;
+}
+
+function emitParam(param: Param): string {
+    const rest = param.rest ? '...' : '';
+    const typ = param.typus ? `: ${emitTypus(param.typus)}` : '';
+    // For Nullabilis params without explicit default, use = null
+    let def = '';
+    if (param.default_) {
+        def = ` = ${emitExpr(param.default_)}`;
+    } else if (param.typus?.tag === 'Nullabilis') {
+        def = ' = null';
+    }
+    return `${rest}${param.nomen}${typ}${def}`;
+}

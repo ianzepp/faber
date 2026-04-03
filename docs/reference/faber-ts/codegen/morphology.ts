@@ -7,7 +7,7 @@
  * WHY: Latin grammar as semantic machinery. The verb conjugation encodes
  *      behavior that would otherwise require separate method definitions.
  *
- * Ported from: fons/rivus/parser/morphologia.fab
+ * Ported from: compilers/rivus/parser/morphologia.fab
  */
 
 // =============================================================================

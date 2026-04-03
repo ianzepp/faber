@@ -46,7 +46,7 @@ export function genImportaDeclaration(node: ImportaDeclaration, g: TsGenerator, 
                 // WHY: Subsidia path is relative to the declaring .fab file.
                 //      When compiling to a temp file (faber run), we need absolute paths.
                 // Example: "../../norma/hal/consolum" + "codegen/ts/consolum.ts"
-                //       -> "/abs/path/to/fons/norma/hal/codegen/ts/consolum"
+                //       -> "/abs/path/to/stdlib/norma/hal/codegen/ts/consolum"
                 if (g.sourceFilePath) {
                     const sourceDir = dirname(g.sourceFilePath);
                     const importedFileDir = resolve(sourceDir, dirname(source));

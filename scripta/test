@@ -14,4 +14,4 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-bun test fons/nanus-ts "$@"
+bun test compilers/nanus-ts "$@"

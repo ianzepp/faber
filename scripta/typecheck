@@ -4,7 +4,7 @@
 # Runs TypeScript compiler in check-only mode (--noEmit) to validate
 # types without generating output files. This is faster than a full build.
 #
-# Covers: fons/nanus-ts/ (bootstrap compiler), fons/proba/ (tests), and generated code
+# Covers: compilers/nanus-ts/ (bootstrap compiler), tests/proba/ (tests), and generated code
 # Excludes: archivum/, opus/, tmp/ (build artifacts)
 
 set -euo pipefail

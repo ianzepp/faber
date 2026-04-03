@@ -341,7 +341,7 @@ async function main() {
     const showUnused = process.argv.includes('--unused') || process.argv.includes('-u');
 
     const counts: Counts = new Map();
-    const glob = new Glob('fons/rivus/**/*.fab');
+    const glob = new Glob('compilers/rivus/**/*.fab');
     const files: string[] = [];
 
     for await (const path of glob.scan('.')) {

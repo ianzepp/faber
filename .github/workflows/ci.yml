@@ -11,6 +11,6 @@ jobs:
             - uses: actions/checkout@v4
             - uses: dtolnay/rust-toolchain@stable
             - name: Format check
-              run: cargo fmt --manifest-path fons/radix-rs/Cargo.toml --all -- --check
+              run: cargo fmt --manifest-path compilers/radix-rs/Cargo.toml --all -- --check
             - name: Test radix-rs
-              run: cargo test --manifest-path fons/radix-rs/Cargo.toml
+              run: cargo test --manifest-path compilers/radix-rs/Cargo.toml

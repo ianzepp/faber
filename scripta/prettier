@@ -9,15 +9,15 @@
 #   ./scripta/prettier --check  # Check formatting (CI mode)
 #
 # Covers:
-#   - fons/**/*.ts (TypeScript source files)
-#   - proba/**/*.yaml (test specifications)
+#   - compilers/**/*.ts, runtimes/**/*.ts, tests/**/*.ts (TypeScript source files)
+#   - tests/proba/**/*.yaml (test specifications)
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 if [[ "${1:-}" == "--check" ]]; then
-    prettier --check "fons/**/*.ts" "fons/**/*.fab" "fons/proba/**/*.yaml"
+    prettier --check "compilers/**/*.ts" "runtimes/**/*.ts" "tests/**/*.ts" "compilers/**/*.fab" "stdlib/**/*.fab" "tests/proba/**/*.yaml" "examples/**/*.fab" "docs/grammatica/**/*.md"
 else
-    prettier --write "fons/**/*.ts" "fons/**/*.fab" "fons/proba/**/*.yaml"
+    prettier --write "compilers/**/*.ts" "runtimes/**/*.ts" "tests/**/*.ts" "compilers/**/*.fab" "stdlib/**/*.fab" "tests/proba/**/*.yaml" "examples/**/*.fab" "docs/grammatica/**/*.md"
 fi

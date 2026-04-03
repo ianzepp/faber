@@ -90,13 +90,13 @@ The `§` symbol (section marker) distinguishes file-level configuration and impo
 
 **Target Transparency.** You pick a compile target (TypeScript, Zig, etc.) and use that ecosystem directly. Faber is a skin over the target, not a replacement for it.
 
-**Target Compatibility.** Not all targets support all features — the compiler validates your code against target capabilities and reports clear errors. See [fons/grammatica/targets.md](fons/grammatica/targets.md) for the compatibility matrix.
+**Target Compatibility.** Not all targets support all features — the compiler validates your code against target capabilities and reports clear errors. See [docs/grammatica/targets.md](docs/grammatica/targets.md) for the compatibility matrix.
 
 ## Repository Contract
 
 Faber is a multi-project family repository. Components live in one tree, but they are not treated as one blocking build surface.
 
-- **Primary delivery target:** [`fons/radix-rs`](fons/radix-rs) is the active compiler and the main quality gate.
+- **Primary delivery target:** [`compilers/radix-rs`](compilers/radix-rs) is the active compiler and the main quality gate.
 - **Older project trees are isolated:** bootstrap compilers, rivus, and legacy TypeScript tooling may lag behind without blocking `radix-rs`.
 - **Root CI is scoped:** pull requests are gated on `radix-rs` checks, not a repo-wide lint/typecheck sweep.
 - **Root inventory lives in [`project.yaml`](project.yaml):** use it to understand project status and ownership at a glance.
@@ -111,8 +111,8 @@ Current status model:
 
 ```bash
 # radix-rs (primary compiler — Rust target)
-cd fons/radix-rs && cargo build --release
-cargo run -- emit fons/exempla/salve-munde.fab            # Emit Rust
+cd compilers/radix-rs && cargo build --release
+cargo run -- emit examples/exempla/salve-munde.fab        # Emit Rust
 
 # Root-scoped primary checks
 bun run check:radix-rs
@@ -122,8 +122,8 @@ bun run ci
 # Bootstrap compilers (TS/Go/Python targets)
 bun install
 bun run build                                             # Build nanus-* compilers
-./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t ts  # TypeScript
-./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t go  # Go
+./opus/bin/nanus-go compile examples/exempla/salve-munde.fab -t ts  # TypeScript
+./opus/bin/nanus-go compile examples/exempla/salve-munde.fab -t go  # Go
 
 # Legacy / secondary checks
 bun run test:nanus-ts
@@ -228,7 +228,7 @@ solum.leget(path)   # async read (future)
 solum.legens(path)  # streaming read (participle)
 ```
 
-The morphology system is implemented via `@ radix` and `@ verte` annotations in the standard library definitions. `@ radix` declares the verb stem and valid morphological forms, while `@ verte` provides target-specific code generation for each form. The compiler validates morphology usage against declared forms. See [fons/grammatica/morphologia.md](fons/grammatica/morphologia.md) for the complete specification.
+The morphology system is implemented via `@ radix` and `@ verte` annotations in the standard library definitions. `@ radix` declares the verb stem and valid morphological forms, while `@ verte` provides target-specific code generation for each form. The compiler validates morphology usage against declared forms. See [docs/grammatica/morphologia.md](docs/grammatica/morphologia.md) for the complete specification.
 
 ## Example
 

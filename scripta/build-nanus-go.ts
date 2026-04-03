@@ -11,7 +11,7 @@ import { join } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const NANUS_GO = join(ROOT, 'fons', 'nanus-go');
+const NANUS_GO = join(ROOT, 'compilers', 'nanus-go');
 const GO_CACHE = '/tmp/go-build';
 
 async function main() {

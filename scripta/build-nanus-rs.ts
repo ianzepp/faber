@@ -11,7 +11,7 @@ import { join } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const NANUS_RS = join(ROOT, 'fons', 'nanus-rs');
+const NANUS_RS = join(ROOT, 'compilers', 'nanus-rs');
 
 async function main() {
     const start = performance.now();

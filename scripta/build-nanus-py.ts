@@ -10,7 +10,7 @@ import { mkdir, writeFile, chmod } from 'fs/promises';
 import { join } from 'path';
 
 const ROOT = join(import.meta.dir, '..');
-const NANUS_PY = join(ROOT, 'fons', 'nanus-py');
+const NANUS_PY = join(ROOT, 'compilers', 'nanus-py');
 
 async function main() {
     const start = performance.now();

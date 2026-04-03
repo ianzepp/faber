@@ -1,6 +1,6 @@
 /**
  * Generated CPP norma registry.
- * Source: fons/norma/
+ * Source: stdlib/norma/
  * Generator: bun run build:norma
  */
 

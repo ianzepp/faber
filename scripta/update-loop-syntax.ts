@@ -2,7 +2,7 @@
 /**
  * Mass-update loop syntax from `ex`/`de` to `itera ex`/`itera de`
  *
- * This script updates all .fab files in fons/rivus/ to use the new loop syntax
+ * This script updates all .fab files in compilers/rivus/ to use the new loop syntax
  * per issue #305.
  *
  * Usage: bun scripta/update-loop-syntax.ts [--dry-run]
@@ -12,7 +12,7 @@ import { readdir, readFile, writeFile } from "fs/promises";
 import { join, relative } from "path";
 
 const DRY_RUN = process.argv.includes("--dry-run");
-const ROOT = join(import.meta.dir, "..", "fons", "rivus");
+const ROOT = join(import.meta.dir, "..", "compilers", "rivus");
 
 interface Change {
   file: string;

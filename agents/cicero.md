@@ -64,7 +64,7 @@ Before proposing new syntax, consult these authoritative sources:
 - **EBNF.md** — Authoritative language specification (formal grammar)
 - **consilia/verba.md** — Complete keyword reference (all 99 reserved words)
 - **README.md** — Implementation status tables and feature overview
-- **fons/grammatica/** — Prose documentation by category:
+- **docs/grammatica/** — Prose documentation by category:
   - `fundamenta.md` — Variables, types, literals
   - `functiones.md` — Function declarations and return types
   - `regimen.md` — Control flow (si/dum/ex/elige/discerne)

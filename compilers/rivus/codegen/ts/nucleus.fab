@@ -1,0 +1,260 @@
+# TypeScript Code Generator - Core generator state
+#
+# This module provides the TsGenerator genus that holds shared state
+# for TypeScript code generation. Individual gen* functions are in
+# separate files under sententia/ and expressia/.
+
+importa ex "norma:hal/solum" privata solum
+importa ex "../typi" privata RequiredFeatures
+importa ex "../typi" privata creaRequiredFeatures
+importa ex "../typi" privata formataNotaePrae
+importa ex "../typi" privata formataNotaePost
+importa ex "../shared/generans" privata Generans
+
+# =============================================================================
+# TS GENERATOR
+# =============================================================================
+
+# Core generator state for TypeScript output.
+#
+# WHY: Holds indentation state, feature tracking, and context flags
+#      that are shared across all statement/expression generators.
+@ publica
+genus TsGenerator implet Generans {
+    # Source file path (for import path resolution)
+    si textus viaFons
+
+    # Indentation depth (number of levels)
+    numerus profunditas
+
+    # Indentation unit (e.g., "  " for 2 spaces)
+    textus indentum
+
+    # Whether we're inside a generator function (cede -> yield)
+    bivalens inCursore
+
+    # Whether we're inside a fit function body (Responsum protocol)
+    bivalens inFlumina
+
+    # Whether we're inside a fiunt function body (flow() protocol)
+    bivalens inFiunt
+
+    # Whether we're inside a fiet function body (async Responsum)
+    bivalens inFiet
+
+    # Whether we're inside a fient function body (async flow())
+    bivalens inFient
+
+    # Whether we're inside a class body (for visibility handling)
+    bivalens inGenere
+
+    # Whether we're inside a function/method body (for nested function handling)
+    bivalens inFunctioCorpus
+
+    # Current function-scope tabula names (for Map get/set lowering)
+    lista<textus> tabulaNominata
+
+    # Whether we're generating an `ab ... ubi` filter predicate
+    bivalens inAbUbi
+
+    # Name of the implicit filter element variable (usually "_x")
+    textus abUbiParam
+
+    # Features used that need preamble setup
+    RequiredFeatures requisita
+
+    # ==========================================================================
+    # TEST HARNESS STATE
+    # ==========================================================================
+
+    # Whether to generate standalone test functions (vs describe/test)
+    bivalens inProbaStandalone
+
+    # Whether to strip test blocks (probandum/proba) from output
+    bivalens stripTests
+
+    # Whether to strip comments from output
+    bivalens stripComments
+
+    # Test registry entries for harness generation
+    # Each entry is a plain object: { suite: string, name: string, funcName: string, skip?: bool, ... }
+    lista<ignotum> probaRegistrum
+
+    # Current suite name stack (for nested probandum)
+    lista<textus> probaSuiteStack
+
+    # ==========================================================================
+    # INDENTATION
+    # ==========================================================================
+
+    # Generate indentation string for current depth
+    @ publica
+    functio ind() → textus {
+        varia result ← ""
+        varia i ← 0
+        dum i < ego.profunditas {
+            result ← result + ego.indentum
+            i += 1
+        }
+        redde result
+    }
+
+    # Increment depth
+    @ publica
+    functio intraProfundum() {
+        ego.profunditas += 1
+    }
+
+    # Decrement depth
+    @ publica
+    functio exiProfundum() {
+        ego.profunditas -= 1
+    }
+
+    # ==========================================================================
+    # COMMENT FORMATTING (stubbed for bootstrap)
+    # ==========================================================================
+
+    # Format leading comments for a node
+    @ publica
+    functio notaePrae(de ignotum nodus) → textus {
+        si ego.stripComments {
+            redde ""
+        }
+        redde formataNotaePrae(nodus, nihil, ego.ind())
+    }
+
+    # Format trailing comments for a node
+    @ publica
+    functio notaePost(de ignotum nodus) → textus {
+        si ego.stripComments {
+            redde ""
+        }
+        redde formataNotaePost(nodus, nihil)
+    }
+}
+
+# =============================================================================
+# NORMA HAL RESOLUTION
+# =============================================================================
+
+# Find project root by looking for runtimes/norma-ts/hal directory
+functio findProjectRoot(de textus fromPath) → si textus {
+    varia dir ← solum.directorium(fromPath)
+    varia i ← 0
+    dum i < 20 {
+        fixum halPath ← solum.iunge([dir, "runtimes", "norma-ts", "hal"])
+        si solum.exstat(halPath) {
+            redde dir
+        }
+        fixum parent ← solum.directorium(dir)
+        si parent ≡ dir { rumpe }
+        dir ← parent
+        i += 1
+    }
+    redde nihil
+}
+
+# Resolve norma:X import to HAL implementation path
+# Returns relative path from OUTPUT file to HAL implementation
+# Output structure: opus/COMPILER/fons/X/Y.ts (without rivus/ level)
+# HAL is at: opus/COMPILER/norma/hal/
+@ publica
+functio resolveNormaHal(de textus importPath, si de textus viaFons) → si textus {
+    si nihil viaFons { redde nihil }
+    si non importPath.initium("norma:") { redde nihil }
+
+    fixum moduleName ← importPath.sectio(6, importPath.longitudo())
+
+    # Find the "compilers/rivus/" marker in the path to calculate output depth
+    # Source: compilers/rivus/X/Y.fab -> Output: fons/X/Y.ts
+    # We need depth from "fons/" in output, which is depth after "compilers/rivus/" in source
+
+    fixum marker ← "compilers/rivus/"
+    fixum markerIdx ← viaFons.indiceDe(marker)
+
+    si markerIdx < 0 {
+        # Fallback: not a rivus source file, use simple calculation
+        redde nihil
+    }
+
+    # Get path after "compilers/rivus/": e.g., "codegen/ts/nucleus.fab"
+    fixum afterMarker ← viaFons.sectio(markerIdx + marker.longitudo(), viaFons.longitudo())
+
+    # Count directory separators to get depth
+    # e.g., "codegen/ts/nucleus.fab" has 2 separators -> depth 2, plus 1 for fons/ = 3
+    varia depth ← 1  # Start at 1 for the "fons/" level in output
+    varia i ← 0
+    dum i < afterMarker.longitudo() {
+        si afterMarker[i] ≡ "/" {
+            depth += 1
+        }
+        i += 1
+    }
+
+    # Build relative path: ../../../norma-ts/hal/module
+    varia prefix ← ""
+    varia j ← 0
+    dum j < depth {
+        prefix ← prefix + "../"
+        j += 1
+    }
+
+    redde prefix + "norma/" + moduleName
+}
+
+# =============================================================================
+# FACTORY
+# =============================================================================
+
+# Create a new TsGenerator with default settings
+@ publica
+functio creaTsGenerator(si de textus viaFons) → TsGenerator {
+    redde novum TsGenerator {
+        viaFons: viaFons,
+        profunditas: 0,
+        indentum: "  ",
+        inCursore: falsum,
+        inFlumina: falsum,
+        inFiunt: falsum,
+        inFiet: falsum,
+        inFient: falsum,
+        inGenere: falsum,
+        inFunctioCorpus: falsum,
+        inAbUbi: falsum,
+        abUbiParam: "_x",
+        requisita: creaRequiredFeatures(),
+        tabulaNominata: [] innatum lista<textus>,
+        inProbaStandalone: falsum,
+        stripTests: falsum,
+        stripComments: falsum,
+        probaRegistrum: [] innatum lista<ignotum>,
+        probaSuiteStack: [] innatum lista<textus>
+    }
+}
+
+# Create a TsGenerator with custom indentation
+@ publica
+functio creaTsGeneratorCum(de textus indentum, si de textus viaFons) → TsGenerator {
+    redde novum TsGenerator {
+        viaFons: viaFons,
+        profunditas: 0,
+        indentum: indentum,
+        inCursore: falsum,
+        inFlumina: falsum,
+        inFiunt: falsum,
+        inFiet: falsum,
+        inFient: falsum,
+        inGenere: falsum,
+        inFunctioCorpus: falsum,
+        inAbUbi: falsum,
+        abUbiParam: "_x",
+        requisita: creaRequiredFeatures(),
+        tabulaNominata: [] innatum lista<textus>,
+        inProbaStandalone: falsum,
+        stripTests: falsum,
+        stripComments: falsum,
+        probaRegistrum: [] innatum lista<ignotum>,
+        probaSuiteStack: [] innatum lista<textus>
+    }
+}

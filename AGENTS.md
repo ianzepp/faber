@@ -4,14 +4,14 @@ A Latin programming language compiler ("The Roman Craftsman").
 
 ## Grammar Reference
 
-See `EBNF.md` for the formal specification, `fons/grammatica/*.md` for prose tutorials, and `fons/exempla/` or `fons/rivus/` for working examples.
+See `EBNF.md` for the formal specification, `docs/grammatica/*.md` for prose tutorials, and `examples/exempla/` or `compilers/rivus/` for working examples.
 
 ## Stdlib (norma)
 
-**The stdlib is fully implemented via `fons/norma/*.fab`.** These files define all collection methods (`lista.adde`, `tabula.pone`, `textus.longitudo`, etc.) with `@ verte` annotations that specify translations per target:
+**The stdlib is fully implemented via `stdlib/norma/*.fab`.** These files define all collection methods (`lista.adde`, `tabula.pone`, `textus.longitudo`, etc.) with `@ verte` annotations that specify translations per target:
 
 ```fab
-# From fons/norma/lista.fab
+# From stdlib/norma/lista.fab
 @ verte ts "push"
 @ verte py "append"
 @ verte rs "push"
@@ -20,11 +20,11 @@ functio adde(T elem) -> vacuum
 ```
 
 **How it works:**
-1. `fons/norma/*.fab` define stdlib methods with `@ verte` annotations
+1. `stdlib/norma/*.fab` define stdlib methods with `@ verte` annotations
 2. Codegen looks up translations via the norma registry
 3. Method calls like `myList.adde(x)` become `myList.push(x)` in TypeScript output
 
-**Runtime libraries** for targets that need them live in `fons/norma-{ts,go,py,rs}/`:
+**Runtime libraries** for targets that need them live in `runtimes/norma-{ts,go,py,rs}/`:
 - `norma-ts/` - TypeScript runtime (codex, json, toml, yaml, hal)
 - `norma-go/` - Go runtime (json, toml, yaml, hal)
 - `norma-py/` - Python runtime (json, toml, yaml, hal)
@@ -102,14 +102,14 @@ scripta/                # Build and utility scripts
 
 ### radix-rs (Primary Compiler)
 
-The production compiler at `fons/radix-rs/`. **Use this for all new development.**
+The production compiler at `compilers/radix-rs/`. **Use this for all new development.**
 
 ```
-cd fons/radix-rs && cargo build --release             # Build
-cd fons/radix-rs && cargo test                        # Run tests (39 tests)
-cd fons/radix-rs && cargo run -- emit <file.fab>      # Emit Rust
-cd fons/radix-rs && cargo run -- parse <file.fab>     # Parse only
-cd fons/radix-rs && cargo run -- check <file.fab>     # Semantic analysis
+cd compilers/radix-rs && cargo build --release             # Build
+cd compilers/radix-rs && cargo test                        # Run tests (39 tests)
+cd compilers/radix-rs && cargo run -- emit <file.fab>      # Emit Rust
+cd compilers/radix-rs && cargo run -- parse <file.fab>     # Parse only
+cd compilers/radix-rs && cargo run -- check <file.fab>     # Semantic analysis
 ```
 
 **Compilation pipeline:** Lex → Parse → Collect → Resolve → Lower → Typecheck → Analysis → Codegen
@@ -158,14 +158,14 @@ bun run build                         # Build all nanus-* compilers
 bun run build:nanus-ts                # Build nanus-ts executable to opus/bin/nanus-ts
 bun run build:rivus                   # Build rivus (via nanus-ts) to opus/rivus/fons/ts/
 bun run build:rivus -- -t zig         # Build rivus to opus/rivus/fons/zig/
-bun run exempla                       # Compile fons/exempla/*.fab to opus/
+bun run exempla                       # Compile examples/exempla/*.fab to opus/
 bun run exempla -- -t all             # Compile to all targets
 ```
 
 ### Testing
 
 ```
-cd fons/radix-rs && cargo test                        # radix-rs tests (primary)
+cd compilers/radix-rs && cargo test                   # radix-rs tests (primary)
 bun test                              # nanus-ts unit tests
 bun test -t "pattern"                 # Filter tests
 bun run test:rivus                    # Run tests against rivus
@@ -198,7 +198,7 @@ Database location: `opus/proba/results.db` (recreated each run)
 ```
 bun run misc:ast                      # Check AST node coverage
 bun run misc:tree-sitter              # Regenerate tree-sitter parser
-bun run lint                          # Lint TS source (fons/nanus-ts)
+bun run lint                          # Lint TS source (compilers/nanus-ts)
 bun run lint:fix                      # Lint with auto-fix
 bun run sanity                        # Verify test coverage
 ```

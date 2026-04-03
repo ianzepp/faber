@@ -17,5 +17,5 @@
 § dependentia "norma" via "../../../norma/hal"
 
 # Dependencies - github (for testing rivus fetch)
-§ dependentia "faber-test" github "ianzepp/faber#main" via "fons/norma/hal"
+§ dependentia "faber-test" github "ianzepp/faber#main" via "stdlib/norma/hal"
 incipit {}

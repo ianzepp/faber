@@ -3,7 +3,7 @@ description: Multi-language language-tooling repository for the Faber ecosystem.
 
 projects:
   - name: radix-rs
-    path: fons/radix-rs
+    path: compilers/radix-rs
     type: compiler
     language: rust
     description: Primary Rust compiler implementation and current delivery focus.
@@ -11,7 +11,7 @@ projects:
     status: active
 
   - name: nanus-ts
-    path: fons/nanus-ts
+    path: compilers/nanus-ts
     type: compiler
     language: typescript
     description: TypeScript bootstrap compiler and supporting tooling surface.
@@ -19,7 +19,7 @@ projects:
     status: maintenance
 
   - name: nanus-go
-    path: fons/nanus-go
+    path: compilers/nanus-go
     type: compiler
     language: go
     description: Go bootstrap compiler.
@@ -27,7 +27,7 @@ projects:
     status: maintenance
 
   - name: nanus-rs
-    path: fons/nanus-rs
+    path: compilers/nanus-rs
     type: compiler
     language: rust
     description: Rust bootstrap compiler.
@@ -35,7 +35,7 @@ projects:
     status: maintenance
 
   - name: nanus-py
-    path: fons/nanus-py
+    path: compilers/nanus-py
     type: compiler
     language: python
     description: Python bootstrap compiler.
@@ -43,7 +43,7 @@ projects:
     status: maintenance
 
   - name: rivus
-    path: fons/rivus
+    path: compilers/rivus
     type: compiler
     language: mixed
     description: Self-hosted compiler sources in Faber.
@@ -51,7 +51,7 @@ projects:
     status: experimental
 
   - name: rivus-cli
-    path: fons/rivus-cli
+    path: compilers/rivus-cli
     type: tool
     language: mixed
     description: CLI entrypoint for the self-hosted compiler.
@@ -59,7 +59,7 @@ projects:
     status: experimental
 
   - name: norma
-    path: fons/norma
+    path: stdlib/norma
     type: library
     language: mixed
     description: Standard library definitions and translation metadata.
@@ -67,7 +67,7 @@ projects:
     status: active
 
   - name: norma-ts
-    path: fons/norma-ts
+    path: runtimes/norma-ts
     type: library
     language: typescript
     description: TypeScript runtime support for stdlib features.
@@ -75,7 +75,7 @@ projects:
     status: maintenance
 
   - name: norma-go
-    path: fons/norma-go
+    path: runtimes/norma-go
     type: library
     language: go
     description: Go runtime support for stdlib features.
@@ -83,7 +83,7 @@ projects:
     status: maintenance
 
   - name: norma-py
-    path: fons/norma-py
+    path: runtimes/norma-py
     type: library
     language: python
     description: Python runtime support for stdlib features.
@@ -91,7 +91,7 @@ projects:
     status: maintenance
 
   - name: norma-rs
-    path: fons/norma-rs
+    path: runtimes/norma-rs
     type: library
     language: rust
     description: Rust runtime support for stdlib features.
@@ -99,7 +99,7 @@ projects:
     status: active
 
   - name: proba
-    path: fons/proba
+    path: tests/proba
     type: tool
     language: typescript
     description: YAML-driven cross-target test harness and reporting.
@@ -107,7 +107,7 @@ projects:
     status: maintenance
 
   - name: exempla
-    path: fons/exempla
+    path: examples/exempla
     type: library
     language: mixed
     description: Example Faber programs used for demonstration and validation.
@@ -115,7 +115,7 @@ projects:
     status: active
 
   - name: golden
-    path: fons/golden
+    path: tests/golden
     type: library
     language: mixed
     description: Golden output corpus.
@@ -123,7 +123,7 @@ projects:
     status: maintenance
 
   - name: grammatica
-    path: fons/grammatica
+    path: docs/grammatica
     type: library
     language: mixed
     description: Prose language documentation and tutorials.

@@ -19,7 +19,7 @@
  *   - "<compiler> failed": Only some compilers failed (parser inconsistency)
  *
  * Usage:
- *   bun run verify:nanus                       # bulk check all .fab in fons/rivus
+ *   bun run verify:nanus                       # bulk check all .fab in compilers/rivus
  *   bun run verify:nanus path/to/file.fab      # single file (shows all outputs)
  *   bun run verify:nanus path/to/dir           # bulk check all .fab in directory
  *   bun run verify:nanus *.fab                 # multiple files via shell glob
@@ -31,7 +31,7 @@
  * Single file mode:
  *   Shows the fab output from each compiler side-by-side, useful for debugging
  *   specific differences. Example:
- *     bun run verify:nanus fons/exempla/si/si.fab
+ *     bun run verify:nanus examples/exempla/si/si.fab
  *
  * Exit codes:
  *   0 - All checked files consistent
@@ -49,7 +49,7 @@ import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
 const BIN = join(ROOT, 'opus', 'bin');
-const DEFAULT_DIR = join(ROOT, 'fons', 'rivus');
+const DEFAULT_DIR = join(ROOT, 'compilers', 'rivus');
 
 const COMPILERS = ['nanus-ts', 'nanus-go', 'nanus-rs', 'nanus-py'] as const;
 type Compiler = (typeof COMPILERS)[number];
@@ -83,7 +83,7 @@ Verifies that nanus-ts, nanus-go, and nanus-rs produce identical output
 when emitting Faber source (\`-t fab\`).
 
 Usage:
-  bun run verify:nanus                     Bulk check all .fab in fons/rivus
+  bun run verify:nanus                     Bulk check all .fab in compilers/rivus
   bun run verify:nanus <file.fab>          Single file (shows all outputs)
   bun run verify:nanus <dir>               Bulk check all .fab in directory
   bun run verify:nanus *.fab               Multiple files (shell glob)

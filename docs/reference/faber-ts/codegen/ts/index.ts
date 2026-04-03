@@ -169,7 +169,7 @@ function resolveHalImportPath(relativePath: string, sourceFilePath?: string, kee
     }
 
     // Resolve path relative to source file's directory
-    // Example: fons/norma/hal/consolum.fab -> fons/norma/hal/codegen/ts/consolum.ts
+    // Example: stdlib/norma/hal/consolum.fab -> stdlib/norma/hal/codegen/ts/consolum.ts
     const sourceDir = dirname(sourceFilePath);
     const absolutePath = join(sourceDir, relativePath);
 

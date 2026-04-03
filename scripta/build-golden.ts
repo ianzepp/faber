@@ -2,7 +2,7 @@
 /**
  * Run golden tests against multiple compilers.
  *
- * For each .fab file in fons/golden/:
+ * For each .fab file in tests/golden/:
  *   1. Compile with each specified compiler
  *   2. Compare output to .ts.golden reference
  *   3. Report pass/fail per compiler
@@ -19,7 +19,7 @@ import { basename, join } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const GOLDEN = join(ROOT, 'fons', 'golden');
+const GOLDEN = join(ROOT, 'tests', 'golden');
 const BIN = join(ROOT, 'opus', 'bin');
 
 type Compiler = 'nanus-ts' | 'nanus-go' | 'nanus-rs' | 'nanus-py' | 'faber' | 'rivus';

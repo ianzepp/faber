@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Build rivus (bootstrap compiler) from fons/rivus/ using nanus.
+ * Build rivus (bootstrap compiler) from compilers/rivus/ using nanus.
  *
  * Uses the specified compiler to compile all .fab files in parallel.
  * Output target is derived from the compiler (e.g., nanus-go emits Go code).
@@ -103,7 +103,7 @@ const target: Target = deriveTarget(compiler);
 // =============================================================================
 
 const ROOT = join(import.meta.dir, '..');
-const SOURCE = join(ROOT, 'fons', 'rivus');
+const SOURCE = join(ROOT, 'compilers', 'rivus');
 
 const FILE_EXT: Record<Target, string> = {
     'ts': '.ts',
@@ -217,13 +217,13 @@ const TARGET_EXT: Record<Target, string> = {
 
 /**
  * Copy norma (stdlib) implementations for the target language.
- * Source: fons/norma-{target}/
+ * Source: runtimes/norma-{target}/
  * Dest: opus/{compiler}/norma/
  * Recursively copies all files with target extension, excluding tests.
  * Returns false if source directory doesn't exist.
  */
 async function copyNorma(target: Target): Promise<boolean> {
-    const normaSource = join(ROOT, 'fons', `norma-${target}`);
+    const normaSource = join(ROOT, 'runtimes', `norma-${target}`);
 
     // Check if norma source exists for this target
     try {
@@ -251,7 +251,7 @@ async function copyNorma(target: Target): Promise<boolean> {
 }
 
 async function copyCliShim(): Promise<void> {
-    const shimSource = join(ROOT, 'fons', 'rivus-cli', 'ts.ts');
+    const shimSource = join(ROOT, 'compilers', 'rivus-cli', 'ts.ts');
     const shimDest = join(OUTPUT, 'cli.ts');
     await Bun.write(shimDest, await Bun.file(shimSource).text());
 }

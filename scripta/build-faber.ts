@@ -3,7 +3,7 @@
  * Build faber: Use rivus to compile itself into a new executable
  *
  * Uses the compiled rivus executable (opus/bin/rivus) to compile
- * the rivus source files in fons/rivus/, then builds opus/bin/faber-ts.
+ * the rivus source files in compilers/rivus/, then builds opus/bin/faber-ts.
  *
  * This proves rivus can self-host and produces a working compiler.
  *
@@ -21,7 +21,7 @@ import { dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const SOURCE = join(ROOT, 'fons', 'rivus');
+const SOURCE = join(ROOT, 'compilers', 'rivus');
 const RIVUS_BIN = join(ROOT, 'opus', 'bin', 'rivus');
 const FABER_DIR = join(ROOT, 'opus', 'faber-ts', 'fons');
 const REFERENCE_DIR = join(ROOT, 'opus', 'rivus-ts', 'fons');
@@ -94,13 +94,13 @@ async function typeCheck(): Promise<boolean> {
 }
 
 async function copyCliShim(): Promise<void> {
-    const shimSource = join(ROOT, 'fons', 'rivus-cli', 'ts.ts');
+    const shimSource = join(ROOT, 'compilers', 'rivus-cli', 'ts.ts');
     const shimDest = join(FABER_DIR, 'cli.ts');
     await Bun.write(shimDest, await Bun.file(shimSource).text());
 }
 
 async function copyNorma(): Promise<boolean> {
-    const normaSource = join(ROOT, 'fons', 'norma-ts');
+    const normaSource = join(ROOT, 'runtimes', 'norma-ts');
 
     try {
         const { readdirSync } = await import('node:fs');

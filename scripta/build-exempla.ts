@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Compile and verify fons/exempla/ using various compilers.
+ * Compile and verify examples/exempla/ using various compilers.
  *
  * All compilers use stdin/stdout: cat file.fab | compiler emit -t target
  * Output goes to opus/<compiler>/exempla/<target>/
@@ -19,7 +19,7 @@ import { basename, dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const EXEMPLA_SOURCE = join(ROOT, 'fons', 'exempla');
+const EXEMPLA_SOURCE = join(ROOT, 'examples', 'exempla');
 const OPUS = join(ROOT, 'opus');
 
 type Target = 'ts' | 'zig' | 'py' | 'rs' | 'go';

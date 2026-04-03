@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [[ "${1:-}" == "--fix" ]]; then
-    eslint fons/nanus-ts --fix
+    eslint compilers/nanus-ts --fix
 else
-    eslint fons/nanus-ts
+    eslint compilers/nanus-ts
 fi

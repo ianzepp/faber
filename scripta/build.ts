@@ -24,11 +24,11 @@ import { $ } from 'bun';
 const ROOT = join(import.meta.dir, '..');
 const OPUS = join(ROOT, 'opus');
 
-const NANUS_RS_DIR = join(ROOT, 'fons', 'nanus-rs');
-const RADIX_RS_DIR = join(ROOT, 'fons', 'radix-rs');
-const NORMA_RS_DIR = join(ROOT, 'fons', 'norma-rs');
-const EXEMPLA_DIR = join(ROOT, 'fons', 'exempla');
-const RIVUS_DIR = join(ROOT, 'fons', 'rivus');
+const NANUS_RS_DIR = join(ROOT, 'compilers', 'nanus-rs');
+const RADIX_RS_DIR = join(ROOT, 'compilers', 'radix-rs');
+const NORMA_RS_DIR = join(ROOT, 'runtimes', 'norma-rs');
+const EXEMPLA_DIR = join(ROOT, 'examples', 'exempla');
+const RIVUS_DIR = join(ROOT, 'compilers', 'rivus');
 
 function parseArgs(): { verbose: boolean; maxStage: number } {
     const args = process.argv.slice(2);

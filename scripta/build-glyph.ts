@@ -2,7 +2,7 @@
 /**
  * Build glyph representation of rivus source.
  *
- * Compiles all .fab files in fons/rivus/ to Unicode glyph format.
+ * Compiles all .fab files in compilers/rivus/ to Unicode glyph format.
  * Output: opus/glyph/
  *
  * Requires: bun run build (or at least rivus-ts)
@@ -17,7 +17,7 @@ import { dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const SOURCE = join(ROOT, 'fons', 'rivus');
+const SOURCE = join(ROOT, 'compilers', 'rivus');
 const OUTPUT = join(ROOT, 'opus', 'glyph');
 const COMPILER = join(ROOT, 'opus', 'bin', 'rivus-ts');
 
