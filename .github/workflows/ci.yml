@@ -5,10 +5,12 @@ on:
     workflow_dispatch:
 
 jobs:
-    build:
+    radix-rs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - uses: oven-sh/setup-bun@v2
-            - run: bun install --frozen-lockfile
-            - run: bun run build
+            - uses: dtolnay/rust-toolchain@stable
+            - name: Format check
+              run: cargo fmt --manifest-path fons/radix-rs/Cargo.toml --all -- --check
+            - name: Test radix-rs
+              run: cargo test --manifest-path fons/radix-rs/Cargo.toml

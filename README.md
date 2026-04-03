@@ -92,6 +92,21 @@ The `§` symbol (section marker) distinguishes file-level configuration and impo
 
 **Target Compatibility.** Not all targets support all features — the compiler validates your code against target capabilities and reports clear errors. See [fons/grammatica/targets.md](fons/grammatica/targets.md) for the compatibility matrix.
 
+## Repository Contract
+
+Faber is a multi-project family repository. Components live in one tree, but they are not treated as one blocking build surface.
+
+- **Primary delivery target:** [`fons/radix-rs`](fons/radix-rs) is the active compiler and the main quality gate.
+- **Older project trees are isolated:** bootstrap compilers, rivus, and legacy TypeScript tooling may lag behind without blocking `radix-rs`.
+- **Root CI is scoped:** pull requests are gated on `radix-rs` checks, not a repo-wide lint/typecheck sweep.
+- **Root inventory lives in [`project.yaml`](project.yaml):** use it to understand project status and ownership at a glance.
+
+Current status model:
+
+- `active` — expected to support ongoing development and blocking checks
+- `maintenance` — useful, but not allowed to block unrelated work
+- `experimental` — informative or exploratory surfaces that may be broken
+
 ## Quick Start
 
 ```bash
@@ -99,15 +114,21 @@ The `§` symbol (section marker) distinguishes file-level configuration and impo
 cd fons/radix-rs && cargo build --release
 cargo run -- emit fons/exempla/salve-munde.fab            # Emit Rust
 
+# Root-scoped primary checks
+bun run check:radix-rs
+bun run test:radix-rs
+bun run ci
+
 # Bootstrap compilers (TS/Go/Python targets)
 bun install
 bun run build                                             # Build nanus-* compilers
 ./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t ts  # TypeScript
 ./opus/bin/nanus-go compile fons/exempla/salve-munde.fab -t go  # Go
 
-# Tests
-cd fons/radix-rs && cargo test                            # radix-rs tests (39 tests)
-bun test                                                  # nanus-ts unit tests
+# Legacy / secondary checks
+bun run test:nanus-ts
+bun run typecheck:legacy
+bun run lint:nanus-ts
 ```
 
 ## Project Structure
