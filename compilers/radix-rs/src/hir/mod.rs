@@ -34,10 +34,11 @@ mod nodes;
 
 pub use lower::{lower, LowerError};
 pub use nodes::{
-    DefId, HirAd, HirAdBinding, HirBinOp, HirBlock, HirCasuArm, HirCollectionFilter, HirCollectionFilterKind,
-    HirCollectionTransform, HirConst, HirEndpointVerb, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId,
-    HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem, HirItemKind, HirIteraMode, HirLiteral,
-    HirLocal, HirMethod, HirNonNullKind, HirOptionalChainKind, HirParam, HirParamMode, HirPattern, HirProgram,
-    HirRangeKind, HirReceiver, HirRefKind, HirStmt, HirStmtKind, HirStruct, HirTransformKind, HirTypeAlias,
-    HirTypeParam, HirUnOp, HirVariant, HirVariantField,
+    DefId, HirAd, HirAdBinding, HirArrayElement, HirBinOp, HirBlock, HirCasuArm, HirCollectionFilter,
+    HirCollectionFilterKind, HirCollectionTransform, HirConst, HirEndpointVerb, HirEnum, HirExpr, HirExprKind,
+    HirField, HirFunction, HirId, HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem, HirItemKind,
+    HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField, HirObjectKey,
+    HirOptionalChainKind, HirParam, HirParamMode, HirPattern, HirProgram, HirRangeKind, HirReceiver, HirRefKind,
+    HirStmt, HirStmtKind, HirStruct, HirTransformKind, HirTypeAlias, HirTypeParam, HirUnOp, HirVariant,
+    HirVariantField,
 };

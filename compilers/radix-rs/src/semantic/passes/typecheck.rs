@@ -47,8 +47,9 @@
 //!   but may produce cascading errors if types remain unresolved
 
 use crate::hir::{
-    DefId, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirId, HirItem, HirItemKind, HirLiteral,
-    HirLocal, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct,
+    DefId, HirArrayElement, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirId, HirItem,
+    HirItemKind, HirLiteral, HirLocal, HirObjectField, HirObjectKey, HirParam, HirParamMode, HirPattern, HirProgram,
+    HirStmt, HirStmtKind, HirStruct,
 };
 use crate::lexer::Symbol;
 use crate::semantic::{
@@ -422,7 +423,14 @@ impl<'a> TypeChecker<'a> {
                 self.finalize_expr(lhs);
                 self.finalize_expr(rhs);
             }
-            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            HirExprKind::Array(elements) => {
+                for element in elements {
+                    match element {
+                        HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => self.finalize_expr(expr),
+                    }
+                }
+            }
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.finalize_expr(element);
                 }
@@ -457,8 +465,8 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Verte { source, entries, .. } => {
                 self.finalize_expr(source);
                 if let Some(entries) = entries {
-                    for (_, value) in entries {
-                        self.finalize_expr(value);
+                    for field in entries {
+                        self.finalize_object_field(field);
                     }
                 }
             }
@@ -470,6 +478,16 @@ impl<'a> TypeChecker<'a> {
             }
             HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => self.finalize_expr(expr),
             HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+        }
+    }
+
+    fn finalize_object_field(&mut self, field: &mut HirObjectField) {
+        match &mut field.key {
+            HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => self.finalize_expr(expr),
+            HirObjectKey::Ident(_) | HirObjectKey::String(_) => {}
+        }
+        if let Some(value) = &mut field.value {
+            self.finalize_expr(value);
         }
     }
 
@@ -1436,7 +1454,12 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn check_array(&mut self, elements: &mut [HirExpr], _span: crate::lexer::Span, expected: Option<TypeId>) -> TypeId {
+    fn check_array(
+        &mut self,
+        elements: &mut [HirArrayElement],
+        _span: crate::lexer::Span,
+        expected: Option<TypeId>,
+    ) -> TypeId {
         let expected_elem = expected.and_then(|ty| match self.types.get(self.resolve_type(ty)) {
             Type::Array(inner) => Some(*inner),
             _ => None,
@@ -1452,14 +1475,40 @@ impl<'a> TypeChecker<'a> {
 
         let mut element_ty = None;
         for element in elements {
-            let ty = if let Some(expected) = expected_elem {
-                self.check_expr_with_expected(element, Some(expected))
+            let (expr, spread) = match element {
+                HirArrayElement::Expr(expr) => (expr, false),
+                HirArrayElement::Spread(expr) => (expr, true),
+            };
+            let ty = if spread {
+                if let Some(expected) = expected_elem {
+                    let expected_array = self.types.array(expected);
+                    self.check_expr_with_expected(expr, Some(expected_array))
+                } else {
+                    self.check_expr(expr)
+                }
+            } else if let Some(expected) = expected_elem {
+                self.check_expr_with_expected(expr, Some(expected))
             } else {
-                self.check_expr(element)
+                self.check_expr(expr)
+            };
+            let ty = if spread {
+                match self.types.get(self.resolve_type(ty)) {
+                    Type::Array(inner) => *inner,
+                    _ => {
+                        self.error(
+                            SemanticErrorKind::InvalidOperandTypes,
+                            "array spread requires lista operand",
+                            expr.span,
+                        );
+                        self.error_type
+                    }
+                }
+            } else {
+                ty
             };
             element_ty = Some(match element_ty {
                 None => ty,
-                Some(existing) => self.array_common_type(existing, ty, element.span),
+                Some(existing) => self.array_common_type(existing, ty, expr.span),
             });
         }
 
@@ -1581,7 +1630,7 @@ impl<'a> TypeChecker<'a> {
         &mut self,
         source: &mut HirExpr,
         target: TypeId,
-        entries: Option<&mut Vec<(Symbol, HirExpr)>>,
+        entries: Option<&mut Vec<HirObjectField>>,
         span: crate::lexer::Span,
     ) -> TypeId {
         let target_resolved = self.resolve_type(target);
@@ -1601,8 +1650,27 @@ impl<'a> TypeChecker<'a> {
             (Type::Array(elem_ty), _) => {
                 if let HirExprKind::Array(elements) = &mut source.kind {
                     for element in elements {
-                        let element_ty = self.check_expr(element);
-                        self.unify(element_ty, elem_ty, element.span, "array element type mismatch");
+                        match element {
+                            HirArrayElement::Expr(expr) => {
+                                let element_ty = self.check_expr(expr);
+                                self.unify(element_ty, elem_ty, expr.span, "array element type mismatch");
+                            }
+                            HirArrayElement::Spread(expr) => {
+                                let spread_ty = self.check_expr(expr);
+                                match self.types.get(self.resolve_type(spread_ty)) {
+                                    Type::Array(inner) => {
+                                        self.unify(*inner, elem_ty, expr.span, "array spread element type mismatch");
+                                    }
+                                    _ => {
+                                        self.error(
+                                            SemanticErrorKind::InvalidOperandTypes,
+                                            "array spread requires lista operand",
+                                            expr.span,
+                                        );
+                                    }
+                                }
+                            }
+                        }
                     }
                 } else {
                     self.check_expr(source);
@@ -1611,17 +1679,52 @@ impl<'a> TypeChecker<'a> {
             // Map construction — validate key-value entry types
             (Type::Map(key_ty, value_ty), Some(entries)) => {
                 let mut inferred_values = Vec::new();
-                for (_, value) in entries {
+                for field in entries {
+                    match &mut field.key {
+                        HirObjectKey::Ident(_) | HirObjectKey::String(_) => {
+                            let textus = self.textus_type();
+                            self.unify(textus, key_ty, span, "map key type mismatch");
+                        }
+                        HirObjectKey::Computed(key) => {
+                            let actual_key_ty = self.check_expr(key);
+                            self.unify(actual_key_ty, key_ty, key.span, "map key type mismatch");
+                        }
+                        HirObjectKey::Spread(expr) => {
+                            let spread_ty = self.check_expr(expr);
+                            match self.types.get(self.resolve_type(spread_ty)).clone() {
+                                Type::Map(spread_key_ty, spread_value_ty) => {
+                                    self.unify(spread_key_ty, key_ty, expr.span, "map spread key type mismatch");
+                                    self.unify(spread_value_ty, value_ty, expr.span, "map spread value type mismatch");
+                                }
+                                _ => {
+                                    self.error(
+                                        SemanticErrorKind::InvalidOperandTypes,
+                                        "object spread requires tabula operand",
+                                        expr.span,
+                                    );
+                                }
+                            }
+                            continue;
+                        }
+                    }
+
+                    let Some(value) = &mut field.value else {
+                        self.error(
+                            SemanticErrorKind::InvalidOperandTypes,
+                            "object field requires value",
+                            span,
+                        );
+                        continue;
+                    };
                     let value_ty_actual = self.check_expr(value);
                     inferred_values.push(self.resolve_type(value_ty_actual));
                     let value_resolved = self.resolve_type(value_ty);
-                    if self.is_infer(value_resolved)
+                    if !(self.is_infer(value_resolved)
                         || matches!(self.types.get(value_resolved), Type::Primitive(Primitive::Ignotum))
-                        || matches!(self.types.get(value_resolved), Type::Union(_))
+                        || matches!(self.types.get(value_resolved), Type::Union(_)))
                     {
-                        continue;
+                        self.unify(value_ty_actual, value_ty, value.span, "map value type mismatch");
                     }
-                    self.unify(value_ty_actual, value_ty, value.span, "map value type mismatch");
                 }
                 if self.is_infer(self.resolve_type(value_ty)) {
                     let inferred_value_ty = match inferred_values.as_slice() {
@@ -1665,26 +1768,54 @@ impl<'a> TypeChecker<'a> {
 
     /// Validate struct field entries against the struct definition.
     /// Extracted from check_struct_literal so it can be used by both Verte and Struct paths.
-    fn check_struct_fields(&mut self, def_id: DefId, fields: &mut [(Symbol, HirExpr)], span: crate::lexer::Span) {
+    fn check_struct_fields(&mut self, def_id: DefId, fields: &mut [HirObjectField], span: crate::lexer::Span) {
         let field_types = match self.structs.get(&def_id) {
             Some(info) => info.fields.clone(),
             None => {
                 self.error(
                     SemanticErrorKind::UndefinedType,
                     "unknown struct",
-                    fields.first().map(|(_, expr)| expr.span).unwrap_or(span),
+                    fields
+                        .first()
+                        .and_then(|field| field.value.as_ref().map(|expr| expr.span))
+                        .unwrap_or(span),
                 );
                 return;
             }
         };
 
-        for (name, value) in fields.iter_mut() {
-            let Some(field_ty) = field_types.get(name).copied() else {
-                self.error(SemanticErrorKind::UndefinedMember, "unknown field", value.span);
-                continue;
-            };
-            let value_ty = self.check_expr(value);
-            self.unify(value_ty, field_ty, value.span, "field initializer type mismatch");
+        for field in fields.iter_mut() {
+            match &mut field.key {
+                HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
+                    let Some(field_ty) = field_types.get(name).copied() else {
+                        let error_span = field.value.as_ref().map(|expr| expr.span).unwrap_or(span);
+                        self.error(SemanticErrorKind::UndefinedMember, "unknown field", error_span);
+                        continue;
+                    };
+                    let Some(value) = &mut field.value else {
+                        self.error(SemanticErrorKind::UndefinedMember, "struct field requires value", span);
+                        continue;
+                    };
+                    let value_ty = self.check_expr(value);
+                    self.unify(value_ty, field_ty, value.span, "field initializer type mismatch");
+                }
+                HirObjectKey::Computed(expr) => {
+                    self.check_expr(expr);
+                    self.error(
+                        SemanticErrorKind::InvalidOperandTypes,
+                        "computed keys are not valid in struct construction",
+                        expr.span,
+                    );
+                }
+                HirObjectKey::Spread(expr) => {
+                    self.check_expr(expr);
+                    self.error(
+                        SemanticErrorKind::InvalidOperandTypes,
+                        "spread fields are not valid in struct construction",
+                        expr.span,
+                    );
+                }
+            }
         }
     }
 

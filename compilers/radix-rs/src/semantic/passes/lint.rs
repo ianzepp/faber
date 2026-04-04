@@ -348,7 +348,11 @@ impl<'a> LintContext<'a> {
             }
             HirExprKind::Array(elements) => {
                 for element in elements {
-                    self.check_expr(element, in_loop);
+                    match element {
+                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                            self.check_expr(expr, in_loop);
+                        }
+                    }
                 }
             }
             HirExprKind::Struct(_, fields) => {
@@ -407,8 +411,15 @@ impl<'a> LintContext<'a> {
                     }
                 }
                 if let Some(entries) = entries {
-                    for (_, value) in entries {
-                        self.check_expr(value, in_loop);
+                    for field in entries {
+                        match &field.key {
+                            crate::hir::HirObjectKey::Computed(expr)
+                            | crate::hir::HirObjectKey::Spread(expr) => self.check_expr(expr, in_loop),
+                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                        }
+                        if let Some(value) = &field.value {
+                            self.check_expr(value, in_loop);
+                        }
                     }
                 }
             }

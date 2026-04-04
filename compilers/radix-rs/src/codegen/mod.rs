@@ -205,7 +205,9 @@ fn find_error_expr_in_stmt(stmt: &crate::hir::HirStmt) -> Option<crate::lexer::S
 }
 
 fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::Span> {
-    use crate::hir::{HirCollectionFilterKind, HirExprKind, HirNonNullKind, HirOptionalChainKind};
+    use crate::hir::{
+        HirArrayElement, HirCollectionFilterKind, HirExprKind, HirNonNullKind, HirObjectKey, HirOptionalChainKind,
+    };
 
     match &expr.kind {
         HirExprKind::Error => Some(expr.span),
@@ -271,9 +273,10 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
         HirExprKind::Intervallum { start, end, step, .. } => find_error_expr_in_expr(start)
             .or_else(|| find_error_expr_in_expr(end))
             .or_else(|| step.as_deref().and_then(find_error_expr_in_expr)),
-        HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
-            elements.iter().find_map(find_error_expr_in_expr)
-        }
+        HirExprKind::Array(elements) => elements.iter().find_map(|element| match element {
+            HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => find_error_expr_in_expr(expr),
+        }),
+        HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => elements.iter().find_map(find_error_expr_in_expr),
         HirExprKind::Struct(_, fields) => fields
             .iter()
             .find_map(|(_, value)| find_error_expr_in_expr(value)),
@@ -289,9 +292,14 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
         HirExprKind::Clausura(_, _, body) => find_error_expr_in_expr(body),
         HirExprKind::Verte { source, entries, .. } => find_error_expr_in_expr(source).or_else(|| {
             entries.as_ref().and_then(|entries| {
-                entries
-                    .iter()
-                    .find_map(|(_, value)| find_error_expr_in_expr(value))
+                entries.iter().find_map(|field| match &field.key {
+                    HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => {
+                        find_error_expr_in_expr(expr).or_else(|| field.value.as_ref().and_then(find_error_expr_in_expr))
+                    }
+                    HirObjectKey::Ident(_) | HirObjectKey::String(_) => {
+                        field.value.as_ref().and_then(find_error_expr_in_expr)
+                    }
+                })
             })
         }),
         HirExprKind::Conversio { source, fallback, .. } => {

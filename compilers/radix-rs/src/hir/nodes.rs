@@ -357,7 +357,7 @@ pub enum HirExprKind {
     /// Compound assignment
     AssignOp(HirBinOp, Box<HirExpr>, Box<HirExpr>),
     /// Array literal
-    Array(Vec<HirExpr>),
+    Array(Vec<HirArrayElement>),
     /// Struct literal
     Struct(DefId, Vec<(Symbol, HirExpr)>),
     /// Tuple (for multiple return, etc)
@@ -388,9 +388,9 @@ pub enum HirExprKind {
     Verte {
         source: Box<HirExpr>,
         target: TypeId,
-        /// Extracted key-value entries for map/struct construction.
+        /// Extracted object fields for map/struct construction.
         /// Present when source is an object literal being constructed into a Map or Struct.
-        entries: Option<Vec<(Symbol, HirExpr)>>,
+        entries: Option<Vec<HirObjectField>>,
     },
     /// Runtime value conversion (numeratum/fractatum/textatum/bivalentum/⇒).
     /// Unlike Verte (compile-time cast), this performs actual parsing/conversion
@@ -409,6 +409,26 @@ pub enum HirExprKind {
     Deref(Box<HirExpr>),
     /// Error placeholder
     Error,
+}
+
+#[derive(Debug)]
+pub enum HirArrayElement {
+    Expr(HirExpr),
+    Spread(HirExpr),
+}
+
+#[derive(Debug)]
+pub struct HirObjectField {
+    pub key: HirObjectKey,
+    pub value: Option<HirExpr>,
+}
+
+#[derive(Debug)]
+pub enum HirObjectKey {
+    Ident(Symbol),
+    String(Symbol),
+    Computed(HirExpr),
+    Spread(HirExpr),
 }
 
 #[derive(Debug)]

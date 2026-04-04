@@ -153,8 +153,15 @@ impl<'a> TsCodegen<'a> {
             HirExprKind::Verte { source, entries, .. } => {
                 self.collect_expr_names(names, source);
                 if let Some(entries) = entries {
-                    for (_, value) in entries {
-                        self.collect_expr_names(names, value);
+                    for field in entries {
+                        match &field.key {
+                            crate::hir::HirObjectKey::Computed(expr)
+                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_names(names, expr),
+                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                        }
+                        if let Some(value) = &field.value {
+                            self.collect_expr_names(names, value);
+                        }
                     }
                 }
             }
@@ -253,7 +260,15 @@ impl<'a> TsCodegen<'a> {
                     self.collect_expr_names(names, step);
                 }
             }
-            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            HirExprKind::Array(elements) => {
+                for element in elements {
+                    match element {
+                        crate::hir::HirArrayElement::Expr(expr)
+                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_names(names, expr),
+                    }
+                }
+            }
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.collect_expr_names(names, element);
                 }

@@ -255,8 +255,15 @@ impl<'a> RustCodegen<'a> {
             HirExprKind::Verte { source, entries, .. } => {
                 self.collect_expr_names(names, source);
                 if let Some(entries) = entries {
-                    for (_, value) in entries {
-                        self.collect_expr_names(names, value);
+                    for field in entries {
+                        match &field.key {
+                            crate::hir::HirObjectKey::Computed(expr)
+                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_names(names, expr),
+                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                        }
+                        if let Some(value) = &field.value {
+                            self.collect_expr_names(names, value);
+                        }
                     }
                 }
             }
@@ -352,7 +359,15 @@ impl<'a> RustCodegen<'a> {
                     self.collect_expr_names(names, step);
                 }
             }
-            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            HirExprKind::Array(elements) => {
+                for element in elements {
+                    match element {
+                        crate::hir::HirArrayElement::Expr(expr)
+                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_names(names, expr),
+                    }
+                }
+            }
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.collect_expr_names(names, element);
                 }
@@ -510,8 +525,15 @@ impl<'a> RustCodegen<'a> {
                 HirExprKind::Verte { source, entries, .. } => {
                     visit_expr(source, suppressed, deps);
                     if let Some(entries) = entries {
-                        for (_, value) in entries {
-                            visit_expr(value, suppressed, deps);
+                        for field in entries {
+                            match &field.key {
+                                crate::hir::HirObjectKey::Computed(expr)
+                                | crate::hir::HirObjectKey::Spread(expr) => visit_expr(expr, suppressed, deps),
+                                crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                            }
+                            if let Some(value) = &field.value {
+                                visit_expr(value, suppressed, deps);
+                            }
                         }
                     }
                 }
@@ -597,7 +619,15 @@ impl<'a> RustCodegen<'a> {
                         visit_expr(step, suppressed, deps);
                     }
                 }
-                HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+                HirExprKind::Array(elements) => {
+                    for element in elements {
+                        match element {
+                            crate::hir::HirArrayElement::Expr(expr)
+                            | crate::hir::HirArrayElement::Spread(expr) => visit_expr(expr, suppressed, deps),
+                        }
+                    }
+                }
+                HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                     for element in elements {
                         visit_expr(element, suppressed, deps);
                     }

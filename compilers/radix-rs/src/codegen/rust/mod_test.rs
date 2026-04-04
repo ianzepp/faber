@@ -1,8 +1,8 @@
 use crate::codegen::{self, Target};
 use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId, HirImport, HirImportItem,
-    HirInterface, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirParam, HirParamMode, HirPattern, HirProgram,
-    HirStmt, HirStmtKind, HirStruct, HirTypeAlias, HirVariant, HirVariantField,
+    DefId, HirArrayElement, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId,
+    HirImport, HirImportItem, HirInterface, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirParam, HirParamMode,
+    HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct, HirTypeAlias, HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
@@ -719,12 +719,12 @@ fn expr_codegen_handles_control_flow_and_operators() {
                     iter_binding_name,
                     Box::new(HirExpr {
                         id: HirId(328),
-                        kind: HirExprKind::Array(vec![HirExpr {
+                        kind: HirExprKind::Array(vec![HirArrayElement::Expr(HirExpr {
                             id: HirId(329),
                             kind: HirExprKind::Literal(HirLiteral::Int(1)),
                             ty: Some(numerus),
                             span: span(),
-                        }]),
+                        })]),
                         ty: None,
                         span: span(),
                     }),

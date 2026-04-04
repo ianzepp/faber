@@ -2,8 +2,8 @@ use super::stmt;
 use super::types;
 use super::{CodeWriter, CodegenError, TsCodegen};
 use crate::hir::{
-    HirBinOp, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirIteraMode, HirLiteral, HirOptionalChainKind,
-    HirStmtKind, HirTransformKind, HirUnOp,
+    HirArrayElement, HirBinOp, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirIteraMode, HirLiteral,
+    HirObjectKey, HirOptionalChainKind, HirStmtKind, HirTransformKind, HirUnOp,
 };
 use crate::semantic::{Primitive, Type, TypeTable};
 
@@ -133,7 +133,13 @@ pub fn generate_expr(
                 if idx > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, element, types, w)?;
+                match element {
+                    HirArrayElement::Expr(expr) => generate_expr(codegen, expr, types, w)?,
+                    HirArrayElement::Spread(expr) => {
+                        w.write("...");
+                        generate_expr(codegen, expr, types, w)?;
+                    }
+                }
             }
             w.write("]");
         }
@@ -221,13 +227,72 @@ pub fn generate_expr(
             Type::Struct(_) => {
                 if let Some(entries) = entries {
                     w.write("{ ");
-                    for (idx, (name, value)) in entries.iter().enumerate() {
-                        if idx > 0 {
+                    let mut wrote_any = false;
+                    for field in entries {
+                        let Some(value) = &field.value else {
+                            continue;
+                        };
+                        if wrote_any {
                             w.write(", ");
                         }
-                        w.write(codegen.resolve_symbol(*name));
+                        match &field.key {
+                            HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
+                                w.write(codegen.resolve_symbol(*name));
+                            }
+                            HirObjectKey::Computed(expr) => {
+                                w.write("[");
+                                generate_expr(codegen, expr, types, w)?;
+                                w.write("]");
+                            }
+                            HirObjectKey::Spread(expr) => {
+                                w.write("...");
+                                generate_expr(codegen, expr, types, w)?;
+                                wrote_any = true;
+                                continue;
+                            }
+                        }
                         w.write(": ");
                         generate_expr(codegen, value, types, w)?;
+                        wrote_any = true;
+                    }
+                    w.write(" }");
+                } else {
+                    generate_expr(codegen, source, types, w)?;
+                    w.write(" as ");
+                    w.write(&types::type_to_ts(codegen, *target, types));
+                }
+            }
+            Type::Map(_, _) => {
+                if let Some(entries) = entries {
+                    w.write("{ ");
+                    let mut wrote_any = false;
+                    for field in entries {
+                        if wrote_any {
+                            w.write(", ");
+                        }
+                        match &field.key {
+                            HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
+                                w.write(codegen.resolve_symbol(*name));
+                                if let Some(value) = &field.value {
+                                    w.write(": ");
+                                    generate_expr(codegen, value, types, w)?;
+                                }
+                            }
+                            HirObjectKey::Computed(expr) => {
+                                w.write("[");
+                                generate_expr(codegen, expr, types, w)?;
+                                w.write("]");
+                                if let Some(value) = &field.value {
+                                    w.write(": ");
+                                    generate_expr(codegen, value, types, w)?;
+                                }
+                            }
+                            HirObjectKey::Spread(expr) => {
+                                w.write("...");
+                                generate_expr(codegen, expr, types, w)?;
+                            }
+                        }
+                        wrote_any = true;
                     }
                     w.write(" }");
                 } else {
@@ -808,9 +873,10 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                 || contains_await_in_expr(end)
                 || step.as_deref().is_some_and(contains_await_in_expr)
         }
-        HirExprKind::Array(values) | HirExprKind::Tuple(values) | HirExprKind::Scribe(values) => {
-            values.iter().any(contains_await_in_expr)
-        }
+        HirExprKind::Array(values) => values.iter().any(|value| match value {
+            HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => contains_await_in_expr(expr),
+        }),
+        HirExprKind::Tuple(values) | HirExprKind::Scribe(values) => values.iter().any(contains_await_in_expr),
         HirExprKind::Scriptum(_, args) => args.iter().any(contains_await_in_expr),
         HirExprKind::Adfirma(cond, msg) => {
             contains_await_in_expr(cond) || msg.as_ref().is_some_and(|msg| contains_await_in_expr(msg))
@@ -827,9 +893,17 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
         HirExprKind::Verte { source, entries, .. } => {
             contains_await_in_expr(source)
                 || entries.as_ref().is_some_and(|entries| {
-                    entries
-                        .iter()
-                        .any(|(_, value)| contains_await_in_expr(value))
+                    entries.iter().any(|field| {
+                        match &field.key {
+                            HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => {
+                                contains_await_in_expr(expr)
+                                    || field.value.as_ref().is_some_and(contains_await_in_expr)
+                            }
+                            HirObjectKey::Ident(_) | HirObjectKey::String(_) => {
+                                field.value.as_ref().is_some_and(contains_await_in_expr)
+                            }
+                        }
+                    })
                 })
         }
         HirExprKind::Conversio { source, fallback, .. } => {

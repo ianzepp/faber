@@ -615,14 +615,65 @@ pub fn generate_expr(
             generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Array(elements) => {
-            w.write("vec![");
-            for (i, elem) in elements.iter().enumerate() {
-                if i > 0 {
-                    w.write(", ");
+            if elements.iter().any(|element| matches!(element, HirArrayElement::Spread(_))) {
+                let temp = format!("__faber_vec_{}", expr.id.0);
+                w.writeln("{");
+                let mut result = Ok(());
+                w.indented(|w| {
+                    w.write("let mut ");
+                    w.write(&temp);
+                    w.writeln(" = Vec::new();");
+                    for element in elements {
+                        if result.is_err() {
+                            return;
+                        }
+                        match element {
+                            HirArrayElement::Expr(elem) => {
+                                w.write(&temp);
+                                w.write(".push(");
+                                result = generate_expr(
+                                    codegen,
+                                    elem,
+                                    types,
+                                    w,
+                                    in_failable_fn,
+                                    in_entry,
+                                    suppress_error_propagation,
+                                );
+                                w.writeln(");");
+                            }
+                            HirArrayElement::Spread(elem) => {
+                                w.write(&temp);
+                                w.write(".extend(");
+                                result = generate_expr(
+                                    codegen,
+                                    elem,
+                                    types,
+                                    w,
+                                    in_failable_fn,
+                                    in_entry,
+                                    suppress_error_propagation,
+                                );
+                                w.writeln(");");
+                            }
+                        }
+                    }
+                    w.write(&temp);
+                    w.newline();
+                });
+                result?;
+                w.write("}");
+            } else {
+                w.write("vec![");
+                for (i, elem) in elements.iter().enumerate() {
+                    if i > 0 {
+                        w.write(", ");
+                    }
+                    let HirArrayElement::Expr(elem) = elem else { continue };
+                    generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
                 }
-                generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write("]");
             }
-            w.write("]");
         }
         HirExprKind::Struct(def_id, fields) => {
             w.write(codegen.resolve_def(*def_id));
@@ -737,7 +788,11 @@ pub fn generate_expr(
                     w.writeln(" {");
                     let mut struct_result = Ok(());
                     w.indented(|w| {
-                        for (name, value) in entries {
+                        for field in entries {
+                            let (name, value) = match (&field.key, &field.value) {
+                                (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(value)) => (name, value),
+                                _ => continue,
+                            };
                             w.write(codegen.resolve_symbol(*name));
                             w.write(": ");
                             if struct_result.is_err() {
@@ -767,12 +822,61 @@ pub fn generate_expr(
                         w.write("Vec::<");
                         w.write(&type_to_rust(codegen, *elem, types));
                         w.write(">::new()");
+                    } else if elements.iter().any(|element| matches!(element, HirArrayElement::Spread(_))) {
+                        let temp = format!("__faber_verte_vec_{}", expr.id.0);
+                        w.writeln("{");
+                        let mut array_result = Ok(());
+                        w.indented(|w| {
+                            w.write("let mut ");
+                            w.write(&temp);
+                            w.writeln(" = Vec::new();");
+                            for element in elements {
+                                if array_result.is_err() {
+                                    return;
+                                }
+                                match element {
+                                    HirArrayElement::Expr(elem_expr) => {
+                                        w.write(&temp);
+                                        w.write(".push(");
+                                        array_result = generate_expr(
+                                            codegen,
+                                            elem_expr,
+                                            types,
+                                            w,
+                                            in_failable_fn,
+                                            in_entry,
+                                            suppress_error_propagation,
+                                        );
+                                        w.writeln(");");
+                                    }
+                                    HirArrayElement::Spread(elem_expr) => {
+                                        w.write(&temp);
+                                        w.write(".extend(");
+                                        array_result = generate_expr(
+                                            codegen,
+                                            elem_expr,
+                                            types,
+                                            w,
+                                            in_failable_fn,
+                                            in_entry,
+                                            suppress_error_propagation,
+                                        );
+                                        w.writeln(");");
+                                    }
+                                }
+                            }
+                            w.write(&temp);
+                            w.newline();
+                        });
+                        array_result?;
+                        w.write("}");
                     } else {
                         w.write("vec![");
                         for (i, elem_expr) in elements.iter().enumerate() {
                             if i > 0 {
                                 w.write(", ");
                             }
+                            let HirArrayElement::Expr(elem_expr) = elem_expr else { continue };
                             generate_expr(
                                 codegen,
                                 elem_expr,
@@ -805,24 +909,58 @@ pub fn generate_expr(
                         w.write(", ");
                         w.write(&type_to_rust(codegen, *value_ty, types));
                         w.writeln(">::new();");
-                        for (key, value) in entries {
-                            w.write(&map_name);
-                            w.write(".insert(");
-                            write_innatum_map_key(codegen, types, *key, *key_ty, w);
-                            w.write(", ");
-                            if map_result.is_err() {
-                                return;
+                        for field in entries {
+                            match (&field.key, &field.value) {
+                                (HirObjectKey::Spread(expr), _) => {
+                                    w.write(&map_name);
+                                    w.write(".extend(");
+                                    if map_result.is_err() {
+                                        return;
+                                    }
+                                    map_result = generate_expr(
+                                        codegen,
+                                        expr,
+                                        types,
+                                        w,
+                                        in_failable_fn,
+                                        in_entry,
+                                        suppress_error_propagation,
+                                    );
+                                    w.writeln(");");
+                                }
+                                (_, Some(value)) => {
+                                    w.write(&map_name);
+                                    w.write(".insert(");
+                                    if map_result.is_err() {
+                                        return;
+                                    }
+                                    map_result = write_object_map_key(
+                                        codegen,
+                                        types,
+                                        &field.key,
+                                        *key_ty,
+                                        w,
+                                        in_failable_fn,
+                                        in_entry,
+                                        suppress_error_propagation,
+                                    );
+                                    if map_result.is_err() {
+                                        return;
+                                    }
+                                    w.write(", ");
+                                    map_result = generate_expr(
+                                        codegen,
+                                        value,
+                                        types,
+                                        w,
+                                        in_failable_fn,
+                                        in_entry,
+                                        suppress_error_propagation,
+                                    );
+                                    w.writeln(");");
+                                }
+                                (_, None) => {}
                             }
-                            map_result = generate_expr(
-                                codegen,
-                                value,
-                                types,
-                                w,
-                                in_failable_fn,
-                                in_entry,
-                                suppress_error_propagation,
-                            );
-                            w.writeln(");");
                         }
                         w.write(&map_name);
                         w.newline();
@@ -1480,4 +1618,27 @@ fn write_innatum_map_key(
     }
 
     w.write(codegen.resolve_symbol(key));
+}
+
+#[allow(clippy::too_many_arguments)]
+fn write_object_map_key(
+    codegen: &RustCodegen<'_>,
+    types: &TypeTable,
+    key: &HirObjectKey,
+    key_ty: TypeId,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    match key {
+        HirObjectKey::Ident(key) | HirObjectKey::String(key) => {
+            write_innatum_map_key(codegen, types, *key, key_ty, w);
+        }
+        HirObjectKey::Computed(expr) => {
+            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        }
+        HirObjectKey::Spread(_) => {}
+    }
+    Ok(())
 }

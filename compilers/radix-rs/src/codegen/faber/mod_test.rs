@@ -1,7 +1,7 @@
 use super::{Codegen, DefId, FaberCodegen, Interner, Primitive, Type, TypeTable};
 use crate::hir::{
-    HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirParam, HirParamMode,
-    HirPattern, HirProgram, HirStmt, HirStmtKind,
+    HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirObjectField,
+    HirObjectKey, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind,
 };
 use crate::lexer::Span;
 use crate::semantic::InferVar;
@@ -443,24 +443,24 @@ fn emits_object_literal_fields_from_innatum_entries() {
             }),
             target: map_ty,
             entries: Some(vec![
-                (
-                    nomen,
-                    HirExpr {
+                HirObjectField {
+                    key: HirObjectKey::Ident(nomen),
+                    value: Some(HirExpr {
                         id: crate::hir::HirId(3),
                         kind: HirExprKind::Literal(HirLiteral::String(marcus)),
                         ty: Some(textus),
                         span: span(),
-                    },
-                ),
-                (
-                    activus,
-                    HirExpr {
+                    }),
+                },
+                HirObjectField {
+                    key: HirObjectKey::Ident(activus),
+                    value: Some(HirExpr {
                         id: crate::hir::HirId(4),
                         kind: HirExprKind::Literal(HirLiteral::Bool(true)),
                         ty: Some(bivalens),
                         span: span(),
-                    },
-                ),
+                    }),
+                },
             ]),
         },
         ty: Some(map_ty),

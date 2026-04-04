@@ -236,7 +236,11 @@ fn check_expr(
         }
         HirExprKind::Array(elements) => {
             for element in elements {
-                check_expr(element, types, enum_variants, errors);
+                match element {
+                    crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                        check_expr(expr, types, enum_variants, errors);
+                    }
+                }
             }
         }
         HirExprKind::Struct(_, fields) => {
@@ -282,8 +286,16 @@ fn check_expr(
         HirExprKind::Verte { source, entries, .. } => {
             check_expr(source, types, enum_variants, errors);
             if let Some(entries) = entries {
-                for (_, value) in entries {
-                    check_expr(value, types, enum_variants, errors);
+                for field in entries {
+                    match &field.key {
+                        crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
+                            check_expr(expr, types, enum_variants, errors);
+                        }
+                        crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                    }
+                    if let Some(value) = &field.value {
+                        check_expr(value, types, enum_variants, errors);
+                    }
                 }
             }
         }

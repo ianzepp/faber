@@ -27,8 +27,8 @@
 
 use super::{CodeWriter, Codegen, CodegenError};
 use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirFunction, HirInterface, HirItem, HirItemKind,
-    HirLiteral, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct,
+    DefId, HirArrayElement, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirFunction, HirInterface, HirItem,
+    HirItemKind, HirLiteral, HirObjectField, HirObjectKey, HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct,
 };
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
@@ -820,7 +820,13 @@ impl FaberCodegen {
                     if idx > 0 {
                         w.write(", ");
                     }
-                    self.write_expr(elem, types, names, interner, w);
+                    match elem {
+                        HirArrayElement::Expr(expr) => self.write_expr(expr, types, names, interner, w),
+                        HirArrayElement::Spread(expr) => {
+                            w.write("sparge ");
+                            self.write_expr(expr, types, names, interner, w);
+                        }
+                    }
                 }
                 w.write("]");
             }
@@ -926,13 +932,11 @@ impl FaberCodegen {
                 Type::Struct(_) => {
                     if let Some(entries) = entries {
                         w.write("{");
-                        for (idx, (name, value)) in entries.iter().enumerate() {
+                        for (idx, field) in entries.iter().enumerate() {
                             if idx > 0 {
                                 w.write(", ");
                             }
-                            w.write(&self.symbol_to_string(*name, interner));
-                            w.write(": ");
-                            self.write_expr(value, types, names, interner, w);
+                            self.write_object_field(field, types, names, interner, w);
                         }
                         w.write("} ⇢ ");
                         w.write(&self.type_to_faber(*target, types, names, interner));
@@ -945,13 +949,11 @@ impl FaberCodegen {
                 Type::Array(_) | Type::Map(_, _) | Type::Set(_) => {
                     if let Some(entries) = entries {
                         w.write("{");
-                        for (idx, (name, value)) in entries.iter().enumerate() {
+                        for (idx, field) in entries.iter().enumerate() {
                             if idx > 0 {
                                 w.write(", ");
                             }
-                            w.write(&self.symbol_to_string(*name, interner));
-                            w.write(": ");
-                            self.write_expr(value, types, names, interner, w);
+                            self.write_object_field(field, types, names, interner, w);
                         }
                         w.write("} ⇢ ");
                     } else {
@@ -1178,6 +1180,45 @@ impl FaberCodegen {
         w.write("\"");
     }
 
+    fn write_object_field(
+        &self,
+        field: &HirObjectField,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        match &field.key {
+            HirObjectKey::Ident(name) => {
+                w.write(&self.symbol_to_string(*name, interner));
+                if let Some(value) = &field.value {
+                    w.write(": ");
+                    self.write_expr(value, types, names, interner, w);
+                }
+            }
+            HirObjectKey::String(name) => {
+                self.write_quoted_symbol(*name, interner, w);
+                if let Some(value) = &field.value {
+                    w.write(": ");
+                    self.write_expr(value, types, names, interner, w);
+                }
+            }
+            HirObjectKey::Computed(expr) => {
+                w.write("[");
+                self.write_expr(expr, types, names, interner, w);
+                w.write("]");
+                if let Some(value) = &field.value {
+                    w.write(": ");
+                    self.write_expr(value, types, names, interner, w);
+                }
+            }
+            HirObjectKey::Spread(expr) => {
+                w.write("sparge ");
+                self.write_expr(expr, types, names, interner, w);
+            }
+        }
+    }
+
     fn is_synthetic_proba_function(&self, func: &HirFunction, types: &TypeTable, interner: &Interner) -> bool {
         if !func.params.is_empty() {
             return false;
@@ -1402,8 +1443,16 @@ impl FaberCodegen {
             HirExprKind::Verte { source, entries, .. } => {
                 self.collect_expr_names(names, source);
                 if let Some(entries) = entries {
-                    for (_, value) in entries {
-                        self.collect_expr_names(names, value);
+                    for field in entries {
+                        match &field.key {
+                            HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => {
+                                self.collect_expr_names(names, expr);
+                            }
+                            HirObjectKey::Ident(_) | HirObjectKey::String(_) => {}
+                        }
+                        if let Some(value) = &field.value {
+                            self.collect_expr_names(names, value);
+                        }
                     }
                 }
             }
@@ -1500,7 +1549,16 @@ impl FaberCodegen {
                     self.collect_expr_names(names, step);
                 }
             }
-            HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            HirExprKind::Array(elements) => {
+                for element in elements {
+                    match element {
+                        HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => {
+                            self.collect_expr_names(names, expr);
+                        }
+                    }
+                }
+            }
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
                     self.collect_expr_names(names, element);
                 }

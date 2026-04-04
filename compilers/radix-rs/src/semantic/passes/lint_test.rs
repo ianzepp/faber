@@ -1,7 +1,7 @@
 use super::{lint, Resolver, SemanticErrorKind, TypeTable, WarningKind};
 use crate::hir::{
-    HirBlock, HirExpr, HirExprKind, HirImport, HirImportItem, HirItem, HirItemKind, HirLiteral, HirLocal, HirProgram,
-    HirStmt, HirStmtKind,
+    HirBlock, HirExpr, HirExprKind, HirImport, HirImportItem, HirItem, HirItemKind, HirLiteral, HirLocal,
+    HirObjectField, HirObjectKey, HirProgram, HirStmt, HirStmtKind,
 };
 use crate::lexer::Span;
 use crate::semantic::Primitive;
@@ -239,15 +239,15 @@ fn no_warning_on_verte_with_entries() {
                         }),
                         target: struct_ty,
                         // Entries present = struct construction, not a redundant cast
-                        entries: Some(vec![(
-                            crate::lexer::Symbol(0),
-                            HirExpr {
+                        entries: Some(vec![HirObjectField {
+                            key: HirObjectKey::Ident(crate::lexer::Symbol(0)),
+                            value: Some(HirExpr {
                                 id: crate::hir::HirId(4),
                                 kind: HirExprKind::Literal(HirLiteral::Int(42)),
                                 ty: Some(numerus),
                                 span: span(),
-                            },
-                        )]),
+                            }),
+                        }]),
                     },
                     ty: Some(struct_ty),
                     span: span(),

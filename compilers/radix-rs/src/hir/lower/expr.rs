@@ -34,8 +34,9 @@
 
 use super::Lowerer;
 use crate::hir::{
-    HirBinOp, HirCollectionFilter, HirCollectionFilterKind, HirCollectionTransform, HirExpr, HirExprKind, HirLiteral,
-    HirNonNullKind, HirOptionalChainKind, HirTransformKind, HirUnOp,
+    HirArrayElement, HirBinOp, HirCollectionFilter, HirCollectionFilterKind, HirCollectionTransform, HirExpr,
+    HirExprKind, HirLiteral, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind, HirTransformKind,
+    HirUnOp,
 };
 use crate::semantic::{InferVar, Primitive, Type};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
@@ -308,30 +309,7 @@ impl<'a> Lowerer<'a> {
             crate::syntax::ExprKind::Object(object) => {
                 let mut entries = Vec::new();
                 for field in &object.fields {
-                    let key = match &field.key {
-                        crate::syntax::ObjectKey::Ident(ident) => ident.name,
-                        crate::syntax::ObjectKey::String(string) => *string,
-                        _ => {
-                            self.error("computed/spread keys not supported in verte object");
-                            continue;
-                        }
-                    };
-                    let value = match &field.value {
-                        Some(value) => lower_expr(self, value),
-                        None => HirExpr {
-                            id: self.next_hir_id(),
-                            kind: HirExprKind::Path(match self.lookup_name(key) {
-                                Some(def_id) => def_id,
-                                None => {
-                                    self.error("undefined shorthand key in verte object");
-                                    return HirExprKind::Error;
-                                }
-                            }),
-                            ty: None,
-                            span: field.span,
-                        },
-                    };
-                    entries.push((key, value));
+                    entries.push(self.lower_object_field(field));
                 }
 
                 let placeholder = HirExpr {
@@ -355,10 +333,10 @@ impl<'a> Lowerer<'a> {
         for el in &array.elements {
             match el {
                 crate::syntax::ArrayElement::Expr(e) => {
-                    elements.push(lower_expr(self, e));
+                    elements.push(HirArrayElement::Expr(lower_expr(self, e)));
                 }
                 crate::syntax::ArrayElement::Spread(e) => {
-                    elements.push(lower_expr(self, e));
+                    elements.push(HirArrayElement::Spread(lower_expr(self, e)));
                 }
             }
         }
@@ -383,28 +361,37 @@ impl<'a> Lowerer<'a> {
         let target = self.types.map(textus_ty, value_ty);
         let mut entries = Vec::new();
         for field in &obj.fields {
-            let key = match &field.key {
-                crate::syntax::ObjectKey::Ident(ident) => ident.name,
-                crate::syntax::ObjectKey::String(string) => *string,
-                _ => {
-                    self.error("computed/spread keys not supported in object literal");
-                    continue;
-                }
-            };
-            let value = match &field.value {
-                Some(value) => lower_expr(self, value),
-                None => match &field.key {
-                    crate::syntax::ObjectKey::Ident(ident) => {
-                        HirExpr { id: self.next_hir_id(), kind: self.lower_nomen(ident), ty: None, span: ident.span }
-                    }
-                    _ => HirExpr { id: self.next_hir_id(), kind: HirExprKind::Error, ty: None, span: field.span },
-                },
-            };
-            entries.push((key, value));
+            entries.push(self.lower_object_field(field));
         }
         let source =
             HirExpr { id: self.next_hir_id(), kind: HirExprKind::Tuple(Vec::new()), ty: None, span: self.current_span };
         HirExprKind::Verte { source: Box::new(source), target, entries: Some(entries) }
+    }
+
+    fn lower_object_field(&mut self, field: &crate::syntax::ObjectField) -> HirObjectField {
+        let key = match &field.key {
+            crate::syntax::ObjectKey::Ident(ident) => HirObjectKey::Ident(ident.name),
+            crate::syntax::ObjectKey::String(string) => HirObjectKey::String(*string),
+            crate::syntax::ObjectKey::Computed(expr) => HirObjectKey::Computed(lower_expr(self, expr)),
+            crate::syntax::ObjectKey::Spread(expr) => HirObjectKey::Spread(lower_expr(self, expr)),
+        };
+
+        let value = match &field.value {
+            Some(value) => Some(lower_expr(self, value)),
+            None => match &field.key {
+                crate::syntax::ObjectKey::Ident(ident) => Some(HirExpr {
+                    id: self.next_hir_id(),
+                    kind: self.lower_nomen(ident),
+                    ty: None,
+                    span: ident.span,
+                }),
+                crate::syntax::ObjectKey::String(_)
+                | crate::syntax::ObjectKey::Computed(_)
+                | crate::syntax::ObjectKey::Spread(_) => None,
+            },
+        };
+
+        HirObjectField { key, value }
     }
 
     fn guess_expr_type(&mut self, expr: &crate::syntax::Expr) -> crate::semantic::TypeId {

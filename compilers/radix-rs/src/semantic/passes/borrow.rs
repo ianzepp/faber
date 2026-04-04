@@ -327,7 +327,11 @@ impl<'a> BorrowChecker<'a> {
             }
             HirExprKind::Array(elements) => {
                 for element in elements {
-                    self.check_expr(element);
+                    match element {
+                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                            self.check_expr(expr);
+                        }
+                    }
                 }
             }
             HirExprKind::Struct(_, fields) => {
@@ -378,8 +382,15 @@ impl<'a> BorrowChecker<'a> {
             HirExprKind::Verte { source, entries, .. } => {
                 self.check_expr(source);
                 if let Some(entries) = entries {
-                    for (_, value) in entries {
-                        self.check_expr(value);
+                    for field in entries {
+                        match &field.key {
+                            crate::hir::HirObjectKey::Computed(expr)
+                            | crate::hir::HirObjectKey::Spread(expr) => self.check_expr(expr),
+                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                        }
+                        if let Some(value) = &field.value {
+                            self.check_expr(value);
+                        }
                     }
                 }
             }
