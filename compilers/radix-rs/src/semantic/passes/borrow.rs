@@ -305,10 +305,17 @@ impl<'a> BorrowChecker<'a> {
                 self.check_expr(cond);
                 self.check_block(block);
             }
-            HirExprKind::Itera(_, binding, iter, block) => {
+            HirExprKind::Itera(_, binding, _, iter, block) => {
                 self.check_expr(iter);
                 self.ensure_state(*binding);
                 self.check_block(block);
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.check_expr(start);
+                self.check_expr(end);
+                if let Some(step) = step {
+                    self.check_expr(step);
+                }
             }
             HirExprKind::Assign(target, value) => {
                 self.check_lvalue(target);

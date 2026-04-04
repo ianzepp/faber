@@ -94,23 +94,27 @@ impl FaberCodegen {
                 w.newline();
             }
             HirItemKind::Import(import) => {
-                w.write("importa ");
-                w.write(&self.symbol_to_string(import.path, interner));
-                if !import.items.is_empty() {
-                    w.write(" {");
-                    for (idx, item) in import.items.iter().enumerate() {
-                        if idx > 0 {
-                            w.write(", ");
-                        }
-                        let name = self.symbol_to_string(item.name, interner);
-                        if let Some(alias) = item.alias {
-                            let alias = self.symbol_to_string(alias, interner);
-                            w.write(&format!("{} ut {}", name, alias));
-                        } else {
-                            w.write(&name);
-                        }
+                w.write("importa ex ");
+                self.write_symbol_literal(import.path, interner, w);
+                w.write(" ");
+                w.write(match import.visibility {
+                    crate::syntax::Visibility::Private => "privata",
+                    crate::syntax::Visibility::Public => "publica",
+                });
+                if let Some(item) = import.items.first() {
+                    w.write(" ");
+                    let name = self.symbol_to_string(item.name, interner);
+                    if item.alias == Some(item.name) {
+                        w.write("* ut ");
+                        w.write(&name);
+                    } else if let Some(alias) = item.alias {
+                        let alias = self.symbol_to_string(alias, interner);
+                        w.write(&name);
+                        w.write(" ut ");
+                        w.write(&alias);
+                    } else {
+                        w.write(&name);
                     }
-                    w.write("}");
                 }
                 w.newline();
             }
@@ -422,9 +426,10 @@ impl FaberCodegen {
                 format!("{}<{}>", base_str, args_str.join(", "))
             }
 
-            Type::Infer(_) => "/* unresolved */".to_owned(),
-            Type::Union(_) => "unio".to_owned(),
-            Type::Error => "/* error */".to_owned(),
+            // WHY: Canonical Faber output must stay inside real grammar even when
+            // semantic precision is degraded. `ignotum` is the nearest legal
+            // fallback for unresolved, union-shaped, or error-marker types.
+            Type::Infer(_) | Type::Union(_) | Type::Error => "ignotum".to_owned(),
         }
     }
 
@@ -710,7 +715,7 @@ impl FaberCodegen {
                 w.indented(|w| self.write_block(block, types, names, interner, w));
                 w.write("}");
             }
-            HirExprKind::Itera(mode, binding, iter, block) => {
+            HirExprKind::Itera(mode, _binding, binding_name, iter, block) => {
                 w.write("itera ");
                 let mode_text = match mode {
                     crate::hir::HirIteraMode::Ex => "ex",
@@ -719,12 +724,24 @@ impl FaberCodegen {
                 };
                 w.write(mode_text);
                 w.write(" ");
-                w.write(&self.name_for_def(*binding, names, interner));
-                w.write(" ");
                 self.write_expr(iter, types, names, interner, w);
+                w.write(" fixum ");
+                w.write(&self.symbol_to_string(*binding_name, interner));
                 w.writeln(" {");
                 w.indented(|w| self.write_block(block, types, names, interner, w));
                 w.write("}");
+            }
+            HirExprKind::Intervallum { start, end, step, kind } => {
+                self.write_expr(start, types, names, interner, w);
+                w.write(match kind {
+                    crate::hir::HirRangeKind::Exclusive => "‥",
+                    crate::hir::HirRangeKind::Inclusive => "…",
+                });
+                self.write_expr(end, types, names, interner, w);
+                if let Some(step) = step {
+                    w.write(" per ");
+                    self.write_expr(step, types, names, interner, w);
+                }
             }
             HirExprKind::Assign(lhs, rhs) => {
                 self.write_expr(lhs, types, names, interner, w);
@@ -897,8 +914,13 @@ impl FaberCodegen {
             },
             HirExprKind::Conversio { source, target, params, fallback } => {
                 self.write_expr(source, types, names, interner, w);
-                w.write(" ⇒ ");
-                w.write(&self.type_to_faber(*target, types, names, interner));
+                w.write(" ");
+                if let Some(keyword) = self.conversio_keyword(*target, types) {
+                    w.write(keyword);
+                } else {
+                    w.write("⇒ ");
+                    w.write(&self.type_to_faber(*target, types, names, interner));
+                }
                 if !params.is_empty() {
                     w.write("<");
                     for (idx, param) in params.iter().enumerate() {
@@ -1073,6 +1095,16 @@ impl FaberCodegen {
             }
             HirLiteral::Bool(value) => w.write(if *value { "verum" } else { "falsum" }),
             HirLiteral::Nil => w.write("nihil"),
+        }
+    }
+
+    fn conversio_keyword(&self, target: TypeId, types: &TypeTable) -> Option<&'static str> {
+        match types.get(target) {
+            Type::Primitive(Primitive::Numerus) => Some("numeratum"),
+            Type::Primitive(Primitive::Fractus) => Some("fractatum"),
+            Type::Primitive(Primitive::Textus) => Some("textatum"),
+            Type::Primitive(Primitive::Bivalens) => Some("bivalentum"),
+            _ => None,
         }
     }
 
@@ -1331,9 +1363,17 @@ impl FaberCodegen {
             HirExprKind::Loop(block) | HirExprKind::Dum(_, block) => {
                 self.collect_block_names(names, Some(block));
             }
-            HirExprKind::Itera(_, _, iter, block) => {
+            HirExprKind::Itera(_, binding, binding_name, iter, block) => {
+                names.insert(*binding, *binding_name);
                 self.collect_expr_names(names, iter);
                 self.collect_block_names(names, Some(block));
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.collect_expr_names(names, start);
+                self.collect_expr_names(names, end);
+                if let Some(step) = step {
+                    self.collect_expr_names(names, step);
+                }
             }
             HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {

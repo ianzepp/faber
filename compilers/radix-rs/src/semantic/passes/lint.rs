@@ -331,9 +331,16 @@ impl<'a> LintContext<'a> {
                 self.check_expr(cond, in_loop);
                 self.check_block(block, true);
             }
-            HirExprKind::Itera(_, _, iter, block) => {
+            HirExprKind::Itera(_, _, _, iter, block) => {
                 self.check_expr(iter, in_loop);
                 self.check_block(block, true);
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.check_expr(start, in_loop);
+                self.check_expr(end, in_loop);
+                if let Some(step) = step {
+                    self.check_expr(step, in_loop);
+                }
             }
             HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
                 self.check_expr(lhs, in_loop);

@@ -523,12 +523,15 @@ impl<'a> Lowerer<'a> {
 
     /// Lower range expression (intervallum)
     fn lower_intervallum(&mut self, range: &crate::syntax::IntervallumExpr) -> HirExprKind {
-        // STUB: lowered as tuple placeholder; needs dedicated range HIR node.
-        let mut items = vec![lower_expr(self, &range.start), lower_expr(self, &range.end)];
-        if let Some(step) = &range.step {
-            items.push(lower_expr(self, step));
+        HirExprKind::Intervallum {
+            start: Box::new(lower_expr(self, &range.start)),
+            end: Box::new(lower_expr(self, &range.end)),
+            step: range.step.as_ref().map(|step| Box::new(lower_expr(self, step))),
+            kind: match range.kind {
+                crate::syntax::RangeKind::Exclusive => crate::hir::HirRangeKind::Exclusive,
+                crate::syntax::RangeKind::Inclusive => crate::hir::HirRangeKind::Inclusive,
+            },
         }
-        HirExprKind::Tuple(items)
     }
 
     fn lower_ab(&mut self, ab: &crate::syntax::AbExpr) -> HirExprKind {

@@ -583,13 +583,24 @@ pub fn generate_expr(
             w.write(" ");
             generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
-        HirExprKind::Itera(_, binding, iter, block) => {
+        HirExprKind::Itera(_, binding, _binding_name, iter, block) => {
             w.write("for ");
             w.write(codegen.resolve_def(*binding));
             w.write(" in ");
             generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(" ");
             generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        }
+        HirExprKind::Intervallum { start, end, step, .. } => {
+            w.write("(");
+            generate_expr(codegen, start, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(", ");
+            generate_expr(codegen, end, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            if let Some(step) = step {
+                w.write(", ");
+                generate_expr(codegen, step, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            }
+            w.write(")");
         }
         HirExprKind::Assign(target, value) => {
             generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;

@@ -231,6 +231,7 @@ pub struct HirConst {
 #[derive(Debug)]
 pub struct HirImport {
     pub path: Symbol,
+    pub visibility: crate::syntax::Visibility,
     pub items: Vec<HirImportItem>,
 }
 
@@ -343,7 +344,14 @@ pub enum HirExprKind {
     /// While loop
     Dum(Box<HirExpr>, HirBlock),
     /// For loop
-    Itera(HirIteraMode, DefId, Box<HirExpr>, HirBlock),
+    Itera(HirIteraMode, DefId, Symbol, Box<HirExpr>, HirBlock),
+    /// Range expression
+    Intervallum {
+        start: Box<HirExpr>,
+        end: Box<HirExpr>,
+        step: Option<Box<HirExpr>>,
+        kind: HirRangeKind,
+    },
     /// Assignment
     Assign(Box<HirExpr>, Box<HirExpr>),
     /// Compound assignment
@@ -447,6 +455,12 @@ pub enum HirIteraMode {
     Ex,
     De,
     Pro,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum HirRangeKind {
+    Exclusive,
+    Inclusive,
 }
 
 #[derive(Debug, Clone, Copy)]

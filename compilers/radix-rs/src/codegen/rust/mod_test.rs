@@ -6,6 +6,7 @@ use crate::hir::{
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
+use crate::syntax::Visibility;
 
 fn span() -> Span {
     Span::default()
@@ -123,6 +124,7 @@ fn emits_usage_driven_and_importa_use_statements() {
                 def_id: DefId(10),
                 kind: HirItemKind::Import(HirImport {
                     path,
+                    visibility: Visibility::Private,
                     items: vec![HirImportItem { def_id: DefId(11), name, alias: Some(alias_name) }],
                 }),
                 span: span(),
@@ -532,6 +534,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
         }),
     };
 
+    let iter_binding_name = interner.intern("n");
     let codegen = super::RustCodegen::new(&support_program, &interner);
     let mut w = codegen::CodeWriter::new();
 
@@ -713,6 +716,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                 kind: HirExprKind::Itera(
                     HirIteraMode::Ex,
                     DefId(7),
+                    iter_binding_name,
                     Box::new(HirExpr {
                         id: HirId(328),
                         kind: HirExprKind::Array(vec![HirExpr {

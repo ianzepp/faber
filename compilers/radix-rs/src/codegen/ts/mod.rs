@@ -242,9 +242,16 @@ impl<'a> TsCodegen<'a> {
                 self.collect_expr_names(names, cond);
                 self.collect_block_names(names, Some(block));
             }
-            HirExprKind::Itera(_, _, iter, block) => {
+            HirExprKind::Itera(_, _, _, iter, block) => {
                 self.collect_expr_names(names, iter);
                 self.collect_block_names(names, Some(block));
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.collect_expr_names(names, start);
+                self.collect_expr_names(names, end);
+                if let Some(step) = step {
+                    self.collect_expr_names(names, step);
+                }
             }
             HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {

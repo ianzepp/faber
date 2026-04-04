@@ -265,9 +265,12 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
                 })
             }),
         HirExprKind::Dum(cond, block) => find_error_expr_in_expr(cond).or_else(|| find_error_expr_in_block(block)),
-        HirExprKind::Itera(_, _, iter, block) => {
+        HirExprKind::Itera(_, _, _, iter, block) => {
             find_error_expr_in_expr(iter).or_else(|| find_error_expr_in_block(block))
         }
+        HirExprKind::Intervallum { start, end, step, .. } => find_error_expr_in_expr(start)
+            .or_else(|| find_error_expr_in_expr(end))
+            .or_else(|| step.as_deref().and_then(find_error_expr_in_expr)),
         HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
             elements.iter().find_map(find_error_expr_in_expr)
         }

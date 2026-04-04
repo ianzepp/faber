@@ -407,9 +407,16 @@ impl<'a> TypeChecker<'a> {
                 self.finalize_expr(cond);
                 self.finalize_block(block);
             }
-            HirExprKind::Itera(_, _, iter, block) => {
+            HirExprKind::Itera(_, _, _, iter, block) => {
                 self.finalize_expr(iter);
                 self.finalize_block(block);
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.finalize_expr(start);
+                self.finalize_expr(end);
+                if let Some(step) = step {
+                    self.finalize_expr(step);
+                }
             }
             HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
                 self.finalize_expr(lhs);
@@ -643,7 +650,7 @@ impl<'a> TypeChecker<'a> {
                 self.check_block(block, None);
                 self.vacuum_type()
             }
-            HirExprKind::Itera(mode, binding, iter, block) => {
+            HirExprKind::Itera(mode, binding, _, iter, block) => {
                 let iter_ty = self.check_expr(iter);
                 let elem_ty = match self.types.get(self.resolve_type(iter_ty)) {
                     Type::Array(inner) => match mode {
@@ -664,6 +671,14 @@ impl<'a> TypeChecker<'a> {
                 self.check_block(block, None);
                 self.pop_scope();
                 self.vacuum_type()
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                let start_ty = self.check_expr(start);
+                let end_ty = self.check_expr(end);
+                if let Some(step) = step {
+                    self.check_expr(step);
+                }
+                self.types.intern(Type::Union(vec![start_ty, end_ty]))
             }
             HirExprKind::Assign(target, value) => self.check_assign(target, value),
             HirExprKind::AssignOp(op, target, value) => self.check_assign_op(*op, target, value),

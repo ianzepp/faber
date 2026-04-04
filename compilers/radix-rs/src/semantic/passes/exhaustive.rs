@@ -219,9 +219,16 @@ fn check_expr(
             check_expr(cond, types, enum_variants, errors);
             check_block(block, types, enum_variants, errors);
         }
-        HirExprKind::Itera(_, _, iter, block) => {
+        HirExprKind::Itera(_, _, _, iter, block) => {
             check_expr(iter, types, enum_variants, errors);
             check_block(block, types, enum_variants, errors);
+        }
+        HirExprKind::Intervallum { start, end, step, .. } => {
+            check_expr(start, types, enum_variants, errors);
+            check_expr(end, types, enum_variants, errors);
+            if let Some(step) = step {
+                check_expr(step, types, enum_variants, errors);
+            }
         }
         HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
             check_expr(lhs, types, enum_variants, errors);

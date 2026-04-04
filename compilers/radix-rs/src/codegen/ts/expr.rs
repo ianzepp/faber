@@ -328,7 +328,7 @@ pub fn generate_expr(
             stmt::generate_inline_block(codegen, block, types, w)?;
             w.write(" })()");
         }
-        HirExprKind::Itera(mode, def_id, iter, block) => {
+        HirExprKind::Itera(mode, def_id, _binding_name, iter, block) => {
             w.write("(() => { for (const ");
             w.write(codegen.resolve_def(*def_id));
             match mode {
@@ -339,6 +339,17 @@ pub fn generate_expr(
             w.write(") ");
             stmt::generate_inline_block(codegen, block, types, w)?;
             w.write(" })()");
+        }
+        HirExprKind::Intervallum { start, end, step, .. } => {
+            w.write("[");
+            generate_expr(codegen, start, types, w)?;
+            w.write(", ");
+            generate_expr(codegen, end, types, w)?;
+            if let Some(step) = step {
+                w.write(", ");
+                generate_expr(codegen, step, types, w)?;
+            }
+            w.write("]");
         }
         HirExprKind::Ab { source, filter, transforms } => {
             generate_expr(codegen, source, types, w)?;
@@ -791,7 +802,12 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                 })
         }
         HirExprKind::Dum(cond, block) => contains_await_in_expr(cond) || contains_await_in_block(block),
-        HirExprKind::Itera(_, _, iter, block) => contains_await_in_expr(iter) || contains_await_in_block(block),
+        HirExprKind::Itera(_, _, _, iter, block) => contains_await_in_expr(iter) || contains_await_in_block(block),
+        HirExprKind::Intervallum { start, end, step, .. } => {
+            contains_await_in_expr(start)
+                || contains_await_in_expr(end)
+                || step.as_deref().is_some_and(contains_await_in_expr)
+        }
         HirExprKind::Array(values) | HirExprKind::Tuple(values) | HirExprKind::Scribe(values) => {
             values.iter().any(contains_await_in_expr)
         }

@@ -1,11 +1,11 @@
 # Basic ordo (enum) declaration
 #
 # ordo Name { Member1, Member2, Member3 }
-# ordo Name { Member1 ← value1, Member2 ← value2 }
+# ordo Name { Member1 = value1, Member2 = value2 }
 
 ordo Color { rubrum, viridis, caeruleum }
 
-ordo Status { pendens ← 0, actum ← 1, finitum ← 2 }
+ordo Status { pendens = 0, actum = 1, finitum = 2 }
 
 incipit {
     # Using enum values

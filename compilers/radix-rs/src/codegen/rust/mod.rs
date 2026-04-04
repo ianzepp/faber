@@ -341,9 +341,16 @@ impl<'a> RustCodegen<'a> {
             HirExprKind::Loop(block) | HirExprKind::Dum(_, block) => {
                 self.collect_block_names(names, Some(block));
             }
-            HirExprKind::Itera(_, _, iter, block) => {
+            HirExprKind::Itera(_, _, _, iter, block) => {
                 self.collect_expr_names(names, iter);
                 self.collect_block_names(names, Some(block));
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.collect_expr_names(names, start);
+                self.collect_expr_names(names, end);
+                if let Some(step) = step {
+                    self.collect_expr_names(names, step);
+                }
             }
             HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                 for element in elements {
@@ -579,9 +586,16 @@ impl<'a> RustCodegen<'a> {
                     visit_expr(cond, suppressed, deps);
                     visit_block(block, suppressed, deps);
                 }
-                HirExprKind::Itera(_, _, iter, block) => {
+                HirExprKind::Itera(_, _, _, iter, block) => {
                     visit_expr(iter, suppressed, deps);
                     visit_block(block, suppressed, deps);
+                }
+                HirExprKind::Intervallum { start, end, step, .. } => {
+                    visit_expr(start, suppressed, deps);
+                    visit_expr(end, suppressed, deps);
+                    if let Some(step) = step {
+                        visit_expr(step, suppressed, deps);
+                    }
                 }
                 HirExprKind::Array(elements) | HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
                     for element in elements {

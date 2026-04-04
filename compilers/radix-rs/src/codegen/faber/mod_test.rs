@@ -68,7 +68,7 @@ fn emits_basic_function_and_entry() {
 }
 
 #[test]
-fn renders_unresolved_infer_as_comment_marker() {
+fn renders_unresolved_infer_as_ignotum() {
     let mut interner = Interner::new();
     let name = interner.intern("x");
     let mut types = TypeTable::new();
@@ -95,7 +95,7 @@ fn renders_unresolved_infer_as_comment_marker() {
 
     let gen = FaberCodegen::new();
     let output = gen.generate(&program, &types, &interner).expect("codegen");
-    assert!(output.code.contains("/* unresolved */ x"));
+    assert!(output.code.contains("ignotum x"));
 }
 
 #[test]

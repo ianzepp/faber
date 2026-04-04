@@ -267,7 +267,7 @@ impl<'a> Lowerer<'a> {
         self.pop_scope();
         let expr = HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Itera(mode, binding, Box::new(iter), body),
+            kind: HirExprKind::Itera(mode, binding, iter_stmt.binding.name, Box::new(iter), body),
             ty: None,
             span: self.current_span,
         };
