@@ -264,6 +264,7 @@ pub struct HirStmt {
 pub enum HirStmtKind {
     Local(HirLocal),
     Expr(HirExpr),
+    Ad(HirAd),
     Redde(Option<HirExpr>),
     Rumpe,
     Perge,
@@ -276,6 +277,23 @@ pub struct HirLocal {
     pub ty: Option<TypeId>,
     pub init: Option<HirExpr>,
     pub mutable: bool,
+}
+
+#[derive(Debug)]
+pub struct HirAd {
+    pub path: Symbol,
+    pub args: Vec<HirExpr>,
+    pub binding: Option<HirAdBinding>,
+    pub body: Option<HirBlock>,
+    pub catch: Option<HirBlock>,
+}
+
+#[derive(Debug)]
+pub struct HirAdBinding {
+    pub verb: HirEndpointVerb,
+    pub ty: Option<TypeId>,
+    pub name: Symbol,
+    pub alias: Option<Symbol>,
 }
 
 #[derive(Debug)]
@@ -306,6 +324,8 @@ pub enum HirExprKind {
     Index(Box<HirExpr>, Box<HirExpr>),
     /// Optional chaining (null-safe member/index/call)
     OptionalChain(Box<HirExpr>, HirOptionalChainKind),
+    /// Non-null assertion member/index/call
+    NonNull(Box<HirExpr>, HirNonNullKind),
     /// Collection pipeline DSL (ab)
     Ab {
         source: Box<HirExpr>,
@@ -317,7 +337,7 @@ pub enum HirExprKind {
     /// If expression
     Si(Box<HirExpr>, HirBlock, Option<HirBlock>),
     /// Match expression
-    Discerne(Box<HirExpr>, Vec<HirCasuArm>),
+    Discerne(Vec<HirExpr>, Vec<HirCasuArm>),
     /// Loop (while true)
     Loop(HirBlock),
     /// While loop
@@ -391,6 +411,13 @@ pub enum HirOptionalChainKind {
 }
 
 #[derive(Debug)]
+pub enum HirNonNullKind {
+    Member(Symbol),
+    Index(Box<HirExpr>),
+    Call(Vec<HirExpr>),
+}
+
+#[derive(Debug)]
 pub struct HirCollectionFilter {
     pub negated: bool,
     pub kind: HirCollectionFilterKind,
@@ -420,6 +447,14 @@ pub enum HirIteraMode {
     Ex,
     De,
     Pro,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum HirEndpointVerb {
+    Fit,
+    Fiet,
+    Fiunt,
+    Fient,
 }
 
 #[derive(Debug)]
@@ -484,7 +519,7 @@ pub enum HirRefKind {
 
 #[derive(Debug)]
 pub struct HirCasuArm {
-    pub pattern: HirPattern,
+    pub patterns: Vec<HirPattern>,
     pub guard: Option<HirExpr>,
     pub body: HirExpr,
     pub span: Span,
@@ -494,6 +529,7 @@ pub struct HirCasuArm {
 pub enum HirPattern {
     Wildcard,
     Binding(DefId, Symbol),
+    Alias(DefId, Symbol, Box<HirPattern>),
     Variant(DefId, Vec<HirPattern>),
     Literal(HirLiteral),
 }

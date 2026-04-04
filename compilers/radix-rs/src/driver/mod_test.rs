@@ -5,6 +5,33 @@ fn session(target: Target) -> Session {
     Session::new(Config::default().with_target(target))
 }
 
+fn faber_roundtrip(source: &str) -> String {
+    let session = session(Target::Faber);
+    let first = compile(&session, "roundtrip.fab", source);
+    assert!(
+        first.success(),
+        "first faber compile failed: {:?}",
+        first.diagnostics.iter().map(|diag| diag.message.clone()).collect::<Vec<_>>()
+    );
+    let Some(crate::Output::Faber(first_output)) = first.output else {
+        panic!("expected faber output");
+    };
+
+    let second = compile(&session, "roundtrip.fab", &first_output.code);
+    assert!(
+        second.success(),
+        "second faber compile failed: {:?}\n{}",
+        second.diagnostics.iter().map(|diag| diag.message.clone()).collect::<Vec<_>>(),
+        first_output.code
+    );
+    let Some(crate::Output::Faber(second_output)) = second.output else {
+        panic!("expected faber output");
+    };
+
+    assert_eq!(first_output.code, second_output.code, "faber emit should stabilize after one roundtrip");
+    second_output.code
+}
+
 #[test]
 fn compile_rust_success_emits_output() {
     let session = session(Target::Rust);
@@ -1701,4 +1728,58 @@ fn conversio_with_fallback_roundtrips_through_faber_codegen() {
         panic!("expected faber output");
     };
     assert!(output.code.contains("⇒ numerus vel 0"));
+}
+
+#[test]
+fn fac_do_while_roundtrips_through_faber_codegen() {
+    let source = r#"incipit {
+  varia counter ← 0
+  fac {
+    counter ← counter + 1
+    scribe counter
+  } dum counter < 3
+}"#;
+
+    let output = faber_roundtrip(source);
+    assert!(output.contains("fac {"));
+    assert!(output.contains("} dum counter < 3"));
+}
+
+#[test]
+fn discerne_alias_and_multi_subject_roundtrip_through_faber_codegen() {
+    let source = r#"discretio Event {
+  Click { numerus x, numerus y },
+  Quit
+}
+
+functio compare(Event left, Event right) -> vacuum {
+  discerne left, right {
+    casu Click ut l, Quit ut r {
+      scribe l.x
+      scribe r
+    }
+    ceterum {
+      scribe "other"
+    }
+  }
+}"#;
+
+    let output = faber_roundtrip(source);
+    assert!(output.contains("discerne left, right"));
+    assert!(output.contains("casu Click ut l, Quit ut r"));
+}
+
+#[test]
+fn ad_roundtrips_through_faber_codegen() {
+    let source = r#"incipit {
+  ad "fasciculus:lege" ("hello.txt") → textus pro content {
+    scribe content
+  } cape err {
+    scribe err
+  }
+}"#;
+
+    let output = faber_roundtrip(source);
+    assert!(output.contains("ad \"fasciculus:lege\" (\"hello.txt\") → textus pro content {"));
+    assert!(output.contains("cape err {"));
 }

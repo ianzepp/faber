@@ -430,10 +430,10 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_ad(&mut self, stmt: &crate::syntax::AdStmt) -> HirStmtKind {
-        // STUB: lowered as tuple placeholder [args..., body?]; needs dedicated annotation/directive HIR node.
-        let mut items: Vec<HirExpr> = Vec::new();
-        for arg in &stmt.args {
-            let lowered = match &arg.value.kind {
+        let args = stmt
+            .args
+            .iter()
+            .map(|arg| match &arg.value.kind {
                 crate::syntax::ExprKind::Ident(ident) if self.lookup_name(ident.name).is_none() => HirExpr {
                     id: self.next_hir_id(),
                     kind: HirExprKind::Literal(crate::hir::HirLiteral::String(ident.name)),
@@ -441,48 +441,23 @@ impl<'a> Lowerer<'a> {
                     span: ident.span,
                 },
                 _ => self.lower_expr(&arg.value),
-            };
-            items.push(lowered);
-        }
-        if let Some(body) = &stmt.body {
-            self.push_scope();
-            let mut binding_local = None;
-            if let Some(binding) = &stmt.binding {
-                let def_id = self.next_def_id();
-                self.bind_local(binding.name.name, def_id);
-                binding_local = Some((def_id, binding));
-            }
-            let mut lowered_body = self.lower_block(body);
-            if let Some((def_id, binding)) = binding_local {
-                lowered_body.stmts.insert(
-                    0,
-                    HirStmt {
-                        id: self.next_hir_id(),
-                        kind: HirStmtKind::Local(crate::hir::HirLocal {
-                            def_id,
-                            name: binding.name.name,
-                            ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
-                            init: None,
-                            mutable: false,
-                        }),
-                        span: binding.name.span,
-                    },
-                );
-            }
-            items.push(HirExpr {
-                id: self.next_hir_id(),
-                kind: HirExprKind::Block(lowered_body),
-                ty: None,
-                span: self.current_span,
-            });
-            self.pop_scope();
-        }
-        HirStmtKind::Expr(HirExpr {
-            id: self.next_hir_id(),
-            kind: HirExprKind::Tuple(items),
-            ty: None,
-            span: self.current_span,
-        })
+            })
+            .collect();
+        let binding = stmt.binding.as_ref().map(|binding| crate::hir::HirAdBinding {
+            verb: match binding.verb {
+                crate::syntax::EndpointVerb::Fit => crate::hir::HirEndpointVerb::Fit,
+                crate::syntax::EndpointVerb::Fiet => crate::hir::HirEndpointVerb::Fiet,
+                crate::syntax::EndpointVerb::Fiunt => crate::hir::HirEndpointVerb::Fiunt,
+                crate::syntax::EndpointVerb::Fient => crate::hir::HirEndpointVerb::Fient,
+            },
+            ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+            name: binding.name.name,
+            alias: binding.alias.as_ref().map(|alias| alias.name),
+        });
+        let body = stmt.body.as_ref().map(|body| self.lower_ad_body(body, stmt.binding.as_ref()));
+        let catch = stmt.catch.as_ref().map(|catch| self.lower_cape_clause_block(catch));
+
+        HirStmtKind::Ad(crate::hir::HirAd { path: stmt.path, args, binding, body, catch })
     }
 
     fn lower_ex(&mut self, _stmt: &crate::syntax::ExStmt) -> HirStmtKind {
@@ -520,28 +495,8 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_fac(&mut self, stmt: &crate::syntax::FacStmt) -> HirStmtKind {
-        let mut block = self.lower_block(&stmt.body);
-        if let Some(cond) = &stmt.while_ {
-            // STUB: fac { body } dum cond currently lowers to trailing while-with-empty-body placeholder.
-            block.expr = Some(Box::new(HirExpr {
-                id: self.next_hir_id(),
-                kind: HirExprKind::Dum(
-                    Box::new(self.lower_expr(cond)),
-                    HirBlock { stmts: Vec::new(), expr: None, span: cond.span },
-                ),
-                ty: None,
-                span: cond.span,
-            }));
-        }
-        if let Some(catch) = &stmt.catch {
-            self.lower_cape_clause_stmts(catch, &mut block.stmts);
-        }
-        HirStmtKind::Expr(HirExpr {
-            id: self.next_hir_id(),
-            kind: HirExprKind::Block(block),
-            ty: None,
-            span: self.current_span,
-        })
+        let expr = self.lower_fac_expr(stmt);
+        HirStmtKind::Expr(expr)
     }
 
     fn lower_elige(&mut self, elige_stmt: &crate::syntax::EligeStmt) -> HirStmtKind {
@@ -553,18 +508,18 @@ impl<'a> Lowerer<'a> {
 
             let block = self.lower_ergo_body(&case.body);
             let body = self.block_expr(block, case.span);
-            arms.push(HirCasuArm { pattern, guard: None, body, span: case.span });
+            arms.push(HirCasuArm { patterns: vec![pattern], guard: None, body, span: case.span });
         }
 
         if let Some(default) = &elige_stmt.default {
             let block = self.lower_ergo_body(&default.body);
             let body = self.block_expr(block, default.span);
-            arms.push(HirCasuArm { pattern: HirPattern::Wildcard, guard: None, body, span: default.span });
+            arms.push(HirCasuArm { patterns: vec![HirPattern::Wildcard], guard: None, body, span: default.span });
         }
 
         let expr = HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Discerne(Box::new(scrutinee), arms),
+            kind: HirExprKind::Discerne(vec![scrutinee], arms),
             ty: None,
             span: self.current_span,
         };
@@ -618,17 +573,12 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_discerne(&mut self, discerne_stmt: &crate::syntax::DiscerneStmt) -> HirStmtKind {
-        let scrutinee = match discerne_stmt.subjects.as_slice() {
-            [one] => self.lower_expr(one),
+        let scrutinees = match discerne_stmt.subjects.as_slice() {
             [] => {
                 self.error("discerne requires at least one subject");
-                error_expr(self, self.current_span)
+                vec![error_expr(self, self.current_span)]
             }
-            many => {
-                self.error("discerne with multiple subjects lowered as tuple");
-                let items = many.iter().map(|expr| self.lower_expr(expr)).collect();
-                HirExpr { id: self.next_hir_id(), kind: HirExprKind::Tuple(items), ty: None, span: self.current_span }
-            }
+            many => many.iter().map(|expr| self.lower_expr(expr)).collect(),
         };
 
         let mut arms = Vec::new();
@@ -636,33 +586,40 @@ impl<'a> Lowerer<'a> {
             self.current_span = arm.span;
             self.push_scope();
 
-            let pattern = match arm.patterns.as_slice() {
-                [one] => pattern::lower_pattern(self, one),
+            let patterns = match arm.patterns.as_slice() {
                 [] => {
                     self.error("discerne casu requires a pattern");
-                    HirPattern::Wildcard
+                    vec![HirPattern::Wildcard]
                 }
-                _ => {
-                    self.error("multiple patterns in casu are not lowered yet");
-                    HirPattern::Wildcard
+                many => {
+                    let lowered: Vec<_> = many.iter().map(|pattern| pattern::lower_pattern(self, pattern)).collect();
+                    if lowered.len() != scrutinees.len() {
+                        self.error("discerne pattern count must match subject count");
+                    }
+                    lowered
                 }
             };
 
             let block = self.lower_ergo_body(&arm.body);
             let body = self.block_expr(block, arm.span);
-            arms.push(HirCasuArm { pattern, guard: None, body, span: arm.span });
+            arms.push(HirCasuArm { patterns, guard: None, body, span: arm.span });
             self.pop_scope();
         }
 
         if let Some(default) = &discerne_stmt.default {
             let block = self.lower_ergo_body(&default.body);
             let body = self.block_expr(block, default.span);
-            arms.push(HirCasuArm { pattern: HirPattern::Wildcard, guard: None, body, span: default.span });
+            arms.push(HirCasuArm {
+                patterns: (0..scrutinees.len().max(1)).map(|_| HirPattern::Wildcard).collect(),
+                guard: None,
+                body,
+                span: default.span,
+            });
         }
 
         let expr = HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Discerne(Box::new(scrutinee), arms),
+            kind: HirExprKind::Discerne(scrutinees, arms),
             ty: None,
             span: self.current_span,
         };
@@ -737,5 +694,122 @@ impl<'a> Lowerer<'a> {
         }
         self.pop_scope();
         HirBlock { stmts, expr: None, span: catch.span }
+    }
+
+    fn lower_ad_body(
+        &mut self,
+        body: &crate::syntax::BlockStmt,
+        binding: Option<&crate::syntax::AdBinding>,
+    ) -> HirBlock {
+        self.push_scope();
+        let mut binding_local = None;
+        if let Some(binding) = binding {
+            let def_id = self.next_def_id();
+            self.bind_local(binding.name.name, def_id);
+            if let Some(alias) = &binding.alias {
+                let alias_def_id = self.next_def_id();
+                self.bind_local(alias.name, alias_def_id);
+            }
+            binding_local = Some((def_id, binding));
+        }
+        let mut lowered_body = self.lower_block(body);
+        if let Some((def_id, binding)) = binding_local {
+            lowered_body.stmts.insert(
+                0,
+                HirStmt {
+                    id: self.next_hir_id(),
+                    kind: HirStmtKind::Local(crate::hir::HirLocal {
+                        def_id,
+                        name: binding.name.name,
+                        ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+                        init: None,
+                        mutable: false,
+                    }),
+                    span: binding.name.span,
+                },
+            );
+            if let Some(alias) = &binding.alias {
+                let alias_def_id = self.lookup_name(alias.name).expect("ad alias binding should be in scope");
+                lowered_body.stmts.insert(
+                    1,
+                    HirStmt {
+                        id: self.next_hir_id(),
+                        kind: HirStmtKind::Local(crate::hir::HirLocal {
+                            def_id: alias_def_id,
+                            name: alias.name,
+                            ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+                            init: None,
+                            mutable: false,
+                        }),
+                        span: alias.span,
+                    },
+                );
+            }
+        }
+        self.pop_scope();
+        lowered_body
+    }
+
+    fn lower_fac_expr(&mut self, stmt: &crate::syntax::FacStmt) -> HirExpr {
+        let block = self.lower_block(&stmt.body);
+        let expr = if let Some(cond) = &stmt.while_ {
+            let negate_cond = HirExpr {
+                id: self.next_hir_id(),
+                kind: HirExprKind::Unary(crate::hir::HirUnOp::Not, Box::new(self.lower_expr(cond))),
+                ty: None,
+                span: cond.span,
+            };
+            let break_stmt = HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Rumpe, span: cond.span };
+            let loop_block = HirBlock {
+                stmts: block
+                    .stmts
+                    .into_iter()
+                    .chain(std::iter::once(HirStmt {
+                        id: self.next_hir_id(),
+                        kind: HirStmtKind::Expr(HirExpr {
+                            id: self.next_hir_id(),
+                            kind: HirExprKind::Si(
+                                Box::new(negate_cond),
+                                HirBlock { stmts: vec![break_stmt], expr: None, span: cond.span },
+                                None,
+                            ),
+                            ty: None,
+                            span: cond.span,
+                        }),
+                        span: cond.span,
+                    }))
+                    .collect(),
+                expr: None,
+                span: stmt.body.span,
+            };
+            HirExpr {
+                id: self.next_hir_id(),
+                kind: HirExprKind::Loop(loop_block),
+                ty: None,
+                span: self.current_span,
+            }
+        } else {
+            HirExpr {
+                id: self.next_hir_id(),
+                kind: HirExprKind::Block(block),
+                ty: None,
+                span: self.current_span,
+            }
+        };
+
+        if let Some(catch) = &stmt.catch {
+            HirExpr {
+                id: self.next_hir_id(),
+                kind: HirExprKind::Tempta {
+                    body: HirBlock { stmts: vec![HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Expr(expr), span: self.current_span }], expr: None, span: self.current_span },
+                    catch: Some(self.lower_cape_clause_block(catch)),
+                    finally: None,
+                },
+                ty: None,
+                span: self.current_span,
+            }
+        } else {
+            expr
+        }
     }
 }

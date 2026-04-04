@@ -289,6 +289,17 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirStmtKind::Expr(expr) => self.finalize_expr(expr),
+            HirStmtKind::Ad(ad) => {
+                for arg in &mut ad.args {
+                    self.finalize_expr(arg);
+                }
+                if let Some(body) = &mut ad.body {
+                    self.finalize_block(body);
+                }
+                if let Some(catch) = &mut ad.catch {
+                    self.finalize_block(catch);
+                }
+            }
             HirStmtKind::Redde(value) => {
                 if let Some(expr) = value {
                     self.finalize_expr(expr);
@@ -347,6 +358,18 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
             }
+            HirExprKind::NonNull(object, chain) => {
+                self.finalize_expr(object);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(_) => {}
+                    crate::hir::HirNonNullKind::Index(index) => self.finalize_expr(index),
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        for arg in args {
+                            self.finalize_expr(arg);
+                        }
+                    }
+                }
+            }
             HirExprKind::Ab { source, filter, transforms } => {
                 self.finalize_expr(source);
                 if let Some(filter) = filter {
@@ -368,8 +391,10 @@ impl<'a> TypeChecker<'a> {
                     self.finalize_block(block);
                 }
             }
-            HirExprKind::Discerne(scrutinee, arms) => {
-                self.finalize_expr(scrutinee);
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.finalize_expr(scrutinee);
+                }
                 for arm in arms {
                     if let Some(guard) = &mut arm.guard {
                         self.finalize_expr(guard);
@@ -527,6 +552,17 @@ impl<'a> TypeChecker<'a> {
                     self.unify(expr_ty, vacuum, expr.span, "ignored expression result must resolve");
                 }
             }
+            HirStmtKind::Ad(ad) => {
+                for arg in &mut ad.args {
+                    self.check_expr(arg);
+                }
+                if let Some(body) = &mut ad.body {
+                    self.check_block(body, None);
+                }
+                if let Some(catch) = &mut ad.catch {
+                    self.check_block(catch, None);
+                }
+            }
             HirStmtKind::Redde(value) => self.check_return(value.as_mut(), stmt.span),
             HirStmtKind::Rumpe | HirStmtKind::Perge => {}
         }
@@ -591,12 +627,13 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Field(object, name) => self.check_field(object, *name),
             HirExprKind::Index(object, index) => self.check_index(object, index),
             HirExprKind::OptionalChain(object, chain) => self.check_optional_chain(object, chain, expr.span),
+            HirExprKind::NonNull(object, chain) => self.check_non_null(object, chain, expr.span),
             HirExprKind::Ab { source, filter, transforms } => self.check_ab(source, filter.as_mut(), transforms),
             HirExprKind::Block(block) => self.check_block(block, expected),
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.check_if(cond, then_block, else_block.as_mut(), expected)
             }
-            HirExprKind::Discerne(scrutinee, arms) => self.check_match(scrutinee, arms, expected),
+            HirExprKind::Discerne(scrutinees, arms) => self.check_match(scrutinees, arms, expected),
             HirExprKind::Loop(block) => {
                 self.check_block(block, None);
                 self.vacuum_type()
@@ -1061,6 +1098,28 @@ impl<'a> TypeChecker<'a> {
         self.types.option(result)
     }
 
+    fn check_non_null(
+        &mut self,
+        object: &mut HirExpr,
+        chain: &mut crate::hir::HirNonNullKind,
+        span: crate::lexer::Span,
+    ) -> TypeId {
+        let object_ty = self.check_expr(object);
+        let inner_ty = match self.types.get(self.resolve_type(object_ty)) {
+            Type::Option(inner) => *inner,
+            _ => object_ty,
+        };
+
+        match chain {
+            crate::hir::HirNonNullKind::Member(name) => self.check_field_from_type(inner_ty, *name, object.span),
+            crate::hir::HirNonNullKind::Index(index) => {
+                let idx_ty = self.check_expr(index);
+                self.check_index_from_type(inner_ty, idx_ty, object.span, index.span)
+            }
+            crate::hir::HirNonNullKind::Call(args) => self.check_call_from_type(inner_ty, args, span),
+        }
+    }
+
     fn check_ab(
         &mut self,
         source: &mut HirExpr,
@@ -1208,13 +1267,15 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn check_match(&mut self, scrutinee: &mut HirExpr, arms: &mut [HirCasuArm], expected: Option<TypeId>) -> TypeId {
-        let scrutinee_ty = self.check_expr(scrutinee);
+    fn check_match(&mut self, scrutinees: &mut [HirExpr], arms: &mut [HirCasuArm], expected: Option<TypeId>) -> TypeId {
+        let scrutinee_tys: Vec<_> = scrutinees.iter_mut().map(|scrutinee| self.check_expr(scrutinee)).collect();
         let mut result_ty = None;
 
         for arm in arms {
             self.push_scope();
-            self.check_pattern(&arm.pattern, scrutinee_ty, arm.span);
+            for (pattern, scrutinee_ty) in arm.patterns.iter().zip(scrutinee_tys.iter().copied()) {
+                self.check_pattern(pattern, scrutinee_ty, arm.span);
+            }
             if let Some(guard) = &mut arm.guard {
                 self.check_condition(guard);
             }
@@ -1234,6 +1295,28 @@ impl<'a> TypeChecker<'a> {
             HirPattern::Wildcard => {}
             HirPattern::Binding(def_id, _name) => {
                 self.insert_binding(*def_id, expected, false);
+            }
+            HirPattern::Alias(def_id, _name, pattern) => {
+                self.insert_binding(*def_id, expected, false);
+                if let HirPattern::Variant(variant_def, patterns) = pattern.as_ref() {
+                    if patterns.is_empty() {
+                        let Some(parent) = self.variant_parent.get(variant_def).copied() else {
+                            self.error(SemanticErrorKind::UndefinedVariable, "unknown variant", span);
+                            return;
+                        };
+                        if let Some(expected_parent) = self.enum_def_from_type(expected) {
+                            if expected_parent != parent {
+                                self.error(
+                                    SemanticErrorKind::TypeMismatch,
+                                    "variant does not match scrutinee type",
+                                    span,
+                                );
+                            }
+                        }
+                        return;
+                    }
+                }
+                self.check_pattern(pattern, expected, span);
             }
             HirPattern::Literal(lit) => {
                 let lit_ty = self.literal_type(lit);

@@ -35,7 +35,7 @@
 use super::Lowerer;
 use crate::hir::{
     HirBinOp, HirCollectionFilter, HirCollectionFilterKind, HirCollectionTransform, HirExpr, HirExprKind, HirLiteral,
-    HirOptionalChainKind, HirTransformKind, HirUnOp,
+    HirNonNullKind, HirOptionalChainKind, HirTransformKind, HirUnOp,
 };
 use crate::semantic::{InferVar, Primitive, Type};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
@@ -241,9 +241,17 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_non_null(&mut self, expr: &crate::syntax::NonNullExpr) -> HirExprKind {
-        let _ = expr;
-        self.error("STUB: non-null chain lowering requires dedicated HIR node");
-        HirExprKind::Error
+        let object = lower_expr(self, &expr.object);
+        let chain = match &expr.chain {
+            crate::syntax::NonNullKind::Member(member) => HirNonNullKind::Member(member.name),
+            crate::syntax::NonNullKind::Index(index) => HirNonNullKind::Index(Box::new(lower_expr(self, index))),
+            crate::syntax::NonNullKind::Call(args) => HirNonNullKind::Call(
+                args.iter()
+                    .map(|arg| lower_expr(self, &arg.value))
+                    .collect(),
+            ),
+        };
+        HirExprKind::NonNull(Box::new(object), chain)
     }
 
     /// Lower index access

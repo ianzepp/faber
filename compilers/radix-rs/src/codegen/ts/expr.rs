@@ -91,6 +91,30 @@ pub fn generate_expr(
                 }
             }
         }
+        HirExprKind::NonNull(object, chain) => {
+            generate_expr(codegen, object, types, w)?;
+            match chain {
+                crate::hir::HirNonNullKind::Member(field) => {
+                    w.write("!.");
+                    w.write(codegen.resolve_symbol(*field));
+                }
+                crate::hir::HirNonNullKind::Index(index) => {
+                    w.write("![");
+                    generate_expr(codegen, index, types, w)?;
+                    w.write("]");
+                }
+                crate::hir::HirNonNullKind::Call(args) => {
+                    w.write("!(");
+                    for (idx, arg) in args.iter().enumerate() {
+                        if idx > 0 {
+                            w.write(", ");
+                        }
+                        generate_expr(codegen, arg, types, w)?;
+                    }
+                    w.write(")");
+                }
+            }
+        }
         HirExprKind::Assign(lhs, rhs) => {
             generate_expr(codegen, lhs, types, w)?;
             w.write(" = ");
@@ -699,6 +723,11 @@ fn contains_await_in_stmt(stmt: &crate::hir::HirStmt) -> bool {
     match &stmt.kind {
         HirStmtKind::Local(local) => local.init.as_ref().is_some_and(contains_await_in_expr),
         HirStmtKind::Expr(expr) => contains_await_in_expr(expr),
+        HirStmtKind::Ad(ad) => {
+            ad.args.iter().any(contains_await_in_expr)
+                || ad.body.as_ref().is_some_and(contains_await_in_block)
+                || ad.catch.as_ref().is_some_and(contains_await_in_block)
+        }
         HirStmtKind::Redde(expr) => expr.as_ref().is_some_and(contains_await_in_expr),
         HirStmtKind::Rumpe | HirStmtKind::Perge => false,
     }
@@ -728,6 +757,14 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                     HirOptionalChainKind::Call(args) => args.iter().any(contains_await_in_expr),
                 }
         }
+        HirExprKind::NonNull(object, chain) => {
+            contains_await_in_expr(object)
+                || match chain {
+                    crate::hir::HirNonNullKind::Member(_) => false,
+                    crate::hir::HirNonNullKind::Index(index) => contains_await_in_expr(index),
+                    crate::hir::HirNonNullKind::Call(args) => args.iter().any(contains_await_in_expr),
+                }
+        }
         HirExprKind::Ab { source, filter, transforms } => {
             contains_await_in_expr(source)
                 || filter.as_ref().is_some_and(|filter| match &filter.kind {
@@ -747,8 +784,8 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                 || contains_await_in_block(then_block)
                 || else_block.as_ref().is_some_and(contains_await_in_block)
         }
-        HirExprKind::Discerne(scrutinee, arms) => {
-            contains_await_in_expr(scrutinee)
+        HirExprKind::Discerne(scrutinees, arms) => {
+            scrutinees.iter().any(contains_await_in_expr)
                 || arms.iter().any(|arm| {
                     arm.guard.as_ref().is_some_and(contains_await_in_expr) || contains_await_in_expr(&arm.body)
                 })

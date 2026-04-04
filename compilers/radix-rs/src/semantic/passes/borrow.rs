@@ -193,6 +193,17 @@ impl<'a> BorrowChecker<'a> {
                 }
             }
             HirStmtKind::Expr(expr) => self.check_expr(expr),
+            HirStmtKind::Ad(ad) => {
+                for arg in &ad.args {
+                    self.check_expr(arg);
+                }
+                if let Some(body) = &ad.body {
+                    self.check_block(body);
+                }
+                if let Some(catch) = &ad.catch {
+                    self.check_block(catch);
+                }
+            }
             HirStmtKind::Redde(value) => {
                 if let Some(expr) = value {
                     if let Some(def_id) = self.root_def_id(expr) {
@@ -243,6 +254,18 @@ impl<'a> BorrowChecker<'a> {
                     }
                 }
             }
+            HirExprKind::NonNull(object, chain) => {
+                self.check_expr(object);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(_) => {}
+                    crate::hir::HirNonNullKind::Index(index) => self.check_expr(index),
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        for arg in args {
+                            self.check_expr(arg);
+                        }
+                    }
+                }
+            }
             HirExprKind::Ab { source, filter, transforms } => {
                 self.check_expr(source);
                 if let Some(filter) = filter {
@@ -264,8 +287,10 @@ impl<'a> BorrowChecker<'a> {
                     self.check_block(block);
                 }
             }
-            HirExprKind::Discerne(scrutinee, arms) => {
-                self.check_expr(scrutinee);
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.check_expr(scrutinee);
+                }
                 for arm in arms {
                     self.push_scope();
                     if let Some(guard) = &arm.guard {

@@ -108,6 +108,17 @@ fn check_stmt(
             }
         }
         HirStmtKind::Expr(expr) => check_expr(expr, types, enum_variants, errors),
+        HirStmtKind::Ad(ad) => {
+            for arg in &ad.args {
+                check_expr(arg, types, enum_variants, errors);
+            }
+            if let Some(body) = &ad.body {
+                check_block(body, types, enum_variants, errors);
+            }
+            if let Some(catch) = &ad.catch {
+                check_block(catch, types, enum_variants, errors);
+            }
+        }
         HirStmtKind::Redde(value) => {
             if let Some(expr) = value {
                 check_expr(expr, types, enum_variants, errors);
@@ -158,6 +169,18 @@ fn check_expr(
                 }
             }
         }
+        HirExprKind::NonNull(object, chain) => {
+            check_expr(object, types, enum_variants, errors);
+            match chain {
+                crate::hir::HirNonNullKind::Member(_) => {}
+                crate::hir::HirNonNullKind::Index(index) => check_expr(index, types, enum_variants, errors),
+                crate::hir::HirNonNullKind::Call(args) => {
+                    for arg in args {
+                        check_expr(arg, types, enum_variants, errors);
+                    }
+                }
+            }
+        }
         HirExprKind::Ab { source, filter, transforms } => {
             check_expr(source, types, enum_variants, errors);
             if let Some(filter) = filter {
@@ -179,9 +202,11 @@ fn check_expr(
                 check_block(block, types, enum_variants, errors);
             }
         }
-        HirExprKind::Discerne(scrutinee, arms) => {
-            check_expr(scrutinee, types, enum_variants, errors);
-            check_match(scrutinee, arms, types, enum_variants, errors);
+        HirExprKind::Discerne(scrutinees, arms) => {
+            for scrutinee in scrutinees {
+                check_expr(scrutinee, types, enum_variants, errors);
+            }
+            check_match(scrutinees, arms, types, enum_variants, errors);
             for arm in arms {
                 if let Some(guard) = &arm.guard {
                     check_expr(guard, types, enum_variants, errors);
@@ -266,13 +291,33 @@ fn check_expr(
 }
 
 fn check_match(
-    scrutinee: &HirExpr,
+    scrutinees: &[HirExpr],
     arms: &[HirCasuArm],
     types: &TypeTable,
     enum_variants: &FxHashMap<DefId, Vec<DefId>>,
     errors: &mut Vec<SemanticError>,
 ) {
-    let Some(scrutinee_ty) = scrutinee.ty else {
+    fn pattern_variant_id(pattern: &HirPattern) -> Option<DefId> {
+        match pattern {
+            HirPattern::Variant(def_id, _) => Some(*def_id),
+            HirPattern::Alias(_, _, inner) => pattern_variant_id(inner),
+            _ => None,
+        }
+    }
+
+    fn is_catchall_pattern(pattern: &HirPattern) -> bool {
+        match pattern {
+            HirPattern::Wildcard | HirPattern::Binding(_, _) => true,
+            HirPattern::Alias(_, _, inner) => is_catchall_pattern(inner),
+            HirPattern::Variant(_, _) | HirPattern::Literal(_) => false,
+        }
+    }
+
+    if scrutinees.len() != 1 {
+        return;
+    }
+
+    let Some(scrutinee_ty) = scrutinees[0].ty else {
         return;
     };
 
@@ -284,7 +329,10 @@ fn check_match(
 
     for arm in arms {
         let is_guarded = arm.guard.is_some();
-        let _is_catchall = matches!(arm.pattern, HirPattern::Wildcard | HirPattern::Binding(_, _));
+        let _is_catchall = arm
+            .patterns
+            .iter()
+            .all(is_catchall_pattern);
 
         if has_catchall {
             errors.push(SemanticError::new(
@@ -295,22 +343,22 @@ fn check_match(
             continue;
         }
 
-        match &arm.pattern {
-            HirPattern::Variant(def_id, _) => {
-                if !is_guarded && !covered.insert(*def_id) {
-                    errors.push(SemanticError::new(
-                        SemanticErrorKind::DuplicatePattern,
-                        "duplicate pattern",
-                        arm.span,
-                    ));
-                }
+        let Some(pattern) = arm.patterns.first() else {
+            continue;
+        };
+
+        if let Some(def_id) = pattern_variant_id(pattern) {
+            if !is_guarded && !covered.insert(def_id) {
+                errors.push(SemanticError::new(
+                    SemanticErrorKind::DuplicatePattern,
+                    "duplicate pattern",
+                    arm.span,
+                ));
             }
-            HirPattern::Wildcard | HirPattern::Binding(_, _) => {
-                if !is_guarded {
-                    has_catchall = true;
-                }
+        } else if is_catchall_pattern(pattern) {
+            if !is_guarded {
+                has_catchall = true;
             }
-            HirPattern::Literal(_) => {}
         }
     }
 
@@ -324,7 +372,7 @@ fn check_match(
                 errors.push(SemanticError::new(
                     SemanticErrorKind::NonExhaustiveMatch,
                     "non-exhaustive match",
-                    scrutinee.span,
+                    scrutinees[0].span,
                 ));
             }
         }

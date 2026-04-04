@@ -165,6 +165,32 @@ pub fn generate_expr(
                 }
             }
         }
+        HirExprKind::NonNull(object, chain) => {
+            w.write("(");
+            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(").expect(\"nonnull assertion failed\")");
+            match chain {
+                crate::hir::HirNonNullKind::Member(field) => {
+                    w.write(".");
+                    w.write(codegen.resolve_symbol(*field));
+                }
+                crate::hir::HirNonNullKind::Index(index) => {
+                    w.write("[");
+                    generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write("]");
+                }
+                crate::hir::HirNonNullKind::Call(args) => {
+                    w.write("(");
+                    for (i, arg) in args.iter().enumerate() {
+                        if i > 0 {
+                            w.write(", ");
+                        }
+                        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    }
+                    w.write(")");
+                }
+            }
+        }
         HirExprKind::Ab { source, filter, transforms } => {
             let suffix = expr.id.0;
             let vec_name = format!("__faber_ab_vec_{}", suffix);
@@ -467,22 +493,52 @@ pub fn generate_expr(
                 )?;
             }
         }
-        HirExprKind::Discerne(scrutinee, arms) => {
+        HirExprKind::Discerne(scrutinees, arms) => {
             w.write("match ");
-            generate_expr(
-                codegen,
-                scrutinee,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            if scrutinees.len() == 1 {
+                generate_expr(
+                    codegen,
+                    &scrutinees[0],
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
+            } else {
+                w.write("(");
+                for (idx, scrutinee) in scrutinees.iter().enumerate() {
+                    if idx > 0 {
+                        w.write(", ");
+                    }
+                    generate_expr(
+                        codegen,
+                        scrutinee,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
+                }
+                w.write(")");
+            }
             w.writeln(" {");
             let mut discerne_result = Ok(());
             w.indented(|w| {
                 for arm in arms {
-                    generate_pattern(codegen, &arm.pattern, w);
+                    if arm.patterns.len() == 1 {
+                        generate_pattern(codegen, &arm.patterns[0], w);
+                    } else {
+                        w.write("(");
+                        for (idx, pattern) in arm.patterns.iter().enumerate() {
+                            if idx > 0 {
+                                w.write(", ");
+                            }
+                            generate_pattern(codegen, pattern, w);
+                        }
+                        w.write(")");
+                    }
                     if let Some(guard) = &arm.guard {
                         w.write(" if ");
                         if discerne_result.is_err() {
@@ -1262,6 +1318,16 @@ fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, w: &mut Cod
             } else {
                 w.write(resolved);
             }
+        }
+        HirPattern::Alias(def_id, name, pattern) => {
+            let resolved = codegen.resolve_def(*def_id);
+            if resolved == "unresolved_def" {
+                w.write(codegen.resolve_symbol(*name));
+            } else {
+                w.write(resolved);
+            }
+            w.write(" @ ");
+            generate_pattern(codegen, pattern, w);
         }
         HirPattern::Variant(def_id, fields) => {
             w.write(codegen.resolve_def(*def_id));

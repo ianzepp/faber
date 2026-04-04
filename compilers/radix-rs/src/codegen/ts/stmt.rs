@@ -75,6 +75,9 @@ pub fn generate_stmt(
             generate_expr(codegen, expr, types, w)?;
             w.writeln(";");
         }
+        HirStmtKind::Ad(_) => {
+            return Err(CodegenError { message: "ad is not supported for TypeScript codegen".to_owned() });
+        }
         HirStmtKind::Redde(expr) => {
             if let Some(expr) = expr {
                 w.write("return ");

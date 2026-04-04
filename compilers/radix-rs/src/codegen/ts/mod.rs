@@ -117,6 +117,13 @@ impl<'a> TsCodegen<'a> {
                         self.collect_expr_names(names, init);
                     }
                 }
+                HirStmtKind::Ad(ad) => {
+                    for arg in &ad.args {
+                        self.collect_expr_names(names, arg);
+                    }
+                    self.collect_block_names(names, ad.body.as_ref());
+                    self.collect_block_names(names, ad.catch.as_ref());
+                }
                 HirStmtKind::Expr(expr) => self.collect_expr_names(names, expr),
                 HirStmtKind::Redde(value) => {
                     if let Some(expr) = value {
@@ -186,6 +193,18 @@ impl<'a> TsCodegen<'a> {
                     }
                 }
             }
+            HirExprKind::NonNull(object, chain) => {
+                self.collect_expr_names(names, object);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(_) => {}
+                    crate::hir::HirNonNullKind::Index(index) => self.collect_expr_names(names, index),
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_names(names, arg);
+                        }
+                    }
+                }
+            }
             HirExprKind::Ab { source, filter, transforms } => {
                 self.collect_expr_names(names, source);
                 if let Some(filter) = filter {
@@ -205,10 +224,14 @@ impl<'a> TsCodegen<'a> {
                 self.collect_block_names(names, Some(then_block));
                 self.collect_block_names(names, else_block.as_ref());
             }
-            HirExprKind::Discerne(scrutinee, arms) => {
-                self.collect_expr_names(names, scrutinee);
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.collect_expr_names(names, scrutinee);
+                }
                 for arm in arms {
-                    self.collect_pattern_names(names, &arm.pattern);
+                    for pattern in &arm.patterns {
+                        self.collect_pattern_names(names, pattern);
+                    }
                     if let Some(guard) = &arm.guard {
                         self.collect_expr_names(names, guard);
                     }
@@ -265,6 +288,10 @@ impl<'a> TsCodegen<'a> {
             HirPattern::Wildcard | HirPattern::Literal(_) => {}
             HirPattern::Binding(def_id, name) => {
                 names.insert(*def_id, *name);
+            }
+            HirPattern::Alias(def_id, name, pattern) => {
+                names.insert(*def_id, *name);
+                self.collect_pattern_names(names, pattern);
             }
             HirPattern::Variant(_, patterns) => {
                 for pattern in patterns {

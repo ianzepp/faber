@@ -23,9 +23,9 @@ fn match_expr(scrutinee_ty: TypeId, patterns: Vec<HirPattern>) -> HirExpr {
         HirExpr { id: crate::hir::HirId(1), kind: HirExprKind::Path(DefId(100)), ty: Some(scrutinee_ty), span: span() };
     let arms = patterns
         .into_iter()
-        .map(|pattern| HirCasuArm { pattern, guard: None, body: lit_expr(2), span: span() })
+        .map(|pattern| HirCasuArm { patterns: vec![pattern], guard: None, body: lit_expr(2), span: span() })
         .collect();
-    HirExpr { id: crate::hir::HirId(3), kind: HirExprKind::Discerne(Box::new(scrutinee), arms), ty: None, span: span() }
+    HirExpr { id: crate::hir::HirId(3), kind: HirExprKind::Discerne(vec![scrutinee], arms), ty: None, span: span() }
 }
 
 fn program_with_match(enum_def: DefId, match_expr: HirExpr) -> HirProgram {

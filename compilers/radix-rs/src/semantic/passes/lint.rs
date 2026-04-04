@@ -205,6 +205,17 @@ impl<'a> LintContext<'a> {
         match &stmt.kind {
             HirStmtKind::Local(local) => self.check_local(local),
             HirStmtKind::Expr(expr) => self.check_expr(expr, in_loop),
+            HirStmtKind::Ad(ad) => {
+                for arg in &ad.args {
+                    self.check_expr(arg, in_loop);
+                }
+                if let Some(body) = &ad.body {
+                    self.check_block(body, in_loop);
+                }
+                if let Some(catch) = &ad.catch {
+                    self.check_block(catch, in_loop);
+                }
+            }
             HirStmtKind::Redde(value) => {
                 if let Some(expr) = value {
                     self.check_expr(expr, in_loop);
@@ -271,6 +282,18 @@ impl<'a> LintContext<'a> {
                     }
                 }
             }
+            HirExprKind::NonNull(object, chain) => {
+                self.check_expr(object, in_loop);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(_) => {}
+                    crate::hir::HirNonNullKind::Index(index) => self.check_expr(index, in_loop),
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        for arg in args {
+                            self.check_expr(arg, in_loop);
+                        }
+                    }
+                }
+            }
             HirExprKind::Ab { source, filter, transforms } => {
                 self.check_expr(source, in_loop);
                 if let Some(filter) = filter {
@@ -292,8 +315,10 @@ impl<'a> LintContext<'a> {
                     self.check_block(block, in_loop);
                 }
             }
-            HirExprKind::Discerne(scrutinee, arms) => {
-                self.check_expr(scrutinee, in_loop);
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.check_expr(scrutinee, in_loop);
+                }
                 for arm in arms {
                     if let Some(guard) = &arm.guard {
                         self.check_expr(guard, in_loop);

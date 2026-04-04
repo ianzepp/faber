@@ -51,6 +51,9 @@ pub fn generate_stmt(
             generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.writeln(";");
         }
+        HirStmtKind::Ad(_) => {
+            return Err(CodegenError { message: "ad is not supported for Rust codegen".to_owned() });
+        }
         HirStmtKind::Redde(value) => {
             if let Some(expr) = value {
                 w.write("return ");

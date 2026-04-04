@@ -193,13 +193,19 @@ fn find_error_expr_in_stmt(stmt: &crate::hir::HirStmt) -> Option<crate::lexer::S
     match &stmt.kind {
         crate::hir::HirStmtKind::Local(local) => local.init.as_ref().and_then(find_error_expr_in_expr),
         crate::hir::HirStmtKind::Expr(expr) => find_error_expr_in_expr(expr),
+        crate::hir::HirStmtKind::Ad(ad) => ad
+            .args
+            .iter()
+            .find_map(find_error_expr_in_expr)
+            .or_else(|| ad.body.as_ref().and_then(find_error_expr_in_block))
+            .or_else(|| ad.catch.as_ref().and_then(find_error_expr_in_block)),
         crate::hir::HirStmtKind::Redde(expr) => expr.as_ref().and_then(find_error_expr_in_expr),
         crate::hir::HirStmtKind::Rumpe | crate::hir::HirStmtKind::Perge => None,
     }
 }
 
 fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::Span> {
-    use crate::hir::{HirCollectionFilterKind, HirExprKind, HirOptionalChainKind};
+    use crate::hir::{HirCollectionFilterKind, HirExprKind, HirNonNullKind, HirOptionalChainKind};
 
     match &expr.kind {
         HirExprKind::Error => Some(expr.span),
@@ -223,6 +229,11 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
             HirOptionalChainKind::Index(index) => find_error_expr_in_expr(index),
             HirOptionalChainKind::Call(args) => args.iter().find_map(find_error_expr_in_expr),
         }),
+        HirExprKind::NonNull(object, chain) => find_error_expr_in_expr(object).or_else(|| match chain {
+            HirNonNullKind::Member(_) => None,
+            HirNonNullKind::Index(index) => find_error_expr_in_expr(index),
+            HirNonNullKind::Call(args) => args.iter().find_map(find_error_expr_in_expr),
+        }),
         HirExprKind::Ab { source, filter, transforms } => find_error_expr_in_expr(source)
             .or_else(|| {
                 filter.as_ref().and_then(|filter| match &filter.kind {
@@ -242,14 +253,17 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
         HirExprKind::Si(cond, then_block, else_block) => find_error_expr_in_expr(cond)
             .or_else(|| find_error_expr_in_block(then_block))
             .or_else(|| else_block.as_ref().and_then(find_error_expr_in_block)),
-        HirExprKind::Discerne(scrutinee, arms) => find_error_expr_in_expr(scrutinee).or_else(|| {
-            arms.iter().find_map(|arm| {
-                arm.guard
-                    .as_ref()
-                    .and_then(find_error_expr_in_expr)
-                    .or_else(|| find_error_expr_in_expr(&arm.body))
-            })
-        }),
+        HirExprKind::Discerne(scrutinees, arms) => scrutinees
+            .iter()
+            .find_map(find_error_expr_in_expr)
+            .or_else(|| {
+                arms.iter().find_map(|arm| {
+                    arm.guard
+                        .as_ref()
+                        .and_then(find_error_expr_in_expr)
+                        .or_else(|| find_error_expr_in_expr(&arm.body))
+                })
+            }),
         HirExprKind::Dum(cond, block) => find_error_expr_in_expr(cond).or_else(|| find_error_expr_in_block(block)),
         HirExprKind::Itera(_, _, iter, block) => {
             find_error_expr_in_expr(iter).or_else(|| find_error_expr_in_block(block))

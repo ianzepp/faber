@@ -475,6 +475,42 @@ impl FaberCodegen {
                 self.write_expr(expr, types, names, interner, w);
                 w.newline();
             }
+            HirStmtKind::Ad(ad) => {
+                w.write("ad ");
+                self.write_symbol_literal(ad.path, interner, w);
+                w.write(" (");
+                for (idx, arg) in ad.args.iter().enumerate() {
+                    if idx > 0 {
+                        w.write(", ");
+                    }
+                    self.write_expr(arg, types, names, interner, w);
+                }
+                w.write(")");
+                if let Some(binding) = &ad.binding {
+                    let _ = binding.verb;
+                    w.write(" →");
+                    if let Some(ty) = binding.ty {
+                        w.write(" ");
+                        w.write(&self.type_to_faber(ty, types, names, interner));
+                    }
+                    w.write(" pro ");
+                    w.write(&self.symbol_to_string(binding.name, interner));
+                    if let Some(alias) = binding.alias {
+                        w.write(" ut ");
+                        w.write(&self.symbol_to_string(alias, interner));
+                    }
+                }
+                if let Some(body) = &ad.body {
+                    w.writeln(" {");
+                    w.indented(|w| self.write_ad_block(body, types, names, interner, w, ad.binding.as_ref()));
+                    w.write("}");
+                }
+                if let Some(catch) = &ad.catch {
+                    w.write(" cape ");
+                    self.write_cape_block(catch, types, names, interner, w);
+                }
+                w.newline();
+            }
             HirStmtKind::Redde(value) => {
                 w.write("redde");
                 if let Some(expr) = value {
@@ -577,6 +613,30 @@ impl FaberCodegen {
                     }
                 }
             }
+            HirExprKind::NonNull(object, chain) => {
+                self.write_expr(object, types, names, interner, w);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(name) => {
+                        w.write("!.");
+                        w.write(&self.symbol_to_string(*name, interner));
+                    }
+                    crate::hir::HirNonNullKind::Index(index) => {
+                        w.write("![");
+                        self.write_expr(index, types, names, interner, w);
+                        w.write("]");
+                    }
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        w.write("!(");
+                        for (idx, arg) in args.iter().enumerate() {
+                            if idx > 0 {
+                                w.write(", ");
+                            }
+                            self.write_expr(arg, types, names, interner, w);
+                        }
+                        w.write(")");
+                    }
+                }
+            }
             HirExprKind::Ab { source, filter, transforms } => {
                 w.write("ab ");
                 self.write_expr(source, types, names, interner, w);
@@ -615,17 +675,33 @@ impl FaberCodegen {
             HirExprKind::Si(cond, then_block, else_block) => {
                 self.write_si_chain(cond, then_block, else_block.as_ref(), types, names, interner, w);
             }
-            HirExprKind::Discerne(scrutinee, arms) => {
+            HirExprKind::Discerne(scrutinees, arms) => {
                 w.write("discerne ");
-                self.write_expr(scrutinee, types, names, interner, w);
+                for (idx, scrutinee) in scrutinees.iter().enumerate() {
+                    if idx > 0 {
+                        w.write(", ");
+                    }
+                    self.write_expr(scrutinee, types, names, interner, w);
+                }
                 w.writeln(" {");
                 w.indented(|w| self.write_match_arms(arms, types, names, interner, w));
                 w.write("}");
             }
             HirExprKind::Loop(block) => {
-                w.writeln("dum verum {");
-                w.indented(|w| self.write_block(block, types, names, interner, w));
-                w.write("}");
+                if let Some((body_stmts, cond)) = self.as_fac_loop(block) {
+                    w.writeln("fac {");
+                    w.indented(|w| {
+                        for stmt in body_stmts {
+                            self.write_stmt(stmt, types, names, interner, w);
+                        }
+                    });
+                    w.write("} dum ");
+                    self.write_expr(cond, types, names, interner, w);
+                } else {
+                    w.writeln("dum verum {");
+                    w.indented(|w| self.write_block(block, types, names, interner, w));
+                    w.write("}");
+                }
             }
             HirExprKind::Dum(cond, block) => {
                 w.write("dum ");
@@ -863,7 +939,12 @@ impl FaberCodegen {
     ) {
         for arm in arms {
             w.write("casu ");
-            self.write_pattern(&arm.pattern, names, interner, w);
+            for (idx, pattern) in arm.patterns.iter().enumerate() {
+                if idx > 0 {
+                    w.write(", ");
+                }
+                self.write_pattern(pattern, names, interner, w);
+            }
             if let Some(guard) = &arm.guard {
                 w.write(" si ");
                 self.write_expr(guard, types, names, interner, w);
@@ -893,22 +974,85 @@ impl FaberCodegen {
                 let name = names.get(def_id).copied().unwrap_or(*name);
                 w.write(&self.symbol_to_string(name, interner));
             }
+            HirPattern::Alias(def_id, name, pattern) => {
+                self.write_pattern(pattern, names, interner, w);
+                let name = names.get(def_id).copied().unwrap_or(*name);
+                w.write(" ut ");
+                w.write(&self.symbol_to_string(name, interner));
+            }
             HirPattern::Variant(def_id, patterns) => {
                 w.write(&self.name_for_def(*def_id, names, interner));
                 if !patterns.is_empty() {
-                    w.write("(");
+                    w.write(" fixum ");
                     for (idx, pat) in patterns.iter().enumerate() {
                         if idx > 0 {
                             w.write(", ");
                         }
                         self.write_pattern(pat, names, interner, w);
                     }
-                    w.write(")");
                 }
             }
             HirPattern::Literal(lit) => {
                 self.write_literal(lit, interner, w);
             }
+        }
+    }
+
+    fn write_symbol_literal(&self, symbol: Symbol, interner: &Interner, w: &mut CodeWriter) {
+        w.write("\"");
+        w.write(&self.symbol_to_string(symbol, interner));
+        w.write("\"");
+    }
+
+    fn write_cape_block(
+        &self,
+        block: &HirBlock,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        if let Some(HirStmt {
+            kind: HirStmtKind::Local(local),
+            ..
+        }) = block.stmts.first()
+        {
+            w.write(&self.symbol_to_string(local.name, interner));
+            w.writeln(" {");
+            w.indented(|w| {
+                for stmt in block.stmts.iter().skip(1) {
+                    self.write_stmt(stmt, types, names, interner, w);
+                }
+                if let Some(expr) = &block.expr {
+                    self.write_expr(expr, types, names, interner, w);
+                    w.newline();
+                }
+            });
+            w.write("}");
+            return;
+        }
+
+        w.writeln("_ {");
+        w.indented(|w| self.write_block(block, types, names, interner, w));
+        w.write("}");
+    }
+
+    fn write_ad_block(
+        &self,
+        block: &HirBlock,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+        binding: Option<&crate::hir::HirAdBinding>,
+    ) {
+        let skip = if binding.is_some() { 1 + usize::from(binding.and_then(|binding| binding.alias).is_some()) } else { 0 };
+        for stmt in block.stmts.iter().skip(skip) {
+            self.write_stmt(stmt, types, names, interner, w);
+        }
+        if let Some(expr) = &block.expr {
+            self.write_expr(expr, types, names, interner, w);
+            w.newline();
         }
     }
 
@@ -1067,6 +1211,13 @@ impl FaberCodegen {
                         self.collect_expr_names(names, init);
                     }
                 }
+                HirStmtKind::Ad(ad) => {
+                    for arg in &ad.args {
+                        self.collect_expr_names(names, arg);
+                    }
+                    self.collect_block_names(names, ad.body.as_ref());
+                    self.collect_block_names(names, ad.catch.as_ref());
+                }
                 HirStmtKind::Expr(expr) => self.collect_expr_names(names, expr),
                 HirStmtKind::Redde(value) => {
                     if let Some(expr) = value {
@@ -1132,6 +1283,18 @@ impl FaberCodegen {
                     }
                 }
             }
+            HirExprKind::NonNull(object, chain) => {
+                self.collect_expr_names(names, object);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(_) => {}
+                    crate::hir::HirNonNullKind::Index(index) => self.collect_expr_names(names, index),
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_names(names, arg);
+                        }
+                    }
+                }
+            }
             HirExprKind::Ab { source, filter, transforms } => {
                 self.collect_expr_names(names, source);
                 if let Some(filter) = filter {
@@ -1151,10 +1314,14 @@ impl FaberCodegen {
                 self.collect_block_names(names, Some(then_block));
                 self.collect_block_names(names, else_block.as_ref());
             }
-            HirExprKind::Discerne(scrutinee, arms) => {
-                self.collect_expr_names(names, scrutinee);
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.collect_expr_names(names, scrutinee);
+                }
                 for arm in arms {
-                    self.collect_pattern_names(names, &arm.pattern);
+                    for pattern in &arm.patterns {
+                        self.collect_pattern_names(names, pattern);
+                    }
                     if let Some(guard) = &arm.guard {
                         self.collect_expr_names(names, guard);
                     }
@@ -1267,6 +1434,26 @@ impl FaberCodegen {
         }
     }
 
+    fn as_fac_loop<'a>(&self, block: &'a HirBlock) -> Option<(&'a [HirStmt], &'a HirExpr)> {
+        let last = block.stmts.last()?;
+        let HirStmtKind::Expr(expr) = &last.kind else {
+            return None;
+        };
+        let HirExprKind::Si(cond, then_block, None) = &expr.kind else {
+            return None;
+        };
+        let HirExprKind::Unary(crate::hir::HirUnOp::Not, inner) = &cond.kind else {
+            return None;
+        };
+        if then_block.expr.is_some() || then_block.stmts.len() != 1 {
+            return None;
+        }
+        if !matches!(then_block.stmts[0].kind, HirStmtKind::Rumpe) {
+            return None;
+        }
+        Some((&block.stmts[..block.stmts.len() - 1], inner))
+    }
+
     fn reddit_expr<'a>(&self, block: &'a HirBlock) -> Option<&'a HirExpr> {
         if block.expr.is_some() || block.stmts.len() != 1 {
             return None;
@@ -1283,6 +1470,10 @@ impl FaberCodegen {
             HirPattern::Wildcard => {}
             HirPattern::Binding(def_id, name) => {
                 names.insert(*def_id, *name);
+            }
+            HirPattern::Alias(def_id, name, pattern) => {
+                names.insert(*def_id, *name);
+                self.collect_pattern_names(names, pattern);
             }
             HirPattern::Variant(_, patterns) => {
                 for pattern in patterns {

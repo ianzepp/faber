@@ -332,14 +332,14 @@ fn discerne_cases_do_not_emit_nested_blocks() {
     let discerne = HirExpr {
         id: crate::hir::HirId(1),
         kind: HirExprKind::Discerne(
-            Box::new(HirExpr {
+            vec![HirExpr {
                 id: crate::hir::HirId(2),
                 kind: HirExprKind::Literal(HirLiteral::Int(200)),
                 ty: Some(numerus),
                 span: span(),
-            }),
+            }],
             vec![HirCasuArm {
-                pattern: HirPattern::Literal(HirLiteral::Int(200)),
+                patterns: vec![HirPattern::Literal(HirLiteral::Int(200))],
                 guard: None,
                 body: arm_body,
                 span: span(),
