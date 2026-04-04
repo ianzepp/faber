@@ -294,10 +294,65 @@ fn emits_si_sin_secus_chain_with_reddit_shorthand() {
 
     let gen = FaberCodegen::new();
     let output = gen.generate(&program, &types, &interner).expect("codegen");
-    assert!(output.code.contains("si verum reddit \"A\""));
-    assert!(output.code.contains("sin falsum reddit \"B\""));
-    assert!(output.code.contains("secus reddit \"F\""));
+    assert!(output.code.contains("verum sic \"A\""));
+    assert!(output.code.contains("falsum sic \"B\""));
+    assert!(output.code.contains("secus \"F\""));
     assert!(!output.code.contains("aliter"));
+}
+
+#[test]
+fn emits_synthetic_proba_functions_as_proba_cases() {
+    let mut interner = Interner::new();
+    let name = interner.intern("one plus one equals two");
+
+    let mut types = TypeTable::new();
+    let vacuum = types.primitive(Primitive::Vacuum);
+
+    let function = HirFunction {
+        name,
+        type_params: Vec::new(),
+        params: Vec::new(),
+        ret_ty: Some(vacuum),
+        body: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: crate::hir::HirId(1),
+                kind: HirStmtKind::Expr(HirExpr {
+                    id: crate::hir::HirId(2),
+                    kind: HirExprKind::Adfirma(
+                        Box::new(HirExpr {
+                            id: crate::hir::HirId(3),
+                            kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                            ty: Some(types.primitive(Primitive::Bivalens)),
+                            span: span(),
+                        }),
+                        None,
+                    ),
+                    ty: Some(vacuum),
+                    span: span(),
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+        is_async: false,
+        is_generator: false,
+    };
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(function),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("proba \"one plus one equals two\""));
+    assert!(!output.code.contains("functio one plus one equals two"));
 }
 
 #[test]

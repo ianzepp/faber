@@ -931,6 +931,7 @@ fn is_builtin_type(name: &str) -> bool {
             | "numquam"
             | "ignotum"
             | "octeti"
+            | "regex"
             | "objectum"
             | "quidlibet"
             | "curator"

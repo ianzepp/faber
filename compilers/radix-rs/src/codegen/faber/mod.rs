@@ -130,6 +130,18 @@ impl FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) -> Result<(), CodegenError> {
+        if self.is_synthetic_proba_function(func, types, interner) {
+            self.generate_proba_function(func, types, names, interner, w);
+            return Ok(());
+        }
+
+        if func.is_async {
+            w.writeln("@ futura");
+        }
+        if func.is_generator {
+            w.writeln("@ cursor");
+        }
+
         w.write("functio ");
         w.write(&self.symbol_to_string(func.name, interner));
 
@@ -150,6 +162,9 @@ impl FaberCodegen {
         for (i, param) in func.params.iter().enumerate() {
             if i > 0 || !func.type_params.is_empty() {
                 w.write(", ");
+            }
+            if param.optional {
+                w.write("si ");
             }
             match param.mode {
                 crate::hir::HirParamMode::Ref => w.write("de "),
@@ -177,6 +192,31 @@ impl FaberCodegen {
         }
 
         Ok(())
+    }
+
+    fn generate_proba_function(
+        &self,
+        func: &HirFunction,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        w.write("proba ");
+        if func.is_generator {
+            w.write("omitte ");
+            self.write_quoted_text("ignored", w);
+            w.write(" ");
+        }
+        self.write_quoted_text(interner.resolve(func.name), w);
+
+        if let Some(body) = &func.body {
+            w.writeln(" {");
+            w.indented(|w| self.write_block(body, types, names, interner, w));
+            w.writeln("}");
+        } else {
+            w.newline();
+        }
     }
 
     fn generate_struct(
@@ -227,7 +267,7 @@ impl FaberCodegen {
                 w.write(" ");
                 w.write(&self.symbol_to_string(field.name, interner));
                 if let Some(init) = &field.init {
-                    w.write(" ← ");
+                    w.write(": ");
                     self.write_expr(init, types, names, interner, w);
                 }
                 w.newline();
@@ -384,9 +424,7 @@ impl FaberCodegen {
 
             Type::Set(elem) => format!("copia<{}>", self.type_to_faber(*elem, types, names, interner)),
 
-            Type::Option(inner) => {
-                format!("si {}", self.type_to_faber(*inner, types, names, interner))
-            }
+            Type::Option(inner) => format!("si {}", self.type_to_faber(self.flatten_option(*inner, types), types, names, interner)),
 
             Type::Ref(mutability, inner) => {
                 let prefix = match mutability {
@@ -541,26 +579,41 @@ impl FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) {
+        self.write_expr_prec(expr, 0, types, names, interner, w);
+    }
+
+    fn write_expr_prec(
+        &self,
+        expr: &HirExpr,
+        parent_prec: u8,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        let expr_prec = self.expr_precedence(expr);
+        let needs_parens = expr_prec <= parent_prec && parent_prec != 0;
+        if needs_parens {
+            w.write("(");
+        }
+
         match &expr.kind {
-            HirExprKind::Path(def_id) => {
-                w.write(&self.name_for_def(*def_id, names, interner));
-            }
-            HirExprKind::Literal(lit) => {
-                self.write_literal(lit, interner, w);
-            }
+            HirExprKind::Path(def_id) => w.write(&self.name_for_def(*def_id, names, interner)),
+            HirExprKind::Literal(lit) => self.write_literal(lit, interner, w),
             HirExprKind::Binary(op, lhs, rhs) => {
-                self.write_expr(lhs, types, names, interner, w);
+                let op_prec = self.binop_precedence(*op);
+                self.write_expr_prec(lhs, op_prec, types, names, interner, w);
                 w.write(" ");
                 w.write(self.binop_to_faber(*op));
                 w.write(" ");
-                self.write_expr(rhs, types, names, interner, w);
+                self.write_expr_prec(rhs, op_prec, types, names, interner, w);
             }
             HirExprKind::Unary(op, operand) => {
                 w.write(self.unop_to_faber(*op));
-                self.write_expr(operand, types, names, interner, w);
+                self.write_expr_prec(operand, 12, types, names, interner, w);
             }
             HirExprKind::Call(callee, args) => {
-                self.write_expr(callee, types, names, interner, w);
+                self.write_expr_prec(callee, 13, types, names, interner, w);
                 w.write("(");
                 for (idx, arg) in args.iter().enumerate() {
                     if idx > 0 {
@@ -571,7 +624,7 @@ impl FaberCodegen {
                 w.write(")");
             }
             HirExprKind::MethodCall(receiver, name, args) => {
-                self.write_expr(receiver, types, names, interner, w);
+                self.write_expr_prec(receiver, 13, types, names, interner, w);
                 w.write(".");
                 w.write(&self.symbol_to_string(*name, interner));
                 w.write("(");
@@ -584,18 +637,18 @@ impl FaberCodegen {
                 w.write(")");
             }
             HirExprKind::Field(object, name) => {
-                self.write_expr(object, types, names, interner, w);
+                self.write_expr_prec(object, 13, types, names, interner, w);
                 w.write(".");
                 w.write(&self.symbol_to_string(*name, interner));
             }
             HirExprKind::Index(object, index) => {
-                self.write_expr(object, types, names, interner, w);
+                self.write_expr_prec(object, 13, types, names, interner, w);
                 w.write("[");
                 self.write_expr(index, types, names, interner, w);
                 w.write("]");
             }
             HirExprKind::OptionalChain(object, chain) => {
-                self.write_expr(object, types, names, interner, w);
+                self.write_expr_prec(object, 13, types, names, interner, w);
                 match chain {
                     crate::hir::HirOptionalChainKind::Member(name) => {
                         w.write("?.");
@@ -619,7 +672,7 @@ impl FaberCodegen {
                 }
             }
             HirExprKind::NonNull(object, chain) => {
-                self.write_expr(object, types, names, interner, w);
+                self.write_expr_prec(object, 13, types, names, interner, w);
                 match chain {
                     crate::hir::HirNonNullKind::Member(name) => {
                         w.write("!.");
@@ -678,6 +731,12 @@ impl FaberCodegen {
                 w.write("}");
             }
             HirExprKind::Si(cond, then_block, else_block) => {
+                if self.write_sic_secus_chain(cond, then_block, else_block.as_ref(), types, names, interner, w) {
+                    if needs_parens {
+                        w.write(")");
+                    }
+                    return;
+                }
                 self.write_si_chain(cond, then_block, else_block.as_ref(), types, names, interner, w);
             }
             HirExprKind::Discerne(scrutinees, arms) => {
@@ -744,16 +803,16 @@ impl FaberCodegen {
                 }
             }
             HirExprKind::Assign(lhs, rhs) => {
-                self.write_expr(lhs, types, names, interner, w);
+                self.write_expr_prec(lhs, 1, types, names, interner, w);
                 w.write(" ← ");
-                self.write_expr(rhs, types, names, interner, w);
+                self.write_expr_prec(rhs, 1, types, names, interner, w);
             }
             HirExprKind::AssignOp(op, lhs, rhs) => {
-                self.write_expr(lhs, types, names, interner, w);
+                self.write_expr_prec(lhs, 1, types, names, interner, w);
                 w.write(" ");
-                w.write(self.binop_to_faber(*op));
-                w.write("= ");
-                self.write_expr(rhs, types, names, interner, w);
+                w.write(self.assignop_to_faber(*op));
+                w.write(" ");
+                self.write_expr_prec(rhs, 1, types, names, interner, w);
             }
             HirExprKind::Array(elements) => {
                 w.write("[");
@@ -843,7 +902,7 @@ impl FaberCodegen {
                 w.write("}");
             }
             HirExprKind::Clausura(params, ret, body) => {
-                w.write("clausura(");
+                w.write("clausura ");
                 for (idx, param) in params.iter().enumerate() {
                     if idx > 0 {
                         w.write(", ");
@@ -852,17 +911,12 @@ impl FaberCodegen {
                     w.write(" ");
                     w.write(&self.symbol_to_string(param.name, interner));
                 }
-                w.write(")");
                 if let Some(ret) = ret {
                     w.write(" → ");
                     w.write(&self.type_to_faber(*ret, types, names, interner));
                 }
-                w.writeln(" {");
-                w.indented(|w| {
-                    self.write_expr(body, types, names, interner, w);
-                    w.newline();
-                });
-                w.write("}");
+                w.write(": ");
+                self.write_expr(body, types, names, interner, w);
             }
             HirExprKind::Cede(inner) => {
                 w.write("cede ");
@@ -913,7 +967,7 @@ impl FaberCodegen {
                 }
             },
             HirExprKind::Conversio { source, target, params, fallback } => {
-                self.write_expr(source, types, names, interner, w);
+                self.write_expr_prec(source, 2, types, names, interner, w);
                 w.write(" ");
                 if let Some(keyword) = self.conversio_keyword(*target, types) {
                     w.write(keyword);
@@ -933,7 +987,7 @@ impl FaberCodegen {
                 }
                 if let Some(fallback) = fallback {
                     w.write(" vel ");
-                    self.write_expr(fallback, types, names, interner, w);
+                    self.write_expr_prec(fallback, 2, types, names, interner, w);
                 }
             }
             HirExprKind::Ref(kind, inner) => {
@@ -941,13 +995,17 @@ impl FaberCodegen {
                     crate::hir::HirRefKind::Shared => w.write("de "),
                     crate::hir::HirRefKind::Mutable => w.write("in "),
                 }
-                self.write_expr(inner, types, names, interner, w);
+                self.write_expr_prec(inner, 12, types, names, interner, w);
             }
             HirExprKind::Deref(inner) => {
                 w.write("*");
-                self.write_expr(inner, types, names, interner, w);
+                self.write_expr_prec(inner, 12, types, names, interner, w);
             }
             HirExprKind::Error => w.write("nihil"),
+        }
+
+        if needs_parens {
+            w.write(")");
         }
     }
 
@@ -1114,6 +1172,35 @@ impl FaberCodegen {
         w.write("\"");
     }
 
+    fn write_quoted_text(&self, text: &str, w: &mut CodeWriter) {
+        w.write("\"");
+        w.write(text);
+        w.write("\"");
+    }
+
+    fn is_synthetic_proba_function(&self, func: &HirFunction, types: &TypeTable, interner: &Interner) -> bool {
+        if !func.params.is_empty() {
+            return false;
+        }
+
+        let Some(ret_ty) = func.ret_ty else {
+            return false;
+        };
+
+        if !matches!(types.get(ret_ty), Type::Primitive(Primitive::Vacuum)) {
+            return false;
+        }
+
+        interner.resolve(func.name).chars().any(char::is_whitespace)
+    }
+
+    fn flatten_option(&self, mut type_id: TypeId, types: &TypeTable) -> TypeId {
+        while let Type::Option(inner) = types.get(type_id) {
+            type_id = *inner;
+        }
+        type_id
+    }
+
     fn binop_to_faber(&self, op: crate::hir::HirBinOp) -> &'static str {
         match op {
             crate::hir::HirBinOp::Add => "+",
@@ -1141,6 +1228,44 @@ impl FaberCodegen {
             crate::hir::HirBinOp::IsNot => "non est",
             crate::hir::HirBinOp::InRange => "intra",
             crate::hir::HirBinOp::Between => "inter",
+        }
+    }
+
+    fn binop_precedence(&self, op: crate::hir::HirBinOp) -> u8 {
+        match op {
+            crate::hir::HirBinOp::Coalesce => 2,
+            crate::hir::HirBinOp::Or => 3,
+            crate::hir::HirBinOp::And => 4,
+            crate::hir::HirBinOp::Eq
+            | crate::hir::HirBinOp::NotEq
+            | crate::hir::HirBinOp::StrictEq
+            | crate::hir::HirBinOp::StrictNotEq
+            | crate::hir::HirBinOp::Is
+            | crate::hir::HirBinOp::IsNot => 5,
+            crate::hir::HirBinOp::Lt
+            | crate::hir::HirBinOp::Gt
+            | crate::hir::HirBinOp::LtEq
+            | crate::hir::HirBinOp::GtEq
+            | crate::hir::HirBinOp::InRange
+            | crate::hir::HirBinOp::Between => 6,
+            crate::hir::HirBinOp::BitOr => 7,
+            crate::hir::HirBinOp::BitXor => 8,
+            crate::hir::HirBinOp::BitAnd => 9,
+            crate::hir::HirBinOp::Shl | crate::hir::HirBinOp::Shr => 10,
+            crate::hir::HirBinOp::Add | crate::hir::HirBinOp::Sub => 11,
+            crate::hir::HirBinOp::Mul | crate::hir::HirBinOp::Div | crate::hir::HirBinOp::Mod => 12,
+        }
+    }
+
+    fn assignop_to_faber(&self, op: crate::hir::HirBinOp) -> &'static str {
+        match op {
+            crate::hir::HirBinOp::Add => "⊕",
+            crate::hir::HirBinOp::Sub => "⊖",
+            crate::hir::HirBinOp::Mul => "⊛",
+            crate::hir::HirBinOp::Div => "⊘",
+            crate::hir::HirBinOp::BitAnd => "⊜",
+            crate::hir::HirBinOp::BitOr => "⊚",
+            _ => self.binop_to_faber(op),
         }
     }
 
@@ -1412,6 +1537,22 @@ impl FaberCodegen {
         }
     }
 
+    fn expr_precedence(&self, expr: &HirExpr) -> u8 {
+        match &expr.kind {
+            HirExprKind::Assign(_, _) | HirExprKind::AssignOp(_, _, _) => 1,
+            HirExprKind::Si(_, _, _) | HirExprKind::Conversio { .. } => 2,
+            HirExprKind::Binary(op, _, _) => self.binop_precedence(*op),
+            HirExprKind::Unary(_, _) | HirExprKind::Ref(_, _) | HirExprKind::Deref(_) => 12,
+            HirExprKind::Call(_, _)
+            | HirExprKind::MethodCall(_, _, _)
+            | HirExprKind::Field(_, _)
+            | HirExprKind::Index(_, _)
+            | HirExprKind::OptionalChain(_, _)
+            | HirExprKind::NonNull(_, _) => 13,
+            _ => 14,
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn write_si_chain(
         &self,
@@ -1440,6 +1581,56 @@ impl FaberCodegen {
                 break;
             }
         }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn write_sic_secus_chain(
+        &self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        else_block: Option<&HirBlock>,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) -> bool {
+        if !self.can_write_sic_secus_chain(then_block, else_block) {
+            return false;
+        }
+
+        let then_expr = self.reddit_expr(then_block).expect("checked by can_write_sic_secus_chain");
+        let else_block = else_block.expect("checked by can_write_sic_secus_chain");
+
+        self.write_expr_prec(cond, 2, types, names, interner, w);
+        w.write(" sic ");
+        self.write_expr_prec(then_expr, 2, types, names, interner, w);
+        w.write(" secus ");
+
+        if let Some((sin_cond, sin_then, sin_else)) = self.as_sin_branch(else_block) {
+            return self.write_sic_secus_chain(sin_cond, sin_then, sin_else, types, names, interner, w);
+        }
+
+        let Some(else_expr) = self.reddit_expr(else_block) else {
+            return false;
+        };
+        self.write_expr_prec(else_expr, 2, types, names, interner, w);
+        true
+    }
+
+    fn can_write_sic_secus_chain(&self, then_block: &HirBlock, else_block: Option<&HirBlock>) -> bool {
+        if self.reddit_expr(then_block).is_none() {
+            return false;
+        }
+
+        let Some(else_block) = else_block else {
+            return false;
+        };
+
+        if let Some((_, sin_then, sin_else)) = self.as_sin_branch(else_block) {
+            return self.can_write_sic_secus_chain(sin_then, sin_else);
+        }
+
+        self.reddit_expr(else_block).is_some()
     }
 
     fn write_si_branch_body(
@@ -1495,6 +1686,9 @@ impl FaberCodegen {
     }
 
     fn reddit_expr<'a>(&self, block: &'a HirBlock) -> Option<&'a HirExpr> {
+        if block.stmts.is_empty() {
+            return block.expr.as_deref();
+        }
         if block.expr.is_some() || block.stmts.len() != 1 {
             return None;
         }
