@@ -633,10 +633,10 @@ functio genTypusAlias(in FaberGenerator g, de TypusAliasDeclaratio s) → textus
     }
 
     si nonnihil s.scopusNomen {
-        redde scriptum("§typus § ← typusex §", result, s.nomen, s.scopusNomen)
+        redde scriptum("§typus § = typusex §", result, s.nomen, s.scopusNomen)
     }
 
-    redde scriptum("§typus § ← §", result, s.nomen, genTypus(g, s.typus qua TypusAnnotatio))
+    redde scriptum("§typus § = §", result, s.nomen, genTypus(g, s.typus qua TypusAnnotatio))
 }
 
 functio genOrdo(in FaberGenerator g, de OrdoDeclaratio s) → textus {

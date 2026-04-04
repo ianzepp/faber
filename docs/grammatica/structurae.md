@@ -54,9 +54,9 @@ The colon syntax deserves explanation. Faber distinguishes between two operation
 | Syntax | Meaning                     | Context                                       |
 | ------ | --------------------------- | --------------------------------------------- |
 | `:`    | "has value" / "defaults to" | Field defaults, object literals, construction |
-| `=`    | "assign value"              | Variable binding, reassignment, method bodies |
+| `←`    | "assign value"              | Variable binding, reassignment, method bodies |
 
-The colon represents a _declarative specification_: this field has this value by nature of its definition. The equals sign represents an _imperative action_: assign this value to that location.
+The colon represents a _declarative specification_: this field has this value by nature of its definition. The left arrow represents an _imperative action_: assign this value to that location.
 
 This distinction creates consistency across the language. Object literals use colons (`{ nomen: "Marcus" }`), construction overrides use colons, and field defaults use colons. All three are specifying property values, not performing assignment.
 
@@ -90,7 +90,7 @@ genus Counter {
     numerus count: 0
 
     functio increment() {
-        ego.count = ego.count + 1
+        ego.count ← ego.count + 1
     }
 
     functio getValue() -> numerus {
@@ -107,7 +107,7 @@ Within methods, `ego` refers to the current instance. The word is Latin for "I" 
 
 ```fab
 functio celebraNatalem() {
-    ego.aetas = ego.aetas + 1
+    ego.aetas ← ego.aetas + 1
 }
 ```
 

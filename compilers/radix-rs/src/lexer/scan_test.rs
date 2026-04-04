@@ -100,7 +100,7 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::Question,
         TokenKind::Question,
         TokenKind::Eq,
-        TokenKind::Eq,
+        TokenKind::Assign,
         TokenKind::Eof,
     ];
 

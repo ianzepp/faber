@@ -345,8 +345,8 @@ typus IsActive = bivalens
 Once defined, type aliases can be used anywhere a type is expected:
 
 ```fab
-fixum UserId id = 42
-fixum Username name = "Marcus"
+fixum UserId id ← 42
+fixum Username name ← "Marcus"
 ```
 
 Aliases are especially useful for complex types:
@@ -370,7 +370,7 @@ functio findUser(UserId id) -> Username? {
 Use `typus` on the right-hand side to extract a type from a value:
 
 ```fab
-fixum config = { port: 3000, host: "localhost" }
+fixum config ← { port: 3000, host: "localhost" }
 typus Config = typus config
 ```
 

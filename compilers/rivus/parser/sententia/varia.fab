@@ -215,12 +215,12 @@ functio parseSeriesDestructura(in Resolvitor r) → lista<SeriesDestructuraEleme
 
 # Parse variable declaration
 #
-# GRAMMAR: varDecl := ('varia'|'fixum') type? name ('=' expr)?
+# GRAMMAR: varDecl := ('varia'|'fixum') type? name ('←' expr)?
 #
 # Supports:
-# - Type inference: fixum x = 42
-# - Type-first: fixum numerus x = 42
-# - Array destructuring: fixum [a, b] = coords (TODO)
+# - Type inference: fixum x ← 42
+# - Type-first: fixum numerus x ← 42
+# - Array destructuring: fixum [a, b] ← coords (TODO)
 @ publica
 functio parseVariaSententia(in Resolvitor r) → Sententia {
     fixum p ← r.parser()
@@ -239,11 +239,11 @@ functio parseVariaSententia(in Resolvitor r) → Sententia {
     p.procede()
 
     # -------------------------------------------------------------------------
-    # Array destructuring: fixum [a, b] = coords
+    # Array destructuring: fixum [a, b] ← coords
     # -------------------------------------------------------------------------
     si p.proba(SymbolumGenus.QuadratusSin) {
         fixum elementa ← parseSeriesDestructura(r)
-        p.expecta(SymbolumGenus.Aequum, ParserErrorCodice.ExpectaturAequale)
+        p.expecta(SymbolumGenus.Assignatio, ParserErrorCodice.ExpectaturAssignatio)
         fixum fons ← r.expressia()
         redde finge SeriesDestructuraSententia {
             locus: locus,
@@ -260,20 +260,20 @@ functio parseVariaSententia(in Resolvitor r) → Sententia {
     varia nomen ← ""
 
     si p.estTypusNomen(p.specta(0)) {
-        # Builtin type: fixum numerus x = 42
+        # Builtin type: fixum numerus x ← 42
         adnotatio ← r.adnotatio()
         nomen ← parseNomenVelVerbum(r)
     } sin p.probaVerbum("si") {
-        # Nullable type: fixum si textus maybe = nihil
+        # Nullable type: fixum si textus maybe ← nihil
         adnotatio ← r.adnotatio()
         nomen ← parseNomenVelVerbum(r)
     } sin p.proba(SymbolumGenus.Nomen) et p.specta(1).species ≡ SymbolumGenus.Nomen {
         # Two identifiers: first is type, second is name
-        # Handles user-defined types: fixum UserId id = 42
+        # Handles user-defined types: fixum UserId id ← 42
         adnotatio ← r.adnotatio()
         nomen ← parseNomenVelVerbum(r)
     } secus {
-        # Just a name (type inference): fixum x = 42
+        # Just a name (type inference): fixum x ← 42
         nomen ← parseNomenVelVerbum(r)
 
         # =====================================================================
@@ -296,7 +296,7 @@ functio parseVariaSententia(in Resolvitor r) → Sententia {
     # -------------------------------------------------------------------------
     varia valor ← nihil qua si Expressia
 
-    si p.congruet(SymbolumGenus.Aequum) {
+    si p.congruet(SymbolumGenus.Assignatio) {
         valor ← r.expressia()
     }
 

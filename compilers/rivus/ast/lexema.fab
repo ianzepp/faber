@@ -61,6 +61,7 @@ ordo SymbolumGenus {
     # Operators - Comparison
     # -------------------------------------------------------------------------
     Aequum        # =
+    Assignatio    # ←
     AequumBis     # ==
     AequumTer     # ===
     NonAequum     # !=

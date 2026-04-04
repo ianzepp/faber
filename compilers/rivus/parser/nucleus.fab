@@ -527,7 +527,7 @@ genus Parser {
     functio estAssignatioSignum(de Symbolum s) → bivalens {
         # WHY: Compound assignment shares assignment precedence and associativity.
         elige s.species {
-            casu SymbolumGenus.Aequum reddit verum
+            casu SymbolumGenus.Assignatio reddit verum
             casu SymbolumGenus.PlusAequum reddit verum
             casu SymbolumGenus.MinusAequum reddit verum
             casu SymbolumGenus.StellaAequum reddit verum

@@ -78,7 +78,7 @@ impl FaberCodegen {
             HirItemKind::TypeAlias(a) => {
                 w.write("typus ");
                 w.write(&self.symbol_to_string(a.name, interner));
-                w.write(" ← ");
+                w.write(" = ");
                 w.write(&self.type_to_faber(a.ty, types, names, interner));
                 w.newline();
             }

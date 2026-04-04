@@ -791,7 +791,7 @@ genus Lexor {
 
             # ---- Equals: = or == or === or => ----
             casu "←" {
-                ego.addeSymbolum(SymbolumGenus.Aequum, "←", loc)
+                ego.addeSymbolum(SymbolumGenus.Assignatio, "←", loc)
             }
             casu "≡" {
                 ego.addeSymbolum(SymbolumGenus.AequumBis, "≡", loc)
@@ -808,7 +808,7 @@ genus Lexor {
                     ego.procede()
                     ego.addeSymbolum(SymbolumGenus.SagittaCrassa, "=>", loc)   # fat arrow (crassa = thick)
                 } secus {
-                    ego.addeSymbolum(SymbolumGenus.Aequum, "←", loc)             # assignment
+                    ego.addeSymbolum(SymbolumGenus.Aequum, "=", loc)
                 }
             }
 

@@ -312,7 +312,7 @@ discretio Sententia {
     # -------------------------------------------------------------------------
 
     # Variable declaration
-    # Examples: varia x = 5, fixum nomen = "Marcus"
+    # Examples: varia x ← 5, fixum nomen ← "Marcus"
     # @ externa marks external declarations (no initializer required)
     VariaSententia {
         Locus locus
@@ -347,7 +347,7 @@ discretio Sententia {
     }
 
     # Array destructure declaration
-    # Example: fixum [a, b, c] = coords
+    # Example: fixum [a, b, c] ← coords
     SeriesDestructuraSententia {
         Locus locus
         VariaGenus species

@@ -26,9 +26,9 @@ blockStmt   := '{' statement* '}'
 ### Variables
 
 ```ebnf
-varDecl      := ('fixum' | 'varia') typeAnnotation? IDENTIFIER ('=' expression)?
-arrayDestruct := ('fixum' | 'varia') arrayPattern '=' expression
-objectDestruct := ('fixum' | 'varia') objectPattern '=' expression
+varDecl      := ('fixum' | 'varia') typeAnnotation? IDENTIFIER ('←' expression)?
+arrayDestruct := ('fixum' | 'varia') arrayPattern '←' expression
+objectDestruct := ('fixum' | 'varia') objectPattern '←' expression
 ```
 
 - `fixum` = const, `varia` = let

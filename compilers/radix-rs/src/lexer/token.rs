@@ -308,6 +308,7 @@ pub enum TokenKind {
 
     // === Comparison ===
     Eq,       // =
+    Assign,   // ←
     EqEq,     // ==
     EqEqEq,   // === (strict equality)
     BangEq,   // !=

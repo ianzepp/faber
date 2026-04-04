@@ -99,7 +99,7 @@ fn parses_following_variable_after_if_body_error() {
     let result = parse_program(
         r#"
 si verum x
-fixum numerus postea = 2
+fixum numerus postea ← 2
 "#,
     );
 
@@ -125,8 +125,8 @@ fn parses_declaration_keywords_and_shapes() {
         r#"
 § opus nomen "demo"
 importa ex "mod" publica Value ut Alias
-fixum numerus count = 1
-varia [head, ceteri tail] = values
+fixum numerus count ← 1
+varia [head, ceteri tail] ← values
 @ futura
 functio mitte(prae typus T, si de textus nomen ut alias vel "anon", ex numerus item, ceteri T reliqua) curata allocator errata Error exitus 7 immutata iacit optiones Opts -> textus {}
 typus Nomen = textus

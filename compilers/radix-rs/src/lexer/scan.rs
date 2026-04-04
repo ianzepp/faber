@@ -267,7 +267,7 @@ impl<'a> Lexer<'a> {
                     TokenKind::Gt
                 }
             }
-            '←' => TokenKind::Eq,
+            '←' => TokenKind::Assign,
             '≡' => TokenKind::EqEq,
             '≠' => TokenKind::BangEq,
             '≤' => TokenKind::LtEq,

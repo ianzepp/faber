@@ -27,6 +27,7 @@ ordo ParserErrorCodice {
     ExpectaturVirgula ← "P005",
     ExpectaturColon ← "P006",
     ExpectaturAequale ← "P007",
+    ExpectaturAssignatio ← "P013",
     ExpectaturUncusSin ← "P008",
     ExpectaturParensSin ← "P009",
     ExpectaturQuadratusSin ← "P014",
@@ -162,7 +163,10 @@ functio nuntiumErroris(ParserErrorCodice codice) → ParserErrorNuntius {
             redde creoNuntium("Expected ':'", "Use colon for key:value or ternary alternate.")
         }
         casu ParserErrorCodice.ExpectaturAequale {
-            redde creoNuntium("Expected '←'", "Use arrow-left for assignments and type aliases.")
+            redde creoNuntium("Expected '='", "Use '=' for type aliases and enum member values.")
+        }
+        casu ParserErrorCodice.ExpectaturAssignatio {
+            redde creoNuntium("Expected '←'", "Use arrow-left for runtime assignment and variable initialization.")
         }
         casu ParserErrorCodice.ExpectaturUncusSin {
             redde creoNuntium("Expected '{'", "Block statements require opening brace.")
@@ -200,7 +204,7 @@ functio nuntiumErroris(ParserErrorCodice codice) → ParserErrorNuntius {
             redde creoNuntium("Expected 'pactum'", "Interfaces: pactum Legibilis { }")
         }
         casu ParserErrorCodice.ExpectaturTypus {
-            redde creoNuntium("Expected 'typus'", "Type aliases: typus ID ← textus")
+            redde creoNuntium("Expected 'typus'", "Type aliases: typus ID = textus")
         }
         casu ParserErrorCodice.ExpectaturSi {
             redde creoNuntium("Expected 'si'", "Conditionals: si x > 0 { }")
@@ -355,7 +359,7 @@ functio nuntiumErroris(ParserErrorCodice codice) → ParserErrorNuntius {
             redde creoNuntium("Pactum requires name", "pactum Legibilis { }")
         }
         casu ParserErrorCodice.DeestTypusNomen {
-            redde creoNuntium("Typus requires name", "typus ID ← textus")
+            redde creoNuntium("Typus requires name", "typus ID = textus")
         }
         casu ParserErrorCodice.DeestVariaNomen {
             redde creoNuntium("Variable requires name", "varia x ← 5")

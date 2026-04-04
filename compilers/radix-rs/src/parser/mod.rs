@@ -313,15 +313,15 @@ impl Parser {
 
     /// Check if this is a simple variable declaration without type annotation.
     ///
-    /// WHY: Faber allows both `fixum name = value` and `fixum type name = value`.
+    /// WHY: Faber allows both `fixum name ← value` and `fixum type name ← value`.
     /// Lookahead distinguishes these forms before parsing the type.
     ///
     /// GRAMMAR:
-    ///   simple-var := identifier '='
-    ///   typed-var  := type identifier '='
+    ///   simple-var := identifier '←'
+    ///   typed-var  := type identifier '←'
     fn is_simple_var_decl(&self) -> bool {
         matches!(self.peek().kind, TokenKind::LBracket)
-            || (matches!(self.peek().kind, TokenKind::Ident(_)) && matches!(self.peek_at(1).kind, TokenKind::Eq))
+            || (matches!(self.peek().kind, TokenKind::Ident(_)) && matches!(self.peek_at(1).kind, TokenKind::Assign))
     }
 
     /// Create an error at current position.

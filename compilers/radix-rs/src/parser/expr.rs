@@ -75,13 +75,13 @@ impl Parser {
     ///   assignment := ternary [assign-op assignment]
     ///   assign-op := '←' | '⊕' | '⊖' | '⊛' | '⊘' | '⊜' | '⊚'
     ///
-    /// WHY: Right-associative via recursion on RHS. Allows `a = b = c`.
+    /// WHY: Right-associative via recursion on RHS. Allows `a ← b ← c`.
     fn parse_assignment(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let expr = self.parse_ternary()?;
 
         let op = match self.peek().kind {
-            TokenKind::Eq => Some(AssignOp::Assign),
+            TokenKind::Assign => Some(AssignOp::Assign),
             TokenKind::PlusEq => Some(AssignOp::AddAssign),
             TokenKind::MinusEq => Some(AssignOp::SubAssign),
             TokenKind::StarEq => Some(AssignOp::MulAssign),

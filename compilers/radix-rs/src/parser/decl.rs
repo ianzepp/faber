@@ -129,10 +129,10 @@ impl Parser {
     /// Parse variable declaration.
     ///
     /// GRAMMAR:
-    ///   var-decl := ('fixum' | 'varia') [type] pattern ['=' expr]
+    ///   var-decl := ('fixum' | 'varia') [type] pattern ['←' expr]
     ///
-    /// WHY: Faber supports both type-inferred (`fixum name = value`) and explicitly
-    /// typed (`fixum type name = value`) declarations. Lookahead distinguishes these.
+    /// WHY: Faber supports both type-inferred (`fixum name ← value`) and explicitly
+    /// typed (`fixum type name ← value`) declarations. Lookahead distinguishes these.
     ///
     /// EDGE: Array destructuring patterns like `[a, b, ceteri rest]` require
     /// special handling for rest elements.
@@ -164,7 +164,7 @@ impl Parser {
         let binding = self.parse_binding_pattern()?;
 
         // Optional initializer
-        let init = if self.eat(&TokenKind::Eq) {
+        let init = if self.eat(&TokenKind::Assign) {
             Some(Box::new(self.parse_expression()?))
         } else {
             None
@@ -907,6 +907,7 @@ impl Parser {
                 | TokenKind::Colon
                 | TokenKind::Dot
                 | TokenKind::Eq
+                | TokenKind::Assign
         )
     }
 
