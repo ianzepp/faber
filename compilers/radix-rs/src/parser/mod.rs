@@ -150,7 +150,7 @@ impl Parser {
                     Ok(directive) => directives.push(directive),
                     Err(e) => {
                         self.errors.push(e);
-                        self.synchronize();
+                        self.synchronize(false);
                     }
                 }
             } else {
@@ -158,7 +158,7 @@ impl Parser {
                     Ok(stmt) => stmts.push(stmt),
                     Err(e) => {
                         self.errors.push(e);
-                        self.synchronize();
+                        self.synchronize(false);
                     }
                 }
             }
@@ -331,6 +331,57 @@ impl Parser {
         ParseError { kind, message: message.to_owned(), span: self.current_span() }
     }
 
+    /// Check whether a token can safely restart statement parsing after an error.
+    ///
+    /// WHY: Recovery should stop at the same keyword-led boundaries the parser
+    /// already treats as statement starts, plus block closure. If this list
+    /// drifts from `parse_statement`, malformed input can erase valid following
+    /// structure.
+    fn is_recovery_boundary(kind: &TokenKind) -> bool {
+        matches!(
+            kind,
+            TokenKind::Fixum
+                | TokenKind::Varia
+                | TokenKind::Functio
+                | TokenKind::Genus
+                | TokenKind::Pactum
+                | TokenKind::Typus
+                | TokenKind::Ordo
+                | TokenKind::Discretio
+                | TokenKind::Importa
+                | TokenKind::Section
+                | TokenKind::Ex
+                | TokenKind::Probandum
+                | TokenKind::Proba
+                | TokenKind::Abstractus
+                | TokenKind::Si
+                | TokenKind::Dum
+                | TokenKind::Itera
+                | TokenKind::Elige
+                | TokenKind::Discerne
+                | TokenKind::Custodi
+                | TokenKind::Fac
+                | TokenKind::Redde
+                | TokenKind::Rumpe
+                | TokenKind::Perge
+                | TokenKind::Iace
+                | TokenKind::Mori
+                | TokenKind::Tempta
+                | TokenKind::Adfirma
+                | TokenKind::Scribe
+                | TokenKind::Vide
+                | TokenKind::Mone
+                | TokenKind::Incipit
+                | TokenKind::Incipiet
+                | TokenKind::Cura
+                | TokenKind::Ad
+                | TokenKind::LBrace
+                | TokenKind::RBrace
+                | TokenKind::At
+                | TokenKind::Eof
+        )
+    }
+
     /// Synchronize after error - skip to next statement boundary.
     ///
     /// WHY: Error recovery strategy. After encountering a malformed construct,
@@ -339,37 +390,22 @@ impl Parser {
     ///
     /// TRADE-OFF: May skip over nested errors within the malformed statement,
     /// but allows parsing to continue and report subsequent errors.
-    fn synchronize(&mut self) {
+    fn synchronize(&mut self, stop_at_rbrace: bool) {
+        if Self::is_recovery_boundary(&self.peek().kind) && (stop_at_rbrace || !matches!(self.peek().kind, TokenKind::RBrace))
+        {
+            return;
+        }
+
         self.advance();
 
         while !self.is_at_end() {
-            // Stop at statement boundaries
-            match self.peek().kind {
-                TokenKind::Fixum
-                | TokenKind::Varia
-                | TokenKind::Functio
-                | TokenKind::Genus
-                | TokenKind::Pactum
-                | TokenKind::Typus
-                | TokenKind::Ordo
-                | TokenKind::Discretio
-                | TokenKind::Si
-                | TokenKind::Dum
-                | TokenKind::Itera
-                | TokenKind::Elige
-                | TokenKind::Discerne
-                | TokenKind::Custodi
-                | TokenKind::Redde
-                | TokenKind::Tempta
-                | TokenKind::Importa
-                | TokenKind::Section
-                | TokenKind::Incipit
-                | TokenKind::Incipiet
-                | TokenKind::Probandum => return,
-                _ => {
-                    self.advance();
-                }
+            if Self::is_recovery_boundary(&self.peek().kind)
+                && (stop_at_rbrace || !matches!(self.peek().kind, TokenKind::RBrace))
+            {
+                return;
             }
+
+            self.advance();
         }
     }
 
@@ -448,3 +484,7 @@ impl Parser {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "mod_test.rs"]
+mod tests;

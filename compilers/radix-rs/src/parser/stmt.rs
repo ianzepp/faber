@@ -109,7 +109,7 @@ impl Parser {
             // "ergo" style - single statement treated as block
             Ok(IfBody::Ergo(Box::new(self.parse_statement()?)))
         } else {
-            Err(self.error(ParseErrorKind::MissingBlock, "expected block or 'ergo'"))
+            Err(self.error(ParseErrorKind::MissingBlock, "expected block, inline exit, or 'ergo'"))
         }
     }
 

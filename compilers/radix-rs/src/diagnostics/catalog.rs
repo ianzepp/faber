@@ -120,7 +120,7 @@ pub fn parse_spec(kind: ParseErrorKind) -> DiagnosticSpec {
             DiagnosticSpec { code: "PARSE021", help: Some("add a condition expression") }
         }
         ParseErrorKind::MissingBlock => {
-            DiagnosticSpec { code: "PARSE022", help: Some("add a block or use 'ergo' form") }
+            DiagnosticSpec { code: "PARSE022", help: Some("add a block, an inline exit, or use 'ergo' form") }
         }
         ParseErrorKind::InvalidPattern => {
             DiagnosticSpec { code: "PARSE023", help: Some("use '_' or an identifier pattern") }

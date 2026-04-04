@@ -951,7 +951,7 @@ impl Parser {
                 Ok(stmt) => stmts.push(stmt),
                 Err(e) => {
                     self.errors.push(e);
-                    self.synchronize();
+                    self.synchronize(true);
                 }
             }
         }

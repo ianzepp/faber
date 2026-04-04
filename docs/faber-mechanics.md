@@ -5,6 +5,8 @@ Review mode only. No compiler code changes were made.
 Update:
 - This started as a read-only mechanics pass.
 - The highest-priority findings around inline lowering and Rust-target exception handling have since been implemented.
+- Parser recovery boundaries and parser-local regression coverage have since been improved.
+- `PARSE022` now acknowledges inline exits instead of teaching an outdated subset of the grammar.
 - The remaining sections below are preserved as review context, but some items are now resolved.
 
 Scope:
@@ -17,8 +19,8 @@ Method:
 - Review each layer in order using the `faber-mechanics` stance: grammar fidelity, local disambiguation, explicit phase boundaries, recovery quality, and preservation of source distinctions
 
 Validation:
-- Read-only review only
-- No tests were run in this pass
+- Original review was read-only
+- Follow-up parser mechanics work was validated with `cargo test --manifest-path compilers/radix-rs/Cargo.toml`
 
 ## Baseline
 
@@ -47,12 +49,12 @@ What looks solid:
 - `cape` parsing is centralized in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs:715`
 
 Findings:
-- Recovery synchronization is coarse and statement-led in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/mod.rs:342`. It only syncs on a fixed set of top-level starters and ignores several statement starters such as `rumpe`, `perge`, `iace`, `mori`, `adfirma`, `scribe`, `vide`, `mone`, `fac`, `cura`, `ad`, `proba`, and `abstractus`. That increases the chance that one malformed construct causes the parser to skip valid following statements even when the next token is already a legitimate recovery point.
-- Parser-local test coverage appears absent. Searches found dedicated tests for lexer, driver, semantic passes, and codegen, but no parser `_test.rs` surface. Current parser behavior is mostly protected indirectly through higher layers. That is a mechanical risk for any future recovery or grammar cleanup.
+- Resolved: recovery synchronization in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/mod.rs` now stops at the full statement restart surface instead of a stale subset, and block parsing now treats `}` as a distinct recovery boundary. This closes the bug where a missing body could consume the next valid statement before recovery had a chance to stop.
+- Improved: parser-local regression coverage now exists in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/mod_test.rs`, including direct tests for recovery boundaries and broad keyword-surface parsing. This is no longer a zero-coverage surface.
 - `parse_secus_stmt` allows a bare expression-statement fallback when neither block, inline return, nor `ergo` is present in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs:139`. This is permissive and may be correct, but it means `secus` is less structurally explicit than `si` bodies. That asymmetry should be intentional and documented if kept.
 
 Assessment:
-- The parser still reads like the grammar in most places, but recovery is too ad hoc to be considered mechanically calm. The next cleanup pass on this layer should start with synchronization boundaries and parser-local regression tests.
+- The parser still reads like the grammar in most places, and the worst recovery drift has been corrected. The remaining parser mechanics work is now less about missing basic defenses and more about deepening malformed-input coverage and deciding whether permissive `secus` fallback is intentional.
 
 ## Phase 2: AST Fidelity And Syntax Contracts
 
@@ -81,12 +83,12 @@ What looks solid:
 - Error-code discipline is explicit and stable
 
 Findings:
-- `PARSE022` says "add a block or use 'ergo' form" in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/catalog.rs:122`, but `parse_ergo_body` also accepts inline return forms like `reddit`, `iacit`, `moritor`, and `tacet` in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs:97`. The diagnostic help no longer teaches the full grammar that the parser actually accepts.
+- Resolved: `PARSE022` in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/catalog.rs:122` now mentions inline exits, which matches the grammar accepted by `parse_ergo_body` in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs:97`.
 - `ParseErrorKind` is fairly granular in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/error.rs`, but a large amount of parser behavior still routes through generic `Expected` or `MissingBlock`. That is serviceable, not polished.
 - Late semantic finalization uses `MissingTypeAnnotation` as a catch-all for unresolved inference outcomes in `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/semantic/passes/typecheck.rs:225`, `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/semantic/passes/typecheck.rs:248`, `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/semantic/passes/typecheck.rs:274`, and `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/semantic/passes/typecheck.rs:304`. That blurs true missing annotations together with deeper inference failures or unsupported lowering outcomes.
 
 Assessment:
-- Diagnostics are structurally organized, but some help text and some late-phase error classification have drifted away from the true language and phase contracts.
+- Diagnostics are structurally organized. The parser help text is closer to the true grammar now, but late-phase error classification still drifts away from the real failure cause.
 
 ## Phase 4: Resolve And Lowering Boundary
 
@@ -134,26 +136,26 @@ Main strengths:
 - Diagnostics are centralized and the semantic pass structure is explicit
 
 Main weaknesses:
-- Parser recovery is too coarse for a compiler that claims graceful forward progress
-- Parser-local regression coverage is missing
-- Diagnostic help text has drifted from actual accepted grammar in some places
+- Parser recovery is better, but malformed nested-input coverage is still shallow
+- Parser-local regression coverage now exists, but it is still young compared with the semantic and codegen surfaces
 - Exception constructs are now handled more honestly, but `cape`/`tempta` still are not modeled as calmly as the rest of the language
 - Several constructs are knowingly stubbed or partially lowered, which pushes ambiguity into later passes
 
 Recommended order for future mechanics work:
-1. Parser recovery boundaries and parser-local tests
-2. HIR lowering correctness for inline returns and catch/control-flow constructs
-3. Diagnostic catalog alignment with actual grammar
-4. Resolve/lowering contract cleanup for aliases and partially lowered constructs
-5. Late semantic refinement after the HIR boundary is trustworthy
+1. HIR lowering correctness for catch/control-flow constructs
+2. Parser malformed-input depth beyond the current recovery and keyword-surface tests
+3. Resolve/lowering contract cleanup for aliases and partially lowered constructs
+4. Late semantic refinement after the HIR boundary is trustworthy
+5. Public-doc drift cleanup in crate-level docs
 
 ## Concrete Follow-Up Targets
 
 Highest-priority files for the next review or implementation pass:
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/mod.rs`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs`
 - `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/hir/lower/mod.rs`
 - `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/hir/lower/stmt.rs`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/catalog.rs`
+- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs`
+- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/mod_test.rs`
+- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/semantic/passes/typecheck.rs`
+- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/lib.rs`
 
 Opus nondum perfectum est, sed linea fracturae nunc clarior est.
