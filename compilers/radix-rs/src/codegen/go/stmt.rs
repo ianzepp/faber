@@ -76,6 +76,32 @@ pub fn generate_block_stmts(
     Ok(())
 }
 
+fn generate_stmt_block(
+    codegen: &GoCodegen<'_>,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.writeln("{");
+    let mut result = Ok(());
+    w.indented(|w| {
+        for stmt in &block.stmts {
+            if result.is_err() {
+                return;
+            }
+            result = generate_stmt(codegen, stmt, types, w);
+        }
+        if result.is_ok() {
+            if let Some(expr) = &block.expr {
+                result = generate_expr_stmt(codegen, expr, types, w);
+            }
+        }
+    });
+    result?;
+    w.write("}");
+    Ok(())
+}
+
 pub fn generate_stmt(
     codegen: &GoCodegen<'_>,
     stmt: &HirStmt,
@@ -288,7 +314,7 @@ fn generate_expr_stmt(
 ) -> Result<(), CodegenError> {
     match &expr.kind {
         HirExprKind::Block(block) => {
-            generate_block(codegen, block, types, w, |_| {})?;
+            generate_stmt_block(codegen, block, types, w)?;
             w.newline();
             Ok(())
         }
@@ -315,17 +341,17 @@ fn generate_expr_stmt(
             w.write("if ");
             generate_expr(codegen, cond, types, w)?;
             w.write(" ");
-            generate_block(codegen, then_block, types, w, |_| {})?;
+            generate_stmt_block(codegen, then_block, types, w)?;
             if let Some(else_block) = else_block {
                 w.write(" else ");
-                generate_block(codegen, else_block, types, w, |_| {})?;
+                generate_stmt_block(codegen, else_block, types, w)?;
             }
             w.newline();
             Ok(())
         }
         HirExprKind::Loop(block) => {
             w.write("for ");
-            generate_block(codegen, block, types, w, |_| {})?;
+            generate_stmt_block(codegen, block, types, w)?;
             w.newline();
             Ok(())
         }
@@ -333,7 +359,7 @@ fn generate_expr_stmt(
             w.write("for ");
             generate_expr(codegen, cond, types, w)?;
             w.write(" ");
-            generate_block(codegen, block, types, w, |_| {})?;
+            generate_stmt_block(codegen, block, types, w)?;
             w.newline();
             Ok(())
         }
@@ -352,7 +378,7 @@ fn generate_expr_stmt(
             }
             generate_expr(codegen, iter, types, w)?;
             w.write(" ");
-            generate_block(codegen, block, types, w, |_| {})?;
+            generate_stmt_block(codegen, block, types, w)?;
             w.newline();
             Ok(())
         }

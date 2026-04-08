@@ -17,7 +17,7 @@ pub fn type_to_go(codegen: &GoCodegen<'_>, type_id: TypeId, types: &TypeTable) -
             )
         }
         Type::Set(elem) => format!("map[{}]struct{{}}", type_to_go(codegen, *elem, types)),
-        Type::Option(inner) => format!("*{}", type_to_go(codegen, *inner, types)),
+        Type::Option(inner) => format!("*{}", non_option_type_to_go(codegen, *inner, types)),
         // WHY: Go is GC'd — de/in/ex borrow modes are irrelevant, just emit the inner type.
         Type::Ref(_, inner) => type_to_go(codegen, *inner, types),
         Type::Struct(def_id) | Type::Enum(def_id) | Type::Interface(def_id) => codegen.resolve_def(*def_id).to_owned(),
@@ -47,6 +47,16 @@ pub fn type_to_go(codegen: &GoCodegen<'_>, type_id: TypeId, types: &TypeTable) -
         Type::Infer(_) => "any".to_owned(),
         Type::Union(_) => "any".to_owned(),
         Type::Error => "any".to_owned(),
+    }
+}
+
+fn non_option_type_to_go(codegen: &GoCodegen<'_>, type_id: TypeId, types: &TypeTable) -> String {
+    let mut current = type_id;
+    loop {
+        match types.get(current) {
+            Type::Option(inner) => current = *inner,
+            _ => return type_to_go(codegen, current, types),
+        }
     }
 }
 

@@ -45,6 +45,7 @@ pub struct GoCodegen<'a> {
     names: FxHashMap<DefId, Symbol>,
     use_counts: FxHashMap<DefId, usize>,
     variant_fields: FxHashMap<DefId, Vec<Symbol>>,
+    struct_fields: FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>,
     interner: &'a Interner,
 }
 
@@ -54,11 +55,13 @@ impl<'a> GoCodegen<'a> {
             names: FxHashMap::default(),
             use_counts: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
+            struct_fields: FxHashMap::default(),
             interner,
         };
         codegen.names = codegen.collect_names(hir);
         codegen.use_counts = codegen.collect_use_counts(hir);
         codegen.variant_fields = codegen.collect_variant_fields(hir);
+        codegen.struct_fields = codegen.collect_struct_fields(hir);
         codegen
     }
 
@@ -79,6 +82,12 @@ impl<'a> GoCodegen<'a> {
 
     pub(super) fn variant_fields(&self, def_id: DefId) -> Option<&[Symbol]> {
         self.variant_fields.get(&def_id).map(Vec::as_slice)
+    }
+
+    pub(super) fn struct_field_type(&self, def_id: DefId, field: Symbol) -> Option<crate::semantic::TypeId> {
+        self.struct_fields
+            .get(&def_id)
+            .and_then(|fields| fields.get(&field).copied())
     }
 
     fn collect_names(&self, hir: &HirProgram) -> FxHashMap<DefId, Symbol> {
@@ -168,6 +177,20 @@ impl<'a> GoCodegen<'a> {
                 for variant in &enum_item.variants {
                     fields.insert(variant.def_id, variant.fields.iter().map(|field| field.name).collect());
                 }
+            }
+        }
+        fields
+    }
+
+    fn collect_struct_fields(&self, hir: &HirProgram) -> FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>> {
+        let mut fields = FxHashMap::default();
+        for item in &hir.items {
+            if let HirItemKind::Struct(strukt) = &item.kind {
+                let mut field_map = FxHashMap::default();
+                for field in &strukt.fields {
+                    field_map.insert(field.name, field.ty);
+                }
+                fields.insert(item.def_id, field_map);
             }
         }
         fields

@@ -140,3 +140,122 @@ functio handle(Event event) {
     assert!(code.contains("x := __radixCase.X"));
     assert!(code.contains("y := __radixCase.Y"));
 }
+
+#[test]
+fn optional_struct_fields_wrap_pointer_values() {
+    let code = compile_go(
+        r#"genus Address {
+  textus city
+  si textus state
+}
+
+genus User {
+  textus name
+  si Address address
+}
+
+incipit {
+  fixum alice ← {
+    name: "Alice",
+    address: { city: "Roma", state: "Italia" } ⇢ Address
+  } ⇢ User
+}"#,
+    );
+
+    assert!(code.contains("Address: func() *Address"));
+    assert!(code.contains("State: func() *string"));
+}
+
+#[test]
+fn optional_chain_members_emit_nil_safe_access() {
+    let code = compile_go(
+        r#"genus Address {
+  textus city
+}
+
+genus User {
+  si Address address
+}
+
+incipit {
+  fixum bob ← {} ⇢ User
+  fixum city ← bob?.address?.city
+  scribe city
+}"#,
+    );
+
+    assert!(code.contains("if v == nil { return nil }"));
+    assert!(code.contains("func() *Address"));
+    assert!(code.contains("return &v.City"));
+    assert!(!code.contains("func() **Address"));
+}
+
+#[test]
+fn optional_chain_preserves_optional_fields_without_double_wrap() {
+    let code = compile_go(
+        r#"genus Address {
+  si textus state
+}
+
+genus User {
+  si Address address
+}
+
+incipit {
+  fixum alice ← {} ⇢ User
+  fixum state ← alice?.address?.state
+  scribe state
+}"#,
+    );
+
+    assert!(code.contains("func() *string"));
+    assert!(code.contains("return v.State"));
+    assert!(!code.contains("return &v.State"));
+    assert!(!code.contains("func() **string"));
+}
+
+#[test]
+fn optional_coalesce_returns_inner_value() {
+    let code = compile_go(
+        r#"genus Address {
+  textus city
+}
+
+genus User {
+  si Address address
+}
+
+incipit {
+  fixum bob ← {} ⇢ User
+  fixum city ← bob?.address?.city vel "Unknown"
+  scribe city
+}"#,
+    );
+
+    assert!(code.contains("func() string"));
+    assert!(code.contains("if v != nil { return *v }"));
+    assert!(code.contains(r#"return "Unknown""#));
+}
+
+#[test]
+fn custodi_nested_guards_emit_statement_if_chain() {
+    let code = compile_go(
+        r#"functio processValue(numerus x) → numerus {
+  custodi {
+    si x < 0 {
+      redde -1
+    }
+    si x > 100 {
+      redde -1
+    }
+  }
+
+  redde x * 2
+}"#,
+    );
+
+    assert!(code.contains("if (x > 100) {"));
+    assert!(code.contains("if (x < 0) {"));
+    assert!(code.contains("return -1"));
+    assert!(!code.contains("func() any"));
+}

@@ -81,41 +81,7 @@ pub fn generate_expr(
             w.write("]");
         }
         HirExprKind::OptionalChain(object, chain) => {
-            // WHY: Go has no optional chaining — emit a plain access.
-            // A full implementation would use nil-check wrappers.
-            generate_expr(codegen, object, types, w)?;
-            match chain {
-                crate::hir::HirOptionalChainKind::Member(field) => {
-                    if matches!(
-                        object
-                            .ty
-                            .map(|ty| normalize_receiver_type(types.get(ty), types)),
-                        Some(Type::Map(_, _))
-                    ) {
-                        w.write("[");
-                        w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
-                        w.write("]");
-                    } else {
-                        w.write(".");
-                        w.write(&capitalize(codegen.resolve_symbol(*field)));
-                    }
-                }
-                crate::hir::HirOptionalChainKind::Index(index) => {
-                    w.write("[");
-                    generate_expr(codegen, index, types, w)?;
-                    w.write("]");
-                }
-                crate::hir::HirOptionalChainKind::Call(args) => {
-                    w.write("(");
-                    for (idx, arg) in args.iter().enumerate() {
-                        if idx > 0 {
-                            w.write(", ");
-                        }
-                        generate_expr(codegen, arg, types, w)?;
-                    }
-                    w.write(")");
-                }
-            }
+            generate_optional_chain_expr(codegen, object, chain, expr, types, w)?;
         }
         HirExprKind::NonNull(object, chain) => {
             // WHY: Go has no non-null assertion — emit plain access.
@@ -177,7 +143,11 @@ pub fn generate_expr(
                 }
                 w.write(&capitalize(codegen.resolve_symbol(*name)));
                 w.write(": ");
-                generate_expr(codegen, value, types, w)?;
+                if let Some(field_ty) = codegen.struct_field_type(*def_id, *name) {
+                    generate_expr_for_go_type(codegen, value, field_ty, types, w)?;
+                } else {
+                    generate_expr(codegen, value, types, w)?;
+                }
             }
             w.write("}");
         }
@@ -288,7 +258,23 @@ pub fn generate_expr(
                                 }
                             }
                             w.write(": ");
-                            generate_expr(codegen, value, types, w)?;
+                            if let Some(struct_ty) = match types.get(*target) {
+                                Type::Struct(def_id) => Some(*def_id),
+                                _ => None,
+                            } {
+                                if let Some(field_ty) = match &field.key {
+                                    HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
+                                        codegen.struct_field_type(struct_ty, *name)
+                                    }
+                                    HirObjectKey::Computed(_) | HirObjectKey::Spread(_) => None,
+                                } {
+                                    generate_expr_for_go_type(codegen, value, field_ty, types, w)?;
+                                } else {
+                                    generate_expr(codegen, value, types, w)?;
+                                }
+                            } else {
+                                generate_expr(codegen, value, types, w)?;
+                            }
                             wrote_any = true;
                         }
                         w.write("}");
@@ -498,10 +484,184 @@ fn generate_expr_for_go_type(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     match (&expr.kind, types.get(expected_ty)) {
+        (_, Type::Option(inner)) => generate_option_wrapped_expr(codegen, expr, *inner, types, w),
         (HirExprKind::Verte { entries: Some(entries), .. }, Type::Map(key_ty, value_ty)) => {
             generate_map_literal(codegen, *key_ty, *value_ty, Some(entries), types, w)
         }
         _ => generate_expr(codegen, expr, types, w),
+    }
+}
+
+fn generate_option_wrapped_expr(
+    codegen: &GoCodegen<'_>,
+    expr: &HirExpr,
+    inner_ty: crate::semantic::TypeId,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    if matches!(expr.kind, HirExprKind::Literal(HirLiteral::Nil))
+        || matches!(
+            expr.ty
+                .map(|ty| normalize_receiver_type(types.get(ty), types)),
+            Some(Type::Option(_))
+        )
+    {
+        return generate_expr(codegen, expr, types, w);
+    }
+
+    let inner_go_ty = types::type_to_go(codegen, inner_ty, types);
+    w.write("func() *");
+    w.write(&inner_go_ty);
+    w.write(" { v := ");
+    generate_expr(codegen, expr, types, w)?;
+    w.write("; return &v }()");
+    Ok(())
+}
+
+fn generate_optional_chain_expr(
+    codegen: &GoCodegen<'_>,
+    object: &HirExpr,
+    chain: &crate::hir::HirOptionalChainKind,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    let ret_ty = expr_return_type(expr, types, codegen);
+    w.write("func() ");
+    w.write(&ret_ty);
+    w.write(" { ");
+    match chain {
+        crate::hir::HirOptionalChainKind::Member(field) => {
+            w.write("v := ");
+            generate_expr(codegen, object, types, w)?;
+            if let Some(object_ty) = object.ty {
+                match normalize_receiver_type(types.get(object_ty), types) {
+                    Type::Option(inner) => match normalize_receiver_type(types.get(*inner), types) {
+                        Type::Map(_, _) => {
+                            w.write("; if v == nil { return nil }; ");
+                            w.write("value, ok := v[");
+                            w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
+                            w.write("]; if !ok { return nil }; ");
+                            if matches!(
+                                expr.ty
+                                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                                Some(Type::Option(_))
+                            ) {
+                                w.write("wrapped := value; return &wrapped");
+                            } else {
+                                w.write("return value");
+                            }
+                        }
+                        _ => {
+                            w.write("; if v == nil { return nil }; ");
+                            let field_name = capitalize(codegen.resolve_symbol(*field));
+                            if field_type_is_option_through_options(codegen, *inner, *field, types) {
+                                w.write("return v.");
+                                w.write(&field_name);
+                            } else if matches!(
+                                expr.ty
+                                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                                Some(Type::Option(_))
+                            ) {
+                                w.write("return &v.");
+                                w.write(&field_name);
+                            } else {
+                                w.write("return v.");
+                                w.write(&field_name);
+                            }
+                        }
+                    },
+                    other => match other {
+                        Type::Map(_, _) => {
+                            w.write("; ");
+                            w.write("value, ok := v[");
+                            w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
+                            w.write("]; if !ok { return nil }; ");
+                            if matches!(
+                                expr.ty
+                                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                                Some(Type::Option(_))
+                            ) {
+                                w.write("wrapped := value; return &wrapped");
+                            } else {
+                                w.write("return value");
+                            }
+                        }
+                        _ => {
+                            w.write("; ");
+                            let field_name = capitalize(codegen.resolve_symbol(*field));
+                            if field_type_is_option(codegen, object_ty, *field, types) {
+                                w.write("return v.");
+                                w.write(&field_name);
+                            } else {
+                                w.write("return &v.");
+                                w.write(&field_name);
+                            }
+                        }
+                    },
+                }
+            } else {
+                w.write("return nil");
+            }
+        }
+        crate::hir::HirOptionalChainKind::Index(index) => {
+            w.write("items := ");
+            generate_expr(codegen, object, types, w)?;
+            w.write("; idx := ");
+            generate_expr(codegen, index, types, w)?;
+            w.write("; if idx < 0 || idx >= len(items) { return nil }; return &items[idx]");
+        }
+        crate::hir::HirOptionalChainKind::Call(args) => {
+            w.write("fn := ");
+            generate_expr(codegen, object, types, w)?;
+            w.write("; if fn == nil { return nil }; result := fn(");
+            for (idx, arg) in args.iter().enumerate() {
+                if idx > 0 {
+                    w.write(", ");
+                }
+                generate_expr(codegen, arg, types, w)?;
+            }
+            w.write("); ");
+            if matches!(
+                expr.ty
+                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                Some(Type::Option(_))
+            ) {
+                w.write("return &result");
+            } else {
+                w.write("return result");
+            }
+        }
+    }
+    w.write(" }()");
+    Ok(())
+}
+
+fn field_type_is_option(
+    codegen: &GoCodegen<'_>,
+    object_ty: crate::semantic::TypeId,
+    field: crate::lexer::Symbol,
+    types: &TypeTable,
+) -> bool {
+    match normalize_receiver_type(types.get(object_ty), types) {
+        Type::Struct(def_id) => codegen
+            .struct_field_type(*def_id, field)
+            .is_some_and(|field_ty| matches!(normalize_receiver_type(types.get(field_ty), types), Type::Option(_))),
+        _ => false,
+    }
+}
+
+fn field_type_is_option_through_options(
+    codegen: &GoCodegen<'_>,
+    mut object_ty: crate::semantic::TypeId,
+    field: crate::lexer::Symbol,
+    types: &TypeTable,
+) -> bool {
+    loop {
+        match normalize_receiver_type(types.get(object_ty), types) {
+            Type::Option(inner) => object_ty = *inner,
+            _ => return field_type_is_option(codegen, object_ty, field, types),
+        }
     }
 }
 
@@ -670,15 +830,17 @@ fn generate_coalesce_expr(
         Some(Type::Option(_)) => {
             let ret_ty = lhs
                 .ty
-                .or(rhs.ty)
-                .map(|ty| types::type_to_go(codegen, ty, types))
+                .and_then(|ty| match normalize_receiver_type(types.get(ty), types) {
+                    Type::Option(inner) => Some(types::type_to_go(codegen, *inner, types)),
+                    _ => None,
+                })
                 .unwrap_or_else(|| "any".to_owned());
             w.write("func() ");
             w.write(&ret_ty);
             w.write(" { v := ");
             generate_expr(codegen, lhs, types, w)?;
             w.write("; if v != nil { return ");
-            generate_expr(codegen, lhs, types, w)?;
+            w.write("*v");
             w.write(" }; return ");
             generate_expr(codegen, rhs, types, w)?;
             w.write(" }()");
