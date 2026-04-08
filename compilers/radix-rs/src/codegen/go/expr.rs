@@ -1,9 +1,7 @@
 use super::stmt;
 use super::types;
 use super::{CodeWriter, CodegenError, GoCodegen};
-use crate::hir::{
-    HirArrayElement, HirBinOp, HirExpr, HirExprKind, HirIteraMode, HirLiteral, HirObjectKey, HirUnOp,
-};
+use crate::hir::{HirArrayElement, HirBinOp, HirExpr, HirExprKind, HirIteraMode, HirLiteral, HirObjectKey, HirUnOp};
 use crate::semantic::{Primitive, Type, TypeTable};
 
 pub fn generate_expr(
@@ -60,7 +58,12 @@ pub fn generate_expr(
             w.write(")");
         }
         HirExprKind::Field(object, field) => {
-            if matches!(object.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Map(_, _))) {
+            if matches!(
+                object
+                    .ty
+                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                Some(Type::Map(_, _))
+            ) {
                 generate_expr(codegen, object, types, w)?;
                 w.write("[");
                 w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
@@ -83,7 +86,12 @@ pub fn generate_expr(
             generate_expr(codegen, object, types, w)?;
             match chain {
                 crate::hir::HirOptionalChainKind::Member(field) => {
-                    if matches!(object.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Map(_, _))) {
+                    if matches!(
+                        object
+                            .ty
+                            .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                        Some(Type::Map(_, _))
+                    ) {
                         w.write("[");
                         w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
                         w.write("]");
@@ -114,7 +122,12 @@ pub fn generate_expr(
             generate_expr(codegen, object, types, w)?;
             match chain {
                 crate::hir::HirNonNullKind::Member(field) => {
-                    if matches!(object.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Map(_, _))) {
+                    if matches!(
+                        object
+                            .ty
+                            .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                        Some(Type::Map(_, _))
+                    ) {
                         w.write("[");
                         w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
                         w.write("]");
@@ -191,7 +204,10 @@ pub fn generate_expr(
         }
         HirExprKind::Scriptum(template, args) => {
             w.write("fmt.Sprintf(");
-            w.write(&format!("{:?}", render_scriptum_template(codegen.resolve_symbol(*template), args.len())));
+            w.write(&format!(
+                "{:?}",
+                render_scriptum_template(codegen.resolve_symbol(*template), args.len())
+            ));
             for arg in args {
                 w.write(", ");
                 generate_expr(codegen, arg, types, w)?;
@@ -214,7 +230,7 @@ pub fn generate_expr(
             w.write("func() { defer func() { if r := recover(); r != nil { _ = r ");
             if let Some(catch) = catch {
                 w.write("; ");
-                stmt::generate_block(codegen, catch, types, w, |_| {})?;
+                stmt::generate_error_binding_block(codegen, catch, "r", types, w)?;
             }
             w.write(" } }(); ");
             stmt::generate_block(codegen, body, types, w, |_| {})?;
@@ -517,7 +533,9 @@ fn try_generate_translated_method_call(
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
     let method_name = codegen.resolve_symbol(method);
-    let receiver_type = receiver.ty.map(|ty| normalize_receiver_type(types.get(ty), types));
+    let receiver_type = receiver
+        .ty
+        .map(|ty| normalize_receiver_type(types.get(ty), types));
     let is_lista = matches!(receiver_type, Some(Type::Array(_)));
     let is_textus = matches!(receiver_type, Some(Type::Primitive(Primitive::Textus)));
 
@@ -554,7 +572,10 @@ fn generate_array_expr(
         })
         .unwrap_or_else(|| "any".to_owned());
 
-    if elements.iter().any(|element| matches!(element, HirArrayElement::Spread(_))) {
+    if elements
+        .iter()
+        .any(|element| matches!(element, HirArrayElement::Spread(_)))
+    {
         w.write("func() []");
         w.write(&elem_ty);
         w.write(" { acc := []");
@@ -602,7 +623,10 @@ fn normalize_receiver_type<'a>(mut ty: &'a Type, types: &'a TypeTable) -> &'a Ty
 }
 
 fn expr_return_type(expr: &HirExpr, types: &TypeTable, codegen: &GoCodegen<'_>) -> String {
-    expr.ty.map(|ty| types::type_to_go(codegen, ty, types)).filter(|ty| !ty.is_empty()).unwrap_or_else(|| "any".to_owned())
+    expr.ty
+        .map(|ty| types::type_to_go(codegen, ty, types))
+        .filter(|ty| !ty.is_empty())
+        .unwrap_or_else(|| "any".to_owned())
 }
 
 fn generate_coalesce_expr(
@@ -612,9 +636,16 @@ fn generate_coalesce_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    match lhs.ty.map(|ty| normalize_receiver_type(types.get(ty), types)) {
+    match lhs
+        .ty
+        .map(|ty| normalize_receiver_type(types.get(ty), types))
+    {
         Some(Type::Option(_)) => {
-            let ret_ty = lhs.ty.or(rhs.ty).map(|ty| types::type_to_go(codegen, ty, types)).unwrap_or_else(|| "any".to_owned());
+            let ret_ty = lhs
+                .ty
+                .or(rhs.ty)
+                .map(|ty| types::type_to_go(codegen, ty, types))
+                .unwrap_or_else(|| "any".to_owned());
             w.write("func() ");
             w.write(&ret_ty);
             w.write(" { v := ");
@@ -691,7 +722,15 @@ fn generate_unary_expr(
             generate_expr(codegen, operand, types, w)?;
         }
         HirUnOp::IsNull | HirUnOp::IsNil => {
-            if !matches!(operand.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Option(_)) | Some(Type::Primitive(Primitive::Ignotum)) | Some(Type::Primitive(Primitive::Nihil)) | Some(Type::Param(_))) {
+            if !matches!(
+                operand
+                    .ty
+                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                Some(Type::Option(_))
+                    | Some(Type::Primitive(Primitive::Ignotum))
+                    | Some(Type::Primitive(Primitive::Nihil))
+                    | Some(Type::Param(_))
+            ) {
                 w.write("false");
                 return Ok(());
             }
@@ -700,7 +739,15 @@ fn generate_unary_expr(
             w.write(" == nil)");
         }
         HirUnOp::IsNotNull | HirUnOp::IsNotNil => {
-            if !matches!(operand.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Option(_)) | Some(Type::Primitive(Primitive::Ignotum)) | Some(Type::Primitive(Primitive::Nihil)) | Some(Type::Param(_))) {
+            if !matches!(
+                operand
+                    .ty
+                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                Some(Type::Option(_))
+                    | Some(Type::Primitive(Primitive::Ignotum))
+                    | Some(Type::Primitive(Primitive::Nihil))
+                    | Some(Type::Param(_))
+            ) {
                 w.write("true");
                 return Ok(());
             }

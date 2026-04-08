@@ -227,8 +227,9 @@ impl<'a> GoCodegen<'a> {
                 if let Some(entries) = entries {
                     for field in entries {
                         match &field.key {
-                            crate::hir::HirObjectKey::Computed(expr)
-                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_use_counts(counts, expr),
+                            crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
+                                self.collect_expr_use_counts(counts, expr)
+                            }
                             crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
                         }
                         if let Some(value) = &field.value {
@@ -337,8 +338,9 @@ impl<'a> GoCodegen<'a> {
             HirExprKind::Array(elements) => {
                 for element in elements {
                     match element {
-                        crate::hir::HirArrayElement::Expr(expr)
-                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_use_counts(counts, expr),
+                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                            self.collect_expr_use_counts(counts, expr)
+                        }
                     }
                 }
             }
@@ -450,8 +452,9 @@ impl<'a> GoCodegen<'a> {
                 if let Some(entries) = entries {
                     for field in entries {
                         match &field.key {
-                            crate::hir::HirObjectKey::Computed(expr)
-                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_names(names, expr),
+                            crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
+                                self.collect_expr_names(names, expr)
+                            }
                             crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
                         }
                         if let Some(value) = &field.value {
@@ -558,8 +561,9 @@ impl<'a> GoCodegen<'a> {
             HirExprKind::Array(elements) => {
                 for element in elements {
                     match element {
-                        crate::hir::HirArrayElement::Expr(expr)
-                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_names(names, expr),
+                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                            self.collect_expr_names(names, expr)
+                        }
                     }
                 }
             }
@@ -635,12 +639,7 @@ impl<'a> GoCodegen<'a> {
 impl Codegen for GoCodegen<'_> {
     type Output = GoOutput;
 
-    fn generate(
-        &self,
-        hir: &HirProgram,
-        types: &TypeTable,
-        _interner: &Interner,
-    ) -> Result<GoOutput, CodegenError> {
+    fn generate(&self, hir: &HirProgram, types: &TypeTable, _interner: &Interner) -> Result<GoOutput, CodegenError> {
         let mut body = CodeWriter::new();
 
         for item in &hir.items {
@@ -649,6 +648,19 @@ impl Codegen for GoCodegen<'_> {
         }
 
         if let Some(entry) = &hir.entry {
+            if program_contains_ad(hir) {
+                body.writeln("func radixAd[T any](endpoint string, args ...any) (T, error) {");
+                body.indented(|w| {
+                    w.writeln("_ = args");
+                    w.writeln("var zero T");
+                    w.writeln(
+                        r#"return zero, fmt.Errorf("ad dispatch is not implemented for Go codegen: %s", endpoint)"#,
+                    );
+                });
+                body.writeln("}");
+                body.newline();
+            }
+
             body.writeln("func main() {");
             let mut block_result = Ok(());
             body.indented(|w| {
@@ -700,6 +712,139 @@ fn collect_imports(code: &str) -> BTreeSet<&'static str> {
         imports.insert("os");
     }
     imports
+}
+
+fn program_contains_ad(hir: &HirProgram) -> bool {
+    hir.items.iter().any(item_contains_ad) || hir.entry.as_ref().is_some_and(block_contains_ad)
+}
+
+fn item_contains_ad(item: &HirItem) -> bool {
+    match &item.kind {
+        HirItemKind::Function(func) => func.body.as_ref().is_some_and(block_contains_ad),
+        HirItemKind::Struct(strukt) => strukt
+            .methods
+            .iter()
+            .any(|method| method.func.body.as_ref().is_some_and(block_contains_ad)),
+        _ => false,
+    }
+}
+
+fn block_contains_ad(block: &HirBlock) -> bool {
+    block.stmts.iter().any(stmt_contains_ad)
+        || block
+            .expr
+            .as_ref()
+            .is_some_and(|expr| expr_contains_ad(expr))
+}
+
+fn stmt_contains_ad(stmt: &crate::hir::HirStmt) -> bool {
+    match &stmt.kind {
+        HirStmtKind::Ad(_) => true,
+        HirStmtKind::Local(local) => local.init.as_ref().is_some_and(expr_contains_ad),
+        HirStmtKind::Expr(expr) => expr_contains_ad(expr),
+        HirStmtKind::Redde(expr) => expr.as_ref().is_some_and(expr_contains_ad),
+        HirStmtKind::Rumpe | HirStmtKind::Perge => false,
+    }
+}
+
+fn expr_contains_ad(expr: &HirExpr) -> bool {
+    match &expr.kind {
+        HirExprKind::Block(block) | HirExprKind::Loop(block) => block_contains_ad(block),
+        HirExprKind::Si(cond, then_block, else_block) => {
+            expr_contains_ad(cond)
+                || block_contains_ad(then_block)
+                || else_block.as_ref().is_some_and(block_contains_ad)
+        }
+        HirExprKind::Dum(cond, block) => expr_contains_ad(cond) || block_contains_ad(block),
+        HirExprKind::Tempta { body, catch, finally } => {
+            block_contains_ad(body)
+                || catch.as_ref().is_some_and(block_contains_ad)
+                || finally.as_ref().is_some_and(block_contains_ad)
+        }
+        HirExprKind::Itera(_, _, _, iter, block) => expr_contains_ad(iter) || block_contains_ad(block),
+        HirExprKind::Intervallum { start, end, step, .. } => {
+            expr_contains_ad(start) || expr_contains_ad(end) || step.as_ref().is_some_and(|step| expr_contains_ad(step))
+        }
+        HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
+            expr_contains_ad(lhs) || expr_contains_ad(rhs)
+        }
+        HirExprKind::Adfirma(condition, message) => {
+            expr_contains_ad(condition)
+                || message
+                    .as_ref()
+                    .is_some_and(|message| expr_contains_ad(message))
+        }
+        HirExprKind::Unary(_, inner)
+        | HirExprKind::Field(inner, _)
+        | HirExprKind::Panic(inner)
+        | HirExprKind::Throw(inner)
+        | HirExprKind::Cede(inner)
+        | HirExprKind::Ref(_, inner)
+        | HirExprKind::Deref(inner) => expr_contains_ad(inner),
+        HirExprKind::Call(callee, args) | HirExprKind::MethodCall(callee, _, args) => {
+            expr_contains_ad(callee) || args.iter().any(expr_contains_ad)
+        }
+        HirExprKind::Index(object, index) => expr_contains_ad(object) || expr_contains_ad(index),
+        HirExprKind::OptionalChain(object, chain) => {
+            expr_contains_ad(object)
+                || match chain {
+                    HirOptionalChainKind::Member(_) => false,
+                    HirOptionalChainKind::Index(index) => expr_contains_ad(index),
+                    HirOptionalChainKind::Call(args) => args.iter().any(expr_contains_ad),
+                }
+        }
+        HirExprKind::NonNull(object, chain) => {
+            expr_contains_ad(object)
+                || match chain {
+                    crate::hir::HirNonNullKind::Member(_) => false,
+                    crate::hir::HirNonNullKind::Index(index) => expr_contains_ad(index),
+                    crate::hir::HirNonNullKind::Call(args) => args.iter().any(expr_contains_ad),
+                }
+        }
+        HirExprKind::Array(elements) => elements.iter().any(|element| match element {
+            crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                expr_contains_ad(expr)
+            }
+        }),
+        HirExprKind::Struct(_, fields) => fields.iter().any(|(_, expr)| expr_contains_ad(expr)),
+        HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => elements.iter().any(expr_contains_ad),
+        HirExprKind::Scriptum(_, args) => args.iter().any(expr_contains_ad),
+        HirExprKind::Clausura(_, _, body) => expr_contains_ad(body),
+        HirExprKind::Verte { source, entries, .. } => {
+            expr_contains_ad(source)
+                || entries.as_ref().is_some_and(|entries| {
+                    entries
+                        .iter()
+                        .any(|field| field.value.as_ref().is_some_and(expr_contains_ad))
+                })
+        }
+        HirExprKind::Conversio { source, fallback, .. } => {
+            expr_contains_ad(source)
+                || fallback
+                    .as_ref()
+                    .is_some_and(|fallback| expr_contains_ad(fallback))
+        }
+        HirExprKind::Ab { source, filter, transforms } => {
+            expr_contains_ad(source)
+                || filter.as_ref().is_some_and(|filter| match &filter.kind {
+                    HirCollectionFilterKind::Condition(expr) => expr_contains_ad(expr),
+                    HirCollectionFilterKind::Property(_) => false,
+                })
+                || transforms.iter().any(|transform| {
+                    transform
+                        .arg
+                        .as_ref()
+                        .is_some_and(|arg| expr_contains_ad(arg))
+                })
+        }
+        HirExprKind::Discerne(scrutinees, arms) => {
+            scrutinees.iter().any(expr_contains_ad)
+                || arms
+                    .iter()
+                    .any(|arm| arm.guard.as_ref().is_some_and(expr_contains_ad) || expr_contains_ad(&arm.body))
+        }
+        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => false,
+    }
 }
 
 #[cfg(test)]

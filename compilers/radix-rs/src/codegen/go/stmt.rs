@@ -3,21 +3,25 @@ use super::{expr::generate_expr, CodeWriter, CodegenError, GoCodegen};
 use crate::hir::{HirBlock, HirExprKind, HirPattern, HirStmt, HirStmtKind};
 use crate::semantic::TypeTable;
 
-pub fn generate_block<F>(
+pub(super) fn generate_prefixed_block<P>(
     codegen: &GoCodegen<'_>,
     block: &HirBlock,
     types: &TypeTable,
     w: &mut CodeWriter,
-    prelude: F,
+    skip_stmts: usize,
+    prelude: P,
 ) -> Result<(), CodegenError>
 where
-    F: FnOnce(&mut CodeWriter),
+    P: FnOnce(&mut CodeWriter) -> Result<(), CodegenError>,
 {
     w.writeln("{");
     let mut result = Ok(());
+    let mut prelude = Some(prelude);
     w.indented(|w| {
-        prelude(w);
-        for stmt in &block.stmts {
+        if let Some(prelude) = prelude.take() {
+            result = prelude(w);
+        }
+        for stmt in block.stmts.iter().skip(skip_stmts) {
             if result.is_err() {
                 return;
             }
@@ -34,6 +38,22 @@ where
     result?;
     w.write("}");
     Ok(())
+}
+
+pub fn generate_block<F>(
+    codegen: &GoCodegen<'_>,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    prelude: F,
+) -> Result<(), CodegenError>
+where
+    F: FnOnce(&mut CodeWriter),
+{
+    generate_prefixed_block(codegen, block, types, w, 0, |w| {
+        prelude(w);
+        Ok(())
+    })
 }
 
 /// Emit only the statements inside a block (no braces).
@@ -106,8 +126,8 @@ pub fn generate_stmt(
         HirStmtKind::Expr(expr) => {
             generate_expr_stmt(codegen, expr, types, w)?;
         }
-        HirStmtKind::Ad(_) => {
-            return Err(CodegenError { message: "ad is not yet supported for Go codegen".to_owned() });
+        HirStmtKind::Ad(ad) => {
+            generate_ad_stmt(codegen, ad, types, w)?;
         }
         HirStmtKind::Redde(expr) => {
             if let Some(expr) = expr {
@@ -122,6 +142,142 @@ pub fn generate_stmt(
         HirStmtKind::Perge => w.writeln("continue"),
     }
     Ok(())
+}
+
+fn generate_ad_stmt(
+    codegen: &GoCodegen<'_>,
+    ad: &crate::hir::HirAd,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    let binding_ty = ad
+        .binding
+        .as_ref()
+        .and_then(|binding| binding.ty)
+        .map(|ty| type_to_go(codegen, ty, types))
+        .filter(|ty| !ty.is_empty())
+        .unwrap_or_else(|| "any".to_owned());
+
+    w.write("if ");
+    if ad.binding.is_some() {
+        w.write("__radixResult, ");
+    } else {
+        w.write("_, ");
+    }
+    w.write("__radixErr := radixAd[");
+    w.write(&binding_ty);
+    w.write("](");
+    write_ad_call_args(codegen, ad, types, w)?;
+    w.write("); __radixErr != nil ");
+
+    match &ad.catch {
+        Some(catch) => generate_error_binding_block(codegen, catch, "__radixErr", types, w)?,
+        None => {
+            w.writeln("{");
+            w.indented(|w| w.writeln("panic(__radixErr)"));
+            w.write("}");
+        }
+    }
+
+    if let Some(body) = &ad.body {
+        w.write(" else ");
+        if ad.binding.is_some() {
+            generate_ad_body_block(codegen, ad, body, types, w)?;
+        } else {
+            generate_block(codegen, body, types, w, |_| {})?;
+        }
+    } else if ad.binding.is_some() {
+        w.write(" else ");
+        w.writeln("{");
+        w.indented(|w| w.writeln("_ = __radixResult"));
+        w.write("}");
+    }
+
+    w.newline();
+    Ok(())
+}
+
+fn write_ad_call_args(
+    codegen: &GoCodegen<'_>,
+    ad: &crate::hir::HirAd,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.write(&format!("{:?}", codegen.resolve_symbol(ad.path)));
+    for arg in &ad.args {
+        w.write(", ");
+        generate_expr(codegen, arg, types, w)?;
+    }
+    Ok(())
+}
+
+pub(super) fn generate_error_binding_block(
+    codegen: &GoCodegen<'_>,
+    block: &HirBlock,
+    value_expr: &str,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    let Some(crate::hir::HirStmt { kind: HirStmtKind::Local(local), .. }) = block.stmts.first() else {
+        return generate_block(codegen, block, types, w, |_| {});
+    };
+
+    generate_prefixed_block(codegen, block, types, w, 1, |w| {
+        w.write(codegen.resolve_symbol(local.name));
+        w.write(" := ");
+        w.writeln(value_expr);
+        if !codegen.is_used(local.def_id) {
+            w.write("_ = ");
+            w.writeln(codegen.resolve_symbol(local.name));
+        }
+        Ok(())
+    })
+}
+
+fn generate_ad_body_block(
+    codegen: &GoCodegen<'_>,
+    ad: &crate::hir::HirAd,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    let Some(binding) = &ad.binding else {
+        return generate_block(codegen, block, types, w, |_| {});
+    };
+
+    let Some(crate::hir::HirStmt { kind: HirStmtKind::Local(binding_local), .. }) = block.stmts.first() else {
+        return generate_block(codegen, block, types, w, |_| {});
+    };
+
+    let alias_local = if binding.alias.is_some() {
+        match block.stmts.get(1) {
+            Some(crate::hir::HirStmt { kind: HirStmtKind::Local(local), .. }) => Some(local),
+            _ => None,
+        }
+    } else {
+        None
+    };
+    let skip = 1 + usize::from(alias_local.is_some());
+
+    generate_prefixed_block(codegen, block, types, w, skip, |w| {
+        w.write(codegen.resolve_symbol(binding_local.name));
+        w.write(" := __radixResult");
+        w.newline();
+        if !codegen.is_used(binding_local.def_id) {
+            w.write("_ = ");
+            w.writeln(codegen.resolve_symbol(binding_local.name));
+        }
+        if let Some(alias_local) = alias_local {
+            w.write(codegen.resolve_symbol(alias_local.name));
+            w.write(" := ");
+            w.writeln(codegen.resolve_symbol(binding.name));
+            if !codegen.is_used(alias_local.def_id) {
+                w.write("_ = ");
+                w.writeln(codegen.resolve_symbol(alias_local.name));
+            }
+        }
+        Ok(())
+    })
 }
 
 fn generate_expr_stmt(
@@ -140,7 +296,9 @@ fn generate_expr_stmt(
             if matches!(receiver.kind, HirExprKind::Path(_))
                 && matches!(codegen.resolve_symbol(*method), "appende" | "adde") =>
         {
-            let HirExprKind::Path(def_id) = receiver.kind else { unreachable!() };
+            let HirExprKind::Path(def_id) = receiver.kind else {
+                unreachable!()
+            };
             let name = codegen.resolve_def(def_id);
             w.write(name);
             w.write(" = append(");
@@ -215,7 +373,9 @@ fn generate_discerne_stmt(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     if scrutinees.len() != 1 {
-        return Err(CodegenError { message: "multi-scrutinee discerne is not yet supported for Go codegen".to_owned() });
+        return Err(CodegenError {
+            message: "multi-scrutinee discerne is not yet supported for Go codegen".to_owned(),
+        });
     }
 
     let mut first = true;
