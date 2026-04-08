@@ -6,7 +6,10 @@
  * Output goes to opus/<compiler>/exempla/<target>/
  *
  * Usage:
+ *   bun run build:exempla:radix-rs                          # radix-rs -> ts exempla + verify
+ *   bun run build:exempla:radix-go                          # radix-rs -> go exempla + verify
  *   bun run build:exempla -c nanus-ts                       # compile + verify
+ *   bun run build:exempla -c radix-rs -t go                 # direct radix-rs Go flow
  *   bun run build:exempla -c rivus-ts                       # compile + verify
  *   bun run build:exempla -c rivus-ts,rivus-py              # multiple compilers
  *   bun run build:exempla -c nanus-ts -t zig                # specific target
@@ -245,7 +248,7 @@ async function main() {
     const start = performance.now();
 
     if (compilers.length === 0) {
-        console.log('No compilers selected. Use -c <compiler> (e.g., -c nanus-ts or -c rivus-ts).');
+        console.log('No compilers selected. Use -c <compiler> (e.g., -c radix-rs, nanus-ts, or rivus-ts).');
         process.exit(0);
     }
 

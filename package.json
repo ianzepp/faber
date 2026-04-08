@@ -17,6 +17,8 @@
     "build:nanus-py": "bun ./scripta/build-nanus-py.ts",
     "build:radix-rs": "cargo build --release --manifest-path compilers/radix-rs/Cargo.toml && mkdir -p opus/bin && cp compilers/radix-rs/target/release/radix opus/bin/radix-rs",
     "build:exempla": "bun ./scripta/build-exempla.ts",
+    "build:exempla:radix-rs": "bun run build:radix-rs && bun ./scripta/build-exempla.ts -c radix-rs",
+    "build:exempla:radix-go": "bun run build:radix-rs && bun ./scripta/build-exempla.ts -c radix-rs -t go",
     "build:golden": "bun ./scripta/build-golden.ts",
     "test:nanus-ts": "./scripta/test",
     "test:legacy": "bun run test:nanus-ts",
