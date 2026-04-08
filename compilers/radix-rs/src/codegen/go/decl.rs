@@ -1,8 +1,8 @@
-use super::stmt::generate_block;
+use super::stmt::generate_stmt;
 use super::types::type_to_go;
 use super::{expr::generate_expr, CodeWriter, CodegenError, GoCodegen};
 use crate::hir::*;
-use crate::semantic::TypeTable;
+use crate::semantic::{Primitive, TypeTable};
 
 pub fn generate_function(
     codegen: &GoCodegen<'_>,
@@ -25,7 +25,7 @@ pub fn generate_function(
 
     if let Some(body) = &func.body {
         w.write(" ");
-        generate_block_with_prelude(codegen, body, types, w, &func.params)?;
+        generate_block_with_prelude(codegen, body, types, w, &func.params, func.ret_ty)?;
     }
     w.newline();
     Ok(())
@@ -74,8 +74,14 @@ pub fn generate_struct(
             w.write(" ");
             let mut prelude_params = Vec::with_capacity(method.func.params.len() + 1);
             prelude_params.push((None, "self"));
-            prelude_params.extend(method.func.params.iter().map(|param| (Some(param.def_id), codegen.resolve_symbol(param.name))));
-            generate_block_with_custom_prelude(codegen, body, types, w, &prelude_params)?;
+            prelude_params.extend(
+                method
+                    .func
+                    .params
+                    .iter()
+                    .map(|param| (Some(param.def_id), codegen.resolve_symbol(param.name))),
+            );
+            generate_block_with_custom_prelude(codegen, body, types, w, &prelude_params, method.func.ret_ty)?;
         }
         w.newline();
     }
@@ -89,12 +95,13 @@ fn generate_block_with_prelude(
     types: &TypeTable,
     w: &mut CodeWriter,
     params: &[HirParam],
+    ret_ty: Option<crate::semantic::TypeId>,
 ) -> Result<(), CodegenError> {
     let prelude_params: Vec<(Option<DefId>, &str)> = params
         .iter()
         .map(|param| (Some(param.def_id), codegen.resolve_symbol(param.name)))
         .collect();
-    generate_block_with_custom_prelude(codegen, body, types, w, &prelude_params)
+    generate_block_with_custom_prelude(codegen, body, types, w, &prelude_params, ret_ty)
 }
 
 fn generate_block_with_custom_prelude(
@@ -103,16 +110,44 @@ fn generate_block_with_custom_prelude(
     types: &TypeTable,
     w: &mut CodeWriter,
     params: &[(Option<DefId>, &str)],
+    ret_ty: Option<crate::semantic::TypeId>,
 ) -> Result<(), CodegenError> {
-    generate_block(codegen, body, types, w, |w| {
+    let needs_nil_return = ret_ty
+        .map(|ret_ty| matches!(types.get(ret_ty), crate::semantic::Type::Primitive(Primitive::Nihil)))
+        .unwrap_or(false);
+
+    w.writeln("{");
+    let mut result = Ok(());
+    w.indented(|w| {
         for (def_id, name) in params {
-            if def_id.map(|def_id| codegen.is_used(def_id)).unwrap_or(false) {
+            if def_id
+                .map(|def_id| codegen.is_used(def_id))
+                .unwrap_or(false)
+            {
                 continue;
             }
             w.write("_ = ");
             w.writeln(name);
         }
-    })
+        for stmt in &body.stmts {
+            if result.is_err() {
+                return;
+            }
+            result = generate_stmt(codegen, stmt, types, w);
+        }
+        if result.is_ok() {
+            if let Some(expr) = &body.expr {
+                w.write("return ");
+                result = generate_expr(codegen, expr, types, w);
+                w.newline();
+            } else if needs_nil_return {
+                w.writeln("return nil");
+            }
+        }
+    });
+    result?;
+    w.write("}");
+    Ok(())
 }
 
 pub fn generate_interface(

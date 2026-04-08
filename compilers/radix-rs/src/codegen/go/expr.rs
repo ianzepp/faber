@@ -297,31 +297,7 @@ pub fn generate_expr(
                     }
                 }
                 Type::Map(key_ty, value_ty) => {
-                    w.write("map[");
-                    w.write(&types::type_to_go(codegen, *key_ty, types));
-                    w.write("]");
-                    w.write(&types::type_to_go(codegen, *value_ty, types));
-                    w.write("{");
-                    if let Some(entries) = entries {
-                        let mut wrote_any = false;
-                        for field in entries {
-                            let Some(value) = &field.value else { continue };
-                            if wrote_any {
-                                w.write(", ");
-                            }
-                            match &field.key {
-                                HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
-                                    w.write(&format!("{:?}", codegen.resolve_symbol(*name)));
-                                }
-                                HirObjectKey::Computed(expr) => generate_expr(codegen, expr, types, w)?,
-                                HirObjectKey::Spread(_) => continue,
-                            }
-                            w.write(": ");
-                            generate_expr(codegen, value, types, w)?;
-                            wrote_any = true;
-                        }
-                    }
-                    w.write("}");
+                    generate_map_literal(codegen, *key_ty, *value_ty, entries.as_deref(), types, w)?;
                 }
                 _ => {
                     generate_expr(codegen, source, types, w)?;
@@ -476,6 +452,57 @@ pub fn generate_expr(
         }
     }
     Ok(())
+}
+
+fn generate_map_literal(
+    codegen: &GoCodegen<'_>,
+    key_ty: crate::semantic::TypeId,
+    value_ty: crate::semantic::TypeId,
+    entries: Option<&[crate::hir::HirObjectField]>,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.write("map[");
+    w.write(&types::type_to_go(codegen, key_ty, types));
+    w.write("]");
+    w.write(&types::type_to_go(codegen, value_ty, types));
+    w.write("{");
+    if let Some(entries) = entries {
+        let mut wrote_any = false;
+        for field in entries {
+            let Some(value) = &field.value else { continue };
+            if wrote_any {
+                w.write(", ");
+            }
+            match &field.key {
+                HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
+                    w.write(&format!("{:?}", codegen.resolve_symbol(*name)));
+                }
+                HirObjectKey::Computed(expr) => generate_expr(codegen, expr, types, w)?,
+                HirObjectKey::Spread(_) => continue,
+            }
+            w.write(": ");
+            generate_expr_for_go_type(codegen, value, value_ty, types, w)?;
+            wrote_any = true;
+        }
+    }
+    w.write("}");
+    Ok(())
+}
+
+fn generate_expr_for_go_type(
+    codegen: &GoCodegen<'_>,
+    expr: &HirExpr,
+    expected_ty: crate::semantic::TypeId,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    match (&expr.kind, types.get(expected_ty)) {
+        (HirExprKind::Verte { entries: Some(entries), .. }, Type::Map(key_ty, value_ty)) => {
+            generate_map_literal(codegen, *key_ty, *value_ty, Some(entries), types, w)
+        }
+        _ => generate_expr(codegen, expr, types, w),
+    }
 }
 
 fn try_generate_intrinsic_call(

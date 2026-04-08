@@ -44,14 +44,21 @@ use std::collections::BTreeSet;
 pub struct GoCodegen<'a> {
     names: FxHashMap<DefId, Symbol>,
     use_counts: FxHashMap<DefId, usize>,
+    variant_fields: FxHashMap<DefId, Vec<Symbol>>,
     interner: &'a Interner,
 }
 
 impl<'a> GoCodegen<'a> {
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
-        let mut codegen = Self { names: FxHashMap::default(), use_counts: FxHashMap::default(), interner };
+        let mut codegen = Self {
+            names: FxHashMap::default(),
+            use_counts: FxHashMap::default(),
+            variant_fields: FxHashMap::default(),
+            interner,
+        };
         codegen.names = codegen.collect_names(hir);
         codegen.use_counts = codegen.collect_use_counts(hir);
+        codegen.variant_fields = codegen.collect_variant_fields(hir);
         codegen
     }
 
@@ -68,6 +75,10 @@ impl<'a> GoCodegen<'a> {
 
     pub(super) fn is_used(&self, def_id: DefId) -> bool {
         self.use_counts.get(&def_id).copied().unwrap_or(0) > 0
+    }
+
+    pub(super) fn variant_fields(&self, def_id: DefId) -> Option<&[Symbol]> {
+        self.variant_fields.get(&def_id).map(Vec::as_slice)
     }
 
     fn collect_names(&self, hir: &HirProgram) -> FxHashMap<DefId, Symbol> {
@@ -148,6 +159,18 @@ impl<'a> GoCodegen<'a> {
             self.collect_block_use_counts(&mut counts, entry);
         }
         counts
+    }
+
+    fn collect_variant_fields(&self, hir: &HirProgram) -> FxHashMap<DefId, Vec<Symbol>> {
+        let mut fields = FxHashMap::default();
+        for item in &hir.items {
+            if let HirItemKind::Enum(enum_item) = &item.kind {
+                for variant in &enum_item.variants {
+                    fields.insert(variant.def_id, variant.fields.iter().map(|field| field.name).collect());
+                }
+            }
+        }
+        fields
     }
 
     fn collect_item_use_counts(&self, counts: &mut FxHashMap<DefId, usize>, item: &HirItem) {

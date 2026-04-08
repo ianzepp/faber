@@ -378,6 +378,14 @@ fn generate_discerne_stmt(
         });
     }
 
+    if arms
+        .iter()
+        .flat_map(|arm| arm.patterns.iter())
+        .any(|pattern| matches_variant_pattern(pattern))
+    {
+        return generate_variant_discerne_stmt(codegen, &scrutinees[0], arms, types, w);
+    }
+
     let mut first = true;
     for arm in arms {
         let mut wrote_branch = false;
@@ -425,6 +433,196 @@ fn generate_discerne_stmt(
     }
     w.newline();
     Ok(())
+}
+
+fn generate_variant_discerne_stmt(
+    codegen: &GoCodegen<'_>,
+    scrutinee: &crate::hir::HirExpr,
+    arms: &[crate::hir::HirCasuArm],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    let needs_case_binding = arms
+        .iter()
+        .flat_map(|arm| arm.patterns.iter())
+        .any(pattern_needs_case_binding);
+    if needs_case_binding {
+        w.write("switch __radixCase := any(");
+        generate_expr(codegen, scrutinee, types, w)?;
+        w.writeln(").(type) {");
+    } else {
+        w.write("switch any(");
+        generate_expr(codegen, scrutinee, types, w)?;
+        w.writeln(").(type) {");
+    }
+    let mut result = Ok(());
+    w.indented(|w| {
+        for arm in arms {
+            if result.is_err() {
+                return;
+            }
+            if arm.patterns.len() != 1 {
+                result = Err(CodegenError {
+                    message: "multi-pattern discerne arms are not yet supported for Go codegen".to_owned(),
+                });
+                return;
+            }
+            result = generate_variant_discerne_arm(codegen, &arm.patterns[0], &arm.body, types, w);
+        }
+        if result.is_ok() {
+            w.writeln("default:");
+            w.indented(|w| w.writeln(r#"panic("non-exhaustive discerne")"#));
+        }
+    });
+    result?;
+    w.write("}");
+    w.newline();
+    Ok(())
+}
+
+fn generate_variant_discerne_arm(
+    codegen: &GoCodegen<'_>,
+    pattern: &HirPattern,
+    body: &crate::hir::HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    match pattern {
+        HirPattern::Wildcard | HirPattern::Binding(_, _) => {
+            w.writeln("default:");
+            w.indented(|w| {
+                let _ = generate_expr_stmt(codegen, body, types, w);
+            });
+            Ok(())
+        }
+        HirPattern::Alias(_, alias, inner) => match inner.as_ref() {
+            HirPattern::Variant(def_id, bindings) => {
+                write_variant_case_header(codegen, *def_id, w)?;
+                let mut result = Ok(());
+                w.indented(|w| {
+                    w.write(codegen.resolve_symbol(*alias));
+                    w.writeln(" := __radixCase");
+                    if result.is_err() {
+                        return;
+                    }
+                    result = write_variant_field_bindings(codegen, *def_id, bindings, w);
+                    if result.is_err() {
+                        return;
+                    }
+                    result = generate_expr_stmt(codegen, body, types, w);
+                });
+                result
+            }
+            _ => Err(CodegenError { message: "alias discerne patterns must wrap a variant in Go codegen".to_owned() }),
+        },
+        HirPattern::Variant(def_id, bindings) => {
+            write_variant_case_header(codegen, *def_id, w)?;
+            let mut result = Ok(());
+            w.indented(|w| {
+                if result.is_err() {
+                    return;
+                }
+                result = write_variant_field_bindings(codegen, *def_id, bindings, w);
+                if result.is_err() {
+                    return;
+                }
+                result = generate_expr_stmt(codegen, body, types, w);
+            });
+            result
+        }
+        HirPattern::Literal(_) => Err(CodegenError {
+            message: "literal discerne patterns cannot be mixed with variant patterns in Go codegen".to_owned(),
+        }),
+    }
+}
+
+fn write_variant_case_header(
+    codegen: &GoCodegen<'_>,
+    def_id: crate::hir::DefId,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.write("case ");
+    w.write(codegen.resolve_def(def_id));
+    w.writeln(":");
+    Ok(())
+}
+
+fn write_variant_field_bindings(
+    codegen: &GoCodegen<'_>,
+    def_id: crate::hir::DefId,
+    bindings: &[HirPattern],
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    let Some(fields) = codegen.variant_fields(def_id) else {
+        return Err(CodegenError {
+            message: format!("missing variant field metadata for {}", codegen.resolve_def(def_id)),
+        });
+    };
+    if bindings.len() > fields.len() {
+        return Err(CodegenError {
+            message: format!(
+                "variant pattern for {} binds {} fields but variant has only {}",
+                codegen.resolve_def(def_id),
+                bindings.len(),
+                fields.len()
+            ),
+        });
+    }
+
+    for (pattern, field) in bindings.iter().zip(fields.iter()) {
+        write_variant_binding_pattern(codegen, pattern, *field, w)?;
+    }
+    Ok(())
+}
+
+fn write_variant_binding_pattern(
+    codegen: &GoCodegen<'_>,
+    pattern: &HirPattern,
+    field: crate::lexer::Symbol,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    match pattern {
+        HirPattern::Wildcard => Ok(()),
+        HirPattern::Binding(_, name) => {
+            w.write(codegen.resolve_symbol(*name));
+            w.write(" := __radixCase.");
+            w.writeln(&field_name_to_go(codegen.resolve_symbol(field)));
+            Ok(())
+        }
+        HirPattern::Alias(_, alias, inner) => {
+            write_variant_binding_pattern(codegen, inner, field, w)?;
+            let _ = alias;
+            Ok(())
+        }
+        other => Err(CodegenError {
+            message: format!("unsupported nested variant binding pattern in Go codegen: {:?}", other),
+        }),
+    }
+}
+
+fn matches_variant_pattern(pattern: &HirPattern) -> bool {
+    match pattern {
+        HirPattern::Variant(_, _) => true,
+        HirPattern::Alias(_, _, inner) => matches_variant_pattern(inner),
+        HirPattern::Wildcard | HirPattern::Binding(_, _) | HirPattern::Literal(_) => false,
+    }
+}
+
+fn pattern_needs_case_binding(pattern: &HirPattern) -> bool {
+    match pattern {
+        HirPattern::Binding(_, _) => true,
+        HirPattern::Alias(_, _, _) => true,
+        HirPattern::Variant(_, bindings) => !bindings.is_empty(),
+        HirPattern::Wildcard | HirPattern::Literal(_) => false,
+    }
+}
+
+fn field_name_to_go(name: &str) -> String {
+    let mut chars = name.chars();
+    match chars.next() {
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+        None => String::new(),
+    }
 }
 
 fn write_literal(codegen: &GoCodegen<'_>, literal: &crate::hir::HirLiteral, w: &mut CodeWriter) {

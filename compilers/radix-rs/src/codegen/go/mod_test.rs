@@ -79,3 +79,64 @@ fn ad_with_catch_binds_error_value() {
     assert!(code.contains("err := __radixErr"));
     assert!(!code.contains("var err any"));
 }
+
+#[test]
+fn nested_object_honors_enclosing_map_value_type() {
+    let code = compile_go(
+        r#"incipit {
+  fixum nested ← { outer: { inner: 1 } }
+  scribe nested
+}"#,
+    );
+
+    assert!(code.contains(r#"nested := map[string]map[string]any{"outer": map[string]any{"inner": 1}}"#));
+    assert!(!code.contains(r#"map[string]map[string]any{"outer": map[string]int{"inner": 1}}"#));
+}
+
+#[test]
+fn discerne_variants_emit_type_switch_with_returns() {
+    let code = compile_go(
+        r#"discretio Status {
+  Active,
+  Inactive
+}
+
+functio describe(Status status) → textus {
+  discerne status {
+    casu Active { redde "active" }
+    casu Inactive { redde "inactive" }
+  }
+}"#,
+    );
+
+    assert!(code.contains("switch any(status).(type) {"));
+    assert!(code.contains("case Active:"));
+    assert!(code.contains(r#"return "active""#));
+    assert!(code.contains("default:"));
+}
+
+#[test]
+fn discerne_variant_bindings_extract_fields() {
+    let code = compile_go(
+        r#"discretio Event {
+  Click { numerus x, numerus y },
+  Quit
+}
+
+functio handle(Event event) {
+  discerne event {
+    casu Click fixum x, y {
+      scribe x
+      scribe y
+    }
+    casu Quit {
+      scribe "quit"
+    }
+  }
+}"#,
+    );
+
+    assert!(code.contains("case Click:"));
+    assert!(code.contains("x := __radixCase.X"));
+    assert!(code.contains("y := __radixCase.Y"));
+}
