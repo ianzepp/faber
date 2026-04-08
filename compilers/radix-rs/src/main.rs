@@ -64,7 +64,7 @@ fn print_usage() {
     eprintln!("  parse <file>            Parse and output AST as JSON");
     eprintln!("  hir <file>              Lower AST to HIR and output as JSON");
     eprintln!("  check [--permissive] <file> Run semantic analysis");
-    eprintln!("  emit [-t target] <file> Compile to target (rust, faber)");
+    eprintln!("  emit [-t target] <file> Compile to target (rust, faber, ts, go)");
     eprintln!("  emit-package [-t target] <path> Compile a local multi-file package");
     eprintln!();
     eprintln!("If no file is given, reads from stdin.");
@@ -380,6 +380,7 @@ fn cmd_emit(args: &[String]) {
             "rust" | "rs" => radix::codegen::Target::Rust,
             "faber" | "fab" => radix::codegen::Target::Faber,
             "ts" | "typescript" => radix::codegen::Target::TypeScript,
+            "go" => radix::codegen::Target::Go,
             other => {
                 eprintln!("unknown target: {}", other);
                 std::process::exit(1);
@@ -413,6 +414,9 @@ fn cmd_emit(args: &[String]) {
         Some(radix::Output::TypeScript(out)) => {
             println!("{}", out.code);
         }
+        Some(radix::Output::Go(out)) => {
+            println!("{}", out.code);
+        }
         None => {
             eprintln!("compilation failed");
             std::process::exit(1);
@@ -429,6 +433,7 @@ fn cmd_emit_package(args: &[String]) {
             "rust" | "rs" => radix::codegen::Target::Rust,
             "faber" | "fab" => radix::codegen::Target::Faber,
             "ts" | "typescript" => radix::codegen::Target::TypeScript,
+            "go" => radix::codegen::Target::Go,
             other => {
                 eprintln!("unknown target: {}", other);
                 std::process::exit(1);
@@ -458,6 +463,7 @@ fn cmd_emit_package(args: &[String]) {
         Some(radix::Output::Rust(out)) => println!("{}", out.code),
         Some(radix::Output::Faber(out)) => println!("{}", out.code),
         Some(radix::Output::TypeScript(out)) => println!("{}", out.code),
+        Some(radix::Output::Go(out)) => println!("{}", out.code),
         None => {
             eprintln!("compilation failed");
             std::process::exit(1);

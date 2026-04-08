@@ -99,6 +99,7 @@ pub enum Output {
     Rust(RustOutput),
     Faber(FaberOutput),
     TypeScript(TypeScriptOutput),
+    Go(GoOutput),
 }
 
 /// Rust compilation output.
@@ -113,6 +114,11 @@ pub struct FaberOutput {
 
 /// TypeScript compilation output.
 pub struct TypeScriptOutput {
+    pub code: String,
+}
+
+/// Go compilation output.
+pub struct GoOutput {
     pub code: String,
 }
 

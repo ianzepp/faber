@@ -1,0 +1,707 @@
+//! Go Code Generation
+//!
+//! ARCHITECTURE OVERVIEW
+//! =====================
+//! This module implements Faber-to-Go transpilation. It transforms HIR into
+//! idiomatic Go source code, mapping Faber's error semantics to Go's multi-return
+//! (T, error) convention and Faber's structs/enums to Go structs and interfaces.
+//!
+//! COMPILER PHASE: Codegen
+//! INPUT: HirProgram (fully-analyzed HIR), TypeTable, Interner
+//! OUTPUT: GoOutput (compilable Go source code)
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Idiomatic Go: Generate code that a Go programmer would write.
+//!   WHY: Output should integrate seamlessly with existing Go ecosystems.
+//! - Multi-return errors: Faber's `iace` (throw) maps to Go's (T, error) returns.
+//!   WHY: Go lacks exceptions; error values are the idiomatic pattern.
+//! - No borrow analysis: Go is garbage-collected, so de/in/ex modes are no-ops.
+//!   WHY: Go uses pointers for mutability, not Rust-style borrows.
+//!
+//! TRADE-OFFS
+//! ==========
+//! - Enums map to interfaces + concrete struct variants (Go lacks sum types).
+//! - Generics use Go 1.18+ type parameters where possible.
+//! - Optional types map to pointers (*T).
+
+mod decl;
+mod expr;
+mod stmt;
+mod types;
+
+use super::{CodeWriter, Codegen, CodegenError};
+use crate::hir::{
+    DefId, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirItem, HirItemKind, HirOptionalChainKind,
+    HirPattern, HirProgram, HirStmtKind,
+};
+use crate::lexer::{Interner, Symbol};
+use crate::semantic::TypeTable;
+use crate::GoOutput;
+use rustc_hash::FxHashMap;
+use std::collections::BTreeSet;
+
+pub struct GoCodegen<'a> {
+    names: FxHashMap<DefId, Symbol>,
+    use_counts: FxHashMap<DefId, usize>,
+    interner: &'a Interner,
+}
+
+impl<'a> GoCodegen<'a> {
+    pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
+        let mut codegen = Self { names: FxHashMap::default(), use_counts: FxHashMap::default(), interner };
+        codegen.names = codegen.collect_names(hir);
+        codegen.use_counts = codegen.collect_use_counts(hir);
+        codegen
+    }
+
+    pub(super) fn resolve_symbol(&self, sym: Symbol) -> &str {
+        self.interner.resolve(sym)
+    }
+
+    pub(super) fn resolve_def(&self, def_id: DefId) -> &str {
+        self.names
+            .get(&def_id)
+            .map(|sym| self.resolve_symbol(*sym))
+            .unwrap_or("unresolved_def")
+    }
+
+    pub(super) fn is_used(&self, def_id: DefId) -> bool {
+        self.use_counts.get(&def_id).copied().unwrap_or(0) > 0
+    }
+
+    fn collect_names(&self, hir: &HirProgram) -> FxHashMap<DefId, Symbol> {
+        let mut names = FxHashMap::default();
+        for item in &hir.items {
+            match &item.kind {
+                HirItemKind::Function(func) => {
+                    names.insert(item.def_id, func.name);
+                    for type_param in &func.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
+                    for param in &func.params {
+                        names.insert(param.def_id, param.name);
+                    }
+                    self.collect_block_names(&mut names, func.body.as_ref());
+                }
+                HirItemKind::Struct(strukt) => {
+                    names.insert(item.def_id, strukt.name);
+                    for type_param in &strukt.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
+                    for field in &strukt.fields {
+                        names.insert(field.def_id, field.name);
+                    }
+                    for method in &strukt.methods {
+                        names.insert(method.def_id, method.func.name);
+                        for type_param in &method.func.type_params {
+                            names.insert(type_param.def_id, type_param.name);
+                        }
+                        for param in &method.func.params {
+                            names.insert(param.def_id, param.name);
+                        }
+                        self.collect_block_names(&mut names, method.func.body.as_ref());
+                    }
+                }
+                HirItemKind::Enum(enum_item) => {
+                    names.insert(item.def_id, enum_item.name);
+                    for type_param in &enum_item.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
+                    for variant in &enum_item.variants {
+                        names.insert(variant.def_id, variant.name);
+                    }
+                }
+                HirItemKind::Interface(interface) => {
+                    names.insert(item.def_id, interface.name);
+                    for type_param in &interface.type_params {
+                        names.insert(type_param.def_id, type_param.name);
+                    }
+                }
+                HirItemKind::TypeAlias(alias) => {
+                    names.insert(item.def_id, alias.name);
+                }
+                HirItemKind::Const(const_item) => {
+                    names.insert(item.def_id, const_item.name);
+                }
+                HirItemKind::Import(import) => {
+                    for item in &import.items {
+                        names.insert(item.def_id, item.alias.unwrap_or(item.name));
+                    }
+                }
+            }
+        }
+
+        if let Some(entry) = &hir.entry {
+            self.collect_block_names(&mut names, Some(entry));
+        }
+
+        names
+    }
+
+    fn collect_use_counts(&self, hir: &HirProgram) -> FxHashMap<DefId, usize> {
+        let mut counts = FxHashMap::default();
+        for item in &hir.items {
+            self.collect_item_use_counts(&mut counts, item);
+        }
+        if let Some(entry) = &hir.entry {
+            self.collect_block_use_counts(&mut counts, entry);
+        }
+        counts
+    }
+
+    fn collect_item_use_counts(&self, counts: &mut FxHashMap<DefId, usize>, item: &HirItem) {
+        match &item.kind {
+            HirItemKind::Function(func) => {
+                if let Some(body) = &func.body {
+                    self.collect_block_use_counts(counts, body);
+                }
+            }
+            HirItemKind::Struct(strukt) => {
+                for field in &strukt.fields {
+                    if let Some(init) = &field.init {
+                        self.collect_expr_use_counts(counts, init);
+                    }
+                }
+                for method in &strukt.methods {
+                    if let Some(body) = &method.func.body {
+                        self.collect_block_use_counts(counts, body);
+                    }
+                }
+            }
+            HirItemKind::Const(constant) => self.collect_expr_use_counts(counts, &constant.value),
+            HirItemKind::Enum(_) | HirItemKind::Interface(_) | HirItemKind::TypeAlias(_) | HirItemKind::Import(_) => {}
+        }
+    }
+
+    fn collect_block_use_counts(&self, counts: &mut FxHashMap<DefId, usize>, block: &HirBlock) {
+        for stmt in &block.stmts {
+            match &stmt.kind {
+                HirStmtKind::Local(local) => {
+                    if let Some(init) = &local.init {
+                        self.collect_expr_use_counts(counts, init);
+                    }
+                }
+                HirStmtKind::Ad(ad) => {
+                    for arg in &ad.args {
+                        self.collect_expr_use_counts(counts, arg);
+                    }
+                    if let Some(body) = &ad.body {
+                        self.collect_block_use_counts(counts, body);
+                    }
+                    if let Some(catch) = &ad.catch {
+                        self.collect_block_use_counts(counts, catch);
+                    }
+                }
+                HirStmtKind::Expr(expr) => self.collect_expr_use_counts(counts, expr),
+                HirStmtKind::Redde(expr) => {
+                    if let Some(expr) = expr {
+                        self.collect_expr_use_counts(counts, expr);
+                    }
+                }
+                HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            }
+        }
+        if let Some(expr) = &block.expr {
+            self.collect_expr_use_counts(counts, expr);
+        }
+    }
+
+    fn collect_expr_use_counts(&self, counts: &mut FxHashMap<DefId, usize>, expr: &HirExpr) {
+        match &expr.kind {
+            HirExprKind::Path(def_id) => {
+                *counts.entry(*def_id).or_insert(0) += 1;
+            }
+            HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
+                self.collect_expr_use_counts(counts, lhs);
+                self.collect_expr_use_counts(counts, rhs);
+            }
+            HirExprKind::Unary(_, operand)
+            | HirExprKind::Cede(operand)
+            | HirExprKind::Ref(_, operand)
+            | HirExprKind::Deref(operand)
+            | HirExprKind::Panic(operand)
+            | HirExprKind::Throw(operand) => self.collect_expr_use_counts(counts, operand),
+            HirExprKind::Verte { source, entries, .. } => {
+                self.collect_expr_use_counts(counts, source);
+                if let Some(entries) = entries {
+                    for field in entries {
+                        match &field.key {
+                            crate::hir::HirObjectKey::Computed(expr)
+                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_use_counts(counts, expr),
+                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                        }
+                        if let Some(value) = &field.value {
+                            self.collect_expr_use_counts(counts, value);
+                        }
+                    }
+                }
+            }
+            HirExprKind::Conversio { source, fallback, .. } => {
+                self.collect_expr_use_counts(counts, source);
+                if let Some(fallback) = fallback {
+                    self.collect_expr_use_counts(counts, fallback);
+                }
+            }
+            HirExprKind::Call(callee, args) => {
+                self.collect_expr_use_counts(counts, callee);
+                for arg in args {
+                    self.collect_expr_use_counts(counts, arg);
+                }
+            }
+            HirExprKind::MethodCall(receiver, _, args) => {
+                self.collect_expr_use_counts(counts, receiver);
+                for arg in args {
+                    self.collect_expr_use_counts(counts, arg);
+                }
+            }
+            HirExprKind::Field(object, _) => self.collect_expr_use_counts(counts, object),
+            HirExprKind::Index(object, index) => {
+                self.collect_expr_use_counts(counts, object);
+                self.collect_expr_use_counts(counts, index);
+            }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.collect_expr_use_counts(counts, object);
+                match chain {
+                    HirOptionalChainKind::Member(_) => {}
+                    HirOptionalChainKind::Index(index) => self.collect_expr_use_counts(counts, index),
+                    HirOptionalChainKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_use_counts(counts, arg);
+                        }
+                    }
+                }
+            }
+            HirExprKind::NonNull(object, chain) => {
+                self.collect_expr_use_counts(counts, object);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(_) => {}
+                    crate::hir::HirNonNullKind::Index(index) => self.collect_expr_use_counts(counts, index),
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_use_counts(counts, arg);
+                        }
+                    }
+                }
+            }
+            HirExprKind::Ab { source, filter, transforms } => {
+                self.collect_expr_use_counts(counts, source);
+                if let Some(filter) = filter {
+                    if let HirCollectionFilterKind::Condition(cond) = &filter.kind {
+                        self.collect_expr_use_counts(counts, cond);
+                    }
+                }
+                for transform in transforms {
+                    if let Some(arg) = &transform.arg {
+                        self.collect_expr_use_counts(counts, arg);
+                    }
+                }
+            }
+            HirExprKind::Block(block) | HirExprKind::Loop(block) => self.collect_block_use_counts(counts, block),
+            HirExprKind::Si(cond, then_block, else_block) => {
+                self.collect_expr_use_counts(counts, cond);
+                self.collect_block_use_counts(counts, then_block);
+                if let Some(else_block) = else_block {
+                    self.collect_block_use_counts(counts, else_block);
+                }
+            }
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.collect_expr_use_counts(counts, scrutinee);
+                }
+                for arm in arms {
+                    for pattern in &arm.patterns {
+                        self.collect_pattern_use_counts(counts, pattern);
+                    }
+                    if let Some(guard) = &arm.guard {
+                        self.collect_expr_use_counts(counts, guard);
+                    }
+                    self.collect_expr_use_counts(counts, &arm.body);
+                }
+            }
+            HirExprKind::Dum(cond, block) => {
+                self.collect_expr_use_counts(counts, cond);
+                self.collect_block_use_counts(counts, block);
+            }
+            HirExprKind::Itera(_, _, _, iter, block) => {
+                self.collect_expr_use_counts(counts, iter);
+                self.collect_block_use_counts(counts, block);
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.collect_expr_use_counts(counts, start);
+                self.collect_expr_use_counts(counts, end);
+                if let Some(step) = step {
+                    self.collect_expr_use_counts(counts, step);
+                }
+            }
+            HirExprKind::Array(elements) => {
+                for element in elements {
+                    match element {
+                        crate::hir::HirArrayElement::Expr(expr)
+                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_use_counts(counts, expr),
+                    }
+                }
+            }
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+                for element in elements {
+                    self.collect_expr_use_counts(counts, element);
+                }
+            }
+            HirExprKind::Scriptum(_, args) => {
+                for arg in args {
+                    self.collect_expr_use_counts(counts, arg);
+                }
+            }
+            HirExprKind::Adfirma(cond, message) => {
+                self.collect_expr_use_counts(counts, cond);
+                if let Some(message) = message {
+                    self.collect_expr_use_counts(counts, message);
+                }
+            }
+            HirExprKind::Struct(_, fields) => {
+                for (_, value) in fields {
+                    self.collect_expr_use_counts(counts, value);
+                }
+            }
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.collect_block_use_counts(counts, body);
+                if let Some(catch) = catch {
+                    self.collect_block_use_counts(counts, catch);
+                }
+                if let Some(finally) = finally {
+                    self.collect_block_use_counts(counts, finally);
+                }
+            }
+            HirExprKind::Clausura(params, _, body) => {
+                for param in params {
+                    counts.entry(param.def_id).or_insert(0);
+                }
+                self.collect_expr_use_counts(counts, body);
+            }
+            HirExprKind::Literal(_) | HirExprKind::Error => {}
+        }
+    }
+
+    fn collect_pattern_use_counts(&self, counts: &mut FxHashMap<DefId, usize>, pattern: &HirPattern) {
+        match pattern {
+            HirPattern::Wildcard | HirPattern::Literal(_) => {}
+            HirPattern::Binding(def_id, _) => {
+                counts.entry(*def_id).or_insert(0);
+            }
+            HirPattern::Alias(def_id, _, pattern) => {
+                counts.entry(*def_id).or_insert(0);
+                self.collect_pattern_use_counts(counts, pattern);
+            }
+            HirPattern::Variant(_, patterns) => {
+                for pattern in patterns {
+                    self.collect_pattern_use_counts(counts, pattern);
+                }
+            }
+        }
+    }
+
+    fn collect_block_names(&self, names: &mut FxHashMap<DefId, Symbol>, block: Option<&HirBlock>) {
+        let Some(block) = block else {
+            return;
+        };
+        for stmt in &block.stmts {
+            match &stmt.kind {
+                HirStmtKind::Local(local) => {
+                    names.insert(local.def_id, local.name);
+                    if let Some(init) = &local.init {
+                        self.collect_expr_names(names, init);
+                    }
+                }
+                HirStmtKind::Ad(ad) => {
+                    for arg in &ad.args {
+                        self.collect_expr_names(names, arg);
+                    }
+                    self.collect_block_names(names, ad.body.as_ref());
+                    self.collect_block_names(names, ad.catch.as_ref());
+                }
+                HirStmtKind::Expr(expr) => self.collect_expr_names(names, expr),
+                HirStmtKind::Redde(value) => {
+                    if let Some(expr) = value {
+                        self.collect_expr_names(names, expr);
+                    }
+                }
+                HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            }
+        }
+        if let Some(expr) = &block.expr {
+            self.collect_expr_names(names, expr);
+        }
+    }
+
+    fn collect_expr_names(&self, names: &mut FxHashMap<DefId, Symbol>, expr: &HirExpr) {
+        match &expr.kind {
+            HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
+                self.collect_expr_names(names, lhs);
+                self.collect_expr_names(names, rhs);
+            }
+            HirExprKind::Unary(_, operand)
+            | HirExprKind::Cede(operand)
+            | HirExprKind::Ref(_, operand)
+            | HirExprKind::Deref(operand)
+            | HirExprKind::Panic(operand)
+            | HirExprKind::Throw(operand) => self.collect_expr_names(names, operand),
+            HirExprKind::Verte { source, entries, .. } => {
+                self.collect_expr_names(names, source);
+                if let Some(entries) = entries {
+                    for field in entries {
+                        match &field.key {
+                            crate::hir::HirObjectKey::Computed(expr)
+                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_names(names, expr),
+                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
+                        }
+                        if let Some(value) = &field.value {
+                            self.collect_expr_names(names, value);
+                        }
+                    }
+                }
+            }
+            HirExprKind::Conversio { source, fallback, .. } => {
+                self.collect_expr_names(names, source);
+                if let Some(fallback) = fallback {
+                    self.collect_expr_names(names, fallback);
+                }
+            }
+            HirExprKind::Call(callee, args) => {
+                self.collect_expr_names(names, callee);
+                for arg in args {
+                    self.collect_expr_names(names, arg);
+                }
+            }
+            HirExprKind::MethodCall(receiver, _, args) => {
+                self.collect_expr_names(names, receiver);
+                for arg in args {
+                    self.collect_expr_names(names, arg);
+                }
+            }
+            HirExprKind::Field(object, _) => self.collect_expr_names(names, object),
+            HirExprKind::Index(object, index) => {
+                self.collect_expr_names(names, object);
+                self.collect_expr_names(names, index);
+            }
+            HirExprKind::OptionalChain(object, chain) => {
+                self.collect_expr_names(names, object);
+                match chain {
+                    HirOptionalChainKind::Member(_) => {}
+                    HirOptionalChainKind::Index(index) => self.collect_expr_names(names, index),
+                    HirOptionalChainKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_names(names, arg);
+                        }
+                    }
+                }
+            }
+            HirExprKind::NonNull(object, chain) => {
+                self.collect_expr_names(names, object);
+                match chain {
+                    crate::hir::HirNonNullKind::Member(_) => {}
+                    crate::hir::HirNonNullKind::Index(index) => self.collect_expr_names(names, index),
+                    crate::hir::HirNonNullKind::Call(args) => {
+                        for arg in args {
+                            self.collect_expr_names(names, arg);
+                        }
+                    }
+                }
+            }
+            HirExprKind::Ab { source, filter, transforms } => {
+                self.collect_expr_names(names, source);
+                if let Some(filter) = filter {
+                    if let HirCollectionFilterKind::Condition(cond) = &filter.kind {
+                        self.collect_expr_names(names, cond);
+                    }
+                }
+                for transform in transforms {
+                    if let Some(arg) = &transform.arg {
+                        self.collect_expr_names(names, arg);
+                    }
+                }
+            }
+            HirExprKind::Block(block) | HirExprKind::Loop(block) => self.collect_block_names(names, Some(block)),
+            HirExprKind::Si(cond, then_block, else_block) => {
+                self.collect_expr_names(names, cond);
+                self.collect_block_names(names, Some(then_block));
+                self.collect_block_names(names, else_block.as_ref());
+            }
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.collect_expr_names(names, scrutinee);
+                }
+                for arm in arms {
+                    for pattern in &arm.patterns {
+                        self.collect_pattern_names(names, pattern);
+                    }
+                    if let Some(guard) = &arm.guard {
+                        self.collect_expr_names(names, guard);
+                    }
+                    self.collect_expr_names(names, &arm.body);
+                }
+            }
+            HirExprKind::Dum(cond, block) => {
+                self.collect_expr_names(names, cond);
+                self.collect_block_names(names, Some(block));
+            }
+            HirExprKind::Itera(_, _, _, iter, block) => {
+                self.collect_expr_names(names, iter);
+                self.collect_block_names(names, Some(block));
+            }
+            HirExprKind::Intervallum { start, end, step, .. } => {
+                self.collect_expr_names(names, start);
+                self.collect_expr_names(names, end);
+                if let Some(step) = step {
+                    self.collect_expr_names(names, step);
+                }
+            }
+            HirExprKind::Array(elements) => {
+                for element in elements {
+                    match element {
+                        crate::hir::HirArrayElement::Expr(expr)
+                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_names(names, expr),
+                    }
+                }
+            }
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+                for element in elements {
+                    self.collect_expr_names(names, element);
+                }
+            }
+            HirExprKind::Scriptum(_, args) => {
+                for arg in args {
+                    self.collect_expr_names(names, arg);
+                }
+            }
+            HirExprKind::Adfirma(cond, message) => {
+                self.collect_expr_names(names, cond);
+                if let Some(message) = message {
+                    self.collect_expr_names(names, message);
+                }
+            }
+            HirExprKind::Struct(_, fields) => {
+                for (_, value) in fields {
+                    self.collect_expr_names(names, value);
+                }
+            }
+            HirExprKind::Tempta { body, catch, finally } => {
+                self.collect_block_names(names, Some(body));
+                self.collect_block_names(names, catch.as_ref());
+                self.collect_block_names(names, finally.as_ref());
+            }
+            HirExprKind::Clausura(params, _, body) => {
+                for param in params {
+                    names.insert(param.def_id, param.name);
+                }
+                self.collect_expr_names(names, body);
+            }
+            HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+        }
+    }
+
+    #[allow(clippy::only_used_in_recursion)]
+    fn collect_pattern_names(&self, names: &mut FxHashMap<DefId, Symbol>, pattern: &HirPattern) {
+        match pattern {
+            HirPattern::Wildcard | HirPattern::Literal(_) => {}
+            HirPattern::Binding(def_id, name) => {
+                names.insert(*def_id, *name);
+            }
+            HirPattern::Alias(def_id, name, pattern) => {
+                names.insert(*def_id, *name);
+                self.collect_pattern_names(names, pattern);
+            }
+            HirPattern::Variant(_, patterns) => {
+                for pattern in patterns {
+                    self.collect_pattern_names(names, pattern);
+                }
+            }
+        }
+    }
+
+    fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+        match &item.kind {
+            HirItemKind::Function(func) => decl::generate_function(self, func, types, w)?,
+            HirItemKind::Struct(strukt) => decl::generate_struct(self, strukt, types, w)?,
+            HirItemKind::Enum(enum_item) => decl::generate_enum(self, enum_item, types, w)?,
+            HirItemKind::Interface(interface) => decl::generate_interface(self, interface, types, w)?,
+            HirItemKind::TypeAlias(alias) => decl::generate_type_alias(self, alias, types, w)?,
+            HirItemKind::Const(constant) => decl::generate_const(self, constant, types, w)?,
+            HirItemKind::Import(import) => decl::generate_import(self, import, w)?,
+        }
+        Ok(())
+    }
+}
+
+impl Codegen for GoCodegen<'_> {
+    type Output = GoOutput;
+
+    fn generate(
+        &self,
+        hir: &HirProgram,
+        types: &TypeTable,
+        _interner: &Interner,
+    ) -> Result<GoOutput, CodegenError> {
+        let mut body = CodeWriter::new();
+
+        for item in &hir.items {
+            self.generate_item(item, types, &mut body)?;
+            body.newline();
+        }
+
+        if let Some(entry) = &hir.entry {
+            body.writeln("func main() {");
+            let mut block_result = Ok(());
+            body.indented(|w| {
+                block_result = stmt::generate_block_stmts(self, entry, types, w);
+            });
+            block_result?;
+            body.writeln("}");
+        }
+        let body = body.finish();
+        let imports = collect_imports(&body);
+        let mut w = CodeWriter::new();
+        w.writeln("// Generated by radix - do not edit");
+        w.newline();
+        w.writeln("package main");
+        if !imports.is_empty() {
+            w.newline();
+            if imports.len() == 1 {
+                w.write("import ");
+                w.writeln(&format!("{:?}", imports.iter().next().expect("single import")));
+            } else {
+                w.writeln("import (");
+                w.indented(|w| {
+                    for import in &imports {
+                        w.writeln(&format!("{:?}", import));
+                    }
+                });
+                w.writeln(")");
+            }
+        }
+        w.newline();
+        w.write(&body);
+
+        Ok(GoOutput { code: w.finish() })
+    }
+}
+
+fn collect_imports(code: &str) -> BTreeSet<&'static str> {
+    let mut imports = BTreeSet::new();
+    if code.contains("fmt.") {
+        imports.insert("fmt");
+    }
+    if code.contains("strconv.") {
+        imports.insert("strconv");
+    }
+    if code.contains("regexp.") {
+        imports.insert("regexp");
+    }
+    if code.contains("os.") {
+        imports.insert("os");
+    }
+    imports
+}
+
+#[cfg(test)]
+#[path = "mod_test.rs"]
+mod tests;

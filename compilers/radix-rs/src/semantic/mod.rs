@@ -84,6 +84,7 @@ impl PassConfig {
             Target::Rust => Self { borrow_analysis: true, exhaustiveness: true, lint: true },
             Target::Faber => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
             Target::TypeScript => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
+            Target::Go => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
         }
     }
 }

@@ -30,6 +30,7 @@
 //! - Faber: Canonical pretty-printing for formatting and round-tripping
 
 pub mod faber;
+pub mod go;
 pub mod rust;
 pub mod ts;
 mod writer;
@@ -55,6 +56,7 @@ pub enum Target {
     Rust,
     Faber,
     TypeScript,
+    Go,
 }
 
 /// Code generation error.
@@ -121,6 +123,11 @@ pub fn generate(
             let gen = ts::TsCodegen::new(hir, interner);
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::TypeScript(output))
+        }
+        Target::Go => {
+            let gen = go::GoCodegen::new(hir, interner);
+            let output = gen.generate(hir, types, interner)?;
+            Ok(crate::Output::Go(output))
         }
     }
 }
