@@ -2,7 +2,7 @@
 
 Internal planning artifact for continuing `radix-rs` Go codegen work after verifier cleanup.
 
-Last updated: 2026-04-10
+Last updated: 2026-04-11
 
 ---
 
@@ -25,8 +25,9 @@ The main blocker is no longer build-script noise. The verifier now reports a muc
 - `bun run build:exempla:radix-go` is the operative gate.
 - `scripta/build-exempla.ts` now uses package-aware verification for Go.
 - Current gate result:
-  - `2/131` emitted Go verification failures
-  - no remaining compile-time codegen failures across `examples/exempla/`
+  - `129/131` Go exempla compile and verify successfully
+  - `2/131` are explicitly gated by target policy (`externa`, `ad`)
+  - no remaining unexpected compile-time or verification failures across `examples/exempla/`
 
 ### Confidence
 
@@ -315,7 +316,7 @@ Exit criteria:
 Status:
 
 - `proba` is now syntactically valid Go
-- `externa` and `ad` remain unresolved policy/runtime-shape work
+- `externa` and `ad` are now explicitly gated for Go when they rely on unsupported dynamic runtime shapes
 
 ---
 
@@ -396,7 +397,7 @@ Required:
 
 Observed:
 
-- achieved; current gate is `3/131`
+- achieved; current gate is `129/131` verified with `2/131` policy-gated
 
 ### Checkpoint 2: Receiver / Construction Stable
 
@@ -418,6 +419,10 @@ Required:
 - no remaining `unresolved_def` in emitted Go exempla
 - collection-method leftovers removed from Go output
 
+Observed:
+
+- achieved for the currently failing exempla set
+
 ### Checkpoint 4: Policy Freeze
 
 Required:
@@ -426,6 +431,12 @@ Required:
   - fixed
   - intentionally unsupported with explicit diagnostic
   - excluded by a documented target policy decision
+
+Observed:
+
+- achieved
+- `externa/externa.fab` is gated with an explicit Go diagnostic for dynamic `@ externa ignotum` projection
+- `ad/ad.fab` is gated with an explicit Go diagnostic because `ad` is unsupported for Go targets
 
 ---
 
@@ -459,4 +470,4 @@ Delivery orchestration should treat:
 - `bun run build:exempla:radix-go` as the main implementation gate
 - `cargo test --manifest-path compilers/radix-rs/Cargo.toml` as the safety gate
 
-The next implementation wave should start at **Stage D: Target-Surface Policy**.
+Stage D is now complete for this wave. The next wave, if any, should begin only if Go support for `ad` or dynamic host-style `externa` becomes a product requirement rather than a gated non-goal.

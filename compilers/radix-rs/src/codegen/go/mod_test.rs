@@ -47,8 +47,11 @@ fn tempta_catch_binds_recovered_value() {
 }
 
 #[test]
-fn ad_with_binding_emits_dispatch_and_bound_body() {
-    let code = compile_go(
+fn ad_is_rejected_for_go_targets() {
+    let session = Session::new(Config::default().with_target(Target::Go));
+    let result = crate::driver::compile(
+        &session,
+        "<test>",
         r#"incipit {
   ad "fasciculus:lege" ("hello.txt") → textus pro content {
     scribe content
@@ -56,17 +59,17 @@ fn ad_with_binding_emits_dispatch_and_bound_body() {
 }"#,
     );
 
-    assert!(code.contains("func radixAd[T any]("));
-    assert!(code.contains(
-        "if __radixResult, __radixErr := radixAd[string](\"fasciculus:lege\", \"hello.txt\"); __radixErr != nil"
-    ));
-    assert!(code.contains("content := __radixResult"));
-    assert!(code.contains("fmt.Println(content)"));
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message.contains("ad is not supported for Go targets")));
 }
 
 #[test]
-fn ad_with_catch_binds_error_value() {
-    let code = compile_go(
+fn ad_with_catch_is_rejected_for_go_targets() {
+    let session = Session::new(Config::default().with_target(Target::Go));
+    let result = crate::driver::compile(
+        &session,
+        "<test>",
         r#"incipit {
   ad "fasciculus:lege" ("hello.txt") → textus pro content {
     scribe content
@@ -76,8 +79,9 @@ fn ad_with_catch_binds_error_value() {
 }"#,
     );
 
-    assert!(code.contains("err := __radixErr"));
-    assert!(!code.contains("var err any"));
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message.contains("ad is not supported for Go targets")));
 }
 
 #[test]

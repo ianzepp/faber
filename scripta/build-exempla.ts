@@ -43,6 +43,12 @@ interface Args {
     verify: boolean;
 }
 
+interface CompileSummary {
+    total: number;
+    failed: number;
+    gated: number;
+}
+
 function parseArgs(): Args {
     const args = process.argv.slice(2);
     let compilerNames: string[] = [];
@@ -100,7 +106,32 @@ async function findFiles(dir: string, ext: string): Promise<string[]> {
     return files;
 }
 
-async function compileExempla(compiler: CompilerSpec, targets: Target[]): Promise<{ total: number; failed: number }> {
+function classifyCompileFailure(
+    compiler: CompilerSpec,
+    target: Target,
+    stderr: string
+): { gated: boolean; reason?: string } {
+    if (compiler.name !== 'radix-rs' || target !== 'go') {
+        return { gated: false };
+    }
+
+    if (stderr.includes('ad is not supported for Go targets')) {
+        return { gated: true, reason: 'policy-gated: ad is unsupported for Go' };
+    }
+
+    if (
+        stderr.includes('member access on @ externa ignotum is not supported for Go targets') ||
+        stderr.includes('index access on @ externa ignotum is not supported for Go targets') ||
+        stderr.includes('optional chaining on @ externa ignotum is not supported for Go targets') ||
+        stderr.includes('non-null projection on @ externa ignotum is not supported for Go targets')
+    ) {
+        return { gated: true, reason: 'policy-gated: dynamic @ externa ignotum projection is unsupported for Go' };
+    }
+
+    return { gated: false };
+}
+
+async function compileExempla(compiler: CompilerSpec, targets: Target[]): Promise<CompileSummary> {
     const fabFiles = await findFiles(EXEMPLA_SOURCE, '.fab');
     const outputBase = join(OPUS, compiler.name, 'exempla');
 
@@ -111,6 +142,7 @@ async function compileExempla(compiler: CompilerSpec, targets: Target[]): Promis
     }
 
     let failed = 0;
+    let gated = 0;
 
     for (const fabPath of fabFiles) {
         const relPath = relative(EXEMPLA_SOURCE, fabPath);
@@ -131,14 +163,23 @@ async function compileExempla(compiler: CompilerSpec, targets: Target[]): Promis
                 await Bun.write(outPath, result.stdout);
                 console.log(`  ${relPath} -> ${compiler.name}/${target}/${subdir}/${name}.${ext}`);
             } catch (err: any) {
+                const stderr = err.stderr?.toString().trim() || '';
+                const classification = classifyCompileFailure(compiler, target, stderr);
+                if (classification.gated) {
+                    console.log(`  ${relPath} [${target}] GATED`);
+                    if (classification.reason) console.log(`    ${classification.reason}`);
+                    gated++;
+                    continue;
+                }
+
                 console.error(`  ${relPath} [${target}] FAILED`);
-                if (err.stderr) console.error(`    ${err.stderr.toString().trim()}`);
+                if (stderr) console.error(`    ${stderr}`);
                 failed++;
             }
         }
     }
 
-    return { total: fabFiles.length * targets.length, failed };
+    return { total: fabFiles.length * targets.length, failed, gated };
 }
 
 async function verifyTypeScript(outputBase: string): Promise<{ total: number; failed: number }> {
@@ -282,6 +323,7 @@ async function main() {
     const compilerNames = compilers.map(c => c.name).join(', ');
     let totalCompileFailed = 0;
     let totalCompileCount = 0;
+    let totalCompileGated = 0;
 
     if (compile) {
         console.log(`Compiling exempla (compilers: ${compilerNames}, targets: ${targets.join(', ')})\n`);
@@ -291,8 +333,12 @@ async function main() {
             const result = await compileExempla(compiler, targets);
             totalCompileCount += result.total;
             totalCompileFailed += result.failed;
+            totalCompileGated += result.gated;
             if (result.failed > 0) {
                 console.log(`  ${result.failed}/${result.total} compilation(s) failed`);
+            }
+            if (result.gated > 0) {
+                console.log(`  ${result.gated}/${result.total} compilation(s) gated by target policy`);
             }
         }
     }
@@ -327,6 +373,9 @@ async function main() {
 
     const elapsed = performance.now() - start;
     console.log(`\nDone (${elapsed.toFixed(0)}ms)`);
+    if (totalCompileGated > 0) {
+        console.log(`Go policy gates: ${totalCompileGated}/${totalCompileCount}`);
+    }
 
     if (totalCompileFailed > 0 || verifyFailed > 0) {
         process.exit(1);

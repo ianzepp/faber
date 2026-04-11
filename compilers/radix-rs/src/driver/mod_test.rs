@@ -509,6 +509,61 @@ incipit {
 }
 
 #[test]
+fn go_target_rejects_ad_with_explicit_policy_diagnostic() {
+    let session = session(Target::Go);
+    let source = r#"incipit {
+  ad "fasciculus:lege" ("hello.txt") → textus pro response {
+    scribe response
+  }
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message.contains("ad is not supported for Go targets")));
+}
+
+#[test]
+fn go_target_rejects_member_access_on_externa_ignotum_binding() {
+    let session = session(Target::Go);
+    let source = r#"@ externa
+fixum ignotum process
+
+incipit {
+  scribe process.argv
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("member access on @ externa ignotum is not supported for Go targets")));
+}
+
+#[test]
+fn go_target_allows_externa_with_explicit_cast_contract() {
+    let session = session(Target::Go);
+    let source = r#"@ externa
+functio argv() -> ignotum
+
+incipit {
+  fixum args ← argv() qua lista<textus>
+  scribe args.longitudo()
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success(), "{:?}", result
+        .diagnostics
+        .iter()
+        .map(|diag| diag.message.clone())
+        .collect::<Vec<_>>());
+    assert!(matches!(result.output, Some(crate::Output::Go(_))));
+    assert!(result.diagnostics.iter().all(|d| !d.is_error()));
+}
+
+#[test]
 fn ab_property_filter_no_longer_reports_unknown_identifier() {
     let session = session(Target::Rust);
     let source = r#"incipit {
