@@ -973,13 +973,8 @@ impl FaberCodegen {
             },
             HirExprKind::Conversio { source, target, params, fallback } => {
                 self.write_expr_prec(source, 2, types, names, interner, w);
-                w.write(" ");
-                if let Some(keyword) = self.conversio_keyword(*target, types) {
-                    w.write(keyword);
-                } else {
-                    w.write("⇒ ");
-                    w.write(&self.type_to_faber(*target, types, names, interner));
-                }
+                w.write(" ⇒ ");
+                w.write(&self.type_to_faber(*target, types, names, interner));
                 if !params.is_empty() {
                     w.write("<");
                     for (idx, param) in params.iter().enumerate() {
@@ -1158,16 +1153,6 @@ impl FaberCodegen {
             }
             HirLiteral::Bool(value) => w.write(if *value { "verum" } else { "falsum" }),
             HirLiteral::Nil => w.write("nihil"),
-        }
-    }
-
-    fn conversio_keyword(&self, target: TypeId, types: &TypeTable) -> Option<&'static str> {
-        match types.get(target) {
-            Type::Primitive(Primitive::Numerus) => Some("numeratum"),
-            Type::Primitive(Primitive::Fractus) => Some("fractatum"),
-            Type::Primitive(Primitive::Textus) => Some("textatum"),
-            Type::Primitive(Primitive::Bivalens) => Some("bivalentum"),
-            _ => None,
         }
     }
 

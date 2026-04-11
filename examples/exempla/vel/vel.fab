@@ -41,10 +41,10 @@ incipit {
 
     # With conversion operators
     fixum input ← "abc"
-    fixum num ← input numeratum vel 0
+    fixum num ← input ⇒ numerus vel 0
     scribe num  # 0 (parse failed, uses default)
 
     fixum validInput ← "42"
-    fixum validNum ← validInput numeratum vel 0
+    fixum validNum ← validInput ⇒ numerus vel 0
     scribe validNum  # 42
 }

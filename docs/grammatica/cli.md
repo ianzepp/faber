@@ -348,7 +348,7 @@ For commands with many options, use the `optiones` modifier to bundle all `@ opt
 @ optio strict longum "strict" bivalens descriptio "Fail on errors"
 functio emit(lista<textus> files) optiones opts -> vacuum {
     fixum target = opts["target"] vel "ts"
-    fixum strict = opts["strict"] bivalentum vel falsum
+    fixum strict = opts["strict"] ⇒ bivalens vel falsum
     # ...
 }
 ```
@@ -357,7 +357,7 @@ The `optiones opts` modifier:
 - Bundles all `@ optio` annotations into a `Map<string, string>` named `opts`
 - Positional arguments (`@ operandus`) stay explicit in the function signature
 - Options are accessed via bracket notation: `opts["name"]`
-- Use `vel` for defaults and type coercion (`bivalentum`, `numeratum`)
+- Use `vel` for defaults and type coercion (`⇒ bivalens`, `⇒ numerus`)
 
 New `@ optio` syntax (preferred):
 ```fab
