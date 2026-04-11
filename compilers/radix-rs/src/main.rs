@@ -26,6 +26,7 @@
 //!   pipeline composition and REPL-style workflows.
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use std::fs;
 use std::io::{self, Read};
 use std::path::PathBuf;
 
@@ -33,6 +34,13 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Command::Build(args) => cmd_build(BuildCommand {
+            input: args.input,
+            out_dir: args.out_dir,
+            package: args.package,
+            target: args.target.into(),
+        }),
+        Command::Targets => cmd_targets(),
         Command::Lex(args) => cmd_lex(&args.input),
         Command::Parse(args) => cmd_parse(&args.input),
         Command::Hir(args) => cmd_hir(&args.input),
@@ -53,6 +61,10 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Compile a file or package and write output to disk
+    Build(BuildArgs),
+    /// Show supported targets and current capability notes
+    Targets,
     /// Tokenize source and output JSON
     Lex(InputArgs),
     /// Parse source and output AST as JSON
@@ -104,6 +116,24 @@ struct EmitPackageArgs {
     path: String,
 }
 
+#[derive(Args, Debug)]
+struct BuildArgs {
+    /// Output target language
+    #[arg(short = 't', long = "target", value_enum, default_value_t = CliTarget::Rust)]
+    target: CliTarget,
+
+    /// Output directory for generated files
+    #[arg(short = 'o', long = "out-dir", default_value = ".")]
+    out_dir: PathBuf,
+
+    /// Force package compilation mode
+    #[arg(long)]
+    package: bool,
+
+    /// Input file or package path
+    input: String,
+}
+
 #[derive(Debug)]
 struct CheckCommand {
     input: Vec<String>,
@@ -119,6 +149,14 @@ struct EmitCommand {
 #[derive(Debug)]
 struct EmitPackageCommand {
     path: String,
+    target: radix::codegen::Target,
+}
+
+#[derive(Debug)]
+struct BuildCommand {
+    input: String,
+    out_dir: PathBuf,
+    package: bool,
     target: radix::codegen::Target,
 }
 
@@ -142,6 +180,14 @@ impl From<CliTarget> for radix::codegen::Target {
             CliTarget::Go => radix::codegen::Target::Go,
         }
     }
+}
+
+struct TargetCapabilities {
+    check: bool,
+    build: bool,
+    run: bool,
+    package: bool,
+    note: &'static str,
 }
 
 /// Read source from file argument or stdin.
@@ -498,6 +544,155 @@ fn cmd_emit_package(command: EmitPackageCommand) {
             eprintln!("compilation failed");
             std::process::exit(1);
         }
+    }
+}
+
+fn cmd_build(command: BuildCommand) {
+    let input_path = PathBuf::from(&command.input);
+    let is_package = command.package || should_treat_as_package(&input_path);
+    let config = radix::driver::Config::default().with_target(command.target);
+    let compiler = radix::Compiler::new(config);
+    let result = if is_package {
+        compiler.compile_package(&input_path)
+    } else {
+        compiler.compile(&input_path)
+    };
+
+    for diag in &result.diagnostics {
+        if diag.is_error() {
+            eprintln!("error: {}", diag.message);
+        } else {
+            eprintln!("warning: {}", diag.message);
+        }
+    }
+
+    let Some(output) = result.output else {
+        eprintln!("compilation failed");
+        std::process::exit(1);
+    };
+
+    let output_path = build_output_path(&command.out_dir, &input_path, command.target, is_package);
+    if let Some(parent) = output_path.parent() {
+        fs::create_dir_all(parent).unwrap_or_else(|err| {
+            eprintln!("error: failed to create '{}': {}", parent.display(), err);
+            std::process::exit(1);
+        });
+    }
+
+    let code = match output {
+        radix::Output::Rust(out) => out.code,
+        radix::Output::Faber(out) => out.code,
+        radix::Output::TypeScript(out) => out.code,
+        radix::Output::Go(out) => out.code,
+    };
+
+    fs::write(&output_path, code).unwrap_or_else(|err| {
+        eprintln!("error: failed to write '{}': {}", output_path.display(), err);
+        std::process::exit(1);
+    });
+
+    println!("{}", output_path.display());
+}
+
+fn cmd_targets() {
+    for target in [
+        radix::codegen::Target::Rust,
+        radix::codegen::Target::Go,
+        radix::codegen::Target::TypeScript,
+        radix::codegen::Target::Faber,
+    ] {
+        let capabilities = target_capabilities(target);
+        println!(
+            "{} check={} build={} run={} package={} note={}",
+            target_name(target),
+            yes_no(capabilities.check),
+            yes_no(capabilities.build),
+            yes_no(capabilities.run),
+            yes_no(capabilities.package),
+            capabilities.note
+        );
+    }
+}
+
+fn should_treat_as_package(path: &std::path::Path) -> bool {
+    path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some("faber.fab")
+}
+
+fn build_output_path(
+    out_dir: &std::path::Path,
+    input_path: &std::path::Path,
+    target: radix::codegen::Target,
+    is_package: bool,
+) -> PathBuf {
+    let base_name = if is_package {
+        "main".to_owned()
+    } else {
+        input_path
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .filter(|stem| !stem.is_empty())
+            .unwrap_or("out")
+            .to_owned()
+    };
+    out_dir.join(format!("{}.{}", base_name, target_extension(target)))
+}
+
+fn target_extension(target: radix::codegen::Target) -> &'static str {
+    match target {
+        radix::codegen::Target::Rust => "rs",
+        radix::codegen::Target::Faber => "fab",
+        radix::codegen::Target::TypeScript => "ts",
+        radix::codegen::Target::Go => "go",
+    }
+}
+
+fn target_name(target: radix::codegen::Target) -> &'static str {
+    match target {
+        radix::codegen::Target::Rust => "rust",
+        radix::codegen::Target::Faber => "faber",
+        radix::codegen::Target::TypeScript => "ts",
+        radix::codegen::Target::Go => "go",
+    }
+}
+
+fn target_capabilities(target: radix::codegen::Target) -> TargetCapabilities {
+    match target {
+        radix::codegen::Target::Rust => TargetCapabilities {
+            check: true,
+            build: true,
+            run: false,
+            package: true,
+            note: "primary backend; package compilation supported",
+        },
+        radix::codegen::Target::Go => TargetCapabilities {
+            check: true,
+            build: true,
+            run: false,
+            package: false,
+            note: "file emission supported; package compilation not yet supported",
+        },
+        radix::codegen::Target::TypeScript => TargetCapabilities {
+            check: true,
+            build: true,
+            run: false,
+            package: false,
+            note: "file emission supported; package compilation not yet supported",
+        },
+        radix::codegen::Target::Faber => TargetCapabilities {
+            check: true,
+            build: true,
+            run: false,
+            package: false,
+            note: "canonical pretty-print target; package compilation not yet supported",
+        },
+    }
+}
+
+fn yes_no(value: bool) -> &'static str {
+    if value {
+        "yes"
+    } else {
+        "no"
     }
 }
 
