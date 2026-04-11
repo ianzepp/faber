@@ -30,7 +30,7 @@ mod expr;
 mod stmt;
 mod types;
 
-use super::{names::collect_names, CodeWriter, Codegen, CodegenError};
+use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
 use crate::hir::{
     DefId, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind,
     HirOptionalChainKind, HirProgram, HirStmtKind,
@@ -54,20 +54,16 @@ use std::collections::BTreeSet;
 /// WHY: Holds pre-analyzed state (names, failable functions) to enable correct
 /// error propagation and reference resolution during code generation.
 pub struct RustCodegen<'a> {
-    /// DefId -> Symbol map for all definitions
-    names: FxHashMap<DefId, Symbol>,
+    /// DefId -> Symbol map for all definitions plus symbol resolution.
+    names: NameCatalog<'a>,
 
     /// Set of DefIds for functions that can throw (return Result)
     failable_defs: FxHashSet<DefId>,
-
-    /// Interner for symbol resolution
-    interner: &'a Interner,
 }
 
 impl<'a> RustCodegen<'a> {
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
-        let mut codegen = Self { names: FxHashMap::default(), failable_defs: FxHashSet::default(), interner };
-        codegen.names = collect_names(hir);
+        let mut codegen = Self { names: NameCatalog::new(hir, interner), failable_defs: FxHashSet::default() };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen
     }
@@ -92,14 +88,11 @@ impl<'a> RustCodegen<'a> {
     }
 
     pub(super) fn resolve_symbol(&self, sym: Symbol) -> &str {
-        self.interner.resolve(sym)
+        self.names.resolve_symbol(sym)
     }
 
     pub(super) fn resolve_def(&self, def_id: DefId) -> &str {
-        self.names
-            .get(&def_id)
-            .map(|sym| self.resolve_symbol(*sym))
-            .unwrap_or("unresolved_def")
+        self.names.resolve_def(def_id)
     }
 
     pub(super) fn is_failable_def(&self, def_id: DefId) -> bool {

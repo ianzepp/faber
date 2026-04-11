@@ -30,7 +30,7 @@ mod expr;
 mod stmt;
 mod types;
 
-use super::{names::collect_names, CodeWriter, Codegen, CodegenError};
+use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
 use crate::hir::{
     DefId, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirItem, HirItemKind, HirOptionalChainKind,
     HirPattern, HirProgram, HirStmtKind,
@@ -42,23 +42,20 @@ use rustc_hash::FxHashMap;
 use std::collections::BTreeSet;
 
 pub struct GoCodegen<'a> {
-    names: FxHashMap<DefId, Symbol>,
+    names: NameCatalog<'a>,
     use_counts: FxHashMap<DefId, usize>,
     variant_fields: FxHashMap<DefId, Vec<Symbol>>,
     struct_fields: FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>,
-    interner: &'a Interner,
 }
 
 impl<'a> GoCodegen<'a> {
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
         let mut codegen = Self {
-            names: FxHashMap::default(),
+            names: NameCatalog::new(hir, interner),
             use_counts: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
             struct_fields: FxHashMap::default(),
-            interner,
         };
-        codegen.names = collect_names(hir);
         codegen.use_counts = codegen.collect_use_counts(hir);
         codegen.variant_fields = codegen.collect_variant_fields(hir);
         codegen.struct_fields = codegen.collect_struct_fields(hir);
@@ -66,14 +63,11 @@ impl<'a> GoCodegen<'a> {
     }
 
     pub(super) fn resolve_symbol(&self, sym: Symbol) -> &str {
-        self.interner.resolve(sym)
+        self.names.resolve_symbol(sym)
     }
 
     pub(super) fn resolve_def(&self, def_id: DefId) -> &str {
-        self.names
-            .get(&def_id)
-            .map(|sym| self.resolve_symbol(*sym))
-            .unwrap_or("unresolved_def")
+        self.names.resolve_def(def_id)
     }
 
     pub(super) fn is_used(&self, def_id: DefId) -> bool {

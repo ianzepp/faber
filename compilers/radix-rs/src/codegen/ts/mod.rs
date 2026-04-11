@@ -3,34 +3,27 @@ mod expr;
 mod stmt;
 mod types;
 
-use super::{names::collect_names, CodeWriter, Codegen, CodegenError};
+use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
 use crate::hir::{DefId, HirItem, HirItemKind, HirProgram};
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::TypeTable;
 use crate::TypeScriptOutput;
-use rustc_hash::FxHashMap;
 
 pub struct TsCodegen<'a> {
-    names: FxHashMap<DefId, Symbol>,
-    interner: &'a Interner,
+    names: NameCatalog<'a>,
 }
 
 impl<'a> TsCodegen<'a> {
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
-        let mut codegen = Self { names: FxHashMap::default(), interner };
-        codegen.names = collect_names(hir);
-        codegen
+        Self { names: NameCatalog::new(hir, interner) }
     }
 
     pub(super) fn resolve_symbol(&self, sym: Symbol) -> &str {
-        self.interner.resolve(sym)
+        self.names.resolve_symbol(sym)
     }
 
     pub(super) fn resolve_def(&self, def_id: DefId) -> &str {
-        self.names
-            .get(&def_id)
-            .map(|sym| self.resolve_symbol(*sym))
-            .unwrap_or("unresolved_def")
+        self.names.resolve_def(def_id)
     }
 
     fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
