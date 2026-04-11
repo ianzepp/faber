@@ -42,19 +42,56 @@ fn cmd_lex_parse_hir_check_emit_succeed_on_valid_file() {
     cmd_lex(&args);
     cmd_parse(&args);
     cmd_hir(&args);
-    cmd_check(&args);
-    cmd_emit(&args);
+    cmd_check(CheckCommand { input: args.clone(), permissive: false });
+    cmd_emit(EmitCommand { input: args, target: radix::codegen::Target::Rust });
 }
 
 #[test]
 fn cmd_emit_supports_faber_target_flag() {
     let file = write_temp_fab("emit-faber", "incipit {}");
-    let args = vec!["-t".to_owned(), "faber".to_owned(), file];
-    cmd_emit(&args);
+    cmd_emit(EmitCommand { input: vec![file], target: radix::codegen::Target::Faber });
 }
 
 #[test]
 fn cmd_emit_package_supports_cli_example() {
-    let args = vec!["../../examples/exempla/cli/main.fab".to_owned()];
-    cmd_emit_package(&args);
+    cmd_emit_package(EmitPackageCommand {
+        path: "../../examples/exempla/cli/main.fab".to_owned(),
+        target: radix::codegen::Target::Rust,
+    });
+}
+
+#[test]
+fn cli_parses_legacy_emit_package_shape() {
+    let cli = Cli::try_parse_from(["radix", "emit-package", "-t", "faber", "pkg/main.fab"]).expect("cli parse");
+    match cli.command {
+        Command::EmitPackage(args) => {
+            assert_eq!(args.target, CliTarget::Faber);
+            assert_eq!(args.path, "pkg/main.fab");
+        }
+        other => panic!("expected emit-package, got {:?}", other),
+    }
+}
+
+#[test]
+fn cli_parses_check_permissive_flag() {
+    let cli = Cli::try_parse_from(["radix", "check", "--permissive", "main.fab"]).expect("cli parse");
+    match cli.command {
+        Command::Check(args) => {
+            assert!(args.permissive);
+            assert_eq!(args.input, vec!["main.fab"]);
+        }
+        other => panic!("expected check, got {:?}", other),
+    }
+}
+
+#[test]
+fn cli_accepts_target_aliases() {
+    let cli = Cli::try_parse_from(["radix", "emit", "-t", "fab", "main.fab"]).expect("cli parse");
+    match cli.command {
+        Command::Emit(args) => {
+            assert_eq!(args.target, CliTarget::Faber);
+            assert_eq!(args.input, vec!["main.fab"]);
+        }
+        other => panic!("expected emit, got {:?}", other),
+    }
 }

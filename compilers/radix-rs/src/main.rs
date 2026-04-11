@@ -25,49 +25,123 @@
 //! - Stdin support: All commands accept stdin when no file is given, enabling
 //!   pipeline composition and REPL-style workflows.
 
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use std::io::{self, Read};
 use std::path::PathBuf;
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let cli = Cli::parse();
 
-    if args.len() < 2 {
-        print_usage();
-        std::process::exit(1);
-    }
-
-    let command = &args[1];
-
-    match command.as_str() {
-        "lex" => cmd_lex(&args[2..]),
-        "parse" => cmd_parse(&args[2..]),
-        "hir" => cmd_hir(&args[2..]),
-        "check" => cmd_check(&args[2..]),
-        "emit" => cmd_emit(&args[2..]),
-        "emit-package" => cmd_emit_package(&args[2..]),
-        "help" | "--help" | "-h" => print_usage(),
-        _ => {
-            eprintln!("unknown command: {}", command);
-            print_usage();
-            std::process::exit(1);
+    match cli.command {
+        Command::Lex(args) => cmd_lex(&args.input),
+        Command::Parse(args) => cmd_parse(&args.input),
+        Command::Hir(args) => cmd_hir(&args.input),
+        Command::Check(args) => cmd_check(CheckCommand { input: args.input, permissive: args.permissive }),
+        Command::Emit(args) => cmd_emit(EmitCommand { input: args.input, target: args.target.into() }),
+        Command::EmitPackage(args) => {
+            cmd_emit_package(EmitPackageCommand { path: args.path, target: args.target.into() })
         }
     }
 }
 
-fn print_usage() {
-    eprintln!("radix - Faber compiler");
-    eprintln!();
-    eprintln!("Usage: radix <command> [options] [file]");
-    eprintln!();
-    eprintln!("Commands:");
-    eprintln!("  lex <file>              Tokenize and output JSON");
-    eprintln!("  parse <file>            Parse and output AST as JSON");
-    eprintln!("  hir <file>              Lower AST to HIR and output as JSON");
-    eprintln!("  check [--permissive] <file> Run semantic analysis");
-    eprintln!("  emit [-t target] <file> Compile to target (rust, faber, ts, go)");
-    eprintln!("  emit-package [-t target] <path> Compile a local multi-file package");
-    eprintln!();
-    eprintln!("If no file is given, reads from stdin.");
+#[derive(Parser, Debug)]
+#[command(name = "radix", about = "Faber compiler", version)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Tokenize source and output JSON
+    Lex(InputArgs),
+    /// Parse source and output AST as JSON
+    Parse(InputArgs),
+    /// Lower AST to HIR and output as JSON
+    Hir(InputArgs),
+    /// Run semantic analysis
+    Check(CheckArgs),
+    /// Compile to target (rust, faber, ts, go)
+    Emit(EmitArgs),
+    /// Compile a local multi-file package
+    #[command(name = "emit-package")]
+    EmitPackage(EmitPackageArgs),
+}
+
+#[derive(Args, Debug)]
+struct InputArgs {
+    /// Input file path, or '-' / omitted for stdin
+    input: Vec<String>,
+}
+
+#[derive(Args, Debug)]
+struct CheckArgs {
+    /// Downgrade unresolved/import-driven semantic errors to warnings
+    #[arg(long)]
+    permissive: bool,
+
+    /// Input file path, or '-' / omitted for stdin
+    input: Vec<String>,
+}
+
+#[derive(Args, Debug)]
+struct EmitArgs {
+    /// Output target language
+    #[arg(short = 't', long = "target", value_enum, default_value_t = CliTarget::Rust)]
+    target: CliTarget,
+
+    /// Input file path, or '-' / omitted for stdin
+    input: Vec<String>,
+}
+
+#[derive(Args, Debug)]
+struct EmitPackageArgs {
+    /// Output target language
+    #[arg(short = 't', long = "target", value_enum, default_value_t = CliTarget::Rust)]
+    target: CliTarget,
+
+    /// Package entry file, directory, or faber.fab manifest
+    path: String,
+}
+
+#[derive(Debug)]
+struct CheckCommand {
+    input: Vec<String>,
+    permissive: bool,
+}
+
+#[derive(Debug)]
+struct EmitCommand {
+    input: Vec<String>,
+    target: radix::codegen::Target,
+}
+
+#[derive(Debug)]
+struct EmitPackageCommand {
+    path: String,
+    target: radix::codegen::Target,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, ValueEnum)]
+enum CliTarget {
+    #[default]
+    Rust,
+    #[value(alias = "fab")]
+    Faber,
+    #[value(name = "ts", alias = "typescript")]
+    TypeScript,
+    Go,
+}
+
+impl From<CliTarget> for radix::codegen::Target {
+    fn from(value: CliTarget) -> Self {
+        match value {
+            CliTarget::Rust => radix::codegen::Target::Rust,
+            CliTarget::Faber => radix::codegen::Target::Faber,
+            CliTarget::TypeScript => radix::codegen::Target::TypeScript,
+            CliTarget::Go => radix::codegen::Target::Go,
+        }
+    }
 }
 
 /// Read source from file argument or stdin.
@@ -302,21 +376,8 @@ fn cmd_hir(args: &[String]) {
 ///
 /// WHY: --permissive mode allows checking files with unresolved imports,
 /// useful for partial compilation or library development.
-fn cmd_check(args: &[String]) {
-    let mut permissive = false;
-    let mut file_args = Vec::new();
-    for arg in args {
-        match arg.as_str() {
-            "--permissive" => permissive = true,
-            _ if arg.starts_with('-') => {
-                eprintln!("unknown check option: {}", arg);
-                std::process::exit(1);
-            }
-            _ => file_args.push(arg.clone()),
-        }
-    }
-
-    let (name, source) = read_source(&file_args);
+fn cmd_check(command: CheckCommand) {
+    let (name, source) = read_source(&command.input);
 
     let lex_result = radix::lexer::lex(&source);
     if !lex_result.success() {
@@ -345,7 +406,7 @@ fn cmd_check(args: &[String]) {
     let mut fatal_errors = 0usize;
     let mut downgraded = 0usize;
     for err in &semantic_result.errors {
-        let downgraded_error = permissive && err.kind.is_permissive_check_downgrade();
+        let downgraded_error = command.permissive && err.kind.is_permissive_check_downgrade();
         let prefix = if err.is_error() && !downgraded_error {
             "error"
         } else {
@@ -361,14 +422,14 @@ fn cmd_check(args: &[String]) {
         }
     }
 
-    if permissive && downgraded > 0 {
+    if command.permissive && downgraded > 0 {
         eprintln!(
             "warning:{}: downgraded {} unresolved/import-driven semantic error(s) in permissive mode",
             name, downgraded
         );
     }
 
-    if semantic_result.success() || (permissive && fatal_errors == 0) {
+    if semantic_result.success() || (command.permissive && fatal_errors == 0) {
         eprintln!("ok: {}", name);
     } else {
         std::process::exit(1);
@@ -379,28 +440,10 @@ fn cmd_check(args: &[String]) {
 ///
 /// WHY: End-to-end compilation command. Accepts -t flag to select Rust or
 /// Faber pretty-print output.
-fn cmd_emit(args: &[String]) {
-    let mut target = radix::codegen::Target::Rust;
-    let mut file_args = args;
+fn cmd_emit(command: EmitCommand) {
+    let (name, source) = read_source(&command.input);
 
-    // WHY: Parse target flag manually to avoid dependency on clap or similar
-    if args.len() >= 2 && (args[0] == "-t" || args[0] == "--target") {
-        target = match args[1].as_str() {
-            "rust" | "rs" => radix::codegen::Target::Rust,
-            "faber" | "fab" => radix::codegen::Target::Faber,
-            "ts" | "typescript" => radix::codegen::Target::TypeScript,
-            "go" => radix::codegen::Target::Go,
-            other => {
-                eprintln!("unknown target: {}", other);
-                std::process::exit(1);
-            }
-        };
-        file_args = &args[2..];
-    }
-
-    let (name, source) = read_source(file_args);
-
-    let config = radix::driver::Config::default().with_target(target);
+    let config = radix::driver::Config::default().with_target(command.target);
 
     let compiler = radix::Compiler::new(config);
     let result = compiler.compile_str(&name, &source);
@@ -433,32 +476,10 @@ fn cmd_emit(args: &[String]) {
     }
 }
 
-fn cmd_emit_package(args: &[String]) {
-    let mut target = radix::codegen::Target::Rust;
-    let mut file_args = args;
-
-    if args.len() >= 2 && (args[0] == "-t" || args[0] == "--target") {
-        target = match args[1].as_str() {
-            "rust" | "rs" => radix::codegen::Target::Rust,
-            "faber" | "fab" => radix::codegen::Target::Faber,
-            "ts" | "typescript" => radix::codegen::Target::TypeScript,
-            "go" => radix::codegen::Target::Go,
-            other => {
-                eprintln!("unknown target: {}", other);
-                std::process::exit(1);
-            }
-        };
-        file_args = &args[2..];
-    }
-
-    if file_args.is_empty() {
-        eprintln!("emit-package requires a package entry file, directory, or faber.fab manifest");
-        std::process::exit(1);
-    }
-
-    let config = radix::driver::Config::default().with_target(target);
+fn cmd_emit_package(command: EmitPackageCommand) {
+    let config = radix::driver::Config::default().with_target(command.target);
     let compiler = radix::Compiler::new(config);
-    let result = compiler.compile_package(&PathBuf::from(&file_args[0]));
+    let result = compiler.compile_package(&PathBuf::from(&command.path));
 
     for diag in &result.diagnostics {
         if diag.is_error() {
