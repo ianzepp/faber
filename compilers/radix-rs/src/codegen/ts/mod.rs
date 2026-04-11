@@ -155,8 +155,9 @@ impl<'a> TsCodegen<'a> {
                 if let Some(entries) = entries {
                     for field in entries {
                         match &field.key {
-                            crate::hir::HirObjectKey::Computed(expr)
-                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_names(names, expr),
+                            crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
+                                self.collect_expr_names(names, expr)
+                            }
                             crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
                         }
                         if let Some(value) = &field.value {
@@ -263,8 +264,9 @@ impl<'a> TsCodegen<'a> {
             HirExprKind::Array(elements) => {
                 for element in elements {
                     match element {
-                        crate::hir::HirArrayElement::Expr(expr)
-                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_names(names, expr),
+                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                            self.collect_expr_names(names, expr)
+                        }
                     }
                 }
             }

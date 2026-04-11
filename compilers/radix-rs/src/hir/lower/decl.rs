@@ -415,11 +415,19 @@ impl<'a> Lowerer<'a> {
         let items = match &decl.kind {
             crate::syntax::ImportKind::Named { name, alias } => {
                 let bound_name = alias.as_ref().map(|ident| ident.name).unwrap_or(name.name);
-                let item_def_id = self.lookup_name(bound_name).unwrap_or_else(|| self.next_def_id());
-                vec![HirImportItem { def_id: item_def_id, name: name.name, alias: alias.as_ref().map(|ident| ident.name) }]
+                let item_def_id = self
+                    .lookup_name(bound_name)
+                    .unwrap_or_else(|| self.next_def_id());
+                vec![HirImportItem {
+                    def_id: item_def_id,
+                    name: name.name,
+                    alias: alias.as_ref().map(|ident| ident.name),
+                }]
             }
             crate::syntax::ImportKind::Wildcard { alias } => {
-                let item_def_id = self.lookup_name(alias.name).unwrap_or_else(|| self.next_def_id());
+                let item_def_id = self
+                    .lookup_name(alias.name)
+                    .unwrap_or_else(|| self.next_def_id());
                 vec![HirImportItem { def_id: item_def_id, name: alias.name, alias: Some(alias.name) }]
             }
         };
@@ -427,11 +435,7 @@ impl<'a> Lowerer<'a> {
         Some(HirItem {
             id: self.next_hir_id(),
             def_id,
-            kind: HirItemKind::Import(HirImport {
-                path: decl.path,
-                visibility: decl.visibility,
-                items,
-            }),
+            kind: HirItemKind::Import(HirImport { path: decl.path, visibility: decl.visibility, items }),
             span: stmt.span,
         })
     }

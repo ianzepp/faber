@@ -219,7 +219,10 @@ fn exempla_faber_roundtrip_e2e() {
     }
 
     let pass_count = results.iter().filter(|r| r.passed).count();
-    eprintln!("Faber roundtrip exempla: {pass_count}/{} exempla files stabilize", results.len());
+    eprintln!(
+        "Faber roundtrip exempla: {pass_count}/{} exempla files stabilize",
+        results.len()
+    );
 
     for fail in results.iter().filter(|r| !r.passed) {
         eprintln!("[fail] {} :: {}", fail.path.display(), fail.reason);

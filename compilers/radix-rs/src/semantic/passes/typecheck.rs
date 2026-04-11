@@ -1301,7 +1301,10 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn check_match(&mut self, scrutinees: &mut [HirExpr], arms: &mut [HirCasuArm], expected: Option<TypeId>) -> TypeId {
-        let scrutinee_tys: Vec<_> = scrutinees.iter_mut().map(|scrutinee| self.check_expr(scrutinee)).collect();
+        let scrutinee_tys: Vec<_> = scrutinees
+            .iter_mut()
+            .map(|scrutinee| self.check_expr(scrutinee))
+            .collect();
         let mut result_ty = None;
 
         for arm in arms {
@@ -1709,11 +1712,7 @@ impl<'a> TypeChecker<'a> {
                     }
 
                     let Some(value) = &mut field.value else {
-                        self.error(
-                            SemanticErrorKind::InvalidOperandTypes,
-                            "object field requires value",
-                            span,
-                        );
+                        self.error(SemanticErrorKind::InvalidOperandTypes, "object field requires value", span);
                         continue;
                     };
                     let value_ty_actual = self.check_expr(value);

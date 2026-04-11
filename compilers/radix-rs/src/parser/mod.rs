@@ -391,7 +391,8 @@ impl Parser {
     /// TRADE-OFF: May skip over nested errors within the malformed statement,
     /// but allows parsing to continue and report subsequent errors.
     fn synchronize(&mut self, stop_at_rbrace: bool) {
-        if Self::is_recovery_boundary(&self.peek().kind) && (stop_at_rbrace || !matches!(self.peek().kind, TokenKind::RBrace))
+        if Self::is_recovery_boundary(&self.peek().kind)
+            && (stop_at_rbrace || !matches!(self.peek().kind, TokenKind::RBrace))
         {
             return;
         }

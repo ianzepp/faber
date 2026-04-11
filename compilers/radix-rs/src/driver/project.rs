@@ -24,8 +24,10 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
     if config.target != Target::Rust {
         return CompileResult {
             output: None,
-            diagnostics: vec![Diagnostic::error("package compilation currently supports Rust target only")
-                .with_file(input.display().to_string())],
+            diagnostics: vec![
+                Diagnostic::error("package compilation currently supports Rust target only")
+                    .with_file(input.display().to_string()),
+            ],
         };
     }
 
@@ -63,7 +65,8 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
                 Ok(Output::Rust(output)) => output.code,
                 Ok(_) => unreachable!("Rust target must emit Rust output"),
                 Err(err) => {
-                    diagnostics.push(Diagnostic::codegen_error(&err.message).with_file(file.path.display().to_string()));
+                    diagnostics
+                        .push(Diagnostic::codegen_error(&err.message).with_file(file.path.display().to_string()));
                     continue;
                 }
             }
@@ -71,7 +74,8 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
             match codegen::rust::generate_module(&analysis.hir, &analysis.types, &analysis.interner) {
                 Ok(output) => output.code,
                 Err(err) => {
-                    diagnostics.push(Diagnostic::codegen_error(&err.message).with_file(file.path.display().to_string()));
+                    diagnostics
+                        .push(Diagnostic::codegen_error(&err.message).with_file(file.path.display().to_string()));
                     continue;
                 }
             }
@@ -80,8 +84,10 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
         diagnostics.extend(analysis.diagnostics);
 
         if rust.contains("unresolved_def") {
-            diagnostics.push(Diagnostic::error("project compilation produced unresolved Rust backend names")
-                .with_file(file.path.display().to_string()));
+            diagnostics.push(
+                Diagnostic::error("project compilation produced unresolved Rust backend names")
+                    .with_file(file.path.display().to_string()),
+            );
             continue;
         }
 
@@ -124,7 +130,10 @@ fn discover_package(input: &Path) -> Result<PackageSpec, Diagnostic> {
     }
 
     let entry = normalize_path(&input);
-    let root = entry.parent().unwrap_or_else(|| Path::new(".")).to_path_buf();
+    let root = entry
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .to_path_buf();
     Ok(PackageSpec { source_root: root, entry })
 }
 
@@ -134,7 +143,10 @@ fn parse_manifest(path: &Path) -> Result<PackageSpec, Diagnostic> {
     let program = parse
         .program
         .ok_or_else(|| Diagnostic::error("manifest parse failed").with_file(path.display().to_string()))?;
-    let package_root = path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf();
+    let package_root = path
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .to_path_buf();
     let mut source_root = package_root.clone();
     let mut entry = source_root.join("main.fab");
 
@@ -152,9 +164,11 @@ fn parse_manifest(path: &Path) -> Result<PackageSpec, Diagnostic> {
                 }
             }
             "dependentia" => {
-                return Err(Diagnostic::error("package compilation does not support manifest dependencies yet")
-                    .with_file(path.display().to_string())
-                    .with_span(directive.span));
+                return Err(
+                    Diagnostic::error("package compilation does not support manifest dependencies yet")
+                        .with_file(path.display().to_string())
+                        .with_span(directive.span),
+                );
             }
             _ => {}
         }
@@ -186,7 +200,8 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
         let parse = parser::parse(crate::lexer::lex(&source));
         if !parse.success() {
             diagnostics.extend(
-                parse.errors
+                parse
+                    .errors
                     .iter()
                     .map(|err| Diagnostic::from_parse_error(&canonical.display().to_string(), &source, err)),
             );
@@ -398,10 +413,9 @@ mod tests {
 
         let result = compile_package(&Config::default(), &entry);
         assert!(result.output.is_none());
-        assert!(result
-            .diagnostics
-            .iter()
-            .any(|diag| diag.message.contains("only supports local intra-package imports")));
+        assert!(result.diagnostics.iter().any(|diag| diag
+            .message
+            .contains("only supports local intra-package imports")));
     }
 
     #[test]

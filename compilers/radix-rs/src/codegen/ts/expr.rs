@@ -893,15 +893,12 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
         HirExprKind::Verte { source, entries, .. } => {
             contains_await_in_expr(source)
                 || entries.as_ref().is_some_and(|entries| {
-                    entries.iter().any(|field| {
-                        match &field.key {
-                            HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => {
-                                contains_await_in_expr(expr)
-                                    || field.value.as_ref().is_some_and(contains_await_in_expr)
-                            }
-                            HirObjectKey::Ident(_) | HirObjectKey::String(_) => {
-                                field.value.as_ref().is_some_and(contains_await_in_expr)
-                            }
+                    entries.iter().any(|field| match &field.key {
+                        HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => {
+                            contains_await_in_expr(expr) || field.value.as_ref().is_some_and(contains_await_in_expr)
+                        }
+                        HirObjectKey::Ident(_) | HirObjectKey::String(_) => {
+                            field.value.as_ref().is_some_and(contains_await_in_expr)
                         }
                     })
                 })

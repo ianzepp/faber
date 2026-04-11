@@ -384,8 +384,9 @@ impl<'a> BorrowChecker<'a> {
                 if let Some(entries) = entries {
                     for field in entries {
                         match &field.key {
-                            crate::hir::HirObjectKey::Computed(expr)
-                            | crate::hir::HirObjectKey::Spread(expr) => self.check_expr(expr),
+                            crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
+                                self.check_expr(expr)
+                            }
                             crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
                         }
                         if let Some(value) = &field.value {

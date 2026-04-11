@@ -615,7 +615,10 @@ pub fn generate_expr(
             generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Array(elements) => {
-            if elements.iter().any(|element| matches!(element, HirArrayElement::Spread(_))) {
+            if elements
+                .iter()
+                .any(|element| matches!(element, HirArrayElement::Spread(_)))
+            {
                 let temp = format!("__faber_vec_{}", expr.id.0);
                 w.writeln("{");
                 let mut result = Ok(());
@@ -822,7 +825,10 @@ pub fn generate_expr(
                         w.write("Vec::<");
                         w.write(&type_to_rust(codegen, *elem, types));
                         w.write(">::new()");
-                    } else if elements.iter().any(|element| matches!(element, HirArrayElement::Spread(_))) {
+                    } else if elements
+                        .iter()
+                        .any(|element| matches!(element, HirArrayElement::Spread(_)))
+                    {
                         let temp = format!("__faber_verte_vec_{}", expr.id.0);
                         w.writeln("{");
                         let mut array_result = Ok(());
@@ -876,7 +882,9 @@ pub fn generate_expr(
                             if i > 0 {
                                 w.write(", ");
                             }
-                            let HirArrayElement::Expr(elem_expr) = elem_expr else { continue };
+                            let HirArrayElement::Expr(elem_expr) = elem_expr else {
+                                continue;
+                            };
                             generate_expr(
                                 codegen,
                                 elem_expr,

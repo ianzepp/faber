@@ -424,7 +424,10 @@ impl FaberCodegen {
 
             Type::Set(elem) => format!("copia<{}>", self.type_to_faber(*elem, types, names, interner)),
 
-            Type::Option(inner) => format!("si {}", self.type_to_faber(self.flatten_option(*inner, types), types, names, interner)),
+            Type::Option(inner) => format!(
+                "si {}",
+                self.type_to_faber(self.flatten_option(*inner, types), types, names, interner)
+            ),
 
             Type::Ref(mutability, inner) => {
                 let prefix = match mutability {
@@ -1094,11 +1097,7 @@ impl FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) {
-        if let Some(HirStmt {
-            kind: HirStmtKind::Local(local),
-            ..
-        }) = block.stmts.first()
-        {
+        if let Some(HirStmt { kind: HirStmtKind::Local(local), .. }) = block.stmts.first() {
             w.write(&self.symbol_to_string(local.name, interner));
             w.writeln(" {");
             w.indented(|w| {
@@ -1128,7 +1127,11 @@ impl FaberCodegen {
         w: &mut CodeWriter,
         binding: Option<&crate::hir::HirAdBinding>,
     ) {
-        let skip = if binding.is_some() { 1 + usize::from(binding.and_then(|binding| binding.alias).is_some()) } else { 0 };
+        let skip = if binding.is_some() {
+            1 + usize::from(binding.and_then(|binding| binding.alias).is_some())
+        } else {
+            0
+        };
         for stmt in block.stmts.iter().skip(skip) {
             self.write_stmt(stmt, types, names, interner, w);
         }
@@ -1656,7 +1659,9 @@ impl FaberCodegen {
             return false;
         }
 
-        let then_expr = self.reddit_expr(then_block).expect("checked by can_write_sic_secus_chain");
+        let then_expr = self
+            .reddit_expr(then_block)
+            .expect("checked by can_write_sic_secus_chain");
         let else_block = else_block.expect("checked by can_write_sic_secus_chain");
 
         self.write_expr_prec(cond, 2, types, names, interner, w);

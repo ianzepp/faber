@@ -11,7 +11,11 @@ fn faber_roundtrip(source: &str) -> String {
     assert!(
         first.success(),
         "first faber compile failed: {:?}",
-        first.diagnostics.iter().map(|diag| diag.message.clone()).collect::<Vec<_>>()
+        first
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.clone())
+            .collect::<Vec<_>>()
     );
     let Some(crate::Output::Faber(first_output)) = first.output else {
         panic!("expected faber output");
@@ -21,14 +25,21 @@ fn faber_roundtrip(source: &str) -> String {
     assert!(
         second.success(),
         "second faber compile failed: {:?}\n{}",
-        second.diagnostics.iter().map(|diag| diag.message.clone()).collect::<Vec<_>>(),
+        second
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.clone())
+            .collect::<Vec<_>>(),
         first_output.code
     );
     let Some(crate::Output::Faber(second_output)) = second.output else {
         panic!("expected faber output");
     };
 
-    assert_eq!(first_output.code, second_output.code, "faber emit should stabilize after one roundtrip");
+    assert_eq!(
+        first_output.code, second_output.code,
+        "faber emit should stabilize after one roundtrip"
+    );
     second_output.code
 }
 
@@ -175,14 +186,12 @@ fn rust_target_rejects_exception_constructs() {
 
     assert!(result.output.is_none());
     assert!(!result.success());
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|d| d.is_error() && d.message.contains("iacit is not supported for Rust targets")));
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|d| d.is_error() && d.message.contains("tempta is not supported for Rust targets")));
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("iacit is not supported for Rust targets")));
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("tempta is not supported for Rust targets")));
     assert!(result
         .diagnostics
         .iter()

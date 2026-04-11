@@ -348,10 +348,7 @@ fn check_match(
 
     for arm in arms {
         let is_guarded = arm.guard.is_some();
-        let _is_catchall = arm
-            .patterns
-            .iter()
-            .all(is_catchall_pattern);
+        let _is_catchall = arm.patterns.iter().all(is_catchall_pattern);
 
         if has_catchall {
             errors.push(SemanticError::new(

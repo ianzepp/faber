@@ -379,12 +379,9 @@ impl<'a> Lowerer<'a> {
         let value = match &field.value {
             Some(value) => Some(lower_expr(self, value)),
             None => match &field.key {
-                crate::syntax::ObjectKey::Ident(ident) => Some(HirExpr {
-                    id: self.next_hir_id(),
-                    kind: self.lower_nomen(ident),
-                    ty: None,
-                    span: ident.span,
-                }),
+                crate::syntax::ObjectKey::Ident(ident) => {
+                    Some(HirExpr { id: self.next_hir_id(), kind: self.lower_nomen(ident), ty: None, span: ident.span })
+                }
                 crate::syntax::ObjectKey::String(_)
                 | crate::syntax::ObjectKey::Computed(_)
                 | crate::syntax::ObjectKey::Spread(_) => None,
@@ -513,7 +510,10 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Intervallum {
             start: Box::new(lower_expr(self, &range.start)),
             end: Box::new(lower_expr(self, &range.end)),
-            step: range.step.as_ref().map(|step| Box::new(lower_expr(self, step))),
+            step: range
+                .step
+                .as_ref()
+                .map(|step| Box::new(lower_expr(self, step))),
             kind: match range.kind {
                 crate::syntax::RangeKind::Exclusive => crate::hir::HirRangeKind::Exclusive,
                 crate::syntax::RangeKind::Inclusive => crate::hir::HirRangeKind::Inclusive,

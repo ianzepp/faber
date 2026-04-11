@@ -57,7 +57,9 @@ fn lower_ident_pattern(lowerer: &mut Lowerer, ident: &crate::syntax::Ident, bind
         ) {
             return match bind {
                 None => HirPattern::Variant(def_id, Vec::new()),
-                Some(PatternBind::Alias(alias)) => lower_alias_pattern(lowerer, alias, HirPattern::Variant(def_id, Vec::new())),
+                Some(PatternBind::Alias(alias)) => {
+                    lower_alias_pattern(lowerer, alias, HirPattern::Variant(def_id, Vec::new()))
+                }
                 Some(PatternBind::Bindings { mutability, names }) => {
                     if *mutability == Mutability::Mutable {
                         lowerer.error("mutable pattern bindings are not lowered yet");
@@ -114,11 +116,7 @@ fn lower_bindings(lowerer: &mut Lowerer, names: &[crate::syntax::Ident]) -> Vec<
         .collect()
 }
 
-fn lower_alias_pattern(
-    lowerer: &mut Lowerer,
-    alias: &crate::syntax::Ident,
-    pattern: HirPattern,
-) -> HirPattern {
+fn lower_alias_pattern(lowerer: &mut Lowerer, alias: &crate::syntax::Ident, pattern: HirPattern) -> HirPattern {
     lowerer.current_span = alias.span;
     let alias_def_id = lowerer.next_def_id();
     lowerer.bind_local(alias.name, alias_def_id);

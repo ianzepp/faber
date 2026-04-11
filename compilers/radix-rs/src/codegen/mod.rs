@@ -283,7 +283,9 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
         HirExprKind::Array(elements) => elements.iter().find_map(|element| match element {
             HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => find_error_expr_in_expr(expr),
         }),
-        HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => elements.iter().find_map(find_error_expr_in_expr),
+        HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            elements.iter().find_map(find_error_expr_in_expr)
+        }
         HirExprKind::Struct(_, fields) => fields
             .iter()
             .find_map(|(_, value)| find_error_expr_in_expr(value)),

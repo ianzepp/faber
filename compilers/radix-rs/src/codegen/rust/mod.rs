@@ -257,8 +257,9 @@ impl<'a> RustCodegen<'a> {
                 if let Some(entries) = entries {
                     for field in entries {
                         match &field.key {
-                            crate::hir::HirObjectKey::Computed(expr)
-                            | crate::hir::HirObjectKey::Spread(expr) => self.collect_expr_names(names, expr),
+                            crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
+                                self.collect_expr_names(names, expr)
+                            }
                             crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
                         }
                         if let Some(value) = &field.value {
@@ -362,8 +363,9 @@ impl<'a> RustCodegen<'a> {
             HirExprKind::Array(elements) => {
                 for element in elements {
                     match element {
-                        crate::hir::HirArrayElement::Expr(expr)
-                        | crate::hir::HirArrayElement::Spread(expr) => self.collect_expr_names(names, expr),
+                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                            self.collect_expr_names(names, expr)
+                        }
                     }
                 }
             }
@@ -527,8 +529,9 @@ impl<'a> RustCodegen<'a> {
                     if let Some(entries) = entries {
                         for field in entries {
                             match &field.key {
-                                crate::hir::HirObjectKey::Computed(expr)
-                                | crate::hir::HirObjectKey::Spread(expr) => visit_expr(expr, suppressed, deps),
+                                crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
+                                    visit_expr(expr, suppressed, deps)
+                                }
                                 crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
                             }
                             if let Some(value) = &field.value {
@@ -622,8 +625,9 @@ impl<'a> RustCodegen<'a> {
                 HirExprKind::Array(elements) => {
                     for element in elements {
                         match element {
-                            crate::hir::HirArrayElement::Expr(expr)
-                            | crate::hir::HirArrayElement::Spread(expr) => visit_expr(expr, suppressed, deps),
+                            crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
+                                visit_expr(expr, suppressed, deps)
+                            }
                         }
                     }
                 }
@@ -796,7 +800,12 @@ impl Codegen for RustCodegen<'_> {
 }
 
 impl RustCodegen<'_> {
-    fn generate_output(&self, hir: &HirProgram, types: &TypeTable, module_mode: bool) -> Result<RustOutput, CodegenError> {
+    fn generate_output(
+        &self,
+        hir: &HirProgram,
+        types: &TypeTable,
+        module_mode: bool,
+    ) -> Result<RustOutput, CodegenError> {
         let mut body = CodeWriter::new();
 
         for item in &hir.items {

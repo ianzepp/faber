@@ -30,9 +30,9 @@
 //! 4. Semantic: Name resolution, type checking, borrow analysis
 //! 5. Codegen: Emit target source code
 
+mod project;
 mod session;
 mod source;
-mod project;
 
 pub use project::compile_package;
 pub use session::{Config, Session};
@@ -78,7 +78,9 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     match codegen::generate(session.config.target, &analysis.hir, &analysis.types, &analysis.interner) {
         Ok(output) => CompileResult { output: Some(output), diagnostics: analysis.diagnostics },
         Err(err) => {
-            analysis.diagnostics.push(Diagnostic::codegen_error(&err.message));
+            analysis
+                .diagnostics
+                .push(Diagnostic::codegen_error(&err.message));
             CompileResult { output: None, diagnostics: analysis.diagnostics }
         }
     }
@@ -360,8 +362,13 @@ fn scan_stmt_for_rust_unsupported_errors(stmt: &Stmt, file: &str, diagnostics: &
                 scan_expr_for_rust_unsupported_errors(init, file, diagnostics);
             }
         }
-        StmtKind::Import(_) | StmtKind::TypeAlias(_) | StmtKind::Enum(_) | StmtKind::Union(_) | StmtKind::Interface(_)
-        | StmtKind::Rumpe(_) | StmtKind::Perge(_) => {}
+        StmtKind::Import(_)
+        | StmtKind::TypeAlias(_)
+        | StmtKind::Enum(_)
+        | StmtKind::Union(_)
+        | StmtKind::Interface(_)
+        | StmtKind::Rumpe(_)
+        | StmtKind::Perge(_) => {}
         StmtKind::Ex(stmt) => scan_expr_for_rust_unsupported_errors(&stmt.source, file, diagnostics),
     }
 }
@@ -415,11 +422,7 @@ fn scan_else_for_rust_unsupported_errors(clause: &SecusClause, file: &str, diagn
     }
 }
 
-fn scan_inline_return_for_rust_unsupported_errors(
-    ret: &InlineReturn,
-    file: &str,
-    diagnostics: &mut Vec<Diagnostic>,
-) {
+fn scan_inline_return_for_rust_unsupported_errors(ret: &InlineReturn, file: &str, diagnostics: &mut Vec<Diagnostic>) {
     match ret {
         InlineReturn::Reddit(expr) | InlineReturn::Moritor(expr) => {
             scan_expr_for_rust_unsupported_errors(expr, file, diagnostics);
@@ -535,12 +538,10 @@ fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &
                 }
             }
         }
-        ExprKind::Clausura(clausura) => {
-            match &clausura.body {
-                ClausuraBody::Expr(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
-                ClausuraBody::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
-            }
-        }
+        ExprKind::Clausura(clausura) => match &clausura.body {
+            ClausuraBody::Expr(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
+            ClausuraBody::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
+        },
         ExprKind::Conversio(conversio) => {
             scan_expr_for_rust_unsupported_errors(&conversio.expr, file, diagnostics);
             if let Some(fallback) = &conversio.fallback {
@@ -566,11 +567,7 @@ fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &
             PraefixumBody::Expr(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
         },
         ExprKind::Paren(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
-        ExprKind::Literal(_)
-        | ExprKind::Ident(_)
-        | ExprKind::Lege(_)
-        | ExprKind::Sed(_)
-        | ExprKind::Ego(_) => {}
+        ExprKind::Literal(_) | ExprKind::Ident(_) | ExprKind::Lege(_) | ExprKind::Sed(_) | ExprKind::Ego(_) => {}
     }
 }
 

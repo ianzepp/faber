@@ -165,7 +165,10 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
         kind: HirExprKind::Discerne(
             vec![HirExpr { id: HirId(21), kind: HirExprKind::Path(DefId(40)), ty: Some(numerus), span: span() }],
             vec![HirCasuArm {
-                patterns: vec![HirPattern::Variant(DefId(30), vec![HirPattern::Binding(DefId(41), bind_name)])],
+                patterns: vec![HirPattern::Variant(
+                    DefId(30),
+                    vec![HirPattern::Binding(DefId(41), bind_name)],
+                )],
                 guard: Some(HirExpr {
                     id: HirId(22),
                     kind: HirExprKind::Literal(HirLiteral::Bool(true)),
@@ -672,7 +675,10 @@ fn expr_codegen_handles_control_flow_and_operators() {
                         span: span(),
                     }],
                     vec![HirCasuArm {
-                        patterns: vec![HirPattern::Variant(DefId(5), vec![HirPattern::Binding(DefId(6), method)])],
+                        patterns: vec![HirPattern::Variant(
+                            DefId(5),
+                            vec![HirPattern::Binding(DefId(6), method)],
+                        )],
                         guard: Some(HirExpr {
                             id: HirId(322),
                             kind: HirExprKind::Literal(HirLiteral::Bool(true)),

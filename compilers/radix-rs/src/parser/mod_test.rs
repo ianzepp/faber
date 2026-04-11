@@ -1,8 +1,8 @@
 use super::parse;
 use crate::lexer::lex;
 use crate::syntax::{
-    AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, IfBody, ImportKind, InlineReturn, IteraMode,
-    Mutability, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause, StmtKind,
+    AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, IfBody, ImportKind, InlineReturn, IteraMode, Mutability,
+    ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause, StmtKind,
 };
 
 fn parse_program(source: &str) -> super::ParseResult {
@@ -38,7 +38,9 @@ rumpe
 
     assert_eq!(result.errors.len(), 1, "expected one parse error");
 
-    let program = result.program.expect("parser should still produce a program");
+    let program = result
+        .program
+        .expect("parser should still produce a program");
     assert_eq!(program.stmts.len(), 1, "recovery should preserve the following statement");
     assert!(matches!(program.stmts[0].kind, StmtKind::Rumpe(_)));
 }
@@ -56,7 +58,9 @@ incipit {
 
     assert_eq!(result.errors.len(), 1, "expected one parse error");
 
-    let program = result.program.expect("parser should still produce a program");
+    let program = result
+        .program
+        .expect("parser should still produce a program");
     assert_eq!(program.stmts.len(), 1);
 
     let StmtKind::Incipit(entry) = &program.stmts[0].kind else {
@@ -67,7 +71,11 @@ incipit {
         panic!("expected block body");
     };
 
-    assert_eq!(block.stmts.len(), 1, "recovery should preserve valid statements inside the block");
+    assert_eq!(
+        block.stmts.len(),
+        1,
+        "recovery should preserve valid statements inside the block"
+    );
     assert!(matches!(block.stmts[0].kind, StmtKind::Rumpe(_)));
 }
 
@@ -83,14 +91,20 @@ functio vale() {}
 
     assert_eq!(result.errors.len(), 1, "expected one parse error");
 
-    let program = result.program.expect("parser should still produce a program");
+    let program = result
+        .program
+        .expect("parser should still produce a program");
     assert_eq!(program.stmts.len(), 1, "recovery should preserve the following declaration");
 
     let StmtKind::Func(func) = &program.stmts[0].kind else {
         panic!("expected function declaration");
     };
 
-    assert_eq!(program.stmts[0].annotations.len(), 1, "annotation should remain attached after recovery");
+    assert_eq!(
+        program.stmts[0].annotations.len(),
+        1,
+        "annotation should remain attached after recovery"
+    );
     assert!(func.body.is_some());
 }
 
@@ -105,8 +119,14 @@ fixum numerus postea ← 2
 
     assert_eq!(result.errors.len(), 1, "expected one parse error");
 
-    let program = result.program.expect("parser should still produce a program");
-    assert_eq!(program.stmts.len(), 1, "recovery should preserve the following variable declaration");
+    let program = result
+        .program
+        .expect("parser should still produce a program");
+    assert_eq!(
+        program.stmts.len(),
+        1,
+        "recovery should preserve the following variable declaration"
+    );
 
     let StmtKind::Var(var) = &program.stmts[0].kind else {
         panic!("expected variable declaration");
@@ -137,7 +157,10 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
 
     assert_eq!(result.program.as_ref().expect("program").directives.len(), 1);
 
-    let program = result.program.as_ref().expect("parser should produce a program");
+    let program = result
+        .program
+        .as_ref()
+        .expect("parser should produce a program");
     assert_eq!(program.stmts.len(), 7);
 
     let StmtKind::Import(import) = &program.stmts[0].kind else {
@@ -176,7 +199,10 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
     assert!(func.body.is_some());
     assert!(func.params[0].optional);
     assert!(matches!(func.params[0].mode, ParamMode::Ref));
-    assert_eq!(symbol_name(&result, func.params[0].alias.as_ref().expect("alias").name), "alias");
+    assert_eq!(
+        symbol_name(&result, func.params[0].alias.as_ref().expect("alias").name),
+        "alias"
+    );
     assert!(func.params[0].default.is_some());
     assert!(matches!(func.params[1].mode, ParamMode::Move));
     assert!(func.params[2].rest);
@@ -222,7 +248,10 @@ probandum "suite" {
 "#,
     );
 
-    let program = result.program.as_ref().expect("parser should produce a program");
+    let program = result
+        .program
+        .as_ref()
+        .expect("parser should produce a program");
     assert_eq!(program.stmts.len(), 3);
 
     let StmtKind::Class(class) = &program.stmts[0].kind else {
@@ -274,13 +303,20 @@ probandum "suite" {
     assert!(matches!(case.modifiers[5], ProbaModifier::Metior));
     assert!(matches!(case.modifiers[6], ProbaModifier::Repete(2)));
     assert!(matches!(case.modifiers[7], ProbaModifier::Fragilis(1)));
-    assert!(matches!(case.modifiers[8], ProbaModifier::Requirit(_) | ProbaModifier::SolumIn(_)));
+    assert!(matches!(
+        case.modifiers[8],
+        ProbaModifier::Requirit(_) | ProbaModifier::SolumIn(_)
+    ));
     assert!(
-        case.modifiers.iter().any(|modifier| matches!(modifier, ProbaModifier::Requirit(_))),
+        case.modifiers
+            .iter()
+            .any(|modifier| matches!(modifier, ProbaModifier::Requirit(_))),
         "expected requirit modifier"
     );
     assert!(
-        case.modifiers.iter().any(|modifier| matches!(modifier, ProbaModifier::SolumIn(_))),
+        case.modifiers
+            .iter()
+            .any(|modifier| matches!(modifier, ProbaModifier::SolumIn(_))),
         "expected solumIn modifier"
     );
 }
@@ -309,7 +345,10 @@ mori "panic"
 "#,
     );
 
-    let program = result.program.as_ref().expect("parser should produce a program");
+    let program = result
+        .program
+        .as_ref()
+        .expect("parser should produce a program");
     assert_eq!(program.stmts.len(), 17);
 
     let StmtKind::Si(if_stmt) = &program.stmts[0].kind else {
@@ -321,7 +360,10 @@ mori "panic"
         panic!("expected sin clause");
     };
     assert!(matches!(sin_stmt.then, IfBody::InlineReturn(InlineReturn::Reddit(_))));
-    assert!(matches!(sin_stmt.else_.as_ref().expect("secus clause"), SecusClause::InlineReturn(InlineReturn::Tacet)));
+    assert!(matches!(
+        sin_stmt.else_.as_ref().expect("secus clause"),
+        SecusClause::InlineReturn(InlineReturn::Tacet)
+    ));
 
     let StmtKind::Dum(while_stmt) = &program.stmts[1].kind else {
         panic!("expected while statement");
@@ -407,7 +449,10 @@ ex source varia nomen ut name, ceteri reliqua
 "#,
     );
 
-    let program = result.program.as_ref().expect("parser should produce a program");
+    let program = result
+        .program
+        .as_ref()
+        .expect("parser should produce a program");
     assert_eq!(program.stmts.len(), 6);
 
     let StmtKind::Incipit(main_stmt) = &program.stmts[0].kind else {
@@ -454,6 +499,12 @@ ex source varia nomen ut name, ceteri reliqua
     };
     assert!(matches!(extract.mutability, Mutability::Mutable));
     assert_eq!(extract.fields.len(), 1);
-    assert_eq!(symbol_name(&result, extract.fields[0].alias.as_ref().expect("field alias").name), "name");
-    assert_eq!(symbol_name(&result, extract.rest.as_ref().expect("rest binding").name), "reliqua");
+    assert_eq!(
+        symbol_name(&result, extract.fields[0].alias.as_ref().expect("field alias").name),
+        "name"
+    );
+    assert_eq!(
+        symbol_name(&result, extract.rest.as_ref().expect("rest binding").name),
+        "reliqua"
+    );
 }

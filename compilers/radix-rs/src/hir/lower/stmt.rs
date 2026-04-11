@@ -443,19 +443,28 @@ impl<'a> Lowerer<'a> {
                 _ => self.lower_expr(&arg.value),
             })
             .collect();
-        let binding = stmt.binding.as_ref().map(|binding| crate::hir::HirAdBinding {
-            verb: match binding.verb {
-                crate::syntax::EndpointVerb::Fit => crate::hir::HirEndpointVerb::Fit,
-                crate::syntax::EndpointVerb::Fiet => crate::hir::HirEndpointVerb::Fiet,
-                crate::syntax::EndpointVerb::Fiunt => crate::hir::HirEndpointVerb::Fiunt,
-                crate::syntax::EndpointVerb::Fient => crate::hir::HirEndpointVerb::Fient,
-            },
-            ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
-            name: binding.name.name,
-            alias: binding.alias.as_ref().map(|alias| alias.name),
-        });
-        let body = stmt.body.as_ref().map(|body| self.lower_ad_body(body, stmt.binding.as_ref()));
-        let catch = stmt.catch.as_ref().map(|catch| self.lower_cape_clause_block(catch));
+        let binding = stmt
+            .binding
+            .as_ref()
+            .map(|binding| crate::hir::HirAdBinding {
+                verb: match binding.verb {
+                    crate::syntax::EndpointVerb::Fit => crate::hir::HirEndpointVerb::Fit,
+                    crate::syntax::EndpointVerb::Fiet => crate::hir::HirEndpointVerb::Fiet,
+                    crate::syntax::EndpointVerb::Fiunt => crate::hir::HirEndpointVerb::Fiunt,
+                    crate::syntax::EndpointVerb::Fient => crate::hir::HirEndpointVerb::Fient,
+                },
+                ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+                name: binding.name.name,
+                alias: binding.alias.as_ref().map(|alias| alias.name),
+            });
+        let body = stmt
+            .body
+            .as_ref()
+            .map(|body| self.lower_ad_body(body, stmt.binding.as_ref()));
+        let catch = stmt
+            .catch
+            .as_ref()
+            .map(|catch| self.lower_cape_clause_block(catch));
 
         HirStmtKind::Ad(crate::hir::HirAd { path: stmt.path, args, binding, body, catch })
     }
@@ -592,7 +601,10 @@ impl<'a> Lowerer<'a> {
                     vec![HirPattern::Wildcard]
                 }
                 many => {
-                    let lowered: Vec<_> = many.iter().map(|pattern| pattern::lower_pattern(self, pattern)).collect();
+                    let lowered: Vec<_> = many
+                        .iter()
+                        .map(|pattern| pattern::lower_pattern(self, pattern))
+                        .collect();
                     if lowered.len() != scrutinees.len() {
                         self.error("discerne pattern count must match subject count");
                     }
@@ -610,7 +622,9 @@ impl<'a> Lowerer<'a> {
             let block = self.lower_ergo_body(&default.body);
             let body = self.block_expr(block, default.span);
             arms.push(HirCasuArm {
-                patterns: (0..scrutinees.len().max(1)).map(|_| HirPattern::Wildcard).collect(),
+                patterns: (0..scrutinees.len().max(1))
+                    .map(|_| HirPattern::Wildcard)
+                    .collect(),
                 guard: None,
                 body,
                 span: default.span,
@@ -729,7 +743,9 @@ impl<'a> Lowerer<'a> {
                 },
             );
             if let Some(alias) = &binding.alias {
-                let alias_def_id = self.lookup_name(alias.name).expect("ad alias binding should be in scope");
+                let alias_def_id = self
+                    .lookup_name(alias.name)
+                    .expect("ad alias binding should be in scope");
                 lowered_body.stmts.insert(
                     1,
                     HirStmt {
@@ -782,26 +798,24 @@ impl<'a> Lowerer<'a> {
                 expr: None,
                 span: stmt.body.span,
             };
-            HirExpr {
-                id: self.next_hir_id(),
-                kind: HirExprKind::Loop(loop_block),
-                ty: None,
-                span: self.current_span,
-            }
+            HirExpr { id: self.next_hir_id(), kind: HirExprKind::Loop(loop_block), ty: None, span: self.current_span }
         } else {
-            HirExpr {
-                id: self.next_hir_id(),
-                kind: HirExprKind::Block(block),
-                ty: None,
-                span: self.current_span,
-            }
+            HirExpr { id: self.next_hir_id(), kind: HirExprKind::Block(block), ty: None, span: self.current_span }
         };
 
         if let Some(catch) = &stmt.catch {
             HirExpr {
                 id: self.next_hir_id(),
                 kind: HirExprKind::Tempta {
-                    body: HirBlock { stmts: vec![HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Expr(expr), span: self.current_span }], expr: None, span: self.current_span },
+                    body: HirBlock {
+                        stmts: vec![HirStmt {
+                            id: self.next_hir_id(),
+                            kind: HirStmtKind::Expr(expr),
+                            span: self.current_span,
+                        }],
+                        expr: None,
+                        span: self.current_span,
+                    },
                     catch: Some(self.lower_cape_clause_block(catch)),
                     finally: None,
                 },
