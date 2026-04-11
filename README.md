@@ -113,7 +113,7 @@ Current status model:
 # radix-rs (primary compiler — Rust target)
 cd compilers/radix-rs && cargo build --release
 cargo run -- emit ../../examples/exempla/salve-munde.fab          # Emit one file as Rust
-cargo run -- emit-package ../../examples/exempla/cli/main.fab     # Emit a local multi-file package
+cargo run -- emit --package ../../examples/exempla/cli/main.fab   # Emit a local multi-file package
 
 # Root-scoped primary checks
 bun run check:radix-rs

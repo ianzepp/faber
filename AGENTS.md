@@ -117,8 +117,8 @@ The production compiler at `compilers/radix-rs/`. **Use this for all new develop
 ```
 cd compilers/radix-rs && cargo build --release             # Build
 cd compilers/radix-rs && cargo test                        # Run tests
-cd compilers/radix-rs && cargo run -- emit <file.fab>      # Emit Rust
-cd compilers/radix-rs && cargo run -- emit-package <path>  # Emit local multi-file package as Rust
+cd compilers/radix-rs && cargo run -- emit <file.fab>              # Emit Rust
+cd compilers/radix-rs && cargo run -- emit --package <path>        # Emit local multi-file package as Rust
 cd compilers/radix-rs && cargo run -- parse <file.fab>     # Parse only
 cd compilers/radix-rs && cargo run -- check <file.fab>     # Semantic analysis
 ```
