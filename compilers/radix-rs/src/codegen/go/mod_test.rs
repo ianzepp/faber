@@ -238,6 +238,71 @@ incipit {
 }
 
 #[test]
+fn explicit_optional_local_initializers_wrap_pointer_values() {
+    let code = compile_go(
+        r#"incipit {
+  fixum si textus name ← "Marcus"
+  fixum display ← name vel "Anonymous"
+  scribe display
+}"#,
+    );
+
+    assert!(code.contains("name := func() *string"));
+    assert!(code.contains("if v != nil { return *v }"));
+}
+
+#[test]
+fn qua_primitive_and_array_conversions_emit_go_conversions() {
+    let code = compile_go(
+        r#"functio getData() → lista<numerus> {
+  redde [1, 2, 3]
+}
+
+incipit {
+  fixum data ← 42
+  fixum asText ← data ⇢ textus
+  fixum input ← "100"
+  fixum asNum ← input ⇢ numerus
+  fixum value ← 1
+  fixum asBool ← value ⇢ bivalens
+  fixum raw ← getData()
+  fixum items ← raw ⇢ lista<textus>
+  scribe asText, asNum, asBool, items
+}"#,
+    );
+
+    assert!(code.contains("asText := fmt.Sprint(data)"));
+    assert!(code.contains("asNum := func() int { v, _ := strconv.Atoi(fmt.Sprint(input)); return v }()"));
+    assert!(code.contains("asBool := (value != 0)"));
+    assert!(code.contains("out[i] = fmt.Sprint(value)"));
+}
+
+#[test]
+fn innatum_empty_and_nonempty_lists_emit_typed_slices() {
+    let code = compile_go(
+        r#"incipit {
+  fixum empty ← [] ⇢ lista<textus>
+  fixum nums ← [1, 2, 3] ⇢ lista<numerus>
+  scribe empty, nums
+}"#,
+    );
+
+    assert!(code.contains("empty := []string{}"));
+    assert!(code.contains("nums := []int{1, 2, 3}"));
+}
+
+#[test]
+fn integer_division_promotes_when_expression_type_is_fractus() {
+    let code = compile_go(
+        r#"functio divide(numerus a, numerus b) → fractus {
+  redde a / b
+}"#,
+    );
+
+    assert!(code.contains("return (float64(a) / float64(b))"));
+}
+
+#[test]
 fn custodi_nested_guards_emit_statement_if_chain() {
     let code = compile_go(
         r#"functio processValue(numerus x) → numerus {

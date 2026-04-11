@@ -815,7 +815,7 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
             // Conversio parameters (e.g., numeratum<i32, Hex>) are codegen hints,
             // not normal type annotations that must resolve in scope.
             if let ConversioTarget::Explicit(ty) = &expr.target {
-                resolve_type(resolver, interner, ty, errors);
+                resolve_conversio_target_type(resolver, interner, ty, errors);
             }
             if let Some(fallback) = &expr.fallback {
                 resolve_expr(resolver, interner, fallback, errors);
@@ -853,6 +853,25 @@ fn resolve_type(resolver: &mut Resolver, interner: &Interner, ty: &TypeExpr, err
             resolve_type(resolver, interner, &func.ret, errors);
         }
     }
+}
+
+fn resolve_conversio_target_type(
+    resolver: &mut Resolver,
+    interner: &Interner,
+    ty: &TypeExpr,
+    errors: &mut Vec<SemanticError>,
+) {
+    match &ty.kind {
+        TypeExprKind::Named(name, params) if Primitive::from_name(interner.resolve(name.name)).is_some() => {
+            resolve_type_ident(resolver, interner, name, errors);
+            if !params.is_empty() {
+                return;
+            }
+        }
+        _ => {}
+    }
+
+    resolve_type(resolver, interner, ty, errors);
 }
 
 fn resolve_type_ident(

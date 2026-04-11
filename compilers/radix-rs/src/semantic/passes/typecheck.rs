@@ -894,8 +894,17 @@ impl<'a> TypeChecker<'a> {
                 let lhs_kind = self.types.get(self.resolve_type(lhs_ty)).clone();
                 match lhs_kind {
                     Type::Option(inner) => {
-                        self.unify(rhs_ty, inner, rhs.span, "coalesce fallback type mismatch");
-                        inner
+                        match self.types.get(self.resolve_type(rhs_ty)).clone() {
+                            Type::Option(rhs_inner) => {
+                                self.unify(rhs_inner, inner, rhs.span, "coalesce fallback type mismatch");
+                                self.types.option(inner)
+                            }
+                            Type::Primitive(Primitive::Nihil) => self.types.option(inner),
+                            _ => {
+                                self.unify(rhs_ty, inner, rhs.span, "coalesce fallback type mismatch");
+                                inner
+                            }
+                        }
                     }
                     Type::Primitive(Primitive::Nihil) => rhs_ty,
                     _ => self.common_type(lhs_ty, rhs_ty, lhs.span),

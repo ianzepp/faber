@@ -1,3 +1,4 @@
+use super::expr::generate_expr_for_go_type;
 use super::types::type_to_go;
 use super::{expr::generate_expr, CodeWriter, CodegenError, GoCodegen};
 use crate::hir::{HirBlock, HirExprKind, HirPattern, HirStmt, HirStmtKind};
@@ -128,7 +129,11 @@ pub fn generate_stmt(
                 } else {
                     w.write(name);
                     w.write(" := ");
-                    generate_expr(codegen, init, types, w)?;
+                    if let Some(ty) = local.ty {
+                        generate_expr_for_go_type(codegen, init, ty, types, w)?;
+                    } else {
+                        generate_expr(codegen, init, types, w)?;
+                    }
                     w.newline();
                 }
                 if !codegen.is_used(local.def_id) {

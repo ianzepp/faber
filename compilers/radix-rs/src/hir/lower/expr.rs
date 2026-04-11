@@ -38,7 +38,7 @@ use crate::hir::{
     HirExprKind, HirLiteral, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind, HirTransformKind,
     HirUnOp,
 };
-use crate::semantic::{InferVar, Primitive, Type};
+use crate::semantic::{InferVar, Primitive, Type, TypeId};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
 
 /// Lower an expression
@@ -552,25 +552,15 @@ impl<'a> Lowerer<'a> {
 
     fn lower_conversio(&mut self, conversio: &crate::syntax::ConversioExpr) -> HirExprKind {
         let source = lower_expr(self, &conversio.expr);
+        let mut params = Vec::new();
         let target = match &conversio.target {
             crate::syntax::ConversioTarget::Numeratum => self.types.primitive(Primitive::Numerus),
             crate::syntax::ConversioTarget::Fractatum => self.types.primitive(Primitive::Fractus),
             crate::syntax::ConversioTarget::Textatum => self.types.primitive(Primitive::Textus),
             crate::syntax::ConversioTarget::Bivalentum => self.types.primitive(Primitive::Bivalens),
-            crate::syntax::ConversioTarget::Explicit(ty) => self.lower_type(ty),
+            crate::syntax::ConversioTarget::Explicit(ty) => lower_conversio_target_type(self, ty, &mut params),
         };
-        let params: Vec<_> = conversio
-            .type_params
-            .iter()
-            .filter_map(|ty| {
-                // Extract the raw type name symbol as a codegen hint, not a resolved type
-                if let crate::syntax::TypeExprKind::Named(ident, _) = &ty.kind {
-                    Some(ident.name)
-                } else {
-                    None
-                }
-            })
-            .collect();
+        params.extend(conversio.type_params.iter().filter_map(conversio_hint_symbol));
         let fallback = conversio
             .fallback
             .as_ref()
@@ -607,5 +597,37 @@ impl<'a> Lowerer<'a> {
                 HirExprKind::Error
             }
         }
+    }
+}
+
+fn lower_conversio_target_type(
+    lowerer: &mut Lowerer<'_>,
+    ty: &crate::syntax::TypeExpr,
+    params: &mut Vec<crate::lexer::Symbol>,
+) -> TypeId {
+    match &ty.kind {
+        crate::syntax::TypeExprKind::Named(ident, target_params)
+            if Primitive::from_name(lowerer.interner.resolve(ident.name)).is_some() =>
+        {
+            params.extend(target_params.iter().filter_map(conversio_hint_symbol));
+            let bare = crate::syntax::TypeExpr {
+                nullable: ty.nullable,
+                mode: ty.mode,
+                kind: crate::syntax::TypeExprKind::Named(
+                    crate::syntax::Ident { name: ident.name, span: ident.span },
+                    Vec::new(),
+                ),
+                span: ty.span,
+            };
+            lowerer.lower_type(&bare)
+        }
+        _ => lowerer.lower_type(ty),
+    }
+}
+
+fn conversio_hint_symbol(ty: &crate::syntax::TypeExpr) -> Option<crate::lexer::Symbol> {
+    match &ty.kind {
+        crate::syntax::TypeExprKind::Named(ident, _) => Some(ident.name),
+        _ => None,
     }
 }

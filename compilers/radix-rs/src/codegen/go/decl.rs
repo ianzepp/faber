@@ -1,6 +1,6 @@
 use super::stmt::generate_stmt;
 use super::types::type_to_go;
-use super::{expr::generate_expr, CodeWriter, CodegenError, GoCodegen};
+use super::{expr::{generate_expr, generate_expr_for_go_type}, CodeWriter, CodegenError, GoCodegen};
 use crate::hir::*;
 use crate::semantic::{Primitive, TypeTable};
 
@@ -138,7 +138,11 @@ fn generate_block_with_custom_prelude(
         if result.is_ok() {
             if let Some(expr) = &body.expr {
                 w.write("return ");
-                result = generate_expr(codegen, expr, types, w);
+                if let Some(ret_ty) = ret_ty {
+                    result = generate_expr_for_go_type(codegen, expr, ret_ty, types, w);
+                } else {
+                    result = generate_expr(codegen, expr, types, w);
+                }
                 w.newline();
             } else if needs_nil_return {
                 w.writeln("return nil");
