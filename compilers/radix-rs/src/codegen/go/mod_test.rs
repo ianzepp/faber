@@ -89,8 +89,42 @@ fn nested_object_honors_enclosing_map_value_type() {
 }"#,
     );
 
-    assert!(code.contains(r#"nested := map[string]map[string]any{"outer": map[string]any{"inner": 1}}"#));
-    assert!(!code.contains(r#"map[string]map[string]any{"outer": map[string]int{"inner": 1}}"#));
+    assert!(code.contains(r#"nested := map[string]map[string]int{"outer": map[string]int{"inner": 1}}"#));
+    assert!(!code.contains(r#"map[string]map[string]any{"outer": map[string]any{"inner": 1}}"#));
+}
+
+#[test]
+fn map_member_access_asserts_precise_types_when_map_values_are_any() {
+    let code = compile_go(
+        r#"incipit {
+  fixum nested ← { outer: { inner: { deep: "found" } } }
+  fixum data ← { items: ["first", "second", "third"] }
+  scribe nested.outer.inner.deep
+  scribe data.items[0]
+}"#,
+    );
+
+    assert!(code.contains(r#"nested := map[string]map[string]map[string]string{"outer": map[string]map[string]string{"inner": map[string]string{"deep": "found"}}}"#));
+    assert!(code.contains(r#"nested["outer"]["inner"]["deep"]"#));
+    assert!(code.contains(r#"data := map[string][]any{"items": []any{"first", "second", "third"}}"#));
+    assert!(code.contains(r#"data["items"][0]"#));
+}
+
+#[test]
+fn optional_map_members_deref_pointer_maps_and_unknown_maps_explicitly() {
+    let code = compile_go(
+        r#"incipit {
+  fixum maybe ← { present: { value: 100 } }
+  scribe maybe?.present?.value
+  fixum empty ← nihil
+  scribe empty?.missing
+}"#,
+    );
+
+    assert!(code.contains("func() *int"));
+    assert!(code.contains("base := *v; value, ok := base[\"value\"]"));
+    assert!(code.contains("m, ok := v.(map[string]any); if !ok { return nil }; value, ok := m[\"missing\"]"));
+    assert!(!code.contains("&v.Missing"));
 }
 
 #[test]

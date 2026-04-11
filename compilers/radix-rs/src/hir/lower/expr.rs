@@ -407,14 +407,38 @@ impl<'a> Lowerer<'a> {
                 self.types.primitive(Primitive::Bivalens)
             }
             crate::syntax::ExprKind::Literal(crate::syntax::Literal::Nil) => self.types.primitive(Primitive::Nihil),
-            crate::syntax::ExprKind::Array(_) => {
-                let infer = self.fresh_lower_infer_type();
-                self.types.array(infer)
+            crate::syntax::ExprKind::Array(array) => {
+                let elem_ty = match array
+                    .elements
+                    .iter()
+                    .map(|element| match element {
+                        crate::syntax::ArrayElement::Expr(expr) => self.guess_expr_type(expr),
+                        crate::syntax::ArrayElement::Spread(_) => self.fresh_lower_infer_type(),
+                    })
+                    .collect::<Vec<_>>()
+                    .as_slice()
+                {
+                    [] => self.fresh_lower_infer_type(),
+                    [single] => *single,
+                    many => self.types.intern(Type::Union(many.to_vec())),
+                };
+                self.types.array(elem_ty)
             }
-            crate::syntax::ExprKind::Object(_) => {
-                let infer = self.fresh_lower_infer_type();
+            crate::syntax::ExprKind::Object(object) => {
                 let key = self.types.primitive(Primitive::Textus);
-                self.types.map(key, infer)
+                let value_ty = match object
+                    .fields
+                    .iter()
+                    .filter_map(|field| field.value.as_deref())
+                    .map(|value| self.guess_expr_type(value))
+                    .collect::<Vec<_>>()
+                    .as_slice()
+                {
+                    [] => self.fresh_lower_infer_type(),
+                    [single] => *single,
+                    many => self.types.intern(Type::Union(many.to_vec())),
+                };
+                self.types.map(key, value_ty)
             }
             _ => self.fresh_lower_infer_type(),
         }

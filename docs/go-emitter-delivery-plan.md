@@ -25,7 +25,7 @@ The main blocker is no longer build-script noise. The verifier now reports a muc
 - `bun run build:exempla:radix-go` is the operative gate.
 - `scripta/build-exempla.ts` now uses package-aware verification for Go.
 - Current gate result:
-  - `3/131` emitted Go verification failures
+  - `2/131` emitted Go verification failures
   - no remaining compile-time codegen failures across `examples/exempla/`
 
 ### Confidence
@@ -192,8 +192,7 @@ Resolved in the current wave.
    - resolved in the current wave
 
 3. Map/member/index typing issues
-   - examples: `membrum/membrum.go`
-   - current shape: invalid chained indexing through `any`, mismatched collection element types
+   - resolved in the current wave
 
 Resolved in the current wave:
 
@@ -265,7 +264,7 @@ Exit criteria:
 
 Status:
 
-- receiver/member/value-construction work is complete except for the remaining dynamic-map cases in `membrum`
+- complete for this wave
 
 ### Stage C: Stabilize Collection / Iterator Translation
 
@@ -410,7 +409,7 @@ Required:
 Observed:
 
 - achieved for `genus`, `vocatio`, `pactum`, `finge`, `ordo`
-- `membrum` remains as the last member-typing holdout
+- `membrum` is retired
 
 ### Checkpoint 3: Iterator / Collection Stable
 
@@ -460,4 +459,4 @@ Delivery orchestration should treat:
 - `bun run build:exempla:radix-go` as the main implementation gate
 - `cargo test --manifest-path compilers/radix-rs/Cargo.toml` as the safety gate
 
-The next implementation wave should start at **Stage B: Stabilize Receiver / Member / Construction Semantics** and **Stage D: Target-Surface Policy**.
+The next implementation wave should start at **Stage D: Target-Surface Policy**.

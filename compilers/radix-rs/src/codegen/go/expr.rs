@@ -110,14 +110,8 @@ pub fn generate_expr(
                 w.write(")");
                 return Ok(());
             }
-            if matches!(
-                object_ty,
-                Some(Type::Map(_, _))
-            ) {
-                generate_expr(codegen, object, types, w)?;
-                w.write("[");
-                w.write(&format!("{:?}", field_name));
-                w.write("]");
+            if let Some(Type::Map(_, value_ty)) = object_ty {
+                write_map_member_expr(codegen, object, field_name, *value_ty, expr.ty, types, w)?;
                 return Ok(());
             }
             if matches!(object_ty, Some(Type::Primitive(Primitive::Ignotum))) {
@@ -605,6 +599,46 @@ fn generate_variant_constructor(
     Ok(())
 }
 
+fn write_map_member_expr(
+    codegen: &GoCodegen<'_>,
+    object: &HirExpr,
+    field_name: &str,
+    value_ty: crate::semantic::TypeId,
+    result_ty: Option<crate::semantic::TypeId>,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    generate_expr(codegen, object, types, w)?;
+    w.write("[");
+    w.write(&format!("{:?}", field_name));
+    w.write("]");
+    if let Some(assert_ty) = asserted_map_value_type(value_ty, result_ty, types) {
+        w.write(".(");
+        w.write(&types::type_to_go(codegen, assert_ty, types));
+        w.write(")");
+    }
+    Ok(())
+}
+
+fn asserted_map_value_type(
+    value_ty: crate::semantic::TypeId,
+    result_ty: Option<crate::semantic::TypeId>,
+    types: &TypeTable,
+) -> Option<crate::semantic::TypeId> {
+    if !matches!(normalize_receiver_type(types.get(value_ty), types), Type::Primitive(Primitive::Ignotum)) {
+        return None;
+    }
+
+    result_ty.filter(|ty| {
+        !matches!(
+            normalize_receiver_type(types.get(*ty), types),
+            Type::Primitive(Primitive::Ignotum)
+                | Type::Primitive(Primitive::Nihil)
+                | Type::Option(_)
+        )
+    })
+}
+
 pub(super) fn generate_expr_for_go_type(
     codegen: &GoCodegen<'_>,
     expr: &HirExpr,
@@ -614,6 +648,9 @@ pub(super) fn generate_expr_for_go_type(
 ) -> Result<(), CodegenError> {
     match (&expr.kind, types.get(expected_ty)) {
         (_, Type::Option(inner)) => generate_option_wrapped_expr(codegen, expr, *inner, types, w),
+        (HirExprKind::Array(elements), Type::Array(elem_ty)) => {
+            generate_typed_array_expr(codegen, *elem_ty, elements, types, w)
+        }
         (HirExprKind::Verte { entries: Some(entries), .. }, Type::Map(key_ty, value_ty)) => {
             generate_map_literal(codegen, *key_ty, *value_ty, Some(entries), types, w)
         }
@@ -734,12 +771,26 @@ fn generate_optional_chain_expr(
             if let Some(object_ty) = object.ty {
                 match normalize_receiver_type(types.get(object_ty), types) {
                     Type::Option(inner) => match normalize_receiver_type(types.get(*inner), types) {
-                        Type::Map(_, _) => {
+                        Type::Map(_, value_ty) => {
                             w.write("; if v == nil { return nil }; ");
-                            w.write("value, ok := v[");
+                            w.write("base := *v; ");
+                            w.write("value, ok := base[");
                             w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
                             w.write("]; if !ok { return nil }; ");
-                            if matches!(
+                            if let Some(assert_ty) = asserted_map_value_type(*value_ty, expr.ty, types) {
+                                w.write("typed := value.(");
+                                w.write(&types::type_to_go(codegen, assert_ty, types));
+                                w.write("); ");
+                                if matches!(
+                                    expr.ty
+                                        .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                                    Some(Type::Option(_))
+                                ) {
+                                    w.write("return &typed");
+                                } else {
+                                    w.write("return typed");
+                                }
+                            } else if matches!(
                                 expr.ty
                                     .map(|ty| normalize_receiver_type(types.get(ty), types)),
                                 Some(Type::Option(_))
@@ -769,9 +820,38 @@ fn generate_optional_chain_expr(
                         }
                     },
                     other => match other {
-                        Type::Map(_, _) => {
+                        Type::Map(_, value_ty) => {
                             w.write("; ");
                             w.write("value, ok := v[");
+                            w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
+                            w.write("]; if !ok { return nil }; ");
+                            if let Some(assert_ty) = asserted_map_value_type(*value_ty, expr.ty, types) {
+                                w.write("typed := value.(");
+                                w.write(&types::type_to_go(codegen, assert_ty, types));
+                                w.write("); ");
+                                if matches!(
+                                    expr.ty
+                                        .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                                    Some(Type::Option(_))
+                                ) {
+                                    w.write("return &typed");
+                                } else {
+                                    w.write("return typed");
+                                }
+                            } else if matches!(
+                                expr.ty
+                                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                                Some(Type::Option(_))
+                            ) {
+                                w.write("wrapped := value; return &wrapped");
+                            } else {
+                                w.write("return value");
+                            }
+                        }
+                        Type::Primitive(Primitive::Ignotum) | Type::Primitive(Primitive::Nihil) => {
+                            w.write("; if v == nil { return nil }; ");
+                            w.write("m, ok := v.(map[string]any); if !ok { return nil }; ");
+                            w.write("value, ok := m[");
                             w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
                             w.write("]; if !ok { return nil }; ");
                             if matches!(
