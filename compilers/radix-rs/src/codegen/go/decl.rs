@@ -11,7 +11,7 @@ pub fn generate_function(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     w.write("func ");
-    w.write(codegen.resolve_symbol(func.name));
+    w.write(&go_function_name(codegen.resolve_symbol(func.name)));
     generate_type_params(codegen, &func.type_params, w);
     generate_params(codegen, &func.params, types, w);
 
@@ -322,5 +322,34 @@ fn capitalize(s: &str) -> String {
     match chars.next() {
         None => String::new(),
         Some(first) => first.to_uppercase().to_string() + chars.as_str(),
+    }
+}
+
+fn go_function_name(name: &str) -> String {
+    if name
+        .chars()
+        .enumerate()
+        .all(|(idx, ch)| (ch == '_' || ch.is_ascii_alphanumeric()) && (idx > 0 || !ch.is_ascii_digit()))
+    {
+        return name.to_owned();
+    }
+
+    let mut out = String::with_capacity(name.len());
+    for (idx, ch) in name.chars().enumerate() {
+        if ch == '_' || ch.is_ascii_alphanumeric() {
+            if idx == 0 && ch.is_ascii_digit() {
+                out.push('_');
+            }
+            out.push(ch);
+        } else if !out.ends_with('_') {
+            out.push('_');
+        }
+    }
+
+    let trimmed = out.trim_matches('_');
+    if trimmed.is_empty() {
+        "proba".to_owned()
+    } else {
+        trimmed.to_owned()
     }
 }

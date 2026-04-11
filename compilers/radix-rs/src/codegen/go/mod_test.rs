@@ -324,3 +324,131 @@ fn custodi_nested_guards_emit_statement_if_chain() {
     assert!(code.contains("return -1"));
     assert!(!code.contains("func() any"));
 }
+
+#[test]
+fn ego_fields_emit_self_access_in_methods() {
+    let code = compile_go(
+        r#"genus Counter {
+  numerus value: 0
+
+  functio increment() {
+    ego.value ← ego.value + 1
+  }
+
+  functio get() → numerus {
+    redde ego.value
+  }
+}"#,
+    );
+
+    assert!(code.contains("self.Value = (self.Value + 1)"));
+    assert!(code.contains("return self.Value"));
+    assert!(!code.contains("Counter.Value"));
+}
+
+#[test]
+fn returning_ego_and_chaining_uses_value_return_with_pointer_temps() {
+    let code = compile_go(
+        r#"genus Calculator {
+  numerus value: 0
+
+  functio setValue(numerus n) → Calculator {
+    ego.value ← n
+    redde ego
+  }
+
+  functio double() → Calculator {
+    ego.value ← ego.value * 2
+    redde ego
+  }
+
+  functio getResult() → numerus {
+    redde ego.value
+  }
+}
+
+incipit {
+  varia calc ← {} ⇢ Calculator
+  fixum result ← calc.setValue(5).double().getResult()
+  scribe result
+}"#,
+    );
+
+    assert!(code.contains("return *self"));
+    assert!(code.contains("calc.SetValue(5)"));
+    assert!(code.contains("return &v"));
+    assert!(code.contains("().Double(); return &v"));
+    assert!(code.contains("().GetResult()"));
+}
+
+#[test]
+fn finge_and_ordo_variants_emit_struct_values() {
+    let code = compile_go(
+        r#"discretio Status {
+  Active,
+  Click { numerus x, numerus y }
+}
+
+incipit {
+  fixum Status s ← finge Active ⇢ Status
+  fixum Status e ← finge Click { x: 1, y: 2 } ⇢ Status
+}"#,
+    );
+
+    assert!(code.contains("s := Active{}"));
+    assert!(code.contains("e := Click{X: 1, Y: 2}"));
+    assert!(!code.contains(".(Status)"));
+}
+
+#[test]
+fn translated_slice_helpers_emit_go_loops() {
+    let code = compile_go(
+        r#"incipit {
+  varia items ← [1, 2, 3] ⇢ lista<numerus>
+  fixum first ← items.primus()
+  fixum doubled ← items.mappata(clausura numerus x: x * 2)
+  fixum evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)
+  fixum extended ← items.addita(4)
+  fixum reversed ← items.inversa()
+  fixum sorted ← items.ordinata()
+  items.inverte()
+  scribe first, doubled, evens, extended, reversed, sorted
+}"#,
+    );
+
+    assert!(code.contains("first := items[0]"));
+    assert!(code.contains("out[i] = mapper(value)"));
+    assert!(code.contains("if pred(value) { out = append(out, value) }"));
+    assert!(code.contains("out = append(out, 4)"));
+    assert!(code.contains("out[i], out[j] = out[j], out[i]"));
+    assert!(code.contains("sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })"));
+    assert!(code.contains("for i, j := 0, len(items)-1; i < j; i, j = i+1, j-1 { items[i], items[j] = items[j], items[i] }"));
+}
+
+#[test]
+fn spread_calls_recover_fixed_arity_array_arguments() {
+    let code = compile_go(
+        r#"functio add(numerus a, numerus b) → numerus {
+  redde a + b
+}
+
+incipit {
+  fixum numerus[] numbers ← [3, 7]
+  fixum total ← add(sparge numbers)
+  scribe total
+}"#,
+    );
+
+    assert!(code.contains("total := add(numbers[0], numbers[1])"));
+}
+
+#[test]
+fn proba_names_are_sanitized_for_go_functions() {
+    let code = compile_go(
+        r#"proba "one plus one equals two" {
+  adfirma 1 + 1 ≡ 2
+}"#,
+    );
+
+    assert!(code.contains("func one_plus_one_equals_two()"));
+}

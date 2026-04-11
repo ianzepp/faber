@@ -25,8 +25,8 @@ The main blocker is no longer build-script noise. The verifier now reports a muc
 - `bun run build:exempla:radix-go` is the operative gate.
 - `scripta/build-exempla.ts` now uses package-aware verification for Go.
 - Current gate result:
-  - `1/131` compile-time codegen failure (`examples/exempla/conversio/conversio.fab`)
-  - `18/130` emitted Go verification failures
+  - `4/131` emitted Go verification failures
+  - no remaining compile-time codegen failures across `examples/exempla/`
 
 ### Confidence
 
@@ -180,47 +180,32 @@ Out of scope for this wave:
 
 ### A. Compile-time codegen failure
 
-1. `examples/exempla/conversio/conversio.fab`
-   - current failure: repeated `unknown type`
-   - likely root cause: conversio type-hint handling (`numerus<i32, Hex>`-style params) leaking into semantic type resolution instead of being preserved as backend hints
+Resolved in the current wave.
 
 ### B. Real emitted Go verification failures
 
-1. Cast semantics
-   - examples: `qua/qua.go`
-   - current shape: invalid interface-style assertions on concrete values
-
-2. Nullability / coalesce / pointer-vs-value
-   - examples: `vel/vel.go`, `unarius/unarius.go`, `ternarius/ternarius.go`, `binarius/binarius.go`
-   - current shape: nil checks on non-pointers, pointer/value return mismatches
-
-3. Receiver/member lowering
-   - examples: `genus/methodi.go`, `genus/creo.go`, `vocatio/vocatio.go`, `pactum/pactum.go`
-   - current shape: `Type.Field` emitted where instance field access should use `self` or value instance
-
-4. Variant construction / enum value semantics
-   - examples: `finge/finge.go`, `ordo/ordo.go`
-   - current shape: type conversions emitted instead of value construction
-
-5. Collection methods / iterator translation
-   - examples: `clausa/clausa.go`, `morphologia/morphologia.go`
-   - current shape: TS-style collection methods emitted on Go slices
-
-6. Interop stubs that are not valid Go
+1. Interop stubs that are not valid Go
    - examples: `externa/externa.go`, `ad/ad.go`
    - current shape: JS/Bun-ish field or method access on `any`
 
-7. Map/member/index typing issues
+2. Nullability / optional ternary result typing
+   - examples: `ternarius/ternarius.go`
+   - current shape: optional ternary lowering still mixes untyped `nil`, `string`, and `*string`
+
+3. Map/member/index typing issues
    - examples: `membrum/membrum.go`
    - current shape: invalid chained indexing through `any`, mismatched collection element types
 
-8. Test-surface lowering
-   - examples: `proba/proba.go`, `proba/modificatores.go`
-   - current shape: prose labels emitted as invalid Go function names
+Resolved in the current wave:
 
-9. Return type mismatch
-   - examples: `mori/mori.go`
-   - current shape: concrete return values do not match inferred/emitted Go return type
+- cast semantics (`qua`)
+- conversio type-hint compile failure
+- general coalesce / pointer-vs-value fixes (`vel`, `unarius`, `binarius`, `mori`)
+- receiver/member lowering (`genus/*`, `vocatio`, `pactum`)
+- variant construction / enum value semantics (`finge`, `ordo`)
+- collection helper translation (`clausa`, `morphologia`, `innatum`)
+- `proba` function-name sanitation
+- fixed-arity spread-call recovery in `vocatio`
 
 ---
 
@@ -252,6 +237,11 @@ Exit criteria:
 - `conversio/conversio.fab` compiles
 - `qua`, `vel`, `unarius`, `ternarius`, `binarius`, `innatum`, `mori` stop failing in Go verify
 
+Status:
+
+- largely complete for this wave
+- remaining Stage A work is `ternarius`
+
 ### Stage B: Stabilize Receiver / Member / Construction Semantics
 
 Goal:
@@ -275,6 +265,10 @@ Exit criteria:
 
 - `genus/*`, `vocatio`, `pactum`, `finge`, `ordo`, `membrum` stop failing in Go verify
 
+Status:
+
+- receiver/member/value-construction work is complete except for the remaining dynamic-map cases in `membrum`
+
 ### Stage C: Stabilize Collection / Iterator Translation
 
 Goal:
@@ -296,6 +290,10 @@ Exit criteria:
 
 - `clausa`, `morphologia`, and remaining iterator-driven examples stop failing
 
+Status:
+
+- complete for currently failing collection exempla
+
 ### Stage D: Target-Surface Policy
 
 Goal:
@@ -316,6 +314,11 @@ Primary files:
 Exit criteria:
 
 - these surfaces either compile valid Go or fail with explicit, intentional diagnostics/gating
+
+Status:
+
+- `proba` is now syntactically valid Go
+- `externa` and `ad` remain unresolved policy/runtime-shape work
 
 ---
 
@@ -394,6 +397,10 @@ Required:
 - `conversio` compile failure removed
 - failure count materially below current `18/130`
 
+Observed:
+
+- achieved; current gate is `4/131`
+
 ### Checkpoint 2: Receiver / Construction Stable
 
 Required:
@@ -401,6 +408,11 @@ Required:
 - `cargo test --manifest-path compilers/radix-rs/Cargo.toml`
 - Go backend tests expanded for method/member/variant behavior
 - `genus`, `vocatio`, `pactum`, `finge`, `ordo` failures retired or intentionally gated
+
+Observed:
+
+- achieved for `genus`, `vocatio`, `pactum`, `finge`, `ordo`
+- `membrum` remains as the last member-typing holdout
 
 ### Checkpoint 3: Iterator / Collection Stable
 

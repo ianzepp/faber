@@ -84,6 +84,14 @@ impl<'a> GoCodegen<'a> {
         self.variant_fields.get(&def_id).map(Vec::as_slice)
     }
 
+    pub(super) fn is_variant_def(&self, def_id: DefId) -> bool {
+        self.variant_fields.contains_key(&def_id)
+    }
+
+    pub(super) fn is_struct_def(&self, def_id: DefId) -> bool {
+        self.struct_fields.contains_key(&def_id)
+    }
+
     pub(super) fn struct_field_type(&self, def_id: DefId, field: Symbol) -> Option<crate::semantic::TypeId> {
         self.struct_fields
             .get(&def_id)
@@ -756,6 +764,9 @@ fn collect_imports(code: &str) -> BTreeSet<&'static str> {
     }
     if code.contains("os.") {
         imports.insert("os");
+    }
+    if code.contains("sort.") {
+        imports.insert("sort");
     }
     imports
 }

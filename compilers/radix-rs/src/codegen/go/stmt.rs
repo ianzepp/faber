@@ -342,6 +342,28 @@ fn generate_expr_stmt(
             w.newline();
             Ok(())
         }
+        HirExprKind::MethodCall(receiver, method, _args)
+            if matches!(receiver.kind, HirExprKind::Path(_))
+                && matches!(codegen.resolve_symbol(*method), "inverte") =>
+        {
+            let HirExprKind::Path(def_id) = receiver.kind else {
+                unreachable!()
+            };
+            let name = codegen.resolve_def(def_id);
+            w.write("for i, j := 0, len(");
+            w.write(name);
+            w.write(")-1; i < j; i, j = i+1, j-1 { ");
+            w.write(name);
+            w.write("[i], ");
+            w.write(name);
+            w.write("[j] = ");
+            w.write(name);
+            w.write("[j], ");
+            w.write(name);
+            w.write("[i] }");
+            w.newline();
+            Ok(())
+        }
         HirExprKind::Si(cond, then_block, else_block) => {
             w.write("if ");
             generate_expr(codegen, cond, types, w)?;
