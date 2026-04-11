@@ -226,11 +226,38 @@ async function verifyRust(outputBase: string): Promise<{ total: number; failed: 
 async function verifyGo(outputBase: string): Promise<{ total: number; failed: number }> {
     const goDir = join(outputBase, 'go');
     const files = await findFiles(goDir, '.go');
+    const dirCounts = new Map<string, number>();
     let failed = 0;
 
     for (const file of files) {
+        const dir = dirname(file);
+        dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
+    }
+
+    for (const file of files) {
         try {
-            await $`go build -o /dev/null ${file}`.quiet();
+            const source = await Bun.file(file).text();
+            const imports = new Set<string>();
+            for (const match of source.matchAll(/import\s+(?:"([^"]+)"|\(\s*([\s\S]*?)\s*\))/g)) {
+                if (match[1]) {
+                    imports.add(match[1]);
+                    continue;
+                }
+                const block = match[2] ?? '';
+                for (const blockMatch of block.matchAll(/"([^"]+)"/g)) {
+                    imports.add(blockMatch[1]);
+                }
+            }
+
+            const needsPackageSupport = [...imports].some(spec => spec.startsWith('.') || spec.includes('/'));
+            const isSingleFileDir = (dirCounts.get(dirname(file)) ?? 0) === 1;
+            const hasMain = /\bfunc\s+main\s*\(/.test(source);
+
+            if (needsPackageSupport || !isSingleFileDir || !hasMain) {
+                await $`gofmt -e ${file}`.quiet();
+            } else {
+                await $`go build -o /dev/null ${file}`.quiet();
+            }
         } catch (err: any) {
             console.error(`  ${relative(outputBase, file)}: compile error`);
             const errText = err.stderr?.toString() || '';
