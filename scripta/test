@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Run test suite for nanus compiler
+# Run the maintained TypeScript-side test suite.
 #
-# This runs unit tests for the nanus TypeScript compiler and excludes
-# rivus bootstrap tests (which require compiled artifacts).
+# These colocated smoke tests exercise the maintained TypeScript bootstrap
+# compiler surface without pulling in legacy or generated trees.
 #
 # Usage: ./scripta/test [bun test options]
 #
 # Examples:
-#   ./scripta/test                    # Run all nanus tests
+#   ./scripta/test                    # Run nanus-ts smoke tests
 #   ./scripta/test -t "lexer"         # Run lexer tests only
 #   ./scripta/test --timeout 10000    # Run with longer timeout
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-bun test compilers/nanus-ts "$@"
+bun test compilers/nanus-ts/index.test.ts "$@"

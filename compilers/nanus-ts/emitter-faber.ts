@@ -24,7 +24,7 @@ import type {
 export function emitFaber(mod: Modulus): string {
     const lines: string[] = [];
     for (let i = 0; i < mod.corpus.length; i++) {
-        if (i > 0) lines.push('');
+        if (i > 0) {lines.push('');}
         lines.push(emitStmt(mod.corpus[i], ''));
     }
     return lines.join('\n');
@@ -162,11 +162,11 @@ function emitVaria(stmt: Stmt & { tag: 'Varia' }, indent: string): string {
 
 function emitFunctio(stmt: Stmt & { tag: 'Functio' }, indent: string): string {
     const lines: string[] = [];
-    if (stmt.externa) lines.push(`${indent}@ externa`);
-    if (stmt.publica) lines.push(`${indent}@ publica`);
+    if (stmt.externa) {lines.push(`${indent}@ externa`);}
+    if (stmt.publica) {lines.push(`${indent}@ publica`);}
 
     let decl = indent;
-    if (stmt.asynca) decl += 'asynca ';
+    if (stmt.asynca) {decl += 'asynca ';}
     decl += 'functio ';
     decl += stmt.nomen;
     if (stmt.generics.length > 0) {
@@ -187,10 +187,10 @@ function emitFunctio(stmt: Stmt & { tag: 'Functio' }, indent: string): string {
 
 function emitGenus(stmt: Stmt & { tag: 'Genus' }, indent: string): string {
     const lines: string[] = [];
-    if (stmt.publica) lines.push(`${indent}@ publica`);
+    if (stmt.publica) {lines.push(`${indent}@ publica`);}
 
     let decl = indent;
-    if (stmt.abstractus) decl += 'abstractus ';
+    if (stmt.abstractus) {decl += 'abstractus ';}
     decl += 'genus ';
     decl += stmt.nomen;
     if (stmt.generics.length > 0) {
@@ -222,7 +222,7 @@ function emitCampus(campo: CampusDecl, indent: string): string {
 
 function emitPactum(stmt: Stmt & { tag: 'Pactum' }, indent: string): string {
     const lines: string[] = [];
-    if (stmt.publica) lines.push(`${indent}@ publica`);
+    if (stmt.publica) {lines.push(`${indent}@ publica`);}
 
     let decl = indent + 'pactum ' + stmt.nomen;
     if (stmt.generics.length > 0) {
@@ -241,7 +241,7 @@ function emitPactum(stmt: Stmt & { tag: 'Pactum' }, indent: string): string {
 
 function emitPactumMethodus(method: PactumMethodus, indent: string): string {
     let decl = indent;
-    if (method.asynca) decl += 'asynca ';
+    if (method.asynca) {decl += 'asynca ';}
     decl += 'functio ';
     decl += method.nomen;
     decl += '(';
@@ -255,7 +255,7 @@ function emitPactumMethodus(method: PactumMethodus, indent: string): string {
 
 function emitOrdo(stmt: Stmt & { tag: 'Ordo' }, indent: string): string {
     const lines: string[] = [];
-    if (stmt.publica) lines.push(`${indent}@ publica`);
+    if (stmt.publica) {lines.push(`${indent}@ publica`);}
 
     lines.push(`${indent}ordo ${stmt.nomen} {`);
     for (const m of stmt.membra) {
@@ -268,7 +268,7 @@ function emitOrdo(stmt: Stmt & { tag: 'Ordo' }, indent: string): string {
 
 function emitDiscretio(stmt: Stmt & { tag: 'Discretio' }, indent: string): string {
     const lines: string[] = [];
-    if (stmt.publica) lines.push(`${indent}@ publica`);
+    if (stmt.publica) {lines.push(`${indent}@ publica`);}
 
     let decl = indent + 'discretio ' + stmt.nomen;
     if (stmt.generics.length > 0) {
@@ -331,7 +331,7 @@ function emitDiscerne(stmt: Stmt & { tag: 'Discerne' }, indent: string): string 
     lines.push(`${indent}discerne ${discrim} {`);
     for (const c of stmt.casus) {
         const patterns = c.patterns.map(p => {
-            if (p.wildcard) return '_';
+            if (p.wildcard) {return '_';}
             let s = p.variant;
             if (p.bindings.length > 0) {
                 s += `(${p.bindings.join(', ')})`;
@@ -467,7 +467,7 @@ function emitExpr(expr: Expr): string {
             const fields = expr.campi
                 .map(p => {
                     const key = p.key.tag === 'Littera' ? p.key.valor : emitExpr(p.key);
-                    if (p.shorthand) return key;
+                    if (p.shorthand) {return key;}
                     return `${key}: ${emitExpr(p.valor)}`;
                 })
                 .join(', ');

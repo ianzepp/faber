@@ -148,9 +148,7 @@ pub fn generate_stmt(
             if let Some(init) = &local.init {
                 let name = codegen.resolve_symbol(local.name);
                 let nil_init_ty = nil_init_type(init);
-                if matches!(init.kind, HirExprKind::Literal(crate::hir::HirLiteral::Nil))
-                    || nil_init_ty.is_some()
-                {
+                if matches!(init.kind, HirExprKind::Literal(crate::hir::HirLiteral::Nil)) || nil_init_ty.is_some() {
                     w.write("var ");
                     w.write(name);
                     if let Some(ty) = local.ty.or(init.ty).or(nil_init_ty) {

@@ -60,8 +60,10 @@ fn ad_is_rejected_for_go_targets() {
     );
 
     assert!(!result.success());
-    assert!(result.diagnostics.iter().any(|d| d.is_error()
-        && d.message.contains("ad is not supported for Go targets")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("ad is not supported for Go targets")));
 }
 
 #[test]
@@ -80,8 +82,10 @@ fn ad_with_catch_is_rejected_for_go_targets() {
     );
 
     assert!(!result.success());
-    assert!(result.diagnostics.iter().any(|d| d.is_error()
-        && d.message.contains("ad is not supported for Go targets")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("ad is not supported for Go targets")));
 }
 
 #[test]
@@ -490,7 +494,8 @@ fn translated_slice_helpers_emit_go_loops() {
     assert!(code.contains("out = append(out, 4)"));
     assert!(code.contains("out[i], out[j] = out[j], out[i]"));
     assert!(code.contains("sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })"));
-    assert!(code.contains("for i, j := 0, len(items)-1; i < j; i, j = i+1, j-1 { items[i], items[j] = items[j], items[i] }"));
+    assert!(code
+        .contains("for i, j := 0, len(items)-1; i < j; i, j = i+1, j-1 { items[i], items[j] = items[j], items[i] }"));
 }
 
 #[test]

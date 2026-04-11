@@ -164,7 +164,7 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
 
     function match(str: string): boolean {
         if (source.slice(pos, pos + str.length) === str) {
-            for (let i = 0; i < str.length; i++) advance();
+            for (let i = 0; i < str.length; i++) {advance();}
             return true;
         }
         return false;
@@ -290,7 +290,7 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
 
     while (pos < source.length) {
         skipWhitespace();
-        if (pos >= source.length) break;
+        if (pos >= source.length) {break;}
 
         const loc = locus();
         const ch = peek();
@@ -338,7 +338,7 @@ export function lex(source: string, filename = '<stdin>'): Token[] {
                 break;
             }
         }
-        if (matched) continue;
+        if (matched) {continue;}
 
         // Punctuators
         if (PUNCTUATORS.has(ch)) {

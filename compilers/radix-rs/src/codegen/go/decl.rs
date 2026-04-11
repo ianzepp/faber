@@ -1,6 +1,9 @@
 use super::stmt::generate_stmt;
 use super::types::type_to_go;
-use super::{expr::{generate_expr, generate_expr_for_go_type}, CodeWriter, CodegenError, GoCodegen};
+use super::{
+    expr::{generate_expr, generate_expr_for_go_type},
+    CodeWriter, CodegenError, GoCodegen,
+};
 use crate::hir::*;
 use crate::semantic::{Primitive, TypeTable};
 

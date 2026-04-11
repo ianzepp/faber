@@ -187,14 +187,22 @@ fn collect_go_dynamic_externa(program: &Program, interner: &Interner) -> GoDynam
     for stmt in &program.stmts {
         match &stmt.kind {
             StmtKind::Var(decl) if has_externa_annotation(&stmt.annotations, &[], interner) => {
-                if decl.ty.as_ref().is_some_and(|ty| is_named_type(ty, interner, "ignotum")) {
+                if decl
+                    .ty
+                    .as_ref()
+                    .is_some_and(|ty| is_named_type(ty, interner, "ignotum"))
+                {
                     if let BindingPattern::Ident(ident) = &decl.binding {
                         dynamic.bindings.insert(ident.name);
                     }
                 }
             }
             StmtKind::Func(func) if has_externa_annotation(&stmt.annotations, &func.annotations, interner) => {
-                if func.ret.as_ref().is_some_and(|ty| is_named_type(ty, interner, "ignotum")) {
+                if func
+                    .ret
+                    .as_ref()
+                    .is_some_and(|ty| is_named_type(ty, interner, "ignotum"))
+                {
                     dynamic.functions.insert(func.name.name);
                 }
             }
@@ -504,7 +512,9 @@ fn scan_expr_for_go_unsupported_errors(
             scan_expr_for_go_unsupported_errors(&binary.lhs, file, dynamic_externa, diagnostics);
             scan_expr_for_go_unsupported_errors(&binary.rhs, file, dynamic_externa, diagnostics);
         }
-        ExprKind::Unary(unary) => scan_expr_for_go_unsupported_errors(&unary.operand, file, dynamic_externa, diagnostics),
+        ExprKind::Unary(unary) => {
+            scan_expr_for_go_unsupported_errors(&unary.operand, file, dynamic_externa, diagnostics)
+        }
         ExprKind::Call(call) => {
             scan_expr_for_go_unsupported_errors(&call.callee, file, dynamic_externa, diagnostics);
             for arg in &call.args {
@@ -546,7 +556,9 @@ fn scan_expr_for_go_unsupported_errors(
             scan_expr_for_go_unsupported_errors(&chain.object, file, dynamic_externa, diagnostics);
             match &chain.chain {
                 OptionalChainKind::Member(_) => {}
-                OptionalChainKind::Index(index) => scan_expr_for_go_unsupported_errors(index, file, dynamic_externa, diagnostics),
+                OptionalChainKind::Index(index) => {
+                    scan_expr_for_go_unsupported_errors(index, file, dynamic_externa, diagnostics)
+                }
                 OptionalChainKind::Call(args) => {
                     for arg in args {
                         scan_expr_for_go_unsupported_errors(&arg.value, file, dynamic_externa, diagnostics);
@@ -566,7 +578,9 @@ fn scan_expr_for_go_unsupported_errors(
             scan_expr_for_go_unsupported_errors(&chain.object, file, dynamic_externa, diagnostics);
             match &chain.chain {
                 NonNullKind::Member(_) => {}
-                NonNullKind::Index(index) => scan_expr_for_go_unsupported_errors(index, file, dynamic_externa, diagnostics),
+                NonNullKind::Index(index) => {
+                    scan_expr_for_go_unsupported_errors(index, file, dynamic_externa, diagnostics)
+                }
                 NonNullKind::Call(args) => {
                     for arg in args {
                         scan_expr_for_go_unsupported_errors(&arg.value, file, dynamic_externa, diagnostics);
@@ -628,7 +642,9 @@ fn scan_expr_for_go_unsupported_errors(
         }
         ExprKind::Clausura(clausura) => match &clausura.body {
             ClausuraBody::Expr(expr) => scan_expr_for_go_unsupported_errors(expr, file, dynamic_externa, diagnostics),
-            ClausuraBody::Block(block) => scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics),
+            ClausuraBody::Block(block) => {
+                scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics)
+            }
         },
         ExprKind::Conversio(conversio) => {
             scan_expr_for_go_unsupported_errors(&conversio.expr, file, dynamic_externa, diagnostics);
@@ -651,7 +667,9 @@ fn scan_expr_for_go_unsupported_errors(
             }
         }
         ExprKind::Praefixum(praefixum) => match &praefixum.body {
-            PraefixumBody::Block(block) => scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics),
+            PraefixumBody::Block(block) => {
+                scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics)
+            }
             PraefixumBody::Expr(expr) => scan_expr_for_go_unsupported_errors(expr, file, dynamic_externa, diagnostics),
         },
         ExprKind::Paren(expr) => scan_expr_for_go_unsupported_errors(expr, file, dynamic_externa, diagnostics),

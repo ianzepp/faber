@@ -74,6 +74,7 @@ export default tseslint.config(
             'dist/**',
             'build/**',
             '.git/**',
+            'compilers/nanus-ts/dist/**',
         ],
     },
 );

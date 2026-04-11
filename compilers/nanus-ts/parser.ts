@@ -91,13 +91,13 @@ export class Parser {
 
     private check(tag: string, valor?: string): boolean {
         const tok = this.peek();
-        if (tok.tag !== tag) return false;
-        if (valor !== undefined && tok.valor !== valor) return false;
+        if (tok.tag !== tag) {return false;}
+        if (valor !== undefined && tok.valor !== valor) {return false;}
         return true;
     }
 
     private match(tag: string, valor?: string): Token | null {
-        if (this.check(tag, valor)) return this.advance();
+        if (this.check(tag, valor)) {return this.advance();}
         return null;
     }
 
@@ -145,9 +145,9 @@ export class Parser {
         let externa = false;
         while (this.match('Punctuator', '@')) {
             const [pub, fut, ext] = this.parseAnnotatio();
-            if (pub) publica = true;
-            if (fut) futura = true;
-            if (ext) externa = true;
+            if (pub) {publica = true;}
+            if (fut) {futura = true;}
+            if (ext) {externa = true;}
         }
 
         // Section annotation: § keyword [args...]
@@ -320,9 +320,6 @@ export class Parser {
             case 'subsidia':
             case 'radix':
             case 'verte':
-                this.skipAnnotatioArgs();
-                return [false, false, false];
-            // CLI annotations - skip their arguments
             case 'cli':
             case 'versio':
             case 'descriptio':
@@ -332,7 +329,6 @@ export class Parser {
             case 'alias':
             case 'imperia':
             case 'nomen':
-            // Formatter annotations - skip their arguments
             case 'indentum':
             case 'tabulae':
             case 'latitudo':
@@ -340,6 +336,7 @@ export class Parser {
             case 'separaGroups':
             case 'bracchiae':
             case 'methodiSeparatio':
+                // WHY: These annotations are handled by downstream tooling only.
                 this.skipAnnotatioArgs();
                 return [false, false, false];
             default:
@@ -440,7 +437,6 @@ export class Parser {
         let corpus: Stmt | null = null;
         if (this.check('Punctuator', '{')) {
             corpus = this.parseMassa();
-        } else {
         }
 
         return { tag: 'Functio', locus, nomen, params, typusReditus, corpus, asynca, publica, generics, externa };
@@ -448,12 +444,12 @@ export class Parser {
 
     private parseParams(): Param[] {
         const params: Param[] = [];
-        if (this.check('Punctuator', ')')) return params;
+        if (this.check('Punctuator', ')')) {return params;}
 
         do {
             const locus = this.peek().locus;
             let rest = false;
-            if (this.match('Keyword', 'ceteri')) rest = true;
+            if (this.match('Keyword', 'ceteri')) {rest = true;}
 
             // Check for optional param: si Type name
             let optional = false;
@@ -551,9 +547,9 @@ export class Parser {
             let fieldExterna = false;
             while (this.match('Punctuator', '@')) {
                 const [pub, fut, ext] = this.parseAnnotatio();
-                if (pub) fieldPublica = true;
-                if (fut) fieldFutura = true;
-                if (ext) fieldExterna = true;
+                if (pub) {fieldPublica = true;}
+                if (fut) {fieldFutura = true;}
+                if (ext) {fieldExterna = true;}
             }
 
             // Check for visibility keyword
@@ -637,7 +633,7 @@ export class Parser {
             const loc = this.peek().locus;
             this.expect('Keyword', 'functio');
             let asynca = false;
-            if (this.match('Keyword', 'asynca')) asynca = true;
+            if (this.match('Keyword', 'asynca')) {asynca = true;}
             const name = this.expect('Identifier').valor;
             this.expect('Punctuator', '(');
             const params = this.parseParams();
@@ -964,7 +960,7 @@ export class Parser {
 
     // Check if current token is a keyword that starts a statement (not an expression)
     private isStatementKeyword(): boolean {
-        if (!this.check('Keyword')) return false;
+        if (!this.check('Keyword')) {return false;}
         const kw = this.peek().valor;
         const STMT_KEYWORDS = new Set([
             'si',
@@ -1012,7 +1008,7 @@ export class Parser {
 
     // Check if current token is a declaration keyword (can follow annotations)
     private isDeclarationKeyword(): boolean {
-        if (!this.check('Keyword')) return false;
+        if (!this.check('Keyword')) {return false;}
         const kw = this.peek().valor;
         const DECL_KEYWORDS = new Set(['functio', 'genus', 'pactum', 'ordo', 'discretio', 'varia', 'fixum', 'incipit', 'probandum']);
         return DECL_KEYWORDS.has(kw);
@@ -1185,7 +1181,7 @@ export class Parser {
             const op = tok.valor;
             const prec = PRECEDENCE[op];
 
-            if (prec === undefined || prec < minPrec) break;
+            if (prec === undefined || prec < minPrec) {break;}
 
             this.advance();
 
@@ -1483,7 +1479,7 @@ export class Parser {
 
     private parseArgs(): Expr[] {
         const args: Expr[] = [];
-        if (this.check('Punctuator', ')')) return args;
+        if (this.check('Punctuator', ')')) {return args;}
 
         do {
             args.push(this.parseExpr());

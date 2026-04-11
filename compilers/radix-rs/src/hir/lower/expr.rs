@@ -584,7 +584,12 @@ impl<'a> Lowerer<'a> {
             crate::syntax::ConversioTarget::Bivalentum => self.types.primitive(Primitive::Bivalens),
             crate::syntax::ConversioTarget::Explicit(ty) => lower_conversio_target_type(self, ty, &mut params),
         };
-        params.extend(conversio.type_params.iter().filter_map(conversio_hint_symbol));
+        params.extend(
+            conversio
+                .type_params
+                .iter()
+                .filter_map(conversio_hint_symbol),
+        );
         let fallback = conversio
             .fallback
             .as_ref()

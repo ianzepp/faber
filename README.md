@@ -128,8 +128,8 @@ bun run build                                             # Build nanus-* compil
 
 # Legacy / secondary checks
 bun run test:nanus-ts
-bun run typecheck:legacy
-bun run lint:nanus-ts
+bun run typecheck:legacy   # nanus-ts only
+bun run lint:nanus-ts      # nanus-ts only
 ```
 
 ## Project Structure

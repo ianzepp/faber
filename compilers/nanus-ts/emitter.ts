@@ -115,7 +115,7 @@ function findProjectRoot(fromPath: string): string | null {
             return dir;
         }
         const parent = dirname(dir);
-        if (parent === dir) break;
+        if (parent === dir) {break;}
         dir = parent;
     }
     return null;

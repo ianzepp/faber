@@ -520,8 +520,10 @@ fn go_target_rejects_ad_with_explicit_policy_diagnostic() {
 
     assert!(result.output.is_none());
     assert!(!result.success());
-    assert!(result.diagnostics.iter().any(|d| d.is_error()
-        && d.message.contains("ad is not supported for Go targets")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("ad is not supported for Go targets")));
 }
 
 #[test]
@@ -554,11 +556,15 @@ incipit {
 }"#;
     let result = compile(&session, "test.fab", source);
 
-    assert!(result.success(), "{:?}", result
-        .diagnostics
-        .iter()
-        .map(|diag| diag.message.clone())
-        .collect::<Vec<_>>());
+    assert!(
+        result.success(),
+        "{:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.clone())
+            .collect::<Vec<_>>()
+    );
     assert!(matches!(result.output, Some(crate::Output::Go(_))));
     assert!(result.diagnostics.iter().all(|d| !d.is_error()));
 }

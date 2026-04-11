@@ -28,9 +28,21 @@ pub fn generate_expr(
                 return Ok(());
             }
             if matches!(op, HirBinOp::Div)
-                && matches!(expr.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Primitive(Primitive::Fractus)))
-                && matches!(lhs.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Primitive(Primitive::Numerus)))
-                && matches!(rhs.ty.map(|ty| normalize_receiver_type(types.get(ty), types)), Some(Type::Primitive(Primitive::Numerus)))
+                && matches!(
+                    expr.ty
+                        .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                    Some(Type::Primitive(Primitive::Fractus))
+                )
+                && matches!(
+                    lhs.ty
+                        .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                    Some(Type::Primitive(Primitive::Numerus))
+                )
+                && matches!(
+                    rhs.ty
+                        .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                    Some(Type::Primitive(Primitive::Numerus))
+                )
             {
                 w.write("(float64(");
                 generate_expr(codegen, lhs, types, w)?;
@@ -100,10 +112,7 @@ pub fn generate_expr(
                 .ty
                 .map(|ty| normalize_receiver_type(types.get(ty), types));
             if matches!(field_name, "length" | "longitudo")
-                && matches!(
-                    object_ty,
-                    Some(Type::Array(_)) | Some(Type::Primitive(Primitive::Textus))
-                )
+                && matches!(object_ty, Some(Type::Array(_)) | Some(Type::Primitive(Primitive::Textus)))
             {
                 w.write("len(");
                 generate_expr(codegen, object, types, w)?;
@@ -625,16 +634,17 @@ fn asserted_map_value_type(
     result_ty: Option<crate::semantic::TypeId>,
     types: &TypeTable,
 ) -> Option<crate::semantic::TypeId> {
-    if !matches!(normalize_receiver_type(types.get(value_ty), types), Type::Primitive(Primitive::Ignotum)) {
+    if !matches!(
+        normalize_receiver_type(types.get(value_ty), types),
+        Type::Primitive(Primitive::Ignotum)
+    ) {
         return None;
     }
 
     result_ty.filter(|ty| {
         !matches!(
             normalize_receiver_type(types.get(*ty), types),
-            Type::Primitive(Primitive::Ignotum)
-                | Type::Primitive(Primitive::Nihil)
-                | Type::Option(_)
+            Type::Primitive(Primitive::Ignotum) | Type::Primitive(Primitive::Nihil) | Type::Option(_)
         )
     })
 }
@@ -1119,7 +1129,9 @@ fn try_generate_translated_method_call(
         generate_expr(codegen, receiver, types, w)?;
         w.write("; out := make([]");
         w.write(&elem_go_ty);
-        w.write(", 0, len(src)); for _, value := range src { if pred(value) { out = append(out, value) } }; return out }()");
+        w.write(
+            ", 0, len(src)); for _, value := range src { if pred(value) { out = append(out, value) } }; return out }()",
+        );
         return Ok(true);
     }
 
