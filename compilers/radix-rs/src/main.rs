@@ -45,9 +45,11 @@ fn main() {
         Command::Parse(args) => cmd_parse(&args.input),
         Command::Hir(args) => cmd_hir(&args.input),
         Command::Check(args) => cmd_check(CheckCommand { input: args.input, permissive: args.permissive }),
-        Command::Emit(args) => cmd_emit(EmitCommand { input: args.input, target: args.target.into() }),
+        Command::Emit(args) => {
+            cmd_emit(EmitCommand { input: args.input, package: args.package, target: args.target.into() })
+        }
         Command::EmitPackage(args) => {
-            cmd_emit_package(EmitPackageCommand { path: args.path, target: args.target.into() })
+            cmd_emit(EmitCommand { input: vec![args.path], package: true, target: args.target.into() })
         }
     }
 }
@@ -75,8 +77,8 @@ enum Command {
     Check(CheckArgs),
     /// Compile to target (rust, faber, ts, go)
     Emit(EmitArgs),
-    /// Compile a local multi-file package
-    #[command(name = "emit-package")]
+    /// Deprecated compatibility alias for package emission
+    #[command(name = "emit-package", hide = true)]
     EmitPackage(EmitPackageArgs),
 }
 
@@ -102,7 +104,11 @@ struct EmitArgs {
     #[arg(short = 't', long = "target", value_enum, default_value_t = CliTarget::Rust)]
     target: CliTarget,
 
-    /// Input file path, or '-' / omitted for stdin
+    /// Force package compilation mode
+    #[arg(long)]
+    package: bool,
+
+    /// Input file or package path, or '-' / omitted for stdin
     input: Vec<String>,
 }
 
@@ -143,12 +149,7 @@ struct CheckCommand {
 #[derive(Debug)]
 struct EmitCommand {
     input: Vec<String>,
-    target: radix::codegen::Target,
-}
-
-#[derive(Debug)]
-struct EmitPackageCommand {
-    path: String,
+    package: bool,
     target: radix::codegen::Target,
 }
 
@@ -487,12 +488,7 @@ fn cmd_check(command: CheckCommand) {
 /// WHY: End-to-end compilation command. Accepts -t flag to select Rust or
 /// Faber pretty-print output.
 fn cmd_emit(command: EmitCommand) {
-    let (name, source) = read_source(&command.input);
-
-    let config = radix::driver::Config::default().with_target(command.target);
-
-    let compiler = radix::Compiler::new(config);
-    let result = compiler.compile_str(&name, &source);
+    let result = compile_cli_input(&command.input, command.package, command.target);
 
     for diag in &result.diagnostics {
         if diag.is_error() {
@@ -502,61 +498,18 @@ fn cmd_emit(command: EmitCommand) {
         }
     }
 
-    match result.output {
-        Some(radix::Output::Rust(out)) => {
-            println!("{}", out.code);
-        }
-        Some(radix::Output::Faber(out)) => {
-            println!("{}", out.code);
-        }
-        Some(radix::Output::TypeScript(out)) => {
-            println!("{}", out.code);
-        }
-        Some(radix::Output::Go(out)) => {
-            println!("{}", out.code);
-        }
-        None => {
-            eprintln!("compilation failed");
-            std::process::exit(1);
-        }
-    }
-}
+    let Some(output) = result.output else {
+        eprintln!("compilation failed");
+        std::process::exit(1);
+    };
 
-fn cmd_emit_package(command: EmitPackageCommand) {
-    let config = radix::driver::Config::default().with_target(command.target);
-    let compiler = radix::Compiler::new(config);
-    let result = compiler.compile_package(&PathBuf::from(&command.path));
-
-    for diag in &result.diagnostics {
-        if diag.is_error() {
-            eprintln!("error: {}", diag.message);
-        } else {
-            eprintln!("warning: {}", diag.message);
-        }
-    }
-
-    match result.output {
-        Some(radix::Output::Rust(out)) => println!("{}", out.code),
-        Some(radix::Output::Faber(out)) => println!("{}", out.code),
-        Some(radix::Output::TypeScript(out)) => println!("{}", out.code),
-        Some(radix::Output::Go(out)) => println!("{}", out.code),
-        None => {
-            eprintln!("compilation failed");
-            std::process::exit(1);
-        }
-    }
+    println!("{}", output_code(output));
 }
 
 fn cmd_build(command: BuildCommand) {
     let input_path = PathBuf::from(&command.input);
-    let is_package = command.package || should_treat_as_package(&input_path);
-    let config = radix::driver::Config::default().with_target(command.target);
-    let compiler = radix::Compiler::new(config);
-    let result = if is_package {
-        compiler.compile_package(&input_path)
-    } else {
-        compiler.compile(&input_path)
-    };
+    let is_package = resolve_package_mode(&input_path, command.package);
+    let result = compile_cli_path(&input_path, is_package, command.target);
 
     for diag in &result.diagnostics {
         if diag.is_error() {
@@ -579,12 +532,7 @@ fn cmd_build(command: BuildCommand) {
         });
     }
 
-    let code = match output {
-        radix::Output::Rust(out) => out.code,
-        radix::Output::Faber(out) => out.code,
-        radix::Output::TypeScript(out) => out.code,
-        radix::Output::Go(out) => out.code,
-    };
+    let code = output_code(output);
 
     fs::write(&output_path, code).unwrap_or_else(|err| {
         eprintln!("error: failed to write '{}': {}", output_path.display(), err);
@@ -616,6 +564,41 @@ fn cmd_targets() {
 
 fn should_treat_as_package(path: &std::path::Path) -> bool {
     path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some("faber.fab")
+}
+
+fn resolve_package_mode(path: &std::path::Path, force_package: bool) -> bool {
+    force_package || should_treat_as_package(path)
+}
+
+fn compile_cli_input(input: &[String], package: bool, target: radix::codegen::Target) -> radix::CompileResult {
+    if input.is_empty() || input[0] == "-" {
+        if package {
+            eprintln!("error: package compilation requires a path input");
+            std::process::exit(1);
+        }
+
+        let (name, source) = read_source(input);
+        return compile_cli_source(&name, &source, target);
+    }
+
+    let path = PathBuf::from(&input[0]);
+    compile_cli_path(&path, resolve_package_mode(&path, package), target)
+}
+
+fn compile_cli_path(path: &std::path::Path, package: bool, target: radix::codegen::Target) -> radix::CompileResult {
+    let config = radix::driver::Config::default().with_target(target);
+    let compiler = radix::Compiler::new(config);
+    if package {
+        compiler.compile_package(path)
+    } else {
+        compiler.compile(path)
+    }
+}
+
+fn compile_cli_source(name: &str, source: &str, target: radix::codegen::Target) -> radix::CompileResult {
+    let config = radix::driver::Config::default().with_target(target);
+    let compiler = radix::Compiler::new(config);
+    compiler.compile_str(name, source)
 }
 
 fn build_output_path(
@@ -693,6 +676,15 @@ fn yes_no(value: bool) -> &'static str {
         "yes"
     } else {
         "no"
+    }
+}
+
+fn output_code(output: radix::Output) -> String {
+    match output {
+        radix::Output::Rust(out) => out.code,
+        radix::Output::Faber(out) => out.code,
+        radix::Output::TypeScript(out) => out.code,
+        radix::Output::Go(out) => out.code,
     }
 }
 

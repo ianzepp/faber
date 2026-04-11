@@ -53,19 +53,20 @@ fn cmd_lex_parse_hir_check_emit_succeed_on_valid_file() {
     cmd_parse(&args);
     cmd_hir(&args);
     cmd_check(CheckCommand { input: args.clone(), permissive: false });
-    cmd_emit(EmitCommand { input: args, target: radix::codegen::Target::Rust });
+    cmd_emit(EmitCommand { input: args, package: false, target: radix::codegen::Target::Rust });
 }
 
 #[test]
 fn cmd_emit_supports_faber_target_flag() {
     let file = write_temp_fab("emit-faber", "incipit {}");
-    cmd_emit(EmitCommand { input: vec![file], target: radix::codegen::Target::Faber });
+    cmd_emit(EmitCommand { input: vec![file], package: false, target: radix::codegen::Target::Faber });
 }
 
 #[test]
-fn cmd_emit_package_supports_cli_example() {
-    cmd_emit_package(EmitPackageCommand {
-        path: "../../examples/exempla/cli/main.fab".to_owned(),
+fn cmd_emit_supports_package_input() {
+    cmd_emit(EmitCommand {
+        input: vec!["../../examples/exempla/cli/main.fab".to_owned()],
+        package: true,
         target: radix::codegen::Target::Rust,
     });
 }
@@ -133,7 +134,20 @@ fn cli_accepts_target_aliases() {
     match cli.command {
         Command::Emit(args) => {
             assert_eq!(args.target, CliTarget::Faber);
+            assert!(!args.package);
             assert_eq!(args.input, vec!["main.fab"]);
+        }
+        other => panic!("expected emit, got {:?}", other),
+    }
+}
+
+#[test]
+fn cli_parses_emit_package_flag() {
+    let cli = Cli::try_parse_from(["radix", "emit", "--package", "pkg/main.fab"]).expect("cli parse");
+    match cli.command {
+        Command::Emit(args) => {
+            assert!(args.package);
+            assert_eq!(args.input, vec!["pkg/main.fab"]);
         }
         other => panic!("expected emit, got {:?}", other),
     }
