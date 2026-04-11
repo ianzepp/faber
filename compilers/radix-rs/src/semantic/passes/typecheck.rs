@@ -971,10 +971,7 @@ impl<'a> TypeChecker<'a> {
                 }
                 self.bool_type()
             }
-            crate::hir::HirUnOp::IsTrue | crate::hir::HirUnOp::IsFalse => {
-                let _ = operand_ty;
-                self.bool_type()
-            }
+            crate::hir::HirUnOp::IsTrue | crate::hir::HirUnOp::IsFalse => self.bool_type(),
         }
     }
 

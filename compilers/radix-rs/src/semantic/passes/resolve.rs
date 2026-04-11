@@ -228,9 +228,7 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
         StmtKind::TypeAlias(decl) => {
             resolve_type(resolver, interner, &decl.ty, errors);
         }
-        StmtKind::Enum(decl) => {
-            let _ = decl;
-        }
+        StmtKind::Enum(_) => {}
         StmtKind::Union(decl) => {
             resolver.enter_scope(ScopeKind::Module);
             for param in &decl.type_params {

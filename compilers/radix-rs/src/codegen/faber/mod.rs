@@ -1644,10 +1644,12 @@ impl FaberCodegen {
             return false;
         }
 
-        let then_expr = self
-            .reddit_expr(then_block)
-            .expect("checked by can_write_sic_secus_chain");
-        let else_block = else_block.expect("checked by can_write_sic_secus_chain");
+        let Some(then_expr) = self.reddit_expr(then_block) else {
+            return false;
+        };
+        let Some(else_block) = else_block else {
+            return false;
+        };
 
         self.write_expr_prec(cond, 2, types, names, interner, w);
         w.write(" sic ");

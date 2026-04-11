@@ -83,7 +83,7 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
 }
 
 /// Lower a literal
-fn lower_literal(lowerer: &mut Lowerer, lit: &Literal) -> HirExprKind {
+fn lower_literal(_lowerer: &mut Lowerer, lit: &Literal) -> HirExprKind {
     let hir_lit = match lit {
         Literal::Integer(n) => HirLiteral::Int(*n),
         Literal::Float(n) => HirLiteral::Float(*n),
@@ -91,7 +91,6 @@ fn lower_literal(lowerer: &mut Lowerer, lit: &Literal) -> HirExprKind {
         Literal::Bool(b) => HirLiteral::Bool(*b),
         Literal::Nil => HirLiteral::Nil,
     };
-    let _ = lowerer;
     HirExprKind::Literal(hir_lit)
 }
 

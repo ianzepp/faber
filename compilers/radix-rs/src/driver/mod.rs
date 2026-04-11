@@ -114,7 +114,10 @@ pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Res
     }
 
     let parser::ParseResult { program, interner, .. } = parse_result;
-    let program = program.expect("successful parse result must contain a program");
+    let Some(program) = program else {
+        diagnostics.push(Diagnostic::error("successful parse result missing program").with_file(name.to_owned()));
+        return Err(diagnostics);
+    };
 
     match session.config.target {
         Target::Go => diagnostics.extend(collect_go_unsupported_errors(&program, name, &interner)),
@@ -143,9 +146,15 @@ pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Res
     Ok(AnalyzedUnit {
         interner,
         types: semantic_result.types,
-        hir: semantic_result
-            .hir
-            .expect("successful semantic result must contain lowered HIR"),
+        hir: match semantic_result.hir {
+            Some(hir) => hir,
+            None => {
+                diagnostics.push(
+                    Diagnostic::error("successful semantic result missing lowered HIR").with_file(name.to_owned()),
+                );
+                return Err(diagnostics);
+            }
+        },
         diagnostics,
     })
 }

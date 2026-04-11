@@ -63,7 +63,13 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
         let rust = if is_entry {
             match codegen::generate(Target::Rust, &analysis.hir, &analysis.types, &analysis.interner) {
                 Ok(Output::Rust(output)) => output.code,
-                Ok(_) => unreachable!("Rust target must emit Rust output"),
+                Ok(_) => {
+                    diagnostics.push(
+                        Diagnostic::error("Rust target emitted unexpected non-Rust output variant")
+                            .with_file(file.path.display().to_string()),
+                    );
+                    continue;
+                }
                 Err(err) => {
                     diagnostics
                         .push(Diagnostic::codegen_error(&err.message).with_file(file.path.display().to_string()));
@@ -208,9 +214,13 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
             continue;
         }
 
-        let program = parse
-            .program
-            .expect("successful package parse must contain a program");
+        let Some(program) = parse.program else {
+            diagnostics.push(
+                Diagnostic::error("successful package parse result missing program")
+                    .with_file(canonical.display().to_string()),
+            );
+            continue;
+        };
 
         for stmt in &program.stmts {
             let StmtKind::Import(decl) = &stmt.kind else {
@@ -391,47 +401,5 @@ impl ModuleNode {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    fn temp_dir(label: &str) -> PathBuf {
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("clock")
-            .as_nanos();
-        let dir = std::env::temp_dir().join(format!("radix-project-{label}-{nanos}"));
-        fs::create_dir_all(&dir).expect("create temp dir");
-        dir
-    }
-
-    #[test]
-    fn compile_package_reports_unresolved_external_imports() {
-        let dir = temp_dir("external-import");
-        let entry = dir.join("main.fab");
-        fs::write(&entry, "importa ex \"lodash\" privata map\nincipit { scribe \"x\" }").expect("write entry");
-
-        let result = compile_package(&Config::default(), &entry);
-        assert!(result.output.is_none());
-        assert!(result.diagnostics.iter().any(|diag| diag
-            .message
-            .contains("only supports local intra-package imports")));
-    }
-
-    #[test]
-    fn compile_package_resolves_relative_input_from_current_working_directory() {
-        let dir = temp_dir("relative-input");
-        let project_dir = dir.join("project");
-        fs::create_dir_all(&project_dir).expect("create project dir");
-        fs::write(project_dir.join("main.fab"), "incipit { scribe \"salve\" }").expect("write entry");
-
-        let original_cwd = std::env::current_dir().expect("current dir");
-        std::env::set_current_dir(&dir).expect("set current dir");
-
-        let result = compile_package(&Config::default(), Path::new("./project/main.fab"));
-
-        std::env::set_current_dir(original_cwd).expect("restore current dir");
-
-        assert!(result.success(), "expected relative package compile success");
-    }
-}
+#[path = "project_test.rs"]
+mod tests;

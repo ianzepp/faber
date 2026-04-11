@@ -332,7 +332,6 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_scribe(&mut self, stmt: &crate::syntax::ScribeStmt) -> HirStmtKind {
-        let _ = stmt.kind;
         let args = stmt.args.iter().map(|arg| self.lower_expr(arg)).collect();
         HirStmtKind::Expr(HirExpr {
             id: self.next_hir_id(),
@@ -343,7 +342,6 @@ impl<'a> Lowerer<'a> {
     }
 
     fn lower_incipit_stmt(&mut self, stmt: &crate::syntax::IncipitStmt) -> HirStmtKind {
-        let _ = stmt.is_async;
         self.push_scope();
         let mut args_binding = None;
         if let Some(args) = &stmt.args {

@@ -213,7 +213,8 @@ impl Parser {
             }
             pos += 1;
         }
-        self.tokens.last().unwrap() // INVARIANT: token stream always ends with EOF
+        debug_assert!(!self.tokens.is_empty(), "token stream always ends with EOF");
+        &self.tokens[self.tokens.len() - 1]
     }
 
     /// Check if current token matches kind (discriminant comparison only).

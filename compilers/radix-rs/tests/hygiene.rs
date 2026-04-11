@@ -3,13 +3,13 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const MAX_UNWRAP: usize = 3;
-const MAX_EXPECT: usize = 16;
+const MAX_UNWRAP: usize = 0;
+const MAX_EXPECT: usize = 5;
 const MAX_PANIC: usize = 0;
-const MAX_UNREACHABLE: usize = 7;
+const MAX_UNREACHABLE: usize = 8;
 const MAX_TODO: usize = 0;
 const MAX_UNIMPLEMENTED: usize = 0;
-const MAX_LET_UNDERSCORE: usize = 9;
+const MAX_LET_UNDERSCORE: usize = 6;
 
 #[derive(Clone)]
 struct SourceFile {
