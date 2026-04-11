@@ -439,7 +439,11 @@ pub fn generate_expr(
             w.write("func() ");
             w.write(&expr_return_type(expr, types, codegen));
             w.write(" ");
-            stmt::generate_block(codegen, block, types, w, |_| {})?;
+            if let Some(result_ty) = expr.ty {
+                stmt::generate_value_block(codegen, block, result_ty, types, w)?;
+            } else {
+                stmt::generate_block(codegen, block, types, w, |_| {})?;
+            }
             w.write("()");
         }
         HirExprKind::Si(cond, then_block, else_block) => {
@@ -449,10 +453,18 @@ pub fn generate_expr(
             w.write(" { if ");
             generate_expr(codegen, cond, types, w)?;
             w.write(" ");
-            stmt::generate_block(codegen, then_block, types, w, |_| {})?;
+            if let Some(result_ty) = expr.ty {
+                stmt::generate_value_block(codegen, then_block, result_ty, types, w)?;
+            } else {
+                stmt::generate_block(codegen, then_block, types, w, |_| {})?;
+            }
             if let Some(else_block) = else_block {
                 w.write(" else ");
-                stmt::generate_block(codegen, else_block, types, w, |_| {})?;
+                if let Some(result_ty) = expr.ty {
+                    stmt::generate_value_block(codegen, else_block, result_ty, types, w)?;
+                } else {
+                    stmt::generate_block(codegen, else_block, types, w, |_| {})?;
+                }
             } else {
                 w.write(" else { return nil }");
             }
@@ -1254,6 +1266,8 @@ fn expr_is_native_option_value(expr: &HirExpr, types: &TypeTable) -> bool {
             | HirExprKind::MethodCall(_, _, _)
             | HirExprKind::Verte { .. }
             | HirExprKind::Conversio { .. }
+            | HirExprKind::Si(_, _, _)
+            | HirExprKind::Block(_)
     )
 }
 

@@ -252,6 +252,36 @@ fn explicit_optional_local_initializers_wrap_pointer_values() {
 }
 
 #[test]
+fn inferred_optional_nil_local_emits_typed_var() {
+    let code = compile_go(
+        r#"incipit {
+  varia maybe ← nihil ⇢ si textus
+  scribe maybe
+}"#,
+    );
+
+    assert!(code.contains("var maybe *string = nil"));
+    assert!(!code.contains("maybe := nil"));
+}
+
+#[test]
+fn ternary_optional_result_coerces_branches_once() {
+    let code = compile_go(
+        r#"incipit {
+  varia maybe ← nihil ⇢ si textus
+  fixum result ← nonnihil maybe sic maybe secus "default"
+  scribe result
+}"#,
+    );
+
+    assert!(code.contains("result := func() *string"));
+    assert!(code.contains("return maybe"));
+    assert!(code.contains(r#"return func() *string { v := "default"; return &v }()"#));
+    assert!(!code.contains("v := func() *string"));
+    assert!(!code.contains("func() **string"));
+}
+
+#[test]
 fn qua_primitive_and_array_conversions_emit_go_conversions() {
     let code = compile_go(
         r#"functio getData() → lista<numerus> {

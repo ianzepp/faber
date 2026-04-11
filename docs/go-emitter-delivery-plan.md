@@ -25,7 +25,7 @@ The main blocker is no longer build-script noise. The verifier now reports a muc
 - `bun run build:exempla:radix-go` is the operative gate.
 - `scripta/build-exempla.ts` now uses package-aware verification for Go.
 - Current gate result:
-  - `4/131` emitted Go verification failures
+  - `3/131` emitted Go verification failures
   - no remaining compile-time codegen failures across `examples/exempla/`
 
 ### Confidence
@@ -189,8 +189,7 @@ Resolved in the current wave.
    - current shape: JS/Bun-ish field or method access on `any`
 
 2. Nullability / optional ternary result typing
-   - examples: `ternarius/ternarius.go`
-   - current shape: optional ternary lowering still mixes untyped `nil`, `string`, and `*string`
+   - resolved in the current wave
 
 3. Map/member/index typing issues
    - examples: `membrum/membrum.go`
@@ -239,8 +238,7 @@ Exit criteria:
 
 Status:
 
-- largely complete for this wave
-- remaining Stage A work is `ternarius`
+- complete for this wave
 
 ### Stage B: Stabilize Receiver / Member / Construction Semantics
 
@@ -399,7 +397,7 @@ Required:
 
 Observed:
 
-- achieved; current gate is `4/131`
+- achieved; current gate is `3/131`
 
 ### Checkpoint 2: Receiver / Construction Stable
 
@@ -462,4 +460,4 @@ Delivery orchestration should treat:
 - `bun run build:exempla:radix-go` as the main implementation gate
 - `cargo test --manifest-path compilers/radix-rs/Cargo.toml` as the safety gate
 
-The next implementation wave should start at **Stage A: Stabilize Type-Directed Expression Semantics**.
+The next implementation wave should start at **Stage B: Stabilize Receiver / Member / Construction Semantics** and **Stage D: Target-Surface Policy**.

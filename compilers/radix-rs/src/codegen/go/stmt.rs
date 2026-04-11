@@ -4,12 +4,30 @@ use super::{expr::generate_expr, CodeWriter, CodegenError, GoCodegen};
 use crate::hir::{HirBlock, HirExprKind, HirPattern, HirStmt, HirStmtKind};
 use crate::semantic::TypeTable;
 
+fn nil_init_type(expr: &crate::hir::HirExpr) -> Option<crate::semantic::TypeId> {
+    match &expr.kind {
+        HirExprKind::Literal(crate::hir::HirLiteral::Nil) => expr.ty,
+        HirExprKind::Verte { source, target, .. }
+            if matches!(source.kind, HirExprKind::Literal(crate::hir::HirLiteral::Nil)) =>
+        {
+            Some(*target)
+        }
+        HirExprKind::Conversio { source, target, .. }
+            if matches!(source.kind, HirExprKind::Literal(crate::hir::HirLiteral::Nil)) =>
+        {
+            Some(*target)
+        }
+        _ => None,
+    }
+}
+
 pub(super) fn generate_prefixed_block<P>(
     codegen: &GoCodegen<'_>,
     block: &HirBlock,
     types: &TypeTable,
     w: &mut CodeWriter,
     skip_stmts: usize,
+    result_ty: Option<crate::semantic::TypeId>,
     prelude: P,
 ) -> Result<(), CodegenError>
 where
@@ -31,7 +49,11 @@ where
         if result.is_ok() {
             if let Some(expr) = &block.expr {
                 w.write("return ");
-                result = generate_expr(codegen, expr, types, w);
+                if let Some(result_ty) = result_ty {
+                    result = generate_expr_for_go_type(codegen, expr, result_ty, types, w);
+                } else {
+                    result = generate_expr(codegen, expr, types, w);
+                }
                 w.newline();
             }
         }
@@ -51,10 +73,20 @@ pub fn generate_block<F>(
 where
     F: FnOnce(&mut CodeWriter),
 {
-    generate_prefixed_block(codegen, block, types, w, 0, |w| {
+    generate_prefixed_block(codegen, block, types, w, 0, None, |w| {
         prelude(w);
         Ok(())
     })
+}
+
+pub(super) fn generate_value_block(
+    codegen: &GoCodegen<'_>,
+    block: &HirBlock,
+    result_ty: crate::semantic::TypeId,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    generate_prefixed_block(codegen, block, types, w, 0, Some(result_ty), |_| Ok(()))
 }
 
 /// Emit only the statements inside a block (no braces).
@@ -115,10 +147,13 @@ pub fn generate_stmt(
             // and var for explicit types without initializers.
             if let Some(init) = &local.init {
                 let name = codegen.resolve_symbol(local.name);
-                if matches!(init.kind, HirExprKind::Literal(crate::hir::HirLiteral::Nil)) {
+                let nil_init_ty = nil_init_type(init);
+                if matches!(init.kind, HirExprKind::Literal(crate::hir::HirLiteral::Nil))
+                    || nil_init_ty.is_some()
+                {
                     w.write("var ");
                     w.write(name);
-                    if let Some(ty) = local.ty {
+                    if let Some(ty) = local.ty.or(init.ty).or(nil_init_ty) {
                         w.write(" ");
                         w.write(&type_to_go(codegen, ty, types));
                     } else {
@@ -253,7 +288,7 @@ pub(super) fn generate_error_binding_block(
         return generate_block(codegen, block, types, w, |_| {});
     };
 
-    generate_prefixed_block(codegen, block, types, w, 1, |w| {
+    generate_prefixed_block(codegen, block, types, w, 1, None, |w| {
         w.write(codegen.resolve_symbol(local.name));
         w.write(" := ");
         w.writeln(value_expr);
@@ -290,7 +325,7 @@ fn generate_ad_body_block(
     };
     let skip = 1 + usize::from(alias_local.is_some());
 
-    generate_prefixed_block(codegen, block, types, w, skip, |w| {
+    generate_prefixed_block(codegen, block, types, w, skip, None, |w| {
         w.write(codegen.resolve_symbol(binding_local.name));
         w.write(" := __radixResult");
         w.newline();
