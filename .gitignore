@@ -55,3 +55,6 @@ fons/nanus-go/nanus-go
 # Local Codex worktrees
 .codex/worktrees/*
 !.codex/worktrees/.gitkeep
+
+# Claude Code local artifacts
+.claude/
