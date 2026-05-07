@@ -1,291 +1,86 @@
 # Target Compatibility
 
-Faber compiles to multiple target languages, each with different capabilities. The compiler validates that your Faber code only uses features supported by your chosen target.
+This page describes the current target contract of the active `radix-rs` compiler.
 
-## Support Matrix
+Treat `cargo run --manifest-path compilers/radix-rs/Cargo.toml -- targets` as the live source of truth for the target list and high-level capability notes. Older bootstrap compilers and planned future targets are real repository surfaces, but they are not the authoritative contract of the primary compiler.
 
-**Legend:** ✓ = supported, ~ = emulated, ✗ = unsupported
+## Current `radix-rs` Target Surface
 
-| Feature                     | ts  | py  | rs  | zig | cpp |
-| --------------------------- | --- | --- | --- | --- | --- |
-| async functions (`fiet`)    | ✓   | ✓   | ✓   | ✗   | ✗   |
-| generators (`fiunt`)        | ✓   | ✓   | ✗   | ✗   | ✗   |
-| async generators (`fient`)  | ✓   | ✓   | ✗   | ✗   | ✗   |
-| try-catch (`tempta...cape`) | ✓   | ✓   | ~   | ~   | ✓   |
-| throw (`iace`)              | ✓   | ✓   | ~   | ~   | ✓   |
-| object destructuring        | ✓   | ✗   | ~   | ~   | ~   |
-| array destructuring         | ✓   | ✓   | ✓   | ✓   | ✓   |
-| default parameters (`vel`)  | ✓   | ✓   | ✗   | ✗   | ✓   |
+As of the current `radix-rs` CLI, the supported targets are:
 
-## Support Levels
+| Target | `check` | `build` | `package` | Notes |
+| ------ | ------- | ------- | --------- | ----- |
+| `rust` | yes | yes | yes | Primary backend; package compilation supported |
+| `go` | yes | yes | no | File emission supported; package compilation not yet supported |
+| `ts` | yes | yes | no | File emission supported; package compilation not yet supported |
+| `faber` | yes | yes | no | Canonical pretty-print target; package compilation not yet supported |
 
-The compiler uses three support levels:
+The current `targets` command prints these same notes directly:
 
-- **supported** (✓): Native implementation with correct semantics. Code compiles without errors.
-- **emulated** (~): Systematic transform (e.g., `Result<T,E>` for exceptions, field-by-field extraction for destructuring). May have performance/ergonomic costs but semantics are preserved.
-- **unsupported** (✗): Cannot be emitted; compilation fails with actionable error.
-
-Emulated features work correctly but may be less idiomatic in the target language. For example, Rust's `tempta...cape` becomes `Result<T,E>` patterns, and Zig's `iace` becomes `return error.X`.
-
-## Error Format
-
-When you use an unsupported feature, the compiler reports all incompatibilities before codegen:
-
-```
-Target compatibility errors for 'zig':
-
-  file.fab:12:1 - Target 'zig' does not support async functions (@ futura)
-    context: function fetch
-    hint: Refactor to synchronous code; consider explicit callbacks/event loop
-
-  file.fab:15:5 - Target 'zig' does not support try-catch (tempta...cape)
-    context: try-catch block
-    hint: Use error unions (!T) and handle errors explicitly
+```text
+rust check=yes build=yes run=no package=yes note=primary backend; package compilation supported
+go check=yes build=yes run=no package=no note=file emission supported; package compilation not yet supported
+ts check=yes build=yes run=no package=no note=file emission supported; package compilation not yet supported
+faber check=yes build=yes run=no package=no note=canonical pretty-print target; package compilation not yet supported
 ```
 
-## Feature Details
+## Primary Surface Versus Secondary Surfaces
 
-### Async Functions (`fiet`)
+[`compilers/radix-rs`](../../compilers/radix-rs) is the active delivery compiler.
 
-**Faber syntax:**
+- Rust is the strongest target today and the primary package-compilation path.
+- Go and TypeScript are real `radix-rs` file-emission targets, but package support is still intentionally absent.
+- Faber output is useful as a canonical pretty-printer and inspection target.
+- Python remains a maintenance/bootstrap surface elsewhere in the repository, not part of the current `radix-rs targets` contract.
+
+If you need current repo status at a glance, see [`project.yaml`](../../project.yaml) and the root [`README.md`](../../README.md).
+
+## Current Syntax Reminder
+
+Some older docs used verb-form return syntax such as `fit`, `fiet`, `fiunt`, and `fient`. The current grammar contract lives in [`EBNF.md`](../../EBNF.md) and uses arrow returns plus annotations:
 
 ```fab
-functio fetch(textus url) fiet textus {
-    redde "data"
-}
+functio parse() -> numerus
+
+@ futura
+functio fetch(textus url) -> textus
+
+@ cursor
+functio count(numerus n) -> numerus
+
+@ futura
+@ cursor
+functio stream() -> textus
 ```
 
-**Supported targets:** TypeScript, Python, Rust
+When reading target examples, prefer this syntax over older prose that still reflects pre-annotation documentation.
 
-**Unsupported targets:** Zig, C++
+## Package Compilation
 
-**Why unsupported:**
+Package compilation is a target capability, not a generic promise.
 
-- Zig uses explicit error unions and event loops, not async/await
-- C++ has no standard async/await (coroutines require careful design)
+- `rust`: package compilation is supported today.
+- `go`, `ts`, `faber`: file emission is supported, but package compilation is not yet supported.
 
-**Alternatives:**
-
-- Refactor to synchronous code
-- Use target-specific concurrency primitives (goroutines, event loops)
-- Consider splitting code by target if async is essential
-
-### Generators (`fiunt`)
-
-**Faber syntax:**
-
-```fab
-functio count(numerus n) fiunt numerus {
-    varia i = 0
-    dum i < n {
-        cede i
-        i = i + 1
-    }
-}
-```
-
-**Supported targets:** TypeScript, Python
-
-**Unsupported targets:** Rust, Zig, C++
-
-**Why unsupported:**
-
-- Rust: Generators are unstable (nightly only)
-- Zig/C++: No native generator support
-
-**Alternatives:**
-
-- Return an array/collection instead
-- Use iterators with explicit state
-- Use `while` loops at call site
-
-### Exception Handling (`tempta...cape`, `iace`)
-
-**Faber syntax:**
-
-```fab
-functio divide(numerus a, numerus b) fit numerus {
-    tempta {
-        si b == 0 {
-            iace error("division by zero")
-        }
-        redde a / b
-    } cape err {
-        scribe err
-        redde 0
-    }
-}
-```
-
-**Supported targets:** TypeScript, Python, C++
-
-**Emulated targets:** Rust, Zig
-
-**Unsupported targets:** None
-
-**Emulation details:**
-
-- **Rust**: `tempta...cape` transforms to `Result<T, E>` patterns. `iace` becomes `return Err("msg")`.
-- **Zig**: `tempta...cape` transforms to error union handling. `iace` becomes `return error.X`.
-
-**Performance notes:**
-Emulated error handling preserves semantics but may be less idiomatic than native patterns in the target language.
-
-### Object Destructuring
-
-**Faber syntax:**
-
-```fab
-genus Punto {
-    numerus x
-    numerus y
-}
-
-functio distance(Punto p) fit numerus {
-    fixum { x, y } = p
-    redde x * x + y * y
-}
-```
-
-**Supported targets:** TypeScript
-
-**Emulated targets:** Rust, Zig, C++
-
-**Unsupported targets:** Python
-
-**Emulation details:**
-Object destructuring transforms to field-by-field extraction:
-
-```fab
-fixum { x, y } = p
-```
-
-becomes:
-
-```
-const x = p.x;
-const y = p.y;
-```
-
-**Performance notes:**
-No performance cost - the emulated code is semantically identical to native destructuring.
-
-### Default Parameters (`vel`)
-
-**Faber syntax:**
-
-```fab
-functio greet(textus name vel "World") fit textus {
-    redde "Salve, " + name
-}
-```
-
-**Supported targets:** TypeScript, Python, C++
-
-**Unsupported targets:** Rust, Zig
-
-**Why unsupported:**
-
-- Rust: Use Option<T> or separate functions
-- Zig: Use optional types (`?T`) with explicit null handling
-
-**Alternatives:**
-
-- Use function overloading (separate signatures)
-- Accept optional type and check for null
-- Provide separate convenience functions
-
-## Writing Portable Code
-
-To maximize portability across targets:
-
-1. **Avoid async/generators unless necessary** - Most code doesn't need them
-2. **Use explicit error handling** - Return optional types instead of throwing
-3. **Access fields explicitly** - Don't rely on destructuring
-4. **Provide all parameters** - Don't rely on defaults
-5. **Use collections and loops** - These work everywhere
-
-Example of portable code:
-
-```fab
-genus Punto {
-    numerus x
-    numerus y
-}
-
-functio distance(Punto a, Punto b) fit numerus {
-    fixum dx = a.x - b.x
-    fixum dy = a.y - b.y
-    redde dx * dx + dy * dy
-}
-
-functio sum(numerus[] items) fit numerus {
-    varia total = 0
-    itera ex items fixum item {
-        total = total + item
-    }
-    redde total
-}
-```
-
-This code compiles to TypeScript, Python, Rust, Zig, and C++ without modification.
-
-## Future Work
-
-### Mismatched Support Level (Not Yet Implemented)
-
-Features with semantic differences may be marked `mismatched`:
-
-- Go goroutines are not async/await (different execution model)
-- Zig async is actually for async I/O, not general coroutines
-- Language-specific coalesce operators with different null semantics
-
-When implemented, these will require opt-in via CLI flag: `--allow-mismatched`
-
-### Policy Control (Future)
-
-Potential CLI flags for fine-grained control:
+This matters for command selection:
 
 ```bash
-faber compile program.fab -t zig --warn-emulated    # Warn on emulated features
-faber compile program.fab -t go --allow-mismatched  # Accept semantic differences (when implemented)
-faber compile program.fab -t rs --strict            # Fail on warnings
+cargo run --manifest-path compilers/radix-rs/Cargo.toml -- build examples/exempla/salve-munde.fab
+cargo run --manifest-path compilers/radix-rs/Cargo.toml -- build --package examples/exempla/cli/main.fab
+cargo run --manifest-path compilers/radix-rs/Cargo.toml -- emit -t go examples/exempla/salve-munde.fab
 ```
 
-## Target-Specific Notes
+Use `build --package` only when the target actually supports package compilation.
 
-### TypeScript
+## Portability Guidance For The Current Compiler
 
-TypeScript supports all Faber features. Use it for prototyping and as a reference implementation.
+If you want the least surprising cross-target results on the active `radix-rs` surface:
 
-### Python
+1. Prefer single-file examples unless you specifically need Rust package output.
+2. Treat Rust as the strongest correctness gate.
+3. Use `emit` for stdout/debug workflows and `build` for writing outputs to disk.
+4. Re-check [`README.md`](../../README.md) or `radix targets` before assuming a target or package mode exists.
 
-Python supports most features except object destructuring. Use tuple unpacking or explicit field access instead.
+## What This Page Does Not Promise
 
-### Rust
-
-Rust is a systems language with explicit error handling. Exception handling (`tempta...cape`, `iace`) is emulated via `Result<T, E>` transforms. Object destructuring is emulated via field-by-field extraction. Generators are not available in stable Rust.
-
-### Zig
-
-Zig is a minimal systems language. Exception handling (`tempta...cape`, `iace`) is emulated via error union transforms. Object destructuring is emulated via field-by-field extraction. Async/await is not supported (Zig uses explicit event loops).
-
-### C++
-
-C++ supports native exception handling (`try`/`catch`/`throw`). Object destructuring is emulated via field-by-field extraction. Async/await and generators are not supported (coroutines are experimental).
-
-## Checking Compatibility
-
-To verify your code is compatible with a target before compiling:
-
-```bash
-bun run faber compile program.fab -t zig
-```
-
-The compiler will report all incompatibilities before attempting codegen. Fix the issues and recompile.
-
-## Related
-
-- Design document: `consilia/capabilities.md`
-- Implementation: `compilers/rivus/codegen/` (target-specific modules)
-- Tests: `tests/proba/capabilities/`
+This page does not claim a current `radix-rs` support matrix for Python, Zig, or C++. Those surfaces either live in bootstrap/older compiler paths or remain future/planned work. If broader target support becomes part of the primary compiler contract later, this page should be expanded from live compiler evidence rather than from historical notes.
