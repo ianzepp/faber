@@ -27,7 +27,7 @@ itera ex items fixum item {
 
 - **LLMs write Faber.** Word-based, regular syntax. No lifetime annotations, no pointer semantics, no template noise. One language regardless of compile target.
 - **Humans skim Faber.** You see `si` (if), `itera` (iterate), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
-- **Compiler emits target code.** The active `radix-rs` compiler currently targets Rust and canonical Faber output. Bootstrap compilers in this repository still cover additional targets such as TypeScript, Go, and Python. The generated code is what actually runs.
+- **Compiler emits target code.** The active `radix-rs` compiler currently emits Rust, canonical Faber, TypeScript, and Go. Package compilation is currently strongest on Rust, while the bootstrap compilers remain useful for Python and older secondary target paths. The generated code is what actually runs.
 
 The workflow: LLM drafts Faber → Human approves → Compiler emits production code.
 
@@ -112,10 +112,12 @@ Current status model:
 ## Quick Start
 
 ```bash
-# radix-rs (primary compiler — Rust target)
+# radix-rs (primary compiler — Rust plus file-level TS/Go/Faber targets)
 cd compilers/radix-rs && cargo build --release
 cargo run -- targets                                              # Show supported targets
 cargo run -- build ../../examples/exempla/salve-munde.fab         # Write one Rust output next to cwd
+cargo run -- emit -t ts ../../examples/exempla/salve-munde.fab    # Stdout-oriented TypeScript emission
+cargo run -- emit -t go ../../examples/exempla/salve-munde.fab    # Stdout-oriented Go emission
 cargo run -- build --package ../../examples/exempla/cli/main.fab  # Build a local multi-file package
 cargo run -- emit ../../examples/exempla/salve-munde.fab          # Stdout-oriented/debug emission
 
@@ -124,7 +126,7 @@ bun run check:radix-rs
 bun run test:radix-rs
 bun run ci
 
-# Bootstrap compilers (TS/Go/Python targets)
+# Bootstrap compilers (Python and secondary TS/Go paths)
 bun install
 bun run build                                             # Build nanus-* compilers
 ./opus/bin/nanus-go compile examples/exempla/salve-munde.fab -t ts  # TypeScript
@@ -155,8 +157,8 @@ The repository is organized as a family repo with isolated component domains:
 
 Current reality:
 - `radix-rs` is the active compiler and current delivery focus.
-- `radix-rs` currently emits Rust and canonical Faber output.
-- `nanus-*` compilers remain useful for older or secondary target paths.
+- `radix-rs` currently emits Rust, canonical Faber, TypeScript, and Go.
+- `nanus-*` compilers remain useful for Python plus older or secondary target paths.
 - `rivus` and related tooling are informative but not current delivery gates.
 
 ## Block Syntax Patterns

@@ -117,8 +117,10 @@ The production compiler at `compilers/radix-rs/`. **Use this for all new develop
 ```
 cd compilers/radix-rs && cargo build --release             # Build
 cd compilers/radix-rs && cargo test                        # Run tests
-cd compilers/radix-rs && cargo run -- emit <file.fab>              # Emit Rust
-cd compilers/radix-rs && cargo run -- emit --package <path>        # Emit local multi-file package as Rust
+cd compilers/radix-rs && cargo run -- targets              # Show supported targets and capability notes
+cd compilers/radix-rs && cargo run -- build <file.fab>     # Build one file to disk (Rust by default)
+cd compilers/radix-rs && cargo run -- build --package <path>       # Build a local multi-file package to disk
+cd compilers/radix-rs && cargo run -- emit <file.fab>              # Emit target code to stdout (Rust by default)
 cd compilers/radix-rs && cargo run -- parse <file.fab>     # Parse only
 cd compilers/radix-rs && cargo run -- check <file.fab>     # Semantic analysis
 ```
@@ -128,7 +130,7 @@ cd compilers/radix-rs && cargo run -- check <file.fab>     # Semantic analysis
 **When to use radix-rs:**
 - All new feature development
 - Semantic analysis work (type checking, borrow analysis, linting)
-- Rust target codegen
+- Rust target codegen and active TS/Go/Faber emission work
 
 ### Nanus CLI (Bootstrap Compilers)
 
@@ -144,7 +146,7 @@ Minimal compilers in multiple languages at `opus/bin/nanus-*`. **Primary purpose
 
 **When to use Nanus:**
 - Building rivus (`bun run build:rivus` uses nanus-ts internally)
-- Targeting TS/Go/Python (radix-rs currently only emits Rust/Faber)
+- Targeting Python, or older/secondary TS/Go paths when radix-rs support is not enough yet
 - Fallback when radix-rs doesn't support a feature yet
 
 **Nanus compilers are intentionally minimal** — new features go in radix-rs.
