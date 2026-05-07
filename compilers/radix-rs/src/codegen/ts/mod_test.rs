@@ -22,10 +22,10 @@ fn render_ts(program: &HirProgram, types: &TypeTable, interner: &Interner) -> St
 
 #[test]
 fn maps_primitive_types_to_typescript() {
-    let mut interner = Interner::new();
+    let interner = Interner::new();
     let program = HirProgram { items: Vec::new(), entry: None };
     let codegen = TsCodegen::new(&program, &interner);
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
 
     assert_eq!(type_to_ts(&codegen, types.primitive(Primitive::Textus), &types), "string");
     assert_eq!(type_to_ts(&codegen, types.primitive(Primitive::Numerus), &types), "number");
@@ -39,7 +39,7 @@ fn maps_primitive_types_to_typescript() {
 
 #[test]
 fn maps_collection_and_option_types_to_typescript() {
-    let mut interner = Interner::new();
+    let interner = Interner::new();
     let program = HirProgram { items: Vec::new(), entry: None };
     let codegen = TsCodegen::new(&program, &interner);
     let mut types = TypeTable::new();
@@ -186,7 +186,7 @@ fn emits_function_and_entry_iife() {
     let mut interner = Interner::new();
     let f_name = interner.intern("id");
     let x_name = interner.intern("x");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let program = HirProgram {
         items: vec![HirItem {
@@ -242,7 +242,7 @@ fn emits_class_interface_import_and_variable_statements() {
     let import_path = interner.intern("./norma");
     let import_item = interner.intern("loge");
     let local_name = interner.intern("x");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let textus = types.primitive(Primitive::Textus);
     let numerus = types.primitive(Primitive::Numerus);
 
@@ -384,7 +384,7 @@ fn lowers_logical_and_comparison_operators() {
     let x = interner.intern("x");
     let y = interner.intern("y");
     let z = interner.intern("z");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let bivalens = types.primitive(Primitive::Bivalens);
     let program = HirProgram {

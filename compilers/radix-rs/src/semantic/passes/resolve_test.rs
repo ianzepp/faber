@@ -47,7 +47,7 @@ fn reports_undefined_variable_in_expression() {
 #[test]
 fn reports_return_outside_function() {
     let program = program(vec![stmt(StmtKind::Redde(ReddeStmt { value: None }))]);
-    let mut interner = Interner::new();
+    let interner = Interner::new();
 
     let mut resolver = Resolver::new();
     let mut types = TypeTable::new();
@@ -183,7 +183,7 @@ fn reports_break_outside_loop() {
     let program = program(vec![stmt(StmtKind::Rumpe(crate::syntax::RumpeStmt {
         span: Span::default(),
     }))]);
-    let mut interner = Interner::new();
+    let interner = Interner::new();
 
     let mut resolver = Resolver::new();
     let mut types = TypeTable::new();

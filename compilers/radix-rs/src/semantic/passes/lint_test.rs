@@ -138,7 +138,7 @@ fn warns_on_shadowed_variable() {
 
 #[test]
 fn warns_on_unnecessary_cast() {
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let program = HirProgram {
         items: Vec::new(),
@@ -312,7 +312,7 @@ fn warns_on_unreachable_after_break() {
 
 #[test]
 fn warns_on_explicit_ignotum_annotation() {
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let ignotum = types.primitive(Primitive::Ignotum);
     let program = HirProgram {
         items: Vec::new(),

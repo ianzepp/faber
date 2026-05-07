@@ -87,7 +87,7 @@ fn reports_use_after_move() {
 
 #[test]
 fn reports_mutable_borrow_conflict() {
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let shared = HirExpr {
         id: crate::hir::HirId(1),
@@ -150,7 +150,7 @@ fn reports_mutable_borrow_conflict() {
 
 #[test]
 fn reports_assign_to_de_parameter() {
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let assign = HirExpr {
         id: crate::hir::HirId(1),
@@ -278,7 +278,7 @@ fn reports_de_passed_to_in_position() {
 
 #[test]
 fn warns_when_in_parameter_is_never_mutated() {
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let read = HirExpr { id: crate::hir::HirId(1), kind: HirExprKind::Path(DefId(1)), ty: Some(numerus), span: span() };
 
@@ -321,7 +321,7 @@ fn warns_when_in_parameter_is_never_mutated() {
 
 #[test]
 fn warns_when_ex_parameter_is_never_consumed() {
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let read = HirExpr { id: crate::hir::HirId(1), kind: HirExprKind::Path(DefId(1)), ty: Some(numerus), span: span() };
 

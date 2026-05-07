@@ -17,7 +17,7 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
     let mut interner = Interner::new();
     let name_f = interner.intern("f");
     let name_x = interner.intern("x");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
 
     let program = HirProgram {
@@ -71,7 +71,7 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
 fn emits_main_body_and_scribe_as_println() {
     let mut interner = Interner::new();
     let salve = interner.intern("Salve, munde!");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
 
     let program = HirProgram {
         items: Vec::new(),
@@ -157,7 +157,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
     let local_name = interner.intern("value");
     let bind_name = interner.intern("bound");
     let closure_name = interner.intern("p");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
 
     let match_expr = HirExpr {
@@ -970,8 +970,8 @@ fn expr_codegen_handles_control_flow_and_operators() {
 
 #[test]
 fn codegen_rejects_hir_error_nodes_for_all_targets() {
-    let mut interner = Interner::new();
-    let mut types = TypeTable::new();
+    let interner = Interner::new();
+    let types = TypeTable::new();
     let program = HirProgram {
         items: Vec::new(),
         entry: Some(HirBlock {
@@ -1004,8 +1004,8 @@ fn codegen_rejects_hir_error_nodes_for_all_targets() {
 
 #[test]
 fn direct_rust_codegen_propagates_entry_stmt_errors() {
-    let mut interner = Interner::new();
-    let mut types = TypeTable::new();
+    let interner = Interner::new();
+    let types = TypeTable::new();
     let program = HirProgram {
         items: Vec::new(),
         entry: Some(HirBlock {
@@ -1031,8 +1031,8 @@ fn direct_rust_codegen_propagates_entry_stmt_errors() {
 
 #[test]
 fn expr_codegen_block_propagates_nested_stmt_errors() {
-    let mut interner = Interner::new();
-    let mut types = TypeTable::new();
+    let interner = Interner::new();
+    let types = TypeTable::new();
     let support_program = HirProgram { items: Vec::new(), entry: None };
     let rust_codegen = super::RustCodegen::new(&support_program, &interner);
     let mut writer = super::CodeWriter::new();
@@ -1170,7 +1170,7 @@ fn emits_result_and_err_for_direct_iace() {
     let mut interner = Interner::new();
     let boom = interner.intern("boom");
     let oops = interner.intern("oops");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
 
     let program = HirProgram {
@@ -1226,7 +1226,7 @@ fn propagates_failable_calls_with_question_mark() {
     let callee = interner.intern("callee");
     let caller = interner.intern("caller");
     let oops = interner.intern("oops");
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let textus = types.primitive(Primitive::Textus);
 

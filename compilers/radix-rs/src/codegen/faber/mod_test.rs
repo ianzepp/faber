@@ -17,7 +17,7 @@ fn emits_basic_function_and_entry() {
     let name_param = interner.intern("name");
     let name_text = interner.intern("salve");
 
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let textus = types.primitive(Primitive::Textus);
 
     let function = HirFunction {
@@ -100,8 +100,8 @@ fn renders_unresolved_infer_as_ignotum() {
 
 #[test]
 fn rejects_hir_error_nodes_in_direct_faber_codegen() {
-    let mut interner = Interner::new();
-    let mut types = TypeTable::new();
+    let interner = Interner::new();
+    let types = TypeTable::new();
     let program = HirProgram {
         items: Vec::new(),
         entry: Some(HirBlock {
@@ -134,7 +134,7 @@ fn emits_parameter_references_with_original_names() {
     let name_identity = interner.intern("identity");
     let name_x = interner.intern("x");
 
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
 
     let function = HirFunction {
@@ -191,7 +191,7 @@ fn emits_si_sin_secus_chain_with_reddit_shorthand() {
     let text_b = interner.intern("B");
     let text_f = interner.intern("F");
 
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let textus = types.primitive(Primitive::Textus);
     let bivalens = types.primitive(Primitive::Bivalens);
 
@@ -305,7 +305,7 @@ fn emits_synthetic_proba_functions_as_proba_cases() {
     let mut interner = Interner::new();
     let name = interner.intern("one plus one equals two");
 
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let vacuum = types.primitive(Primitive::Vacuum);
 
     let function = HirFunction {
@@ -360,7 +360,7 @@ fn discerne_cases_do_not_emit_nested_blocks() {
     let mut interner = Interner::new();
     let ok = interner.intern("OK");
 
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
     let textus = types.primitive(Primitive::Textus);
 
@@ -490,7 +490,7 @@ fn emits_regex_literals_with_flags() {
     let pattern = interner.intern("\\d+");
     let flags = interner.intern("g");
 
-    let mut types = TypeTable::new();
+    let types = TypeTable::new();
     let regex = types.primitive(Primitive::Regex);
 
     let program = HirProgram {
