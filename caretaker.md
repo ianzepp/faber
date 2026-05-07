@@ -2,12 +2,12 @@
 
 ## Active Queue
 
-### structurae-member-contract-truth
+### member-visibility-contract-decision
 - type: housekeeping
 - status: pending
 - priority: medium
 - size: small
 - discovered: 2026-05-07
 - source: caretaker loop
-- next slice: Resolve `docs/grammatica/structurae.md` field-visibility and `generis functio` guidance against the active `radix-rs` checker, `tests/proba/codegen/statements/genus.yaml`, and `EBNF.md` before editing those sections further.
-- notes: Postfix `novum`, `si` nullable returns, and stdlib annotation signatures are now aligned; the remaining ambiguity is specifically around member-visibility spellings and static methods.
+- next slice: Decide whether `EBNF.md` should keep member-visibility annotations and `generis functio` as language contract, or whether `radix-rs` docs/spec should narrow to the currently implemented public-by-default plus static-field surface before more tutorial edits.
+- notes: `radix-rs` rejects `generis functio`, field-position visibility annotations fail to parse, method-position annotations parse inconsistently with older `-um` fixture spellings, and lowering/codegen have no dedicated member-visibility model yet.

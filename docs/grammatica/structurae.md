@@ -99,7 +99,7 @@ genus Counter {
 }
 ```
 
-Methods are public by default, matching the struct semantics of `genus`. Use the `@ privata` annotation for internal helper methods.
+Methods are public by default, matching the struct semantics of `genus`. The grammar reserves visibility-style annotations, but the active `radix-rs` implementation does not yet carry a stable member-visibility contract through parsing, lowering, and code generation, so this page sticks to the public-by-default rule.
 
 ### Self-Reference with ego
 
@@ -133,28 +133,18 @@ scribe Colores.ruber      # "#FF0000"
 
 Static `generis` fields are useful for constants and shared configuration. The broader `generis functio` surface still lags between older fixtures and the active `radix-rs` checker, so this page keeps the example to the code-backed field form.
 
-### Field Visibility
+### Member Visibility
 
-Fields in a `genus` are public by default, following struct semantics where data is meant to be accessed directly. The dedicated field-visibility forms are still being reconciled across older fixtures and the active `radix-rs` surface, so this page focuses on the public-by-default rule and on method visibility, which is the more stable current example.
+Fields in a `genus` are public by default, following struct semantics where data is meant to be accessed directly. That public-by-default model is the only member-visibility behavior this page treats as stable today.
 
-### Method Visibility
+The broader visibility story is still unresolved across the repo:
 
-Methods follow the same pattern:
+- `EBNF.md` reserves annotation spellings such as `@ publica`, `@ protecta`, and `@ privata`
+- older bootstrap-era fixtures still mention legacy `@ publicum` / `@ protectum` / `@ privatum` forms
+- the active `radix-rs` parser accepts method-position visibility annotations more readily than field-position ones
+- `radix-rs` lowering and code generation do not currently carry a dedicated member-visibility model
 
-```fab
-genus Processor {
-    functio process() -> textus {       # public (default)
-        redde ego.auxilium()
-    }
-
-    @ privata
-    functio auxilium() -> textus {      # private helper
-        redde "internal work"
-    }
-}
-```
-
-Method visibility currently uses annotations such as `@ privata` and `@ protecta` on the active compiler surface.
+Until that contract is reconciled, prefer plain public members in examples and treat visibility annotations as implementation work in progress rather than tutorial-ready surface area.
 
 ### Abstract Types
 
