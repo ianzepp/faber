@@ -649,8 +649,6 @@ functio processArray(lista<numerus> items) {
 | `ex` | "from, out of" | Iteration source |
 | `de` | "concerning" | Key iteration source |
 | `pro` | "for" | Iteration binding |
-| `fit` | "it becomes" | Sync binding |
-| `fiet` | "it will become" | Async binding |
 | `rumpe` | "break!" | Exit loop |
 | `perge` | "continue!" | Skip to next iteration |
 | `elige` | "choose!" | Value switch |

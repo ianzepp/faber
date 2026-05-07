@@ -9,5 +9,5 @@
 - size: medium
 - discovered: 2026-05-07
 - source: caretaker loop
-- next slice: Refresh `docs/grammatica/functiones.md` and adjacent pages that still teach `fit`/`fiet` verb-form return syntax instead of the current annotation-plus-arrow grammar in `EBNF.md`.
-- notes: `targets.md` is now current, but broader grammatica prose still contains pre-annotation syntax.
+- next slice: Repair remaining grammatica examples outside `functiones.md` that still show pre-arrow function syntax, especially the stdlib-style snippets in `docs/grammatica/structurae.md`.
+- notes: `functiones.md`, `fundamenta.md`, `verba.md`, and the stale `regimen.md` summary rows are now aligned; broader example-level syntax drift remains.

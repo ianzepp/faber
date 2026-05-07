@@ -220,16 +220,18 @@ Unary operators that expand to inline checks:
 | `sic`   | `?`    | Then branch in ternary |
 | `secus` | `:`    | Else branch in ternary |
 
-### Return Type Verbs
+### Historical Return Verb Forms
 
-Conjugations of _fio_ ("to become") indicating return behavior:
+Older Faber drafts and some stale docs used conjugations of _fio_ ("to become") to describe sync, async, and generator return behavior:
 
-| Verbum  | Async | Generator | Meaning                              |
-| ------- | :---: | :-------: | ------------------------------------ |
-| `fit`   |  no   |    no     | "it becomes" (sync)                  |
-| `fiet`  |  yes  |    no     | "it will become" (async)             |
-| `fiunt` |  no   |    yes    | "they become" (sync generator)       |
-| `fient` |  yes  |    yes    | "they will become" (async generator) |
+| Verbum  | Historical association                |
+| ------- | ------------------------------------- |
+| `fit`   | sync single-result function           |
+| `fiet`  | async single-result function          |
+| `fiunt` | sync generator                        |
+| `fient` | async generator                       |
+
+The current grammar contract does not use these verb forms in function declarations. Use arrow returns plus `@ futura` and `@ cursor` instead.
 
 ### Range Operators
 

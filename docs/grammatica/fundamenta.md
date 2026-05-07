@@ -30,7 +30,7 @@ incipit {
 
 ### Asynchronous Entry: incipiet
 
-When your program needs to perform asynchronous operations at the top level, use `incipiet` instead. This is the future tense: "it will begin." The naming mirrors the `fit`/`fiet` pattern used throughout Faber, where present tense indicates synchronous operations and future tense indicates asynchronous ones.
+When your program needs to perform asynchronous operations at the top level, use `incipiet` instead. This is the future tense: "it will begin." The naming reflects the same present-versus-future contrast that Faber uses elsewhere in its Latin vocabulary, but current function declarations still use arrow returns plus annotations such as `@ futura`.
 
 ```fab
 incipiet {

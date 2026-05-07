@@ -144,26 +144,36 @@ functio doNothingExplicit() -> vacuum {
 }
 ```
 
-### Latin Verb Forms
+### Historical Note On Older Docs
 
-Faber offers an alternative syntax using conjugated forms of the Latin verb _fieri_ ("to become"). These verb forms encode additional semantic information about how the function returns values:
+Some older Faber docs and examples used verb-form return syntax such as `fit`, `fiet`, `fiunt`, and `fient`. The current grammar contract in [`EBNF.md`](../../EBNF.md) no longer uses those forms for function declarations.
 
-| Verb    | Tense/Number   | Meaning            | Semantics              |
-| ------- | -------------- | ------------------ | ---------------------- |
-| `fit`   | present, sing. | "it becomes"       | sync, single value     |
-| `fiet`  | future, sing.  | "it will become"   | async, single value    |
-| `fiunt` | present, plur. | "they become"      | sync, yields multiple  |
-| `fient` | future, plur.  | "they will become" | async, yields multiple |
+Today, function return shape is expressed with:
 
-The verb forms participate in the Responsum stream protocol, providing structured error handling. Arrow syntax (`->`) bypasses this protocol for direct returns with zero overhead.
+- `->` for the return type
+- `@ futura` for async functions
+- `@ cursor` for generator functions
+- both `@ futura` and `@ cursor` for async generators
 
 ```fab
-# These are equivalent for simple cases:
-functio getId() -> textus { redde "abc" }
-functio getId() fit textus { redde "abc" }
+functio getId() -> textus {
+    redde "abc"
+}
+
+@ futura
+functio fetchData(textus url) -> textus {
+    redde "data"
+}
+
+@ cursor
+functio range(numerus n) -> numerus {
+    itera ex 0..n fixum i {
+        cede i
+    }
+}
 ```
 
-The verb syntax becomes valuable when you want stream-based error handling or generator behavior without explicit modifiers.
+Treat any verb-form function examples you encounter elsewhere in the docs as historical drift unless the grammar contract is updated.
 
 ## Async Functions
 
@@ -199,24 +209,18 @@ functio processAll(textus[] urls) -> textus[] {
 
 The etymology captures the semantics precisely: the function cedes control until the async operation completes.
 
-### Async via Verb Form
+### Current Async Declaration
 
-The `fiet` verb ("it will become") implies async behavior without the `@ futura` annotation:
+Use `@ futura` with arrow return syntax for async functions:
 
 ```fab
-functio fetchData() fiet textus {
+@ futura
+functio fetchData() -> textus {
     redde "data"
 }
 ```
 
-This is equivalent to:
-
-```fab
-@ futura
-functio fetchData() -> textus { redde "data" }
-```
-
-…but participates in the Responsum protocol.
+If you see `fiet` in older material, treat it as a stale example rather than current grammar.
 
 ## Generator Functions
 
@@ -235,27 +239,21 @@ functio range(numerus n) -> numerus {
 
 In generator context, `cede` yields values rather than awaiting them, reusing the same keyword for both semantics based on function context.
 
-### Generator via Verb Forms
+### Async Generators
 
-The `fiunt` verb ("they become," plural) implies generator behavior:
-
-```fab
-functio range(numerus n) fiunt numerus {
-    itera ex 0..n fixum i {
-        cede i
-    }
-}
-```
-
-For async generators that yield promises, use `fient` ("they will become"):
+Async generators combine both annotations:
 
 ```fab
-functio fetchAll(textus[] urls) fient textus {
+@ futura
+@ cursor
+functio fetchAll(textus[] urls) -> textus {
     itera ex urls fixum url {
         cede fetch(url)
     }
 }
 ```
+
+If you see `fiunt` or `fient` in older material, treat them as historical examples rather than current declaration syntax.
 
 ### Iterating Over Generators
 
@@ -431,10 +429,10 @@ Faber's function system balances Latin linguistic authenticity with practical pr
 - `functio` for declaration, `redde` for return
 - Type-first parameters with `ut` aliasing
 - `si` for optional, `vel` for defaults, `ceteri` for rest
-- Arrow `->` for direct returns, verb forms for stream protocol
-- `@ futura` and `@ cursor` annotations, post-function modifiers (`curata`, `errata`, `immutata`, `iacit`), or `fiet`/`fiunt`/`fient` verbs
+- Arrow `->` for return types
+- `@ futura` and `@ cursor` annotations for async and generator behavior, plus post-function modifiers such as `curata`, `errata`, `immutata`, and `iacit`
 - `cede` for await (async) or yield (generator)
 - `prae typus` for generics
 - `clausura` for closures (async inferred from `cede` usage)
 
-The Latin vocabulary maps naturally to programming concepts: _futura_ captures async's temporal nature, _cede_ captures yielding control, and verb conjugations encode sync/async and single/multiple semantics grammatically.
+The Latin vocabulary maps naturally to programming concepts: _futura_ captures async's temporal nature, _cursor_ captures generator behavior, and _cede_ captures yielding control.
