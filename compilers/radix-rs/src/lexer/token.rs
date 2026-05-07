@@ -261,7 +261,7 @@ pub enum TokenKind {
     Postpara,    // after each
     Postparabit, // after all
     Omitte,      // skip test
-    Futurum,     // TODO test
+    Futurum,     // todo test modifier
     Solum,       // only this test
     Tag,         // test tag
     Temporis,    // test timeout

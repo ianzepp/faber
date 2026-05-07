@@ -173,3 +173,36 @@ fn lexes_verte_keyword_aliases() {
         );
     }
 }
+
+#[test]
+fn lexes_proba_modifier_keywords() {
+    let result = lex(
+        r#"proba omitte "blocked" futurum "later" solum tag "focus" temporis 5 metior repete 2 fragilis 1 requirit "net" solum_in "ci" {}"#,
+    );
+    assert!(result.errors.is_empty());
+
+    let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
+
+    assert!(matches!(kinds[0], TokenKind::Proba));
+    assert!(matches!(kinds[1], TokenKind::Omitte));
+    assert!(matches!(kinds[2], TokenKind::String(_)));
+    assert!(matches!(kinds[3], TokenKind::Futurum));
+    assert!(matches!(kinds[4], TokenKind::String(_)));
+    assert!(matches!(kinds[5], TokenKind::Solum));
+    assert!(matches!(kinds[6], TokenKind::Tag));
+    assert!(matches!(kinds[7], TokenKind::String(_)));
+    assert!(matches!(kinds[8], TokenKind::Temporis));
+    assert!(matches!(kinds[9], TokenKind::Integer(5)));
+    assert!(matches!(kinds[10], TokenKind::Metior));
+    assert!(matches!(kinds[11], TokenKind::Repete));
+    assert!(matches!(kinds[12], TokenKind::Integer(2)));
+    assert!(matches!(kinds[13], TokenKind::Fragilis));
+    assert!(matches!(kinds[14], TokenKind::Integer(1)));
+    assert!(matches!(kinds[15], TokenKind::Requirit));
+    assert!(matches!(kinds[16], TokenKind::String(_)));
+    assert!(matches!(kinds[17], TokenKind::SolumIn));
+    assert!(matches!(kinds[18], TokenKind::String(_)));
+    assert!(matches!(kinds[19], TokenKind::LBrace));
+    assert!(matches!(kinds[20], TokenKind::RBrace));
+    assert!(matches!(kinds[21], TokenKind::Eof));
+}
