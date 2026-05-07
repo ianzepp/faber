@@ -31,10 +31,10 @@ Evidence:
 - Root scripts bias toward `radix-rs` in `/Users/ianzepp/github/ianzepp/faber/package.json`
 - Recent git history is dominated by `radix` HIR/codegen/resolve work followed by repo reorganization
 
-One documentation drift is already visible:
+One documentation drift was visible when this review started:
 - `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/lib.rs:17` documents `Semantic` before `HIR Lowering`
 - `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/README.md:7` correctly places `lower` inside the semantic pass sequence
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/main.rs:12` also reflects the phase-debug CLI view more accurately than `lib.rs`
+- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/main.rs` reflected the older phase-debug CLI view more accurately than `lib.rs`
 
 This is not a runtime bug, but it is mechanical drift at the public contract level.
 

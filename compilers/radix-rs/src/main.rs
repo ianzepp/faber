@@ -2,22 +2,31 @@
 //!
 //! ARCHITECTURE OVERVIEW
 //! =====================
-//! This binary provides a multi-command CLI for inspecting each phase of the
-//! compiler pipeline. It's designed for compiler development and debugging,
-//! not end-user compilation (use the library API for that).
+//! This binary provides the current `radix` command surface for `radix-rs`.
+//! It now spans both product-facing compilation commands and compiler
+//! inspection commands:
+//!
+//! - product-facing: `build`, `targets`, `check`
+//! - inspection-oriented: `lex`, `parse`, `hir`, `emit`
 //!
 //! COMMANDS
 //! ========
+//! - `build`: Compile a file or package and write output to disk
+//! - `targets`: Show supported targets and capability notes
+//! - `check`: Run semantic analysis (with optional `--permissive`)
 //! - `lex`: Tokenize source and emit JSON
 //! - `parse`: Parse source and emit AST as JSON
 //! - `hir`: Lower AST to HIR and emit JSON
-//! - `check`: Run semantic analysis (with optional --permissive mode)
-//! - `emit`: Compile to target (Rust or Faber)
+//! - `emit`: Compile to target for stdout-oriented and debug workflows
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Phase introspection: Each command exposes a specific compiler phase,
-//!   allowing developers to debug lexing, parsing, or semantic issues in isolation.
+//! - Two-layer surface: The same binary supports ordinary compile/check flows
+//!   and lower-level compiler inspection without teaching a separate tool.
+//!
+//! - Phase introspection: Inspection commands still expose specific compiler
+//!   phases, allowing developers to debug lexing, parsing, or semantic issues
+//!   in isolation.
 //!
 //! - JSON output: Machine-readable output enables automated testing and tooling
 //!   integration (e.g., language servers, formatters).

@@ -1,4 +1,5 @@
 use super::*;
+use clap::CommandFactory;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -166,4 +167,15 @@ fn cli_parses_build_flags() {
         }
         other => panic!("expected build, got {:?}", other),
     }
+}
+
+#[test]
+fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
+    let help = Cli::command().render_help().to_string();
+
+    assert!(help.contains("build"));
+    assert!(help.contains("targets"));
+    assert!(help.contains("check"));
+    assert!(help.contains("emit"));
+    assert!(!help.contains("emit-package"));
 }

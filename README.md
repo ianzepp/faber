@@ -92,6 +92,8 @@ The `§` symbol (section marker) distinguishes file-level configuration and impo
 
 **Target Compatibility.** Not all targets support all features, and not all compiler implementations in this repository are equally current. See [docs/grammatica/targets.md](docs/grammatica/targets.md) for the language-level compatibility matrix, and treat [`compilers/radix-rs`](compilers/radix-rs) as the primary delivery surface.
 
+**CLI Reality.** The current `radix-rs` binary exposes both product-facing commands (`build`, `targets`, `check`) and compiler-inspection commands (`lex`, `parse`, `hir`, `emit`). Prefer `build` for writing outputs to disk; keep `emit` for stdout-oriented and debugging workflows.
+
 ## Repository Contract
 
 Faber is a multi-project family repository. Components live in one tree, but they are not treated as one blocking build surface.
@@ -112,8 +114,10 @@ Current status model:
 ```bash
 # radix-rs (primary compiler — Rust target)
 cd compilers/radix-rs && cargo build --release
-cargo run -- emit ../../examples/exempla/salve-munde.fab          # Emit one file as Rust
-cargo run -- emit --package ../../examples/exempla/cli/main.fab   # Emit a local multi-file package
+cargo run -- targets                                              # Show supported targets
+cargo run -- build ../../examples/exempla/salve-munde.fab         # Write one Rust output next to cwd
+cargo run -- build --package ../../examples/exempla/cli/main.fab  # Build a local multi-file package
+cargo run -- emit ../../examples/exempla/salve-munde.fab          # Stdout-oriented/debug emission
 
 # Root-scoped primary checks
 bun run check:radix-rs
