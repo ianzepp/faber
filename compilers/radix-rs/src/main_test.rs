@@ -1,4 +1,5 @@
 use super::*;
+use clap::error::ErrorKind;
 use clap::CommandFactory;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -106,18 +107,6 @@ fn cmd_targets_reports_known_capabilities() {
 }
 
 #[test]
-fn cli_parses_legacy_emit_package_shape() {
-    let cli = Cli::try_parse_from(["radix", "emit-package", "-t", "faber", "pkg/main.fab"]).expect("cli parse");
-    match cli.command {
-        Command::EmitPackage(args) => {
-            assert_eq!(args.target, CliTarget::Faber);
-            assert_eq!(args.path, "pkg/main.fab");
-        }
-        other => panic!("expected emit-package, got {:?}", other),
-    }
-}
-
-#[test]
 fn cli_parses_check_permissive_flag() {
     let cli = Cli::try_parse_from(["radix", "check", "--permissive", "main.fab"]).expect("cli parse");
     match cli.command {
@@ -178,4 +167,11 @@ fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
     assert!(help.contains("check"));
     assert!(help.contains("emit"));
     assert!(!help.contains("emit-package"));
+}
+
+#[test]
+fn cli_rejects_removed_emit_package_alias() {
+    let err = Cli::try_parse_from(["radix", "emit-package", "-t", "faber", "pkg/main.fab"]).expect_err("removed alias");
+
+    assert_eq!(err.kind(), ErrorKind::InvalidSubcommand);
 }

@@ -57,9 +57,6 @@ fn main() {
         Command::Emit(args) => {
             cmd_emit(EmitCommand { input: args.input, package: args.package, target: args.target.into() })
         }
-        Command::EmitPackage(args) => {
-            cmd_emit(EmitCommand { input: vec![args.path], package: true, target: args.target.into() })
-        }
     }
 }
 
@@ -86,9 +83,6 @@ enum Command {
     Check(CheckArgs),
     /// Compile to target (rust, faber, ts, go)
     Emit(EmitArgs),
-    /// Deprecated compatibility alias for package emission
-    #[command(name = "emit-package", hide = true)]
-    EmitPackage(EmitPackageArgs),
 }
 
 #[derive(Args, Debug)]
@@ -119,16 +113,6 @@ struct EmitArgs {
 
     /// Input file or package path, or '-' / omitted for stdin
     input: Vec<String>,
-}
-
-#[derive(Args, Debug)]
-struct EmitPackageArgs {
-    /// Output target language
-    #[arg(short = 't', long = "target", value_enum, default_value_t = CliTarget::Rust)]
-    target: CliTarget,
-
-    /// Package entry file, directory, or faber.fab manifest
-    path: String,
 }
 
 #[derive(Args, Debug)]
