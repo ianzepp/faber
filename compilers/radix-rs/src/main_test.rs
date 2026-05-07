@@ -47,6 +47,15 @@ fn read_source_reads_file_argument() {
 }
 
 #[test]
+fn format_location_uses_line_and_column() {
+    let source_file = radix::driver::SourceFile::inline("demo.fab", "alfa\nbeta\ngamma".to_owned());
+
+    assert_eq!(format_location(&source_file, 0), "demo.fab:1:1");
+    assert_eq!(format_location(&source_file, 5), "demo.fab:2:1");
+    assert_eq!(format_location(&source_file, 8), "demo.fab:2:4");
+}
+
+#[test]
 fn cmd_lex_parse_hir_check_emit_succeed_on_valid_file() {
     let file = write_temp_fab("pipeline", "incipit {}");
     let args = vec![file.clone()];

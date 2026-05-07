@@ -208,16 +208,26 @@ fn read_source(args: &[String]) -> (String, String) {
     }
 }
 
+fn source_file_from_input(name: String, source: String) -> radix::driver::SourceFile {
+    radix::driver::SourceFile::inline(name, source)
+}
+
+fn format_location(source_file: &radix::driver::SourceFile, offset: u32) -> String {
+    let (line, column) = source_file.offset_to_line_col(offset);
+    format!("{}:{}:{}", source_file.name.as_str(), line, column)
+}
+
 /// Tokenize source and emit JSON.
 ///
 /// WHY: Enables inspection of lexer output for debugging tokenization issues.
 fn cmd_lex(args: &[String]) {
     let (name, source) = read_source(args);
-    let result = radix::lexer::lex(&source);
+    let source_file = source_file_from_input(name, source);
+    let result = radix::lexer::lex(source_file.content.as_str());
 
     // WHY: JSON output for machine readability
     println!("{{");
-    println!("  \"file\": \"{}\",", escape_json(&name));
+    println!("  \"file\": \"{}\",", escape_json(&source_file.name));
     println!("  \"success\": {},", result.success());
     println!("  \"tokens\": [");
 
@@ -266,12 +276,13 @@ fn cmd_lex(args: &[String]) {
 /// WHY: Enables inspection of parser output for debugging AST structure.
 fn cmd_parse(args: &[String]) {
     let (name, source) = read_source(args);
-    let lex_result = radix::lexer::lex(&source);
+    let source_file = source_file_from_input(name, source);
+    let lex_result = radix::lexer::lex(source_file.content.as_str());
 
     if !lex_result.success() {
         eprintln!("lexer errors:");
         for err in &lex_result.errors {
-            eprintln!("  {}: {}", err.span.start, err.message);
+            eprintln!("  {}: {}", format_location(&source_file, err.span.start), err.message);
         }
         std::process::exit(1);
     }
@@ -279,7 +290,7 @@ fn cmd_parse(args: &[String]) {
     let parse_result = radix::parser::parse(lex_result);
 
     println!("{{");
-    println!("  \"file\": \"{}\",", escape_json(&name));
+    println!("  \"file\": \"{}\",", escape_json(&source_file.name));
     println!("  \"success\": {},", parse_result.success());
 
     if let Some(program) = &parse_result.program {
@@ -327,13 +338,14 @@ fn cmd_parse(args: &[String]) {
 /// and type assignment issues.
 fn cmd_hir(args: &[String]) {
     let (name, source) = read_source(args);
+    let source_file = source_file_from_input(name, source);
 
     // WHY: HIR lowering requires lexing, parsing, and name resolution
-    let lex_result = radix::lexer::lex(&source);
+    let lex_result = radix::lexer::lex(source_file.content.as_str());
     if !lex_result.success() {
         eprintln!("lexer errors:");
         for err in &lex_result.errors {
-            eprintln!("  {}: {}", err.span.start, err.message);
+            eprintln!("  {}: {}", format_location(&source_file, err.span.start), err.message);
         }
         std::process::exit(1);
     }
@@ -342,7 +354,7 @@ fn cmd_hir(args: &[String]) {
     if !parse_result.success() {
         eprintln!("parser errors:");
         for err in &parse_result.errors {
-            eprintln!("  {}: {}", err.span.start, err.message);
+            eprintln!("  {}: {}", format_location(&source_file, err.span.start), err.message);
         }
         std::process::exit(1);
     }
@@ -375,7 +387,7 @@ fn cmd_hir(args: &[String]) {
     let (hir, errors) = radix::hir::lower(&program, &resolver, &mut types, &interner);
 
     println!("{{");
-    println!("  \"file\": \"{}\",", escape_json(&name));
+    println!("  \"file\": \"{}\",", escape_json(&source_file.name));
     println!("  \"success\": {},", errors.is_empty());
     println!("  \"items\": {},", hir.items.len());
     println!("  \"hir\": [");
@@ -418,11 +430,12 @@ fn cmd_hir(args: &[String]) {
 /// useful for partial compilation or library development.
 fn cmd_check(command: CheckCommand) {
     let (name, source) = read_source(&command.input);
+    let source_file = source_file_from_input(name, source);
 
-    let lex_result = radix::lexer::lex(&source);
+    let lex_result = radix::lexer::lex(source_file.content.as_str());
     if !lex_result.success() {
         for err in &lex_result.errors {
-            eprintln!("{}:{}: {}", name, err.span.start, err.message);
+            eprintln!("{}: {}", format_location(&source_file, err.span.start), err.message);
         }
         std::process::exit(1);
     }
@@ -430,7 +443,7 @@ fn cmd_check(command: CheckCommand) {
     let parse_result = radix::parser::parse(lex_result);
     if !parse_result.success() {
         for err in &parse_result.errors {
-            eprintln!("{}:{}: {}", name, err.span.start, err.message);
+            eprintln!("{}: {}", format_location(&source_file, err.span.start), err.message);
         }
         std::process::exit(1);
     }
@@ -452,7 +465,7 @@ fn cmd_check(command: CheckCommand) {
         } else {
             "warning"
         };
-        eprintln!("{}:{}:{}: {}", prefix, name, err.span.start, err.message);
+        eprintln!("{}: {}: {}", prefix, format_location(&source_file, err.span.start), err.message);
         if err.is_error() {
             if downgraded_error {
                 downgraded += 1;
@@ -465,12 +478,13 @@ fn cmd_check(command: CheckCommand) {
     if command.permissive && downgraded > 0 {
         eprintln!(
             "warning:{}: downgraded {} unresolved/import-driven semantic error(s) in permissive mode",
-            name, downgraded
+            source_file.name.as_str(),
+            downgraded
         );
     }
 
     if semantic_result.success() || (command.permissive && fatal_errors == 0) {
-        eprintln!("ok: {}", name);
+        eprintln!("ok: {}", source_file.name.as_str());
     } else {
         std::process::exit(1);
     }
