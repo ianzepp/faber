@@ -95,6 +95,7 @@ targetMapping := IDENTIFIER STRING
 - `@ operandus` defines a CLI positional argument
 - `@ futura` marks function as async (equivalent to `futura` modifier)
 - `@ cursor` marks function as generator (equivalent to `cursor` modifier)
+- `@ publica`, `@ protecta`, and `@ privata` are still parsed as annotations, but the active `radix-rs` contract does not treat them as a stable genus member-visibility model
 
 - `sub` = extends, `implet` = implements
 - `generis` = static, `nexum` = bound/property

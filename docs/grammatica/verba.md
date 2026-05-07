@@ -156,15 +156,11 @@ Keywords that modify declarations, members, or execution behavior:
 | `prae`      | comptime       | Compile-time type parameter                                   |
 | `praefixum` | comptime block | Compile-time evaluation                                       |
 
-### Visibility
+### Member Visibility
 
-| Verbum      | Meaning   | Usage                                 |
-| ----------- | --------- | ------------------------------------- |
-| `publicus`  | public    | Public visibility (genus modifier)    |
-| `publica`   | public    | Public visibility (functio modifier)  |
-| `privatus`  | private   | Private field                         |
-| `privata`   | private   | Private method                        |
-| `protectus` | protected | Protected visibility (TS/Py/C++ only) |
+Fields in a `genus` are public by default. That is the stable member-visibility rule in the active `radix-rs` contract.
+
+The parser still recognizes older visibility spellings in annotation form, but they are not a stable genus contract and should not be taught as one. Prefer plain public members in examples until the contract is expanded deliberately.
 
 ### Type Relationships
 
