@@ -472,53 +472,120 @@ fn generate_discerne_stmt(
         return generate_variant_discerne_stmt(codegen, &scrutinees[0], arms, types, w);
     }
 
-    let mut first = true;
+    let scrutinee_name = "__radixMatch";
+    w.write("switch ");
+    w.write(scrutinee_name);
+    w.write(" := ");
+    generate_expr(codegen, &scrutinees[0], types, w)?;
+    w.write("; ");
+    w.write(scrutinee_name);
+    w.writeln(" {");
+
     for arm in arms {
-        let mut wrote_branch = false;
-        for pattern in &arm.patterns {
-            match pattern {
-                HirPattern::Wildcard => {
-                    if first {
-                        w.write("{");
-                    } else {
-                        w.write(" else {");
-                    }
-                    w.newline();
-                    w.indented(|w| {
-                        let _ = generate_expr_stmt(codegen, &arm.body, types, w);
-                    });
-                    w.write("}");
-                    wrote_branch = true;
-                }
-                HirPattern::Literal(lit) => {
-                    if first {
-                        w.write("if ");
-                    } else {
-                        w.write(" else if ");
-                    }
-                    generate_expr(codegen, &scrutinees[0], types, w)?;
-                    w.write(" == ");
-                    write_literal(codegen, lit, w);
-                    w.write(" {");
-                    w.newline();
-                    w.indented(|w| {
-                        let _ = generate_expr_stmt(codegen, &arm.body, types, w);
-                    });
-                    w.write("}");
-                    wrote_branch = true;
-                }
-                _ => {}
-            }
-            if wrote_branch {
-                break;
-            }
+        if arm.patterns.len() != 1 {
+            return Err(CodegenError {
+                message: "multi-pattern discerne arms are not yet supported for Go codegen".to_owned(),
+            });
         }
-        if wrote_branch {
-            first = false;
+
+        let mut result = Ok(());
+        w.indented(|w| {
+            result = generate_non_variant_discerne_arm(codegen, &arm.patterns[0], &arm.body, types, scrutinee_name, w);
+        });
+        result?;
+
+        if pattern_is_catch_all(&arm.patterns[0]) {
+            break;
         }
     }
+    w.write("}");
     w.newline();
     Ok(())
+}
+
+fn generate_non_variant_discerne_arm(
+    codegen: &GoCodegen<'_>,
+    pattern: &HirPattern,
+    body: &crate::hir::HirExpr,
+    types: &TypeTable,
+    scrutinee_name: &str,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    match pattern {
+        HirPattern::Literal(lit) => {
+            w.write("case ");
+            write_literal(codegen, lit, w);
+            w.writeln(":");
+            let mut result = Ok(());
+            w.indented(|w| {
+                result = generate_expr_stmt(codegen, body, types, w);
+            });
+            result
+        }
+        HirPattern::Wildcard => {
+            w.writeln("default:");
+            let mut result = Ok(());
+            w.indented(|w| {
+                result = generate_expr_stmt(codegen, body, types, w);
+            });
+            result
+        }
+        HirPattern::Binding(_, name) => {
+            w.writeln("default:");
+            let mut result = Ok(());
+            w.indented(|w| {
+                w.write(codegen.resolve_symbol(*name));
+                w.write(" := ");
+                w.writeln(scrutinee_name);
+                result = generate_expr_stmt(codegen, body, types, w);
+            });
+            result
+        }
+        HirPattern::Alias(_, alias, inner) => {
+            let mut result = generate_non_variant_discerne_header(codegen, inner, w);
+            if result.is_err() {
+                return result;
+            }
+            w.indented(|w| {
+                w.write(codegen.resolve_symbol(*alias));
+                w.write(" := ");
+                w.writeln(scrutinee_name);
+                if let HirPattern::Binding(_, name) = inner.as_ref() {
+                    w.write(codegen.resolve_symbol(*name));
+                    w.write(" := ");
+                    w.writeln(scrutinee_name);
+                }
+                result = generate_expr_stmt(codegen, body, types, w);
+            });
+            result
+        }
+        HirPattern::Variant(_, _) => {
+            Err(CodegenError { message: "variant discerne pattern reached non-variant Go codegen path".to_owned() })
+        }
+    }
+}
+
+fn generate_non_variant_discerne_header(
+    codegen: &GoCodegen<'_>,
+    pattern: &HirPattern,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    match pattern {
+        HirPattern::Literal(lit) => {
+            w.write("case ");
+            write_literal(codegen, lit, w);
+            w.writeln(":");
+            Ok(())
+        }
+        HirPattern::Wildcard | HirPattern::Binding(_, _) => {
+            w.writeln("default:");
+            Ok(())
+        }
+        HirPattern::Alias(_, _, inner) => generate_non_variant_discerne_header(codegen, inner, w),
+        HirPattern::Variant(_, _) => {
+            Err(CodegenError { message: "variant discerne pattern reached non-variant Go codegen path".to_owned() })
+        }
+    }
 }
 
 fn generate_variant_discerne_stmt(
@@ -700,6 +767,14 @@ fn pattern_needs_case_binding(pattern: &HirPattern) -> bool {
         HirPattern::Alias(_, _, _) => true,
         HirPattern::Variant(_, bindings) => !bindings.is_empty(),
         HirPattern::Wildcard | HirPattern::Literal(_) => false,
+    }
+}
+
+fn pattern_is_catch_all(pattern: &HirPattern) -> bool {
+    match pattern {
+        HirPattern::Wildcard | HirPattern::Binding(_, _) => true,
+        HirPattern::Alias(_, _, inner) => pattern_is_catch_all(inner),
+        HirPattern::Literal(_) | HirPattern::Variant(_, _) => false,
     }
 }
 

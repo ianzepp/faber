@@ -184,6 +184,53 @@ functio handle(Event event) {
 }
 
 #[test]
+fn elige_emits_single_evaluation_switch_for_literal_cases() {
+    let code = compile_go(
+        r#"functio accipeNumerum() → numerus {
+  redde 2
+}
+
+incipit {
+  elige accipeNumerum() {
+    casu 1 {
+      scribe "one"
+    }
+    casu 2 {
+      scribe "two"
+    }
+    ceterum {
+      scribe "other"
+    }
+  }
+}"#,
+    );
+
+    assert!(code.contains("switch __radixMatch := accipeNumerum(); __radixMatch {"));
+    assert!(code.contains("case 1:"));
+    assert!(code.contains("case 2:"));
+    assert!(code.contains("default:"));
+    assert!(!code.contains("if accipeNumerum() =="));
+}
+
+#[test]
+fn discerne_binding_pattern_binds_scrutinee_in_default_case() {
+    let code = compile_go(
+        r#"functio describe(numerus value) {
+  discerne value {
+    casu other {
+      scribe other
+    }
+  }
+}"#,
+    );
+
+    assert!(code.contains("switch __radixMatch := value; __radixMatch {"));
+    assert!(code.contains("default:"));
+    assert!(code.contains("other := __radixMatch"));
+    assert!(code.contains("fmt.Println(other)"));
+}
+
+#[test]
 fn optional_struct_fields_wrap_pointer_values() {
     let code = compile_go(
         r#"genus Address {
