@@ -281,7 +281,7 @@ Latin prepositions used in various syntactic contexts:
 
 ## Collection DSL
 
-Keywords for collection manipulation (planned):
+Keywords for collection manipulation:
 
 | Verbum    | Meaning     | Usage                 |
 | --------- | ----------- | --------------------- |
@@ -293,6 +293,13 @@ Keywords for collection manipulation (planned):
 | `ordina`  | sort        | Sort collection       |
 | `collige` | pluck       | Extract field values  |
 | `grupa`   | group by    | Group by key          |
+
+Current `radix-rs` reality:
+
+- `ab`, `ubi`, `prima`, `ultima`, and `summa` are live in the active compiler surface.
+- Rust and TypeScript support the common `ab` expression flow.
+- Go now covers the exempla-backed subset: boolean-property filters plus `prima`, `ultima`, and `summa`.
+- `ordina`, `collige`, and `grupa` remain planning vocabulary rather than active `radix-rs` surface.
 
 ---
 

@@ -525,7 +525,7 @@ dslVerb       := 'prima' | 'ultima' | 'summa'
 
 `ex` is used for iteration (`itera ex items fixum x`) and imports (`importa ex "path"`).
 
-**Note:** Collection DSL transforms (`prima`, `ultima`, `summa`) are implemented for TypeScript target only. Other targets not yet supported.
+**Note:** In the active `radix-rs` compiler, collection DSL transforms (`prima`, `ultima`, `summa`) are covered for TypeScript and Rust, and the exempla-backed Go subset also supports boolean-property filtering plus these transforms. Broader target support still varies by backend.
 
 ---
 

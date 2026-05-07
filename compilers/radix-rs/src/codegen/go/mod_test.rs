@@ -499,6 +499,54 @@ fn translated_slice_helpers_emit_go_loops() {
 }
 
 #[test]
+fn ab_property_filters_and_transforms_emit_real_go_pipeline() {
+    let code = compile_go(
+        r#"incipit {
+  fixum users ← [
+    { nomen: "Marcus", activus: verum },
+    { nomen: "Julia", activus: falsum },
+    { nomen: "Gaius", activus: verum }
+  ]
+  fixum nums ← [1, 2, 3, 4, 5]
+  fixum active ← ab users activus
+  fixum inactive ← ab users non activus
+  fixum top2 ← ab nums, prima 2
+  fixum last2 ← ab nums, ultima 2
+  fixum sumFirst ← ab nums, prima 3, summa
+  scribe active, inactive, top2, last2, sumFirst
+}"#,
+    );
+
+    assert!(!code.contains("TODO: ab pipeline"));
+    assert!(code.contains("filtered := make([]map[string]any, 0, len(current))"));
+    assert!(code.contains("typed, ok := raw.(bool); return ok && typed"));
+    assert!(code.contains("current = current[:__radixAbFirstClamped0]"));
+    assert!(code.contains("current = current[len(current)-__radixAbLastClamped0:]"));
+    assert!(code
+        .contains("var total int; for _, __radixAbValue1 := range current { total += __radixAbValue1 }; return total"));
+}
+
+#[test]
+fn ab_member_source_pipeline_emits_filtered_slice() {
+    let code = compile_go(
+        r#"incipit {
+  fixum users ← [
+    { nomen: "Marcus", activus: verum },
+    { nomen: "Julia", activus: falsum }
+  ]
+  fixum data ← { users: users }
+  fixum active ← ab data.users activus
+  scribe active
+}"#,
+    );
+
+    assert!(!code.contains("TODO: ab pipeline"));
+    assert!(code.contains("active := func() []map[string]any"));
+    assert!(code.contains("current := data[\"users\"]"));
+    assert!(code.contains("filtered = append(filtered, value)"));
+}
+
+#[test]
 fn spread_calls_recover_fixed_arity_array_arguments() {
     let code = compile_go(
         r#"functio add(numerus a, numerus b) → numerus {
