@@ -2,12 +2,12 @@
 
 ## Active Queue
 
-### grammatica-function-syntax-doc-truth
+### structurae-member-contract-truth
 - type: housekeeping
 - status: pending
 - priority: medium
-- size: medium
+- size: small
 - discovered: 2026-05-07
 - source: caretaker loop
-- next slice: Repair remaining grammatica examples outside `functiones.md` that still show pre-arrow function syntax, especially the stdlib-style snippets in `docs/grammatica/structurae.md`.
-- notes: `functiones.md`, `fundamenta.md`, `verba.md`, and the stale `regimen.md` summary rows are now aligned; broader example-level syntax drift remains.
+- next slice: Resolve `docs/grammatica/structurae.md` field-visibility and `generis functio` guidance against the active `radix-rs` checker, `tests/proba/codegen/statements/genus.yaml`, and `EBNF.md` before editing those sections further.
+- notes: Postfix `novum`, `si` nullable returns, and stdlib annotation signatures are now aligned; the remaining ambiguity is specifically around member-visibility spellings and static methods.

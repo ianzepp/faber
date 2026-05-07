@@ -119,19 +119,9 @@ Members that belong to the type itself rather than instances use the `generis` k
 
 ```fab
 genus Colores {
-    generis fixum ruber = "#FF0000"
-    generis fixum viridis = "#00FF00"
-    generis fixum caeruleus = "#0000FF"
-}
-
-genus Math {
-    generis fixum PI = 3.14159
-    generis fixum E = 2.71828
-
-    generis functio maximus(numerus a, numerus b) -> numerus {
-        si a > b { redde a }
-        redde b
-    }
+    generis textus ruber: "#FF0000"
+    generis textus viridis: "#00FF00"
+    generis textus caeruleus: "#0000FF"
 }
 ```
 
@@ -139,26 +129,13 @@ Access static members through the type name:
 
 ```fab
 scribe Colores.ruber      # "#FF0000"
-scribe Math.PI            # 3.14159
-fixum m = Math.maximus(5, 3)  # 5
 ```
 
-Static members are useful for constants, utility functions, and factory methods that don't require instance state.
+Static `generis` fields are useful for constants and shared configuration. The broader `generis functio` surface still lags between older fixtures and the active `radix-rs` checker, so this page keeps the example to the code-backed field form.
 
 ### Field Visibility
 
-Fields in a `genus` are public by default, following struct semantics where data is meant to be accessed directly. For fields that should be encapsulated, use visibility annotations:
-
-```fab
-genus Persona {
-    textus nomen              # public (default)
-
-    @ privatum
-    numerus internaAetas      # private - only accessible within this genus
-}
-```
-
-The `@ privatum` annotation marks a field as accessible only within the `genus` that declares it. The `@ protectum` annotation allows access from subtypes as well.
+Fields in a `genus` are public by default, following struct semantics where data is meant to be accessed directly. The dedicated field-visibility forms are still being reconciled across older fixtures and the active `radix-rs` surface, so this page focuses on the public-by-default rule and on method visibility, which is the more stable current example.
 
 ### Method Visibility
 
@@ -177,7 +154,7 @@ genus Processor {
 }
 ```
 
-Note the grammatical agreement: `privatum` for fields (neuter), `privata` for methods (feminine, agreeing with `functio`).
+Method visibility currently uses annotations such as `@ privata` and `@ protecta` on the active compiler surface.
 
 ### Abstract Types
 
@@ -205,7 +182,7 @@ genus Capsa<T> {
     }
 }
 
-fixum c = novum Capsa<numerus> { valor: 42 }
+fixum c = { valor: 42 } novum Capsa<numerus>
 scribe c.accipe()  # 42
 ```
 
@@ -227,12 +204,12 @@ pactum Drawable {
 }
 
 pactum Iterabilis<T> {
-    functio sequens() -> T?
+    functio sequens() -> si numerus
     functio habet() -> bivalens
 }
 ```
 
-Unlike `genus`, a `pactum` cannot have fields or property requirements. It defines only what a type can _do_, not what it _has_. This constraint keeps interfaces focused on behavior.
+Unlike `genus`, a `pactum` cannot have fields or property requirements. It defines only what a type can _do_, not what it _has_. This constraint keeps interfaces focused on behavior. When a method returns an optional value, current grammar uses the `si` prefix form rather than a trailing `?`.
 
 ### Implementation with implet
 
@@ -272,13 +249,13 @@ genus Document implet Readable, Writable, Printable {
 
 ### Creating Instances with novum
 
-The `novum` keyword creates a new instance of a `genus`. The word is Latin for "new":
+The `novum` keyword participates in postfix construction. The word is Latin for "new", and the current `radix-rs` surface uses it after the source literal:
 
 ```fab
-fixum p = novum Punctum { x: 10, y: 20 }
+fixum p = { x: 10, y: 20 } novum Punctum
 ```
 
-Field values are provided in an object literal following the type name. Required fields (those without defaults) must be specified:
+Field values are provided in an object literal before the type name. Required fields (those without defaults) must be specified:
 
 ```fab
 genus Persona {
@@ -287,11 +264,11 @@ genus Persona {
 }
 
 # nomen is required, aetas is optional
-fixum marcus = novum Persona { nomen: "Marcus" }
+fixum marcus = { nomen: "Marcus" } novum Persona
 scribe marcus.aetas  # 0 (default)
 
 # Override defaults by providing values
-fixum julia = novum Persona { nomen: "Julia", aetas: 25 }
+fixum julia = { nomen: "Julia", aetas: 25 } novum Persona
 ```
 
 When all fields have defaults, the literal can be omitted entirely:
@@ -301,19 +278,22 @@ genus Counter {
     numerus count: 0
 }
 
-varia counter = novum Counter  # no braces needed
+varia counter = {} novum Counter
 ```
 
-### Construction from Variables
+### Construction from Existing Values
 
-When constructing from an existing variable, use the `de` (from) preposition:
+When you already have source values, build the object literal explicitly and then apply `novum`:
 
 ```fab
 fixum props = getPersonaProps()
-fixum p = novum Persona de props
+fixum p = {
+    nomen: props.nomen,
+    aetas: props.aetas
+} novum Persona
 ```
 
-This merges the source object's fields into the new instance, following the same rules as literal construction.
+This keeps construction explicit and uses the same field-checking rules as any other struct literal.
 
 ### The creo() Hook
 
@@ -325,19 +305,19 @@ genus BoundedValue {
 
     functio creo() {
         si ego.value < 0 {
-            ego.value = 0
+            ego.value ← 0
         }
         si ego.value > 100 {
-            ego.value = 100
+            ego.value ← 100
         }
     }
 }
 ```
 
-The initialization sequence is:
+The current `radix-rs` implementation treats `creo()` as a post-construction hook. The initialization sequence is:
 
 1. Field defaults are applied
-2. Literal overrides (or `de` source) are merged
+2. Literal overrides are merged
 3. `creo()` runs if defined
 
 By the time `creo()` executes, `ego` already has all its field values. The method takes no parameters because everything it needs is already on the instance.
@@ -351,12 +331,12 @@ genus Circle {
     numerus area: 0
 
     functio creo() {
-        ego.diameter = ego.radius * 2
-        ego.area = 3.14159 * ego.radius * ego.radius
+        ego.diameter ← ego.radius * 2
+        ego.area ← 3.14159 * ego.radius * ego.radius
     }
 }
 
-fixum c = novum Circle { radius: 5 }
+fixum c = { radius: 5 } novum Circle
 scribe c.diameter  # 10
 scribe c.area      # 78.54
 ```
@@ -373,9 +353,9 @@ Faber's type system reflects several deliberate choices:
 
 **Methods over getters.** Faber omits computed properties (getters). Derived values use explicit methods: `r.area()` rather than `r.area`. The parentheses honestly communicate that computation is happening. Getters that start simple often grow complex, but their API is locked to property syntax.
 
-**Struct semantics by default.** Fields are public unless explicitly marked private. This transparency suits data-oriented design where types are containers of state rather than encapsulated black boxes.
+**Struct semantics by default.** Fields are public by default in the current docs and examples. This transparency suits data-oriented design where types are containers of state rather than encapsulated black boxes.
 
-**No classes, no constructors.** The `genus` keyword names a type of thing, not a blueprint for objects. Construction happens through `novum` with declarative field specification, not imperative constructor logic.
+**No classes, no constructors.** The `genus` keyword names a type of thing, not a blueprint for objects. Construction happens through postfix `novum` with declarative field specification, not imperative constructor logic.
 
 These choices produce code that is explicit about data flow and honest about computation. The Roman craftsman built things to last; Faber aims for code that remains comprehensible as it evolves.
 
@@ -413,12 +393,15 @@ When the compiler encounters a method without an inline `@ verte` for a target, 
 The `@ radix` annotation (Latin "root, stem") declares the morphological stem and valid verb forms for a method:
 
 ```fab
-@ radix filtr, imperativus, perfectum
-functio filtra<T>(ego lista<T>, praedicatum: functio(T) fit bivalens) fit vacuum
-functio filtrata<T>(ego lista<T>, praedicatum: functio(T) fit bivalens) fit lista<T>
+@ radix append, imperativus, perfectum
+@ externa
+functio appende(T elem) -> vacuum
+
+@ externa
+functio addita(T elem) -> lista<T>
 ```
 
-The first identifier is the verb stem (`filtr-`), followed by valid conjugation forms:
+The first identifier is the verb stem (`append-`), followed by valid conjugation forms. In stdlib declarations the receiver is implicit: these signatures live inside the `lista` genus rather than spelling `ego` as a normal parameter.
 
 | Form                  | Ending                | Semantics                       |
 | --------------------- | --------------------- | ------------------------------- |
@@ -428,7 +411,7 @@ The first identifier is the verb stem (`filtr-`), followed by valid conjugation 
 | `futurum_activum`     | `-atura`, `-itura`    | Returns new value, asynchronous |
 | `generator`           | `-ans`, `-ens`        | Yields values (streaming)       |
 
-The compiler validates that called method names match declared forms. Calling `items.filtratura(pred)` would error if only `imperativus, perfectum` are declared.
+The compiler validates that called method names match declared forms. Calling `items.appendatura(elem)` would error if only `imperativus, perfectum` are declared.
 
 ### @ verte (Codegen Transform)
 
@@ -439,7 +422,9 @@ The `@ verte` annotation (Latin "turn, transform") defines how a method call tra
 ```fab
 @ verte ts "push"
 @ verte py "append"
-functio appende<T>(ego lista<T>, elem: T) fit vacuum
+@ verte rs "push"
+@ externa
+functio appende(T elem) -> vacuum
 ```
 
 This compiles `items.appende(x)` to `items.push(x)` in TypeScript and `items.append(x)` in Python.
@@ -447,13 +432,14 @@ This compiles `items.appende(x)` to `items.push(x)` in TypeScript and `items.app
 **Template with placeholders:**
 
 ```fab
-@ verte ts (ego, elem) -> "[...§, §]"
-@ verte py (ego, elem) -> "[*§, §]"
-@ verte zig (ego, elem, alloc) -> "§.addita(§, §)"
-functio addita<T>(ego lista<T>, elem: T) fit lista<T>
+@ verte ts (ego, elem) -> "[...§0, §1]"
+@ verte py (ego, elem) -> "[*§0, §1]"
+@ verte zig (ego, elem, alloc) -> "§0.addita(§2, §1)"
+@ externa
+functio addita(T elem) -> lista<T>
 ```
 
-The `§` placeholders are filled positionally with the parameter values. For Zig, the allocator parameter comes last when needed.
+The `§` placeholders are filled positionally with the parameter values. `§0` refers to the receiver, `§1` to the first explicit argument, and so on. For Zig, the allocator parameter comes last when needed.
 
 Each `@ verte` specifies exactly one target. Use multiple annotations for multiple targets:
 
@@ -463,8 +449,9 @@ Each `@ verte` specifies exactly one target. Use multiple annotations for multip
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "§.appende(§, §)"
-functio appende<T>(ego lista<T>, elem: T) fit vacuum
+@ verte zig (ego, elem, alloc) -> "§0.appende(§2, §1)"
+@ externa
+functio appende(T elem) -> vacuum
 ```
 
 ### Design Philosophy
