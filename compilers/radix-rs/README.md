@@ -8,7 +8,7 @@ The `radix` binary now has a split surface:
 
 - product-facing commands: `build`, `targets`, `check`
 - inspection commands: `lex`, `parse`, `hir`, `emit`
-- package emission now goes through `emit --package`
+- package builds go through `build --package`; `emit --package` stays available for stdout-oriented package emission
 
 ## Design overview
 
