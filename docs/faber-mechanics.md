@@ -31,12 +31,12 @@ Evidence:
 - Root scripts bias toward `radix-rs` in `/Users/ianzepp/github/ianzepp/faber/package.json`
 - Recent git history is dominated by `radix` HIR/codegen/resolve work followed by repo reorganization
 
-One documentation drift was visible when this review started:
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/lib.rs:17` documents `Semantic` before `HIR Lowering`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/README.md:7` correctly places `lower` inside the semantic pass sequence
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/main.rs` reflected the older phase-debug CLI view more accurately than `lib.rs`
+The CLI contract is now aligned across the crate docs and the binary entrypoint:
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/lib.rs:17` describes the same compile pipeline that `main.rs` exposes
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/README.md:7` places `lower` inside the semantic pass sequence
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/main.rs` presents the current product-facing and inspection split directly
 
-This is not a runtime bug, but it is mechanical drift at the public contract level.
+The earlier note about `main.rs` lagging behind `lib.rs` is now historical context, not current drift.
 
 ## Phase 1: Parser Control Flow And Recovery
 
@@ -151,11 +151,11 @@ Recommended order for future mechanics work:
 ## Concrete Follow-Up Targets
 
 Highest-priority files for the next review or implementation pass:
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/hir/lower/mod.rs`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/hir/lower/stmt.rs`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser/mod_test.rs`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/semantic/passes/typecheck.rs`
-- `/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/lib.rs`
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/hir/lower/mod.rs`
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/hir/lower/stmt.rs`
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/parser/stmt.rs`
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/parser/mod_test.rs`
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/semantic/passes/typecheck.rs`
+- `/Volumes/code/ianzepp/faber/compilers/radix-rs/src/lib.rs`
 
 Opus nondum perfectum est, sed linea fracturae nunc clarior est.
