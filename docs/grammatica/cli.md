@@ -1,10 +1,10 @@
 # CLI Framework
 
-Faber provides a declarative CLI framework through annotations. The compiler generates argument parsing, help text, and command dispatch from metadata annotations.
+Faber reserves a declarative CLI-shaped annotation surface. The active `radix-rs` compiler parses those annotations, but it does not yet lower them into a stable shipped command dispatcher, help formatter, or alias system.
 
 ## File-Level Annotations
 
-A CLI program is declared with file-level annotations on `incipit`:
+A CLI program can be sketched with file-level annotations on `incipit`:
 
 ```fab
 @ cli "myapp"
@@ -13,30 +13,30 @@ A CLI program is declared with file-level annotations on `incipit`:
 incipit argumenta args {}
 ```
 
-| Annotation | Purpose |
+| Annotation | Intended meaning |
 |------------|---------|
-| `@ cli "name"` | Declares file as CLI program, sets executable name |
+| `@ cli "name"` | Marks the intended CLI entry point and executable name |
 | `@ versio "x.y.z"` | Program version (shown with `--version`) |
 | `@ descriptio "..."` | Program description (shown in help text) |
 
-The `@ cli` annotation replaces the need for manual entry point logic. The compiler generates argument parsing and dispatch.
+The `@ cli` annotation marks the intended entry-point shape. A future lowering pass would be responsible for argument parsing and dispatch.
 
 ## CLI Modes
 
-Faber supports two CLI patterns:
+The annotation surface sketches two CLI patterns:
 
 | Mode | Use case | Defined by |
 |------|----------|------------|
 | **Single-command** | Simple utilities (`echo`, `cat`, `true`) | `@ optio` / `@ operandus` annotations |
 | **Subcommand** | Multi-command tools (`git`, `npm`, `docker`) | `@ imperium` annotations on functions |
 
-The compiler detects the mode automatically from which annotations are present.
+The current compiler preserves these annotations as metadata; mode detection belongs to the eventual lowering contract.
 
 ---
 
 ## Single-Command Mode
 
-For simple CLI programs that don't need subcommands. Options and positional arguments are declared with annotations, then bound to a variable in `incipit`.
+For simple CLI programs that don't need subcommands. This example shows the intended annotation shape; it is not a shipped generation contract.
 
 ### Basic Example
 
@@ -57,7 +57,7 @@ incipit argumenta args exitus code {
 }
 ```
 
-Usage:
+Illustrative usage:
 ```
 echo hello world          # prints "hello world\n"
 echo -n hello world       # prints "hello world" (no newline)
@@ -136,7 +136,7 @@ incipit argumenta args {
 }
 ```
 
-The compiler generates a typed `Argumenta` interface based on the declared annotations.
+The intended lowering would generate a typed `Argumenta` interface based on the declared annotations.
 
 ### Exit Codes: exitus
 
@@ -154,7 +154,7 @@ incipit argumenta args exitus code {
 }
 ```
 
-Without `exitus`, no explicit exit is generated.
+Without `exitus`, no explicit exit is part of the sketch.
 
 ### Complete Example
 
@@ -176,7 +176,7 @@ incipit argumenta args exitus code {
 }
 ```
 
-Generated help:
+Illustrative help:
 ```
 copy v1.0.0
 Copy files to a destination
@@ -217,7 +217,7 @@ functio version() -> vacuum {
 }
 ```
 
-Usage:
+Illustrative usage:
 ```
 agent version
 agent v
@@ -226,7 +226,7 @@ agent --help
 
 ### Subcommands: @ imperium
 
-The `@ imperium` annotation marks a function as a CLI command:
+The `@ imperium` annotation marks the intended command shape for a future lowering pass:
 
 ```fab
 @ imperium "create"
@@ -236,9 +236,9 @@ functio create(textus name) -> vacuum {
 }
 ```
 
-### Command Aliases: @ alias
+### Command Aliases (Illustrative): @ alias
 
-Add short aliases to commands:
+This shows the intended alias annotation shape for a future lowering pass. The current compiler preserves `@ alias` as annotation metadata only.
 
 ```fab
 @ imperium "list"
@@ -249,7 +249,7 @@ functio list() -> vacuum {
 }
 ```
 
-Usage: `myapp list` or `myapp ls`
+Illustrative usage: `myapp list` or `myapp ls`
 
 ### Options on Commands: @ optio
 
@@ -275,12 +275,12 @@ functio run(
 }
 ```
 
-The `@ optio` annotations provide:
+The `@ optio` annotations sketch:
 - Short flag via `brevis "r"` -> `-r`
 - Long flag via `longum "repo"` -> `--repo`
 - Help text via `descriptio "..."`
 
-The function signature declares parameters with `si` for optionality. Running `myapp run --help` shows:
+The function signature declares parameters with `si` for optionality. An illustrative `myapp run --help` could show:
 
 ```
 Spawn a new agent job
@@ -300,7 +300,7 @@ Options:
   --help, -h      Show this help message
 ```
 
-Usage:
+Illustrative usage:
 ```
 agent run "fix the bug" -r owner/repo -i 123 -m sonnet
 agent run "implement feature" --repo owner/repo --model opus --pr
@@ -308,7 +308,7 @@ agent run "implement feature" --repo owner/repo --model opus --pr
 
 ### Positional Arguments on Commands: @ operandus
 
-Use `@ operandus` annotations on `@ imperium` functions to declare positional arguments with help text:
+Use `@ operandus` annotations on `@ imperium` functions to declare positional arguments with help text. Again, this is the intended shape of the annotation surface:
 
 ```fab
 @ imperium "emit"
@@ -325,7 +325,7 @@ functio emit(
 }
 ```
 
-The `ceteri` modifier creates a variadic argument that collects all remaining positional args:
+The `ceteri` modifier sketches a variadic argument that collects all remaining positional args:
 
 ```
 rivus emit file1.fab file2.fab file3.fab -t go
@@ -353,7 +353,7 @@ functio emit(lista<textus> files) optiones opts -> vacuum {
 }
 ```
 
-The `optiones opts` modifier:
+The `optiones opts` modifier sketches:
 - Bundles all `@ optio` annotations into a `Map<string, string>` named `opts`
 - Positional arguments (`@ operandus`) stay explicit in the function signature
 - Options are accessed via bracket notation: `opts["name"]`
@@ -436,7 +436,7 @@ functio clean(si bivalens all, si textus olderThan) -> vacuum {
 }
 ```
 
-The `@ descriptio` on the module's `incipit` provides help text for the command group. Modules don't know their mount path - they're decoupled from where they're mounted.
+The `@ descriptio` on the module's `incipit` sketches the help text for the command group. Modules don't know their mount path - they're decoupled from where they're mounted.
 
 ### Generated Help
 
@@ -502,7 +502,7 @@ functio show(textus name) -> vacuum {
 }
 ```
 
-Usage: `myapp personas show reviewer`
+Illustrative usage: `myapp personas show reviewer`
 
 Missing required arguments produce an error:
 ```
@@ -518,7 +518,7 @@ The `si` prefix marks optional parameters:
 functio build(si textus output) -> vacuum { }
 ```
 
-Usage: `myapp build --output dist/`
+Illustrative usage: `myapp build --output dist/`
 
 ### Boolean Flags: si bivalens
 
@@ -529,7 +529,7 @@ Boolean flags don't take values - their presence sets them to `verum`:
 functio run(si bivalens verbose, si bivalens quiet) -> vacuum { }
 ```
 
-Usage: `myapp run --verbose`
+Illustrative usage: `myapp run --verbose`
 
 ### Combining @ optio with si
 
@@ -551,7 +551,7 @@ This gives you:
 
 ## Generated Features
 
-The CLI framework automatically generates:
+The intended CLI framework would generate:
 
 | Feature | Flags | Description |
 |---------|-------|-------------|
@@ -560,7 +560,7 @@ The CLI framework automatically generates:
 | Error messages | - | Missing/invalid argument errors |
 | Unknown command errors | - | Suggests running `--help` |
 
-Help is contextual:
+Illustrative help is contextual:
 - `myapp --help` shows top-level commands
 - `myapp jobs --help` shows that subgroup's commands
 - `myapp jobs clean --help` shows that command's options
@@ -572,3 +572,4 @@ Not yet implemented:
 - Environment variable fallbacks
 - Mutual exclusion constraints
 - Negatable flags (`--no-verbose`)
+- Command-alias lowering from `@ alias`
