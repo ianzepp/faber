@@ -147,6 +147,43 @@ functio run() {}
 }
 
 #[test]
+fn rejects_single_command_global_local_collisions() {
+    let analysis = analyze_source(
+        r#"
+@ cli "bad"
+@ optio config longum "config" ubique
+@ optio config longum "local-config"
+incipit argumenta args {}
+"#,
+    );
+
+    assert!(messages(&analysis)
+        .iter()
+        .any(|message| message.contains("single-command option 'config' collides with a global CLI binding")));
+}
+
+#[test]
+fn rejects_alias_collision_with_later_command_path() {
+    let analysis = analyze_source(
+        r#"
+@ cli "bad"
+incipit argumenta args {}
+
+@ imperium "one"
+@ alias "two"
+functio one() {}
+
+@ imperium "two"
+functio two() {}
+"#,
+    );
+
+    assert!(messages(&analysis)
+        .iter()
+        .any(|message| message.contains("command alias 'two' collides with a command path")));
+}
+
+#[test]
 fn rejects_unsupported_cli_types() {
     let analysis = analyze_source(
         r#"

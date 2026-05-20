@@ -74,6 +74,20 @@ fn cmd_emit_supports_faber_target_flag() {
 }
 
 #[test]
+fn cmd_cli_ir_succeeds_on_valid_cli_file() {
+    let file = write_temp_fab(
+        "cli-ir",
+        r#"
+@ cli "tool"
+@ optio verbose brevis "v" longum "verbose" typus bivalens
+incipit argumenta args {}
+"#,
+    );
+
+    cmd_cli_ir(&[file]);
+}
+
+#[test]
 fn cmd_emit_supports_package_input() {
     let package = temp_dir_path("emit-package");
     std::fs::create_dir_all(&package).expect("create package");

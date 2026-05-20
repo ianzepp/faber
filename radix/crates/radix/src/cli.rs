@@ -145,6 +145,9 @@ impl CliBuilder<'_> {
 
         self.validate_surface("top-level", &globals.options, &globals.operands);
         self.validate_surface("single-command", &single.options, &single.operands);
+        if mode == CliMode::SingleCommand {
+            self.validate_global_surface_collisions("single-command", &single, &globals);
+        }
         self.validate_commands(&commands, &globals);
 
         let cli_program = CliProgram {
@@ -431,12 +434,16 @@ impl CliBuilder<'_> {
 
     fn validate_commands(&mut self, commands: &[CliCommand], globals: &CliSurface) {
         let mut paths = FxHashSet::default();
-        let mut aliases = FxHashSet::default();
         for command in commands {
             let path = command.path.join("/");
             if !paths.insert(path.clone()) {
                 self.error(command.span, format!("duplicate command path '{path}'"));
             }
+        }
+
+        let mut aliases = FxHashSet::default();
+        for command in commands {
+            let path = command.path.join("/");
             for alias in &command.aliases {
                 if alias.is_empty() || alias.contains('/') {
                     self.error(command.span, format!("invalid command alias '{alias}'"));
@@ -454,6 +461,10 @@ impl CliBuilder<'_> {
     }
 
     fn validate_global_collisions(&mut self, command: &CliCommand, globals: &CliSurface) {
+        self.validate_global_surface_collisions(&format!("command '{}'", command.path.join("/")), command, globals);
+    }
+
+    fn validate_global_surface_collisions(&mut self, label: &str, local: &impl CliSurfaceView, globals: &CliSurface) {
         let mut global_bindings = FxHashSet::default();
         for option in &globals.options {
             global_bindings.insert(option.binding.as_str());
@@ -461,19 +472,19 @@ impl CliBuilder<'_> {
         for operand in &globals.operands {
             global_bindings.insert(operand.binding.as_str());
         }
-        for option in &command.options {
+        for option in local.options() {
             if global_bindings.contains(option.binding.as_str()) {
                 self.error(
                     option.span,
-                    format!("command option '{}' collides with a global CLI binding", option.binding),
+                    format!("{label} option '{}' collides with a global CLI binding", option.binding),
                 );
             }
         }
-        for operand in &command.operands {
+        for operand in local.operands() {
             if global_bindings.contains(operand.binding.as_str()) {
                 self.error(
                     operand.span,
-                    format!("command operand '{}' collides with a global CLI binding", operand.binding),
+                    format!("{label} operand '{}' collides with a global CLI binding", operand.binding),
                 );
             }
         }
@@ -525,6 +536,31 @@ enum SurfacePlacement {
 struct CliSurface {
     options: Vec<CliOption>,
     operands: Vec<CliOperand>,
+}
+
+trait CliSurfaceView {
+    fn options(&self) -> &[CliOption];
+    fn operands(&self) -> &[CliOperand];
+}
+
+impl CliSurfaceView for CliSurface {
+    fn options(&self) -> &[CliOption] {
+        &self.options
+    }
+
+    fn operands(&self) -> &[CliOperand] {
+        &self.operands
+    }
+}
+
+impl CliSurfaceView for CliCommand {
+    fn options(&self) -> &[CliOption] {
+        &self.options
+    }
+
+    fn operands(&self) -> &[CliOperand] {
+        &self.operands
+    }
 }
 
 fn imperium_annotation(annotations: &[Annotation]) -> Option<crate::lexer::Symbol> {
