@@ -12,14 +12,50 @@ Keep these in the main repository unless a later decision changes the project di
 
 | Path | Reason |
 | ---- | ------ |
-| `compilers/radix-rs/` | Active compiler and current CI gate. Recent history is concentrated here. |
+| `radix/crates/radix/` | New home for the active compiler and current CI gate. Move from `compilers/radix-rs/`. |
+| `radix/crates/norma/` | New home for the Rust stdlib runtime. Move from `runtimes/norma-rs/`. |
+| `radix/stdlib/norma/` | New home for Faber stdlib definitions and `@ verte` metadata. Move from `stdlib/norma/`. |
+| `radix/Cargo.toml` | Workspace root for compiler/runtime crates. |
 | `.github/workflows/ci.yml` | Already scoped to `radix-rs` format and tests. |
-| `stdlib/norma/` | Source-of-truth stdlib definitions and `@ verte` metadata. Needed for current targets and future WASM runtime planning. |
-| `runtimes/norma-rs/` | Rust runtime support is aligned with the likely Rust-to-WASM path. |
 | `docs/grammatica/`, `EBNF.md` | Current language contract and prose documentation. Some pages still need cleanup after pruning. |
 | `docs/wasm-execution-plan.md` | Future direction memo. |
 | `examples/exempla/` | Keep the general feature corpus, but prune examples that only exist for archived surfaces. |
 | `README.md`, `AGENTS.md`, `project.yaml`, `package.json` | Keep, but rewrite after the archive move so they stop advertising archived paths as local project surfaces. |
+
+## Collapse The Active Tree
+
+After archiving old compiler surfaces, collapse the three active pieces into a single `radix/` workspace:
+
+```text
+radix/
+  Cargo.toml                 # workspace root
+  crates/
+    radix/                   # current compilers/radix-rs crate
+      Cargo.toml
+      src/
+      tests/
+    norma/                   # current runtimes/norma-rs crate
+      Cargo.toml
+      src/
+        lib.rs
+        hal/
+        json.rs
+        toml.rs
+        yaml.rs
+  stdlib/
+    norma/                   # current stdlib/norma/*.fab definitions
+      hal/
+      innatum/
+      json.fab
+      toml.fab
+      yaml.fab
+```
+
+This keeps Rust crates as Rust crates, keeps Faber stdlib definitions out of Rust `src/`, and gives future WASM work one natural home (`radix/crates/norma-wasm`, `radix/crates/faber-wasm-host`, or similar).
+
+Do not put the Faber stdlib files under `radix/crates/radix/src/`; that would blur compiler source with language/library source. The compiler should consume `radix/stdlib/norma/` as data/spec input.
+
+Migration caveat: `stdlib/norma/*.fab` currently encodes relative `@ subsidia` paths such as `../norma-rs/json.rs` and `../../norma-rs/hal/solum.rs`. The collapse should either rewrite them to the new layout or, preferably, replace filesystem-relative runtime references with logical runtime identifiers so stdlib metadata stops depending on repo layout.
 
 ## Move To `faber-archivum` First
 
@@ -107,25 +143,34 @@ These are generated or local artifacts. Do not move them into `faber-archivum`; 
    - `reference/rivus-cli`
 2. Commit the archive repository first, so the old code has a durable destination.
 3. Remove the moved paths from the main repository.
-4. Rewrite `package.json`, `README.md`, `AGENTS.md`, and `project.yaml` around the smaller canonical surface.
-5. Replace root scripts with a narrow set:
+4. Move active compiler/runtime/stdlib paths into the new `radix/` workspace:
+   - `compilers/radix-rs/` -> `radix/crates/radix/`
+   - `runtimes/norma-rs/` -> `radix/crates/norma/`
+   - `stdlib/norma/` -> `radix/stdlib/norma/`
+5. Add `radix/Cargo.toml` as the workspace root and update Cargo commands accordingly.
+6. Rewrite `package.json`, `README.md`, `AGENTS.md`, and `project.yaml` around the smaller canonical surface.
+7. Replace root scripts with a narrow set:
    - `ci`
-   - `check:radix-rs`
-   - `test:radix-rs`
-   - optional `build:radix-rs`
+   - `check:radix`
+   - `test:radix`
+   - optional `build:radix`
    - optional future `build:wasm`
-6. Sweep docs for now-broken local links to `compilers/nanus-*`, `compilers/rivus`, `docs/reference/faber-ts`, and `docs/reference/rivus-cli`.
-7. Decide whether to preserve `tests/proba` YAML cases by porting them into `radix-rs` tests before archiving the harness.
-8. Run the remaining gate: `bun run ci`.
+8. Sweep docs for now-broken local links to `compilers/nanus-*`, `compilers/rivus`, `compilers/radix-rs`, `stdlib/norma`, `runtimes/norma-rs`, `docs/reference/faber-ts`, and `docs/reference/rivus-cli`.
+9. Decide whether to preserve `tests/proba` YAML cases by porting them into `radix` tests before archiving the harness.
+10. Run the remaining gate: `bun run ci`.
 
 ## Expected Main-Repo Shape After Pruning
 
 The main repository should roughly collapse to:
 
 ```text
-compilers/radix-rs/
-stdlib/norma/
-runtimes/norma-rs/
+radix/
+  Cargo.toml
+  crates/
+    radix/
+    norma/
+  stdlib/
+    norma/
 docs/grammatica/
 docs/wasm-execution-plan.md
 docs/pruning-archive-plan.md
