@@ -137,7 +137,7 @@ Some target-specific surfaces may remain gated rather than translated immediatel
 
 Current likely ownership boundaries:
 
-- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr/mod.rs` and `radix/crates/radix/src/codegen/go/expr/**`
   - casts
   - conversio
   - nullability/coalesce
@@ -227,7 +227,7 @@ Targets:
 
 Primary files:
 
-- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr/mod.rs` and `radix/crates/radix/src/codegen/go/expr/**`
 - `radix/crates/radix/src/codegen/go/types.rs`
 - possibly semantic/HIR support files if inputs are wrong
 
@@ -257,7 +257,7 @@ Targets:
 Primary files:
 
 - `radix/crates/radix/src/codegen/go/decl.rs`
-- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr/mod.rs` and `radix/crates/radix/src/codegen/go/expr/**`
 
 Exit criteria:
 
@@ -281,7 +281,7 @@ Targets:
 
 Primary files:
 
-- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr/mod.rs` and `radix/crates/radix/src/codegen/go/expr/**`
 - `radix/crates/radix/src/codegen/go/stmt.rs`
 
 Exit criteria:
@@ -334,7 +334,7 @@ Scope:
 
 Files:
 
-- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr/mod.rs` and `radix/crates/radix/src/codegen/go/expr/**`
 - `radix/crates/radix/src/codegen/go/types.rs`
 - relevant tests in `radix/crates/radix/src/codegen/go/mod_test.rs`
 
@@ -349,7 +349,7 @@ Scope:
 Files:
 
 - `radix/crates/radix/src/codegen/go/decl.rs`
-- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr/mod.rs` and `radix/crates/radix/src/codegen/go/expr/**`
 - relevant tests in `radix/crates/radix/src/codegen/go/mod_test.rs`
 
 ### Workstream 3: Iterator / Collection Translation
@@ -363,7 +363,7 @@ Scope:
 Files:
 
 - `radix/crates/radix/src/codegen/go/stmt.rs`
-- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr/mod.rs` and `radix/crates/radix/src/codegen/go/expr/**`
 
 ### Workstream 4: Unsupported-Surface Policy
 

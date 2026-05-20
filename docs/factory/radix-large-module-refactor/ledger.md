@@ -8,7 +8,7 @@
 **Commit Policy**: Commit after each phase completion + validation gate pass
 **Agent Policy**: Use subagents for exploration, poker-face, verification, bounded impl where appropriate; main agent supervises and integrates
 **Checkpoint Policy**: Full validation gate after every phase; phase-specific smoke tests
-**Current Status**: Phase 4 complete in working tree (gate PASS); ready for commit
+**Current Status**: Phase 5 complete in working tree (gate PASS); ready for commit
 
 ## Baseline (Phase 0 Intake)
 
@@ -25,8 +25,8 @@
 | 1 | Split Faber codegen | completed | c4368940 | `phase-01-faber-codegen-delivery.md` |
 | 2 | Split typecheck pass | completed | 4ee6a5e8 | `phase-02-typecheck-delivery.md` |
 | 3 | Split Go expression codegen | completed | f6b2d01d | `phase-03-go-expr-delivery.md` |
-| 4 | Split Rust expression codegen | completed | pending | `phase-04-rust-expr-delivery.md` |
-| 5 | Documentation and final hygiene review | pending | pending | `phase-05-docs-hygiene-delivery.md` |
+| 4 | Split Rust expression codegen | completed | 34c41322 | `phase-04-rust-expr-delivery.md` |
+| 5 | Documentation and final hygiene review | completed | pending | `phase-05-docs-hygiene-delivery.md` |
 
 ## Validation Gate Log
 
@@ -203,4 +203,53 @@ This completes Phase 0 per master plan. Factory run is resumable from ledger.
 - `bun run prettier:check`: PASS
 - `bun run build:radix`: PASS
 
-**Phase 4 Gate Result**: PASS. Ready to commit with message `refactor: split rust expression codegen`.
+**Phase 4 Gate Result**: PASS.
+
+## Phase 4 Commit Record
+
+- Hash: 34c41322
+- Message: `refactor: split rust expression codegen`
+- Files: Rust expression codegen moved to `rust/expr/mod.rs`, split into 9 target modules, plus Phase 4 delivery spec and ledger update.
+
+## Phase 5 Completion
+
+- Added Phase 5 delivery spec.
+- Updated active documentation references that still pointed at removed monolithic paths:
+  - `docs/faber-mechanics.md`: typecheck references now point at `typecheck/mod.rs` or `typecheck/finalize.rs`.
+  - `docs/go-emitter-delivery-plan.md`: Go expression workstream paths now point at `go/expr/mod.rs` and `go/expr/**`.
+  - `docs/radix-large-module-refactor-factory-plan.md`: status now records that the plan has been implemented.
+- Reviewed `README.md`, `AGENTS.md`, `radix/crates/radix/README.md`, and `docs/**/*.md` for stale module-shape claims.
+
+**Final Source-Size Scan Top Entries**:
+
+```text
+  32307 total
+   1317 radix/crates/radix/src/driver/mod.rs
+   1195 radix/crates/radix/src/syntax/ast.rs
+   1184 radix/crates/radix/src/semantic/passes/resolve.rs
+   1143 radix/crates/radix/src/parser/expr.rs
+    985 radix/crates/radix/src/parser/decl.rs
+    914 radix/crates/radix/src/codegen/ts/expr.rs
+    874 radix/crates/radix/src/lexer/scan.rs
+    827 radix/crates/radix/src/hir/lower/stmt.rs
+    805 radix/crates/radix/src/codegen/go/stmt.rs
+    771 radix/crates/radix/src/codegen/rust/expr/mod.rs
+    727 radix/crates/radix/src/parser/stmt.rs
+    709 radix/crates/radix/src/main.rs
+    661 radix/crates/radix/src/hir/lower/expr.rs
+    660 radix/crates/radix/src/semantic/passes/borrow.rs
+    614 radix/crates/radix/src/codegen/go/mod.rs
+    602 radix/crates/radix/src/codegen/go/expr/mod.rs
+```
+
+Remaining large files are outside this phase set or are orchestration/legacy-large surfaces not targeted by this plan.
+
+**Phase 5 Verification**:
+
+- `bun run lint`: PASS
+- `bun run ci`: PASS
+- `bunx eslint .`: PASS
+- `bun run prettier:check`: PASS
+- `bun run build:radix`: PASS
+
+**Phase 5 Gate Result**: PASS. Ready to commit with message `docs: update radix module refactor notes`.

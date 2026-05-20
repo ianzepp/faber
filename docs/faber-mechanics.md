@@ -85,7 +85,7 @@ What looks solid:
 Findings:
 - Resolved: `PARSE022` in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/catalog.rs:122` now mentions inline exits, which matches the grammar accepted by `parse_ergo_body` in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/stmt.rs:97`.
 - `ParseErrorKind` is fairly granular in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/error.rs`, but a large amount of parser behavior still routes through generic `Expected` or `MissingBlock`. That is serviceable, not polished.
-- Late semantic finalization uses `MissingTypeAnnotation` as a catch-all for unresolved inference outcomes in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck.rs:225`, `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck.rs:248`, `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck.rs:274`, and `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck.rs:304`. That blurs true missing annotations together with deeper inference failures or unsupported lowering outcomes.
+- Late semantic finalization uses `MissingTypeAnnotation` as a catch-all for unresolved inference outcomes in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:22`, `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:45`, `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:71`, and `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:112`. That blurs true missing annotations together with deeper inference failures or unsupported lowering outcomes.
 
 Assessment:
 - Diagnostics are structurally organized. The parser help text is closer to the true grammar now, but late-phase error classification still drifts away from the real failure cause.
@@ -117,12 +117,12 @@ Mechanical boundary:
 - Late passes should consume a faithful HIR contract, not guess around missing source distinctions
 
 What looks solid:
-- The type checker is internally disciplined and explicit about inference finalization in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck.rs`
+- The type checker is internally disciplined and explicit about inference finalization in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/mod.rs` and `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs`
 - Dedicated tests exist for `collect`, `resolve`, `typecheck`, `borrow`, `exhaustive`, and `lint`
 
 Findings:
 - Because lowering collapses some control-flow distinctions and leaves several constructs as placeholders or error expressions, late passes are partly forced into damage control rather than analysis over a crisp intermediate form.
-- Finalization in the type checker reports unresolved types as `MissingTypeAnnotation` even when the deeper cause may be unsupported lowering or an earlier semantic blur. This is visible in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck.rs:301`. That makes late semantic failures less teachable than they could be.
+- Finalization in the type checker reports unresolved types as `MissingTypeAnnotation` even when the deeper cause may be unsupported lowering or an earlier semantic blur. This is visible in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:112`. That makes late semantic failures less teachable than they could be.
 - The crate README still lists several semantic TODOs in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/README.md:15`, which aligns with what the code shows: the late semantic layers are not the first place to pursue mechanical cleanup. They depend on the syntax-to-HIR contract becoming more exact first.
 
 Assessment:
@@ -155,7 +155,7 @@ Highest-priority files for the next review or implementation pass:
 - `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/hir/lower/stmt.rs`
 - `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/stmt.rs`
 - `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/mod_test.rs`
-- `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck.rs`
+- `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/mod.rs`
 - `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/lib.rs`
 
 Opus nondum perfectum est, sed linea fracturae nunc clarior est.

@@ -1,6 +1,6 @@
 # Radix Large Module Refactor Factory Plan
 
-**Status**: factory-approved phased plan. No refactor work has been performed by this document.
+**Status**: implemented through Phase 5 on 2026-05-20. See `docs/factory/radix-large-module-refactor/ledger.md` for commits and validation results.
 
 This plan turns the large-module housekeeping finding into a staged implementation program. The goal is not to extract one or two helpers, but to comprehensively split oversized compiler modules into cohesive submodules while preserving behavior.
 
