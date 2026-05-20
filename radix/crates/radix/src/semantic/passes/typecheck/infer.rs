@@ -1,0 +1,136 @@
+use super::*;
+
+impl<'a> TypeChecker<'a> {
+    pub(super) fn occurs_in(&self, var: InferVar, ty: TypeId) -> bool {
+        let resolved = self.resolve_type(ty);
+        if let Some(found) = self.infer_var_of(resolved) {
+            return found == var;
+        }
+        match self.types.get(resolved) {
+            Type::Array(inner) | Type::Option(inner) | Type::Ref(_, inner) => self.occurs_in(var, *inner),
+            Type::Set(inner) => self.occurs_in(var, *inner),
+            Type::Map(key, value) => self.occurs_in(var, *key) || self.occurs_in(var, *value),
+            Type::Func(sig) => {
+                sig.params.iter().any(|param| self.occurs_in(var, param.ty)) || self.occurs_in(var, sig.ret)
+            }
+            Type::Applied(base, args) => self.occurs_in(var, *base) || args.iter().any(|arg| self.occurs_in(var, *arg)),
+            Type::Union(types) => types.iter().any(|inner| self.occurs_in(var, *inner)),
+            _ => false,
+        }
+    }
+    pub(super) fn bind_infer(&mut self, var: InferVar, ty: TypeId, span: crate::lexer::Span, message: &str) -> TypeId {
+        let resolved = self.resolve_type(ty);
+        if let Some(existing) = self.substitutions.get(&var) {
+            return self.unify(*existing, resolved, span, message);
+        }
+
+        if self.occurs_in(var, resolved) {
+            self.error(SemanticErrorKind::TypeMismatch, message, span);
+            return self.error_type;
+        }
+
+        self.substitutions.insert(var, resolved);
+        resolved
+    }
+    pub(super) fn unify(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span, message: &str) -> TypeId {
+        let left = self.resolve_type(a);
+        let right = self.resolve_type(b);
+        if left == right {
+            return left;
+        }
+
+        if let Some(var) = self.infer_var_of(left) {
+            return self.bind_infer(var, right, span, message);
+        }
+        if let Some(var) = self.infer_var_of(right) {
+            return self.bind_infer(var, left, span, message);
+        }
+
+        let left_ty = self.types.get(left).clone();
+        let right_ty = self.types.get(right).clone();
+
+        match (left_ty, right_ty) {
+            (Type::Primitive(Primitive::Numerus), Type::Primitive(Primitive::Fractus))
+            | (Type::Primitive(Primitive::Fractus), Type::Primitive(Primitive::Numerus)) => {
+                return self.fractus_type();
+            }
+            (Type::Primitive(a), Type::Primitive(b)) if a == b => return left,
+            (Type::Array(a), Type::Array(b)) => {
+                let inner = self.unify(a, b, span, message);
+                return self.types.array(inner);
+            }
+            (Type::Map(ka, va), Type::Map(kb, vb)) => {
+                let key = self.unify(ka, kb, span, message);
+                let value = self.unify(va, vb, span, message);
+                return self.types.map(key, value);
+            }
+            (Type::Set(a), Type::Set(b)) => {
+                let inner = self.unify(a, b, span, message);
+                return self.types.set(inner);
+            }
+            (Type::Option(a), Type::Option(b)) => {
+                let inner = self.unify(a, b, span, message);
+                return self.types.option(inner);
+            }
+            (Type::Ref(ma, a), Type::Ref(mb, b)) if ma == mb => {
+                let inner = self.unify(a, b, span, message);
+                return self.types.reference(ma, inner);
+            }
+            (Type::Func(sig_a), Type::Func(sig_b)) => {
+                if sig_a.params.len() != sig_b.params.len() {
+                    self.error(SemanticErrorKind::WrongArity, message, span);
+                    return self.error_type;
+                }
+                for (param_a, param_b) in sig_a.params.iter().zip(sig_b.params.iter()) {
+                    self.unify(param_a.ty, param_b.ty, span, message);
+                }
+                let ret = self.unify(sig_a.ret, sig_b.ret, span, message);
+                return self.types.function(FuncSig {
+                    params: sig_a.params.clone(),
+                    ret,
+                    is_async: sig_a.is_async || sig_b.is_async,
+                    is_generator: sig_a.is_generator || sig_b.is_generator,
+                });
+            }
+            _ => {
+                if self.types.assignable(left, right) || self.types.assignable(right, left) {
+                    return right;
+                }
+            }
+        }
+
+        self.error(SemanticErrorKind::TypeMismatch, message, span);
+        self.error_type
+    }
+    pub(super) fn is_infer(&self, ty: TypeId) -> bool {
+        self.infer_var_of(ty).is_some()
+    }
+    pub(super) fn infer_var_of(&self, ty: TypeId) -> Option<InferVar> {
+        match self.types.get(ty) {
+            Type::Infer(var) => Some(*var),
+            _ => None,
+        }
+    }
+    pub(super) fn resolve_type(&self, ty: TypeId) -> TypeId {
+        let mut current = ty;
+        loop {
+            if let Some(infer) = self.infer_var_of(current) {
+                if let Some(subst) = self.substitutions.get(&infer) {
+                    current = *subst;
+                    continue;
+                }
+            }
+            match self.types.get(current) {
+                Type::Alias(_, resolved) => current = *resolved,
+                _ => return current,
+            }
+        }
+    }
+    pub(super) fn fresh_infer(&mut self) -> TypeId {
+        let var = InferVar(self.next_infer);
+        self.next_infer += 1;
+        let id = self.types.intern(Type::Infer(var));
+        self.infer_ids.insert(var, id);
+        id
+    }
+}

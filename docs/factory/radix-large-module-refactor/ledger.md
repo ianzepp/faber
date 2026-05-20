@@ -8,7 +8,7 @@
 **Commit Policy**: Commit after each phase completion + validation gate pass
 **Agent Policy**: Use subagents for exploration, poker-face, verification, bounded impl where appropriate; main agent supervises and integrates
 **Checkpoint Policy**: Full validation gate after every phase; phase-specific smoke tests
-**Current Status**: Phase 1 complete in working tree (gate PASS); ready for commit
+**Current Status**: Phase 2 complete in working tree (gate PASS); ready for commit
 
 ## Baseline (Phase 0 Intake)
 
@@ -22,8 +22,8 @@
 | Phase | Name | Status | Commit | Delivery Spec |
 |-------|------|--------|--------|---------------|
 | 0 | Preflight and delivery-spec setup | completed | a0e3838c | N/A (ledger + Phase 1 spec) |
-| 1 | Split Faber codegen | completed | pending | `phase-01-faber-codegen-delivery.md` |
-| 2 | Split typecheck pass | pending | pending | `phase-02-typecheck-delivery.md` |
+| 1 | Split Faber codegen | completed | c4368940 | `phase-01-faber-codegen-delivery.md` |
+| 2 | Split typecheck pass | completed | pending | `phase-02-typecheck-delivery.md` |
 | 3 | Split Go expression codegen | pending | pending | `phase-03-go-expr-delivery.md` |
 | 4 | Split Rust expression codegen | pending | pending | `phase-04-rust-expr-delivery.md` |
 | 5 | Documentation and final hygiene review | pending | pending | `phase-05-docs-hygiene-delivery.md` |
@@ -98,4 +98,43 @@ This completes Phase 0 per master plan. Factory run is resumable from ledger.
 - `bun run prettier:check`: PASS
 - `bun run build:radix`: PASS
 
-**Phase 1 Gate Result**: PASS. Ready to commit with message `refactor: split faber codegen modules`.
+**Phase 1 Gate Result**: PASS.
+
+## Phase 1 Commit Record
+
+- Hash: c4368940
+- Message: `refactor: split faber codegen modules`
+- Files: Faber codegen split into 8 target modules plus ledger update.
+
+## Phase 2 Completion
+
+- Moved `radix/crates/radix/src/semantic/passes/typecheck.rs` to `radix/crates/radix/src/semantic/passes/typecheck/mod.rs`.
+- Split the typechecker into responsibility modules:
+  - `collect.rs`
+  - `finalize.rs`
+  - `item.rs`
+  - `stmt.rs`
+  - `expr.rs`
+  - `ops.rs`
+  - `call.rs`
+  - `access.rs`
+  - `aggregate.rs`
+  - `control.rs`
+  - `pattern.rs`
+  - `convert.rs`
+  - `infer.rs`
+  - `lookup.rs`
+- Preserved public `semantic::passes::typecheck::typecheck(...)` entry point.
+- Updated test module path for the new `typecheck/mod.rs` location.
+- Removed three no-op `let _ =` statements to keep the hygiene ratchet green after the split.
+
+**Phase 2 Verification**:
+
+- `cargo check --manifest-path radix/Cargo.toml -p radix`: PASS
+- `bun run lint`: PASS
+- `bun run ci`: PASS
+- `bunx eslint .`: PASS
+- `bun run prettier:check`: PASS
+- `bun run build:radix`: PASS
+
+**Phase 2 Gate Result**: PASS. Ready to commit with message `refactor: split typecheck pass modules`.
