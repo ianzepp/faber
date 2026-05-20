@@ -63,3 +63,68 @@ pub(super) fn generate_literal(codegen: &RustCodegen<'_>, lit: &HirLiteral, w: &
         }
     }
 }
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_assert_expr(
+    codegen: &RustCodegen<'_>,
+    cond: &HirExpr,
+    message: Option<&HirExpr>,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("assert!(");
+    generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if let Some(message) = message {
+        w.write(", \"{}\", ");
+        generate_expr(codegen, message, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    }
+    w.write(")");
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_panic_expr(
+    codegen: &RustCodegen<'_>,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("panic!(\"{}\", ");
+    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write(")");
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_throw_expr(
+    codegen: &RustCodegen<'_>,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if in_failable_fn && !in_entry && !suppress_error_propagation {
+        w.write("return Err(");
+        if matches!(value.kind, HirExprKind::Literal(HirLiteral::String(_))) {
+            w.write("String::from(");
+            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(")");
+        } else {
+            w.write("format!(\"{}\", ");
+            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(")");
+        }
+        w.write(")");
+    } else {
+        generate_panic_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    }
+    Ok(())
+}

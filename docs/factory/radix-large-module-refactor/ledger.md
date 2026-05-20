@@ -8,14 +8,14 @@
 **Commit Policy**: Commit after each phase completion + validation gate pass
 **Agent Policy**: Use subagents for exploration, poker-face, verification, bounded impl where appropriate; main agent supervises and integrates
 **Checkpoint Policy**: Full validation gate after every phase; phase-specific smoke tests
-**Current Status**: Phase 5 complete in working tree (gate PASS); ready for commit
+**Current Status**: Phase 5 complete; second-pass refactor completion committed and gate PASS.
 
 ## Baseline (Phase 0 Intake)
 
 - HEAD: 7619f4f3 (docs: clarify radix refactor extraction strategy)
 - Branch: main (ahead of origin/main by 1)
 - Working tree: clean
-- Validation gate baseline run: in progress (see below)
+- Validation gate baseline run: PASS (see below)
 
 ## Phases
 
@@ -26,7 +26,8 @@
 | 2 | Split typecheck pass | completed | 4ee6a5e8 | `phase-02-typecheck-delivery.md` |
 | 3 | Split Go expression codegen | completed | f6b2d01d | `phase-03-go-expr-delivery.md` |
 | 4 | Split Rust expression codegen | completed | 34c41322 | `phase-04-rust-expr-delivery.md` |
-| 5 | Documentation and final hygiene review | completed | pending | `phase-05-docs-hygiene-delivery.md` |
+| 5 | Documentation and final hygiene review | completed | 8632a5ab | `phase-05-docs-hygiene-delivery.md` |
+| Follow-up | Second-pass refactor completion | completed | this commit | N/A |
 
 ## Validation Gate Log
 
@@ -39,10 +40,6 @@
 - `bun run test:radix`: PASS (full suite + hygiene + doctests ok, fast due to cache)
 - `bun run build:radix`: PASS (release build cached, 0.03s)
 - **FULL BASELINE VALIDATION GATE: PASS** (all components green at HEAD 39707302)
-- `bunx eslint .`: not yet
-- `bun run prettier:check`: not yet
-- `bun run build:radix`: not yet
-- `bun run test:radix` (via ci): not yet
 
 See per-phase sections for subsequent runs.
 
@@ -252,4 +249,84 @@ Remaining large files are outside this phase set or are orchestration/legacy-lar
 - `bun run prettier:check`: PASS
 - `bun run build:radix`: PASS
 
-**Phase 5 Gate Result**: PASS. Ready to commit with message `docs: update radix module refactor notes`.
+**Phase 5 Gate Result**: PASS.
+
+## Phase 5 Commit Record
+
+- Hash: 8632a5ab
+- Message: `docs: update radix module refactor notes`
+- Files: final docs hygiene updates and ledger notes.
+
+## Second-Pass Refactor Completion
+
+Second-pass review found that Go and Rust expression dispatch modules still held substantial target-specific lowering logic. This follow-up completed the intended module responsibility split while preserving behavior.
+
+- Go `expr/mod.rs` now keeps dispatch and shared helpers; access, call, collection, control, conversion, formatting/literal, option, ops, and variant helpers live in named submodules.
+- Rust `expr/mod.rs` now keeps dispatch and shared helpers; access, call, collection, control, conversion, format, literal, ops, option, pattern, and `verte` helpers live in named submodules.
+- `docs/radix-large-module-refactor-factory-plan.md` was updated to record the additional submodules that were needed to make the responsibility split truthful.
+
+**Second-Pass Source-Size Scan Top Entries**:
+
+```text
+  32946 total
+   1317 radix/crates/radix/src/driver/mod.rs
+   1195 radix/crates/radix/src/syntax/ast.rs
+   1184 radix/crates/radix/src/semantic/passes/resolve.rs
+   1143 radix/crates/radix/src/parser/expr.rs
+    985 radix/crates/radix/src/parser/decl.rs
+    914 radix/crates/radix/src/codegen/ts/expr.rs
+    874 radix/crates/radix/src/lexer/scan.rs
+    827 radix/crates/radix/src/hir/lower/stmt.rs
+    805 radix/crates/radix/src/codegen/go/stmt.rs
+    727 radix/crates/radix/src/parser/stmt.rs
+    709 radix/crates/radix/src/main.rs
+    661 radix/crates/radix/src/hir/lower/expr.rs
+    660 radix/crates/radix/src/semantic/passes/borrow.rs
+    614 radix/crates/radix/src/codegen/go/mod.rs
+    569 radix/crates/radix/src/hir/nodes.rs
+    492 radix/crates/radix/src/parser/mod.rs
+    481 radix/crates/radix/src/lexer/token.rs
+    477 radix/crates/radix/src/semantic/passes/lint.rs
+    456 radix/crates/radix/src/hir/lower/decl.rs
+    456 radix/crates/radix/src/codegen/rust/expr/mod.rs
+    441 radix/crates/radix/src/codegen/faber/expr.rs
+    438 radix/crates/norma/hal/solum.rs
+    414 radix/crates/radix/src/hir/lower/mod.rs
+    410 radix/crates/radix/src/driver/project.rs
+    408 radix/crates/radix/src/semantic/passes/exhaustive.rs
+    398 radix/crates/radix/src/semantic/types.rs
+    359 radix/crates/norma/hal/arca.rs
+    358 radix/crates/radix/src/codegen/go/decl.rs
+    355 radix/crates/radix/src/codegen/faber/decl.rs
+    352 radix/crates/radix/src/codegen/rust/decl.rs
+    327 radix/crates/radix/src/codegen/rust/expr/control.rs
+    327 radix/crates/radix/src/codegen/go/expr/collection.rs
+    326 radix/crates/radix/src/syntax/visit.rs
+    326 radix/crates/radix/src/codegen/rust/expr/collection.rs
+    322 radix/crates/radix/src/codegen/go/expr/option.rs
+    320 radix/crates/radix/src/codegen/names.rs
+    319 radix/crates/radix/src/codegen/mod.rs
+    308 radix/crates/radix/src/codegen/go/expr/call.rs
+    307 radix/crates/radix/src/codegen/faber/stmt.rs
+    306 radix/crates/radix/src/codegen/rust/expr/verte.rs
+```
+
+Remaining large files are outside this phase set, already listed as deferred, or are dispatch/orchestration files.
+
+**Second-Pass Verification**:
+
+- `cargo check --manifest-path radix/Cargo.toml -p radix`: PASS
+- `bun run ci`: PASS
+- `bun run lint`: PASS
+- `bunx eslint .`: PASS
+- `bun run prettier:check`: PASS
+- `bun run build:radix`: PASS
+- Representative emission comparison against `8632a5ab` for `faber`, `go`, and `rust`: PASS, no diffs.
+
+**Second-Pass Gate Result**: PASS.
+
+## Second-Pass Commit Record
+
+- Hash: recorded by the commit containing this ledger update
+- Message: `refactor: complete expression module split`
+- Files: Go/Rust expression submodule completion plus factory ledger and plan updates.

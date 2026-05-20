@@ -224,3 +224,38 @@ pub(super) fn generate_binary_expr(
 
     Ok(())
 }
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_assign_expr(
+    codegen: &RustCodegen<'_>,
+    target: &HirExpr,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write(" = ");
+    generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_assign_op_expr(
+    codegen: &RustCodegen<'_>,
+    op: HirBinOp,
+    target: &HirExpr,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write(" ");
+    w.write(binop_to_rust(op));
+    w.write("= ");
+    generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}

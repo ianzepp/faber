@@ -1,4 +1,5 @@
 use super::*;
+use crate::hir::{HirBinOp, HirUnOp};
 pub(super) fn binary_op_to_go(op: HirBinOp) -> &'static str {
     use HirBinOp::*;
     match op {
@@ -23,6 +24,78 @@ pub(super) fn binary_op_to_go(op: HirBinOp) -> &'static str {
         Shr => ">>",
         InRange | Between => "&&",
     }
+}
+pub(super) fn generate_binary_expr(
+    codegen: &GoCodegen<'_>,
+    expr: &HirExpr,
+    op: HirBinOp,
+    lhs: &HirExpr,
+    rhs: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    if matches!(op, HirBinOp::Coalesce) {
+        return generate_coalesce_expr(codegen, expr, lhs, rhs, types, w);
+    }
+    if matches!(op, HirBinOp::Div)
+        && matches!(
+            expr.ty
+                .map(|ty| normalize_receiver_type(types.get(ty), types)),
+            Some(Type::Primitive(Primitive::Fractus))
+        )
+        && matches!(
+            lhs.ty
+                .map(|ty| normalize_receiver_type(types.get(ty), types)),
+            Some(Type::Primitive(Primitive::Numerus))
+        )
+        && matches!(
+            rhs.ty
+                .map(|ty| normalize_receiver_type(types.get(ty), types)),
+            Some(Type::Primitive(Primitive::Numerus))
+        )
+    {
+        w.write("(float64(");
+        generate_expr(codegen, lhs, types, w)?;
+        w.write(") / float64(");
+        generate_expr(codegen, rhs, types, w)?;
+        w.write("))");
+        return Ok(());
+    }
+    w.write("(");
+    generate_expr(codegen, lhs, types, w)?;
+    w.write(" ");
+    w.write(binary_op_to_go(op));
+    w.write(" ");
+    generate_expr(codegen, rhs, types, w)?;
+    w.write(")");
+    Ok(())
+}
+
+pub(super) fn generate_assign_expr(
+    codegen: &GoCodegen<'_>,
+    lhs: &HirExpr,
+    rhs: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    generate_expr(codegen, lhs, types, w)?;
+    w.write(" = ");
+    generate_expr(codegen, rhs, types, w)
+}
+
+pub(super) fn generate_assign_op_expr(
+    codegen: &GoCodegen<'_>,
+    op: HirBinOp,
+    lhs: &HirExpr,
+    rhs: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    generate_expr(codegen, lhs, types, w)?;
+    w.write(" ");
+    w.write(assign_op_to_go(op));
+    w.write(" ");
+    generate_expr(codegen, rhs, types, w)
 }
 
 pub(super) fn assign_op_to_go(op: HirBinOp) -> &'static str {

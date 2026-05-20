@@ -257,6 +257,50 @@ pub(super) fn generate_optional_chain_expr(
     w.write(" }()");
     Ok(())
 }
+pub(super) fn generate_non_null_expr(
+    codegen: &GoCodegen<'_>,
+    object: &HirExpr,
+    chain: &crate::hir::HirNonNullKind,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    // WHY: Go has no non-null assertion; emit plain access.
+    generate_expr(codegen, object, types, w)?;
+    match chain {
+        crate::hir::HirNonNullKind::Member(field) => {
+            if matches!(
+                object
+                    .ty
+                    .map(|ty| normalize_receiver_type(types.get(ty), types)),
+                Some(Type::Map(_, _))
+            ) {
+                w.write("[");
+                w.write(&format!("{:?}", codegen.resolve_symbol(*field)));
+                w.write("]");
+            } else {
+                w.write(".");
+                w.write(&capitalize(codegen.resolve_symbol(*field)));
+            }
+        }
+        crate::hir::HirNonNullKind::Index(index) => {
+            w.write("[");
+            generate_expr(codegen, index, types, w)?;
+            w.write("]");
+        }
+        crate::hir::HirNonNullKind::Call(args) => {
+            w.write("(");
+            for (idx, arg) in args.iter().enumerate() {
+                if idx > 0 {
+                    w.write(", ");
+                }
+                generate_expr(codegen, arg, types, w)?;
+            }
+            w.write(")");
+        }
+    }
+    Ok(())
+}
+
 pub(super) fn generate_option_wrapped_expr(
     codegen: &GoCodegen<'_>,
     expr: &HirExpr,

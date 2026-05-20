@@ -1,4 +1,48 @@
 use super::*;
+use crate::hir::HirObjectKey;
+pub(super) fn generate_struct_expr(
+    codegen: &GoCodegen<'_>,
+    def_id: crate::hir::DefId,
+    fields: &[(crate::lexer::Symbol, HirExpr)],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.write(codegen.resolve_def(def_id));
+    w.write("{");
+    for (idx, (name, value)) in fields.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+        w.write(&capitalize(codegen.resolve_symbol(*name)));
+        w.write(": ");
+        if let Some(field_ty) = codegen.struct_field_type(def_id, *name) {
+            generate_expr_for_go_type(codegen, value, field_ty, types, w)?;
+        } else {
+            generate_expr(codegen, value, types, w)?;
+        }
+    }
+    w.write("}");
+    Ok(())
+}
+
+pub(super) fn generate_tuple_expr(
+    codegen: &GoCodegen<'_>,
+    elements: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    // WHY: Go has no tuples; a slice preserves multi-value expression shape.
+    w.write("[]any{");
+    for (idx, element) in elements.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+        generate_expr(codegen, element, types, w)?;
+    }
+    w.write("}");
+    Ok(())
+}
+
 pub(super) fn generate_array_expr(
     codegen: &GoCodegen<'_>,
     expr: &HirExpr,

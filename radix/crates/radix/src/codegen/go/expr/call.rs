@@ -1,4 +1,59 @@
 use super::*;
+pub(super) fn generate_call_expr(
+    codegen: &GoCodegen<'_>,
+    callee: &HirExpr,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    if let HirExprKind::Path(def_id) = callee.kind {
+        if codegen.is_variant_def(def_id) {
+            return generate_variant_constructor(codegen, def_id, args, types, w);
+        }
+    }
+    if try_generate_spread_call_recovery(codegen, callee, args, types, w)? {
+        return Ok(());
+    }
+    if try_generate_intrinsic_call(codegen, callee, args, types, w)? {
+        return Ok(());
+    }
+    generate_expr(codegen, callee, types, w)?;
+    w.write("(");
+    for (idx, arg) in args.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+        generate_expr(codegen, arg, types, w)?;
+    }
+    w.write(")");
+    Ok(())
+}
+
+pub(super) fn generate_method_call_expr(
+    codegen: &GoCodegen<'_>,
+    receiver: &HirExpr,
+    method: crate::lexer::Symbol,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    if try_generate_translated_method_call(codegen, receiver, method, args, types, w)? {
+        return Ok(());
+    }
+    write_method_receiver(codegen, receiver, types, w)?;
+    w.write(".");
+    w.write(&capitalize(codegen.resolve_symbol(method)));
+    w.write("(");
+    for (idx, arg) in args.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+        generate_expr(codegen, arg, types, w)?;
+    }
+    w.write(")");
+    Ok(())
+}
+
 pub(super) fn write_method_receiver(
     codegen: &GoCodegen<'_>,
     receiver: &HirExpr,

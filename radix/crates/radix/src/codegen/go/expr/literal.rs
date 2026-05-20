@@ -9,6 +9,54 @@ pub(super) fn render_scriptum_template(template: &str, arg_count: usize) -> Stri
     rendered = rendered.replace('§', "%v");
     rendered
 }
+pub(super) fn generate_scribe_expr(
+    codegen: &GoCodegen<'_>,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.write("fmt.Println(");
+    for (idx, arg) in args.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+        generate_expr(codegen, arg, types, w)?;
+    }
+    w.write(")");
+    Ok(())
+}
+
+pub(super) fn generate_scriptum_expr(
+    codegen: &GoCodegen<'_>,
+    template: crate::lexer::Symbol,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.write("fmt.Sprintf(");
+    w.write(&format!(
+        "{:?}",
+        render_scriptum_template(codegen.resolve_symbol(template), args.len())
+    ));
+    for arg in args {
+        w.write(", ");
+        generate_expr(codegen, arg, types, w)?;
+    }
+    w.write(")");
+    Ok(())
+}
+
+pub(super) fn generate_panic_expr(
+    codegen: &GoCodegen<'_>,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    w.write("panic(fmt.Sprint(");
+    generate_expr(codegen, value, types, w)?;
+    w.write("))");
+    Ok(())
+}
 pub(super) fn generate_literal(codegen: &GoCodegen<'_>, literal: &HirLiteral, w: &mut CodeWriter) {
     match literal {
         HirLiteral::Int(v) => w.write(&v.to_string()),

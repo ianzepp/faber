@@ -288,3 +288,40 @@ pub(super) fn generate_range_tuple_expr(
     w.write(")");
     Ok(())
 }
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_closure_expr(
+    codegen: &RustCodegen<'_>,
+    params: &[HirParam],
+    body: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("|");
+    for (i, param) in params.iter().enumerate() {
+        if i > 0 {
+            w.write(", ");
+        }
+        w.write(codegen.resolve_symbol(param.name));
+    }
+    w.write("| ");
+    generate_expr(codegen, body, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_await_expr(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write(".await");
+    Ok(())
+}

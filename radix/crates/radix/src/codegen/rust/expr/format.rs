@@ -32,3 +32,56 @@ pub(super) fn rust_scribe_format(expr: &HirExpr, types: &TypeTable) -> &'static 
         _ => "{:?}",
     }
 }
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_scribe_expr(
+    codegen: &RustCodegen<'_>,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if args.is_empty() {
+        w.write("println!()");
+        return Ok(());
+    }
+
+    let format = args
+        .iter()
+        .map(|arg| rust_scribe_format(arg, types))
+        .collect::<Vec<_>>()
+        .join(" ");
+    w.write("println!(\"");
+    w.write(&format);
+    w.write("\"");
+    for arg in args {
+        w.write(", ");
+        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    }
+    w.write(")");
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_scriptum_expr(
+    codegen: &RustCodegen<'_>,
+    template: Symbol,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("format!(\"");
+    w.write(&rust_format_template(codegen.resolve_symbol(template)));
+    w.write("\"");
+    for arg in args {
+        w.write(", ");
+        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    }
+    w.write(")");
+    Ok(())
+}

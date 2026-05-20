@@ -1,6 +1,6 @@
 # Radix Large Module Refactor Factory Plan
 
-**Status**: implemented through Phase 5 on 2026-05-20. See `docs/factory/radix-large-module-refactor/ledger.md` for commits and validation results.
+**Status**: implemented through Phase 5, with second-pass refactor completion, on 2026-05-20. See `docs/factory/radix-large-module-refactor/ledger.md` for commits and validation results.
 
 This plan turns the large-module housekeeping finding into a staged implementation program. The goal is not to extract one or two helpers, but to comprehensively split oversized compiler modules into cohesive submodules while preserving behavior.
 
@@ -289,6 +289,7 @@ radix/crates/radix/src/codegen/go/expr/
 ├── literal.rs
 ├── ops.rs
 ├── collection.rs
+├── control.rs
 ├── access.rs
 ├── option.rs
 ├── call.rs
@@ -302,6 +303,7 @@ Responsibilities:
 - `literal.rs`: literal rendering, string/scriptum template helpers.
 - `ops.rs`: unary, binary, assignment operator rendering.
 - `collection.rs`: arrays, maps, typed collection literals, `ab` pipelines and filters.
+- `control.rs`: block, `if`, loop-shaped, range-shaped, try/catch-shaped, and assert expression helpers.
 - `access.rs`: field/index/map member access and asserted map value typing.
 - `option.rs`: option wrapping, optional chain, coalesce, option field helpers.
 - `call.rs`: intrinsics, translated method calls, receiver handling, spread recovery.
@@ -342,6 +344,7 @@ Target shape:
 ```text
 radix/crates/radix/src/codegen/rust/expr/
 ├── mod.rs
+├── access.rs
 ├── literal.rs
 ├── ops.rs
 ├── block.rs
@@ -349,13 +352,16 @@ radix/crates/radix/src/codegen/rust/expr/
 ├── collection.rs
 ├── control.rs
 ├── call.rs
+├── convert.rs
 ├── option.rs
+├── verte.rs
 └── format.rs
 ```
 
 Responsibilities:
 
 - `mod.rs`: public `generate_expr` dispatch and shared helpers.
+- `access.rs`: field and index expression generation.
 - `literal.rs`: literal rendering, string escaping, regex flag handling.
 - `ops.rs`: binary and unary expression generation.
 - `block.rs`: expression block generation.
@@ -363,7 +369,9 @@ Responsibilities:
 - `collection.rs`: innatum arrays/maps, object map keys, collection helpers.
 - `control.rs`: `if`, match, and loop-shaped expression forms.
 - `call.rs`: function calls, method calls, failable call handling.
+- `convert.rs`: `conversio`, references, and dereferences.
 - `option.rs`: optional chain, coalesce, non-null, option-specific helpers.
+- `verte.rs`: `verte` lowering for structs, arrays, maps, primitive casts, and passthrough conversions.
 - `format.rs`: `scriptum`, `scribe` format selection, format template rendering.
 
 Implementation notes:
