@@ -1,20 +1,11 @@
 #!/usr/bin/env bun
 /**
- * Compile and verify examples/exempla/ using various compilers.
- *
- * All compilers use stdin/stdout: cat file.fab | compiler emit -t target
- * Output goes to opus/<compiler>/exempla/<target>/
+ * Compile examples/exempla with the active radix workspace compiler.
  *
  * Usage:
- *   bun run build:exempla:radix-rs                          # radix-rs -> ts exempla + verify
- *   bun run build:exempla:radix-go                          # radix-rs -> go exempla + verify
- *   bun run build:exempla -c nanus-ts                       # compile + verify
- *   bun run build:exempla -c radix-rs -t go                 # direct radix-rs Go flow
- *   bun run build:exempla -c rivus-ts                       # compile + verify
- *   bun run build:exempla -c rivus-ts,rivus-py              # multiple compilers
- *   bun run build:exempla -c nanus-ts -t zig                # specific target
- *   bun run build:exempla -c nanus-ts --no-verify           # compile only
- *   bun run build:exempla -c nanus-ts --verify-only         # verify only (no compile)
+ *   bun scripta/build-exempla.ts
+ *   bun scripta/build-exempla.ts -t go
+ *   bun scripta/build-exempla.ts -t rust --no-clean
  */
 
 import { mkdir, readdir, rm, stat } from 'fs/promises';
@@ -22,367 +13,101 @@ import { basename, dirname, join, relative } from 'path';
 import { $ } from 'bun';
 
 const ROOT = join(import.meta.dir, '..');
-const EXEMPLA_SOURCE = join(ROOT, 'examples', 'exempla');
-const OPUS = join(ROOT, 'opus');
+const MANIFEST = join(ROOT, 'radix', 'Cargo.toml');
+const EXEMPLA = join(ROOT, 'examples', 'exempla');
+const OUT_ROOT = join(ROOT, 'opus', 'radix', 'exempla');
 
-type Target = 'ts' | 'zig' | 'py' | 'rs' | 'go';
+type Target = 'rust' | 'ts' | 'go' | 'faber';
 
-const VALID_TARGETS = ['ts', 'zig', 'py', 'rs', 'go', 'all'] as const;
-const ALL_TARGETS: Target[] = ['ts', 'zig', 'py', 'rs', 'go'];
-const TARGET_EXT: Record<Target, string> = { ts: 'ts', zig: 'zig', py: 'py', rs: 'rs', go: 'go' };
+const TARGETS = ['rust', 'ts', 'go', 'faber'] as const;
+const EXTENSION: Record<Target, string> = {
+    rust: 'rs',
+    ts: 'ts',
+    go: 'go',
+    faber: 'fab',
+};
 
-interface CompilerSpec {
-    name: string;
-    bin: string;
-}
-
-interface Args {
-    compilers: CompilerSpec[];
-    targets: Target[];
-    compile: boolean;
-    verify: boolean;
-}
-
-interface CompileSummary {
-    total: number;
-    failed: number;
-    gated: number;
-}
-
-function parseArgs(): Args {
+function parseArgs(): { target: Target; clean: boolean } {
     const args = process.argv.slice(2);
-    let compilerNames: string[] = [];
-    let targets: Target[] = ['ts'];
-    let compile = true;
-    let verify = true;
+    let target: Target = 'rust';
+    let clean = true;
 
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
-
         if (arg === '-t' || arg === '--target') {
-            const t = args[++i];
-            if (!VALID_TARGETS.includes(t as (typeof VALID_TARGETS)[number])) {
-                console.error(`Unknown target '${t}'. Valid: ${VALID_TARGETS.join(', ')}`);
+            const value = args[++i] as Target | undefined;
+            if (!value || !TARGETS.includes(value)) {
+                console.error(`Unknown target '${value ?? ''}'. Expected one of: ${TARGETS.join(', ')}`);
                 process.exit(1);
             }
-            targets = t === 'all' ? ALL_TARGETS : [t as Target];
-        } else if (arg === '-c' || arg === '--compiler') {
-            const value = args[++i];
-            if (!value) {
-                console.error('Missing value for -c/--compiler');
-                process.exit(1);
-            }
-            compilerNames = value.split(',').map(c => c.trim());
-        } else if (arg === '--no-verify') {
-            verify = false;
-        } else if (arg === '--verify-only') {
-            compile = false;
-            verify = true;
+            target = value;
+            continue;
         }
+
+        if (arg === '--no-clean') {
+            clean = false;
+            continue;
+        }
+
+        console.error(`Unknown argument: ${arg}`);
+        process.exit(1);
     }
 
-    const compilers: CompilerSpec[] = compilerNames.map(name => ({
-        name,
-        bin: join(ROOT, 'opus', 'bin', name),
-    }));
-
-    return { compilers, targets, compile, verify };
+    return { target, clean };
 }
 
-async function findFiles(dir: string, ext: string): Promise<string[]> {
+async function findFabFiles(dir: string): Promise<string[]> {
     const entries = await readdir(dir);
     const files: string[] = [];
 
     for (const entry of entries) {
         const fullPath = join(dir, entry);
-        const s = await stat(fullPath);
-        if (s.isDirectory()) {
-            files.push(...(await findFiles(fullPath, ext)));
-        } else if (entry.endsWith(ext)) {
+        const info = await stat(fullPath);
+        if (info.isDirectory()) {
+            files.push(...await findFabFiles(fullPath));
+        } else if (entry.endsWith('.fab')) {
             files.push(fullPath);
         }
     }
 
-    return files;
-}
-
-function classifyCompileFailure(
-    compiler: CompilerSpec,
-    target: Target,
-    stderr: string
-): { gated: boolean; reason?: string } {
-    if (compiler.name !== 'radix-rs' || target !== 'go') {
-        return { gated: false };
-    }
-
-    if (stderr.includes('ad is not supported for Go targets')) {
-        return { gated: true, reason: 'policy-gated: ad is unsupported for Go' };
-    }
-
-    if (
-        stderr.includes('member access on @ externa ignotum is not supported for Go targets') ||
-        stderr.includes('index access on @ externa ignotum is not supported for Go targets') ||
-        stderr.includes('optional chaining on @ externa ignotum is not supported for Go targets') ||
-        stderr.includes('non-null projection on @ externa ignotum is not supported for Go targets')
-    ) {
-        return { gated: true, reason: 'policy-gated: dynamic @ externa ignotum projection is unsupported for Go' };
-    }
-
-    return { gated: false };
-}
-
-async function compileExempla(compiler: CompilerSpec, targets: Target[]): Promise<CompileSummary> {
-    const fabFiles = await findFiles(EXEMPLA_SOURCE, '.fab');
-    const outputBase = join(OPUS, compiler.name, 'exempla');
-
-    // Clear output directories for each target to ensure fresh builds
-    for (const target of targets) {
-        const targetDir = join(outputBase, target);
-        await rm(targetDir, { recursive: true, force: true });
-    }
-
-    let failed = 0;
-    let gated = 0;
-
-    for (const fabPath of fabFiles) {
-        const relPath = relative(EXEMPLA_SOURCE, fabPath);
-        const name = basename(fabPath, '.fab');
-        const subdir = dirname(relPath);
-
-        for (const target of targets) {
-            const ext = TARGET_EXT[target];
-            const outDir = join(outputBase, target, subdir);
-            const outPath = join(outDir, `${name}.${ext}`);
-
-            try {
-                await mkdir(outDir, { recursive: true });
-
-                // All compilers use stdin: cat file | compiler emit -t target
-                const result = await $`cat ${fabPath} | ${compiler.bin} emit -t ${target}`.quiet();
-
-                await Bun.write(outPath, result.stdout);
-                console.log(`  ${relPath} -> ${compiler.name}/${target}/${subdir}/${name}.${ext}`);
-            } catch (err: any) {
-                const stderr = err.stderr?.toString().trim() || '';
-                const classification = classifyCompileFailure(compiler, target, stderr);
-                if (classification.gated) {
-                    console.log(`  ${relPath} [${target}] GATED`);
-                    if (classification.reason) console.log(`    ${classification.reason}`);
-                    gated++;
-                    continue;
-                }
-
-                console.error(`  ${relPath} [${target}] FAILED`);
-                if (stderr) console.error(`    ${stderr}`);
-                failed++;
-            }
-        }
-    }
-
-    return { total: fabFiles.length * targets.length, failed, gated };
-}
-
-async function verifyTypeScript(outputBase: string): Promise<{ total: number; failed: number }> {
-    const tsDir = join(outputBase, 'ts');
-    const files = await findFiles(tsDir, '.ts');
-    let failed = 0;
-
-    for (const file of files) {
-        try {
-            await $`bun build --no-bundle ${file}`.quiet();
-        } catch {
-            console.error(`  ${relative(outputBase, file)}: type error`);
-            failed++;
-        }
-    }
-
-    return { total: files.length, failed };
-}
-
-async function verifyZig(outputBase: string): Promise<{ total: number; failed: number }> {
-    const zigDir = join(outputBase, 'zig');
-    const files = await findFiles(zigDir, '.zig');
-    let failed = 0;
-
-    for (const file of files) {
-        const name = basename(file, '.zig');
-        const output = join(dirname(file), name);
-
-        try {
-            await $`zig build-exe ${file} -femit-bin=${output}`.quiet();
-        } catch (err: any) {
-            console.error(`  ${relative(outputBase, file)}: compile error`);
-            const errText = err.stderr?.toString() || '';
-            const firstError = errText.split('\n').slice(0, 3).join('\n');
-            if (firstError) console.error(`    ${firstError}`);
-            failed++;
-        }
-    }
-
-    return { total: files.length, failed };
-}
-
-async function verifyPython(outputBase: string): Promise<{ total: number; failed: number }> {
-    const pyDir = join(outputBase, 'py');
-    const files = await findFiles(pyDir, '.py');
-    let failed = 0;
-
-    for (const file of files) {
-        try {
-            await $`python3 -m py_compile ${file}`.quiet();
-        } catch (err: any) {
-            console.error(`  ${relative(outputBase, file)}: syntax error`);
-            const errText = err.stderr?.toString() || '';
-            if (errText) console.error(`    ${errText.trim()}`);
-            failed++;
-        }
-    }
-
-    return { total: files.length, failed };
-}
-
-async function verifyRust(outputBase: string): Promise<{ total: number; failed: number }> {
-    const rsDir = join(outputBase, 'rs');
-    const files = await findFiles(rsDir, '.rs');
-    let failed = 0;
-    const tmpDir = join(outputBase, '.rustc-verify');
-    await mkdir(tmpDir, { recursive: true });
-    const tmpOut = join(tmpDir, 'out.rmeta');
-
-    for (const file of files) {
-        try {
-            await $`rustc --emit=metadata --edition=2021 -o ${tmpOut} ${file}`.quiet();
-        } catch (err: any) {
-            console.error(`  ${relative(outputBase, file)}: compile error`);
-            const errText = err.stderr?.toString() || '';
-            const firstError = errText.split('\n').slice(0, 5).join('\n');
-            if (firstError) console.error(`    ${firstError}`);
-            failed++;
-        }
-    }
-
-    return { total: files.length, failed };
-}
-
-async function verifyGo(outputBase: string): Promise<{ total: number; failed: number }> {
-    const goDir = join(outputBase, 'go');
-    const files = await findFiles(goDir, '.go');
-    const dirCounts = new Map<string, number>();
-    let failed = 0;
-
-    for (const file of files) {
-        const dir = dirname(file);
-        dirCounts.set(dir, (dirCounts.get(dir) ?? 0) + 1);
-    }
-
-    for (const file of files) {
-        try {
-            const source = await Bun.file(file).text();
-            const imports = new Set<string>();
-            for (const match of source.matchAll(/import\s+(?:"([^"]+)"|\(\s*([\s\S]*?)\s*\))/g)) {
-                if (match[1]) {
-                    imports.add(match[1]);
-                    continue;
-                }
-                const block = match[2] ?? '';
-                for (const blockMatch of block.matchAll(/"([^"]+)"/g)) {
-                    imports.add(blockMatch[1]);
-                }
-            }
-
-            const needsPackageSupport = [...imports].some(spec => spec.startsWith('.') || spec.includes('/'));
-            const isSingleFileDir = (dirCounts.get(dirname(file)) ?? 0) === 1;
-            const hasMain = /\bfunc\s+main\s*\(/.test(source);
-
-            if (needsPackageSupport || !isSingleFileDir || !hasMain) {
-                await $`gofmt -e ${file}`.quiet();
-            } else {
-                await $`go build -o /dev/null ${file}`.quiet();
-            }
-        } catch (err: any) {
-            console.error(`  ${relative(outputBase, file)}: compile error`);
-            const errText = err.stderr?.toString() || '';
-            const firstError = errText.split('\n').slice(0, 5).join('\n');
-            if (firstError) console.error(`    ${firstError}`);
-            failed++;
-        }
-    }
-
-    return { total: files.length, failed };
+    return files.sort();
 }
 
 async function main() {
-    const { compilers, targets, compile, verify } = parseArgs();
-    const start = performance.now();
+    const { target, clean } = parseArgs();
+    const outDir = join(OUT_ROOT, target);
 
-    if (compilers.length === 0) {
-        console.log('No compilers selected. Use -c <compiler> (e.g., -c radix-rs, nanus-ts, or rivus-ts).');
-        process.exit(0);
+    if (clean) {
+        await rm(outDir, { recursive: true, force: true });
     }
 
-    const compilerNames = compilers.map(c => c.name).join(', ');
-    let totalCompileFailed = 0;
-    let totalCompileCount = 0;
-    let totalCompileGated = 0;
+    const files = await findFabFiles(EXEMPLA);
+    let failed = 0;
 
-    if (compile) {
-        console.log(`Compiling exempla (compilers: ${compilerNames}, targets: ${targets.join(', ')})\n`);
+    for (const file of files) {
+        const rel = relative(EXEMPLA, file);
+        const output = join(outDir, dirname(rel), `${basename(file, '.fab')}.${EXTENSION[target]}`);
 
-        for (const compiler of compilers) {
-            console.log(`\n[${compiler.name}]`);
-            const result = await compileExempla(compiler, targets);
-            totalCompileCount += result.total;
-            totalCompileFailed += result.failed;
-            totalCompileGated += result.gated;
-            if (result.failed > 0) {
-                console.log(`  ${result.failed}/${result.total} compilation(s) failed`);
-            }
-            if (result.gated > 0) {
-                console.log(`  ${result.gated}/${result.total} compilation(s) gated by target policy`);
-            }
+        try {
+            await mkdir(dirname(output), { recursive: true });
+            const result = await $`cargo run --quiet --manifest-path ${MANIFEST} -p radix -- emit -t ${target} ${file}`.quiet();
+            await Bun.write(output, result.stdout);
+            console.log(`${rel} -> ${relative(ROOT, output)}`);
+        } catch (err: any) {
+            failed++;
+            console.error(`${rel}: failed`);
+            const stderr = err.stderr?.toString().trim();
+            if (stderr) console.error(stderr.split('\n').slice(0, 4).join('\n'));
         }
     }
 
-    let verifyFailed = 0;
-
-    if (verify) {
-        console.log(`\nVerifying exempla (compilers: ${compilerNames}, targets: ${targets.join(', ')})\n`);
-
-        const verifiers: Record<Target, (outputBase: string) => Promise<{ total: number; failed: number }>> = {
-            ts: verifyTypeScript,
-            zig: verifyZig,
-            py: verifyPython,
-            rs: verifyRust,
-            go: verifyGo,
-        };
-
-        for (const compiler of compilers) {
-            const outputBase = join(OPUS, compiler.name, 'exempla');
-            for (const target of targets) {
-                process.stdout.write(`  ${compiler.name}/${target}: `);
-                const result = await verifiers[target](outputBase);
-                if (result.failed === 0) {
-                    console.log(`OK (${result.total} files)`);
-                } else {
-                    console.log(`${result.failed}/${result.total} failed`);
-                    verifyFailed += result.failed;
-                }
-            }
-        }
-    }
-
-    const elapsed = performance.now() - start;
-    console.log(`\nDone (${elapsed.toFixed(0)}ms)`);
-    if (totalCompileGated > 0) {
-        console.log(`Go policy gates: ${totalCompileGated}/${totalCompileCount}`);
-    }
-
-    if (totalCompileFailed > 0 || verifyFailed > 0) {
+    if (failed > 0) {
+        console.error(`\n${failed}/${files.length} examples failed`);
         process.exit(1);
     }
 }
 
 main().catch(err => {
-    console.error(`\nFailed: ${err.message}`);
+    console.error(err);
     process.exit(1);
 });

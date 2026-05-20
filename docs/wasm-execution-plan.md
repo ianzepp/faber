@@ -70,7 +70,7 @@ This approach maximizes reuse of the strongest existing compiler component while
 Faber will require a minimal WASM runtime to support:
 
 - Core language primitives and collections.
-- The Hardware Abstraction Layer defined in `stdlib/norma/hal/` (`pactum solum`, `consolum`, `nuncius`/HTTP, `processus`, `tempus`, `crypta`, etc.).
+- The Hardware Abstraction Layer defined in `radix/stdlib/norma/hal/` (`pactum solum`, `consolum`, `nuncius`/HTTP, `processus`, `tempus`, `crypta`, etc.).
 - Basic I/O, filesystem access (via WASI), and networking as needed for CLI tools and HTTP clients.
 
 The runtime should be kept as small as possible for the initial use cases (CLI tools + HTTP calls to Swarm).

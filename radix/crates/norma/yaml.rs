@@ -118,18 +118,12 @@ pub fn ut_bivalens(valor: &Value, def_val: bool) -> bool {
 
 /// Get value by key (returns null if missing)
 pub fn cape(valor: &Value, clavis: &str) -> Value {
-    valor
-        .get(clavis)
-        .cloned()
-        .unwrap_or(Value::Null)
+    valor.get(clavis).cloned().unwrap_or(Value::Null)
 }
 
 /// Pluck value by array index (returns null if out of bounds)
 pub fn carpe(valor: &Value, index: usize) -> Value {
-    valor
-        .get(index)
-        .cloned()
-        .unwrap_or(Value::Null)
+    valor.get(index).cloned().unwrap_or(Value::Null)
 }
 
 /// Find value by dotted path (returns null if not found)

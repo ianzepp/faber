@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Install faber to ~/.local/bin
+# Install the current radix binary as ~/.local/bin/faber.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if [[ ! -f opus/faber ]]; then
-    echo "Error: opus/faber not found. Run 'bun run build' first."
+if [[ ! -f radix/target/release/radix ]]; then
+    echo "Error: radix/target/release/radix not found. Run 'bun run build:radix' first."
     exit 1
 fi
 
 mkdir -p ~/.local/bin
 rm -f ~/.local/bin/faber
-ln -s "$(pwd)/opus/faber" ~/.local/bin/faber
-echo "Installed: ~/.local/bin/faber → $(pwd)/opus/faber"
+ln -s "$(pwd)/radix/target/release/radix" ~/.local/bin/faber
+echo "Installed: ~/.local/bin/faber -> $(pwd)/radix/target/release/radix"

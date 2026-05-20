@@ -14,14 +14,14 @@ use std::path::Path;
 /// Full file status returned by describe/describet
 #[derive(Debug, Clone)]
 pub struct SolumStatus {
-    pub modus: u32,           // permission bits (e.g., 0o755)
-    pub nexus: u64,           // hard link count
-    pub possessor: u32,       // owner uid
-    pub grex: u32,            // group gid
-    pub magnitudo: u64,       // size in bytes
-    pub modificatum: u64,     // mtime (ms since epoch)
+    pub modus: u32,       // permission bits (e.g., 0o755)
+    pub nexus: u64,       // hard link count
+    pub possessor: u32,   // owner uid
+    pub grex: u32,        // group gid
+    pub magnitudo: u64,   // size in bytes
+    pub modificatum: u64, // mtime (ms since epoch)
     pub est_directorii: bool,
-    pub est_vinculum: bool,   // is symlink
+    pub est_vinculum: bool, // is symlink
 }
 
 // =============================================================================

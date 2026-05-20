@@ -1,17 +1,7 @@
 #!/usr/bin/env bash
-# Run the maintained TypeScript-side test suite.
-#
-# These colocated smoke tests exercise the maintained TypeScript bootstrap
-# compiler surface without pulling in legacy or generated trees.
-#
-# Usage: ./scripta/test [bun test options]
-#
-# Examples:
-#   ./scripta/test                    # Run nanus-ts smoke tests
-#   ./scripta/test -t "lexer"         # Run lexer tests only
-#   ./scripta/test --timeout 10000    # Run with longer timeout
+# Run the active radix workspace tests.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-bun test compilers/nanus-ts/index.test.ts "$@"
+cargo test --manifest-path radix/Cargo.toml "$@"

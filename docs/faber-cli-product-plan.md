@@ -1,6 +1,6 @@
 # Faber CLI Product Plan
 
-Internal planning artifact for promoting `compilers/radix-rs` from an implementation-named debug CLI into the public-facing packaged Faber compiler command.
+Internal planning artifact for promoting `radix/crates/radix` from an implementation-named debug CLI into the public-facing packaged Faber compiler command.
 
 Last updated: 2026-04-10
 
@@ -48,7 +48,7 @@ Keep the compiler implementation named `radix-rs` internally.
 
 This plan does **not** require renaming:
 
-- the `compilers/radix-rs` project
+- the `radix/crates/radix` project
 - the Rust crate/package identity
 - the internal binary produced during normal development
 
@@ -72,7 +72,7 @@ The `faber` name is the public packaged command exposed later through distributi
 
 ### `radix-rs`
 
-Current CLI in [main.rs](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/main.rs):
+Current CLI in [main.rs](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/main.rs):
 
 - `lex`
 - `parse`
@@ -91,7 +91,7 @@ Characteristics:
 
 ### `nanus-go`
 
-Current CLI in [main.go](/Users/ianzepp/github/ianzepp/faber/compilers/nanus-go/main.go):
+Current CLI in [main.go](/Users/ianzepp/work/ianzepp/faber/../faber-archivum/bootstrap/nanus-go/main.go):
 
 - `lex`
 - `parse`

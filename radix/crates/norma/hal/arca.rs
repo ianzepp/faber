@@ -91,7 +91,10 @@ impl Connexio {
     /// Return first row or None
     pub async fn capiet(&self, sql: &str, params: &[Value]) -> Option<Value> {
         let query = build_query(sql, params);
-        let row = query.fetch_optional(&self.pool).await.expect("failed to execute query");
+        let row = query
+            .fetch_optional(&self.pool)
+            .await
+            .expect("failed to execute query");
 
         row.as_ref().map(row_to_value)
     }
@@ -260,16 +263,14 @@ fn row_to_value(row: &AnyRow) -> Value {
         let type_name = col.type_info().name();
 
         let value: Value = match type_name {
-            "INTEGER" | "INT" | "INT4" | "INT8" | "BIGINT" | "SMALLINT" => {
-                row.try_get::<i64, _>(col.ordinal())
-                    .map(Value::from)
-                    .unwrap_or(Value::Null)
-            }
-            "REAL" | "FLOAT" | "FLOAT4" | "FLOAT8" | "DOUBLE" | "NUMERIC" | "DECIMAL" => {
-                row.try_get::<f64, _>(col.ordinal())
-                    .map(Value::from)
-                    .unwrap_or(Value::Null)
-            }
+            "INTEGER" | "INT" | "INT4" | "INT8" | "BIGINT" | "SMALLINT" => row
+                .try_get::<i64, _>(col.ordinal())
+                .map(Value::from)
+                .unwrap_or(Value::Null),
+            "REAL" | "FLOAT" | "FLOAT4" | "FLOAT8" | "DOUBLE" | "NUMERIC" | "DECIMAL" => row
+                .try_get::<f64, _>(col.ordinal())
+                .map(Value::from)
+                .unwrap_or(Value::Null),
             "BOOLEAN" | "BOOL" => row
                 .try_get::<bool, _>(col.ordinal())
                 .map(Value::from)
@@ -331,8 +332,10 @@ impl<W: std::io::Write> std::io::Write for Base64Encoder<W> {
                 n |= chunk[2] as u32;
             }
 
-            self.writer.write_all(&[ALPHABET[(n >> 18 & 63) as usize]])?;
-            self.writer.write_all(&[ALPHABET[(n >> 12 & 63) as usize]])?;
+            self.writer
+                .write_all(&[ALPHABET[(n >> 18 & 63) as usize]])?;
+            self.writer
+                .write_all(&[ALPHABET[(n >> 12 & 63) as usize]])?;
 
             if chunk.len() > 1 {
                 self.writer.write_all(&[ALPHABET[(n >> 6 & 63) as usize]])?;

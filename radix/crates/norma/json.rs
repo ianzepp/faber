@@ -76,7 +76,10 @@ pub fn est_tabula(valor: &Value) -> bool {
 
 /// Extract as string with default
 pub fn ut_textus(valor: &Value, def_val: &str) -> String {
-    valor.as_str().map(|s| s.to_string()).unwrap_or_else(|| def_val.to_string())
+    valor
+        .as_str()
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| def_val.to_string())
 }
 
 /// Extract as number with default

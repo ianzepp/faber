@@ -1,266 +1,99 @@
 # Faber Romanus
 
-**The Roman Craftsman** — An LLM-oriented intermediate representation for compiling reviewed Faber programs into production target code.
+**The Roman Craftsman** is a Latin programming language compiler centered on the Rust `radix` workspace.
 
-**[faberlang.dev](https://faberlang.dev)** — Official project website
+The current repository is intentionally narrow: the active compiler, Rust runtime crate, Faber standard library definitions, examples, and docs all live around `radix/`. Older bootstrap and self-hosting implementations were moved to the sibling archive repository during the pruning pass and are no longer live main-repo surfaces.
 
-## The Problem
+## Current Shape
 
-LLMs write code. Humans review it. But systems languages — Zig, Rust, C++ — are hard for both:
-
-- **LLMs struggle with symbol-dense syntax.** Lifetimes, borrow checkers, template metaprogramming, `&&` vs `&`, `->` vs `.` — these create semantic chaos that increases error rates.
-- **Humans can't skim generated code.** Reviewing 50 lines of Rust requires understanding Rust. You can't verify "yes, that logic looks right" without parsing the syntax mentally.
-
-You don't need an IR to generate TypeScript. You need one to generate Rust without lifetime annotation chaos.
-
-## The Solution
-
-Faber Romanus is an **intermediate representation** optimized for LLM generation and human review.
-
-```
-itera ex items fixum item {
-    si item.price > 100 {
-        scribe item.name
-    }
-}
-```
-
-- **LLMs write Faber.** Word-based, regular syntax. No lifetime annotations, no pointer semantics, no template noise. One language regardless of compile target.
-- **Humans skim Faber.** You see `si` (if), `itera` (iterate), `scribe` (print). You don't need to know Zig to verify the loop logic is correct.
-- **Compiler emits target code.** The active `radix-rs` compiler currently emits Rust, canonical Faber, TypeScript, and Go. Package compilation is currently strongest on Rust, while the bootstrap compilers remain useful for Python and older secondary target paths. The generated code is what actually runs.
-
-The workflow: LLM drafts Faber → Human approves → Compiler emits production code.
-
-## Why It Works
-
-**No ecosystem problem.** Faber compiles to the target language, so you use its libraries directly. `importa ex "hono" privata Hono` becomes `import { Hono } from 'hono'`. No need to rewrite npm/PyPI/crates.io in a new language.
-
-**Grammar designed for LLMs.** The [EBNF.md](EBNF.md) specification is built for LLM consumption: formal grammar, type tables, keyword mappings. Trials show models achieve 96-98% accuracy after reading the grammar specification alone — no prose documentation required.
-
-**Regular structure.** Type-first declarations, consistent block patterns, no operator overloading. The regularity may matter more than the vocabulary — a hypothesis we're testing with ablations (same grammar, English keywords).
-
-**Semantic vocabulary.** Latin keywords encode intent: `fixum` (fixed/immutable) vs `varia` (variable/mutable), `cede` (yield/await), `redde` (give back/return). Whether this helps beyond structure is an open question, but it makes code skimmable for humans unfamiliar with the target language.
-
-## Research & Evidence
-
-The [faber-trials](https://github.com/ianzepp/faber-trials) research harness tests Faber's learnability with reproducible evaluation: falsifiable claims, controlled comparisons, automated grading.
-
-### Trial Results (Framework 1.1)
-
-~13,000 trials across 17 models, testing Faber↔TypeScript translation tasks:
-
-| Finding                              | Result                                                                  |
-| ------------------------------------ | ----------------------------------------------------------------------- |
-| **Faber is learnable**               | 11 of 12 models achieve 86%+ accuracy with grammar-only context         |
-| **Grammar beats prose**              | Formal EBNF (87%) matches verbose docs (87%), outperforms minimal (83%) |
-| **Reading > Writing**                | Models score 90-95% on Faber→TS but 54-65% on TS→Faber                  |
-| **Coding models are cost-effective** | qwen3-coder (96%) matches gpt-4o (98%) at 1/10th cost                   |
-
-Top performers with grammar-only context:
-
-| Model             | Accuracy |
-| ----------------- | -------- |
-| gpt-4o            | 98%      |
-| claude-3.5-sonnet | 98%      |
-| qwen3-coder       | 96%      |
-| llama-3.1-70b     | 95%      |
-| deepseek-v3.1     | 95%      |
-
-**What this validates**: LLMs can learn Faber syntax from a formal grammar specification. TypeScript was used for grading (mature tooling), but the value proposition is strongest for systems languages where direct generation is error-prone.
-
-**Open questions**: Do Latin keywords help, or is it just the regular structure? (Faber-English ablation planned.) How do error rates compare for Faber→Zig vs direct Zig generation?
-
-See [faber-trials/docs/framework-1.1-results.md](https://github.com/ianzepp/faber-trials/blob/main/docs/framework-1.1-results.md) for methodology, or [faber-trials/thesis.md](https://github.com/ianzepp/faber-trials/blob/main/thesis.md) for the research strategy.
-
-## The § Symbol
-
-Faber uses the `§` symbol as a distinctive marker for declarative constructs:
-
-- **String formatting**: `scriptum("Hello, §!", name)` → `"Hello, World!"`
-- **Imports**: `importa ex "hono" privata Hono` → `import { Hono } from 'hono'`
-- **File-level directives**: `§ dependentia "hono" github "honojs/hono#main" via "."`
-
-The `§` symbol (section marker) distinguishes file-level configuration and imports from executable code. Use `@` for code annotations like `@ futura`, `@ radix`, `@ verte`.
-
-## Principles
-
-**LLM-First, Human-Readable.** The language is optimized for LLMs to write and humans to review. Not the other way around. Humans don't type Faber; they approve it.
-
-**Compiler as Safety Net.** The compiler never crashes on malformed input — it collects errors and continues. When an LLM generates broken code, you see all the issues at once, not one at a time.
-
-**Target Transparency.** You pick a compile target and use that ecosystem directly. Faber is a skin over the target, not a replacement for it.
-
-**Target Compatibility.** Not all targets support all features, and not all compiler implementations in this repository are equally current. See [docs/grammatica/targets.md](docs/grammatica/targets.md) for the language-level compatibility matrix, and treat [`compilers/radix-rs`](compilers/radix-rs) as the primary delivery surface.
-
-**CLI Reality.** The current `radix-rs` binary exposes both product-facing commands (`build`, `targets`, `check`) and compiler-inspection commands (`lex`, `parse`, `hir`, `emit`). Prefer `build` for writing outputs to disk; keep `emit` for stdout-oriented and debugging workflows.
-
-## Repository Contract
-
-Faber is a multi-project family repository. Components live in one tree, but they are not treated as one blocking build surface.
-
-- **Primary delivery target:** [`compilers/radix-rs`](compilers/radix-rs) is the active compiler and the main quality gate.
-- **Older project trees are isolated:** bootstrap compilers, rivus, and legacy TypeScript tooling may lag behind without blocking `radix-rs`.
-- **Root CI is scoped:** pull requests are gated on `radix-rs` checks, not a repo-wide lint/typecheck sweep.
-- **Root inventory lives in [`project.yaml`](project.yaml):** use it to understand project status and ownership at a glance.
-
-Current status model:
-
-- `active` — expected to support ongoing development and blocking checks
-- `maintenance` — useful, but not allowed to block unrelated work
-- `experimental` — informative or exploratory surfaces that may be broken
+| Path | Purpose |
+| ---- | ------- |
+| [`radix/Cargo.toml`](radix/Cargo.toml) | Canonical Cargo workspace manifest |
+| [`radix/crates/radix`](radix/crates/radix) | Active Faber compiler crate and CLI binary |
+| [`radix/crates/norma`](radix/crates/norma) | Rust runtime support crate for standard library and HAL features |
+| [`radix/stdlib/norma`](radix/stdlib/norma) | Faber standard library definitions with `@ verte` translation metadata |
+| [`examples/exempla`](examples/exempla) | Example Faber programs |
+| [`docs/grammatica`](docs/grammatica) | Language documentation |
+| [`scripta`](scripta) | Current helper scripts only |
 
 ## Quick Start
 
 ```bash
-# radix-rs (primary compiler — Rust plus file-level TS/Go/Faber targets)
-cd compilers/radix-rs && cargo build --release
-cargo run -- targets                                              # Show supported targets
-cargo run -- build ../../examples/exempla/salve-munde.fab         # Write one Rust output next to cwd
-cargo run -- emit -t ts ../../examples/exempla/salve-munde.fab    # Stdout-oriented TypeScript emission
-cargo run -- emit -t go ../../examples/exempla/salve-munde.fab    # Stdout-oriented Go emission
-cargo run -- build --package ../../examples/exempla/cli/main.fab  # Build a local multi-file package
-cargo run -- emit ../../examples/exempla/salve-munde.fab          # Stdout-oriented/debug emission
+bun install
 
-# Root-scoped primary checks
-bun run check:radix-rs
-bun run test:radix-rs
+bun run check:radix
+bun run test:radix
 bun run ci
 
-# Bootstrap compilers (Python and secondary TS/Go paths)
-bun install
-bun run build                                             # Build nanus-* compilers
-./opus/bin/nanus-go compile examples/exempla/salve-munde.fab -t ts  # TypeScript
-./opus/bin/nanus-go compile examples/exempla/salve-munde.fab -t go  # Go
-
-# Legacy / secondary checks
-bun run test:nanus-ts
-bun run typecheck:legacy   # nanus-ts only
-bun run lint:nanus-ts      # nanus-ts only
+bun run build:radix
+cargo run --manifest-path radix/Cargo.toml -p radix -- targets
+cargo run --manifest-path radix/Cargo.toml -p radix -- check examples/exempla/salve-munde.fab
+cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust examples/exempla/salve-munde.fab
+cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t ts examples/exempla/salve-munde.fab
 ```
 
-## Project Structure
+Root CI is scoped to the `radix` workspace:
 
-The repository is organized as a family repo with isolated component domains:
-
-| Root                     | Description |
-| ------------------------ | ----------- |
-| [`compilers/`](compilers) | Compiler implementations, including active [`radix-rs`](compilers/radix-rs), bootstrap `nanus-*`, and experimental `rivus` surfaces |
-| [`stdlib/`](stdlib) | Standard library definitions, especially [`stdlib/norma`](stdlib/norma) and its `@ verte` translation metadata |
-| [`runtimes/`](runtimes) | Target-specific runtime support such as [`runtimes/norma-rs`](runtimes/norma-rs) and [`runtimes/norma-ts`](runtimes/norma-ts) |
-| [`tests/`](tests) | Shared validation assets including [`tests/proba`](tests/proba) and [`tests/golden`](tests/golden) |
-| [`examples/`](examples) | Example Faber programs in [`examples/exempla`](examples/exempla) |
-| [`docs/`](docs) | Language documentation and references, including [`docs/grammatica`](docs/grammatica) |
-| [`opus/`](opus) | Build outputs and generated artifacts |
-| [`project.yaml`](project.yaml) | Repo inventory and per-project status model |
-
-**Primary compiler:** [`compilers/radix-rs`](compilers/radix-rs)
-
-Current reality:
-- `radix-rs` is the active compiler and current delivery focus.
-- `radix-rs` currently emits Rust, canonical Faber, TypeScript, and Go.
-- `nanus-*` compilers remain useful for Python plus older or secondary target paths.
-- `rivus` and related tooling are informative but not current delivery gates.
-
-## Block Syntax Patterns
-
-Faber uses a consistent `keyword expr VERB name { body }` pattern for scoped constructs:
-
-| Construct       | Syntax                                      | Binding | Purpose        |
-| --------------- | ------------------------------------------- | ------- | -------------- |
-| `itera ex`      | `itera ex expr fixum name { }`              | `name`  | iterate values |
-| `itera de`      | `itera de expr fixum key { }`               | `name`  | iterate keys   |
-| `cura`          | `cura expr fixum name { }`                  | `name`  | resource scope |
-| `tempta...cape` | `tempta { } cape err { }`                   | `err`   | error handling |
-| `dum`           | `dum expr { }`                              | —       | while loop     |
-| `si`            | `si expr { } secus { }`                     | —       | conditional    |
-| `custodi`       | `custodi { si expr { } }`                   | —       | guard clauses  |
-| `elige`         | `elige expr { casu val { } }`               | —       | switch         |
-| `discerne`      | `discerne expr { casu Variant ut x { } }`   | `x`     | pattern match  |
-| `probandum`     | `probandum "label" { }`                     | —       | test suite     |
-| `proba`         | `proba "label" { }`                         | —       | test case      |
-
-Bindings use `fixum` (immutable) or `varia` (mutable).
-
-## Primitive Types
-
-| Faber      | TypeScript   | Python     | Zig          | C++                    | Rust      |
-| ---------- | ------------ | ---------- | ------------ | ---------------------- | --------- |
-| `textus`   | `string`     | `str`      | `[]const u8` | `std::string`          | `String`  |
-| `numerus`  | `number`     | `int`      | `i64`        | `int64_t`              | `i64`     |
-| `fractus`  | `number`     | `float`    | `f64`        | `double`               | `f64`     |
-| `decimus`  | `number`     | `Decimal`  | —            | —                      | —         |
-| `magnus`   | `bigint`     | `int`      | `i128`       | —                      | `i128`    |
-| `bivalens` | `boolean`    | `bool`     | `bool`       | `bool`                 | `bool`    |
-| `nihil`    | `null`       | `None`     | `null`       | `std::nullopt`         | `None`    |
-| `vacuum`   | `void`       | `None`     | `void`       | `void`                 | `()`      |
-| `numquam`  | `never`      | `NoReturn` | `noreturn`   | `[[noreturn]]`         | `!`       |
-| `octeti`   | `Uint8Array` | `bytes`    | `[]u8`       | `std::vector<uint8_t>` | `Vec<u8>` |
-| `ignotum`  | `unknown`    | `Any`      | —            | —                      | —         |
-
-## Function Annotations
-
-Function return types use arrow syntax (`->`) with optional annotations for async and generator semantics:
-
-```fab
-functio parse() -> numerus                        # sync function
-@ futura
-functio fetch() -> textus                         # async function
-@ cursor
-functio items() -> numerus                        # generator function
-@ futura
-@ cursor
-functio stream() -> datum                         # async generator
+```bash
+cargo fmt --manifest-path radix/Cargo.toml --all -- --check
+cargo test --manifest-path radix/Cargo.toml
 ```
 
-The `@ futura` annotation marks async functions, `@ cursor` marks generators. Arrow syntax (`->`) is the standard return type syntax.
+## Compiler Surface
 
-## Method Morphology
+The active CLI is the `radix` binary from `radix/crates/radix`.
 
-Standard library methods use Latin verb conjugations to encode behavior. Instead of separate names like `filter`/`filterAsync`/`filterNew`, Faber uses different endings on the same stem:
+Product-facing commands:
 
-| Form                   | Ending        | Behavior                 | Example                         |
-| ---------------------- | ------------- | ------------------------ | ------------------------------- |
-| **Imperative**         | -a/-e/-i      | Mutates in place, sync   | `adde`, `filtra`                |
-| **Perfect**            | -ata/-ita/-sa | Returns new value, sync  | `addita`, `filtrata`, `inversa` |
-| **Future Indicative**  | -abit/-ebit   | Mutates in place, async  | `filtrabit`, `scribet`          |
-| **Future Active**      | -atura/-itura | Returns new value, async | `filtratura`                    |
-| **Present Participle** | -ans/-ens     | Streaming/generator      | `filtrans`, `legens`            |
+- `targets` shows supported targets and capability notes.
+- `check` runs semantic analysis.
+- `build` writes generated output to disk.
+- `emit` writes generated output to stdout.
 
-**Collections** use morphology for mutation vs allocation:
+Inspection commands:
+
+- `lex` emits lexer output.
+- `parse` emits parsed syntax.
+- `hir` emits lowered HIR.
+
+Current targets are documented in [`docs/grammatica/targets.md`](docs/grammatica/targets.md). Rust is the strongest backend and the package-compilation path. Go, TypeScript, and canonical Faber output are file-emission surfaces.
+
+## Standard Library
+
+The Faber standard library definitions live in [`radix/stdlib/norma`](radix/stdlib/norma). These files describe collection methods, HAL contracts, and target translations:
 
 ```fab
-lista.adde(x)       # mutates list, adds x
-lista.addita(x)     # returns NEW list with x added
+@ verte ts "push"
+@ verte rs "push"
+functio adde(T elem) -> vacuum
 ```
 
-**I/O operations** use morphology for sync vs async vs streaming:
+The Rust runtime crate that supports runtime-backed stdlib and HAL behavior lives in [`radix/crates/norma`](radix/crates/norma).
+
+## Language Notes
+
+Faber uses type-first syntax:
 
 ```fab
-solum.lege(path)    # sync read (imperative)
-solum.leget(path)   # async read (future)
-solum.legens(path)  # streaming read (participle)
+textus nomen
+numerus aetas
+functio salve(textus name) -> textus
 ```
 
-The morphology system is implemented via `@ radix` and `@ verte` annotations in the standard library definitions. `@ radix` declares the verb stem and valid morphological forms, while `@ verte` provides target-specific code generation for each form. The compiler validates morphology usage against declared forms. See [docs/grammatica/morphologia.md](docs/grammatica/morphologia.md) for the complete specification.
+Use [`EBNF.md`](EBNF.md) as the formal grammar source, and [`docs/grammatica`](docs/grammatica) for prose explanations.
 
-## Example
+Block syntax follows regular keyword patterns:
 
 ```fab
-functio salve(nomen) -> textus {
-    redde scriptum("Salve, §!", nomen)
+itera ex items fixum item {
+    si item.pretium > 100 {
+        scribe item.nomen
+    }
 }
-
-fixum nomen = "Mundus"
-scribe salve(nomen)
 ```
 
-Compiles to TypeScript:
+## Archive Note
 
-```typescript
-function salve(nomen): string {
-    return 'Salve, ' + nomen + '!';
-}
+Historical bootstrap compilers, self-hosting sources, old reference code, and old test harnesses are preserved in `../faber-archivum`. They are useful for archaeology, not for current main-repo commands or CI.
 
-const nomen = 'Mundus';
-console.log(salve(nomen));
-```
+Opus perfectum est only when `bun run ci` passes against `radix/Cargo.toml`.

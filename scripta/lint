@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# Lint source code
+# Lint the active Rust workspace.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if [[ "${1:-}" == "--fix" ]]; then
-    eslint compilers/nanus-ts --fix
-else
-    eslint compilers/nanus-ts
-fi
+cargo clippy --manifest-path radix/Cargo.toml --all-targets --all-features -- -D warnings

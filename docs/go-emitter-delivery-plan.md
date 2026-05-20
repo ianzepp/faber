@@ -44,7 +44,7 @@ High.
 
 ### Project Frame
 
-Improve `compilers/radix-rs` Go codegen until `bun run build:exempla:radix-go` fails only on intentionally unsupported or explicitly gated cases.
+Improve `radix/crates/radix` Go codegen until `bun run build:exempla:radix-go` fails only on intentionally unsupported or explicitly gated cases.
 
 ### Problem Statement
 
@@ -57,7 +57,7 @@ The Go backend exists and has unit coverage, but exempla verification still show
    - build self-contained single-file outputs
    - syntax-check package-shaped or import-dependent outputs
 3. Reduce remaining real failures in `bun run build:exempla:radix-go`.
-4. Keep `cargo test --manifest-path compilers/radix-rs/Cargo.toml` green.
+4. Keep `cargo test --manifest-path radix/Cargo.toml` green.
 5. Add or extend focused Go backend unit tests as each bug family is fixed.
 
 ### Non-Functional / Technical Constraints
@@ -87,8 +87,8 @@ The Go backend exists and has unit coverage, but exempla verification still show
 
 Active implementation lives in:
 
-- `compilers/radix-rs/src/codegen/go/*.rs`
-- `compilers/radix-rs/src/driver/*`
+- `radix/crates/radix/src/codegen/go/*.rs`
+- `radix/crates/radix/src/driver/*`
 - `scripta/build-exempla.ts`
 
 Operational gate:
@@ -97,11 +97,11 @@ Operational gate:
 
 Supporting gate:
 
-- `cargo test --manifest-path compilers/radix-rs/Cargo.toml`
+- `cargo test --manifest-path radix/Cargo.toml`
 
 ### Hard Gates
 
-1. `cargo test --manifest-path compilers/radix-rs/Cargo.toml`
+1. `cargo test --manifest-path radix/Cargo.toml`
 2. `bun run build:exempla:radix-go`
 
 ### Constraint Decisions
@@ -137,17 +137,17 @@ Some target-specific surfaces may remain gated rather than translated immediatel
 
 Current likely ownership boundaries:
 
-- `compilers/radix-rs/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/expr.rs`
   - casts
   - conversio
   - nullability/coalesce
   - member access
   - translated methods
-- `compilers/radix-rs/src/codegen/go/stmt.rs`
+- `radix/crates/radix/src/codegen/go/stmt.rs`
   - iterator lowering
   - pattern/match execution
   - local/return statement behavior
-- `compilers/radix-rs/src/codegen/go/decl.rs`
+- `radix/crates/radix/src/codegen/go/decl.rs`
   - receivers
   - methods
   - import emission
@@ -227,8 +227,8 @@ Targets:
 
 Primary files:
 
-- `compilers/radix-rs/src/codegen/go/expr.rs`
-- `compilers/radix-rs/src/codegen/go/types.rs`
+- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/types.rs`
 - possibly semantic/HIR support files if inputs are wrong
 
 Exit criteria:
@@ -256,8 +256,8 @@ Targets:
 
 Primary files:
 
-- `compilers/radix-rs/src/codegen/go/decl.rs`
-- `compilers/radix-rs/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/decl.rs`
+- `radix/crates/radix/src/codegen/go/expr.rs`
 
 Exit criteria:
 
@@ -281,8 +281,8 @@ Targets:
 
 Primary files:
 
-- `compilers/radix-rs/src/codegen/go/expr.rs`
-- `compilers/radix-rs/src/codegen/go/stmt.rs`
+- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/stmt.rs`
 
 Exit criteria:
 
@@ -306,7 +306,7 @@ Targets:
 
 Primary files:
 
-- `compilers/radix-rs/src/codegen/go/*`
+- `radix/crates/radix/src/codegen/go/*`
 - maybe driver/diagnostic surfaces if explicit unsupported diagnostics are needed
 
 Exit criteria:
@@ -334,9 +334,9 @@ Scope:
 
 Files:
 
-- `compilers/radix-rs/src/codegen/go/expr.rs`
-- `compilers/radix-rs/src/codegen/go/types.rs`
-- relevant tests in `compilers/radix-rs/src/codegen/go/mod_test.rs`
+- `radix/crates/radix/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/types.rs`
+- relevant tests in `radix/crates/radix/src/codegen/go/mod_test.rs`
 
 ### Workstream 2: Receiver / Construction Semantics
 
@@ -348,9 +348,9 @@ Scope:
 
 Files:
 
-- `compilers/radix-rs/src/codegen/go/decl.rs`
-- `compilers/radix-rs/src/codegen/go/expr.rs`
-- relevant tests in `compilers/radix-rs/src/codegen/go/mod_test.rs`
+- `radix/crates/radix/src/codegen/go/decl.rs`
+- `radix/crates/radix/src/codegen/go/expr.rs`
+- relevant tests in `radix/crates/radix/src/codegen/go/mod_test.rs`
 
 ### Workstream 3: Iterator / Collection Translation
 
@@ -362,8 +362,8 @@ Scope:
 
 Files:
 
-- `compilers/radix-rs/src/codegen/go/stmt.rs`
-- `compilers/radix-rs/src/codegen/go/expr.rs`
+- `radix/crates/radix/src/codegen/go/stmt.rs`
+- `radix/crates/radix/src/codegen/go/expr.rs`
 
 ### Workstream 4: Unsupported-Surface Policy
 
@@ -375,8 +375,8 @@ Scope:
 
 Files:
 
-- `compilers/radix-rs/src/codegen/go/*`
-- maybe `compilers/radix-rs/src/driver/*` if diagnostics need routing
+- `radix/crates/radix/src/codegen/go/*`
+- maybe `radix/crates/radix/src/driver/*` if diagnostics need routing
 
 Parallel safety note:
 
@@ -390,7 +390,7 @@ Parallel safety note:
 
 Required:
 
-- `cargo test --manifest-path compilers/radix-rs/Cargo.toml`
+- `cargo test --manifest-path radix/Cargo.toml`
 - `bun run build:exempla:radix-go`
 - `conversio` compile failure removed
 - failure count materially below current `18/130`
@@ -403,7 +403,7 @@ Observed:
 
 Required:
 
-- `cargo test --manifest-path compilers/radix-rs/Cargo.toml`
+- `cargo test --manifest-path radix/Cargo.toml`
 - Go backend tests expanded for method/member/variant behavior
 - `genus`, `vocatio`, `pactum`, `finge`, `ordo` failures retired or intentionally gated
 
@@ -468,6 +468,6 @@ Delivery orchestration should treat:
 
 - this plan as the repo-aware baseline artifact
 - `bun run build:exempla:radix-go` as the main implementation gate
-- `cargo test --manifest-path compilers/radix-rs/Cargo.toml` as the safety gate
+- `cargo test --manifest-path radix/Cargo.toml` as the safety gate
 
 Stage D is now complete for this wave. The next wave, if any, should begin only if Go support for `ad` or dynamic host-style `externa` becomes a product requirement rather than a gated non-goal.

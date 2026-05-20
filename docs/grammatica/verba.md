@@ -4,8 +4,8 @@ Reserved keywords in Faber Romanus. This reference catalogs all Latin keywords u
 
 **Implementation synchronization:** When the compiler recognizes a new keyword, it must appear in:
 
-- `compilers/nanus-ts/lexicon.ts` - Bootstrap compiler (TypeScript)
-- `compilers/rivus/lexicon/verba.fab` - Self-hosted compiler
+- `radix/crates/radix/src/lexer/scan.rs` - active lexer keyword table
+- parser or semantic surfaces that consume the keyword
 - This document
 
 ---
@@ -323,14 +323,11 @@ Not yet implemented:
 
 When adding a new keyword to the language:
 
-1. **Add to bootstrap compiler:** `compilers/nanus-ts/lexicon.ts`
-    - Include the keyword in the lexicon
-2. **Add to bootstrap compiler:** `compilers/rivus/lexicon/verba.fab`
-    - Add to `estVerbum()` function
-3. **Categorize if needed:**
-    - If statement-starting: add to `estVerbumSententiae()`
-    - If genus member: add to `estVerbumGeneris()`
-4. **Update this document:** Add to appropriate section above
-5. **Update grammatica:** If the keyword affects user-facing syntax, document in relevant `docs/grammatica/*.md` file
-6. **Update EBNF:** If grammar rules change, update `EBNF.md`
-7. **Add tests:** Create test cases in `tests/proba/` covering the new keyword
+1. **Add to active lexer:** `radix/crates/radix/src/lexer/scan.rs`
+    - Include the keyword in `keyword_or_ident()`
+2. **Update parser or semantic handling as needed**
+    - Add parse branches, AST nodes, lowering, or diagnostics for the new grammar role.
+3. **Update this document:** Add to appropriate section above
+4. **Update grammatica:** If the keyword affects user-facing syntax, document in relevant `docs/grammatica/*.md` file
+5. **Update EBNF:** If grammar rules change, update `EBNF.md`
+6. **Add tests:** Add focused radix tests under `radix/crates/radix`

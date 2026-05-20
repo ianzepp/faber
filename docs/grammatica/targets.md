@@ -2,7 +2,7 @@
 
 This page describes the current target contract of the active `radix-rs` compiler.
 
-Treat `cargo run --manifest-path compilers/radix-rs/Cargo.toml -- targets` as the live source of truth for the target list and high-level capability notes. Older bootstrap compilers and planned future targets are real repository surfaces, but they are not the authoritative contract of the primary compiler.
+Treat `cargo run --manifest-path radix/Cargo.toml -p radix -- targets` as the live source of truth for the target list and high-level capability notes. Archived bootstrap compilers and planned future targets are not part of the active main-repo target contract.
 
 ## Current `radix-rs` Target Surface
 
@@ -26,12 +26,12 @@ faber check=yes build=yes run=no package=no note=canonical pretty-print target; 
 
 ## Primary Surface Versus Secondary Surfaces
 
-[`compilers/radix-rs`](../../compilers/radix-rs) is the active delivery compiler.
+[`radix/crates/radix`](../../radix/crates/radix) is the active delivery compiler.
 
 - Rust is the strongest target today and the primary package-compilation path.
 - Go and TypeScript are real `radix-rs` file-emission targets, but package support is still intentionally absent.
 - Faber output is useful as a canonical pretty-printer and inspection target.
-- Python remains a maintenance/bootstrap surface elsewhere in the repository, not part of the current `radix-rs targets` contract.
+- Python is not part of the current `radix-rs targets` contract.
 
 If you need current repo status at a glance, see [`project.yaml`](../../project.yaml) and the root [`README.md`](../../README.md).
 
@@ -65,9 +65,9 @@ Package compilation is a target capability, not a generic promise.
 This matters for command selection:
 
 ```bash
-cargo run --manifest-path compilers/radix-rs/Cargo.toml -- build examples/exempla/salve-munde.fab
-cargo run --manifest-path compilers/radix-rs/Cargo.toml -- build --package examples/exempla/cli/main.fab
-cargo run --manifest-path compilers/radix-rs/Cargo.toml -- emit -t go examples/exempla/salve-munde.fab
+cargo run --manifest-path radix/Cargo.toml -p radix -- build examples/exempla/salve-munde.fab
+cargo run --manifest-path radix/Cargo.toml -p radix -- build --package examples/exempla/cli/main.fab
+cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t go examples/exempla/salve-munde.fab
 ```
 
 Use `build --package` only when the target actually supports package compilation.
@@ -83,4 +83,4 @@ If you want the least surprising cross-target results on the active `radix-rs` s
 
 ## What This Page Does Not Promise
 
-This page does not claim a current `radix-rs` support matrix for Python, Zig, or C++. Those surfaces either live in bootstrap/older compiler paths or remain future/planned work. If broader target support becomes part of the primary compiler contract later, this page should be expanded from live compiler evidence rather than from historical notes.
+This page does not claim a current `radix-rs` support matrix for Python, Zig, or C++. Those targets are either archive history or future/planned work. If broader target support becomes part of the primary compiler contract later, this page should be expanded from live compiler evidence rather than from historical notes.

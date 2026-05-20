@@ -4,7 +4,7 @@
 
 The active `radix-rs` compiler only preserves CLI-shaped annotations as generic annotation metadata today. Dedicated AST variants (`Cli`, `Optio(OptioAnnotation)`, and `Operandus(OperandusAnnotation)`) exist in `syntax/ast.rs`, but the parser does not currently populate them, and no lowering, argument parser generation, help formatting, or command dispatch codegen exists in `radix-rs`. Treat this page as a planned contract to implement against, not as a shipped capability matrix.
 
-See the rich usage example at `examples/exempla/rivus-cli-annotated/cli.fab` for the most complete real-world illustration.
+The richest historical usage example now lives in the archive repository at `../faber-archivum/tests/proba` and related self-hosting/reference CLI material. The active main repo keeps only small illustrative examples under `examples/exempla/cli`.
 
 ---
 
@@ -166,7 +166,7 @@ This scoping keeps the CLI surface focused on what can be reasonably and reliabl
 
 **2026-05 update**: The `ubique` modifier, unified `args` binding model, `vel`-based defaults, and the scoped CLI type support (primitives + `lista<textus>` + `lista<numerus>`, with everything else treated as `textus` for now) were added to this planned design during review against real-world CLIs such as `vivi`. These rules are not implemented in `radix-rs`; they are part of the preserved specification for future implementation.
 
-The earlier reference implementation (`docs/reference/faber-ts/codegen/cli/{detector.ts,resolver.ts}` and the incipit/incipiet generators) did the following:
+The earlier reference implementation (`../faber-archivum/reference/faber-ts/codegen/cli/{detector.ts,resolver.ts}` and the incipit/incipiet generators) did the following:
 
 - Built a full command tree supporting nested paths via `/` in `@ imperium` and `@ imperia`.
 - Supported both **single-command mode** (pure `@ optio`/`@ operandus` on `incipit`) and **subcommand mode**.
@@ -177,7 +177,7 @@ The earlier reference implementation (`docs/reference/faber-ts/codegen/cli/{dete
 
 When reviving this in `radix-rs`, the prepared `OptioAnnotation` and `OperandusAnnotation` structs in the AST should be populated by enhancing `parse_annotation_kind` (or a post-parse CLI normalization pass) rather than keeping everything as generic `AnnotationStmt`.
 
-The rich example at `examples/exempla/rivus-cli-annotated/cli.fab` is the best current test corpus for the full surface.
+The full historical CLI corpus is archive material now; `examples/exempla/cli` is only a small active illustration.
 
 ## CLI Modes
 
@@ -532,18 +532,18 @@ New `@ optio` syntax (preferred):
 
 For anyone reviving the feature, the following locations contain the most complete prior implementation:
 
-- **Design + usage corpus** (current)
-  - `examples/exempla/rivus-cli-annotated/cli.fab` — most complete real example
+- **Design + usage corpus**
+  - Archive CLI examples under `../faber-archivum` — most complete historical examples
   - `examples/exempla/cli/main.fab` + `commands/greet.fab`
 
 - **Old reference lowering** (faber-ts era)
-  - `docs/reference/faber-ts/codegen/cli/detector.ts` — command tree building, annotation extraction, module mounting via `@ imperia`
-  - `docs/reference/faber-ts/codegen/cli/resolver.ts` — module loading and recursive extraction
-  - `docs/reference/faber-ts/codegen/ts/statements/incipit.ts` and `incipiet.ts` — help generation and dispatch logic
-  - `docs/reference/faber-ts/codegen/ts/generator.ts` — `CliProgram`, `CliCommandNode`, `CliOption`, `CliOperand` types
+  - `../faber-archivum/reference/faber-ts/codegen/cli/detector.ts` — command tree building, annotation extraction, module mounting via `@ imperia`
+  - `../faber-archivum/reference/faber-ts/codegen/cli/resolver.ts` — module loading and recursive extraction
+  - `../faber-archivum/reference/faber-ts/codegen/ts/statements/incipit.ts` and `incipiet.ts` — help generation and dispatch logic
+  - `../faber-archivum/reference/faber-ts/codegen/ts/generator.ts` — `CliProgram`, `CliCommandNode`, `CliOption`, `CliOperand` types
 
 - **Radix-rs AST preparation** (partial forward port)
-  - `compilers/radix-rs/src/syntax/ast.rs` — `AnnotationKind::Cli`, `OptioAnnotation`, `OperandusAnnotation`
+  - `radix/crates/radix/src/syntax/ast.rs` — `AnnotationKind::Cli`, `OptioAnnotation`, `OperandusAnnotation`
 
 - **Known limitation in current radix-rs**
   - Lowering for `incipit argumenta` and CLI dispatch was explicitly rejected (see commit `7e906c3b` "reject unsupported incipit argumenta lowering").

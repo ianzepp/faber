@@ -1,6 +1,6 @@
 # Radix Diagnostics Plan
 
-Internal delivery plan for improving `compilers/radix-rs` diagnostics without attempting to make the `rivus` codebase pass semantic checking.
+Internal delivery plan for improving `radix/crates/radix` diagnostics without attempting to make the `rivus` codebase pass semantic checking.
 
 Last updated: 2026-04-10
 
@@ -10,7 +10,7 @@ Last updated: 2026-04-10
 
 ### Claimed problem
 
-Improve `radix-rs` diagnostics so they are genuinely useful when checking difficult codebases such as `compilers/rivus`.
+Improve `radix-rs` diagnostics so they are genuinely useful when checking difficult codebases such as `../faber-archivum/self-hosting/rivus`.
 
 ### Inferred actual problem
 
@@ -50,9 +50,9 @@ The compiler should not dump a giant undifferentiated error wall and call that g
 
 `radix-rs` already has a diagnostics subsystem:
 
-- [`compilers/radix-rs/src/diagnostics/diagnostic.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/diagnostic.rs)
-- [`compilers/radix-rs/src/diagnostics/render.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/render.rs)
-- [`compilers/radix-rs/src/diagnostics/catalog.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/catalog.rs)
+- [`radix/crates/radix/src/diagnostics/diagnostic.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/diagnostic.rs)
+- [`radix/crates/radix/src/diagnostics/render.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/render.rs)
+- [`radix/crates/radix/src/diagnostics/catalog.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/catalog.rs)
 
 The data model already supports:
 
@@ -67,7 +67,7 @@ The data model already supports:
 
 The CLI still bypasses this in important paths:
 
-- [`compilers/radix-rs/src/main.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/main.rs)
+- [`radix/crates/radix/src/main.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/main.rs)
 
 Today the output often falls back to plain `eprintln!` strings such as:
 
@@ -79,7 +79,7 @@ That is directionally correct, but weak for broad compatibility passes.
 
 ### Evidence from rivus sweep
 
-A per-file `check` sweep across `compilers/rivus/**/*.fab` produced:
+A per-file `check` sweep across `../faber-archivum/self-hosting/rivus/**/*.fab` produced:
 
 - `total=137`
 - `failed=132`
@@ -122,8 +122,8 @@ Each diagnostic should stand on its own.
 Short mode should produce one line per diagnostic:
 
 ```text
-error[PARSE012]: compilers/rivus/foo.fab:12:8: expected identifier
-warning[SEM031]: compilers/rivus/bar.fab:44:3: unused local
+error[PARSE012]: ../faber-archivum/self-hosting/rivus/foo.fab:12:8: expected identifier
+warning[SEM031]: ../faber-archivum/self-hosting/rivus/bar.fab:44:3: unused local
 ```
 
 This is for CI logs, filtering, and large sweeps.
@@ -246,7 +246,7 @@ Exit criteria:
 
 Scope:
 
-- strengthen [`render.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/render.rs)
+- strengthen [`render.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/render.rs)
 - ensure human output uses the richer model consistently
 - bring plain rendering into parity with the contract
 
@@ -304,8 +304,8 @@ Exit criteria:
 
 Primary files:
 
-- [`compilers/radix-rs/src/diagnostics/diagnostic.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/diagnostic.rs)
-- [`compilers/radix-rs/src/diagnostics/catalog.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/catalog.rs)
+- [`radix/crates/radix/src/diagnostics/diagnostic.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/diagnostic.rs)
+- [`radix/crates/radix/src/diagnostics/catalog.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/catalog.rs)
 
 Responsibilities:
 
@@ -317,7 +317,7 @@ Responsibilities:
 
 Primary file:
 
-- [`compilers/radix-rs/src/diagnostics/render.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/diagnostics/render.rs)
+- [`radix/crates/radix/src/diagnostics/render.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/render.rs)
 
 Responsibilities:
 
@@ -329,7 +329,7 @@ Responsibilities:
 
 Primary file:
 
-- [`compilers/radix-rs/src/main.rs`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/main.rs)
+- [`radix/crates/radix/src/main.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/main.rs)
 
 Responsibilities:
 
@@ -341,7 +341,7 @@ Responsibilities:
 
 Primary area:
 
-- [`compilers/radix-rs/src/parser`](/Users/ianzepp/github/ianzepp/faber/compilers/radix-rs/src/parser)
+- [`radix/crates/radix/src/parser`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser)
 
 Responsibilities:
 

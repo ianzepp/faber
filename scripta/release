@@ -30,20 +30,13 @@ fi
 
 echo "=== Running tests ==="
 if [[ "$FORCE" == true ]]; then
-    bun test || echo "Warning: Tests failed but --force was specified, continuing..."
+    bun run ci || echo "Warning: CI failed but --force was specified, continuing..."
 else
-    bun test
+    bun run ci
 fi
 
 echo "=== Building faber ==="
-bun run build
-
-echo "=== Verifying exempla ==="
-if [[ "$FORCE" == true ]]; then
-    bun run verify:exempla || echo "Warning: Exempla verification failed but --force was specified, continuing..."
-else
-    bun run verify:exempla
-fi
+bun run build:radix
 
 # Read current version
 CURRENT=$(jq -r .version package.json)
@@ -73,6 +66,6 @@ git push -u origin main
 git push --tags
 
 echo "=== Creating GitHub release ==="
-gh release create "v${VERSION}" opus/faber --title "v${VERSION}" --notes "Release v${VERSION}"
+gh release create "v${VERSION}" radix/target/release/radix --title "v${VERSION}" --notes "Release v${VERSION}"
 
 echo "=== Released v${VERSION} ==="

@@ -1,131 +1,59 @@
 name: faber
-description: Multi-language language-tooling repository for the Faber ecosystem.
+description: Faber language repository centered on the radix Rust workspace.
 
 projects:
-  - name: radix-rs
-    path: compilers/radix-rs
-    type: compiler
+  - name: radix-workspace
+    path: radix
+    type: workspace
     language: rust
-    description: Primary Rust compiler implementation and current delivery focus.
+    description: Canonical Cargo workspace for the active compiler and Rust runtime crates.
     deploy: none
     status: active
 
-  - name: nanus-ts
-    path: compilers/nanus-ts
-    type: compiler
-    language: typescript
-    description: TypeScript bootstrap compiler and supporting tooling surface.
-    deploy: none
-    status: maintenance
-
-  - name: nanus-go
-    path: compilers/nanus-go
-    type: compiler
-    language: go
-    description: Go bootstrap compiler.
-    deploy: none
-    status: maintenance
-
-  - name: nanus-rs
-    path: compilers/nanus-rs
+  - name: radix
+    path: radix/crates/radix
     type: compiler
     language: rust
-    description: Rust bootstrap compiler.
+    description: Primary Faber compiler implementation and current CI gate.
     deploy: none
-    status: maintenance
-
-  - name: nanus-py
-    path: compilers/nanus-py
-    type: compiler
-    language: python
-    description: Python bootstrap compiler.
-    deploy: none
-    status: maintenance
-
-  - name: rivus
-    path: compilers/rivus
-    type: compiler
-    language: mixed
-    description: Self-hosted compiler sources in Faber.
-    deploy: none
-    status: experimental
-
-  - name: rivus-cli
-    path: compilers/rivus-cli
-    type: tool
-    language: mixed
-    description: CLI entrypoint for the self-hosted compiler.
-    deploy: none
-    status: experimental
+    status: active
 
   - name: norma
-    path: stdlib/norma
-    type: library
-    language: mixed
-    description: Standard library definitions and translation metadata.
-    deploy: none
-    status: active
-
-  - name: norma-ts
-    path: runtimes/norma-ts
-    type: library
-    language: typescript
-    description: TypeScript runtime support for stdlib features.
-    deploy: none
-    status: maintenance
-
-  - name: norma-go
-    path: runtimes/norma-go
-    type: library
-    language: go
-    description: Go runtime support for stdlib features.
-    deploy: none
-    status: maintenance
-
-  - name: norma-py
-    path: runtimes/norma-py
-    type: library
-    language: python
-    description: Python runtime support for stdlib features.
-    deploy: none
-    status: maintenance
-
-  - name: norma-rs
-    path: runtimes/norma-rs
+    path: radix/crates/norma
     type: library
     language: rust
-    description: Rust runtime support for stdlib features.
+    description: Rust runtime support crate for standard library and HAL features.
     deploy: none
     status: active
 
-  - name: proba
-    path: tests/proba
-    type: tool
-    language: typescript
-    description: YAML-driven cross-target test harness and reporting.
+  - name: norma-stdlib
+    path: radix/stdlib/norma
+    type: library
+    language: faber
+    description: Faber standard library definitions and target translation metadata.
     deploy: none
-    status: maintenance
+    status: active
 
   - name: exempla
     path: examples/exempla
     type: library
-    language: mixed
+    language: faber
     description: Example Faber programs used for demonstration and validation.
     deploy: none
     status: active
 
-  - name: golden
-    path: tests/golden
-    type: library
-    language: mixed
-    description: Golden output corpus.
-    deploy: none
-    status: maintenance
-
   - name: grammatica
     path: docs/grammatica
-    type: library
-    language: mixed
+    type: documentation
+    language: markdown
     description: Prose language documentation and tutorials.
+    deploy: none
+    status: active
+
+  - name: docs
+    path: docs
+    type: documentation
+    language: markdown
+    description: Design notes, delivery plans, and historical analysis.
     deploy: none
     status: active

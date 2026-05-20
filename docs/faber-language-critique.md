@@ -4,7 +4,7 @@ This note captures a broad language-level critique formed after reading:
 
 - `EBNF.md`
 - `examples/exempla/`
-- `compilers/rivus/`
+- `../faber-archivum/self-hosting/rivus/`
 
 It is not a compiler bug report and not a verdict against the project. The goal is to name what Faber feels like, where it is strong, where it is weak, and what changed after looking beyond the clean examples into the self-hosted compiler tree.
 
@@ -114,7 +114,7 @@ That is the best concise description of the difference in feel.
 
 ## Early Critique Before Looking At Rivus
 
-Before reading `compilers/rivus/`, the main concerns were:
+Before reading `../faber-archivum/self-hosting/rivus/`, the main concerns were:
 
 1. Faber might work best only in curated examples.
 2. The Latin vocabulary might be more ornamental than necessary.
@@ -134,7 +134,7 @@ Reading Rivus changed some of that and strengthened some of it.
 
 This got weaker.
 
-`compilers/rivus/` is a real compiler-shaped codebase written in Faber. It has:
+`../faber-archivum/self-hosting/rivus/` is a real compiler-shaped codebase written in Faber. It has:
 
 - AST definitions
 - lexer and parser phases
@@ -223,8 +223,8 @@ The living language is not just one grammar. It is really something like:
 
 - a formal grammar in `EBNF.md`
 - a worked example corpus in `examples/exempla/`
-- a primary active compiler in `compilers/radix-rs`
-- a self-hosted experimental compiler in `compilers/rivus`
+- a primary active compiler in `radix/crates/radix`
+- a self-hosted experimental compiler in `../faber-archivum/self-hosting/rivus`
 - multiple target backends with uneven support
 - capability validation and target policy surfaces
 
