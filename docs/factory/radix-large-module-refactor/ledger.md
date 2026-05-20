@@ -8,11 +8,11 @@
 **Commit Policy**: Commit after each phase completion + validation gate pass
 **Agent Policy**: Use subagents for exploration, poker-face, verification, bounded impl where appropriate; main agent supervises and integrates
 **Checkpoint Policy**: Full validation gate after every phase; phase-specific smoke tests
-**Current Status**: Phase 0 completed (gate PASS); ready for commit and Phase 1 start
+**Current Status**: Phase 1 complete in working tree (gate PASS); ready for commit
 
 ## Baseline (Phase 0 Intake)
 
-- HEAD: 39707302 (docs: add radix large-module refactor factory plan)
+- HEAD: 7619f4f3 (docs: clarify radix refactor extraction strategy)
 - Branch: main (ahead of origin/main by 1)
 - Working tree: clean
 - Validation gate baseline run: in progress (see below)
@@ -21,8 +21,8 @@
 
 | Phase | Name | Status | Commit | Delivery Spec |
 |-------|------|--------|--------|---------------|
-| 0 | Preflight and delivery-spec setup | completed | pending | N/A (ledger + Phase 1 spec) |
-| 1 | Split Faber codegen | pending | pending | `phase-01-faber-codegen-delivery.md` (created) |
+| 0 | Preflight and delivery-spec setup | completed | a0e3838c | N/A (ledger + Phase 1 spec) |
+| 1 | Split Faber codegen | completed | pending | `phase-01-faber-codegen-delivery.md` |
 | 2 | Split typecheck pass | pending | pending | `phase-02-typecheck-delivery.md` |
 | 3 | Split Go expression codegen | pending | pending | `phase-03-go-expr-delivery.md` |
 | 4 | Split Rust expression codegen | pending | pending | `phase-04-rust-expr-delivery.md` |
@@ -64,11 +64,38 @@ See per-phase sections for subsequent runs.
 
 **Next**: Commit with message per plan, then select and hand Phase 1 to implementation (delivery spec already persisted).
 
-## Commit Record (to be executed)
+## Commit Record
 
-Message: `docs: add radix large-module refactor factory ledger`
+- Hash: a0e3838c
+- Message: `docs: add radix large-module refactor factory ledger`
+- Files: docs/factory/radix-large-module-refactor/ledger.md + phase-01-*.md
 
-Files: docs/factory/radix-large-module-refactor/ledger.md + phase-01-*.md
+This completes Phase 0 per master plan. Factory run is resumable from ledger.
 
-This completes Phase 0 per master plan. Factory run is now resumable from ledger.
+## Phase 1 Completion
 
+- Split `radix/crates/radix/src/codegen/faber/mod.rs` from 1804 LOC to 100 LOC.
+- Added cohesive Faber codegen modules:
+  - `decl.rs`
+  - `stmt.rs`
+  - `expr.rs`
+  - `pattern.rs`
+  - `types.rs`
+  - `literal.rs`
+  - `names.rs`
+  - `ops.rs`
+- Kept `FaberCodegen::new()`, `impl Default`, `impl Codegen`, and `mod_test.rs` convention stable.
+- Used method-anchored extraction; attached clippy attributes moved with their methods.
+
+**Phase 1 Verification**:
+
+- `cargo check --manifest-path radix/Cargo.toml -p radix`: PASS
+- `bun run lint`: PASS
+- `bun run test:radix`: PASS
+- `cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t faber examples/exempla/salve-munde.fab`: PASS
+- `bun run ci`: PASS
+- `bunx eslint .`: PASS
+- `bun run prettier:check`: PASS
+- `bun run build:radix`: PASS
+
+**Phase 1 Gate Result**: PASS. Ready to commit with message `refactor: split faber codegen modules`.

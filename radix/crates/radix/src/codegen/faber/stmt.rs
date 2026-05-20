@@ -1,0 +1,307 @@
+use super::CodeWriter;
+use crate::hir::{DefId, HirBlock, HirExpr, HirExprKind, HirStmt, HirStmtKind};
+use crate::lexer::{Interner, Symbol};
+use crate::semantic::TypeTable;
+use rustc_hash::FxHashMap;
+
+impl super::FaberCodegen {
+    pub(super) fn as_fac_loop<'a>(&self, block: &'a HirBlock) -> Option<(&'a [HirStmt], &'a HirExpr)> {
+        let last = block.stmts.last()?;
+        let HirStmtKind::Expr(expr) = &last.kind else {
+            return None;
+        };
+        let HirExprKind::Si(cond, then_block, None) = &expr.kind else {
+            return None;
+        };
+        let HirExprKind::Unary(crate::hir::HirUnOp::Not, inner) = &cond.kind else {
+            return None;
+        };
+        if then_block.expr.is_some() || then_block.stmts.len() != 1 {
+            return None;
+        }
+        if !matches!(then_block.stmts[0].kind, HirStmtKind::Rumpe) {
+            return None;
+        }
+        Some((&block.stmts[..block.stmts.len() - 1], inner))
+    }
+
+    pub(super) fn reddit_expr<'a>(&self, block: &'a HirBlock) -> Option<&'a HirExpr> {
+        if block.stmts.is_empty() {
+            return block.expr.as_deref();
+        }
+        if block.expr.is_some() || block.stmts.len() != 1 {
+            return None;
+        }
+        match &block.stmts[0].kind {
+            HirStmtKind::Redde(Some(expr)) => Some(expr),
+            _ => None,
+        }
+    }
+    pub(super) fn as_sin_branch<'a>(
+        &self,
+        block: &'a HirBlock,
+    ) -> Option<(&'a HirExpr, &'a HirBlock, Option<&'a HirBlock>)> {
+        if !block.stmts.is_empty() {
+            return None;
+        }
+
+        let expr = block.expr.as_ref()?;
+        if let HirExprKind::Si(cond, then_block, else_block) = &expr.kind {
+            Some((cond, then_block, else_block.as_ref()))
+        } else {
+            None
+        }
+    }
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn write_si_chain(
+        &self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        else_block: Option<&HirBlock>,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        w.write("si ");
+        self.write_expr(cond, types, names, interner, w);
+        self.write_si_branch_body(then_block, types, names, interner, w);
+
+        let mut next_else = else_block;
+        while let Some(block) = next_else {
+            if let Some((sin_cond, sin_then, sin_else)) = self.as_sin_branch(block) {
+                w.write(" sin ");
+                self.write_expr(sin_cond, types, names, interner, w);
+                self.write_si_branch_body(sin_then, types, names, interner, w);
+                next_else = sin_else;
+            } else {
+                w.write(" secus");
+                self.write_si_branch_body(block, types, names, interner, w);
+                break;
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn write_sic_secus_chain(
+        &self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        else_block: Option<&HirBlock>,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) -> bool {
+        if !self.can_write_sic_secus_chain(then_block, else_block) {
+            return false;
+        }
+
+        let Some(then_expr) = self.reddit_expr(then_block) else {
+            return false;
+        };
+        let Some(else_block) = else_block else {
+            return false;
+        };
+
+        self.write_expr_prec(cond, 2, types, names, interner, w);
+        w.write(" sic ");
+        self.write_expr_prec(then_expr, 2, types, names, interner, w);
+        w.write(" secus ");
+
+        if let Some((sin_cond, sin_then, sin_else)) = self.as_sin_branch(else_block) {
+            return self.write_sic_secus_chain(sin_cond, sin_then, sin_else, types, names, interner, w);
+        }
+
+        let Some(else_expr) = self.reddit_expr(else_block) else {
+            return false;
+        };
+        self.write_expr_prec(else_expr, 2, types, names, interner, w);
+        true
+    }
+
+    pub(super) fn can_write_sic_secus_chain(&self, then_block: &HirBlock, else_block: Option<&HirBlock>) -> bool {
+        if self.reddit_expr(then_block).is_none() {
+            return false;
+        }
+
+        let Some(else_block) = else_block else {
+            return false;
+        };
+
+        if let Some((_, sin_then, sin_else)) = self.as_sin_branch(else_block) {
+            return self.can_write_sic_secus_chain(sin_then, sin_else);
+        }
+
+        self.reddit_expr(else_block).is_some()
+    }
+
+    pub(super) fn write_si_branch_body(
+        &self,
+        block: &HirBlock,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        if let Some(reddit_expr) = self.reddit_expr(block) {
+            w.write(" reddit ");
+            self.write_expr(reddit_expr, types, names, interner, w);
+            return;
+        }
+
+        w.writeln(" {");
+        w.indented(|w| self.write_block(block, types, names, interner, w));
+        w.write("}");
+    }
+    pub(super) fn write_cape_block(
+        &self,
+        block: &HirBlock,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        if let Some(HirStmt { kind: HirStmtKind::Local(local), .. }) = block.stmts.first() {
+            w.write(&self.symbol_to_string(local.name, interner));
+            w.writeln(" {");
+            w.indented(|w| {
+                for stmt in block.stmts.iter().skip(1) {
+                    self.write_stmt(stmt, types, names, interner, w);
+                }
+                if let Some(expr) = &block.expr {
+                    self.write_expr(expr, types, names, interner, w);
+                    w.newline();
+                }
+            });
+            w.write("}");
+            return;
+        }
+
+        w.writeln("_ {");
+        w.indented(|w| self.write_block(block, types, names, interner, w));
+        w.write("}");
+    }
+
+    pub(super) fn write_ad_block(
+        &self,
+        block: &HirBlock,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+        binding: Option<&crate::hir::HirAdBinding>,
+    ) {
+        let skip = if binding.is_some() {
+            1 + usize::from(binding.and_then(|binding| binding.alias).is_some())
+        } else {
+            0
+        };
+        for stmt in block.stmts.iter().skip(skip) {
+            self.write_stmt(stmt, types, names, interner, w);
+        }
+        if let Some(expr) = &block.expr {
+            self.write_expr(expr, types, names, interner, w);
+            w.newline();
+        }
+    }
+    pub(super) fn write_block(
+        &self,
+        block: &HirBlock,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        for stmt in &block.stmts {
+            self.write_stmt(stmt, types, names, interner, w);
+        }
+        if let Some(expr) = &block.expr {
+            self.write_expr(expr, types, names, interner, w);
+            w.newline();
+        }
+    }
+
+    pub(super) fn write_stmt(
+        &self,
+        stmt: &HirStmt,
+        types: &TypeTable,
+        names: &FxHashMap<DefId, Symbol>,
+        interner: &Interner,
+        w: &mut CodeWriter,
+    ) {
+        match &stmt.kind {
+            HirStmtKind::Local(local) => {
+                if local.mutable {
+                    w.write("varia ");
+                } else {
+                    w.write("fixum ");
+                }
+                if let Some(ty) = local.ty {
+                    w.write(&self.type_to_faber(ty, types, names, interner));
+                    w.write(" ");
+                }
+                w.write(&self.symbol_to_string(local.name, interner));
+                if let Some(init) = &local.init {
+                    w.write(" ← ");
+                    self.write_expr(init, types, names, interner, w);
+                }
+                w.newline();
+            }
+            HirStmtKind::Expr(expr) => {
+                self.write_expr(expr, types, names, interner, w);
+                w.newline();
+            }
+            HirStmtKind::Ad(ad) => {
+                w.write("ad ");
+                self.write_symbol_literal(ad.path, interner, w);
+                w.write(" (");
+                for (idx, arg) in ad.args.iter().enumerate() {
+                    if idx > 0 {
+                        w.write(", ");
+                    }
+                    self.write_expr(arg, types, names, interner, w);
+                }
+                w.write(")");
+                if let Some(binding) = &ad.binding {
+                    let _ = binding.verb;
+                    w.write(" →");
+                    if let Some(ty) = binding.ty {
+                        w.write(" ");
+                        w.write(&self.type_to_faber(ty, types, names, interner));
+                    }
+                    w.write(" pro ");
+                    w.write(&self.symbol_to_string(binding.name, interner));
+                    if let Some(alias) = binding.alias {
+                        w.write(" ut ");
+                        w.write(&self.symbol_to_string(alias, interner));
+                    }
+                }
+                if let Some(body) = &ad.body {
+                    w.writeln(" {");
+                    w.indented(|w| self.write_ad_block(body, types, names, interner, w, ad.binding.as_ref()));
+                    w.write("}");
+                }
+                if let Some(catch) = &ad.catch {
+                    w.write(" cape ");
+                    self.write_cape_block(catch, types, names, interner, w);
+                }
+                w.newline();
+            }
+            HirStmtKind::Redde(value) => {
+                w.write("redde");
+                if let Some(expr) = value {
+                    w.write(" ");
+                    self.write_expr(expr, types, names, interner, w);
+                }
+                w.newline();
+            }
+            HirStmtKind::Rumpe => {
+                w.writeln("rumpe");
+            }
+            HirStmtKind::Perge => {
+                w.writeln("perge");
+            }
+        }
+    }
+}
