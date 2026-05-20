@@ -371,10 +371,8 @@ fn check_match(
                     arm.span,
                 ));
             }
-        } else if is_catchall_pattern(pattern) {
-            if !is_guarded {
-                has_catchall = true;
-            }
+        } else if is_catchall_pattern(pattern) && !is_guarded {
+            has_catchall = true;
         }
     }
 

@@ -10,7 +10,7 @@ The type system prioritizes explicitness and clarity. Every type name derives fr
 
 ### textus (String)
 
-From the Latin *texere*, "to weave." Text is woven words, threads of meaning combined into fabric. The metaphor is ancient: we still speak of "spinning a yarn" and the "thread" of an argument.
+From the Latin _texere_, "to weave." Text is woven words, threads of meaning combined into fabric. The metaphor is ancient: we still speak of "spinning a yarn" and the "thread" of an argument.
 
 ```fab
 fixum textus greeting = "Salve, Munde"
@@ -26,7 +26,7 @@ fixum message = `Hello, ${name}`
 
 ### numerus (Integer)
 
-From the Latin *numerus*, "number, count." This is the discrete counting number---whole, indivisible. When you need integers, you need `numerus`.
+From the Latin _numerus_, "number, count." This is the discrete counting number---whole, indivisible. When you need integers, you need `numerus`.
 
 ```fab
 fixum numerus count = 42
@@ -38,7 +38,7 @@ Numeric literals support decimal, hexadecimal (with `0x` prefix), and arbitrary-
 
 ### fractus (Floating-Point)
 
-From the Latin *fractus*, "broken." The past participle of *frangere*, "to break." A fractional number is a broken number---one that has been divided into parts. This is the etymological root of the English word "fraction."
+From the Latin _fractus_, "broken." The past participle of _frangere_, "to break." A fractional number is a broken number---one that has been divided into parts. This is the etymological root of the English word "fraction."
 
 Use `fractus` when you need decimal precision:
 
@@ -51,7 +51,7 @@ The distinction between `numerus` and `fractus` mirrors the distinction between 
 
 ### bivalens (Boolean)
 
-From *bi-*, "two," and *valens*, "being strong, having value." A two-valued type. The boolean literals are `verum` (true) and `falsum` (false):
+From _bi-_, "two," and _valens_, "being strong, having value." A two-valued type. The boolean literals are `verum` (true) and `falsum` (false):
 
 ```fab
 fixum bivalens active = verum
@@ -62,7 +62,7 @@ These literals read as Latin adjectives: "it is true," "it is false."
 
 ### nihil (Null)
 
-From the Latin *nihil*, "nothing." The absence of value. Where other languages use `null` or `nil` or `None`, Faber uses `nihil`:
+From the Latin _nihil_, "nothing." The absence of value. Where other languages use `null` or `nil` or `None`, Faber uses `nihil`:
 
 ```fab
 fixum nothing = nihil
@@ -72,7 +72,7 @@ A variable holding `nihil` holds nothing---not zero, not an empty string, but th
 
 ### vacuum (Void)
 
-From the Latin *vacuum*, "empty, void." This is the return type of functions that complete but return no value:
+From the Latin _vacuum_, "empty, void." This is the return type of functions that complete but return no value:
 
 ```fab
 functio log(textus message) -> vacuum {
@@ -88,7 +88,7 @@ The distinction from `nihil` is semantic: `nihil` is a value (the null value), w
 
 ### ignotum (Unknown)
 
-From *in-*, "not," and *gnoscere*, "to know." The unknown type. Unlike permissive "any" types in other languages, `ignotum` requires you to narrow before use:
+From _in-_, "not," and _gnoscere_, "to know." The unknown type. Unlike permissive "any" types in other languages, `ignotum` requires you to narrow before use:
 
 ```fab
 fixum ignotum data = getExternalData()
@@ -106,7 +106,7 @@ Faber deliberately omits an "any" type. When you receive data of unknown type, y
 
 ### numquam (Never)
 
-From the Latin *numquam*, "never." This is the return type of functions that never return---those that throw exceptions, loop infinitely, or exit the process:
+From the Latin _numquam_, "never." This is the return type of functions that never return---those that throw exceptions, loop infinitely, or exit the process:
 
 ```fab
 functio moritur() -> numquam {
@@ -122,7 +122,7 @@ A function marked `numquam` is a one-way door. Control enters but does not exit.
 
 ### objectum (Object)
 
-From the Latin *objectum*, "something thrown before." The root of the English word "object." This type represents any non-primitive value---anything that is not a number, string, boolean, or null:
+From the Latin _objectum_, "something thrown before." The root of the English word "object." This type represents any non-primitive value---anything that is not a number, string, boolean, or null:
 
 ```fab
 functio getUser() -> objectum {
@@ -270,7 +270,7 @@ Faber provides three built-in collection types, each named for Latin words descr
 
 ### lista (Array/List)
 
-From the Latin *lista*, "border, strip, list." An ordered, indexable sequence of elements:
+From the Latin _lista_, "border, strip, list." An ordered, indexable sequence of elements:
 
 ```fab
 fixum lista<textus> names = ["Marcus", "Julia", "Gaius"]
@@ -303,7 +303,7 @@ fixum last = names[names.longitudo() - 1]
 
 ### tabula (Map/Dictionary)
 
-From the Latin *tabula*, "tablet, table, board." The writing tablet, a surface for recording associations. A `tabula` maps keys to values:
+From the Latin _tabula_, "tablet, table, board." The writing tablet, a surface for recording associations. A `tabula` maps keys to values:
 
 ```fab
 fixum tabula<textus, numerus> ages = {
@@ -321,7 +321,7 @@ fixum marcusAge = ages["Marcus"]
 
 ### copia (Set)
 
-From the Latin *copia*, "abundance, supply, plenty." A collection of unique values with no duplicates:
+From the Latin _copia_, "abundance, supply, plenty." A collection of unique values with no duplicates:
 
 ```fab
 fixum copia<textus> uniqueNames = copia("Marcus", "Julia", "Marcus")

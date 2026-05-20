@@ -8,12 +8,12 @@ Treat `cargo run --manifest-path radix/Cargo.toml -p radix -- targets` as the li
 
 As of the current `radix-rs` CLI, the supported targets are:
 
-| Target | `check` | `build` | `package` | Notes |
-| ------ | ------- | ------- | --------- | ----- |
-| `rust` | yes | yes | yes | Primary backend; package compilation supported |
-| `go` | yes | yes | no | File emission supported; package compilation not yet supported |
-| `ts` | yes | yes | no | File emission supported; package compilation not yet supported |
-| `faber` | yes | yes | no | Canonical pretty-print target; package compilation not yet supported |
+| Target  | `check` | `build` | `package` | Notes                                                                |
+| ------- | ------- | ------- | --------- | -------------------------------------------------------------------- |
+| `rust`  | yes     | yes     | yes       | Primary backend; package compilation supported                       |
+| `go`    | yes     | yes     | no        | File emission supported; package compilation not yet supported       |
+| `ts`    | yes     | yes     | no        | File emission supported; package compilation not yet supported       |
+| `faber` | yes     | yes     | no        | Canonical pretty-print target; package compilation not yet supported |
 
 The current `targets` command prints these same notes directly:
 

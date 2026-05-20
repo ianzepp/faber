@@ -220,12 +220,12 @@ Unary operators that expand to inline checks:
 
 Older Faber drafts and some stale docs used conjugations of _fio_ ("to become") to describe sync, async, and generator return behavior:
 
-| Verbum  | Historical association                |
-| ------- | ------------------------------------- |
-| `fit`   | sync single-result function           |
-| `fiet`  | async single-result function          |
-| `fiunt` | sync generator                        |
-| `fient` | async generator                       |
+| Verbum  | Historical association       |
+| ------- | ---------------------------- |
+| `fit`   | sync single-result function  |
+| `fiet`  | async single-result function |
+| `fiunt` | sync generator               |
+| `fient` | async generator              |
 
 The current grammar contract does not use these verb forms in function declarations. Use arrow returns plus `@ futura` and `@ cursor` instead.
 

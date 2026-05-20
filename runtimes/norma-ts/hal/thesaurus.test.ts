@@ -1,5 +1,6 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test';
-import { thesaurus, Subscriptio, Nuntius } from './thesaurus';
+import type { Nuntius } from './thesaurus';
+import { thesaurus, Subscriptio } from './thesaurus';
 
 describe('thesaurus HAL', () => {
     beforeEach(() => {
@@ -225,7 +226,9 @@ describe('thesaurus HAL', () => {
             const consumer = (async () => {
                 for await (const msg of sub.nuntient()) {
                     messages.push(msg);
-                    if (messages.length >= 2) break;
+                    if (messages.length >= 2) {
+                        break;
+                    }
                 }
             })();
 
@@ -254,10 +257,7 @@ describe('thesaurus HAL', () => {
             })();
 
             await thesaurus.publicabit('test', 'payload');
-            const msg = await Promise.race([
-                consumer,
-                new Promise<Nuntius>((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000)),
-            ]);
+            const msg = await Promise.race([consumer, new Promise<Nuntius>((_, reject) => setTimeout(() => reject(new Error('timeout')), 1000))]);
 
             expect(msg!.thema()).toBe('test');
             expect(msg!.corpus()).toBe('payload');
@@ -298,7 +298,9 @@ describe('thesaurus HAL', () => {
             const consumer = (async () => {
                 for await (const msg of sub.nuntient()) {
                     messages.push(msg.thema());
-                    if (messages.length >= 2) break;
+                    if (messages.length >= 2) {
+                        break;
+                    }
                 }
             })();
 
@@ -306,10 +308,7 @@ describe('thesaurus HAL', () => {
             await thesaurus.publicabit('events/scroll', 'data');
             await thesaurus.publicabit('events/mouse/move', 'data'); // Should not match
 
-            await Promise.race([
-                consumer,
-                new Promise(resolve => setTimeout(resolve, 100)),
-            ]);
+            await Promise.race([consumer, new Promise(resolve => setTimeout(resolve, 100))]);
 
             expect(messages).toEqual(['events/click', 'events/scroll']);
             sub.claude();
@@ -322,7 +321,9 @@ describe('thesaurus HAL', () => {
             const consumer = (async () => {
                 for await (const msg of sub.nuntient()) {
                     messages.push(msg.thema());
-                    if (messages.length >= 3) break;
+                    if (messages.length >= 3) {
+                        break;
+                    }
                 }
             })();
 
@@ -331,16 +332,9 @@ describe('thesaurus HAL', () => {
             await thesaurus.publicabit('logs/app/module/trace', 'data');
             await thesaurus.publicabit('other/log', 'data'); // Should not match
 
-            await Promise.race([
-                consumer,
-                new Promise(resolve => setTimeout(resolve, 100)),
-            ]);
+            await Promise.race([consumer, new Promise(resolve => setTimeout(resolve, 100))]);
 
-            expect(messages.sort()).toEqual([
-                'logs/app/debug',
-                'logs/app/module/trace',
-                'logs/error',
-            ]);
+            expect(messages.sort()).toEqual(['logs/app/debug', 'logs/app/module/trace', 'logs/error']);
             sub.claude();
         });
 
@@ -351,17 +345,16 @@ describe('thesaurus HAL', () => {
             const consumer = (async () => {
                 for await (const msg of sub.nuntient()) {
                     messages.push(msg.thema());
-                    if (messages.length >= 2) break;
+                    if (messages.length >= 2) {
+                        break;
+                    }
                 }
             })();
 
             await thesaurus.publicabit('news', 'headline');
             await thesaurus.publicabit('alerts/critical', 'warning');
 
-            await Promise.race([
-                consumer,
-                new Promise(resolve => setTimeout(resolve, 100)),
-            ]);
+            await Promise.race([consumer, new Promise(resolve => setTimeout(resolve, 100))]);
 
             expect(messages.sort()).toEqual(['alerts/critical', 'news']);
             sub.claude();

@@ -49,8 +49,12 @@ export const consolum = {
 
         while (true) {
             const bytesRead = readSync(0, buffer);
-            if (bytesRead === 0 || buffer[0] === 10) break; // EOF or newline
-            if (buffer[0] !== 13) chunks.push(buffer[0]!);   // skip CR
+            if (bytesRead === 0 || buffer[0] === 10) {
+                break;
+            } // EOF or newline
+            if (buffer[0] !== 13) {
+                chunks.push(buffer[0]!);
+            } // skip CR
         }
 
         return decoder.decode(new Uint8Array(chunks));

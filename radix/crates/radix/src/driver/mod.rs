@@ -195,25 +195,25 @@ fn collect_go_dynamic_externa(program: &Program, interner: &Interner) -> GoDynam
 
     for stmt in &program.stmts {
         match &stmt.kind {
-            StmtKind::Var(decl) if has_externa_annotation(&stmt.annotations, &[], interner) => {
-                if decl
-                    .ty
-                    .as_ref()
-                    .is_some_and(|ty| is_named_type(ty, interner, "ignotum"))
-                {
-                    if let BindingPattern::Ident(ident) = &decl.binding {
-                        dynamic.bindings.insert(ident.name);
-                    }
+            StmtKind::Var(decl)
+                if has_externa_annotation(&stmt.annotations, &[], interner)
+                    && decl
+                        .ty
+                        .as_ref()
+                        .is_some_and(|ty| is_named_type(ty, interner, "ignotum")) =>
+            {
+                if let BindingPattern::Ident(ident) = &decl.binding {
+                    dynamic.bindings.insert(ident.name);
                 }
             }
-            StmtKind::Func(func) if has_externa_annotation(&stmt.annotations, &func.annotations, interner) => {
-                if func
-                    .ret
-                    .as_ref()
-                    .is_some_and(|ty| is_named_type(ty, interner, "ignotum"))
-                {
-                    dynamic.functions.insert(func.name.name);
-                }
+            StmtKind::Func(func)
+                if has_externa_annotation(&stmt.annotations, &func.annotations, interner)
+                    && func
+                        .ret
+                        .as_ref()
+                        .is_some_and(|ty| is_named_type(ty, interner, "ignotum")) =>
+            {
+                dynamic.functions.insert(func.name.name);
             }
             _ => {}
         }
@@ -694,7 +694,7 @@ fn is_first_go_dynamic_externa_projection(expr: &Expr, dynamic_externa: &GoDynam
         return false;
     }
 
-    matches!(go_dynamic_externa_root(expr, dynamic_externa), Some(_))
+    go_dynamic_externa_root(expr, dynamic_externa).is_some()
 }
 
 fn go_dynamic_externa_root(expr: &Expr, dynamic_externa: &GoDynamicExterna) -> Option<()> {

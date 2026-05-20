@@ -74,6 +74,7 @@ fixum negated = non flag          # not
 ```
 
 Etymology:
+
 - `et` means "and" in Latin, the same word that gives us "et cetera" (and the rest)
 - `aut` means "or" in the exclusive sense (one or the other)
 - `non` means "not"
@@ -136,6 +137,7 @@ scribe nonnulla maybe    # falsum (has content)
 ```
 
 The distinction matters:
+
 - `nihil`/`nonnihil` check strictly for null
 - `nulla`/`nonnulla` check for null OR empty (length zero)
 
@@ -194,6 +196,7 @@ fixum max = a > b sic a secus b
 ```
 
 Etymology:
+
 - `sic` means "thus" or "so" (as in "sic semper tyrannis")
 - `secus` means "otherwise" or "differently"
 
@@ -361,12 +364,12 @@ fixum s = "42" ⇒ numerus ⇒ textus     # "42" -> 42 -> "42"
 
 For `⇒ numerus`, you can specify both the target integer type and the radix (base) for parsing:
 
-| Radix | Base | Example |
-|-------|------|---------|
-| `Dec` | 10 | `"42" ⇒ numerus<i32, Dec>` |
-| `Hex` | 16 | `"ff" ⇒ numerus<i32, Hex>` |
-| `Oct` | 8 | `"777" ⇒ numerus<i32, Oct>` |
-| `Bin` | 2 | `"101" ⇒ numerus<u8, Bin>` |
+| Radix | Base | Example                     |
+| ----- | ---- | --------------------------- |
+| `Dec` | 10   | `"42" ⇒ numerus<i32, Dec>`  |
+| `Hex` | 16   | `"ff" ⇒ numerus<i32, Hex>`  |
+| `Oct` | 8    | `"777" ⇒ numerus<i32, Oct>` |
+| `Bin` | 2    | `"101" ⇒ numerus<u8, Bin>`  |
 
 If no radix is specified, decimal (base 10) is assumed.
 
@@ -433,8 +436,9 @@ fixum halved = 16 dextratum 2        # right shift: 16 >> 2 = 4
 ```
 
 Etymology:
-- `sinistratum` from *sinister* ("left") + *-atum* ("made into")---shifted leftward
-- `dextratum` from *dexter* ("right") + *-atum* ("made into")---shifted rightward
+
+- `sinistratum` from _sinister_ ("left") + _-atum_ ("made into")---shifted leftward
+- `dextratum` from _dexter_ ("right") + _-atum_ ("made into")---shifted rightward
 
 The `-atum` suffix follows the same pattern as type conversion operators (`numeratum`, `textatum`), treating the shift as a transformation applied to the value.
 

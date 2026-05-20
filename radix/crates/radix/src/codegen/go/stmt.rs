@@ -467,7 +467,7 @@ fn generate_discerne_stmt(
     if arms
         .iter()
         .flat_map(|arm| arm.patterns.iter())
-        .any(|pattern| matches_variant_pattern(pattern))
+        .any(matches_variant_pattern)
     {
         return generate_variant_discerne_stmt(codegen, &scrutinees[0], arms, types, w);
     }
@@ -542,10 +542,8 @@ fn generate_non_variant_discerne_arm(
             result
         }
         HirPattern::Alias(_, alias, inner) => {
-            let mut result = generate_non_variant_discerne_header(codegen, inner, w);
-            if result.is_err() {
-                return result;
-            }
+            generate_non_variant_discerne_header(codegen, inner, w)?;
+            let mut result = Ok(());
             w.indented(|w| {
                 w.write(codegen.resolve_symbol(*alias));
                 w.write(" := ");

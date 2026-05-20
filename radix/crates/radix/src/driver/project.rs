@@ -20,6 +20,8 @@ struct PackageFile {
     _program: Program,
 }
 
+type PackageDiscoveryResult = Result<PackageSpec, Box<Diagnostic>>;
+
 pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
     if config.target != Target::Rust {
         return CompileResult {
@@ -33,7 +35,7 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
 
     let spec = match discover_package(input) {
         Ok(spec) => spec,
-        Err(diag) => return CompileResult { output: None, diagnostics: vec![diag] },
+        Err(diag) => return CompileResult { output: None, diagnostics: vec![*diag] },
     };
 
     let files = match load_package(&spec) {
@@ -120,10 +122,13 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
     CompileResult { output: Some(Output::Rust(RustOutput { code: crate_code })), diagnostics }
 }
 
-fn discover_package(input: &Path) -> Result<PackageSpec, Diagnostic> {
+fn discover_package(input: &Path) -> PackageDiscoveryResult {
     let input = absolutize_path(input);
     if !input.exists() {
-        return Err(Diagnostic::io_error(&input, std::io::Error::from(std::io::ErrorKind::NotFound)));
+        return Err(Box::new(Diagnostic::io_error(
+            &input,
+            std::io::Error::from(std::io::ErrorKind::NotFound),
+        )));
     }
 
     if input.file_name().and_then(|name| name.to_str()) == Some("faber.fab") {
@@ -143,12 +148,12 @@ fn discover_package(input: &Path) -> Result<PackageSpec, Diagnostic> {
     Ok(PackageSpec { source_root: root, entry })
 }
 
-fn parse_manifest(path: &Path) -> Result<PackageSpec, Diagnostic> {
-    let source = fs::read_to_string(path).map_err(|err| Diagnostic::io_error(path, err))?;
+fn parse_manifest(path: &Path) -> PackageDiscoveryResult {
+    let source = fs::read_to_string(path).map_err(|err| Box::new(Diagnostic::io_error(path, err)))?;
     let parse = parser::parse(crate::lexer::lex(&source));
     let program = parse
         .program
-        .ok_or_else(|| Diagnostic::error("manifest parse failed").with_file(path.display().to_string()))?;
+        .ok_or_else(|| Box::new(Diagnostic::error("manifest parse failed").with_file(path.display().to_string())))?;
     let package_root = path
         .parent()
         .unwrap_or_else(|| Path::new("."))
@@ -170,11 +175,11 @@ fn parse_manifest(path: &Path) -> Result<PackageSpec, Diagnostic> {
                 }
             }
             "dependentia" => {
-                return Err(
+                return Err(Box::new(
                     Diagnostic::error("package compilation does not support manifest dependencies yet")
                         .with_file(path.display().to_string())
                         .with_span(directive.span),
-                );
+                ));
             }
             _ => {}
         }

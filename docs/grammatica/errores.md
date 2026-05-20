@@ -18,7 +18,7 @@ The `tempta`/`cape`/`demum` trio corresponds directly to try/catch/finally in ot
 
 ### tempta (Try)
 
-From Latin *temptare* (to attempt, to try). The `tempta` block wraps code that might throw an error.
+From Latin _temptare_ (to attempt, to try). The `tempta` block wraps code that might throw an error.
 
 ```fab
 tempta {
@@ -32,7 +32,7 @@ Code after the block only executes if no error occurs. If an error is thrown and
 
 ### cape (Catch)
 
-From Latin *capere* (to seize, to catch). The `cape` clause binds the thrown error to a variable and executes handler code.
+From Latin _capere_ (to seize, to catch). The `cape` clause binds the thrown error to a variable and executes handler code.
 
 ```fab
 tempta {
@@ -59,7 +59,7 @@ demum {
 
 ### demum (Finally)
 
-From Latin *demum* (at last, finally). The `demum` block contains cleanup code that runs regardless of whether an error occurred.
+From Latin _demum_ (at last, finally). The `demum` block contains cleanup code that runs regardless of whether an error occurred.
 
 ```fab
 tempta {
@@ -124,7 +124,7 @@ Faber provides two keywords for signaling errors, each with distinct semantics.
 
 ### iace (Throw)
 
-From Latin *iacere* (to throw, to hurl). Use `iace` for recoverable errors that calling code can catch and handle.
+From Latin _iacere_ (to throw, to hurl). Use `iace` for recoverable errors that calling code can catch and handle.
 
 ```fab
 iace "Something went wrong"
@@ -141,7 +141,7 @@ iace scriptum("Error code: {}", code)
 
 ### mori (Panic)
 
-From Latin *mori* (to die). Use `mori` for fatal errors that indicate the program cannot meaningfully continue.
+From Latin _mori_ (to die). Use `mori` for fatal errors that indicate the program cannot meaningfully continue.
 
 ```fab
 mori "Fatal: invariant violated"
@@ -152,12 +152,14 @@ Unlike `iace`, a `mori` cannot be caught. It terminates execution immediately. U
 ### When to Use Each
 
 **Use `iace` when:**
+
 - The caller might reasonably recover from this error
 - The error represents an expected failure mode (file not found, invalid input, network timeout)
 - You want to return error information to the caller
 - The program state remains consistent after the error
 
 **Use `mori` when:**
+
 - The error indicates a bug in the program
 - An invariant has been violated that should never happen
 - Continuing would corrupt data or produce undefined behavior
@@ -173,7 +175,7 @@ Beyond the traditional try/catch pattern, Faber provides `fac` blocks for creati
 
 ### fac Blocks
 
-From Latin *facere* (to do, to make). A `fac` block creates an explicit scope for grouping statements:
+From Latin _facere_ (to do, to make). A `fac` block creates an explicit scope for grouping statements:
 
 ```fab
 fac {

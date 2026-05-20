@@ -126,20 +126,14 @@ pub fn inveni(valor: &Value, via: &str) -> Option<Value> {
     for part in parts {
         match current {
             Value::Table(map) => {
-                current = match map.get(part) {
-                    Some(v) => v,
-                    None => return None,
-                };
+                current = map.get(part)?;
             }
             Value::Array(arr) => {
                 let idx: usize = match part.parse() {
                     Ok(i) => i,
                     Err(_) => return None,
                 };
-                current = match arr.get(idx) {
-                    Some(v) => v,
-                    None => return None,
-                };
+                current = arr.get(idx)?;
             }
             _ => return None,
         }

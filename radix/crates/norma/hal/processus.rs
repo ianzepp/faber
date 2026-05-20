@@ -128,6 +128,8 @@ pub async fn generabit(
 // Verb: dimitte from "dimittere" (to send away, dismiss)
 
 /// Dismiss process to run independently - returns PID
+// WHY: dimitte deliberately releases ownership so the spawned process outlives the caller.
+#[allow(clippy::zombie_processes)]
 pub fn dimitte(
     argumenta: &[&str],
     directorium: Option<&str>,

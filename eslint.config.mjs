@@ -18,26 +18,32 @@ export default tseslint.config(
     {
         rules: {
             // WHY: Always require braces for clarity
-            'curly': ['error', 'all'],
+            curly: ['error', 'all'],
 
             // =================================================================
             // TYPESCRIPT SPECIFIC
             // =================================================================
 
             '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
-            '@typescript-eslint/consistent-type-imports': ['error', {
-                prefer: 'type-imports',
-                disallowTypeAnnotations: false,
-            }],
+            '@typescript-eslint/consistent-type-imports': [
+                'error',
+                {
+                    prefer: 'type-imports',
+                    disallowTypeAnnotations: false,
+                },
+            ],
 
             // WHY: Stubs for future implementation
             '@typescript-eslint/no-unused-vars': 'off',
             '@typescript-eslint/no-unused-expressions': 'off',
 
             // WHY: Allow `const self = this` where context is needed
-            '@typescript-eslint/no-this-alias': ['error', {
-                allowedNames: ['self'],
-            }],
+            '@typescript-eslint/no-this-alias': [
+                'error',
+                {
+                    allowedNames: ['self'],
+                },
+            ],
 
             // WHY: Allow namespaces for grouped exports
             '@typescript-eslint/no-namespace': 'off',
@@ -69,12 +75,6 @@ export default tseslint.config(
         },
     },
     {
-        ignores: [
-            'node_modules/**',
-            'dist/**',
-            'build/**',
-            '.git/**',
-            'compilers/nanus-ts/dist/**',
-        ],
+        ignores: ['node_modules/**', 'dist/**', 'build/**', '.git/**', '.codex/**', 'compilers/nanus-ts/dist/**'],
     },
 );

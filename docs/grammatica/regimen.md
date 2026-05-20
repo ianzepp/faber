@@ -2,7 +2,7 @@
 
 Control flow determines how a program executes: which statements run, in what order, and under what conditions. Faber uses Latin keywords that map intuitively to their English equivalents while reading naturally as Latin prose.
 
-The Latin word *regimen* means "guidance" or "direction"—literally, the act of steering. In Faber, control flow keywords *steer* execution through conditionals, loops, and branching constructs.
+The Latin word _regimen_ means "guidance" or "direction"—literally, the act of steering. In Faber, control flow keywords _steer_ execution through conditionals, loops, and branching constructs.
 
 ---
 
@@ -101,7 +101,7 @@ si age >= 18 ergo scribe "Adult" secus scribe "Minor"
 
 #### reddit (Early Return)
 
-The keyword `reddit` means "it returns" in Latin (third person singular of *reddere*, "to give back"). It combines `ergo` with `redde` for early return patterns.
+The keyword `reddit` means "it returns" in Latin (third person singular of _reddere_, "to give back"). It combines `ergo` with `redde` for early return patterns.
 
 ```fab
 functio classify(numerus x) -> textus {
@@ -197,7 +197,7 @@ itera ex numbers fixum n {
 }
 ```
 
-The verb `itera` is the imperative of *iterare* ("to repeat, traverse"). The preposition `ex` means "from" or "out of"—the source from which values are drawn. The binding uses `fixum` (immutable) or `varia` (mutable).
+The verb `itera` is the imperative of _iterare_ ("to repeat, traverse"). The preposition `ex` means "from" or "out of"—the source from which values are drawn. The binding uses `fixum` (immutable) or `varia` (mutable).
 
 This verb-first syntax aligns with other Faber statements like `scribe`, `iace`, and `importa`. Where JavaScript writes `for (const item of items)`, Faber writes `itera ex items fixum item`.
 
@@ -232,11 +232,11 @@ itera ex numbers fixum n ergo scribe n
 
 Ranges generate sequences of numbers. Faber provides three range operators:
 
-| Operator | Latin Meaning | End Behavior | Example |
-|----------|---------------|--------------|---------|
-| `..` | (shorthand) | exclusive | `0..5` yields 0, 1, 2, 3, 4 |
-| `ante` | "before" | exclusive | `0 ante 5` yields 0, 1, 2, 3, 4 |
-| `usque` | "up to" | inclusive | `0 usque 5` yields 0, 1, 2, 3, 4, 5 |
+| Operator | Latin Meaning | End Behavior | Example                             |
+| -------- | ------------- | ------------ | ----------------------------------- |
+| `..`     | (shorthand)   | exclusive    | `0..5` yields 0, 1, 2, 3, 4         |
+| `ante`   | "before"      | exclusive    | `0 ante 5` yields 0, 1, 2, 3, 4     |
+| `usque`  | "up to"       | inclusive    | `0 usque 5` yields 0, 1, 2, 3, 4, 5 |
 
 The `..` operator is convenient shorthand matching common programming conventions (Python's `range()`, Rust's `..`):
 
@@ -246,7 +246,7 @@ itera ex 0..5 fixum i {
 }
 ```
 
-The `ante` keyword makes exclusivity explicit—the range stops *before* the end value:
+The `ante` keyword makes exclusivity explicit—the range stops _before_ the end value:
 
 ```fab
 itera ex 0 ante 5 fixum i {
@@ -254,7 +254,7 @@ itera ex 0 ante 5 fixum i {
 }
 ```
 
-The `usque` keyword includes the end value—the range goes *up to and including* the end:
+The `usque` keyword includes the end value—the range goes _up to and including_ the end:
 
 ```fab
 itera ex 0 usque 5 fixum i {
@@ -286,7 +286,7 @@ itera de persona fixum clavis {
 }
 ```
 
-The preposition `de` means "about" or "concerning"—indicating a read-only relationship with the object. You're iterating *concerning* the object's structure, not extracting its contents.
+The preposition `de` means "about" or "concerning"—indicating a read-only relationship with the object. You're iterating _concerning_ the object's structure, not extracting its contents.
 
 To access values, use the key with bracket notation:
 
@@ -307,8 +307,9 @@ itera de numeri fixum index {
 ```
 
 The distinction between `ex` and `de` mirrors their Latin meanings:
-- `itera ex items fixum item` — draw *values* **from** the collection
-- `itera de object fixum key` — inspect *keys* **concerning** the object
+
+- `itera ex items fixum item` — draw _values_ **from** the collection
+- `itera de object fixum key` — inspect _keys_ **concerning** the object
 
 ### Async Iteration
 
@@ -328,7 +329,7 @@ Two keywords control loop flow:
 
 #### rumpe (Break)
 
-The keyword `rumpe` is the imperative of *rumpere* ("to break"). It exits the innermost loop immediately.
+The keyword `rumpe` is the imperative of _rumpere_ ("to break"). It exits the innermost loop immediately.
 
 ```fab
 varia i = 0
@@ -359,7 +360,7 @@ itera ex 0..3 fixum outer {
 
 #### perge (Continue)
 
-The keyword `perge` is the imperative of *pergere* ("to continue" or "proceed"). It skips to the next iteration.
+The keyword `perge` is the imperative of _pergere_ ("to continue" or "proceed"). It skips to the next iteration.
 
 ```fab
 itera ex 0..10 fixum i {
@@ -382,7 +383,7 @@ Branching statements select one path among several based on a value.
 
 ### elige (Switch)
 
-The keyword `elige` is the imperative of *eligere* ("to choose"). It matches a value against cases.
+The keyword `elige` is the imperative of _eligere_ ("to choose"). It matches a value against cases.
 
 ```fab
 fixum status = "active"
@@ -400,7 +401,7 @@ elige status {
 }
 ```
 
-The keyword `casu` is the ablative of *casus* ("case" or "instance")—literally "in the case of."
+The keyword `casu` is the ablative of _casus_ ("case" or "instance")—literally "in the case of."
 
 Unlike C-family switch statements, Faber's `elige` does not fall through. Each `casu` is self-contained.
 
@@ -445,7 +446,7 @@ functio statusMessage(numerus code) -> textus {
 
 ### discerne (Pattern Match)
 
-The keyword `discerne` is the imperative of *discernere* ("to distinguish" or "discriminate"). It performs exhaustive pattern matching on tagged union types (*discretio*).
+The keyword `discerne` is the imperative of _discernere_ ("to distinguish" or "discriminate"). It performs exhaustive pattern matching on tagged union types (_discretio_).
 
 First, define a `discretio` (tagged union):
 
@@ -507,6 +508,7 @@ discerne left, right {
 The underscore `_` is the wildcard pattern—it matches any variant without binding.
 
 The difference between `elige` and `discerne`:
+
 - `elige` matches against primitive values (numbers, strings)
 - `discerne` matches against `discretio` variants with destructuring
 
@@ -518,7 +520,7 @@ Guards and assertions enforce invariants—conditions that must hold for the pro
 
 ### custodi (Guard Block)
 
-The keyword `custodi` is the imperative of *custodire* ("to guard" or "watch over"). It groups early-exit conditions at the start of a function.
+The keyword `custodi` is the imperative of _custodire_ ("to guard" or "watch over"). It groups early-exit conditions at the start of a function.
 
 ```fab
 functio divide(numerus a, numerus b) -> numerus {
@@ -604,7 +606,7 @@ functio createUser(textus name, textus email, numerus age) -> textus {
 
 ### adfirma (Assert)
 
-The keyword `adfirma` is the imperative of *adfirmare* ("to affirm" or "assert"). It checks runtime invariants.
+The keyword `adfirma` is the imperative of _adfirmare_ ("to affirm" or "assert"). It checks runtime invariants.
 
 ```fab
 adfirma x > 0
@@ -620,6 +622,7 @@ adfirma name != "", "name must not be empty"
 ```
 
 Assertions differ from guards:
+
 - Guards handle expected edge cases gracefully (return early, throw recoverable errors)
 - Assertions catch programming errors (bugs) that should never occur in correct code
 
@@ -638,22 +641,22 @@ functio processArray(lista<numerus> items) {
 
 ## Summary
 
-| Keyword | Latin Meaning | Purpose |
-|---------|--------------|---------|
-| `si` | "if" | Conditional branch |
-| `sin` | "but if" | Else-if branch |
-| `secus` | "otherwise" | Else branch |
-| `ergo` | "therefore" | One-liner consequent |
-| `reddit` | "it returns" | One-liner early return |
-| `dum` | "while" | While loop |
-| `ex` | "from, out of" | Iteration source |
-| `de` | "concerning" | Key iteration source |
-| `pro` | "for" | Iteration binding |
-| `rumpe` | "break!" | Exit loop |
-| `perge` | "continue!" | Skip to next iteration |
-| `elige` | "choose!" | Value switch |
-| `casu` | "in the case of" | Switch case |
-| `ceterum` | "otherwise" | Switch default |
-| `discerne` | "distinguish!" | Pattern match |
-| `custodi` | "guard!" | Guard clause block |
-| `adfirma` | "affirm!" | Runtime assertion |
+| Keyword    | Latin Meaning    | Purpose                |
+| ---------- | ---------------- | ---------------------- |
+| `si`       | "if"             | Conditional branch     |
+| `sin`      | "but if"         | Else-if branch         |
+| `secus`    | "otherwise"      | Else branch            |
+| `ergo`     | "therefore"      | One-liner consequent   |
+| `reddit`   | "it returns"     | One-liner early return |
+| `dum`      | "while"          | While loop             |
+| `ex`       | "from, out of"   | Iteration source       |
+| `de`       | "concerning"     | Key iteration source   |
+| `pro`      | "for"            | Iteration binding      |
+| `rumpe`    | "break!"         | Exit loop              |
+| `perge`    | "continue!"      | Skip to next iteration |
+| `elige`    | "choose!"        | Value switch           |
+| `casu`     | "in the case of" | Switch case            |
+| `ceterum`  | "otherwise"      | Switch default         |
+| `discerne` | "distinguish!"   | Pattern match          |
+| `custodi`  | "guard!"         | Guard clause block     |
+| `adfirma`  | "affirm!"        | Runtime assertion      |

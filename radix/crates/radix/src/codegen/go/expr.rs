@@ -370,15 +370,14 @@ pub fn generate_expr(
                 Type::Primitive(Primitive::Bivalens) => {
                     generate_bool_conversion_expr(codegen, source, types, w)?;
                 }
+                Type::Enum(_) | Type::Interface(_) if variant_value_expr(source, codegen) => {
+                    generate_expr(codegen, source, types, w)?;
+                }
                 Type::Enum(_) | Type::Interface(_) => {
-                    if variant_value_expr(source, codegen) {
-                        generate_expr(codegen, source, types, w)?;
-                    } else {
-                        generate_expr(codegen, source, types, w)?;
-                        w.write(".(");
-                        w.write(&types::type_to_go(codegen, *target, types));
-                        w.write(")");
-                    }
+                    generate_expr(codegen, source, types, w)?;
+                    w.write(".(");
+                    w.write(&types::type_to_go(codegen, *target, types));
+                    w.write(")");
                 }
                 _ => {
                     generate_expr(codegen, source, types, w)?;

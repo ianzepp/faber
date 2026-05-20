@@ -1,5 +1,6 @@
 import { test, expect, describe, afterEach } from 'bun:test';
-import { caelum, Auscultator, Connexus } from './caelum';
+import type { Auscultator, Connexus } from './caelum';
+import { caelum } from './caelum';
 
 // Track resources for cleanup
 const listeners: Auscultator[] = [];
@@ -7,10 +8,18 @@ const connections: Connexus[] = [];
 
 afterEach(() => {
     for (const conn of connections) {
-        try { conn.claude(); } catch { /* ignore */ }
+        try {
+            conn.claude();
+        } catch {
+            /* ignore */
+        }
     }
     for (const listener of listeners) {
-        try { listener.claude(); } catch { /* ignore */ }
+        try {
+            listener.claude();
+        } catch {
+            /* ignore */
+        }
     }
     connections.length = 0;
     listeners.length = 0;

@@ -8,7 +8,7 @@ Every Faber program needs an entry point. This is where execution begins, and Fa
 
 ### Synchronous Entry: incipit
 
-The keyword `incipit` marks the synchronous entry point. It is the third person singular present active indicative of *incipere* (to begin): "it begins."
+The keyword `incipit` marks the synchronous entry point. It is the third person singular present active indicative of _incipere_ (to begin): "it begins."
 
 ```fab
 incipit {
@@ -47,7 +47,7 @@ Faber distinguishes between mutable and immutable bindings with distinct keyword
 
 ### Immutable Bindings: fixum
 
-The keyword `fixum` declares an immutable binding. It is the perfect passive participle of *figere* (to fix, fasten): "that which has been fixed." Once bound, a `fixum` value cannot be reassigned.
+The keyword `fixum` declares an immutable binding. It is the perfect passive participle of _figere_ (to fix, fasten): "that which has been fixed." Once bound, a `fixum` value cannot be reassigned.
 
 ```fab
 fixum greeting = "Salve, Mundus!"
@@ -70,7 +70,7 @@ The pattern is always type-first: `fixum <type> <name> = <value>`. This mirrors 
 
 ### Mutable Bindings: varia
 
-The keyword `varia` declares a mutable binding. It comes from *variare* (to vary): "let it vary." A `varia` binding can be reassigned throughout its scope.
+The keyword `varia` declares a mutable binding. It comes from _variare_ (to vary): "let it vary." A `varia` binding can be reassigned throughout its scope.
 
 ```fab
 varia counter = 0
@@ -109,7 +109,7 @@ fixum decimal = 3.14
 fixum negative = -100
 ```
 
-For typed declarations, `numerus` is the integer type and `fractus` (from *frangere*, to break) is the floating-point type:
+For typed declarations, `numerus` is the integer type and `fractus` (from _frangere_, to break) is the floating-point type:
 
 ```fab
 fixum numerus count = 42
@@ -134,7 +134,7 @@ fixum message = `Hello ${name}`
 
 ### Booleans: verum and falsum
 
-Rather than `true` and `false`, Faber uses Latin: `verum` (true, real) and `falsum` (false, deceptive). These are not arbitrary choices. Latin's *verum* shares its root with English "verify" and "veracity"; *falsum* gives us "falsify."
+Rather than `true` and `false`, Faber uses Latin: `verum` (true, real) and `falsum` (false, deceptive). These are not arbitrary choices. Latin's _verum_ shares its root with English "verify" and "veracity"; _falsum_ gives us "falsify."
 
 ```fab
 fixum yes = verum
@@ -158,7 +158,7 @@ Faber provides three output statements corresponding to different severity level
 
 ### Standard Output: scribe
 
-The keyword `scribe` writes to standard output. It is the imperative of *scribere* (to write): "write!"
+The keyword `scribe` writes to standard output. It is the imperative of _scribere_ (to write): "write!"
 
 ```fab
 scribe "Hello, world!"
@@ -176,7 +176,7 @@ scribe "Coordinates:", x, y
 
 ### Debug Output: vide
 
-The keyword `vide` writes to debug output. It is the imperative of *videre* (to see): "see!" Use it for diagnostic information that should be visible during development but filtered in production.
+The keyword `vide` writes to debug output. It is the imperative of _videre_ (to see): "see!" Use it for diagnostic information that should be visible during development but filtered in production.
 
 ```fab
 vide "Debug: entering main loop"
@@ -185,7 +185,7 @@ vide "Debug: count =", count
 
 ### Warning Output: mone
 
-The keyword `mone` writes to warning output. It is the imperative of *monere* (to warn, advise): "warn!" Use it for conditions that are not errors but deserve attention.
+The keyword `mone` writes to warning output. It is the imperative of _monere_ (to warn, advise): "warn!" Use it for conditions that are not errors but deserve attention.
 
 ```fab
 mone "Warning: deprecated feature used"
@@ -201,7 +201,7 @@ Comments begin with `#` and extend to the end of the line. There is no block com
 fixum x = 10  # inline comment
 ```
 
-Comments explain *why*, not *what*. The code itself shows what is happening; comments provide context that cannot be derived from the code alone.
+Comments explain _why_, not _what_. The code itself shows what is happening; comments provide context that cannot be derived from the code alone.
 
 ## Destructuring
 

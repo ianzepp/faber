@@ -45,15 +45,19 @@ The `argumenta` form is intended to trigger CLI argument parsing and help genera
 Two historical syntaxes existed; the second ("new") form is preferred in recent examples.
 
 **Form A (explicit type first):**
+
 ```
 @ optio <type> <ident> [brevis <string>] [longum <string>] [descriptio <string>]
 ```
+
 - `<type>`: `bivalens` (flag), `textus`, `numerus`, etc.
 
 **Form B (binding-first, current preference in examples):**
+
 ```
 @ optio <ident> [brevis <string>] [longum <string>] [bivalens] [descriptio <string>] [ubique] [vel <value>]
 ```
+
 - Binding name comes first.
 - `bivalens` as a bare modifier means boolean flag (no value).
 - `ubique` marks the option as global (see Global Options below).
@@ -75,6 +79,7 @@ incipit argumenta args {}
 ```
 
 Rules:
+
 - `ubique` options are automatically available to every command in the program (including commands reached via `@ imperia` module mounts).
 - All `ubique` options are merged into the **same flat `args` object** as the command’s local options and operands.
 - A name collision between a `ubique` option and a command-local `@ optio` or `@ operandus` is a **compiler error** (reported by the CLI lowering pass).
@@ -142,23 +147,23 @@ This scoping keeps the CLI surface focused on what can be reasonably and reliabl
 
 ## File-Level Annotations (Summary Table)
 
-| Annotation     | Arguments                          | Placement          | Meaning |
-|----------------|------------------------------------|--------------------|---------|
-| `@ cli`        | string (name)                      | before `incipit`   | Marks program as CLI entry point |
-| `@ versio`     | string                             | before `incipit`   | `--version` output |
-| `@ descriptio` | string                             | before `incipit` or on `@ imperium` / module `incipit` | Help description |
-| `@ imperia`    | string (mount path) `ex` ident     | before `incipit`   | Mount submodule commands |
+| Annotation     | Arguments                      | Placement                                              | Meaning                          |
+| -------------- | ------------------------------ | ------------------------------------------------------ | -------------------------------- |
+| `@ cli`        | string (name)                  | before `incipit`                                       | Marks program as CLI entry point |
+| `@ versio`     | string                         | before `incipit`                                       | `--version` output               |
+| `@ descriptio` | string                         | before `incipit` or on `@ imperium` / module `incipit` | Help description                 |
+| `@ imperia`    | string (mount path) `ex` ident | before `incipit`                                       | Mount submodule commands         |
 
 **Note on globals**: `@ optio ... ubique` and `@ operandus ... ubique` are also declared at this top level (see Global Options grammar above).
 
 ## Command-Level Annotations
 
-| Annotation     | Arguments                          | Placement             | Meaning |
-|----------------|------------------------------------|-----------------------|---------|
-| `@ imperium`   | string (command name, `/` allowed) | on `functio`          | Subcommand definition |
-| `@ alias`      | string                             | on `@ imperium` fn    | Command alias |
-| `@ optio`      | see grammar above (including `vel` and `lista<T>`) | before `@ imperium` fn, or at top level with `ubique` | Flag/option (global when `ubique`) |
-| `@ operandus`  | see grammar above (including `vel` and `lista<T>`) | before `@ imperium` fn, or at top level with `ubique` | Positional (global when `ubique`) |
+| Annotation    | Arguments                                          | Placement                                             | Meaning                            |
+| ------------- | -------------------------------------------------- | ----------------------------------------------------- | ---------------------------------- |
+| `@ imperium`  | string (command name, `/` allowed)                 | on `functio`                                          | Subcommand definition              |
+| `@ alias`     | string                                             | on `@ imperium` fn                                    | Command alias                      |
+| `@ optio`     | see grammar above (including `vel` and `lista<T>`) | before `@ imperium` fn, or at top level with `ubique` | Flag/option (global when `ubique`) |
+| `@ operandus` | see grammar above (including `vel` and `lista<T>`) | before `@ imperium` fn, or at top level with `ubique` | Positional (global when `ubique`)  |
 
 ---
 
@@ -183,10 +188,10 @@ The full historical CLI corpus is archive material now; `examples/exempla/cli` i
 
 The annotation surface sketches two CLI patterns:
 
-| Mode | Use case | Defined by |
-|------|----------|------------|
-| **Single-command** | Simple utilities (`echo`, `cat`, `true`) | `@ optio` / `@ operandus` annotations |
-| **Subcommand** | Multi-command tools (`git`, `npm`, `docker`) | `@ imperium` annotations on functions |
+| Mode               | Use case                                     | Defined by                            |
+| ------------------ | -------------------------------------------- | ------------------------------------- |
+| **Single-command** | Simple utilities (`echo`, `cat`, `true`)     | `@ optio` / `@ operandus` annotations |
+| **Subcommand**     | Multi-command tools (`git`, `npm`, `docker`) | `@ imperium` annotations on functions |
 
 The current compiler preserves these annotations as metadata; mode detection belongs to the eventual lowering contract.
 
@@ -216,6 +221,7 @@ incipit argumenta args exitus code {
 ```
 
 Illustrative usage:
+
 ```
 echo hello world          # prints "hello world\n"
 echo -n hello world       # prints "hello world" (no newline)
@@ -230,13 +236,13 @@ Declare command-line flags with `@ optio`:
 @ optio <type> <binding> [brevis "<short>"] [longum "<long>"] [descriptio "..."]
 ```
 
-| Part | Required | Description |
-|------|----------|-------------|
-| `<type>` | Yes | `bivalens` (flag), `textus` (string), `numerus` (integer) |
-| `<binding>` | Yes | Internal binding name (identifier, accessed as `args.<binding>`) |
-| `brevis "<short>"` | Conditional | Short flag, single char (e.g., `brevis "v"` -> `-v`) |
-| `longum "<long>"` | Conditional | Long flag (e.g., `longum "verbose"` -> `--verbose`) |
-| `descriptio "..."` | No | Help text for this option |
+| Part               | Required    | Description                                                      |
+| ------------------ | ----------- | ---------------------------------------------------------------- |
+| `<type>`           | Yes         | `bivalens` (flag), `textus` (string), `numerus` (integer)        |
+| `<binding>`        | Yes         | Internal binding name (identifier, accessed as `args.<binding>`) |
+| `brevis "<short>"` | Conditional | Short flag, single char (e.g., `brevis "v"` -> `-v`)             |
+| `longum "<long>"`  | Conditional | Long flag (e.g., `longum "verbose"` -> `--verbose`)              |
+| `descriptio "..."` | No          | Help text for this option                                        |
 
 At least one of `brevis` or `longum` is required. The `brevis` value must be a single character.
 
@@ -264,12 +270,12 @@ Declare positional arguments with `@ operandus`:
 @ operandus [ceteri] <type> <binding> [descriptio "..."]
 ```
 
-| Part | Required | Description |
-|------|----------|-------------|
-| `ceteri` | No | Makes this a rest/variadic argument (collects remaining args) |
-| `<type>` | Yes | `textus`, `numerus`, etc. |
-| `<binding>` | Yes | Internal binding name (identifier) |
-| `descriptio "..."` | No | Help text |
+| Part               | Required | Description                                                   |
+| ------------------ | -------- | ------------------------------------------------------------- |
+| `ceteri`           | No       | Makes this a rest/variadic argument (collects remaining args) |
+| `<type>`           | Yes      | `textus`, `numerus`, etc.                                     |
+| `<binding>`        | Yes      | Internal binding name (identifier)                            |
+| `descriptio "..."` | No       | Help text                                                     |
 
 Examples:
 
@@ -335,6 +341,7 @@ incipit argumenta args exitus code {
 ```
 
 Illustrative help:
+
 ```
 copy v1.0.0
 Copy files to a destination
@@ -376,6 +383,7 @@ functio version() -> vacuum {
 ```
 
 Illustrative usage:
+
 ```
 agent version
 agent v
@@ -434,6 +442,7 @@ functio run(
 ```
 
 The `@ optio` annotations sketch:
+
 - Short flag via `brevis "r"` -> `-r`
 - Long flag via `longum "repo"` -> `--repo`
 - Help text via `descriptio "..."`
@@ -459,6 +468,7 @@ Options:
 ```
 
 Illustrative usage:
+
 ```
 agent run "fix the bug" -r owner/repo -i 123 -m sonnet
 agent run "implement feature" --repo owner/repo --model opus --pr
@@ -491,6 +501,7 @@ rivus emit *.fab --strict
 ```
 
 Constraints:
+
 - Only one `ceteri` operand per function
 - `ceteri` must be the last operand
 - Type is always `textus` (collected into `lista<textus>`)
@@ -512,12 +523,14 @@ functio emit(lista<textus> files) optiones opts -> vacuum {
 ```
 
 The `optiones opts` modifier sketches:
+
 - Bundles all `@ optio` annotations into a `Map<string, string>` named `opts`
 - Positional arguments (`@ operandus`) stay explicit in the function signature
 - Options are accessed via bracket notation: `opts["name"]`
 - Use `vel` for defaults and type coercion (`⇒ bivalens`, `⇒ numerus`)
 
 New `@ optio` syntax (preferred):
+
 ```fab
 @ optio name [brevis "x"] [longum "xxx"] [bivalens] [descriptio "..."]
 ```
@@ -533,20 +546,20 @@ New `@ optio` syntax (preferred):
 For anyone reviving the feature, the following locations contain the most complete prior implementation:
 
 - **Design + usage corpus**
-  - Archive CLI examples under `../faber-archivum` — most complete historical examples
-  - `examples/exempla/cli/main.fab` + `commands/greet.fab`
+    - Archive CLI examples under `../faber-archivum` — most complete historical examples
+    - `examples/exempla/cli/main.fab` + `commands/greet.fab`
 
 - **Old reference lowering** (faber-ts era)
-  - `../faber-archivum/reference/faber-ts/codegen/cli/detector.ts` — command tree building, annotation extraction, module mounting via `@ imperia`
-  - `../faber-archivum/reference/faber-ts/codegen/cli/resolver.ts` — module loading and recursive extraction
-  - `../faber-archivum/reference/faber-ts/codegen/ts/statements/incipit.ts` and `incipiet.ts` — help generation and dispatch logic
-  - `../faber-archivum/reference/faber-ts/codegen/ts/generator.ts` — `CliProgram`, `CliCommandNode`, `CliOption`, `CliOperand` types
+    - `../faber-archivum/reference/faber-ts/codegen/cli/detector.ts` — command tree building, annotation extraction, module mounting via `@ imperia`
+    - `../faber-archivum/reference/faber-ts/codegen/cli/resolver.ts` — module loading and recursive extraction
+    - `../faber-archivum/reference/faber-ts/codegen/ts/statements/incipit.ts` and `incipiet.ts` — help generation and dispatch logic
+    - `../faber-archivum/reference/faber-ts/codegen/ts/generator.ts` — `CliProgram`, `CliCommandNode`, `CliOption`, `CliOperand` types
 
 - **Radix-rs AST preparation** (partial forward port)
-  - `radix/crates/radix/src/syntax/ast.rs` — `AnnotationKind::Cli`, `OptioAnnotation`, `OperandusAnnotation`
+    - `radix/crates/radix/src/syntax/ast.rs` — `AnnotationKind::Cli`, `OptioAnnotation`, `OperandusAnnotation`
 
 - **Known limitation in current radix-rs**
-  - Lowering for `incipit argumenta` and CLI dispatch was explicitly rejected (see commit `7e906c3b` "reject unsupported incipit argumenta lowering").
+    - Lowering for `incipit argumenta` and CLI dispatch was explicitly rejected (see commit `7e906c3b` "reject unsupported incipit argumenta lowering").
 
 This planned grammar and the artifacts above should be sufficient to re-implement the full surface cleanly on top of the existing HIR and codegen pipeline when the time comes.
 
@@ -623,6 +636,7 @@ The `@ descriptio` on the module's `incipit` sketches the help text for the comm
 ### Generated Help
 
 Root help (`agent --help`):
+
 ```
 agent v0.1.0
 CLI for spawning isolated AI agent runs
@@ -640,6 +654,7 @@ Options:
 ```
 
 Group help (`agent jobs --help`):
+
 ```
 Usage: agent jobs <command> [options]
 
@@ -654,6 +669,7 @@ Options:
 ```
 
 Command help (`agent jobs clean --help`):
+
 ```
 Remove old jobs
 
@@ -687,6 +703,7 @@ functio show(textus name) -> vacuum {
 Illustrative usage: `myapp personas show reviewer`
 
 Missing required arguments produce an error:
+
 ```
 Missing required argument: name
 ```
@@ -725,6 +742,7 @@ functio compile(textus input, si textus output, si bivalens verbose) -> vacuum {
 ```
 
 This gives you:
+
 - `-o` and `--output` flags with help text
 - `-v` and `--verbose` flags with help text
 - Type checking that `output` and `verbose` are optional
@@ -735,14 +753,15 @@ This gives you:
 
 The intended CLI framework would generate:
 
-| Feature | Flags | Description |
-|---------|-------|-------------|
-| Help | `--help`, `-h` | Shows usage, commands, and options |
-| Version | `--version`, `-v` | Shows version from `@ versio` |
-| Error messages | - | Missing/invalid argument errors |
-| Unknown command errors | - | Suggests running `--help` |
+| Feature                | Flags             | Description                        |
+| ---------------------- | ----------------- | ---------------------------------- |
+| Help                   | `--help`, `-h`    | Shows usage, commands, and options |
+| Version                | `--version`, `-v` | Shows version from `@ versio`      |
+| Error messages         | -                 | Missing/invalid argument errors    |
+| Unknown command errors | -                 | Suggests running `--help`          |
 
 Illustrative help is contextual:
+
 - `myapp --help` shows top-level commands
 - `myapp jobs --help` shows that subgroup's commands
 - `myapp jobs clean --help` shows that command's options
@@ -750,6 +769,7 @@ Illustrative help is contextual:
 ## Limitations
 
 Not yet implemented:
+
 - Typed `@ cli`, `@ optio`, and `@ operandus` parsing in `radix-rs`
 - CLI argument lowering, generated help, generated version output, and dispatch
 - Default values for options (`vel`)

@@ -301,9 +301,10 @@ fn row_to_value(row: &AnyRow) -> Value {
 fn base64_encode(data: &[u8]) -> String {
     use std::io::Write;
     let mut buf = Vec::new();
-    let mut encoder = Base64Encoder::new(&mut buf);
-    encoder.write_all(data).unwrap();
-    drop(encoder);
+    {
+        let mut encoder = Base64Encoder::new(&mut buf);
+        encoder.write_all(data).unwrap();
+    }
     String::from_utf8(buf).unwrap_or_default()
 }
 

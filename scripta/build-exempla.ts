@@ -18,6 +18,9 @@ const EXEMPLA = join(ROOT, 'examples', 'exempla');
 const OUT_ROOT = join(ROOT, 'opus', 'radix', 'exempla');
 
 type Target = 'rust' | 'ts' | 'go' | 'faber';
+interface ShellErrorLike {
+    stderr?: { toString(): string };
+}
 
 const TARGETS = ['rust', 'ts', 'go', 'faber'] as const;
 const EXTENSION: Record<Target, string> = {
@@ -64,13 +67,21 @@ async function findFabFiles(dir: string): Promise<string[]> {
         const fullPath = join(dir, entry);
         const info = await stat(fullPath);
         if (info.isDirectory()) {
-            files.push(...await findFabFiles(fullPath));
+            files.push(...(await findFabFiles(fullPath)));
         } else if (entry.endsWith('.fab')) {
             files.push(fullPath);
         }
     }
 
     return files.sort();
+}
+
+function stderrFromError(err: unknown): string {
+    if (typeof err !== 'object' || err === null || !('stderr' in err)) {
+        return '';
+    }
+
+    return ((err as ShellErrorLike).stderr?.toString() ?? '').trim();
 }
 
 async function main() {
@@ -93,11 +104,13 @@ async function main() {
             const result = await $`cargo run --quiet --manifest-path ${MANIFEST} -p radix -- emit -t ${target} ${file}`.quiet();
             await Bun.write(output, result.stdout);
             console.log(`${rel} -> ${relative(ROOT, output)}`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             failed++;
             console.error(`${rel}: failed`);
-            const stderr = err.stderr?.toString().trim();
-            if (stderr) console.error(stderr.split('\n').slice(0, 4).join('\n'));
+            const stderr = stderrFromError(err);
+            if (stderr) {
+                console.error(stderr.split('\n').slice(0, 4).join('\n'));
+            }
         }
     }
 

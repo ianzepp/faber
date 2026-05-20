@@ -149,14 +149,14 @@ fn local_init_requires_some_wrapper(
         return false;
     }
 
-    match &init.kind {
-        HirExprKind::Literal(HirLiteral::Nil) => false,
-        HirExprKind::Path(_)
-        | HirExprKind::Call(_, _)
-        | HirExprKind::MethodCall(_, _, _)
-        | HirExprKind::Field(_, _)
-        | HirExprKind::Index(_, _)
-        | HirExprKind::Binary(_, _, _) => false,
-        _ => true,
-    }
+    !matches!(
+        &init.kind,
+        HirExprKind::Literal(HirLiteral::Nil)
+            | HirExprKind::Path(_)
+            | HirExprKind::Call(_, _)
+            | HirExprKind::MethodCall(_, _, _)
+            | HirExprKind::Field(_, _)
+            | HirExprKind::Index(_, _)
+            | HirExprKind::Binary(_, _, _)
+    )
 }

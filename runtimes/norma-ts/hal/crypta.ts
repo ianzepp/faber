@@ -59,16 +59,23 @@ export class ParClavium {
 // =========================================================================
 
 function normalizeHashAlgo(algo: string): string {
-    if (algo === 'blake2b') return 'blake2b512';
-    if (algo.startsWith('hmac-')) return algo.slice(5); // hmac-sha256 -> sha256
+    if (algo === 'blake2b') {
+        return 'blake2b512';
+    }
+    if (algo.startsWith('hmac-')) {
+        return algo.slice(5);
+    } // hmac-sha256 -> sha256
     return algo;
 }
 
 function getIvLength(algo: CipherAlgorithm): number {
     switch (algo) {
-        case 'aes-256-gcm': return 12;
-        case 'aes-256-cbc': return 16;
-        default: throw new Error(`Unknown cipher algorithm: ${algo}`);
+        case 'aes-256-gcm':
+            return 12;
+        case 'aes-256-cbc':
+            return 16;
+        default:
+            throw new Error(`Unknown cipher algorithm: ${algo}`);
     }
 }
 
@@ -116,8 +123,7 @@ export const crypta = {
             result.set(authTag, iv.length);
             result.set(encrypted, iv.length + authTag.length);
             return result;
-        }
-        else {
+        } else {
             const cipher = crypto.createCipheriv('aes-256-cbc', clavis, iv);
             const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
             const result = new Uint8Array(iv.length + encrypted.length);
@@ -139,8 +145,7 @@ export const crypta = {
             decipher.setAuthTag(authTag);
             const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
             return new Uint8Array(decrypted);
-        }
-        else {
+        } else {
             const iv = data.slice(0, ivLength);
             const ciphertext = data.slice(ivLength);
 
@@ -230,16 +235,22 @@ export const crypta = {
             case 'pbkdf2':
                 return new Promise((resolve, reject) => {
                     crypto.pbkdf2(password, sal, 100000, longitudo, 'sha256', (err, key) => {
-                        if (err) reject(err);
-                        else resolve(new Uint8Array(key));
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(new Uint8Array(key));
+                        }
                     });
                 });
 
             case 'scrypt':
                 return new Promise((resolve, reject) => {
                     crypto.scrypt(password, sal, longitudo, (err, key) => {
-                        if (err) reject(err);
-                        else resolve(new Uint8Array(key));
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(new Uint8Array(key));
+                        }
                     });
                 });
 

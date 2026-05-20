@@ -24,7 +24,9 @@ const subscriptions = new Set<SubscriptioImpl>();
 let cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
 function startCleanup(): void {
-    if (cleanupInterval) return;
+    if (cleanupInterval) {
+        return;
+    }
     cleanupInterval = setInterval(() => {
         const now = Date.now();
         for (const [key, entry] of cache) {
@@ -41,7 +43,9 @@ function isExpired(entry: CacheEntry): boolean {
 
 function getValidEntry(key: string): CacheEntry | null {
     const entry = cache.get(key);
-    if (!entry) return null;
+    if (!entry) {
+        return null;
+    }
     if (isExpired(entry)) {
         cache.delete(key);
         return null;
@@ -80,25 +84,19 @@ function matchesPattern(topic: string, pattern: string): boolean {
             }
             // Try matching ** against varying numbers of segments
             for (let skip = 0; skip <= topicParts.length - ti; skip++) {
-                if (matchesPattern(
-                    topicParts.slice(ti + skip).join('/'),
-                    patternParts.slice(pi + 1).join('/')
-                )) {
+                if (matchesPattern(topicParts.slice(ti + skip).join('/'), patternParts.slice(pi + 1).join('/'))) {
                     return true;
                 }
             }
             return false;
-        }
-        else if (patternParts[pi] === '*') {
+        } else if (patternParts[pi] === '*') {
             // * matches exactly one segment
             ti++;
             pi++;
-        }
-        else if (patternParts[pi] === topicParts[ti]) {
+        } else if (patternParts[pi] === topicParts[ti]) {
             ti++;
             pi++;
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -153,7 +151,9 @@ export class Subscriptio {
 
     /** Internal: deliver message to this subscription */
     _deliver(topic: string, body: string, timestamp: number): boolean {
-        if (this.closed) return false;
+        if (this.closed) {
+            return false;
+        }
 
         for (const pattern of this.patterns) {
             if (matchesPattern(topic, pattern)) {
@@ -162,8 +162,7 @@ export class Subscriptio {
                     const resolve = this.waiting;
                     this.waiting = null;
                     resolve({ value: new Nuntius(msg.topic, msg.body, msg.timestamp), done: false });
-                }
-                else {
+                } else {
                     this.queue.push(msg);
                 }
                 return true;
@@ -177,12 +176,13 @@ export class Subscriptio {
             if (this.queue.length > 0) {
                 const msg = this.queue.shift()!;
                 yield new Nuntius(msg.topic, msg.body, msg.timestamp);
-            }
-            else {
-                const result = await new Promise<IteratorResult<Nuntius>>((resolve) => {
+            } else {
+                const result = await new Promise<IteratorResult<Nuntius>>(resolve => {
                     this.waiting = resolve;
                 });
-                if (result.done) break;
+                if (result.done) {
+                    break;
+                }
                 yield result.value;
             }
         }
@@ -220,7 +220,9 @@ export const thesaurus = {
     async ponetNovum(clavis: string, valor: string): Promise<boolean> {
         startCleanup();
         const existing = getValidEntry(clavis);
-        if (existing) return false;
+        if (existing) {
+            return false;
+        }
         cache.set(clavis, { value: valor, expiresAt: null });
         return true;
     },
@@ -241,18 +243,24 @@ export const thesaurus = {
 
     async ttl(clavis: string): Promise<number> {
         const entry = cache.get(clavis);
-        if (!entry) return -2;
+        if (!entry) {
+            return -2;
+        }
         if (isExpired(entry)) {
             cache.delete(clavis);
             return -2;
         }
-        if (entry.expiresAt === null) return -1;
+        if (entry.expiresAt === null) {
+            return -1;
+        }
         return Math.max(0, Math.ceil((entry.expiresAt - Date.now()) / 1000));
     },
 
     async expirabit(clavis: string, secundae: number): Promise<boolean> {
         const entry = getValidEntry(clavis);
-        if (!entry) return false;
+        if (!entry) {
+            return false;
+        }
         entry.expiresAt = Date.now() + secundae * 1000;
         return true;
     },

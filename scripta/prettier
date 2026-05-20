@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Format source code with Prettier
 #
-# Formats current Faber source and Markdown documentation.
+# Formats known Prettier-supported project files.
 # Use --check flag to validate formatting without making changes.
 #
 # Usage:
@@ -9,16 +9,15 @@
 #   ./scripta/prettier --check  # Check formatting (CI mode)
 #
 # Covers:
-#   - radix/stdlib/**/*.fab
-#   - examples/**/*.fab
 #   - docs/grammatica/**/*.md
+# Unknown Faber files are included for future parser/plugin support, but skipped today.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 if [[ "${1:-}" == "--check" ]]; then
-    prettier --check "radix/stdlib/**/*.fab" "examples/**/*.fab" "docs/grammatica/**/*.md"
+    prettier --ignore-unknown --check "radix/stdlib/**/*.fab" "examples/**/*.fab" "docs/grammatica/**/*.md"
 else
-    prettier --write "radix/stdlib/**/*.fab" "examples/**/*.fab" "docs/grammatica/**/*.md"
+    prettier --ignore-unknown --write "radix/stdlib/**/*.fab" "examples/**/*.fab" "docs/grammatica/**/*.md"
 fi

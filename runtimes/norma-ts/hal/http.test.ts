@@ -1,5 +1,6 @@
 import { test, expect, describe, beforeAll, afterAll } from 'bun:test';
-import { http, Replicatio, Rogatio, Servitor } from './http';
+import type { Rogatio, Servitor } from './http';
+import { http, Replicatio } from './http';
 
 describe('http HAL', () => {
     let server: Servitor;
@@ -53,7 +54,7 @@ describe('http HAL', () => {
                         'X-Custom-Header': 'custom-value',
                         'Content-Type': 'text/plain',
                     },
-                    'check headers'
+                    'check headers',
                 );
             }
 
@@ -130,7 +131,7 @@ describe('http HAL', () => {
                 'POST',
                 `${baseUrl}/echo`,
                 { 'X-Test-Header': 'test-value', 'Content-Type': 'application/json' },
-                '{"test": true}'
+                '{"test": true}',
             );
             expect(response.status()).toBe(200);
             expect(lastRequest?.method).toBe('POST');
@@ -230,11 +231,7 @@ describe('http HAL', () => {
 
     describe('response builders', () => {
         test('replica creates response with status, headers, body', () => {
-            const response = http.replica(
-                201,
-                { 'X-Test': 'value' },
-                'body content'
-            );
+            const response = http.replica(201, { 'X-Test': 'value' }, 'body content');
             expect(response.status()).toBe(201);
             expect(response.corpus()).toBe('body content');
             expect(response.caput('x-test')).toBe('value');
