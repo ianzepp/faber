@@ -12,9 +12,31 @@ Important rules:
 
 - Do not run Git commands that create locks in parallel in this repository.
 - Commit after each completed phase.
-- Prefer line-moving tools such as `slice` for bulk refactors instead of regenerating large Rust files.
+- Prefer method-anchored moves over raw line-range moves. When using `slice`, move whole Rust items or whole methods only after confirming the method's doc comments, attributes, signature, and closing brace are included.
 - Keep public module surfaces stable unless a phase explicitly says otherwise.
 - Run the validation gate after every phase.
+
+## Refactor Execution Discipline
+
+Large Rust module splits in this plan must be performed as item moves, not as broad text surgery. The failed Phase 1 attempt showed that raw line ranges are brittle around doc comments, `#[allow(...)]` attributes, blank lines, and nested braces. A refactor slice is only acceptable when it moves a complete Rust item:
+
+- include every attached doc comment and attribute with the function or helper it documents
+- include the full function signature and closing brace
+- leave no orphaned doc comment, attribute, import, or blank placeholder in the source file
+- run `cargo fmt --manifest-path radix/Cargo.toml --all -- --check` or `cargo fmt --manifest-path radix/Cargo.toml --all` immediately after each small batch
+- run `cargo check --manifest-path radix/Cargo.toml -p radix` after each file-sized batch
+- run `bun run lint` before declaring a phase checkpoint, because unused imports and stale attributes are phase blockers
+
+Use line numbers only as temporary navigation aids. Before each move, re-anchor on function names with `rg -n "fn name|pub\\(super\\) fn name|#\\[allow"` and inspect the exact start and end. If a method has attached attributes or doc comments, treat them as part of the method.
+
+Parallel subagents are feasible, but they must not concurrently edit the same source file in the same worktree. Use them for bounded, file-owned work:
+
+- one agent may prepare or implement a target module such as `ops.rs`, `types.rs`, or `literal.rs`
+- one agent may inspect dependencies and produce a method list for a target module
+- one agent may verify a completed target module against the plan
+- the parent/integrator serializes edits to the shared parent file (`mod.rs`, `expr.rs`, or `typecheck.rs`) and runs the validation loop
+
+Do not ask multiple agents to remove methods from the same parent file at the same time. Parallelism is safe at the planning, target-file, and verification layers; extraction from the shared source module is serialized.
 
 ## Interpreted Problem
 
@@ -163,6 +185,8 @@ Implementation notes:
 - Prefer moving existing methods into separate `impl FaberCodegen` blocks.
 - Keep function names stable where practical.
 - Keep `mod_test.rs` path and test module convention unchanged.
+- For each target file, move complete methods one at a time or in very small groups. Attached doc comments and `#[allow(...)]` attributes move with the method.
+- Subagents may own target modules, but the final deletion from `mod.rs` must be integrated serially by the parent agent.
 
 Checkpoint:
 
@@ -419,4 +443,3 @@ After this factory run, consider separate plans for:
 - runtime HAL modules that cross 400 lines
 
 Those should not be folded into this run. The first factory run should make the most painful compiler modules navigable and stop there.
-

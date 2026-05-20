@@ -31,8 +31,25 @@ This matches the "large module" anti-pattern identified in housekeeping. Other b
    - Owns top-level `collect_names`, `generate_item` dispatch (thin), `generate_function` etc if orchestration, or delegates.
 4. Preserve exact output bytes for all existing tests in `mod_test.rs` and any snapshot tests.
 5. Use `pub(super)` for cross-submodule items inside the faber module.
-6. Prefer mechanical `slice` moves for bodies; only hand-edit imports, mod decls, visibility, and any call-site path adjustments.
+6. Prefer method-anchored moves over raw line ranges. If `slice` is used, move complete methods only after confirming attached docs, attributes, signatures, and closing braces are included.
 7. After split: run full validation gate + Faber-specific smoke (e.g. `cargo run -p radix -- emit -t faber examples/...`).
+
+## Restart Lessons and Extraction Rules
+
+The first Phase 1 attempt was abandoned before commit. It kept behavior mostly intact, but it left empty target modules, stale imports, orphaned comments, and a failing lint/format gate. The failure mode was not semantic complexity; it was brittle line-range movement around Rust method boundaries.
+
+For the restart, use this discipline:
+
+- Re-anchor every move on method names, not remembered line numbers.
+- Treat `///` doc comments and `#[allow(...)]` attributes as part of the method they describe.
+- Move one complete method or one tightly coupled helper cluster at a time.
+- After each move, immediately remove stale imports from the source file and add only required imports to the target file.
+- Run `cargo fmt --manifest-path radix/Cargo.toml --all` after each batch before interpreting compiler output.
+- Run `cargo check --manifest-path radix/Cargo.toml -p radix` after each target module lands.
+- Run `bun run lint` before any checkpoint; warnings are blockers in this repo.
+- Do not leave empty target modules with speculative imports. Create a target file when the first real method lands there.
+
+If a method has a clippy allowance such as `#[allow(clippy::too_many_arguments)]` or `#[allow(clippy::only_used_in_recursion)]`, move the allowance with that method. If moving the method removes the original lint trigger from `mod.rs`, also remove any now-stale allowance or comment from `mod.rs`.
 
 ## Repo-Aware Baseline (Current State)
 
@@ -65,30 +82,42 @@ This matches the "large module" anti-pattern identified in housekeeping. Other b
 
 ## Stage Graph / Workstreams for Phase 1
 
-1. **Exploration & boundary definition** (read-only subagent or main): map exact line ranges for each responsibility group using rg/nl. Produce extraction plan (bottom-up order to avoid line drift).
-2. **Scaffold new module files**: mkdir not needed (already in tree? no, will touch), `touch` the 8 new .rs files + update mod.rs `mod xxx;`
-3. **Mechanical extractions** (primary use of `slice`):
-   - Extract ops.rs (precedence, binop, unop, assign helpers) - likely early, low dependency
-   - literal.rs
-   - names.rs (collect_names + name_for_def)
-   - types.rs (type_to_faber + option flattening)
-   - pattern.rs
-   - expr.rs (write_expr family + precedence dispatch)
-   - stmt.rs (block/stmt writers)
-   - decl.rs (item + function/struct/enum/interface)
-4. **Glue edits** (small search_replace or patch):
+1. **Exploration & boundary definition** (read-only subagent or main): map methods, attached attributes/docs, and internal call dependencies for each target module. Produce method-name extraction lists, not only line ranges.
+2. **Target module implementation**: create each target `.rs` file only when moving its first real method. Do not create placeholder modules with speculative imports.
+3. **Method-anchored extractions**:
+   - `ops.rs`: `expr_precedence`, `binop_to_faber`, `binop_precedence`, `assignop_to_faber`, `unop_to_faber`
+   - `types.rs`: `type_to_faber`, `flatten_option`
+   - `literal.rs`: `write_literal`, `write_object_field`, quoted text/symbol helpers if they are not better kept with names
+   - `names.rs`: `collect_names`, name collectors, `name_for_def`, `symbol_to_string`
+   - `pattern.rs`: `write_pattern`, `write_match_arms`/match-arm helpers if present
+   - `expr.rs`: `write_expr`, `write_expr_prec`, expression-only helpers
+   - `stmt.rs`: `write_block`, `write_stmt`, control-flow statement helpers, branch body helpers, loop-shape helpers, `reddit_expr` if used by statement rendering
+   - `decl.rs`: `generate_item`, declarations, functions, proba functions, structs, enums, interfaces, `is_synthetic_proba_function`
+4. **Glue edits**:
    - Add `mod decl; mod stmt; ...` declarations
    - Adjust visibility on moved items (`pub(super)`)
    - Add necessary `use` in submodules and in mod.rs
    - Ensure `CodeWriter`, `CodegenError`, HIR types visible (they come from super:: or crate::)
 5. **Compile + test loop**:
-   - After each 1-2 extractions: `cargo check -p radix`
+   - After each method batch: `cargo fmt --manifest-path radix/Cargo.toml --all`
+   - After each target module: `cargo check --manifest-path radix/Cargo.toml -p radix`
+   - Before checkpoint: `bun run lint`
    - Full `cargo test -p radix --test faber_codegen` or the mod_test
    - Fix any import/visibility/scope issues immediately
 6. **Faber-specific smoke**: Use CLI `cargo run -p radix -- emit -t faber <example.fab>` and roundtrip check if available.
 7. **Full validation gate**: per master plan.
 
-**Parallelism**: Exploration can be subagent; extractions are serial (line numbers shift); glue + check can interleave.
+**Parallelism**: Feasible, but only with clear ownership. Subagents may own target files or read-only method maps. The parent agent serializes edits to `mod.rs` and owns the final integration order.
+
+Suggested 5.4-mini ownership:
+
+- Agent A: `ops.rs`, `types.rs`, `literal.rs` method map and implementation proposal
+- Agent B: `names.rs` and `pattern.rs` method map and implementation proposal
+- Agent C: `expr.rs` method map, dependencies, and post-move verification checklist
+- Agent D: `stmt.rs` method map, dependencies, and post-move verification checklist
+- Agent E: `decl.rs` method map, dependencies, and final public-surface verification
+
+Each agent must report exact method names, attached attributes/docs, imports needed in its target file, and cross-file method calls. Do not let multiple agents delete from `mod.rs` concurrently.
 
 ## Checkpoints & Gate
 
@@ -120,6 +149,6 @@ This matches the "large module" anti-pattern identified in housekeeping. Other b
 
 ## Spec Revisions
 
-- None yet. This spec is derived directly from the factory-approved master plan + live repo inspection (HEAD 39707302).
+- 2026-05-20: Added restart lessons after the abandoned first Phase 1 attempt. The restart should use method-anchored moves, keep attributes/docs attached to methods, avoid placeholder modules, and use parallel subagents only for target-file ownership or read-only mapping while `mod.rs` integration remains serialized.
 
 **Status**: Ready for implementation. Delivery spec persisted before any edits.
