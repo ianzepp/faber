@@ -1,52 +1,61 @@
-# json.fab - JSON Encoding/Decoding Device
+# yaml.fab - YAML Encoding/Decoding Device
 #
-# Etymology: "JSON" - JavaScript Object Notation (universal, kept as-is).
+# Etymology: "YAML" - YAML Ain't Markup Language (universal, kept as-is).
 #
 # Part of the Hardware Abstraction Layer (HAL).
 #
 # Design principles:
-#   - pange (compose) for serialization: composing the JSON text
+#   - pange (compose) for serialization: composing the YAML text
 #   - solve (untangle) for parsing: solving/extracting data from text
+#   - necto/collige for multi-document: bind/gather multiple docs
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "../norma-ts/json.ts"
-@ subsidia rs "../norma-rs/json.rs"
-@ subsidia go "../norma-go/json/json.go"
-@ subsidia py "../norma-py/json.py"
-pactum json {
+@ subsidia ts "../../../runtimes/norma-ts/yaml.ts"
+@ subsidia rs "../../crates/norma/yaml.rs"
+@ subsidia go "../../../runtimes/norma-go/yaml/yaml.go"
+@ subsidia py "../../../runtimes/norma-py/yaml.py"
+pactum yaml {
     # =========================================================================
     # SERIALIZATION
     # =========================================================================
     # Verb: pange from "pangere" (to fasten, compose)
-    # Why: Composing/fastening data into JSON text representation.
 
-    # Serialize value to JSON string
-    # indentum = 0 or omitted: compact output
-    # indentum > 0: pretty-printed with that many spaces
+    # Serialize value to YAML string
     @ externa
-    functio pange(quidlibet valor, si numerus indentum) -> textus
+    functio pange(quidlibet valor) -> textus
+
+    # Verb: necto from "nectere" (to bind, tie together)
+    # Why: Binding multiple documents into a single YAML stream.
+
+    # Bind multiple documents into multi-doc YAML string
+    @ externa
+    functio necto(lista<quidlibet> documenta) -> textus
 
     # =========================================================================
     # PARSING
     # =========================================================================
     # Verb: solve from "solvere" (to loosen, untangle)
-    # Why: Untangling/extracting data from JSON text.
 
-    # Parse JSON string to value (throws on error)
+    # Parse YAML string to value (throws on error)
     @ externa
-    functio solve(textus json) -> quidlibet
+    functio solve(textus yaml) -> quidlibet
 
     # Verb: tempta from "temptare" (to try, attempt)
-    # Why: Attempting to parse, returning null on failure instead of throwing.
 
-    # Attempt to parse JSON string (returns null on error)
+    # Attempt to parse YAML string (returns null on error)
     @ externa
-    functio tempta(textus json) -> si quidlibet
+    functio tempta(textus yaml) -> si quidlibet
+
+    # Verb: collige from "colligere" (to collect, gather)
+    # Why: Gathering all documents from a multi-doc YAML stream.
+
+    # Gather all documents from multi-doc YAML string
+    @ externa
+    functio collige(textus yaml) -> lista<quidlibet>
 
     # =========================================================================
     # TYPE CHECKING
     # =========================================================================
-    # Predicates: "est X" = "it is X" - natural Latin predicate form
 
     @ externa
     functio estNihil(quidlibet valor) -> bivalens
@@ -69,7 +78,6 @@ pactum json {
     # =========================================================================
     # VALUE EXTRACTION
     # =========================================================================
-    # Pattern: "ut X" = "as X" - extract as type with default
 
     @ externa
     functio utTextus(quidlibet valor, textus defVal) -> textus

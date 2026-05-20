@@ -13,10 +13,10 @@
 #   - Default output includes newline (common case)
 #   - Use dic() for partial output without newline
 
-@ subsidia ts "../../norma-ts/hal/consolum.ts"
-@ subsidia rs "../../norma-rs/hal/consolum.rs"
-@ subsidia go "../../norma-go/hal/consolum/consolum.go"
-@ subsidia py "../../norma-py/hal/consolum.py"
+@ subsidia ts "../../../../runtimes/norma-ts/hal/consolum.ts"
+@ subsidia rs "../../../crates/norma/hal/consolum.rs"
+@ subsidia go "../../../../runtimes/norma-go/hal/consolum/consolum.go"
+@ subsidia py "../../../../runtimes/norma-py/hal/consolum.py"
 pactum consolum {
     # =========================================================================
     # STDIN - Bytes

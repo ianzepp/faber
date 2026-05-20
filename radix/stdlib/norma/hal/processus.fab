@@ -25,10 +25,10 @@ genus Subprocessus {
     promissum<numerus> expiravit   # resolves to exit code when process ends
 }
 
-@ subsidia ts "../../norma-ts/hal/processus.ts"
-@ subsidia rs "../../norma-rs/hal/processus.rs"
-@ subsidia go "../../norma-go/hal/processus/processus.go"
-@ subsidia py "../../norma-py/hal/processus.py"
+@ subsidia ts "../../../../runtimes/norma-ts/hal/processus.ts"
+@ subsidia rs "../../../crates/norma/hal/processus.rs"
+@ subsidia go "../../../../runtimes/norma-go/hal/processus/processus.go"
+@ subsidia py "../../../../runtimes/norma-py/hal/processus.py"
 pactum processus {
     # =========================================================================
     # SPAWN - Attached

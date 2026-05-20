@@ -20,7 +20,7 @@ fn exempla_rust_e2e() {
         return;
     }
 
-    let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
+    let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../examples/exempla");
     let mut exempla = collect_exempla_files(&exempla_dir);
     exempla.sort();
     assert_eq!(exempla.len(), 131, "expected 131 exempla files");
@@ -156,7 +156,7 @@ fn exempla_rust_e2e() {
 #[test]
 #[ignore = "slow round-trip harness; run explicitly with cargo test exempla_faber_roundtrip_e2e -- --ignored"]
 fn exempla_faber_roundtrip_e2e() {
-    let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
+    let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../examples/exempla");
     let mut exempla = collect_exempla_files(&exempla_dir);
     exempla.sort();
     assert_eq!(exempla.len(), 131, "expected 131 exempla files");

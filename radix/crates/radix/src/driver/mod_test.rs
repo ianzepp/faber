@@ -1638,7 +1638,7 @@ incipit {
 #[test]
 fn ordo_exemplum_no_longer_reports_elige_literal_error() {
     let session = session(Target::Rust);
-    let source = std::fs::read_to_string("../../examples/exempla/ordo/ordo.fab").expect("read ordo exemplum");
+    let source = std::fs::read_to_string("../../../examples/exempla/ordo/ordo.fab").expect("read ordo exemplum");
     let result = compile(&session, "ordo.fab", &source);
 
     assert!(result

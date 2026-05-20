@@ -76,7 +76,7 @@ fn cmd_emit_supports_faber_target_flag() {
 #[test]
 fn cmd_emit_supports_package_input() {
     cmd_emit(EmitCommand {
-        input: vec!["../../examples/exempla/cli/main.fab".to_owned()],
+        input: vec!["../../../examples/exempla/cli/main.fab".to_owned()],
         package: true,
         target: radix::codegen::Target::Rust,
     });
