@@ -197,6 +197,10 @@ pub fn semantic_spec(kind: SemanticErrorKind) -> DiagnosticSpec {
         SemanticErrorKind::LoweringError => {
             DiagnosticSpec { code: "SEM008", help: Some("fix the AST construct for lowering") }
         }
+        SemanticErrorKind::CliValidation => DiagnosticSpec {
+            code: "SEM009",
+            help: Some("fix the CLI annotation contract before emitting runnable CLI code"),
+        },
         SemanticErrorKind::ShadowedVariable => {
             DiagnosticSpec { code: "SEM055", help: Some("rename one of the variables") }
         }

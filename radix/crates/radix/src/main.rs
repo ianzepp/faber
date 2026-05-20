@@ -53,6 +53,7 @@ fn main() {
         Command::Lex(args) => cmd_lex(&args.input),
         Command::Parse(args) => cmd_parse(&args.input),
         Command::Hir(args) => cmd_hir(&args.input),
+        Command::CliIr(args) => cmd_cli_ir(&args.input),
         Command::Check(args) => cmd_check(CheckCommand { input: args.input, permissive: args.permissive }),
         Command::Emit(args) => {
             cmd_emit(EmitCommand { input: args.input, package: args.package, target: args.target.into() })
@@ -79,6 +80,8 @@ enum Command {
     Parse(InputArgs),
     /// Lower AST to HIR and output as JSON
     Hir(InputArgs),
+    /// Validate and output normalized CLI IR as JSON
+    CliIr(InputArgs),
     /// Run semantic analysis
     Check(CheckArgs),
     /// Compile to target (rust, faber, ts, go)
@@ -303,8 +306,13 @@ fn cmd_parse(args: &[String]) {
             // WHY: Extract variant name only to avoid huge debug output
             let kind_name = kind.split('(').next().unwrap_or(&kind);
             println!(
-                "    {{ \"id\": {}, \"kind\": \"{}\", \"span\": [{}, {}] }}{}",
-                stmt.id, kind_name, stmt.span.start, stmt.span.end, comma
+                "    {{ \"id\": {}, \"kind\": \"{}\", \"span\": [{}, {}], \"annotations\": [{}] }}{}",
+                stmt.id,
+                kind_name,
+                stmt.span.start,
+                stmt.span.end,
+                annotation_json(&stmt.annotations),
+                comma
             );
         }
 
@@ -424,6 +432,42 @@ fn cmd_hir(args: &[String]) {
     }
 }
 
+fn cmd_cli_ir(args: &[String]) {
+    let (name, source) = read_source(args);
+    let source_file = source_file_from_input(name, source);
+
+    let lex_result = radix::lexer::lex(source_file.content.as_str());
+    if !lex_result.success() {
+        eprintln!("lexer errors:");
+        for err in &lex_result.errors {
+            eprintln!("  {}: {}", format_location(&source_file, err.span.start), err.message);
+        }
+        std::process::exit(1);
+    }
+
+    let parse_result = radix::parser::parse(lex_result);
+    if !parse_result.success() {
+        eprintln!("parser errors:");
+        for err in &parse_result.errors {
+            eprintln!("  {}: {}", format_location(&source_file, err.span.start), err.message);
+        }
+        std::process::exit(1);
+    }
+
+    let radix::parser::ParseResult { program, interner, .. } = parse_result;
+    let Some(program) = program else {
+        eprintln!("internal error: successful parse result missing program");
+        std::process::exit(1);
+    };
+
+    let cli_analysis = radix::cli::analyze(&program, &interner);
+    println!("{}", cli_analysis_json(&cli_analysis));
+
+    if !cli_analysis.errors.is_empty() {
+        std::process::exit(1);
+    }
+}
+
 /// Run semantic analysis.
 ///
 /// WHY: --permissive mode allows checking files with unresolved imports,
@@ -453,6 +497,17 @@ fn cmd_check(command: CheckCommand) {
         eprintln!("internal error: successful parse result missing program");
         std::process::exit(1);
     };
+
+    let cli_analysis = radix::cli::analyze(&program, &interner);
+    let mut cli_fatal_errors = 0usize;
+    for err in &cli_analysis.errors {
+        eprintln!("error: {}: {}", format_location(&source_file, err.span.start), err.message);
+        cli_fatal_errors += 1;
+    }
+    if cli_fatal_errors > 0 {
+        std::process::exit(1);
+    }
+
     let pass_config = radix::semantic::PassConfig::for_target(radix::codegen::Target::Rust);
     let semantic_result = radix::semantic::analyze(&program, &pass_config, &interner);
 
@@ -692,6 +747,216 @@ fn output_code(output: radix::Output) -> String {
         radix::Output::Faber(out) => out.code,
         radix::Output::TypeScript(out) => out.code,
         radix::Output::Go(out) => out.code,
+    }
+}
+
+fn annotation_json(annotations: &[radix::syntax::Annotation]) -> String {
+    annotations
+        .iter()
+        .map(|annotation| {
+            let kind = match &annotation.kind {
+                radix::syntax::AnnotationKind::Cli(_) => "Cli",
+                radix::syntax::AnnotationKind::Imperium(_) => "Imperium",
+                radix::syntax::AnnotationKind::Optio(_) => "Optio",
+                radix::syntax::AnnotationKind::Operandus(_) => "Operandus",
+                radix::syntax::AnnotationKind::Statement(_) => "Statement",
+                radix::syntax::AnnotationKind::Innatum(_) => "Innatum",
+                radix::syntax::AnnotationKind::Subsidia(_) => "Subsidia",
+                radix::syntax::AnnotationKind::Radix(_) => "Radix",
+                radix::syntax::AnnotationKind::Verte(_) => "Verte",
+                radix::syntax::AnnotationKind::Externa => "Externa",
+                radix::syntax::AnnotationKind::Futura => "Futura",
+                radix::syntax::AnnotationKind::Cursor => "Cursor",
+                radix::syntax::AnnotationKind::Tag => "Tag",
+                radix::syntax::AnnotationKind::Solum => "Solum",
+                radix::syntax::AnnotationKind::Omitte => "Omitte",
+                radix::syntax::AnnotationKind::Metior => "Metior",
+                radix::syntax::AnnotationKind::Publica => "Publica",
+                radix::syntax::AnnotationKind::Protecta => "Protecta",
+                radix::syntax::AnnotationKind::Privata => "Privata",
+            };
+            format!(
+                "{{ \"kind\": \"{}\", \"span\": [{}, {}] }}",
+                kind, annotation.span.start, annotation.span.end
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn cli_analysis_json(analysis: &radix::cli::CliAnalysis) -> String {
+    let mut out = String::new();
+    out.push_str("{\n");
+    out.push_str(&format!("  \"mode\": \"{}\",\n", cli_mode_name(&analysis.mode)));
+    out.push_str(&format!("  \"success\": {},\n", analysis.errors.is_empty()));
+    if let Some(program) = &analysis.program {
+        out.push_str("  \"program\": ");
+        out.push_str(&cli_program_json(program, 2));
+        out.push_str(",\n");
+    } else {
+        out.push_str("  \"program\": null,\n");
+    }
+    out.push_str("  \"errors\": [");
+    for (i, err) in analysis.errors.iter().enumerate() {
+        if i > 0 {
+            out.push_str(", ");
+        }
+        out.push_str(&format!(
+            "{{ \"message\": \"{}\", \"span\": [{}, {}] }}",
+            escape_json(&err.message),
+            err.span.start,
+            err.span.end
+        ));
+    }
+    out.push_str("]\n}");
+    out
+}
+
+fn cli_program_json(program: &radix::cli::CliProgram, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    let inner = " ".repeat(indent + 2);
+    let mut out = String::new();
+    out.push_str("{\n");
+    out.push_str(&format!("{inner}\"name\": \"{}\",\n", escape_json(&program.name)));
+    out.push_str(&format!("{inner}\"entry_args\": \"{}\",\n", escape_json(&program.entry_args)));
+    out.push_str(&format!("{inner}\"mode\": \"{}\",\n", cli_mode_name(&program.mode)));
+    out.push_str(&format!(
+        "{inner}\"version\": {},\n",
+        json_string_opt(program.version.as_deref())
+    ));
+    out.push_str(&format!(
+        "{inner}\"description\": {},\n",
+        json_string_opt(program.description.as_deref())
+    ));
+    out.push_str(&format!(
+        "{inner}\"global_options\": {},\n",
+        cli_options_json(&program.global_options)
+    ));
+    out.push_str(&format!(
+        "{inner}\"global_operands\": {},\n",
+        cli_operands_json(&program.global_operands)
+    ));
+    out.push_str(&format!("{inner}\"options\": {},\n", cli_options_json(&program.options)));
+    out.push_str(&format!("{inner}\"operands\": {},\n", cli_operands_json(&program.operands)));
+    out.push_str(&format!("{inner}\"commands\": {}\n", cli_commands_json(&program.commands)));
+    out.push_str(&format!("{pad}}}"));
+    out
+}
+
+fn cli_commands_json(commands: &[radix::cli::CliCommand]) -> String {
+    format!(
+        "[{}]",
+        commands
+            .iter()
+            .map(|command| {
+                format!(
+                    "{{ \"path\": [{}], \"function\": \"{}\", \"aliases\": [{}], \"description\": {}, \"options\": {}, \"operands\": {} }}",
+                    command
+                        .path
+                        .iter()
+                        .map(|part| format!("\"{}\"", escape_json(part)))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    escape_json(&command.function),
+                    command
+                        .aliases
+                        .iter()
+                        .map(|alias| format!("\"{}\"", escape_json(alias)))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    json_string_opt(command.description.as_deref()),
+                    cli_options_json(&command.options),
+                    cli_operands_json(&command.operands)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    )
+}
+
+fn cli_options_json(options: &[radix::cli::CliOption]) -> String {
+    format!(
+        "[{}]",
+        options
+            .iter()
+            .map(|option| {
+                format!(
+                    "{{ \"binding\": \"{}\", \"type\": \"{}\", \"short\": {}, \"long\": {}, \"global\": {}, \"flag\": {}, \"default\": {} }}",
+                    escape_json(&option.binding),
+                    cli_type_name(&option.ty),
+                    json_string_opt(option.short.as_deref()),
+                    json_string_opt(option.long.as_deref()),
+                    option.global,
+                    option.flag,
+                    cli_default_json(option.default.as_ref())
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    )
+}
+
+fn cli_operands_json(operands: &[radix::cli::CliOperand]) -> String {
+    format!(
+        "[{}]",
+        operands
+            .iter()
+            .map(|operand| {
+                format!(
+                    "{{ \"binding\": \"{}\", \"type\": \"{}\", \"rest\": {}, \"global\": {}, \"default\": {} }}",
+                    escape_json(&operand.binding),
+                    cli_type_name(&operand.ty),
+                    operand.rest,
+                    operand.global,
+                    cli_default_json(operand.default.as_ref())
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    )
+}
+
+fn cli_default_json(default: Option<&radix::cli::CliDefault>) -> String {
+    match default {
+        Some(radix::cli::CliDefault::Text(value)) => {
+            format!("{{ \"kind\": \"text\", \"value\": \"{}\" }}", escape_json(value))
+        }
+        Some(radix::cli::CliDefault::Integer(value)) => format!("{{ \"kind\": \"integer\", \"value\": {} }}", value),
+        Some(radix::cli::CliDefault::Float(value)) => format!("{{ \"kind\": \"float\", \"value\": {} }}", value),
+        Some(radix::cli::CliDefault::Bool(value)) => format!("{{ \"kind\": \"bool\", \"value\": {} }}", value),
+        Some(radix::cli::CliDefault::Nil) => "{ \"kind\": \"nil\" }".to_owned(),
+        Some(radix::cli::CliDefault::Expr(value)) => {
+            format!("{{ \"kind\": \"expr\", \"value\": \"{}\" }}", escape_json(value))
+        }
+        None => "null".to_owned(),
+    }
+}
+
+fn cli_mode_name(mode: &radix::cli::CliMode) -> &'static str {
+    match mode {
+        radix::cli::CliMode::NotCli => "not-cli",
+        radix::cli::CliMode::SingleCommand => "single-command",
+        radix::cli::CliMode::Subcommand => "subcommand",
+    }
+}
+
+fn cli_type_name(ty: &radix::cli::CliType) -> &'static str {
+    match ty {
+        radix::cli::CliType::Textus => "textus",
+        radix::cli::CliType::Numerus => "numerus",
+        radix::cli::CliType::Fractus => "fractus",
+        radix::cli::CliType::Bivalens => "bivalens",
+        radix::cli::CliType::Octeti => "octeti",
+        radix::cli::CliType::Ignotum => "ignotum",
+        radix::cli::CliType::ListaTextus => "lista<textus>",
+        radix::cli::CliType::ListaNumerus => "lista<numerus>",
+    }
+}
+
+fn json_string_opt(value: Option<&str>) -> String {
+    match value {
+        Some(value) => format!("\"{}\"", escape_json(value)),
+        None => "null".to_owned(),
     }
 }
 

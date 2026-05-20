@@ -10,7 +10,7 @@ importa ex "./commands/greet" privata * ut greetModule
 @ versio "1.0.0"
 @ descriptio "Example CLI application"
 @ imperia "greet" ex greetModule
-incipit {}
+incipit argumenta args {}
 
 @ imperium "version"
 @ alias "v"

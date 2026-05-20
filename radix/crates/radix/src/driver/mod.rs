@@ -72,6 +72,15 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         Err(diagnostics) => return CompileResult { output: None, diagnostics },
     };
 
+    if analysis.cli_program.is_some() {
+        analysis.diagnostics.push(
+            Diagnostic::error("runnable CLI code generation is not implemented until CLI framework Phase 03")
+                .with_code("CODEGEN002")
+                .with_file(name.to_owned()),
+        );
+        return CompileResult { output: None, diagnostics: analysis.diagnostics };
+    }
+
     // -------------------------------------------------------------------------
     // PHASE 4: CODE GENERATION
     // Emit target-specific source code
@@ -91,6 +100,7 @@ pub(crate) struct AnalyzedUnit {
     pub interner: Interner,
     pub types: semantic::TypeTable,
     pub hir: HirProgram,
+    pub cli_program: Option<crate::cli::CliProgram>,
     pub diagnostics: Vec<Diagnostic>,
 }
 
@@ -132,6 +142,15 @@ pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Res
         return Err(diagnostics);
     }
 
+    let cli_analysis = crate::cli::analyze(&program, &interner);
+    for err in &cli_analysis.errors {
+        diagnostics.push(Diagnostic::from_semantic_error(name, source, err));
+    }
+
+    if diagnostics.iter().any(Diagnostic::is_error) {
+        return Err(diagnostics);
+    }
+
     let pass_config = PassConfig::for_target(session.config.target);
     let semantic_result = semantic::analyze(&program, &pass_config, &interner);
 
@@ -146,6 +165,7 @@ pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Res
     Ok(AnalyzedUnit {
         interner,
         types: semantic_result.types,
+        cli_program: cli_analysis.program,
         hir: match semantic_result.hir {
             Some(hir) => hir,
             None => {

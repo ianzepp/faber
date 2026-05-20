@@ -75,8 +75,12 @@ fn cmd_emit_supports_faber_target_flag() {
 
 #[test]
 fn cmd_emit_supports_package_input() {
+    let package = temp_dir_path("emit-package");
+    std::fs::create_dir_all(&package).expect("create package");
+    std::fs::write(package.join("main.fab"), "incipit {}").expect("write package entry");
+
     cmd_emit(EmitCommand {
-        input: vec!["../../../examples/exempla/cli/main.fab".to_owned()],
+        input: vec![package.to_string_lossy().to_string()],
         package: true,
         target: radix::codegen::Target::Rust,
     });

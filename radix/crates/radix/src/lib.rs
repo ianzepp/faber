@@ -55,6 +55,7 @@
 //! }
 //! ```
 
+pub mod cli;
 pub mod codegen;
 pub mod diagnostics;
 pub mod driver;

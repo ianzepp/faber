@@ -55,6 +55,7 @@ pub enum SemanticErrorKind {
     ImportNotFound,
     CircularDependency,
     LoweringError,
+    CliValidation,
     ShadowedVariable,
 
     // Type errors
