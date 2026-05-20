@@ -1,7 +1,7 @@
 # Phase 5 Delivery Spec: Documentation and Final Hygiene Review
 
-**Phase**: 5 of 6  
-**Source Plan**: `docs/radix-large-module-refactor-factory-plan.md`  
+**Phase**: 5 of 6
+**Source Plan**: now-deleted `docs/radix-large-module-refactor-factory-plan.md`
 **Owned Area**: repository documentation and tiny follow-up notes only
 
 ## Objective

@@ -1,6 +1,6 @@
 # Phase 3 Delivery Spec: Split Go Expression Codegen
 
-**Phase**: 3 of 6 in `radix-large-module-refactor-factory-plan.md`
+**Phase**: 3 of 6 in the now-deleted `radix-large-module-refactor-factory-plan.md`
 **Goal**: Split `codegen/go/expr.rs` into expression helper submodules while preserving `expr::generate_expr(...)` and Go output.
 **Inputs**: Current Go expression codegen, Go codegen tests, existing `decl.rs`/`stmt.rs` call sites.
 **Outputs**: `codegen/go/expr/mod.rs` plus helper modules for literals, ops, collection, access, option, call, convert, and variants.

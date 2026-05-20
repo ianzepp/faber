@@ -1,7 +1,7 @@
 # Phase 4 Delivery Spec: Split Rust Expression Codegen
 
-**Phase**: 4 of 6  
-**Source Plan**: `docs/radix-large-module-refactor-factory-plan.md`  
+**Phase**: 4 of 6
+**Source Plan**: now-deleted `docs/radix-large-module-refactor-factory-plan.md`
 **Owned Area**: `radix/crates/radix/src/codegen/rust/expr.rs` and `radix/crates/radix/src/codegen/rust/expr/**`
 
 ## Objective

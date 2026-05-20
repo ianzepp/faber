@@ -1,9 +1,9 @@
 # Radix Large Module Refactor Factory Ledger
 
-**Factory Run**: radix-large-module-refactor per `docs/radix-large-module-refactor-factory-plan.md`
+**Factory Run**: radix-large-module-refactor per the deleted `radix-large-module-refactor-factory-plan.md`
 **Started**: 2026-05-20
 **Target Repo**: /Users/ianzepp/work/ianzepp/faber (radix primary)
-**Phase Set Source**: docs/radix-large-module-refactor-factory-plan.md (factory-approved)
+**Phase Set Source**: deleted after completion; preserved here as executed ledger and phase delivery specs
 **Delivery Spec Dir**: docs/factory/radix-large-module-refactor/
 **Commit Policy**: Commit after each phase completion + validation gate pass
 **Agent Policy**: Use subagents for exploration, poker-face, verification, bounded impl where appropriate; main agent supervises and integrates
@@ -214,7 +214,7 @@ This completes Phase 0 per master plan. Factory run is resumable from ledger.
 - Updated active documentation references that still pointed at removed monolithic paths:
   - `docs/faber-mechanics.md`: typecheck references now point at `typecheck/mod.rs` or `typecheck/finalize.rs`.
   - `docs/go-emitter-delivery-plan.md`: Go expression workstream paths now point at `go/expr/mod.rs` and `go/expr/**`.
-  - `docs/radix-large-module-refactor-factory-plan.md`: status now records that the plan has been implemented.
+  - `docs/radix-large-module-refactor-factory-plan.md`: status recorded that the plan had been implemented before the completed plan document was removed.
 - Reviewed `README.md`, `AGENTS.md`, `radix/crates/radix/README.md`, and `docs/**/*.md` for stale module-shape claims.
 
 **Final Source-Size Scan Top Entries**:
@@ -263,7 +263,7 @@ Second-pass review found that Go and Rust expression dispatch modules still held
 
 - Go `expr/mod.rs` now keeps dispatch and shared helpers; access, call, collection, control, conversion, formatting/literal, option, ops, and variant helpers live in named submodules.
 - Rust `expr/mod.rs` now keeps dispatch and shared helpers; access, call, collection, control, conversion, format, literal, ops, option, pattern, and `verte` helpers live in named submodules.
-- `docs/radix-large-module-refactor-factory-plan.md` was updated to record the additional submodules that were needed to make the responsibility split truthful.
+- The completed factory plan document was updated to record the additional submodules that were needed to make the responsibility split truthful, then removed after completion.
 
 **Second-Pass Source-Size Scan Top Entries**:
 

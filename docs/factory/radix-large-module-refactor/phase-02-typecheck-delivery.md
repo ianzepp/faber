@@ -1,6 +1,6 @@
 # Phase 2 Delivery Spec: Split Typecheck Pass
 
-**Phase**: 2 of 6 in `radix-large-module-refactor-factory-plan.md`
+**Phase**: 2 of 6 in the now-deleted `radix-large-module-refactor-factory-plan.md`
 **Goal**: Split `semantic/passes/typecheck.rs` into cohesive submodules while preserving `semantic::passes::typecheck::typecheck(...)` and diagnostics behavior.
 **Inputs**: Current typecheck pass, `typecheck_test.rs`, semantic pass module wiring.
 **Outputs**: `semantic/passes/typecheck/mod.rs` plus responsibility modules from the master plan.

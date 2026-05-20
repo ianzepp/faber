@@ -1,6 +1,6 @@
 # Phase 1 Delivery Spec: Split Faber Codegen
 
-**Phase**: 1 of 6 in `radix-large-module-refactor-factory-plan.md`
+**Phase**: 1 of 6 in the now-deleted `radix-large-module-refactor-factory-plan.md`
 **Goal**: Reshape `codegen/faber/mod.rs` (1804 LOC) into the established multi-file pattern used by Go/Rust/TS codegen backends. No behavior change.
 **Owner**: Factory (main agent + slice + subagents)
 **Inputs**: Current `radix/crates/radix/src/codegen/faber/mod.rs`, `mod_test.rs`, usages in `codegen/mod.rs`
