@@ -213,7 +213,6 @@ This completes Phase 0 per master plan. Factory run is resumable from ledger.
 - Added Phase 5 delivery spec.
 - Updated active documentation references that still pointed at removed monolithic paths:
   - `docs/faber-mechanics.md`: typecheck references now point at `typecheck/mod.rs` or `typecheck/finalize.rs`.
-  - `docs/go-emitter-delivery-plan.md`: Go expression workstream paths now point at `go/expr/mod.rs` and `go/expr/**`.
   - `docs/radix-large-module-refactor-factory-plan.md`: status recorded that the plan had been implemented before the completed plan document was removed.
 - Reviewed `README.md`, `AGENTS.md`, `radix/crates/radix/README.md`, and `docs/**/*.md` for stale module-shape claims.
 
