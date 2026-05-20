@@ -929,7 +929,7 @@ impl Parser {
             } else if self.eat_annotation_ident("ubique") {
                 global = true;
             } else if self.eat_annotation_ident("vel") {
-                default = Some(Box::new(self.parse_expression()?));
+                default = Some(Box::new(self.parse_annotation_default()?));
             } else {
                 return Err(self.error(ParseErrorKind::InvalidAnnotation, "invalid @ optio modifier"));
             }
@@ -965,7 +965,7 @@ impl Parser {
             } else if self.eat_annotation_ident("ubique") {
                 global = true;
             } else if self.eat_annotation_ident("vel") {
-                default = Some(Box::new(self.parse_expression()?));
+                default = Some(Box::new(self.parse_annotation_default()?));
             } else {
                 return Err(self.error(ParseErrorKind::InvalidAnnotation, "invalid @ operandus modifier"));
             }
@@ -1017,6 +1017,26 @@ impl Parser {
         } else {
             Ok(())
         }
+    }
+
+    fn parse_annotation_default(&mut self) -> Result<Expr, ParseError> {
+        if let TokenKind::Ident(sym) = self.peek().kind {
+            let literal = match self.interner.resolve(sym) {
+                "verum" => Some(Literal::Bool(true)),
+                "falsum" => Some(Literal::Bool(false)),
+                "nihil" => Some(Literal::Nil),
+                _ => None,
+            };
+
+            if let Some(literal) = literal {
+                let span = self.peek().span;
+                self.advance();
+                let id = self.next_id();
+                return Ok(Expr { id, kind: ExprKind::Literal(literal), span });
+            }
+        }
+
+        self.parse_expression()
     }
 
     fn is_annotation_bivalens_type(&self, ty: &TypeExpr) -> bool {

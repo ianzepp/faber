@@ -1,8 +1,9 @@
 use super::parse;
 use crate::lexer::lex;
 use crate::syntax::{
-    AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, IfBody, ImportKind, InlineReturn, IteraMode, Mutability,
-    ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause, StmtKind, TypeExprKind,
+    AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, ExprKind, IfBody, ImportKind, InlineReturn, IteraMode,
+    Literal, Mutability, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause,
+    StmtKind, TypeExprKind,
 };
 
 fn parse_program(source: &str) -> super::ParseResult {
@@ -25,6 +26,22 @@ fn parse_ok(source: &str) -> super::ParseResult {
 
 fn symbol_name(result: &super::ParseResult, symbol: crate::lexer::Symbol) -> &str {
     result.interner.resolve(symbol)
+}
+
+fn assert_parse_error_contains(source: &str, expected: &str) {
+    let result = parse_program(source);
+    assert!(
+        result
+            .errors
+            .iter()
+            .any(|err| err.message.contains(expected)),
+        "expected parse error containing {expected:?}, got {:?}",
+        result
+            .errors
+            .iter()
+            .map(|err| err.message.as_str())
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -147,6 +164,36 @@ incipit argumenta args {}
 }
 
 #[test]
+fn parses_non_string_cli_default_expressions() {
+    let result = parse_ok(
+        r#"
+@ optio limit longum "limit" typus numerus vel 100
+@ optio strict longum "strict" typus bivalens vel verum
+incipit argumenta args {}
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+
+    let AnnotationKind::Optio(limit) = &program.stmts[0].annotations[0].kind else {
+        panic!("expected structured numeric @ optio");
+    };
+    let Some(default) = &limit.default else {
+        panic!("expected numeric default");
+    };
+    assert!(matches!(default.kind, ExprKind::Literal(Literal::Integer(100))));
+
+    let AnnotationKind::Optio(strict) = &program.stmts[0].annotations[1].kind else {
+        panic!("expected structured boolean @ optio");
+    };
+    let Some(default) = &strict.default else {
+        panic!("expected boolean default");
+    };
+    assert!(strict.flag);
+    assert!(matches!(default.kind, ExprKind::Literal(Literal::Bool(true))));
+}
+
+#[test]
 fn omitted_optio_type_is_left_for_textus_defaulting() {
     let result = parse_ok(
         r#"
@@ -222,6 +269,127 @@ incipit argumenta args {}
             .iter()
             .any(|err| err.message.contains("invalid @ optio modifier")),
         "bare bivalens modifier must not parse as canonical syntax"
+    );
+}
+
+#[test]
+fn malformed_cli_and_imperium_annotations_report_parse_errors() {
+    assert_parse_error_contains(
+        r#"
+@ cli
+incipit argumenta args {}
+"#,
+        "expected string",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ cli "faber" extra
+incipit argumenta args {}
+"#,
+        "unexpected token after @ cli name",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ imperium
+functio run() {}
+"#,
+        "expected string",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ imperium "run" extra
+functio run() {}
+"#,
+        "unexpected token after @ imperium name",
+    );
+}
+
+#[test]
+fn malformed_optio_annotations_report_parse_errors() {
+    assert_parse_error_contains(
+        r#"
+@ optio
+incipit argumenta args {}
+"#,
+        "expected identifier",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ optio output brevis
+incipit argumenta args {}
+"#,
+        "expected string",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ optio output longum
+incipit argumenta args {}
+"#,
+        "expected string",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ optio output descriptio
+incipit argumenta args {}
+"#,
+        "expected string",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ optio output typus
+incipit argumenta args {}
+"#,
+        "expected identifier",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ optio output vel
+incipit argumenta args {}
+"#,
+        "expected expression",
+    );
+}
+
+#[test]
+fn malformed_operandus_annotations_report_parse_errors() {
+    assert_parse_error_contains(
+        r#"
+@ operandus textus
+incipit argumenta args {}
+"#,
+        "expected identifier",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ operandus textus input descriptio
+incipit argumenta args {}
+"#,
+        "expected string",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ operandus textus input longum "input"
+incipit argumenta args {}
+"#,
+        "invalid @ operandus modifier",
+    );
+
+    assert_parse_error_contains(
+        r#"
+@ operandus textus input vel
+incipit argumenta args {}
+"#,
+        "expected expression",
     );
 }
 
