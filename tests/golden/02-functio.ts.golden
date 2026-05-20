@@ -1,4 +1,0 @@
-function summa(a: number, b: number): number {
-  return (a + b);
-}
-console.log(summa(2, 3));

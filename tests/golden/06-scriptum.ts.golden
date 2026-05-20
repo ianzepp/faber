@@ -1,3 +1,0 @@
-const name: string = "Roma";
-const msg: string = `Salve, ${name}!`;
-console.log(msg);

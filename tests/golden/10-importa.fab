@@ -1,3 +1,0 @@
-# import syntax (use a real existing module so faber succeeds)
-
-importa ex "../rivus/lexor/index" privata lexare

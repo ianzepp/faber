@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "include": ["compilers/nanus-ts"],
-  "compilerOptions": {
-    // Semi-strict: relax some checks for minimal compiler
-    "noUncheckedIndexedAccess": false,
-    "noPropertyAccessFromIndexSignature": false
-  }
-}
