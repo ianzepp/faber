@@ -91,6 +91,15 @@ impl PassConfig {
 
 /// Run semantic analysis on a program
 pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> SemanticResult {
+    analyze_with_cli(program, config, interner, None)
+}
+
+pub fn analyze_with_cli(
+    program: &Program,
+    config: &PassConfig,
+    interner: &Interner,
+    cli_program: Option<&crate::cli::CliProgram>,
+) -> SemanticResult {
     let mut errors = Vec::new();
     let mut types = TypeTable::new();
     let mut resolver = Resolver::new();
@@ -111,7 +120,7 @@ pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> S
     }
 
     // Pass 3: Lower to HIR
-    let (mut hir, lower_errors) = crate::hir::lower(program, &resolver, &mut types, interner);
+    let (mut hir, lower_errors) = crate::hir::lower_with_cli(program, &resolver, &mut types, interner, cli_program);
 
     // Add lowering errors
     for err in lower_errors {

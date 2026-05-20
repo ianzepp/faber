@@ -509,7 +509,8 @@ fn cmd_check(command: CheckCommand) {
     }
 
     let pass_config = radix::semantic::PassConfig::for_target(radix::codegen::Target::Rust);
-    let semantic_result = radix::semantic::analyze(&program, &pass_config, &interner);
+    let semantic_result =
+        radix::semantic::analyze_with_cli(&program, &pass_config, &interner, cli_analysis.program.as_ref());
 
     let mut fatal_errors = 0usize;
     let mut downgraded = 0usize;

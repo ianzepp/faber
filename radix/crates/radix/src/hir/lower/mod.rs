@@ -61,8 +61,9 @@ mod stmt;
 mod types;
 
 use super::{HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirProgram, HirStmt, HirStmtKind};
+use crate::cli::{CliProgram, CliType};
 use crate::lexer::{Interner, Span, Symbol};
-use crate::semantic::{Resolver, TypeTable};
+use crate::semantic::{Primitive, Resolver, Type, TypeId, TypeTable};
 use crate::syntax::{PraeparaBlock, PraeparaKind, ProbaCase, ProbaModifier, ProbandumDecl, Program, Stmt, StmtKind};
 use rustc_hash::FxHashMap;
 
@@ -86,6 +87,8 @@ pub struct Lowerer<'a> {
     local_scopes: Vec<FxHashMap<Symbol, crate::hir::DefId>>,
     /// Current self type for lowering `ego` expressions inside methods.
     current_ego_struct: Option<crate::hir::DefId>,
+    /// Validated CLI contract, when the entry point is a runnable CLI.
+    cli_program: Option<&'a CliProgram>,
 }
 
 /// Lowering error
@@ -97,7 +100,12 @@ pub struct LowerError {
 
 impl<'a> Lowerer<'a> {
     /// Create a new lowerer with the given resolver
-    pub fn new(resolver: &'a Resolver, types: &'a mut TypeTable, interner: &'a Interner) -> Self {
+    pub fn new(
+        resolver: &'a Resolver,
+        types: &'a mut TypeTable,
+        interner: &'a Interner,
+        cli_program: Option<&'a CliProgram>,
+    ) -> Self {
         Self {
             resolver,
             types,
@@ -108,6 +116,7 @@ impl<'a> Lowerer<'a> {
             current_span: Span::default(),
             local_scopes: Vec::new(),
             current_ego_struct: None,
+            cli_program,
         }
     }
 
@@ -140,10 +149,7 @@ impl<'a> Lowerer<'a> {
                                 kind: HirStmtKind::Local(crate::hir::HirLocal {
                                     def_id,
                                     name,
-                                    ty: Some(
-                                        self.types
-                                            .array(self.types.primitive(crate::semantic::Primitive::Textus)),
-                                    ),
+                                    ty: Some(self.incipit_args_type()),
                                     init: None,
                                     mutable: false,
                                 }),
@@ -231,6 +237,52 @@ impl<'a> Lowerer<'a> {
             }
         }
         self.resolver.lookup(name)
+    }
+
+    pub(super) fn incipit_args_type(&mut self) -> TypeId {
+        if let Some(cli) = self.cli_program {
+            let mut fields = FxHashMap::default();
+            for option in cli.global_options.iter().chain(cli.options.iter()) {
+                let ty = self.cli_value_type(&option.ty, option.default.is_none() && !option.flag, false);
+                fields.insert(option.binding_symbol, ty);
+            }
+            for operand in cli.global_operands.iter().chain(cli.operands.iter()) {
+                let ty = self.cli_value_type(&operand.ty, false, operand.rest);
+                fields.insert(operand.binding_symbol, ty);
+            }
+            return self.types.intern(Type::Record(fields));
+        }
+
+        let textus = self.types.primitive(Primitive::Textus);
+        self.types.array(textus)
+    }
+
+    fn cli_value_type(&mut self, ty: &CliType, optional: bool, rest: bool) -> TypeId {
+        let base = match ty {
+            CliType::Textus | CliType::Ignotum => self.types.primitive(Primitive::Textus),
+            CliType::Numerus => self.types.primitive(Primitive::Numerus),
+            CliType::Fractus => self.types.primitive(Primitive::Fractus),
+            CliType::Bivalens => self.types.primitive(Primitive::Bivalens),
+            CliType::Octeti => self.types.primitive(Primitive::Octeti),
+            CliType::ListaTextus => {
+                let textus = self.types.primitive(Primitive::Textus);
+                self.types.array(textus)
+            }
+            CliType::ListaNumerus => {
+                let numerus = self.types.primitive(Primitive::Numerus);
+                self.types.array(numerus)
+            }
+        };
+        let value = if rest && !matches!(ty, CliType::ListaTextus | CliType::ListaNumerus) {
+            self.types.array(base)
+        } else {
+            base
+        };
+        if optional {
+            self.types.option(value)
+        } else {
+            value
+        }
     }
 
     /// Record an error
@@ -407,7 +459,17 @@ pub fn lower(
     types: &mut TypeTable,
     interner: &Interner,
 ) -> (HirProgram, Vec<LowerError>) {
-    let mut lowerer = Lowerer::new(resolver, types, interner);
+    lower_with_cli(program, resolver, types, interner, None)
+}
+
+pub fn lower_with_cli(
+    program: &Program,
+    resolver: &Resolver,
+    types: &mut TypeTable,
+    interner: &Interner,
+    cli_program: Option<&CliProgram>,
+) -> (HirProgram, Vec<LowerError>) {
+    let mut lowerer = Lowerer::new(resolver, types, interner, cli_program);
     let hir = lowerer.lower_program(program);
     let errors = lowerer.take_errors();
     (hir, errors)

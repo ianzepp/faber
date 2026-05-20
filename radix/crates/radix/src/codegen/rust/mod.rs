@@ -25,6 +25,7 @@
 //! - Imports are collected post-codegen by scanning output text (avoids complex tracking).
 //! - Entry point `incipit` blocks never propagate errors (always use panic! for throws).
 
+mod cli;
 mod decl;
 mod expr;
 mod failable;
@@ -224,16 +225,26 @@ impl Codegen for RustCodegen<'_> {
     type Output = RustOutput;
 
     fn generate(&self, hir: &HirProgram, types: &TypeTable, _interner: &Interner) -> Result<RustOutput, CodegenError> {
-        self.generate_output(hir, types, false)
+        self.generate_output(hir, types, false, None)
     }
 }
 
 impl RustCodegen<'_> {
+    pub fn generate_cli(
+        &self,
+        hir: &HirProgram,
+        types: &TypeTable,
+        cli_program: &crate::cli::CliProgram,
+    ) -> Result<RustOutput, CodegenError> {
+        self.generate_output(hir, types, false, Some(cli_program))
+    }
+
     fn generate_output(
         &self,
         hir: &HirProgram,
         types: &TypeTable,
         module_mode: bool,
+        cli_program: Option<&crate::cli::CliProgram>,
     ) -> Result<RustOutput, CodegenError> {
         let mut body = CodeWriter::new();
 
@@ -242,14 +253,27 @@ impl RustCodegen<'_> {
             body.newline();
         }
 
+        if let Some(cli_program) = cli_program {
+            cli::generate_cli_support(cli_program, &mut body);
+            body.newline();
+        }
+
         // Generate main if there's an entry point
         if let Some(entry) = &hir.entry {
             body.writeln("fn main() {");
             let mut entry_result = Ok(());
             body.indented(|w| {
+                if let Some(cli_program) = cli_program {
+                    w.write("let ");
+                    w.write(&cli_program.entry_args);
+                    w.writeln(" = parse_cli_args_or_exit();");
+                }
                 for stmt in &entry.stmts {
                     if entry_result.is_err() {
                         return;
+                    }
+                    if cli_program.is_some_and(|cli| is_cli_args_local(stmt, &cli.entry_args, self)) {
+                        continue;
                     }
                     entry_result = stmt::generate_stmt(self, stmt, types, w, false, true, false);
                 }
@@ -259,6 +283,11 @@ impl RustCodegen<'_> {
                     }
                     entry_result = expr::generate_expr(self, expr, types, w, false, true, false);
                     w.writeln(";");
+                }
+                if let Some(cli_program) = cli_program {
+                    if let Some(exit) = &cli_program.exit {
+                        cli::generate_cli_exit(exit, w);
+                    }
                 }
             });
             entry_result?;
@@ -290,7 +319,14 @@ impl RustCodegen<'_> {
 
 pub fn generate_module(hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<RustOutput, CodegenError> {
     super::reject_hir_errors(hir)?;
-    RustCodegen::new(hir, interner).generate_output(hir, types, true)
+    RustCodegen::new(hir, interner).generate_output(hir, types, true, None)
+}
+
+fn is_cli_args_local(stmt: &crate::hir::HirStmt, entry_args: &str, codegen: &RustCodegen<'_>) -> bool {
+    let crate::hir::HirStmtKind::Local(local) = &stmt.kind else {
+        return false;
+    };
+    local.init.is_none() && codegen.resolve_symbol(local.name) == entry_args
 }
 
 #[cfg(test)]

@@ -32,7 +32,7 @@
 mod lower;
 mod nodes;
 
-pub use lower::{lower, LowerError};
+pub use lower::{lower, lower_with_cli, LowerError};
 pub use nodes::{
     DefId, HirAd, HirAdBinding, HirArrayElement, HirBinOp, HirBlock, HirCasuArm, HirCollectionFilter,
     HirCollectionFilterKind, HirCollectionTransform, HirConst, HirEndpointVerb, HirEnum, HirExpr, HirExprKind,

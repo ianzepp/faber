@@ -65,7 +65,7 @@ fn compiler_compile_package_supports_manifest_example() {
 }
 
 #[test]
-fn compiler_gates_runnable_cli_codegen_until_phase_03() {
+fn compiler_emits_rust_runnable_cli_codegen_after_phase_03() {
     let compiler = Compiler::new(Config::default());
     let result = compiler.compile_str(
         "cli.fab",
@@ -75,9 +75,9 @@ incipit argumenta args {}
 "#,
     );
 
-    assert!(result.output.is_none());
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|diagnostic| diagnostic.message.contains("Phase 03")));
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust CLI output");
+    };
+    assert!(output.code.contains("parse_cli_args_or_exit"));
 }

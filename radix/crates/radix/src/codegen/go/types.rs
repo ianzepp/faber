@@ -16,6 +16,7 @@ pub fn type_to_go(codegen: &GoCodegen<'_>, type_id: TypeId, types: &TypeTable) -
                 type_to_go(codegen, *value, types)
             )
         }
+        Type::Record(_) => "map[string]any".to_owned(),
         Type::Set(elem) => format!("map[{}]struct{{}}", type_to_go(codegen, *elem, types)),
         Type::Option(inner) => format!("*{}", non_option_type_to_go(codegen, *inner, types)),
         // WHY: Go is GC'd — de/in/ex borrow modes are irrelevant, just emit the inner type.

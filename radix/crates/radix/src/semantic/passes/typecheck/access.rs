@@ -98,6 +98,13 @@ impl<'a> TypeChecker<'a> {
         if let Type::Map(_, value_ty) = self.types.get(self.resolve_type(object_ty)) {
             return *value_ty;
         }
+        if let Type::Record(fields) = self.types.get(self.resolve_type(object_ty)) {
+            if let Some(field_ty) = fields.get(&name).copied() {
+                return field_ty;
+            }
+            self.error(SemanticErrorKind::UndefinedVariable, "unknown record field", _span);
+            return self.error_type;
+        }
         self.error_type
     }
     pub(super) fn check_non_null(

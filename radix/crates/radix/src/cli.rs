@@ -34,6 +34,15 @@ pub struct CliProgram {
     pub options: Vec<CliOption>,
     pub operands: Vec<CliOperand>,
     pub commands: Vec<CliCommand>,
+    pub exit: Option<CliExit>,
+}
+
+#[derive(Debug, Clone)]
+pub enum CliExit {
+    Fixed(i64),
+    Binding(String),
+    Field { object: String, field: String },
+    Unsupported,
 }
 
 #[derive(Debug, Clone)]
@@ -50,6 +59,7 @@ pub struct CliCommand {
 #[derive(Debug, Clone)]
 pub struct CliOption {
     pub binding: String,
+    pub binding_symbol: crate::lexer::Symbol,
     pub ty: CliType,
     pub short: Option<String>,
     pub long: Option<String>,
@@ -63,6 +73,7 @@ pub struct CliOption {
 #[derive(Debug, Clone)]
 pub struct CliOperand {
     pub binding: String,
+    pub binding_symbol: crate::lexer::Symbol,
     pub ty: CliType,
     pub rest: bool,
     pub description: Option<String>,
@@ -161,6 +172,7 @@ impl CliBuilder<'_> {
             options: single.options,
             operands: single.operands,
             commands,
+            exit: entry.exitus.as_deref().map(|expr| self.exit(expr)),
         };
 
         CliAnalysis { mode, program: Some(cli_program), errors: std::mem::take(&mut self.errors) }
@@ -293,6 +305,7 @@ impl CliBuilder<'_> {
             });
         CliOption {
             binding: self.ident(&optio.binding),
+            binding_symbol: optio.binding.name,
             flag: ty == CliType::Bivalens,
             ty,
             short: optio.short.map(|sym| self.resolve(sym)),
@@ -307,6 +320,7 @@ impl CliBuilder<'_> {
     fn operand(&mut self, operandus: &OperandusAnnotation, span: Span) -> CliOperand {
         CliOperand {
             binding: self.ident(&operandus.binding),
+            binding_symbol: operandus.binding.name,
             ty: self.cli_type(&operandus.ty, span),
             rest: operandus.rest,
             description: operandus.description.map(|sym| self.resolve(sym)),
@@ -365,6 +379,22 @@ impl CliBuilder<'_> {
             ExprKind::Literal(Literal::Bool(value)) => CliDefault::Bool(*value),
             ExprKind::Literal(Literal::Nil) => CliDefault::Nil,
             other => CliDefault::Expr(format!("{other:?}")),
+        }
+    }
+
+    fn exit(&self, expr: &Expr) -> CliExit {
+        match &expr.kind {
+            ExprKind::Literal(Literal::Integer(value)) => CliExit::Fixed(*value),
+            ExprKind::Ident(ident) => CliExit::Binding(self.ident(ident)),
+            ExprKind::Member(member) => {
+                if let ExprKind::Ident(object) = &member.object.kind {
+                    CliExit::Field { object: self.ident(object), field: self.ident(&member.member) }
+                } else {
+                    CliExit::Unsupported
+                }
+            }
+            ExprKind::Paren(inner) => self.exit(inner),
+            _ => CliExit::Unsupported,
         }
     }
 

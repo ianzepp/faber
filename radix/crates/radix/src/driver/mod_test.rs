@@ -1,5 +1,7 @@
 use super::{compile, Config, Session};
 use crate::codegen::Target;
+use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 fn session(target: Target) -> Session {
     Session::new(Config::default().with_target(target))
@@ -43,6 +45,32 @@ fn faber_roundtrip(source: &str) -> String {
     second_output.code
 }
 
+fn compile_rust_source_with_rustc(code: &str, label: &str) -> std::path::PathBuf {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock before epoch")
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!("radix-{label}-{}-{stamp}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let source = dir.join("main.rs");
+    let binary = dir.join("main");
+    std::fs::write(&source, code).expect("write generated rust");
+
+    let output = Command::new("rustc")
+        .arg(&source)
+        .arg("-o")
+        .arg(&binary)
+        .output()
+        .expect("execute rustc");
+    assert!(
+        output.status.success(),
+        "rustc failed:\n{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    binary
+}
+
 #[test]
 fn compile_rust_success_emits_output() {
     let session = session(Target::Rust);
@@ -68,6 +96,166 @@ fn compile_typescript_success_emits_output() {
 
     assert!(result.success());
     assert!(matches!(result.output, Some(crate::Output::TypeScript(_))));
+}
+
+#[test]
+fn rust_single_command_cli_generates_compilable_parser_and_runtime_behavior() {
+    let session = session(Target::Rust);
+    let source = r#"@ cli "echo"
+@ versio "1.2.3"
+@ descriptio "Echo text"
+@ optio loud brevis "l" longum "loud" typus bivalens descriptio "Loud output"
+@ optio name longum "name" typus textus vel "Roma"
+@ optio count longum "count" typus numerus
+@ operandus numerus code
+@ operandus ceteri textus words descriptio "Words"
+incipit argumenta args exitus args.code {
+  scribe args.name
+  scribe args.loud
+  scribe args.count
+  scribe args.words
+}"#;
+    let result = compile(&session, "cli.fab", source);
+
+    assert!(
+        result.success(),
+        "diagnostics: {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|d| &d.message)
+            .collect::<Vec<_>>()
+    );
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+    assert!(output.code.contains("struct CliArgs"));
+    assert!(output.code.contains("parse_cli_args_or_exit"));
+    assert!(!output
+        .code
+        .contains("runnable CLI code generation is not implemented"));
+
+    let binary = compile_rust_source_with_rustc(&output.code, "single-cli");
+    let help = Command::new(&binary)
+        .arg("--help")
+        .output()
+        .expect("run help");
+    assert!(help.status.success());
+    let help_stdout = String::from_utf8_lossy(&help.stdout);
+    assert!(help_stdout.contains("Usage: echo [OPTIONS] <code> [words...]"));
+    assert!(help_stdout.contains("--version"));
+
+    let version = Command::new(&binary)
+        .arg("--version")
+        .output()
+        .expect("run version");
+    assert!(version.status.success());
+    assert_eq!(String::from_utf8_lossy(&version.stdout).trim(), "1.2.3");
+
+    let run = Command::new(&binary)
+        .args(["--name", "Alba", "--count", "3", "-l", "7", "salve", "munde"])
+        .output()
+        .expect("run cli");
+    assert_eq!(run.status.code(), Some(7));
+    assert_eq!(
+        String::from_utf8_lossy(&run.stdout),
+        "Alba\ntrue\nSome(3)\n[\"salve\", \"munde\"]\n"
+    );
+
+    let defaults = Command::new(&binary)
+        .arg("0")
+        .output()
+        .expect("run cli defaults");
+    assert!(defaults.status.success());
+    assert_eq!(String::from_utf8_lossy(&defaults.stdout), "Roma\nfalse\nNone\n[]\n");
+}
+
+#[test]
+fn rust_single_command_cli_reports_parse_errors() {
+    let session = session(Target::Rust);
+    let source = r#"@ cli "need"
+@ optio count longum "count" typus numerus
+@ operandus textus file
+incipit argumenta args {
+  scribe args.file
+}"#;
+    let result = compile(&session, "cli.fab", source);
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+    let binary = compile_rust_source_with_rustc(&output.code, "parse-errors");
+
+    let unknown = Command::new(&binary)
+        .arg("--bogus")
+        .output()
+        .expect("run unknown");
+    assert_eq!(unknown.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&unknown.stderr).contains("unknown option '--bogus'"));
+
+    let version = Command::new(&binary)
+        .arg("--version")
+        .output()
+        .expect("run version without metadata");
+    assert_eq!(version.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&version.stderr).contains("unknown option '--version'"));
+
+    let missing_value = Command::new(&binary)
+        .arg("--count")
+        .output()
+        .expect("run missing value");
+    assert_eq!(missing_value.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&missing_value.stderr).contains("missing value for --count"));
+
+    let missing_operand = Command::new(&binary)
+        .args(["--count", "4"])
+        .output()
+        .expect("run missing operand");
+    assert_eq!(missing_operand.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&missing_operand.stderr).contains("missing operand 'file'"));
+}
+
+#[test]
+fn rust_single_command_cli_supports_fixed_exitus() {
+    let session = session(Target::Rust);
+    let source = r#"@ cli "fixed"
+incipit argumenta args exitus 5 {
+  scribe "done"
+}"#;
+    let result = compile(&session, "cli.fab", source);
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+    let binary = compile_rust_source_with_rustc(&output.code, "fixed-exitus");
+
+    let run = Command::new(&binary).output().expect("run fixed exitus");
+    assert_eq!(run.status.code(), Some(5));
+    assert_eq!(String::from_utf8_lossy(&run.stdout), "done\n");
+}
+
+#[test]
+fn cli_codegen_gates_non_rust_targets_and_subcommands() {
+    let source = r#"@ cli "tool"
+incipit argumenta args {}"#;
+    let ts = compile(&session(Target::TypeScript), "cli.fab", source);
+    assert!(ts.output.is_none());
+    assert!(ts
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("only implemented for Rust")));
+
+    let subcommand = r#"@ cli "tool"
+incipit argumenta args {}
+
+@ imperium "run"
+functio run() -> vacuum {}"#;
+    let rust = compile(&session(Target::Rust), "cli.fab", subcommand);
+    assert!(rust.output.is_none());
+    assert!(rust
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("subcommand CLI code generation") && d.message.contains("Phase 04")));
 }
 
 #[test]

@@ -133,6 +133,16 @@ pub fn generate(
     }
 }
 
+pub fn generate_rust_cli(
+    hir: &HirProgram,
+    types: &TypeTable,
+    interner: &Interner,
+    cli_program: &crate::cli::CliProgram,
+) -> Result<crate::RustOutput, CodegenError> {
+    reject_hir_errors(hir)?;
+    rust::RustCodegen::new(hir, interner).generate_cli(hir, types, cli_program)
+}
+
 pub(super) fn reject_hir_errors(hir: &HirProgram) -> Result<(), CodegenError> {
     if let Some(span) = find_error_expr_in_program(hir) {
         return Err(CodegenError {

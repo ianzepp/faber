@@ -52,6 +52,8 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
             )
         }
 
+        Type::Record(_) => "CliArgs".to_owned(),
+
         Type::Set(elem) => {
             format!("HashSet<{}>", type_to_rust(codegen, *elem, types))
         }

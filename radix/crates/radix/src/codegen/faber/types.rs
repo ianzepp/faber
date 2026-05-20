@@ -50,6 +50,8 @@ impl super::FaberCodegen {
                 self.type_to_faber(*value, types, names, interner)
             ),
 
+            Type::Record(_) => "ignotum".to_owned(),
+
             Type::Set(elem) => format!("copia<{}>", self.type_to_faber(*elem, types, names, interner)),
 
             Type::Option(inner) => format!(

@@ -72,13 +72,58 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         Err(diagnostics) => return CompileResult { output: None, diagnostics },
     };
 
-    if analysis.cli_program.is_some() {
-        analysis.diagnostics.push(
-            Diagnostic::error("runnable CLI code generation is not implemented until CLI framework Phase 03")
+    if let Some(cli_program) = &analysis.cli_program {
+        if session.config.target != Target::Rust {
+            analysis.diagnostics.push(
+                Diagnostic::error(
+                    "runnable CLI code generation is only implemented for Rust in CLI framework Phase 03",
+                )
                 .with_code("CODEGEN002")
                 .with_file(name.to_owned()),
-        );
-        return CompileResult { output: None, diagnostics: analysis.diagnostics };
+            );
+            return CompileResult { output: None, diagnostics: analysis.diagnostics };
+        }
+
+        if cli_program.mode == crate::cli::CliMode::Subcommand {
+            analysis.diagnostics.push(
+                Diagnostic::error("subcommand CLI code generation is not implemented until CLI framework Phase 04")
+                    .with_code("CODEGEN003")
+                    .with_file(name.to_owned()),
+            );
+            return CompileResult { output: None, diagnostics: analysis.diagnostics };
+        }
+
+        if matches!(cli_program.exit, Some(crate::cli::CliExit::Unsupported)) {
+            analysis.diagnostics.push(
+                Diagnostic::error(
+                    "CLI exitus code generation supports numeric literals, bindings, and args fields in Phase 03",
+                )
+                .with_code("CODEGEN004")
+                .with_file(name.to_owned()),
+            );
+            return CompileResult { output: None, diagnostics: analysis.diagnostics };
+        }
+
+        if let Some(message) = phase03_cli_codegen_gap(cli_program) {
+            analysis.diagnostics.push(
+                Diagnostic::error(message)
+                    .with_code("CODEGEN005")
+                    .with_file(name.to_owned()),
+            );
+            return CompileResult { output: None, diagnostics: analysis.diagnostics };
+        }
+
+        match codegen::generate_rust_cli(&analysis.hir, &analysis.types, &analysis.interner, cli_program) {
+            Ok(output) => {
+                return CompileResult { output: Some(crate::Output::Rust(output)), diagnostics: analysis.diagnostics };
+            }
+            Err(err) => {
+                analysis
+                    .diagnostics
+                    .push(Diagnostic::codegen_error(&err.message));
+                return CompileResult { output: None, diagnostics: analysis.diagnostics };
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -94,6 +139,47 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
             CompileResult { output: None, diagnostics: analysis.diagnostics }
         }
     }
+}
+
+fn phase03_cli_codegen_gap(program: &crate::cli::CliProgram) -> Option<String> {
+    for option in program.global_options.iter().chain(program.options.iter()) {
+        if !matches!(
+            option.ty,
+            crate::cli::CliType::Textus
+                | crate::cli::CliType::Numerus
+                | crate::cli::CliType::Fractus
+                | crate::cli::CliType::Bivalens
+        ) {
+            return Some(format!(
+                "Phase 03 Rust CLI code generation does not support option '{}' with type {:?}",
+                option.binding, option.ty
+            ));
+        }
+    }
+
+    for operand in program
+        .global_operands
+        .iter()
+        .chain(program.operands.iter())
+    {
+        let supported_scalar = matches!(
+            operand.ty,
+            crate::cli::CliType::Textus
+                | crate::cli::CliType::Numerus
+                | crate::cli::CliType::Fractus
+                | crate::cli::CliType::Bivalens
+        );
+        let supported_rest_list =
+            operand.rest && matches!(operand.ty, crate::cli::CliType::ListaTextus | crate::cli::CliType::ListaNumerus);
+        if !supported_scalar && !supported_rest_list {
+            return Some(format!(
+                "Phase 03 Rust CLI code generation does not support operand '{}' with type {:?}",
+                operand.binding, operand.ty
+            ));
+        }
+    }
+
+    None
 }
 
 pub(crate) struct AnalyzedUnit {
@@ -152,7 +238,7 @@ pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Res
     }
 
     let pass_config = PassConfig::for_target(session.config.target);
-    let semantic_result = semantic::analyze(&program, &pass_config, &interner);
+    let semantic_result = semantic::analyze_with_cli(&program, &pass_config, &interner, cli_analysis.program.as_ref());
 
     for err in &semantic_result.errors {
         diagnostics.push(Diagnostic::from_semantic_error(name, source, err));

@@ -358,10 +358,7 @@ impl<'a> Lowerer<'a> {
                     kind: HirStmtKind::Local(crate::hir::HirLocal {
                         def_id,
                         name,
-                        ty: Some(
-                            self.types
-                                .array(self.types.primitive(crate::semantic::Primitive::Textus)),
-                        ),
+                        ty: Some(self.incipit_args_type()),
                         init: None,
                         mutable: false,
                     }),

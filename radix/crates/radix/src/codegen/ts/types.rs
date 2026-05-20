@@ -12,6 +12,7 @@ pub fn type_to_ts(codegen: &TsCodegen<'_>, type_id: TypeId, types: &TypeTable) -
                 type_to_ts(codegen, *value, types)
             )
         }
+        Type::Record(_) => "Record<string, unknown>".to_owned(),
         Type::Set(elem) => format!("Set<{}>", type_to_ts(codegen, *elem, types)),
         Type::Option(inner) => format!("{} | null", type_to_ts(codegen, *inner, types)),
         Type::Ref(_, inner) => type_to_ts(codegen, *inner, types),

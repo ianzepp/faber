@@ -140,6 +140,14 @@ impl TypeTable {
             | (Type::Option(ae), Type::Option(be))
             | (Type::Set(ae), Type::Set(be)) => self.equals(*ae, *be),
             (Type::Map(ak, av), Type::Map(bk, bv)) => self.equals(*ak, *bk) && self.equals(*av, *bv),
+            (Type::Record(a_fields), Type::Record(b_fields)) => {
+                a_fields.len() == b_fields.len()
+                    && a_fields.iter().all(|(name, a_ty)| {
+                        b_fields
+                            .get(name)
+                            .is_some_and(|b_ty| self.equals(*a_ty, *b_ty))
+                    })
+            }
             (Type::Ref(am, ai), Type::Ref(bm, bi)) => am == bm && self.equals(*ai, *bi),
             (Type::Struct(a_def), Type::Struct(b_def))
             | (Type::Enum(a_def), Type::Enum(b_def))
@@ -239,6 +247,9 @@ pub enum Type {
 
     /// Map type: tabula<K, V>
     Map(TypeId, TypeId),
+
+    /// Structural record type used for compiler-synthesized contracts.
+    Record(FxHashMap<LexSymbol, TypeId>),
 
     /// Set type: copia<T>
     Set(TypeId),
