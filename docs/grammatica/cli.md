@@ -1,25 +1,183 @@
 # CLI Framework
 
-Faber reserves a declarative CLI-shaped annotation surface. The active `radix-rs` compiler parses those annotations, but it does not yet lower them into a stable shipped command dispatcher, help formatter, or alias system.
+**Status**: This document is an **aspirational design specification and historical reference** for Faber's declarative CLI annotation surface. It is not a description of the current `radix-rs` implementation. The surface was implemented (parser + detector + TypeScript code generation for argument parsing, help text, subcommand dispatch, and module mounting) in the earlier reference compiler (`faber-ts`) and had partial support in `rivus`.
 
-## File-Level Annotations
+The active `radix-rs` compiler only preserves CLI-shaped annotations as generic annotation metadata today. Dedicated AST variants (`Cli`, `Optio(OptioAnnotation)`, and `Operandus(OperandusAnnotation)`) exist in `syntax/ast.rs`, but the parser does not currently populate them, and no lowering, argument parser generation, help formatting, or command dispatch codegen exists in `radix-rs`. Treat this page as a planned contract to implement against, not as a shipped capability matrix.
 
-A CLI program can be sketched with file-level annotations on `incipit`:
+See the rich usage example at `examples/exempla/rivus-cli-annotated/cli.fab` for the most complete real-world illustration.
+
+---
+
+## Planned Grammar Reference
+
+### Entry Point Forms
+
+```
+incipit { ... }                              -- plain entry (body runs directly)
+incipit argumenta <ident> { ... }            -- binds parsed args to variable
+incipit argumenta <ident> exitus <ident> { ... }  -- also binds exit code variable
+incipiet ...                                 -- async variant (historical)
+```
+
+The `argumenta` form is intended to trigger CLI argument parsing and help generation once CLI lowering exists.
+
+### File-Level / Incipit Annotations
+
+```
+@ cli <string>                    -- required to mark a CLI program; value is the binary name
+@ versio <string>                 -- program version (emitted for --version / -v)
+@ descriptio <string>             -- program-level description for help
+@ imperia <string> ex <ident>     -- mount an imported module's commands under the given path
+```
+
+`@ imperia` requires a prior wildcard import (`importa ex "..." privata * ut <ident>`).
+
+### Command / Subcommand Annotations (on `functio`)
+
+```
+@ imperium <string>               -- marks the function as a CLI subcommand (the string is the command name, supports / for nesting)
+@ alias <string>                  -- short alias for the command
+@ descriptio <string>             -- help text for this command
+```
+
+### Option / Flag Annotations
+
+Two historical syntaxes existed; the second ("new") form is preferred in recent examples.
+
+**Form A (explicit type first):**
+```
+@ optio <type> <ident> [brevis <string>] [longum <string>] [descriptio <string>]
+```
+- `<type>`: `bivalens` (flag), `textus`, `numerus`, etc.
+
+**Form B (binding-first, current preference in examples):**
+```
+@ optio <ident> [brevis <string>] [longum <string>] [bivalens] [descriptio <string>] [ubique] [vel <value>]
+```
+- Binding name comes first.
+- `bivalens` as a bare modifier means boolean flag (no value).
+- `ubique` marks the option as global (see Global Options below).
+- `vel <value>` provides a default in the planned lowering. The value should be captured and converted to the declared type by the CLI lowering pass.
+
+At least one of `brevis` or `longum` is required unless using the `optiones` bundling path.
+
+### Global Options (`ubique`)
+
+The `ubique` modifier may **only** appear on `@ optio` (and `@ operandus`) annotations attached at the top level — that is, directly before or on the `incipit` that carries the `@ cli` annotation.
 
 ```fab
-@ cli "myapp"
-@ versio "1.0.0"
-@ descriptio "A command-line tool"
+@ cli "vivi"
+@ optio textus config longum "config" descriptio "..." ubique
+@ optio bivalens json longum "json" descriptio "..." ubique
+@ optio textus account longum "account" descriptio "..." ubique
+
 incipit argumenta args {}
 ```
 
-| Annotation | Intended meaning |
-|------------|---------|
-| `@ cli "name"` | Marks the intended CLI entry point and executable name |
-| `@ versio "x.y.z"` | Program version (shown with `--version`) |
-| `@ descriptio "..."` | Program description (shown in help text) |
+Rules:
+- `ubique` options are automatically available to every command in the program (including commands reached via `@ imperia` module mounts).
+- All `ubique` options are merged into the **same flat `args` object** as the command’s local options and operands.
+- A name collision between a `ubique` option and a command-local `@ optio` or `@ operandus` is a **compiler error** (reported by the CLI lowering pass).
 
-The `@ cli` annotation marks the intended entry-point shape. A future lowering pass would be responsible for argument parsing and dispatch.
+### Defaults (`vel`)
+
+The `vel <value>` modifier on `@ optio` (and `@ operandus`) declares a CLI-level default.
+
+- If `vel` is **present**, the lowering pass will inject the provided value (after converting the string literal to the declared option type) unless the user supplies the flag on the command line.
+- If `vel` is **absent**, the option is optional at the CLI surface. When the user does not provide it, an absent/null value is passed into the `args` object. The command handler may then apply its own `vel` fallback if desired.
+
+Examples:
+
+```fab
+@ optio textus interval longum "interval" vel "30s" descriptio "Poll interval for --watch"
+
+@ optio numerus limit longum "limit" vel 100 descriptio "..."
+
+@ optio bivalens strict longum "strict" vel falsum descriptio "..."
+```
+
+`vel` values are captured as strings by the parser. The CLI lowering/codegen is responsible for converting them to the declared Faber type (`textus`, `numerus`, `bivalens`, etc.).
+
+`vel` works on both normal options and `ubique` globals.
+
+### CLI-Supported Types
+
+The type position in `@ optio <type>` and `@ operandus <type>` is intended to accept:
+
+- All basic primitive types (`textus`, `numerus`, `bivalens`, `fractus`, `magnus`, `octeti`, etc.)
+- `lista<textus>` — for repeatable string-valued options
+- `lista<numerus>` — for repeatable numeric options
+
+`vel <value>` defaults are intended to be supported on all of the above types.
+
+**Currently out of scope** (intentionally treated as `textus` for now):
+
+- File paths
+- Enums or simple choice types (e.g. folder roles, output formats)
+- `lista<bivalens>`
+- User-defined `genus` and `tabula<K, V>` types
+
+**Future direction**: Once Faber has a first-class `json` (or equivalent structured data) type together with standard library parsing support, the CLI annotation layer will recognize the type and attempt to parse the argument value automatically.
+
+This scoping keeps the CLI surface focused on what can be reasonably and reliably parsed from a command line while still allowing rich types where they provide clear value (especially repeatable flags).
+
+### Positional Argument Annotations
+
+```
+@ operandus [ceteri] <type> <ident> [descriptio <string>] [ubique] [vel <value>]
+```
+
+- `ceteri` makes it a rest/variadic collector (must be last; collects into `lista<textus>` in the historical lowering).
+- Only one `ceteri` operand allowed per command.
+- `ubique` is allowed but rare; the same top-level-only + unified binding + collision rules apply as for options.
+- `vel <value>` works the same way as on options (see Defaults section above).
+- The same type restrictions apply as documented in the CLI-Supported Types section.
+
+### Function Modifiers Related to CLI
+
+- `optiones <ident>` on a `functio` — bundles all `@ optio` values for that command into a `tabula<textus, ...>` (or equivalent) instead of individual parameters.
+- `exitus <ident>` on `incipit argumenta ...` — binds the exit code variable.
+
+---
+
+## File-Level Annotations (Summary Table)
+
+| Annotation     | Arguments                          | Placement          | Meaning |
+|----------------|------------------------------------|--------------------|---------|
+| `@ cli`        | string (name)                      | before `incipit`   | Marks program as CLI entry point |
+| `@ versio`     | string                             | before `incipit`   | `--version` output |
+| `@ descriptio` | string                             | before `incipit` or on `@ imperium` / module `incipit` | Help description |
+| `@ imperia`    | string (mount path) `ex` ident     | before `incipit`   | Mount submodule commands |
+
+**Note on globals**: `@ optio ... ubique` and `@ operandus ... ubique` are also declared at this top level (see Global Options grammar above).
+
+## Command-Level Annotations
+
+| Annotation     | Arguments                          | Placement             | Meaning |
+|----------------|------------------------------------|-----------------------|---------|
+| `@ imperium`   | string (command name, `/` allowed) | on `functio`          | Subcommand definition |
+| `@ alias`      | string                             | on `@ imperium` fn    | Command alias |
+| `@ optio`      | see grammar above (including `vel` and `lista<T>`) | before `@ imperium` fn, or at top level with `ubique` | Flag/option (global when `ubique`) |
+| `@ operandus`  | see grammar above (including `vel` and `lista<T>`) | before `@ imperium` fn, or at top level with `ubique` | Positional (global when `ubique`) |
+
+---
+
+## Historical Implementation Notes (for Future Revival)
+
+**2026-05 update**: The `ubique` modifier, unified `args` binding model, `vel`-based defaults, and the scoped CLI type support (primitives + `lista<textus>` + `lista<numerus>`, with everything else treated as `textus` for now) were added to this planned design during review against real-world CLIs such as `vivi`. These rules are not implemented in `radix-rs`; they are part of the preserved specification for future implementation.
+
+The earlier reference implementation (`docs/reference/faber-ts/codegen/cli/{detector.ts,resolver.ts}` and the incipit/incipiet generators) did the following:
+
+- Built a full command tree supporting nested paths via `/` in `@ imperium` and `@ imperia`.
+- Supported both **single-command mode** (pure `@ optio`/`@ operandus` on `incipit`) and **subcommand mode**.
+- Resolved `@ imperia` mounts by following wildcard `importa * ut Alias` imports and recursively extracting commands (with cycle detection).
+- Generated TypeScript argument parsing + formatted `--help` / `--version` output.
+- Supported the `optiones <name>` modifier to receive a single options table.
+- Distinguished `incipit` (sync) vs `incipiet` (async) entry points for CLI dispatch.
+
+When reviving this in `radix-rs`, the prepared `OptioAnnotation` and `OperandusAnnotation` structs in the AST should be populated by enhancing `parse_annotation_kind` (or a post-parse CLI normalization pass) rather than keeping everything as generic `AnnotationStmt`.
+
+The rich example at `examples/exempla/rivus-cli-annotated/cli.fab` is the best current test corpus for the full surface.
 
 ## CLI Modes
 
@@ -370,6 +528,30 @@ New `@ optio` syntax (preferred):
 
 ---
 
+## Implementation Artifacts (Historical)
+
+For anyone reviving the feature, the following locations contain the most complete prior implementation:
+
+- **Design + usage corpus** (current)
+  - `examples/exempla/rivus-cli-annotated/cli.fab` — most complete real example
+  - `examples/exempla/cli/main.fab` + `commands/greet.fab`
+
+- **Old reference lowering** (faber-ts era)
+  - `docs/reference/faber-ts/codegen/cli/detector.ts` — command tree building, annotation extraction, module mounting via `@ imperia`
+  - `docs/reference/faber-ts/codegen/cli/resolver.ts` — module loading and recursive extraction
+  - `docs/reference/faber-ts/codegen/ts/statements/incipit.ts` and `incipiet.ts` — help generation and dispatch logic
+  - `docs/reference/faber-ts/codegen/ts/generator.ts` — `CliProgram`, `CliCommandNode`, `CliOption`, `CliOperand` types
+
+- **Radix-rs AST preparation** (partial forward port)
+  - `compilers/radix-rs/src/syntax/ast.rs` — `AnnotationKind::Cli`, `OptioAnnotation`, `OperandusAnnotation`
+
+- **Known limitation in current radix-rs**
+  - Lowering for `incipit argumenta` and CLI dispatch was explicitly rejected (see commit `7e906c3b` "reject unsupported incipit argumenta lowering").
+
+This planned grammar and the artifacts above should be sufficient to re-implement the full surface cleanly on top of the existing HIR and codegen pipeline when the time comes.
+
+---
+
 ## Command Groups: @ imperia
 
 Mount an entire module as a command group using `@ imperia`. This is the cleanest way to organize large CLIs.
@@ -568,7 +750,10 @@ Illustrative help is contextual:
 ## Limitations
 
 Not yet implemented:
+- Typed `@ cli`, `@ optio`, and `@ operandus` parsing in `radix-rs`
+- CLI argument lowering, generated help, generated version output, and dispatch
 - Default values for options (`vel`)
+- Global options and operands (`ubique`)
 - Environment variable fallbacks
 - Mutual exclusion constraints
 - Negatable flags (`--no-verbose`)
