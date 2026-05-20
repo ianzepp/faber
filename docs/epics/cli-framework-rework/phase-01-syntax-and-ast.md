@@ -1,5 +1,16 @@
 # Phase 01: Syntax and AST
 
+**Status**: Completed on 2026-05-20.
+
+## Completion Notes
+
+- `@ cli` and `@ imperium` now parse into distinct structured annotation variants with string payloads.
+- `@ optio` uses the canonical binding-first grammar and rejects the historical type-first form and bare `bivalens` modifier.
+- `@ optio typus <type>` and `@ operandus <type>` store full `TypeExpr` values.
+- `vel` defaults are stored as `Expr` values; annotation-mode `verum`, `falsum`, and `nihil` defaults normalize to literal expressions.
+- `@ versio`, `@ descriptio`, `@ alias`, and `@ imperia` remain generic annotations for this phase.
+- Parser coverage includes positive AST-shape tests and syntax-shape error tests for malformed structured CLI annotations.
+
 ## Goal
 
 Make the planned CLI annotation syntax parse into explicit AST structures instead of generic `AnnotationStmt` metadata.
@@ -36,9 +47,9 @@ Make the planned CLI annotation syntax parse into explicit AST structures instea
 
 ## Design Questions
 
-- Should `vel` defaults be stored as raw tokens, literals, or expressions?
-- Should `lista<textus>` and `lista<numerus>` be accepted by the annotation parser as full `TypeExpr` values?
-- Should `typus bivalens vel verum` be allowed as a normal default, or should boolean defaults be restricted because absent flags already default to `falsum`?
+- Resolved for Phase 01: `vel` defaults are stored as expressions.
+- Resolved for Phase 01: full type syntax is accepted by the annotation parser as `TypeExpr`, including `lista<textus>` and `lista<numerus>`.
+- Resolved for Phase 01: `typus bivalens vel verum` parses as a normal default expression; default type compatibility remains a later validation concern.
 
 ## Acceptance
 
