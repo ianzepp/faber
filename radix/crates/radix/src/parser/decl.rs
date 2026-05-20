@@ -876,7 +876,17 @@ impl Parser {
     }
 
     fn parse_annotation_kind(&mut self) -> Result<AnnotationKind, ParseError> {
-        let name = self.parse_ident()?;
+        let name = self.parse_annotation_name()?;
+        let annotation_name = self.interner.resolve(name.name).to_owned();
+
+        match annotation_name.as_str() {
+            "cli" => return self.parse_cli_annotation(),
+            "imperium" => return self.parse_imperium_annotation(),
+            "optio" => return self.parse_optio_annotation(),
+            "operandus" => return self.parse_operandus_annotation(),
+            _ => {}
+        }
+
         let mut args = Vec::new();
 
         while self.is_annotation_arg() {
@@ -884,6 +894,140 @@ impl Parser {
         }
 
         Ok(AnnotationKind::Statement(AnnotationStmt { name, args }))
+    }
+
+    fn parse_cli_annotation(&mut self) -> Result<AnnotationKind, ParseError> {
+        let name = self.parse_string()?;
+        self.expect_annotation_end("unexpected token after @ cli name")?;
+        Ok(AnnotationKind::Cli(CliAnnotation { name }))
+    }
+
+    fn parse_imperium_annotation(&mut self) -> Result<AnnotationKind, ParseError> {
+        let name = self.parse_string()?;
+        self.expect_annotation_end("unexpected token after @ imperium name")?;
+        Ok(AnnotationKind::Imperium(ImperiumAnnotation { name }))
+    }
+
+    fn parse_optio_annotation(&mut self) -> Result<AnnotationKind, ParseError> {
+        let binding = self.parse_ident()?;
+        let mut ty = None;
+        let mut short = None;
+        let mut long = None;
+        let mut description = None;
+        let mut global = false;
+        let mut default = None;
+
+        while self.is_annotation_arg() {
+            if self.eat_annotation_ident("brevis") {
+                short = Some(self.parse_string()?);
+            } else if self.eat_annotation_ident("longum") {
+                long = Some(self.parse_string()?);
+            } else if self.eat_annotation_ident("typus") {
+                ty = Some(self.parse_type()?);
+            } else if self.eat_annotation_ident("descriptio") {
+                description = Some(self.parse_string()?);
+            } else if self.eat_annotation_ident("ubique") {
+                global = true;
+            } else if self.eat_annotation_ident("vel") {
+                default = Some(Box::new(self.parse_expression()?));
+            } else {
+                return Err(self.error(ParseErrorKind::InvalidAnnotation, "invalid @ optio modifier"));
+            }
+        }
+
+        let flag = ty
+            .as_ref()
+            .is_some_and(|ty| self.is_annotation_bivalens_type(ty));
+
+        Ok(AnnotationKind::Optio(OptioAnnotation {
+            binding,
+            ty,
+            short,
+            long,
+            flag,
+            description,
+            global,
+            default,
+        }))
+    }
+
+    fn parse_operandus_annotation(&mut self) -> Result<AnnotationKind, ParseError> {
+        let rest = self.eat_annotation_ident("ceteri");
+        let ty = self.parse_type()?;
+        let binding = self.parse_ident()?;
+        let mut description = None;
+        let mut global = false;
+        let mut default = None;
+
+        while self.is_annotation_arg() {
+            if self.eat_annotation_ident("descriptio") {
+                description = Some(self.parse_string()?);
+            } else if self.eat_annotation_ident("ubique") {
+                global = true;
+            } else if self.eat_annotation_ident("vel") {
+                default = Some(Box::new(self.parse_expression()?));
+            } else {
+                return Err(self.error(ParseErrorKind::InvalidAnnotation, "invalid @ operandus modifier"));
+            }
+        }
+
+        Ok(AnnotationKind::Operandus(OperandusAnnotation {
+            rest,
+            ty,
+            binding,
+            description,
+            global,
+            default,
+        }))
+    }
+
+    fn parse_annotation_name(&mut self) -> Result<Ident, ParseError> {
+        let token = self.advance();
+        let span = token.span;
+        match token.kind {
+            TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident { name: sym, span }),
+            TokenKind::Publica => Ok(self.keyword_ident("publica", span)),
+            TokenKind::Protecta => Ok(self.keyword_ident("protecta", span)),
+            TokenKind::Privata => Ok(self.keyword_ident("privata", span)),
+            TokenKind::Futura => Ok(self.keyword_ident("futura", span)),
+            TokenKind::Cursor => Ok(self.keyword_ident("cursor", span)),
+            TokenKind::Tag => Ok(self.keyword_ident("tag", span)),
+            TokenKind::Solum => Ok(self.keyword_ident("solum", span)),
+            TokenKind::Omitte => Ok(self.keyword_ident("omitte", span)),
+            TokenKind::Metior => Ok(self.keyword_ident("metior", span)),
+            _ => {
+                Err(ParseError { kind: ParseErrorKind::Expected, message: "expected annotation name".to_owned(), span })
+            }
+        }
+    }
+
+    fn eat_annotation_ident(&mut self, expected: &str) -> bool {
+        if let TokenKind::Ident(sym) = self.peek().kind {
+            if self.interner.resolve(sym) == expected {
+                self.advance();
+                return true;
+            }
+        }
+        false
+    }
+
+    fn expect_annotation_end(&mut self, message: &str) -> Result<(), ParseError> {
+        if self.is_annotation_arg() {
+            Err(self.error(ParseErrorKind::InvalidAnnotation, message))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn is_annotation_bivalens_type(&self, ty: &TypeExpr) -> bool {
+        matches!(
+            &ty.kind,
+            TypeExprKind::Named(name, params)
+                if params.is_empty()
+                    && !ty.nullable
+                    && ty.mode.is_none()
+                    && self.interner.resolve(name.name) == "bivalens"
+        )
     }
 
     fn is_annotation_arg(&self) -> bool {
@@ -899,6 +1043,11 @@ impl Parser {
                 | TokenKind::Integer(_)
                 | TokenKind::Float(_)
                 | TokenKind::Comma
+                | TokenKind::Ceteri
+                | TokenKind::De
+                | TokenKind::Ex
+                | TokenKind::Falsum
+                | TokenKind::In
                 | TokenKind::LParen
                 | TokenKind::RParen
                 | TokenKind::Arrow
@@ -908,6 +1057,11 @@ impl Parser {
                 | TokenKind::Dot
                 | TokenKind::Eq
                 | TokenKind::Assign
+                | TokenKind::Nihil
+                | TokenKind::Si
+                | TokenKind::Typus
+                | TokenKind::Vel
+                | TokenKind::Verum
         )
     }
 

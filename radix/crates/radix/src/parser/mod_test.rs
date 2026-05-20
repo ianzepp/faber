@@ -2,7 +2,7 @@ use super::parse;
 use crate::lexer::lex;
 use crate::syntax::{
     AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, IfBody, ImportKind, InlineReturn, IteraMode, Mutability,
-    ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause, StmtKind,
+    ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause, StmtKind, TypeExprKind,
 };
 
 fn parse_program(source: &str) -> super::ParseResult {
@@ -25,6 +25,204 @@ fn parse_ok(source: &str) -> super::ParseResult {
 
 fn symbol_name(result: &super::ParseResult, symbol: crate::lexer::Symbol) -> &str {
     result.interner.resolve(symbol)
+}
+
+#[test]
+fn parses_cli_and_imperium_annotations_as_structured_ast() {
+    let result = parse_ok(
+        r#"
+@ cli "faber"
+@ versio "0.1.0"
+incipit argumenta args {}
+
+@ imperium "emit"
+@ alias "e"
+functio emit() {}
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+    assert_eq!(program.stmts.len(), 2);
+
+    assert!(matches!(
+        &program.stmts[0].annotations[0].kind,
+        AnnotationKind::Cli(cli) if symbol_name(&result, cli.name) == "faber"
+    ));
+    assert!(
+        matches!(program.stmts[0].annotations[1].kind, AnnotationKind::Statement(_)),
+        "@ versio remains generic in phase 01"
+    );
+
+    assert!(matches!(
+        &program.stmts[1].annotations[0].kind,
+        AnnotationKind::Imperium(command) if symbol_name(&result, command.name) == "emit"
+    ));
+    assert!(
+        matches!(program.stmts[1].annotations[1].kind, AnnotationKind::Statement(_)),
+        "@ alias remains generic in phase 01"
+    );
+}
+
+#[test]
+fn keeps_other_cli_metadata_annotations_generic() {
+    let result = parse_ok(
+        r#"
+@ descriptio "Compile source files"
+@ imperia "jobs" ex jobsModulum
+incipit argumenta args {}
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+    assert_eq!(program.stmts[0].annotations.len(), 2);
+
+    let AnnotationKind::Statement(description) = &program.stmts[0].annotations[0].kind else {
+        panic!("@ descriptio should remain generic in phase 01");
+    };
+    assert_eq!(symbol_name(&result, description.name.name), "descriptio");
+    assert_eq!(description.args.len(), 1);
+
+    let AnnotationKind::Statement(imperia) = &program.stmts[0].annotations[1].kind else {
+        panic!("@ imperia should remain generic in phase 01");
+    };
+    assert_eq!(symbol_name(&result, imperia.name.name), "imperia");
+    assert_eq!(imperia.args.len(), 3);
+}
+
+#[test]
+fn parses_canonical_optio_annotation_as_structured_ast() {
+    let result = parse_ok(
+        r#"
+@ optio target brevis "t" longum "target" typus lista<textus> descriptio "Target language" ubique vel "rust"
+incipit argumenta args {}
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+    let AnnotationKind::Optio(optio) = &program.stmts[0].annotations[0].kind else {
+        panic!("expected structured @ optio");
+    };
+
+    assert_eq!(symbol_name(&result, optio.binding.name), "target");
+    assert_eq!(symbol_name(&result, optio.short.expect("short")), "t");
+    assert_eq!(symbol_name(&result, optio.long.expect("long")), "target");
+    assert_eq!(symbol_name(&result, optio.description.expect("description")), "Target language");
+    assert!(!optio.flag);
+    assert!(optio.global);
+    assert!(optio.default.is_some());
+
+    let ty = optio.ty.as_ref().expect("explicit type");
+    let TypeExprKind::Named(name, params) = &ty.kind else {
+        panic!("expected named option type");
+    };
+    assert_eq!(symbol_name(&result, name.name), "lista");
+    assert_eq!(params.len(), 1);
+    let TypeExprKind::Named(param_name, param_params) = &params[0].kind else {
+        panic!("expected named type parameter");
+    };
+    assert_eq!(symbol_name(&result, param_name.name), "textus");
+    assert!(param_params.is_empty());
+}
+
+#[test]
+fn parses_bivalens_optio_type_as_boolean_flag() {
+    let result = parse_ok(
+        r#"
+@ optio verbose longum "verbose" typus bivalens
+incipit argumenta args {}
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+    let AnnotationKind::Optio(optio) = &program.stmts[0].annotations[0].kind else {
+        panic!("expected structured @ optio");
+    };
+
+    assert_eq!(symbol_name(&result, optio.binding.name), "verbose");
+    assert!(optio.flag, "typus bivalens marks a boolean flag");
+    assert!(
+        optio.default.is_none(),
+        "absent boolean flag defaults are applied by CLI validation/lowering"
+    );
+}
+
+#[test]
+fn omitted_optio_type_is_left_for_textus_defaulting() {
+    let result = parse_ok(
+        r#"
+@ optio output longum "output" descriptio "Output path"
+incipit argumenta args {}
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+    let AnnotationKind::Optio(optio) = &program.stmts[0].annotations[0].kind else {
+        panic!("expected structured @ optio");
+    };
+
+    assert_eq!(symbol_name(&result, optio.binding.name), "output");
+    assert!(
+        optio.ty.is_none(),
+        "omitted typus means textus in later CLI validation/lowering"
+    );
+}
+
+#[test]
+fn parses_operandus_annotation_with_rest_type_global_and_default() {
+    let result = parse_ok(
+        r#"
+@ operandus ceteri lista<textus> files descriptio "Input files" ubique vel "src"
+incipit argumenta args {}
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+    let AnnotationKind::Operandus(operandus) = &program.stmts[0].annotations[0].kind else {
+        panic!("expected structured @ operandus");
+    };
+
+    assert!(operandus.rest);
+    assert_eq!(symbol_name(&result, operandus.binding.name), "files");
+    assert_eq!(symbol_name(&result, operandus.description.expect("description")), "Input files");
+    assert!(operandus.global);
+    assert!(operandus.default.is_some());
+
+    let TypeExprKind::Named(name, params) = &operandus.ty.kind else {
+        panic!("expected named operand type");
+    };
+    assert_eq!(symbol_name(&result, name.name), "lista");
+    assert_eq!(params.len(), 1);
+}
+
+#[test]
+fn cli_option_parser_rejects_historical_type_first_and_bare_bivalens_forms() {
+    let type_first = parse_program(
+        r#"
+@ optio textus output longum "output"
+incipit argumenta args {}
+"#,
+    );
+    assert!(
+        type_first
+            .errors
+            .iter()
+            .any(|err| err.message.contains("invalid @ optio modifier")),
+        "type-first @ optio must not parse as canonical syntax"
+    );
+
+    let bare_bivalens = parse_program(
+        r#"
+@ optio verbose longum "verbose" bivalens
+incipit argumenta args {}
+"#,
+    );
+    assert!(
+        bare_bivalens
+            .errors
+            .iter()
+            .any(|err| err.message.contains("invalid @ optio modifier")),
+        "bare bivalens modifier must not parse as canonical syntax"
+    );
 }
 
 #[test]

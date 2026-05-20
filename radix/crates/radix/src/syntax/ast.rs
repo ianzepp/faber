@@ -1126,8 +1126,10 @@ pub enum AnnotationKind {
     Verte(VerteMapping),
     /// @ externa
     Externa,
-    /// @ imperium / @ cli
-    Cli,
+    /// @ cli STRING
+    Cli(CliAnnotation),
+    /// @ imperium STRING
+    Imperium(ImperiumAnnotation),
     /// @ optio ...
     Optio(OptioAnnotation),
     /// @ operandus ...
@@ -1159,6 +1161,16 @@ pub struct AnnotationStmt {
 }
 
 #[derive(Debug)]
+pub struct CliAnnotation {
+    pub name: Symbol,
+}
+
+#[derive(Debug)]
+pub struct ImperiumAnnotation {
+    pub name: Symbol,
+}
+
+#[derive(Debug)]
 pub struct TargetMapping {
     pub target: Ident,
     pub value: Symbol,
@@ -1179,17 +1191,22 @@ pub enum VerteMappingKind {
 
 #[derive(Debug)]
 pub struct OptioAnnotation {
-    pub name: Ident,
+    pub binding: Ident,
+    pub ty: Option<TypeExpr>,
     pub short: Option<Symbol>,
     pub long: Option<Symbol>,
     pub flag: bool,
     pub description: Option<Symbol>,
+    pub global: bool,
+    pub default: Option<Box<Expr>>,
 }
 
 #[derive(Debug)]
 pub struct OperandusAnnotation {
     pub rest: bool,
-    pub ty: Ident,
-    pub name: Ident,
+    pub ty: TypeExpr,
+    pub binding: Ident,
     pub description: Option<Symbol>,
+    pub global: bool,
+    pub default: Option<Box<Expr>>,
 }
