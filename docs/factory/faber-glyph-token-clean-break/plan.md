@@ -7,6 +7,19 @@
 **Mode**: clean-break / full edit
 **Commit Policy**: Commit after each completed phase and validation gate pass
 
+## Prerequisite Assumption
+
+This plan now assumes the Faber explain coverage completion work has already landed before the glyph clean break starts.
+
+Specifically:
+
+- `faber explain` exists in the Faber build tool, not the Radix compiler.
+- The explain corpus covers all active keywords and canonical glyph/operator tokens.
+- Legacy redirect entries exist for old spellings such as `==`, `!=`, `<=`, `>=`, `->`, and old compound assignment forms where applicable.
+- Explain corpus filenames use stable ASCII token slugs, with legacy redirects named as `<token-slug>.legacy.md`.
+
+That means this clean-break plan does not need to create the user-facing explanation surface from scratch. Its job is to remove old source-token acceptance from the compiler and keep the already-complete explain corpus accurate as migration/help text.
+
 ## Interpreted Problem
 
 Faber has accumulated compatibility acceptance for old ASCII multi-character operators even though the language should now use canonical single-glyph source tokens. This creates confusing docs, examples, and tests: old forms such as `==` keep passing, so non-canonical syntax continues to spread.
@@ -17,7 +30,8 @@ The clean break is:
 - update examples to canonical glyph syntax,
 - update compiler tests to use canonical glyph syntax,
 - add negative tests proving old ASCII forms are rejected,
-- update docs so they no longer teach old forms as valid Faber source.
+- update grammar docs so they no longer teach old forms as valid Faber source,
+- preserve `faber explain` legacy redirects so users and agents can ask what removed spellings mean.
 
 The requested implementation order is parser/compiler break first, then fix what breaks:
 
@@ -25,7 +39,7 @@ The requested implementation order is parser/compiler break first, then fix what
 2. Run tests and example checks to expose all old-style usage.
 3. Update tests.
 4. Update examples.
-5. Update docs and guardrails.
+5. Update grammar docs, explain redirect copy if needed, and guardrails.
 
 ## Break Boundary
 
@@ -37,7 +51,8 @@ This cleanup applies to:
 - `.fab` snippets embedded in Rust compiler tests,
 - grammar docs that teach Faber source syntax,
 - lexer/parser tests that currently assert old token acceptance,
-- generated Faber codegen round-trip expectations.
+- generated Faber codegen round-trip expectations,
+- `explain/*.md` legacy redirect entries, but only to ensure they describe old forms as removed/non-canonical.
 
 This cleanup does **not** apply to:
 
@@ -45,6 +60,7 @@ This cleanup does **not** apply to:
 - shell command examples such as `--help`, `--release`, or `cargo run`,
 - target translation template strings such as `@ verte ts "... == ..."`,
 - prose references that explicitly compare Faber to target-language syntax,
+- `faber explain` legacy redirect entries that intentionally document removed spellings as invalid Faber source,
 - Rust implementation code that naturally uses `==`, `!=`, `=>`, `->`, `&&`, or `||`.
 
 Implementation sessions must avoid broad regex replacement across Rust source.
@@ -100,6 +116,13 @@ Confirmed current compiler behavior:
 - Faber codegen already prints equality and inequality back as canonical glyphs in `crates/radix/src/codegen/faber/ops.rs`.
 - Examples already contain some canonical glyph usage, but docs and tests still contain old forms.
 
+Expected explain baseline before this plan starts:
+
+- `faber explain ≡`, `faber explain →`, and other canonical glyph lookups work from the installed/build tool.
+- `faber explain ==`, `faber explain ->`, and related legacy lookups return guidance toward canonical syntax instead of implying those spellings are valid source.
+- The explain corpus has already been renamed away from glyph/punctuation filenames.
+- Coverage validation for explain entries already exists, so this plan should update explain entries only when the clean break changes canonical/legacy wording.
+
 Important files:
 
 - `crates/radix/src/lexer/scan.rs`
@@ -113,18 +136,21 @@ Important files:
 - `crates/radix/src/driver/mod_test.rs`
 - `crates/radix/src/codegen/faber/ops.rs`
 - `examples/**/*.fab`
+- `explain/*.md`
 - `docs/grammatica/*.md`
+- `docs/grammatica/explain.md`
 - `docs/factory/faber-test-runner-evolution/plan.md`
+- `docs/factory/faber-explain-coverage-completion/plan.md`
 
 ## Stage Graph
 
 | Phase | Name | Goal | Checkpoint |
 | ----- | ---- | ---- | ---------- |
-| 0 | Inventory and baseline | Capture old token inventory and current acceptance evidence. | Ledger records exact old tokens and initial failing/passing state. |
+| 0 | Inventory and baseline | Capture old token inventory, current acceptance evidence, and completed explain baseline. | Ledger records exact old tokens, explain redirect status, and initial failing/passing state. |
 | 1 | Front-end break | Remove old ASCII multi-character token acceptance from lexer/parser surface. | Tests fail only because callers still use removed source tokens. |
 | 2 | Compiler tests migration | Update lexer/parser/driver/codegen tests to canonical glyph source syntax and add rejection tests. | Compiler tests pass and old tokens are rejected. |
 | 3 | Examples migration | Update `.fab` examples and fixtures to canonical glyph syntax. | Example checks pass; no old tokens remain in Faber examples. |
-| 4 | Grammar docs migration | Update grammatica docs to teach canonical glyph syntax and remove old compatibility claims. | Docs no longer advertise removed Faber source tokens. |
+| 4 | Grammar and explain docs migration | Update grammatica docs to teach canonical glyph syntax and align explain legacy wording. | Grammar docs no longer advertise removed source tokens; explain redirects still document removed spellings. |
 | 5 | Guardrails and validation | Add searches/tests that prevent reintroducing old source tokens where practical. | Full validation passes and residue search is clean. |
 
 ## Phase Details
@@ -134,22 +160,30 @@ Important files:
 Steps:
 
 - Inspect `git status --short`.
+- Verify the explain coverage completion plan has landed:
+  - canonical glyph entries exist,
+  - legacy redirect entries exist,
+  - legacy redirect filenames use `<token-slug>.legacy.md`,
+  - explain coverage validation passes.
 - Capture current lexer acceptance for old and glyph tokens.
 - Search separately in:
   - `examples/**/*.fab`,
   - `crates/radix/src/**/*_test.rs`,
   - `docs/grammatica/*.md`,
+  - `explain/*.md`,
   - factory plans that embed Faber snippets.
 - Create a ledger in this artifact directory.
 - Classify each match as:
   - Faber source to change,
   - generated target-language assertion to leave alone,
   - shell/CLI syntax to leave alone,
+  - intentional explain legacy redirect to preserve,
   - prose comparison to rewrite or clarify.
 
 Checkpoint:
 
 - Inventory names the old token set to remove in Phase 1.
+- Inventory confirms explain coverage and legacy redirects are already in place.
 - No behavior changed.
 
 ### Phase 1: Front-End Break
@@ -232,7 +266,7 @@ Checkpoint:
 - No old ASCII multi-character source tokens remain in `.fab` examples.
 - Example check/roundtrip gates pass or documented blockers are recorded.
 
-### Phase 4: Grammar Docs Migration
+### Phase 4: Grammar and Explain Docs Migration
 
 Steps:
 
@@ -240,12 +274,15 @@ Steps:
 - Update function/type docs from `->` to `→` where the snippet is Faber source.
 - Update test-runner plan snippets if needed.
 - Update `docs/grammatica/verba.md` so it no longer maps canonical Faber operators to old source tokens as though they are accepted syntax.
+- Review `explain/*.legacy.md` entries for removed tokens and make sure they say the spelling is non-canonical or removed, not merely an alternate accepted spelling.
+- Do not delete legacy explain entries solely because lexer support was removed; they are the migration/help interface.
 - Keep target-language comparison tables only when clearly labeled as target-language output, not Faber input.
 
 Checkpoint:
 
 - Docs teach glyph-first Faber source syntax.
 - Removed old tokens are not presented as valid Faber source.
+- `faber explain <old-token>` still gives a useful canonical replacement.
 
 ### Phase 5: Guardrails and Validation
 
@@ -266,13 +303,13 @@ cargo build --release -p radix
 - Run targeted residue search and classify any remaining old-token strings:
 
 ```bash
-rg -n '==|!=|===|!==|<=|>=|->|\+=|-=|\*=|/=' examples docs/grammatica crates/radix/src crates/faber/src
+rg -n '==|!=|===|!==|<=|>=|->|\+=|-=|\*=|/=' examples docs/grammatica explain crates/radix/src crates/faber/src
 ```
 
 Checkpoint:
 
 - Validation passes.
-- Residue search contains only allowed target-language, shell, or Rust implementation contexts.
+- Residue search contains only allowed target-language, shell, Rust implementation, or intentional explain legacy contexts.
 - Work is committed.
 
 ## Epic Candidates And Scopable Issues
@@ -317,11 +354,12 @@ Acceptance:
 
 ### Issue E: Docs and Guardrails
 
-Update docs and add residue guardrails.
+Update grammar docs, align explain legacy redirect wording, and add residue guardrails.
 
 Acceptance:
 
 - grammar docs no longer teach removed forms,
+- explain legacy redirects remain available and describe removed forms as non-canonical,
 - hygiene checks or negative tests prevent easy regression.
 
 ## Checkpoints
@@ -363,6 +401,8 @@ Required semantic proof:
 - `functio f() -> vacuum {}` fails.
 - `x ⊕ 1` parses as add assignment where assignment syntax is valid.
 - `x += 1` fails where it previously parsed.
+- `faber explain ==` points to `≡` and says `==` is non-canonical or removed.
+- `faber explain ->` points to `→` and says `->` is non-canonical or removed.
 - `.fab` examples no longer contain removed old source tokens.
 
 ## Open Questions
@@ -371,5 +411,4 @@ Required semantic proof:
 - Should logical ASCII `&&` and `||` be explicitly rejected if any support remains, or is this already keyword-only?
 - Should `!` be removed as logical-not syntax in favor of `non`/`¬`, while preserving `!.`, `![`, and `!(`?
 - Should simple ASCII `<` and `>` stay because they are single-character mathematical operators, or should the language eventually require Latin/range-style alternatives?
-- Should docs preserve a historical migration note listing removed ASCII forms, or should they simply disappear from user-facing grammar?
-
+- Should grammar docs preserve a historical migration note listing removed ASCII forms, or should legacy history live only in `faber explain <old-token>` redirects?
