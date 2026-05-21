@@ -113,6 +113,14 @@ struct TestArgs {
     /// Limit the number of test threads used by the harness
     #[arg(long, value_name = "N")]
     test_threads: Option<usize>,
+
+    /// Only run ignored tests (maps to `omitte` / `futurum` cases today)
+    #[arg(long, conflicts_with = "include_ignored")]
+    ignored: bool,
+
+    /// Run normal tests and ignored tests
+    #[arg(long, conflicts_with = "ignored")]
+    include_ignored: bool,
 }
 
 fn main() {
@@ -434,6 +442,14 @@ fn cmd_test(args: TestArgs) {
     if let Some(n) = args.test_threads {
         harness_args.push("--test-threads".to_string());
         harness_args.push(n.to_string());
+    }
+
+    // Phase 3: ignored test support (mutual exclusion enforced by Clap)
+    if args.ignored {
+        harness_args.push("--ignored".to_string());
+    }
+    if args.include_ignored {
+        harness_args.push("--include-ignored".to_string());
     }
 
     let status = match package::invoke_cargo_test(&layout, args.filter.as_deref(), &harness_args) {
