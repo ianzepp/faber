@@ -339,6 +339,11 @@ pub fn render_list(registry: &Registry) -> String {
         .iter()
         .filter(|entry| entry.canonical)
         .collect::<Vec<_>>();
+    let term_width = entries
+        .iter()
+        .map(|entry| display_width(&entry.term))
+        .max()
+        .unwrap_or(0);
 
     for kind in [
         Kind::Keyword,
@@ -363,11 +368,6 @@ pub fn render_list(registry: &Registry) -> String {
         out.push_str(kind.list_title());
         out.push('\n');
 
-        let term_width = group
-            .iter()
-            .map(|entry| display_width(&entry.term))
-            .max()
-            .unwrap_or(0);
         for entry in group {
             out.push_str("  ");
             push_padded(&mut out, &entry.term, term_width);
