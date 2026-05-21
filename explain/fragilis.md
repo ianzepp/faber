@@ -11,5 +11,5 @@ related = ["requirit"]
 Marks a test as fragile.
 
 ```fab
-proba fragilis 1 {}
+proba "case" fragilis 1 {}
 ```

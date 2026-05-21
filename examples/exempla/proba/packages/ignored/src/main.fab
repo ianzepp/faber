@@ -1,8 +1,8 @@
-proba omitte "blocked by external service" "skipped failing case" {
+proba "skipped failing case" omitte "blocked by external service" {
     adfirma falsum
 }
 
-proba futurum "not implemented yet" "future case" {
+proba "future case" futurum "not implemented yet" {
     adfirma falsum
 }
 

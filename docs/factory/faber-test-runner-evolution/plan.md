@@ -212,11 +212,11 @@ examples/exempla/proba/packages/ignored/
 `src/main.fab`:
 
 ```fab
-proba omitte "blocked by external service" "skipped failing case" {
+proba "skipped failing case" omitte "blocked by external service" {
     adfirma falsum
 }
 
-proba futurum "not implemented yet" "future case" {
+proba "future case" futurum "not implemented yet" {
     adfirma falsum
 }
 
@@ -384,7 +384,7 @@ Checkpoint:
 
 - A package containing passing `proba` tests passes with `faber test`.
 - A package containing a failing `proba` exits nonzero.
-- `proba omitte` / `proba futurum` are ignored by default through Rust `#[ignore]`.
+- `proba "name" omitte` / `proba "name" futurum` are ignored by default through Rust `#[ignore]`.
 - The suite fixture proves nested `probandum` tests execute.
 - Cargo test output remains visible to the user.
 - The command exits with Cargo test's exit status.

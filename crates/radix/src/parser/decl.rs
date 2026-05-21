@@ -744,7 +744,7 @@ impl Parser {
     /// Parse test suite declaration.
     ///
     /// GRAMMAR:
-    ///   probandum := 'probandum' string '{' probandum-body '}'
+    ///   probandum := 'probandum' string proba-modifier* '{' probandum-body '}'
     ///   probandum-body := (setup | proba | nested-probandum)*
     ///
     /// WHY: Test suites support setup/teardown hooks (praepara/postpara), individual
@@ -754,6 +754,7 @@ impl Parser {
         self.expect_keyword(TokenKind::Probandum, "expected 'probandum'")?;
 
         let name = self.parse_string()?;
+        let modifiers = self.parse_test_modifiers()?;
 
         self.expect(&TokenKind::LBrace, "expected '{'")?;
 
@@ -762,7 +763,7 @@ impl Parser {
         self.expect(&TokenKind::RBrace, "expected '}'")?;
 
         let span = start.merge(self.previous_span());
-        Ok(StmtKind::Probandum(ProbandumDecl { name, body, span }))
+        Ok(StmtKind::Probandum(ProbandumDecl { name, modifiers, body, span }))
     }
 
     fn parse_probandum_body(&mut self) -> Result<ProbandumBody, ParseError> {
@@ -819,9 +820,18 @@ impl Parser {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Proba, "expected 'proba'")?;
 
-        let mut modifiers = Vec::new();
+        let name = self.parse_string()?;
 
-        // Parse modifiers before string
+        let modifiers = self.parse_test_modifiers()?;
+
+        let body = self.parse_block()?;
+
+        let span = start.merge(self.previous_span());
+        Ok(ProbaCase { modifiers, name, body, span })
+    }
+
+    fn parse_test_modifiers(&mut self) -> Result<Vec<ProbaModifier>, ParseError> {
+        let mut modifiers = Vec::new();
         loop {
             if self.eat_keyword(TokenKind::Omitte) {
                 let reason = self.parse_string()?;
@@ -861,12 +871,7 @@ impl Parser {
                 break;
             }
         }
-
-        let name = self.parse_string()?;
-        let body = self.parse_block()?;
-
-        let span = start.merge(self.previous_span());
-        Ok(ProbaCase { modifiers, name, body, span })
+        Ok(modifiers)
     }
 
     /// Parse annotations

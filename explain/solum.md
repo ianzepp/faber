@@ -11,5 +11,5 @@ related = ["omitte", "futurum"]
 Marks a test as the only test to run.
 
 ```fab
-proba solum "focus" {}
+proba "focus" solum {}
 ```

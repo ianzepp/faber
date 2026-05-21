@@ -4,7 +4,7 @@ kind = "modifier"
 category = "testing"
 canonical = true
 summary = "Marks a test case as pending future work with a reason."
-syntax = "proba futurum <reason> <name> <block>"
+syntax = "proba <name> futurum <reason> <block>"
 examples = ["examples/exempla/proba/modificatores.fab"]
 aliases = ["todo", "pending"]
 related = ["proba", "omitte"]
@@ -13,7 +13,7 @@ related = ["proba", "omitte"]
 Use `futurum` after `proba` for a test case that documents planned behavior.
 
 ```fab
-proba futurum "needs API" "creates users" {
+proba "creates users" futurum "needs API" {
 adfirma verum
 }
 ```

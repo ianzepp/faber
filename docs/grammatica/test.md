@@ -19,10 +19,10 @@ proba "arithmetic passes" {
 
 ### Suites
 
-`probandum` groups cases and nested suites. Suite-level setup and teardown apply to contained cases.
+`probandum` groups cases and nested suites. Suite-level setup, teardown, and test modifiers apply to contained cases.
 
 ```fab
-probandum "math suite" {
+probandum "math suite" tag "math" {
     praepara omnia {
         fixum setup_value ← 1
     }
@@ -43,7 +43,15 @@ Setup and teardown blocks use:
 
 ## Test Modifiers
 
-The current testing surface recognizes these `proba` modifiers:
+The current testing surface recognizes these `proba` and `probandum` modifiers. Modifiers come after the case or suite name:
+
+```fab
+proba "parses input" solum tag "parser" {
+}
+
+probandum "parser suite" tag "parser" {
+}
+```
 
 | Verbum | Meaning | Current behavior |
 | ------ | ------- | ---------------- |

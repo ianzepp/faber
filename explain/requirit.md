@@ -11,5 +11,5 @@ related = ["solum_in"]
 Requires a named test fixture or capability.
 
 ```fab
-proba requirit "net" {}
+proba "case" requirit "net" {}
 ```

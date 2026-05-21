@@ -11,5 +11,5 @@ related = ["requirit"]
 Restricts a test to a named environment or target.
 
 ```fab
-proba solum_in "ci" "case" {}
+proba "case" solum_in "ci" {}
 ```

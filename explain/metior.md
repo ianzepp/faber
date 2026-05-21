@@ -11,5 +11,5 @@ related = ["temporis"]
 Marks a test for metered or measured execution.
 
 ```fab
-proba metior {}
+proba "case" metior {}
 ```

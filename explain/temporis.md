@@ -11,5 +11,5 @@ related = ["metior", "repete"]
 Sets a timeout-like duration for a test modifier.
 
 ```fab
-proba temporis 5 {}
+proba "case" temporis 5 {}
 ```

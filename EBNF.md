@@ -444,9 +444,9 @@ incipietStmt := 'incipiet' (blockStmt | 'ergo' statement)
 ## Testing
 
 ```ebnf
-probandumDecl := 'probandum' STRING '{' probandumBody '}'
+probandumDecl := 'probandum' STRING probaModifier* '{' probandumBody '}'
 probandumBody := (praeparaBlock | probandumDecl | probaStmt)*
-probaStmt     := 'proba' probaModifier? STRING blockStmt
+probaStmt     := 'proba' STRING probaModifier* blockStmt
 probaModifier := 'omitte' STRING | 'futurum' STRING | 'solum' | 'tag' STRING
               | 'temporis' NUMBER | 'metior' | 'repete' NUMBER | 'fragilis' NUMBER
               | 'requirit' STRING | 'solum_in' STRING

@@ -11,5 +11,5 @@ related = ["fragilis"]
 Repeats a test a fixed number of times.
 
 ```fab
-proba repete 2 {}
+proba "case" repete 2 {}
 ```

@@ -163,11 +163,11 @@ impl super::FaberCodegen {
     ) {
         w.write("proba ");
         if let Some(test) = &func.test {
-            for modifier in &test.modifiers {
-                self.write_test_modifier(modifier, interner, w);
-                w.write(" ");
-            }
             self.write_quoted_text(interner.resolve(test.name), w);
+            for modifier in &test.modifiers {
+                w.write(" ");
+                self.write_test_modifier(modifier, interner, w);
+            }
         } else {
             self.write_quoted_text(interner.resolve(func.name), w);
         }

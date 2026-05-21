@@ -86,8 +86,8 @@ probandum "outer suite" {
 
 #[test]
 fn lowers_all_test_modifiers_into_metadata() {
-    let source = r#"proba omitte "blocked by service" futurum "later" solum tag "smoke" temporis 5 metior repete 2 fragilis 1 requirit "capability" solum_in "staging" "modifier case" {
-  adfirma verum
+    let source = r#"proba "modifier case" omitte "blocked by service" futurum "later" solum tag "smoke" temporis 5 metior repete 2 fragilis 1 requirit "capability" solum_in "staging" {
+    adfirma verum
 }"#;
 
     let (hir, interner) = lower_source(source);
@@ -129,5 +129,33 @@ fn lowers_all_test_modifiers_into_metadata() {
             "requirit(capability)".to_owned(),
             "solum_in(staging)".to_owned(),
         ]
+    );
+}
+
+#[test]
+fn lowers_suite_modifiers_into_nested_test_metadata() {
+    let source = r#"probandum "suite" tag "parser" solum {
+  proba "case" tag "unit" {
+    adfirma verum
+  }
+}"#;
+
+    let (hir, interner) = lower_source(source);
+    assert_eq!(hir.items.len(), 1);
+
+    let metadata = test_metadata(&hir.items[0]);
+    let rendered: Vec<String> = metadata
+        .modifiers
+        .iter()
+        .map(|modifier| match modifier {
+            HirTestModifier::Tag(tag) => format!("tag({})", interner.resolve(*tag)),
+            HirTestModifier::Solum => "solum".to_owned(),
+            other => format!("{other:?}"),
+        })
+        .collect();
+
+    assert_eq!(
+        rendered,
+        vec!["tag(parser)".to_owned(), "solum".to_owned(), "tag(unit)".to_owned()]
     );
 }

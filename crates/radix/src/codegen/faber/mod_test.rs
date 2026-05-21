@@ -369,7 +369,7 @@ fn emits_synthetic_proba_functions_as_proba_cases() {
     let output = gen.generate(&program, &types, &interner).expect("codegen");
     assert!(output
         .code
-        .contains("proba omitte \"blocked by maintenance\" \"one plus one equals two\""));
+        .contains("proba \"one plus one equals two\" omitte \"blocked by maintenance\""));
     assert!(!output.code.contains("functio one plus one equals two"));
 }
 

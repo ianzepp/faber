@@ -1438,11 +1438,11 @@ incipit {}"#;
 #[test]
 fn compile_lowers_proba_omit_and_futurum_as_ignored_tests() {
     let session = session(Target::Rust);
-    let source = r#"proba omitte "blocked" "case one" {
+    let source = r#"proba "case one" omitte "blocked" {
   adfirma falsum
 }
 
-proba futurum "todo" "case two" {
+proba "case two" futurum "todo" {
   adfirma verum
 }
 

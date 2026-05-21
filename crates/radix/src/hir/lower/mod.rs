@@ -327,10 +327,10 @@ impl<'a> Lowerer<'a> {
             StmtKind::Interface(decl) => self.lower_pactum(stmt, decl).into_iter().collect(),
             StmtKind::TypeAlias(decl) => self.lower_typus(stmt, decl).into_iter().collect(),
             StmtKind::Import(decl) => self.lower_importa(stmt, decl).into_iter().collect(),
-            StmtKind::Proba(case) => vec![self.lower_proba_item(case, &[], &[])],
+            StmtKind::Proba(case) => vec![self.lower_proba_item(case, &[], &[], &[])],
             StmtKind::Probandum(suite) => {
                 let mut items = Vec::new();
-                self.lower_probandum_items(suite, &[], &[], &mut items);
+                self.lower_probandum_items(suite, &[], &[], &[], &mut items);
                 items
             }
             _ => Vec::new(),
@@ -341,6 +341,7 @@ impl<'a> Lowerer<'a> {
         &mut self,
         suite: &ProbandumDecl,
         inherited_setup: &[&PraeparaBlock],
+        inherited_modifiers: &[ProbaModifier],
         suite_path: &[Symbol],
         out: &mut Vec<HirItem>,
     ) {
@@ -354,12 +355,15 @@ impl<'a> Lowerer<'a> {
         let mut combined_suite_path = suite_path.to_vec();
         combined_suite_path.push(suite.name);
 
+        let mut combined_modifiers = inherited_modifiers.to_vec();
+        combined_modifiers.extend(suite.modifiers.iter().cloned());
+
         for case in &suite.body.tests {
-            out.push(self.lower_proba_item(case, &combined_setup, &combined_suite_path));
+            out.push(self.lower_proba_item(case, &combined_setup, &combined_modifiers, &combined_suite_path));
         }
 
         for nested in &suite.body.nested {
-            self.lower_probandum_items(nested, &combined_setup, &combined_suite_path, out);
+            self.lower_probandum_items(nested, &combined_setup, &combined_modifiers, &combined_suite_path, out);
         }
     }
 
@@ -367,6 +371,7 @@ impl<'a> Lowerer<'a> {
         &mut self,
         case: &ProbaCase,
         inherited_setup: &[&PraeparaBlock],
+        inherited_modifiers: &[ProbaModifier],
         suite_path: &[Symbol],
     ) -> HirItem {
         let def_id = self.next_def_id();
@@ -387,6 +392,9 @@ impl<'a> Lowerer<'a> {
 
         self.pop_scope();
 
+        let mut modifiers = inherited_modifiers.to_vec();
+        modifiers.extend(case.modifiers.iter().cloned());
+
         HirItem {
             id: self.next_hir_id(),
             def_id,
@@ -402,7 +410,7 @@ impl<'a> Lowerer<'a> {
                 test: Some(HirTestMetadata {
                     name: case.name,
                     suite_path: suite_path.to_vec(),
-                    modifiers: Self::lower_test_modifiers(&case.modifiers),
+                    modifiers: Self::lower_test_modifiers(&modifiers),
                     span: case.span,
                 }),
             }),

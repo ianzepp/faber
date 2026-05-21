@@ -348,6 +348,7 @@ pub enum DirectiveArg {
 #[derive(Debug)]
 pub struct ProbandumDecl {
     pub name: Symbol,
+    pub modifiers: Vec<ProbaModifier>,
     pub body: ProbandumBody,
     pub span: Span,
 }
@@ -383,7 +384,7 @@ pub struct ProbaCase {
     pub span: Span,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ProbaModifier {
     Omitte(Symbol),
     Futurum(Symbol),

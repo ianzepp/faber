@@ -2,7 +2,7 @@ proba "name match" {
     adfirma verum
 }
 
-proba tag "smoke" "tag match" {
+proba "tag match" tag "smoke" {
     adfirma verum
 }
 
@@ -12,7 +12,7 @@ probandum "outer suite" {
     }
 
     probandum "inner suite" {
-        proba tag "focus" "combined match" {
+        proba "combined match" tag "focus" {
             adfirma verum
         }
     }

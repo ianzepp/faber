@@ -56,14 +56,14 @@ Keywords for organizing test suites and cases:
 | `postpara`    | afterEach        | Run after each test                |
 | `postparabit` | async afterEach  | Async teardown after each test     |
 | `omnia`       | all              | Modifier: beforeAll/afterAll       |
-| `omitte`      | skip             | Skip this test                     |
-| `futurum`     | todo             | Mark test as pending               |
-| `solum`       | focus            | Run this test by default when any focused tests exist |
+| `omitte`      | skip             | Skip this test or suite            |
+| `futurum`     | todo             | Mark test or suite as pending      |
+| `solum`       | focus            | Run this test or suite by default when any focused tests exist |
 | `tag`         | tag              | Attach a label used by `faber test --tag` |
 | `requirit`    | requires         | Requirement metadata for later phases |
 | `solum_in`    | only in          | Environment-scoping metadata for later phases |
 
-`temporis`, `metior`, `repete`, and `fragilis` are also parsed on test declarations and preserved in HIR metadata. The current `faber test` implementation does not enforce them yet.
+Test modifiers follow the case or suite name. `temporis`, `metior`, `repete`, and `fragilis` are also parsed on test declarations and preserved in HIR metadata. The current `faber test` implementation does not enforce them yet.
 
 ---
 

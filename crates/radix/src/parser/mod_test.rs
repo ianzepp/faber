@@ -608,10 +608,10 @@ pactum Canens<T> {
     @ externa
     functio aliter() → textus
 }
-probandum "suite" {
+probandum "suite" tag "parser" {
     praepara omnia {}
     postpara {}
-    proba omitte "skip" futurum "later" solum tag "focus" temporis 5 metior repete 2 fragilis 1 requirit "net" solum_in "ci" "case" {}
+    proba "case" omitte "skip" futurum "later" solum tag "focus" temporis 5 metior repete 2 fragilis 1 requirit "net" solum_in "ci" {}
     probandum "nested" { proba "inner" {} }
 }
 "#,
@@ -655,6 +655,8 @@ probandum "suite" {
     let StmtKind::Probandum(test) = &program.stmts[2].kind else {
         panic!("expected probandum declaration");
     };
+    assert_eq!(test.modifiers.len(), 1);
+    assert!(matches!(test.modifiers[0], ProbaModifier::Tag(_)));
     assert_eq!(test.body.setup.len(), 2);
     assert!(matches!(test.body.setup[0].kind, PraeparaKind::Praepara));
     assert!(test.body.setup[0].all);
@@ -688,6 +690,16 @@ probandum "suite" {
             .any(|modifier| matches!(modifier, ProbaModifier::SolumIn(_))),
         "expected solumIn modifier"
     );
+}
+
+#[test]
+fn proba_modifiers_must_follow_name() {
+    assert_parse_error_contains(r#"proba solum tag "parser" "parses input" {}"#, "expected string");
+}
+
+#[test]
+fn probandum_modifiers_must_follow_name() {
+    assert_parse_error_contains(r#"probandum solum tag "parser" "suite" {}"#, "expected string");
 }
 
 #[test]

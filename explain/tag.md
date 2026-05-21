@@ -11,5 +11,5 @@ related = ["solum", "temporis"]
 Attaches a test tag string.
 
 ```fab
-proba tag "focus" {}
+proba "case" tag "focus" {}
 ```

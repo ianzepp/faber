@@ -38,7 +38,7 @@ error: `faber test` is not implemented yet; use `faber check` on <path>
 ### Existing Proba Lowering Evidence
 - `proba "name" { adfirma ... }` parses via `StmtKind::Proba` in radix parser.
 - Lowers in `crates/radix/src/hir/lower/mod.rs:lower_proba_item` to `HirItem::Function` with synthetic `def_id >= 1_000_000`.
-- `proba omitte ...` and `proba futurum ...` set `is_generator: true` (repurposed as ignore flag).
+- `proba "name" omitte ...` and `proba "name" futurum ...` set `is_generator: true` (repurposed as ignore flag).
 - Codegen in `crates/radix/src/codegen/rust/decl.rs:generate_function_with_cli_args_type`:
   - emits `#[test]`
   - emits `#[ignore]` if `is_generator` (for omitte/futurum)
@@ -65,7 +65,7 @@ error: `faber test` is not implemented yet; use `faber check` on <path>
 
 ### Fixture Creation Complete
 - Created `examples/exempla/proba/packages/{passing,failing,ignored,suite}/` with `faber.toml` (proba-* names) and `src/main.fab`.
-- Used canonical post-glyph syntax: `←` for bindings, `≡`, `adfirma`, `proba omitte "reason" "name"`, `proba futurum`, `probandum`, `praepara omnia`, `verum`/`falsum`.
+- Used canonical post-glyph syntax: `←` for bindings, `≡`, `adfirma`, `proba "name" omitte "reason"`, `proba "name" futurum`, `probandum`, `praepara omnia`, `verum`/`falsum`.
 - All four pass `faber check` (verified).
 - Fixtures are small smoke cases per contract; no target/ contents committed.
 
