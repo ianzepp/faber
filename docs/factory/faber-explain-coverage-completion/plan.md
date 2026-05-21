@@ -91,6 +91,122 @@ Legacy redirect files should use the canonical token slug with a `.legacy.md` su
 
 Coverage validation should fail if a required entry uses a non-ASCII or punctuation-heavy filename when an ASCII token slug is available.
 
+## Human Output Format
+
+The current plain renderer exposes the entry data model directly:
+
+```text
+functio
+Kind: keyword
+Category: function
+Meaning: Declares a named function or method.
+```
+
+That is readable, but it is not the desired long-term human interface. The default renderer should become a compact man-page-style language reference view, while `--json` remains the stable machine interface.
+
+Target shape for canonical entries:
+
+```text
+FUNCTIO(7)                 Faber Language Reference                 FUNCTIO(7)
+
+NAME
+    functio - declares a named function or method
+
+SYNTAX
+    functio <name>(<params>) [→ <type>] <block>
+
+DESCRIPTION
+    `functio` introduces a named callable block. Parameters are declared using
+    Faber's type-first form, and the optional return type follows `→`.
+
+EXAMPLE
+    functio duplica(numerus n) → numerus {
+        redde n * 2
+    }
+
+RELATED
+    →, incipit
+
+EXAMPLES
+    examples/exempla/functio/functio.fab
+```
+
+Target shape for legacy entries:
+
+```text
+==(7)                    Faber Language Reference                     ==(7)
+
+NAME
+    == - legacy spelling for ≡
+
+STATUS
+    Legacy. Not canonical Faber source.
+
+USE INSTEAD
+    ≡
+
+EXAMPLE
+    adfirma left ≡ right
+
+SEE ALSO
+    ≡
+```
+
+Renderer requirements:
+
+- Default output is human-first and structured like a small Unix reference page.
+- Use ANSI styling only when stdout is a TTY.
+- Honor `NO_COLOR`.
+- Add a `--plain` or equivalent escape hatch if styled output is introduced.
+- Keep `--json` unchanged.
+- Avoid complex Markdown parsing in the first pass; extracting the first Faber code block is enough.
+- Add snapshot-style tests for no-color/plain output.
+
+## Search Behavior
+
+Current lookup behavior is exact, not search:
+
+```bash
+faber explain functio
+faber explain ≡
+faber explain ==
+faber explain --list
+faber explain --category testing
+faber explain --json proba
+```
+
+The registry resolves exact terms, aliases, and legacy spellings. It does not currently provide fuzzy search, substring search, or full-text search.
+
+Add a follow-on search surface after coverage is complete:
+
+```bash
+faber explain --search function
+faber explain --search equality
+faber explain --search "return type"
+```
+
+Search should inspect:
+
+- `term`,
+- `summary`,
+- `syntax`,
+- `aliases`,
+- `legacy`,
+- `related`,
+- body text.
+
+Search output should be concise and deterministic:
+
+```text
+Search: equality
+
+≡      operator / comparison   Compares two values for equality and returns bivalens.
+≠      operator / comparison   Compares two values for inequality and returns bivalens.
+est    keyword  / logic        Checks identity rather than value equality.
+```
+
+Search is separate from lookup. `faber explain <term>` should remain exact and predictable; suggestions can be offered on failed lookup, but fuzzy matching should not silently choose an entry.
+
 ## Coverage Definition
 
 Coverage should be explicit by tier.
@@ -205,8 +321,9 @@ Do not use invented syntax in examples. Check existing examples, grammar docs, a
 | 3 | Keyword corpus expansion | Add entries for all active keyword spellings. | Keyword coverage test passes. |
 | 4 | Glyph/operator corpus expansion | Add entries for all canonical glyph/operator terms and useful punctuation forms. | Operator coverage test passes. |
 | 5 | Redirect and alias pass | Add or normalize legacy redirects and search aliases. | Legacy lookups return canonical guidance. |
-| 6 | Docs and UX pass | Document the coverage contract and improve list/category output if needed. | User-facing docs match behavior. |
-| 7 | Full validation | Run formatting, tests, clippy, and release builds. | Repo passes validation and coverage gates. |
+| 6 | Human renderer and search | Replace raw field output with a man-page-style renderer and add explicit search. | Plain output reads like a reference page; search returns ranked summaries. |
+| 7 | Docs and UX pass | Document the coverage contract, renderer, search, and list/category behavior. | User-facing docs match behavior. |
+| 8 | Full validation | Run formatting, tests, clippy, and release builds. | Repo passes validation and coverage gates. |
 
 ## Phase Details
 
@@ -332,12 +449,32 @@ Checkpoint:
 
 - Legacy and natural-language lookups guide users to canonical Faber syntax.
 
-### Phase 6: Docs and UX Pass
+### Phase 6: Human Renderer and Search
+
+Steps:
+
+- Refactor plain output into a dedicated renderer layer.
+- Render canonical entries with `NAME`, `SYNTAX`, `DESCRIPTION`, `EXAMPLE`, `RELATED`, and `EXAMPLES` sections.
+- Render legacy entries with `NAME`, `STATUS`, `USE INSTEAD`, `EXAMPLE`, and `SEE ALSO` sections.
+- Add TTY-aware ANSI styling for section headings and dim metadata if the project wants styled output.
+- Honor `NO_COLOR` and provide a plain/no-style path for tests and scripts.
+- Add `faber explain --search <query>`.
+- Keep exact lookup behavior unchanged for `faber explain <term>`.
+- Add snapshot-style tests for canonical, legacy, and search output.
+
+Checkpoint:
+
+- `faber explain functio` reads like a compact language reference page.
+- `faber explain ≡` and `faber explain ==` have distinct canonical and legacy layouts.
+- `faber explain --search equality` returns multiple deterministic candidates.
+- `faber explain --json <term>` remains unchanged.
+
+### Phase 7: Docs and UX Pass
 
 Steps:
 
 - Update `docs/grammatica/explain.md` with the coverage policy.
-- Update README command examples if list/category output changes.
+- Update README command examples if renderer, search, list, or category output changes.
 - Ensure `faber explain --list` and `faber explain --category <name>` remain useful with the expanded corpus.
 - If list output becomes too large, group by category and keep plain output scannable.
 - Make sure generated build artifacts remain out of source control.
@@ -347,7 +484,7 @@ Checkpoint:
 - Docs tell users what coverage to expect.
 - Large-corpus list output is still readable.
 
-### Phase 7: Full Validation
+### Phase 8: Full Validation
 
 Run:
 
@@ -367,6 +504,7 @@ cargo run -p faber -- explain solum_in
 cargo run -p faber -- explain ≡
 cargo run -p faber -- explain ∧
 cargo run -p faber -- explain ⇢
+cargo run -p faber -- explain --search equality
 cargo run -p faber -- explain --list
 ```
 
