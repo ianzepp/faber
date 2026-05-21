@@ -713,7 +713,7 @@ pub enum ExprKind {
     Intervallum(IntervallumExpr),
     /// Collection DSL: ab
     Ab(AbExpr),
-    /// Type conversion: numeratum, fractatum, textatum, bivalentum
+    /// Runtime value conversion: ⇒ target
     Conversio(ConversioExpr),
     /// Interpolated script: scriptum
     Scriptum(ScriptumExpr),
@@ -1024,14 +1024,8 @@ pub struct ConversioExpr {
 }
 
 /// Target of a conversio expression.
-/// Keywords imply a fixed primitive type; the glyph form takes an explicit type.
 #[derive(Debug)]
 pub enum ConversioTarget {
-    Numeratum,
-    Fractatum,
-    Textatum,
-    Bivalentum,
-    /// Explicit type from `⇒ type` form
     Explicit(TypeExpr),
 }
 

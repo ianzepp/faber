@@ -1,7 +1,7 @@
 # Conversio - Type conversion operators
 #
 # Demonstrates the ⇒ conversio operator for converting between primitive types.
-# The keyword aliases (numeratum, fractatum, textatum, bivalentum) remain valid.
+# The target type after ⇒ selects the conversion.
 
 incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡

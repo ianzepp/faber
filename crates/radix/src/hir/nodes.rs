@@ -418,13 +418,13 @@ pub enum HirExprKind {
         /// Present when source is an object literal being constructed into a Map or Struct.
         entries: Option<Vec<HirObjectField>>,
     },
-    /// Runtime value conversion (numeratum/fractatum/textatum/bivalentum/⇒).
+    /// Runtime value conversion (`⇒ target`).
     /// Unlike Verte (compile-time cast), this performs actual parsing/conversion
     /// and supports fallback values via `vel`.
     Conversio {
         source: Box<HirExpr>,
         target: TypeId,
-        /// Codegen hint parameters (e.g., `i32`, `Hex` in `numeratum<i32, Hex>`).
+        /// Codegen hint parameters (e.g., `i32`, `Hex` in `⇒ numerus<i32, Hex>`).
         /// Stored as raw symbols because these are target-specific hints, not Faber types.
         params: Vec<Symbol>,
         fallback: Option<Box<HirExpr>>,

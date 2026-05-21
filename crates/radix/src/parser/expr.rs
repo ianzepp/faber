@@ -557,7 +557,7 @@ impl Parser {
     ///   index := '[' expr ']'
     ///   cast := ('⇢' | 'qua' | 'innatum' | 'novum') type
     ///   optional-chain := '?.' ident | '?[' expr ']' | '?(' args ')'
-    ///   conversion := 'numeratum' | 'fractatum' | 'textatum' | 'bivalentum'
+    ///   conversion := '⇒' type [type-params] ['vel' fallback]
     ///
     /// WHY: All postfix operations share the same precedence, so they're handled
     /// in a single loop. This prevents precedence ambiguities like `a.b()`.
@@ -651,36 +651,6 @@ impl Parser {
                 } else {
                     None
                 };
-                let span = start.merge(self.previous_span());
-                let id = self.next_id();
-                expr = Expr {
-                    id,
-                    kind: ExprKind::Conversio(ConversioExpr { expr: Box::new(expr), target, type_params, fallback }),
-                    span,
-                };
-            } else if self.check_keyword(TokenKind::Numeratum)
-                || self.check_keyword(TokenKind::Fractatum)
-                || self.check_keyword(TokenKind::Textatum)
-                || self.check_keyword(TokenKind::Bivalentum)
-            {
-                // Type conversion via keyword
-                let target = match self.peek().kind {
-                    TokenKind::Numeratum => ConversioTarget::Numeratum,
-                    TokenKind::Fractatum => ConversioTarget::Fractatum,
-                    TokenKind::Textatum => ConversioTarget::Textatum,
-                    TokenKind::Bivalentum => ConversioTarget::Bivalentum,
-                    _ => unreachable!(),
-                };
-                self.advance();
-
-                let type_params = self.try_parse_type_args()?;
-
-                let fallback = if self.eat_keyword(TokenKind::Vel) {
-                    Some(Box::new(self.parse_unary()?))
-                } else {
-                    None
-                };
-
                 let span = start.merge(self.previous_span());
                 let id = self.next_id();
                 expr = Expr {

@@ -724,10 +724,6 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "qua" => TokenKind::Verte,
         "innatum" => TokenKind::Verte,
         "novum" => TokenKind::Verte,
-        "numeratum" => TokenKind::Numeratum,
-        "fractatum" => TokenKind::Fractatum,
-        "textatum" => TokenKind::Textatum,
-        "bivalentum" => TokenKind::Bivalentum,
 
         // Output
         "scribe" => TokenKind::Scribe,

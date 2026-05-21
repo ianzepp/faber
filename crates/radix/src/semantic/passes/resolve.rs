@@ -797,13 +797,11 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
         }
         ExprKind::Conversio(expr) => {
             resolve_expr(resolver, interner, &expr.expr, errors);
-            // WHY: The glyph form (⇒ type) carries a real type expression that must
-            // be resolved. Keyword forms (numeratum etc.) have no type to resolve.
-            // Conversio parameters (e.g., numeratum<i32, Hex>) are codegen hints,
-            // not normal type annotations that must resolve in scope.
-            if let ConversioTarget::Explicit(ty) = &expr.target {
-                resolve_conversio_target_type(resolver, interner, ty, errors);
-            }
+            // WHY: The runtime conversion target is a real type expression.
+            // Conversio parameters such as `Hex` in `⇒ numerus<i32, Hex>` are
+            // codegen hints, not normal type annotations that must resolve in scope.
+            let ConversioTarget::Explicit(ty) = &expr.target;
+            resolve_conversio_target_type(resolver, interner, ty, errors);
             if let Some(fallback) = &expr.fallback {
                 resolve_expr(resolver, interner, fallback, errors);
             }

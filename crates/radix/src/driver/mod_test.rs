@@ -1868,7 +1868,7 @@ fn quidlibet_container_annotation_no_longer_reports_unknown_type() {
 fn conversio_type_params_no_longer_report_unknown_type() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← "ff" numeratum<i32, Hex>
+  fixum n ← "ff" ⇒ numerus<i32, Hex>
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1885,7 +1885,7 @@ fn qua_innatum_vel_no_longer_report_invalid_cast() {
     let source = r#"incipit {
   fixum data ← 42
   fixum asText ← data qua textus
-  fixum parsed ← "invalid" numeratum vel 0
+  fixum parsed ← "invalid" ⇒ numerus vel 0
   fixum cache ← { alice: 95, bob: 87 } innatum tabula<textus, numerus>
   fixum items ← [] innatum lista<textus>
   nota asText, parsed, cache, items
@@ -2032,10 +2032,10 @@ fn conversio_glyph_form_compiles_to_parse() {
 }
 
 #[test]
-fn conversio_keyword_emits_parse_not_as_cast() {
+fn conversio_emits_parse_not_as_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← "42" numeratum
+  fixum n ← "42" ⇒ numerus
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2052,7 +2052,7 @@ fn conversio_keyword_emits_parse_not_as_cast() {
 fn conversio_with_fallback_emits_unwrap_or() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← "bad" numeratum vel 0
+  fixum n ← "bad" ⇒ numerus vel 0
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2065,11 +2065,11 @@ fn conversio_with_fallback_emits_unwrap_or() {
 }
 
 #[test]
-fn conversio_textatum_emits_to_string() {
+fn conversio_to_textus_emits_to_string() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum n ← 42
-  fixum s ← n textatum
+  fixum s ← n ⇒ textus
   nota s
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2118,7 +2118,7 @@ fn conversio_glyph_form_roundtrips_through_faber_codegen() {
 fn conversio_with_fallback_roundtrips_through_faber_codegen() {
     let session = session(Target::Faber);
     let source = r#"incipit {
-  fixum n ← "bad" numeratum vel 0
+  fixum n ← "bad" ⇒ numerus vel 0
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);

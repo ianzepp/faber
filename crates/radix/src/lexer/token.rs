@@ -201,12 +201,8 @@ pub enum TokenKind {
     Implet, // implements
 
     // === Keywords: Type operations ===
-    Verte,      // ⇢ / qua / innatum / novum — unified type conversion
-    Conversio,  // ⇒ — runtime value conversion (glyph form)
-    Numeratum,  // to integer
-    Fractatum,  // to float
-    Textatum,   // to string
-    Bivalentum, // to boolean
+    Verte,     // ⇢ / qua / innatum / novum — unified type conversion
+    Conversio, // ⇒ — runtime value conversion
 
     // === Shift operators ===
     Sinistratum, // ≪
@@ -422,10 +418,6 @@ impl TokenKind {
                 | Implet
                 | Verte
                 | Conversio
-                | Numeratum
-                | Fractatum
-                | Textatum
-                | Bivalentum
                 | Scribe
                 | Vide
                 | Mone

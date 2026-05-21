@@ -246,9 +246,8 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
         }
         ExprKind::Conversio(conversio) => {
             visitor.visit_expr(&conversio.expr);
-            if let ConversioTarget::Explicit(ty) = &conversio.target {
-                visitor.visit_type_expr(ty);
-            }
+            let ConversioTarget::Explicit(ty) = &conversio.target;
+            visitor.visit_type_expr(ty);
             for ty in &conversio.type_params {
                 visitor.visit_type_expr(ty);
             }

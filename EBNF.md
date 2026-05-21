@@ -353,8 +353,7 @@ additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
 unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'finge') unary | cast
 cast       := call (('⇢' | 'qua' | 'innatum' | 'novum') typeAnnotation | conversio)*
-conversio  := ('⇒' typeAnnotation | 'numeratum' | 'fractatum' | 'textatum' | 'bivalentum')
-              typeParams? ('vel' unary)?
+conversio  := '⇒' typeAnnotation typeParams? ('vel' unary)?
 ```
 
 **Type conversion (`⇢` / verte) — compile-time cast:**
@@ -374,8 +373,6 @@ The `⇒` glyph (U+21D2, "rightwards double arrow") is the runtime value convers
 - `"22" ⇒ numerus` → Rust: `"22".parse::<i64>().unwrap()`
 - `"bad" ⇒ numerus vel 0` → Rust: `"bad".parse::<i64>().unwrap_or(0)`
 - `42 ⇒ textus` → Rust: `42.to_string()`
-
-The keywords `numeratum`, `fractatum`, `textatum`, and `bivalentum` are shorthand aliases that imply the target type.
 
 ### Call and Member Access
 
@@ -604,11 +601,11 @@ Not all Faber features are supported across all compilation targets. Some featur
 | **Objects**         | `ego`                         | this/self           |
 |                     | `finge`                       | construct variant   |
 | **Type Cast**       | `⇢` / `qua` / `innatum` / `novum` | compile-time type cast |
-| **Type Conversion** | `⇒` / `numeratum` / `fractatum` / `textatum` / `bivalentum` | runtime value conversion |
-|                     | `numeratum`                   | parse to integer    |
-|                     | `fractatum`                   | parse to float      |
-|                     | `textatum`                    | convert to string   |
-|                     | `bivalentum`                  | convert to boolean  |
+| **Type Conversion** | `⇒ target`                    | runtime value conversion |
+|                     | `⇒ numerus`                   | parse to integer    |
+|                     | `⇒ fractus`                   | parse to float      |
+|                     | `⇒ textus`                    | convert to string   |
+|                     | `⇒ bivalens`                  | convert to boolean  |
 |                     | `Hex` / `Oct` / `Bin` / `Dec` | radix types         |
 | **Bitwise**         | `∧` / `∨` / `⊻` / `¬`         | and/or/xor/not      |
 |                     | `≪` / `≫`                     | left/right shift    |

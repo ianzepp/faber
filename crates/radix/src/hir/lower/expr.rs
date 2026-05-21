@@ -577,10 +577,6 @@ impl<'a> Lowerer<'a> {
         let source = lower_expr(self, &conversio.expr);
         let mut params = Vec::new();
         let target = match &conversio.target {
-            crate::syntax::ConversioTarget::Numeratum => self.types.primitive(Primitive::Numerus),
-            crate::syntax::ConversioTarget::Fractatum => self.types.primitive(Primitive::Fractus),
-            crate::syntax::ConversioTarget::Textatum => self.types.primitive(Primitive::Textus),
-            crate::syntax::ConversioTarget::Bivalentum => self.types.primitive(Primitive::Bivalens),
             crate::syntax::ConversioTarget::Explicit(ty) => lower_conversio_target_type(self, ty, &mut params),
         };
         params.extend(

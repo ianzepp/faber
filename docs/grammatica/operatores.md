@@ -290,7 +290,7 @@ Etymology: `inter` means "among" or "between" in Latin.
 
 ## Type Conversion
 
-Faber provides postfix runtime conversion with the `⇒` glyph. The older keyword aliases (`numeratum`, `fractatum`, `textatum`, `bivalentum`) remain valid shorthand.
+Faber provides postfix runtime conversion with the `⇒` glyph. The target type after `⇒` selects the conversion.
 
 ### `⇒ numerus` (to integer)
 
@@ -310,8 +310,6 @@ fixum n = "bad" ⇒ numerus vel 0       # 0 (fallback on parse failure)
 fixum n = userInput ⇒ numerus vel -1  # -1 if input is not a valid number
 ```
 
-Alias: `numeratum`
-
 ### `⇒ fractus` (to float)
 
 Parse a string to a floating-point number:
@@ -320,8 +318,6 @@ Parse a string to a floating-point number:
 fixum f = "3.14" ⇒ fractus            # 3.14
 fixum f = "bad" ⇒ fractus vel 0.0     # 0.0 (fallback)
 ```
-
-Alias: `fractatum`
 
 ### `⇒ textus` (to string)
 
@@ -332,8 +328,6 @@ fixum s = 42 ⇒ textus                 # "42"
 fixum s = 3.14 ⇒ textus               # "3.14"
 fixum s = verum ⇒ textus              # "verum"
 ```
-
-Alias: `textatum`
 
 ### `⇒ bivalens` (to boolean)
 
@@ -347,8 +341,6 @@ fixum b = "hello" ⇒ bivalens          # verum (non-empty)
 fixum b = [] ⇒ bivalens               # falsum (empty collection)
 fixum b = nihil ⇒ bivalens            # falsum (null)
 ```
-
-Alias: `bivalentum`
 
 ### Chaining Conversions
 
@@ -438,7 +430,7 @@ Etymology:
 - `sinistratum` from _sinister_ ("left") + _-atum_ ("made into")---shifted leftward
 - `dextratum` from _dexter_ ("right") + _-atum_ ("made into")---shifted rightward
 
-The `-atum` suffix follows the same pattern as type conversion operators (`numeratum`, `textatum`), treating the shift as a transformation applied to the value.
+The `-atum` suffix treats the shift as a transformation applied to the value.
 
 ---
 
