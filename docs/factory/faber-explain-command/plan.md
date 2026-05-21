@@ -21,7 +21,7 @@ faber explain →
 faber explain --json custodi
 ```
 
-The source material should be Markdown with frontmatter:
+The source material should be Markdown with TOML frontmatter:
 
 ```text
 explain/
@@ -68,30 +68,23 @@ The `explain/` corpus becomes the public grammar interface compiled into the Fab
 
 ## Corpus Format
 
-Each entry is a Markdown file with YAML-like frontmatter followed by a short Markdown body.
+Each entry is a Markdown file with TOML frontmatter (delimited by `+++`) followed by a short Markdown body.
 
 Example operator entry:
 
 ```markdown
----
-term: "≡"
-kind: "operator"
-category: "comparison"
-canonical: true
-summary: "Compares two values for equality and returns bivalens."
-syntax: "<expression> ≡ <expression>"
-examples:
-  - "examples/exempla/proba/proba.fab"
-aliases:
-  - "equals"
-  - "equality"
-legacy:
-  - "=="
-related:
-  - "≠"
-  - "est"
-  - "non est"
----
++++
+term = "≡"
+kind = "operator"
+category = "comparison"
+canonical = true
+summary = "Compares two values for equality and returns bivalens."
+syntax = "<expression> ≡ <expression>"
+examples = ["examples/exempla/proba/proba.fab"]
+aliases = ["equals", "equality"]
+legacy = ["=="]
+related = ["≠", "est", "non est"]
++++
 
 Use `≡` when an expression should be true only when both sides compare equal.
 
@@ -103,23 +96,17 @@ adfirma 1 + 1 ≡ 2
 Example keyword entry:
 
 ```markdown
----
-term: "proba"
-kind: "keyword"
-category: "testing"
-canonical: true
-summary: "Defines a single test case."
-syntax: "proba <name> <block>"
-examples:
-  - "examples/exempla/proba/proba.fab"
-aliases:
-  - "test"
-related:
-  - "probandum"
-  - "adfirma"
-  - "omitte"
-  - "futurum"
----
++++
+term = "proba"
+kind = "keyword"
+category = "testing"
+canonical = true
+summary = "Defines a single test case."
+syntax = "proba <name> <block>"
+examples = ["examples/exempla/proba/proba.fab"]
+aliases = ["test"]
+related = ["probandum", "adfirma", "omitte", "futurum"]
++++
 
 `proba` introduces one test case. The body is normal Faber code and usually contains one or more `adfirma` assertions.
 
@@ -133,17 +120,16 @@ proba "arithmetic passes" {
 Example legacy redirect entry:
 
 ```markdown
----
-term: "=="
-kind: "legacy"
-category: "comparison"
-canonical: false
-canonical_term: "≡"
-summary: "Legacy equality spelling. Use ≡ in Faber source."
-syntax: "<expression> ≡ <expression>"
-related:
-  - "≡"
----
++++
+term = "=="
+kind = "legacy"
+category = "comparison"
+canonical = false
+canonical_term = "≡"
+summary = "Legacy equality spelling. Use ≡ in Faber source."
+syntax = "<expression> ≡ <expression>"
+related = ["≡"]
++++
 
 `==` is not canonical Faber syntax. Use `≡`.
 

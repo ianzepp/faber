@@ -25,21 +25,19 @@ The `examples` frontmatter field remains available in JSON and for corpus valida
 
 `faber explain --search <query>` is a separate discovery mode. It returns a ranked list of matching entries instead of choosing one fuzzy match automatically.
 
-Each entry uses frontmatter followed by a short Markdown body with one Faber code example:
+Each entry uses TOML frontmatter (delimited by `+++`) followed by a short Markdown body with one Faber code example:
 
 ````markdown
----
-term: "proba"
-kind: "keyword"
-category: "testing"
-canonical: true
-summary: "Defines a single test case."
-syntax: "proba <name> <block>"
-aliases:
-  - "test"
-related:
-  - "adfirma"
----
++++
+term = "proba"
+kind = "keyword"
+category = "testing"
+canonical = true
+summary = "Defines a single test case."
+syntax = "proba <name> <block>"
+aliases = ["test"]
+related = ["adfirma"]
++++
 
 `proba` introduces one test case.
 

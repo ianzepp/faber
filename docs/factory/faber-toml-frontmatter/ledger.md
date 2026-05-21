@@ -127,8 +127,8 @@ nothing to commit, working tree clean
 - (No doc changes yet)
 
 ## Current Phase
-2 - Corpus migration (complete; committed)
-3 - Docs migration (next)
+3 - Docs migration (complete; committed)
+4 - Residue cleanup (next)
 
 ## Phase 2: Corpus Migration (completed)
 
@@ -156,3 +156,25 @@ nothing to commit, working tree clean
 - No `explain/*.md` starts with `---`.
 - Coverage/registry tests (modulo helper) + `faber explain` family all behavior-compatible.
 - Large mechanical change isolated from parser (Phase 1 committed first).
+
+## Phase 3: Docs Migration (completed)
+
+**Date**: 2026-05-21
+**Changes**:
+- Updated `docs/grammatica/explain.md`: changed "frontmatter" description + full example block to TOML `+++` / `key = "val"` / `list = ["a"]` syntax. Generic "in frontmatter" references left as they are format-neutral.
+- Updated `docs/factory/faber-explain-command/plan.md`:
+  - Changed "YAML-like frontmatter" phrasing to "TOML frontmatter (delimited by `+++`)".
+  - Converted all 3 embedded example frontmatter blocks (operator, keyword, legacy) to current TOML syntax.
+- Updated `docs/factory/faber-explain-coverage-completion/plan.md`: converted the small frontmatter example to TOML.
+- `docs/factory/faber-explain-coverage-completion/inventory.md`: only generic "in frontmatter" reference (left unchanged).
+- Ran residue scans (`rg` for YAML-like / old examples in grammatica + the two factory explain plans). All prescriptive syntax examples and "YAML-like" labels removed from user/factory docs outside the self-referential plan/ledger (which correctly describe the pre-migration state and work performed).
+
+**Verification**:
+- `rg -n 'YAML-like|YAML frontmatter|YAML-style front' docs/grammatica/explain.md docs/factory/faber-explain-*` now returns 0 hits outside our own plan/ledger files.
+- User-facing `docs/grammatica/explain.md` now shows correct TOML front matter.
+- Historical factory plans no longer instruct future readers to use the old format.
+
+**Checkpoint met**:
+- User-facing docs describe TOML front matter.
+- Factory docs no longer prescribe YAML-like front matter for the explain corpus.
+- Remaining `---` are only Markdown tables/rules or historical notes in the plan itself.

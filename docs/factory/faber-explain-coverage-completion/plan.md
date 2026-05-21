@@ -65,14 +65,14 @@ Use stable ASCII filenames derived from the compiler token or AST-style name, co
 The frontmatter remains the source of the user-facing term:
 
 ```markdown
----
-term: "≡"
-kind: "operator"
-category: "comparison"
-canonical: true
-summary: "Compares two values for equality and returns bivalens."
-syntax: "<expression> ≡ <expression>"
----
++++
+term = "≡"
+kind = "operator"
+category = "comparison"
+canonical = true
+summary = "Compares two values for equality and returns bivalens."
+syntax = "<expression> ≡ <expression>"
++++
 ```
 
 This avoids filesystem and tooling problems with glyph filenames while preserving exact `faber explain ≡` lookup behavior.
