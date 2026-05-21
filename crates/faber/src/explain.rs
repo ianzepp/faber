@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, Copy)]
@@ -40,6 +40,29 @@ pub enum Kind {
     Modifier,
     Legacy,
     Concept,
+}
+
+/// TOML front matter schema for explain/*.md entries (delimited by +++).
+/// Unknown fields are rejected via deny_unknown_fields.
+/// All list fields default to empty; canonical_term is optional.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FrontMatter {
+    term: String,
+    kind: String,
+    category: String,
+    canonical: bool,
+    summary: String,
+    syntax: String,
+    #[serde(default)]
+    examples: Vec<String>,
+    #[serde(default)]
+    aliases: Vec<String>,
+    #[serde(default)]
+    legacy: Vec<String>,
+    canonical_term: Option<String>,
+    #[serde(default)]
+    related: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -434,19 +457,22 @@ fn first_faber_example(body: &str) -> Option<&str> {
 }
 
 fn parse_entry(filename: &str, source: &str) -> Result<Entry, ExplainError> {
-    let mut lines = source.lines();
-    if lines.next() != Some("---") {
+    // Require opening +++ on its own first line (TOML front matter).
+    let mut line_iter = source.lines();
+    if line_iter.next() != Some("+++") {
         return Err(ExplainError::new(format!(
-            "{filename}: missing frontmatter"
+            "{filename}: missing frontmatter (expected opening +++ on first line)"
         )));
     }
 
+    // Collect raw lines between the +++ delimiters (for toml::from_str).
+    // Use same offset logic as before (+++ and --- are both 3 bytes + \n).
     let mut frontmatter = Vec::new();
     let mut body_start = None;
     let mut offset = 4;
     for line in source[4..].split_inclusive('\n') {
         let trimmed = line.trim_end_matches('\n');
-        if trimmed == "---" {
+        if trimmed == "+++" {
             body_start = Some(offset + line.len());
             break;
         }
@@ -472,19 +498,24 @@ fn parse_entry(filename: &str, source: &str) -> Result<Entry, ExplainError> {
         )));
     }
 
-    let map = parse_frontmatter(filename, &frontmatter)?;
+    // Parse as TOML table into typed struct (rejects unknown fields, wrong types,
+    // duplicate keys via the toml crate, missing required via serde).
+    let frontmatter_text = frontmatter.join("\n");
+    let fm: FrontMatter = toml::from_str(&frontmatter_text)
+        .map_err(|e| ExplainError::new(format!("{filename}: {e}")))?;
+
     let entry = Entry {
-        term: required_string(filename, &map, "term")?,
-        kind: parse_kind(filename, &required_string(filename, &map, "kind")?)?,
-        category: required_string(filename, &map, "category")?,
-        canonical: required_bool(filename, &map, "canonical")?,
-        summary: required_string(filename, &map, "summary")?,
-        syntax: required_string(filename, &map, "syntax")?,
-        examples: optional_list(&map, "examples"),
-        aliases: optional_list(&map, "aliases"),
-        legacy: optional_list(&map, "legacy"),
-        canonical_term: optional_string(&map, "canonical_term"),
-        related: optional_list(&map, "related"),
+        term: fm.term,
+        kind: parse_kind(filename, &fm.kind)?,
+        category: fm.category,
+        canonical: fm.canonical,
+        summary: fm.summary,
+        syntax: fm.syntax,
+        examples: fm.examples,
+        aliases: fm.aliases,
+        legacy: fm.legacy,
+        canonical_term: fm.canonical_term,
+        related: fm.related,
         body,
     };
 
@@ -492,137 +523,6 @@ fn parse_entry(filename: &str, source: &str) -> Result<Entry, ExplainError> {
     Ok(entry)
 }
 
-fn parse_frontmatter(
-    filename: &str,
-    lines: &[String],
-) -> Result<BTreeMap<String, FrontValue>, ExplainError> {
-    let allowed = [
-        "term",
-        "kind",
-        "category",
-        "canonical",
-        "summary",
-        "syntax",
-        "examples",
-        "aliases",
-        "legacy",
-        "canonical_term",
-        "related",
-    ];
-    let mut map = BTreeMap::new();
-    let mut current_list: Option<String> = None;
-
-    for line in lines {
-        if line.trim().is_empty() {
-            continue;
-        }
-
-        if let Some(item) = line.strip_prefix("  - ") {
-            let Some(key) = current_list.as_ref() else {
-                return Err(ExplainError::new(format!(
-                    "{filename}: list item without list key"
-                )));
-            };
-            match map.get_mut(key) {
-                Some(FrontValue::List(items)) => items.push(parse_scalar(item)),
-                _ => {
-                    return Err(ExplainError::new(format!(
-                        "{filename}: invalid list state for {key}"
-                    )))
-                }
-            }
-            continue;
-        }
-
-        let Some((key, value)) = line.split_once(':') else {
-            return Err(ExplainError::new(format!(
-                "{filename}: invalid frontmatter line {line:?}"
-            )));
-        };
-        let key = key.trim().to_owned();
-        if !allowed.contains(&key.as_str()) {
-            return Err(ExplainError::new(format!(
-                "{filename}: unknown frontmatter field {key}"
-            )));
-        }
-        if map.contains_key(&key) {
-            return Err(ExplainError::new(format!(
-                "{filename}: duplicate frontmatter field {key}"
-            )));
-        }
-
-        let value = value.trim();
-        if value.is_empty() {
-            map.insert(key.clone(), FrontValue::List(Vec::new()));
-            current_list = Some(key);
-        } else {
-            map.insert(key, FrontValue::Scalar(parse_scalar(value)));
-            current_list = None;
-        }
-    }
-
-    Ok(map)
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum FrontValue {
-    Scalar(String),
-    List(Vec<String>),
-}
-
-fn parse_scalar(value: &str) -> String {
-    let value = value.trim();
-    if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
-        value[1..value.len() - 1].to_owned()
-    } else {
-        value.to_owned()
-    }
-}
-
-fn required_string(
-    filename: &str,
-    map: &BTreeMap<String, FrontValue>,
-    key: &str,
-) -> Result<String, ExplainError> {
-    match map.get(key) {
-        Some(FrontValue::Scalar(value)) if !value.is_empty() => Ok(value.clone()),
-        Some(_) => Err(ExplainError::new(format!(
-            "{filename}: {key} must be a non-empty string"
-        ))),
-        None => Err(ExplainError::new(format!(
-            "{filename}: missing required field {key}"
-        ))),
-    }
-}
-
-fn optional_string(map: &BTreeMap<String, FrontValue>, key: &str) -> Option<String> {
-    match map.get(key) {
-        Some(FrontValue::Scalar(value)) if !value.is_empty() => Some(value.clone()),
-        _ => None,
-    }
-}
-
-fn optional_list(map: &BTreeMap<String, FrontValue>, key: &str) -> Vec<String> {
-    match map.get(key) {
-        Some(FrontValue::List(items)) => items.clone(),
-        Some(FrontValue::Scalar(value)) if !value.is_empty() => vec![value.clone()],
-        _ => Vec::new(),
-    }
-}
-
-fn required_bool(
-    filename: &str,
-    map: &BTreeMap<String, FrontValue>,
-    key: &str,
-) -> Result<bool, ExplainError> {
-    match required_string(filename, map, key)?.as_str() {
-        "true" => Ok(true),
-        "false" => Ok(false),
-        other => Err(ExplainError::new(format!(
-            "{filename}: {key} must be true or false, got {other}"
-        ))),
-    }
-}
 
 fn parse_kind(filename: &str, value: &str) -> Result<Kind, ExplainError> {
     match value {

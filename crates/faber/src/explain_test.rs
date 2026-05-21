@@ -86,15 +86,15 @@ fn all_embedded_entries_validate() {
 fn unknown_frontmatter_fields_fail() {
     let raw = [crate::explain::RawEntry {
         filename: "bad.md",
-        source: r#"---
-term: "bad"
-kind: "concept"
-category: "test"
-canonical: true
-summary: "Bad entry."
-syntax: "bad"
-surprise: "no"
----
+        source: r#"+++
+term = "bad"
+kind = "concept"
+category = "test"
+canonical = true
+summary = "Bad entry."
+syntax = "bad"
+surprise = "no"
++++
 
 Body.
 
@@ -105,7 +105,122 @@ incipit {}
     }];
 
     let err = Registry::from_raw_entries(&raw).expect_err("unknown field fails");
-    assert!(err.message.contains("unknown frontmatter field surprise"));
+    // TOML + serde(deny_unknown_fields) produces "unknown field `surprise`..."
+    assert!(err.message.contains("surprise") && err.message.contains("unknown field"));
+}
+
+#[test]
+fn old_yaml_frontmatter_delimiters_fail() {
+    let raw = [crate::explain::RawEntry {
+        filename: "old.md",
+        source: r#"---
+term = "old"
+kind = "concept"
+category = "test"
+canonical = true
+summary = "Old entry."
+syntax = "old"
++++
+
+Body with fab example.
+
+```fab
+incipit {}
+```
+"#,
+    }];
+
+    let err = Registry::from_raw_entries(&raw).expect_err("old --- must fail");
+    assert!(
+        err.message.contains("missing frontmatter"),
+        "old YAML --- should be rejected, got: {}",
+        err.message
+    );
+}
+
+#[test]
+fn missing_or_unterminated_toml_frontmatter_fails() {
+    let missing = [crate::explain::RawEntry {
+        filename: "miss.md",
+        source: r#"term = "x"
+kind = "concept"
+category = "t"
+canonical = true
+summary = "S."
+syntax = "x"
+
+```fab
+incipit {}
+```
+"#,
+    }];
+    let err = Registry::from_raw_entries(&missing).expect_err("missing +++");
+    assert!(err.message.contains("missing frontmatter"));
+
+    let unterm = [crate::explain::RawEntry {
+        filename: "unterm.md",
+        source: r#"+++
+term = "x"
+kind = "concept"
+category = "t"
+canonical = true
+summary = "S."
+syntax = "x"
+
+Body.
+
+```fab
+incipit {}
+```
+"#,
+    }];
+    let err = Registry::from_raw_entries(&unterm).expect_err("unterminated");
+    assert!(err.message.contains("unterminated frontmatter"));
+}
+
+#[test]
+fn toml_frontmatter_type_errors_reported() {
+    // scalar where array required (aliases must be array in schema)
+    let scalar_array = [crate::explain::RawEntry {
+        filename: "badarr.md",
+        source: r#"+++
+term = "x"
+kind = "concept"
+category = "t"
+canonical = true
+summary = "S."
+syntax = "x"
+aliases = "not-an-array"
++++
+
+```fab
+incipit {}
+```
+"#,
+    }];
+    let err = Registry::from_raw_entries(&scalar_array).expect_err("scalar for array");
+    assert!(err.message.contains("aliases") || err.message.contains("invalid type"));
+
+    // non-string item in list
+    let bad_item = [crate::explain::RawEntry {
+        filename: "baditem.md",
+        source: r#"+++
+term = "x"
+kind = "concept"
+category = "t"
+canonical = true
+summary = "S."
+syntax = "x"
+examples = [1, 2]
++++
+
+```fab
+incipit {}
+```
+"#,
+    }];
+    let err = Registry::from_raw_entries(&bad_item).expect_err("non-string array item");
+    assert!(err.message.contains("examples") || err.message.contains("invalid type"));
 }
 
 #[test]

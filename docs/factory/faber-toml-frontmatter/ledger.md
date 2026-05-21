@@ -91,3 +91,41 @@ nothing to commit, working tree clean
 - Prefer deserializing directly to a struct with serde + toml for robustness (unknown fields via deny_unknown_fields? or manual post-validation to match current error style).
 - Keep error messages similar or improve clarity.
 - Commit only after each phase's checkpoint passes.
+
+## Phase 1: TOML Parser Support (completed)
+
+**Date**: 2026-05-21
+**Changes**:
+- Updated `crates/faber/src/explain.rs`:
+  - Added `FrontMatter` struct with `#[derive(Deserialize)]` + `#[serde(deny_unknown_fields)]` (lines ~46-64).
+  - Rewrote `parse_entry` (now ~459) to require first line exactly `+++`, collect inter-delimiter text, `toml::from_str::<FrontMatter>`, map directly to Entry.
+  - Deleted obsolete `parse_frontmatter`, `FrontValue` enum, `parse_scalar`, `required_string`, `optional_string`, `optional_list`, `required_bool` (no longer referenced; early residue removal).
+  - Error messages now come from toml/serde prefixed with "{filename}: ", e.g. "missing field `term`", "unknown field `surprise`...", "invalid type: integer `1`, expected a string".
+- Updated `crates/faber/src/explain_test.rs`:
+  - Converted `unknown_frontmatter_fields_fail` fixture to TOML `+++` syntax; relaxed assert to check for "surprise" + "unknown field".
+  - Added 3 new explicit negative tests covering plan requirements:
+    - `old_yaml_frontmatter_delimiters_fail`
+    - `missing_or_unterminated_toml_frontmatter_fails`
+    - `toml_frontmatter_type_errors_reported` (scalar-for-array + non-string array item)
+
+**Verification**:
+- `cargo check -p faber` : PASS
+- Specific parser tests (4): all PASS (old --- rejected; TOML good paths and type/unknown/unterm/missing errors reported cleanly).
+- Manual: loading any old corpus entry now fails fast at first file with clear "missing frontmatter (expected opening +++ ...)" — exactly the intended Phase 1 behavior.
+- No YAML added to crates/faber; toml already present.
+
+**Checkpoint**:
+- TOML-frontmatter fixtures parse successfully.
+- YAML-style `---` explain entries fail fast with clear error.
+- No explain *behavior* changes for valid TOML entries (shape, validation, rendering identical).
+- Old hand-rolled YAML parser removed in this phase (frontmatter logic is now TOML-only).
+- Ready for corpus migration in Phase 2 (parser committed first per plan guidance).
+
+**Artifacts**:
+- Code edits in explain.rs + explain_test.rs
+- This ledger updated
+- (No doc changes yet)
+
+## Current Phase
+1 - TOML parser support (complete; committed)
+2 - Corpus migration (next)
