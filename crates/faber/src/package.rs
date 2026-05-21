@@ -1,3 +1,4 @@
+use crate::library::{LibraryResolveError, LibraryResolver, ResolvedLibraryModule};
 use radix::codegen::rust::TestSelection as RustTestSelection;
 use radix::codegen::Target;
 use radix::diagnostics::Diagnostic;
@@ -203,6 +204,13 @@ struct PackageFile {
     source: String,
     program: Program,
     interner: Interner,
+    library_imports: Vec<LibraryImportBinding>,
+}
+
+struct LibraryImportBinding {
+    binding: String,
+    import_span: Span,
+    module: ResolvedLibraryModule,
 }
 
 type PackageDiscoveryResult = Result<PackageSpec, Box<Diagnostic>>;
@@ -244,7 +252,8 @@ fn compile_package_internal(
         }
     };
 
-    let files = match load_package(&spec) {
+    let library_resolver = library_resolver_from_config(config);
+    let files = match load_package(&spec, &library_resolver) {
         Ok(files) => files,
         Err(diagnostics) => {
             return CompileResult {
@@ -270,10 +279,17 @@ fn compile_package_internal(
 
     for file in files {
         let file_cli = mount_plan.module_cli.get(&file.path).cloned();
+        let analysis_source = match analysis_source_for_file(&file) {
+            Ok(source) => source,
+            Err(diag) => {
+                diagnostics.push(diag);
+                continue;
+            }
+        };
         let mut analysis = match analyze_source_with_cli_program(
             &session,
             &file.path.display().to_string(),
-            &file.source,
+            &analysis_source,
             file_cli,
         ) {
             Ok(analysis) => analysis,
@@ -402,7 +418,8 @@ pub fn check_package(config: &Config, input: &Path) -> Vec<Diagnostic> {
         Err(diag) => return vec![*diag],
     };
 
-    let files = match load_package(&spec) {
+    let library_resolver = library_resolver_from_config(config);
+    let files = match load_package(&spec, &library_resolver) {
         Ok(files) => files,
         Err(diagnostics) => return diagnostics,
     };
@@ -421,11 +438,18 @@ pub fn check_package(config: &Config, input: &Path) -> Vec<Diagnostic> {
         } else {
             mount_plan.module_cli.get(&file.path).cloned()
         };
+        let analysis_source = match analysis_source_for_file(file) {
+            Ok(source) => source,
+            Err(diag) => {
+                diagnostics.push(diag);
+                continue;
+            }
+        };
 
         match analyze_source_with_cli_program(
             &session,
             &file.path.display().to_string(),
-            &file.source,
+            &analysis_source,
             file_cli,
         ) {
             Ok(analysis) => diagnostics.extend(analysis.diagnostics),
@@ -485,6 +509,14 @@ fn parse_manifest(path: &Path) -> PackageDiscoveryResult {
     let source_root = package_root.join(&manifest.paths.source);
     let entry = source_root.join(&manifest.paths.entry);
     Ok(PackageSpec { source_root, entry })
+}
+
+fn library_resolver_from_config(config: &Config) -> LibraryResolver {
+    config
+        .stdlib_path
+        .as_ref()
+        .map(|path| LibraryResolver::new(path.clone()))
+        .unwrap_or_else(LibraryResolver::default)
 }
 
 pub fn read_manifest(path: &Path) -> Result<FaberManifest, Box<Diagnostic>> {
@@ -619,7 +651,10 @@ pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic
     Ok(BuildLayout::from_package_root(root, &name))
 }
 
-fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>> {
+fn load_package(
+    spec: &PackageSpec,
+    library_resolver: &LibraryResolver,
+) -> Result<Vec<PackageFile>, Vec<Diagnostic>> {
     let mut queue = VecDeque::from([spec.entry.clone()]);
     let mut seen = BTreeSet::new();
     let mut files = Vec::new();
@@ -658,15 +693,30 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
             continue;
         };
 
+        let mut library_imports = Vec::new();
         for stmt in &program.stmts {
             let StmtKind::Import(decl) = &stmt.kind else {
                 continue;
             };
             let import_path = interner.resolve(decl.path);
-            match resolve_local_import(spec, &canonical, import_path) {
-                Some(target) => queue.push_back(target),
-                None => {
-                    diagnostics.push(import_unsupported_diagnostic(&canonical, decl, import_path))
+            match resolve_import(spec, library_resolver, &canonical, import_path) {
+                ImportResolution::Local(target) => queue.push_back(target),
+                ImportResolution::Library(module) => {
+                    if let Some(binding) = library_import_binding(&interner, decl, module) {
+                        library_imports.push(binding);
+                    } else {
+                        diagnostics.push(library_import_kind_diagnostic(
+                            &canonical,
+                            decl,
+                            import_path,
+                        ));
+                    }
+                }
+                ImportResolution::Unsupported => {
+                    diagnostics.push(import_unsupported_diagnostic(&canonical, decl, import_path));
+                }
+                ImportResolution::Error(diag) => {
+                    diagnostics.push(diag.with_span(decl.span));
                 }
             }
         }
@@ -677,6 +727,7 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
             source,
             program,
             interner,
+            library_imports,
         });
     }
 
@@ -690,6 +741,85 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
         }
         Ok(files)
     }
+}
+
+fn analysis_source_for_file(file: &PackageFile) -> Result<String, Diagnostic> {
+    if file.library_imports.is_empty() {
+        return Ok(file.source.clone());
+    }
+
+    let mut source = strip_library_imports(&file.source, &file.library_imports);
+    for import in &file.library_imports {
+        source.push('\n');
+        source.push_str(&library_interface_source(import)?);
+    }
+    Ok(source)
+}
+
+fn strip_library_imports(source: &str, imports: &[LibraryImportBinding]) -> String {
+    let mut bytes = source.as_bytes().to_vec();
+    for import in imports {
+        let start = import.import_span.start as usize;
+        let end = import.import_span.end as usize;
+        for byte in bytes.iter_mut().take(end.min(source.len())).skip(start) {
+            if *byte != b'\n' && *byte != b'\r' {
+                *byte = b' ';
+            }
+        }
+    }
+    String::from_utf8(bytes).unwrap_or_else(|_| source.to_owned())
+}
+
+fn library_interface_source(import: &LibraryImportBinding) -> Result<String, Diagnostic> {
+    let source = fs::read_to_string(&import.module.interface_path)
+        .map_err(|err| Diagnostic::io_error(&import.module.interface_path, err))?;
+    rename_library_interface(&source, import)
+}
+
+fn rename_library_interface(
+    source: &str,
+    import: &LibraryImportBinding,
+) -> Result<String, Diagnostic> {
+    let parse = parser::parse(radix::lexer::lex(source));
+    if !parse.success() {
+        let mut message = format!(
+            "library interface `{}` failed to parse",
+            import.module.interface_path.display()
+        );
+        if let Some(err) = parse.errors.first() {
+            message.push_str(&format!(": {}", err.message));
+        }
+        return Err(Diagnostic::error(message)
+            .with_file(import.module.interface_path.display().to_string()));
+    }
+
+    let Some(program) = parse.program else {
+        return Err(
+            Diagnostic::error("successful library interface parse result missing program")
+                .with_file(import.module.interface_path.display().to_string()),
+        );
+    };
+
+    let Some(interface_name_span) = program.stmts.iter().find_map(|stmt| {
+        let StmtKind::Interface(interface) = &stmt.kind else {
+            return None;
+        };
+        Some(interface.name.span)
+    }) else {
+        return Err(Diagnostic::error(format!(
+            "library interface `{}` does not declare a pactum",
+            import.module.interface_path.display()
+        ))
+        .with_file(import.module.interface_path.display().to_string()));
+    };
+
+    let start = interface_name_span.start as usize;
+    let end = interface_name_span.end as usize;
+    let mut renamed = String::with_capacity(source.len() + import.binding.len());
+    renamed.push_str(&source[..start]);
+    renamed.push_str(&import.binding);
+    renamed.push_str(&source[end..]);
+    Ok(renamed)
 }
 
 #[derive(Default)]
@@ -1063,6 +1193,32 @@ fn detect_import_cycles(spec: &PackageSpec, files: &[PackageFile]) -> Vec<Diagno
     diagnostics
 }
 
+enum ImportResolution {
+    Local(PathBuf),
+    Library(ResolvedLibraryModule),
+    Unsupported,
+    Error(Diagnostic),
+}
+
+fn resolve_import(
+    spec: &PackageSpec,
+    library_resolver: &LibraryResolver,
+    from_file: &Path,
+    import_path: &str,
+) -> ImportResolution {
+    match library_resolver.resolve(import_path) {
+        Ok(Some(module)) => return ImportResolution::Library(module),
+        Ok(None) => {}
+        Err(err) => return ImportResolution::Error(library_resolve_diagnostic(from_file, err)),
+    }
+
+    if let Some(target) = resolve_local_import(spec, from_file, import_path) {
+        return ImportResolution::Local(target);
+    }
+
+    ImportResolution::Unsupported
+}
+
 fn detect_import_cycles_from(
     path: &PathBuf,
     graph: &BTreeMap<PathBuf, Vec<(PathBuf, Span)>>,
@@ -1131,6 +1287,58 @@ fn resolve_module_candidates(base: &Path) -> Option<PathBuf> {
         candidates.push(base.join("mod.fab"));
     }
     candidates.into_iter().find(|candidate| candidate.exists())
+}
+
+fn library_import_binding(
+    interner: &Interner,
+    decl: &ImportDecl,
+    module: ResolvedLibraryModule,
+) -> Option<LibraryImportBinding> {
+    let module_name = module.module_name()?;
+    match &decl.kind {
+        ImportKind::Named { name, alias } => {
+            if interner.resolve(name.name) != module_name {
+                return None;
+            }
+            let binding = alias.as_ref().unwrap_or(name);
+            Some(LibraryImportBinding {
+                binding: interner.resolve(binding.name).to_owned(),
+                import_span: decl.span,
+                module,
+            })
+        }
+        ImportKind::Wildcard { .. } => None,
+    }
+}
+
+fn library_resolve_diagnostic(file: &Path, err: LibraryResolveError) -> Diagnostic {
+    match err {
+        LibraryResolveError::UnknownBuiltinModule {
+            specifier,
+            package,
+            known_modules,
+        } => Diagnostic::error(format!(
+            "unknown built-in library module `{specifier}` for provider `{package}`; known modules: {}",
+            known_modules.join(", ")
+        ))
+        .with_file(file.display().to_string()),
+        LibraryResolveError::MissingInterface {
+            specifier,
+            interface_path,
+        } => Diagnostic::error(format!(
+            "built-in library module `{specifier}` resolved to missing interface `{}`",
+            interface_path.display()
+        ))
+        .with_file(file.display().to_string()),
+    }
+}
+
+fn library_import_kind_diagnostic(file: &Path, decl: &ImportDecl, import_path: &str) -> Diagnostic {
+    Diagnostic::error(format!(
+        "library import `{import_path}` must import its module name as a module alias"
+    ))
+    .with_file(file.display().to_string())
+    .with_span(decl.span)
 }
 
 fn import_unsupported_diagnostic(file: &Path, decl: &ImportDecl, import_path: &str) -> Diagnostic {

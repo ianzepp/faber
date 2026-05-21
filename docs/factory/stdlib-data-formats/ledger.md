@@ -3,9 +3,9 @@
 **Source Plan**: `docs/factory/stdlib-data-formats/plan.md`
 **Factory Artifact Dir**: `docs/factory/stdlib-data-formats/`
 **Started**: 2026-05-21 (from plan creation)
-**Current Phase**: 0 (Baseline)
+**Current Phase**: 4 (Library Import Resolution complete)
 
-> **Scope note (user directive)**: Only Phases 0, 1, and 2 were executed in this pass. Phases 3–9 (codegen bridge, import resolution, Cargo dependency injection, end-to-end JSON/TOML reimplementation, fixtures, and full validation) are deliberately deferred.
+> **Scope note**: Phases 0–4 are complete. Phases 5–9 (Rust backend linkage, end-to-end JSON/TOML implementation, fixtures, docs/examples, and full validation) remain deferred.
 
 ## Phase 0 Baseline Record (2026-05-21)
 
@@ -195,3 +195,42 @@ After initial delivery of Phase 2, the following issues were identified and corr
 - Removed references to "future YAML" from module header and `Tempus` doc comment, since the current factory pass is scoped to JSON + TOML only.
 
 All `cargo test -p norma` and `faber check` on the stdlib interfaces continue to pass after the revision.
+
+## Phase 4 Completion Record (2026-05-21)
+
+### Changes Made
+- Added a target-neutral Faber library resolver in `crates/faber/src/library.rs`.
+  - Resolved shape includes only package name, module path, interface path, and provider kind.
+  - No Rust crate names, Rust module paths, Cargo dependency specs, WASM linkage, or native linker metadata are present in the language-level resolver model.
+- Implemented the built-in `norma` provider for `norma/json` and `norma/toml`.
+- Updated package loading to distinguish:
+  - local package modules, which are still queued and cycle-checked as package files,
+  - library modules, which are resolved to interface files and are not treated as user package modules,
+  - unsupported external/non-local imports, which retain the existing unsupported-import diagnostic.
+- Added diagnostics for unknown built-in modules such as `norma/nope`.
+- During package semantic analysis, library import declarations are stripped from the analyzed source and the resolved Faber interface is appended under the imported binding name. This lets `json.solve(...)` typecheck against `stdlib/norma/json.fab` without making the interface a user package module.
+- Tightened interface method checking so unknown methods on interface receivers produce an `unknown method` semantic error instead of falling through to unconstrained inference.
+- Left Rust/Cargo linkage out of this phase. Generated Rust no longer emits `use crate::norma::json...` from the library import itself; Rust backend dependency injection remains Phase 5.
+
+### Tests Added
+- Package compile tests for `importa ex "norma/json" privata json` and `importa ex "norma/toml" privata toml` proving:
+  - no local `norma` module is required,
+  - generated Rust does not normalize the import to `crate::norma::json`.
+- Package check test proving `json.nonexistent(...)` is checked against the imported interface and reports `unknown method`.
+- Unknown built-in import test for `norma/nope`.
+- Design-proof test showing the resolver data structure can represent a future `sqlite/transactio` package dependency without Rust metadata.
+
+### Validation
+- `cargo test -p faber` passes.
+- `cargo test -p radix` passes.
+  - Existing warning remains: `unused_mut` in `crates/radix/src/codegen/rust/mod_test.rs:1594`; not introduced by Phase 4.
+
+### Checkpoint Met
+- A package importing `norma/json` typechecks against the interface.
+- A misspelled built-in library import gets a useful diagnostic.
+- The resolver/provider metadata model is not `norma`-specific and does not encode Rust or Cargo concepts.
+- Generated Rust no longer normalizes library imports like `norma/json` to `crate::norma::json`.
+- Existing local import tests remain green.
+
+---
+*Phase 4 complete. Importa sine vinculis ferri.*

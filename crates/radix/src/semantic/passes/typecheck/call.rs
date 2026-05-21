@@ -124,6 +124,14 @@ impl<'a> TypeChecker<'a> {
             return self.types.primitive(Primitive::Ignotum);
         }
 
+        if self.interface_def_from_type(receiver_ty).is_some() {
+            for arg in args {
+                self.check_expr(arg);
+            }
+            self.error(SemanticErrorKind::UndefinedMember, "unknown method", receiver.span);
+            return self.error_type;
+        }
+
         for arg in args {
             self.check_expr(arg);
         }

@@ -2,6 +2,7 @@ use super::{
     check_package, compile_package, discover_build_layout, emit_generated_crate, read_manifest,
     sanitize_crate_name, BuildLayout,
 };
+use crate::library::{LibraryProviderKind, ResolvedLibraryModule};
 use radix::diagnostics::Diagnostic;
 use radix::driver::Config;
 use radix::Output;
@@ -34,6 +35,132 @@ fn compile_package_reports_unresolved_external_imports() {
     assert!(result.diagnostics.iter().any(|diag| diag
         .message
         .contains("only supports local intra-package imports")));
+}
+
+#[test]
+fn compile_package_resolves_builtin_norma_library_imports_without_local_modules() {
+    let dir = temp_dir("norma-json-import");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "norma/json" privata json
+
+incipit {
+  fixum parsed ← json.solve("{}")
+}
+"#,
+    )
+    .expect("write entry");
+
+    let result = compile_package(&Config::default(), &entry);
+    assert!(
+        result.success(),
+        "expected norma/json package compile success, got {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+    let Some(Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+
+    assert!(output.code.contains("norma::json::solve"));
+    assert!(!output.code.contains("crate::norma::json"));
+}
+
+#[test]
+fn compile_package_resolves_builtin_norma_toml_library_imports() {
+    let dir = temp_dir("norma-toml-import");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "norma/toml" privata toml
+
+incipit {
+  fixum parsed ← toml.solve("name = \"faber\"")
+}
+"#,
+    )
+    .expect("write entry");
+
+    let result = compile_package(&Config::default(), &entry);
+    assert!(
+        result.success(),
+        "expected norma/toml package compile success, got {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+    let Some(Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+
+    assert!(output.code.contains("norma::toml::solve"));
+    assert!(!output.code.contains("crate::norma::toml"));
+}
+
+#[test]
+fn check_package_typechecks_builtin_library_imports_against_interfaces() {
+    let dir = temp_dir("norma-json-interface");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "norma/json" privata json
+
+incipit {
+  json.nonexistent("{}")
+}
+"#,
+    )
+    .expect("write entry");
+
+    let diagnostics = check_package(&Config::default(), &entry);
+    assert!(diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("unknown method")));
+}
+
+#[test]
+fn compile_package_reports_unknown_builtin_library_modules() {
+    let dir = temp_dir("norma-nope");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "norma/nope" privata nope
+incipit {}
+"#,
+    )
+    .expect("write entry");
+
+    let result = compile_package(&Config::default(), &entry);
+    assert!(result.output.is_none());
+    assert!(result.diagnostics.iter().any(|diag| diag
+        .message
+        .contains("unknown built-in library module `norma/nope`")));
+}
+
+#[test]
+fn resolved_library_module_shape_can_describe_future_sqlite_without_rust_metadata() {
+    let module = ResolvedLibraryModule::new(
+        "sqlite",
+        vec!["transactio".to_owned()],
+        "/tmp/faber-libs/sqlite/transactio.fab",
+        LibraryProviderKind::PackageDependency,
+    );
+
+    assert_eq!(module.package, "sqlite");
+    assert_eq!(module.module_path, vec!["transactio"]);
+    assert_eq!(module.module_name(), Some("transactio"));
+    assert_eq!(module.provider, LibraryProviderKind::PackageDependency);
+    assert!(module.interface_path.ends_with("sqlite/transactio.fab"));
 }
 
 #[test]

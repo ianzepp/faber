@@ -1,5 +1,6 @@
 //! User-facing Faber project tool (`faber` binary).
 
+mod library;
 mod package;
 
 use clap::{Parser, Subcommand};

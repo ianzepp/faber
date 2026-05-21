@@ -1,6 +1,6 @@
 # Standard Library Data Formats Factory Plan
 
-**Status**: in-progress (Phases 0–2 complete; 3–9 deferred per owner directive)
+**Status**: in-progress (Phases 0–4 complete; 5–9 deferred)
 **Created**: 2026-05-21
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/stdlib-data-formats/`
