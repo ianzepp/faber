@@ -191,11 +191,29 @@ All client/server operations are async-only, so only future forms are defined (`
 
 ---
 
-### 7. Other Modules (Brief)
+### 7. `caelum.fab` — Socket Forms Resolved
+
+Low-level socket APIs can reasonably expose both sync and async forms:
+
+- `ausculta` / `auscultabit` — listen
+- `connecte` / `connectet` — connect
+- `accipe` / `accipiet` — accept connection
+- `hauri` / `hauriet` — read bytes
+- `funde` / `fundet` — write bytes
+
+**Recommendations**:
+- Keep the current sync/async pairs.
+- Chunked read/write streams are a useful future extension, especially with an explicit chunk size.
+- For read chunks, prefer plural forms of `haurire`: `hauriunt` for sync generator and `haurient` for async generator.
+- For write-side chunk streaming, keep the `funde` root if the operation is still "pour bytes to the connection"; use `fundunt` / `fundent` only after the exact producer/acknowledgement semantics are designed.
+
+---
+
+### 8. Other Modules (Brief)
 
 - **`tempus.fab`**: `dormiet` for sleep is fine.
 - **`crypta.fab`**: Async hash functions are intentionally slow — future forms are correct.
-- **`caelum.fab`**, **`nuncius.fab`**, **`pressura.fab`**: Mostly future-only networking/messaging. Review for real Latin conjugation of each root rather than suffix uniformity.
+- **`nuncius.fab`**, **`pressura.fab`**: Messaging/compression surfaces still need review for real Latin conjugation of each root rather than suffix uniformity.
 - Data format modules (`json`, `toml`, `yaml`): Currently only define base forms. When async versions are added, they should use the real future form for each root rather than forcing an artificial `-et` pattern.
 
 ---
@@ -248,6 +266,7 @@ Create (or expand) a document that defines the expected conjugation patterns for
 | `arca`     | `capiet`           | Keep as separate root | Done | Single-row retrieval has distinct result shape and wrapper possibilities |
 | `processus`| `exsequetur`       | Keep deponent execution root | Done | Root declarations can allow only sync/async collected-output forms |
 | `http`     | async client/server forms | Keep async-only | Done | Sync HTTP forms do not belong in the stdlib surface |
+| `caelum`   | socket sync/async pairs | Keep; add chunk streams later | Done | Low-level sockets can support sync/async and future chunk generators |
 | `solum`    | `carpiet`          | Keep as async line collection | Done | Streaming should add `carpunt` / `carpent`, not rename collected-list forms |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
