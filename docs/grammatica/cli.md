@@ -31,12 +31,12 @@ and operands.
 incipit argumenta args {}
 ```
 
-| Annotation     | Placement        | Meaning |
-| -------------- | ---------------- | ------- |
-| `@ cli`        | root `incipit`   | Marks the program as a CLI and gives the binary name |
-| `@ versio`     | root `incipit`   | Enables `--version` output |
-| `@ descriptio` | root or command  | Adds help text |
-| `@ imperia`    | root `incipit`   | Mounts commands from an imported module |
+| Annotation     | Placement       | Meaning                                              |
+| -------------- | --------------- | ---------------------------------------------------- |
+| `@ cli`        | root `incipit`  | Marks the program as a CLI and gives the binary name |
+| `@ versio`     | root `incipit`  | Enables `--version` output                           |
+| `@ descriptio` | root or command | Adds help text                                       |
+| `@ imperia`    | root `incipit`  | Mounts commands from an imported module              |
 
 Top-level `@ optio ... ubique` and `@ operandus ... ubique` values are global. They are merged into every command's
 `args` object, including mounted commands.
@@ -72,16 +72,16 @@ Rules:
 
 Supported CLI types today:
 
-| Faber type       | Rust parser behavior |
-| ---------------- | -------------------- |
-| `textus`         | string |
-| `numerus`        | `i64` parse |
-| `fractus`        | `f64` parse |
-| `bivalens`       | boolean flag or bool parse |
+| Faber type       | Rust parser behavior                             |
+| ---------------- | ------------------------------------------------ |
+| `textus`         | string                                           |
+| `numerus`        | `i64` parse                                      |
+| `fractus`        | `f64` parse                                      |
+| `bivalens`       | boolean flag or bool parse                       |
 | `octeti`         | string-backed placeholder in current CLI parsing |
-| `ignotum`        | string-backed placeholder |
-| `lista<textus>`  | repeated/rest string values |
-| `lista<numerus>` | repeated/rest numeric values |
+| `ignotum`        | string-backed placeholder                        |
+| `lista<textus>`  | repeated/rest string values                      |
+| `lista<numerus>` | repeated/rest numeric values                     |
 
 Structured types, enums, choices, maps, and user-defined records are not CLI-parsed yet.
 
