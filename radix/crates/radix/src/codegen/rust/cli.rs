@@ -254,9 +254,9 @@ fn generate_command_help(
         write_println(
             w,
             &format!(
-                "Usage: {}{}{}",
+                "Usage: {} {}{}",
                 program.name,
-                format!(" {}", command.path.join(" ")),
+                command.path.join(" "),
                 usage_suffix(options, operands)
             ),
         );
@@ -510,7 +510,7 @@ fn generate_dispatcher(program: &CliProgram, w: &mut CodeWriter) {
         });
         w.writeln("}");
         let mut commands = program.commands.iter().collect::<Vec<_>>();
-        commands.sort_by(|left, right| right.path.len().cmp(&left.path.len()));
+        commands.sort_by_key(|command| std::cmp::Reverse(command.path.len()));
         for command in commands {
             generate_dispatch_arm(program, command, w);
             for alias in &command.aliases {
