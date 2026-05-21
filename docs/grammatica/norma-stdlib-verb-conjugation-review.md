@@ -180,13 +180,14 @@ This is the key test case for migration-safe conjugation. The root `quaer-` rema
 
 ---
 
-### 6. `http.fab` — Acceptable
+### 6. `http.fab` — Async-Only Forms Resolved
 
 All client/server operations are async-only, so only future forms are defined (`petet`, `mittet`, `exspectabit`, etc.).
 
 **Recommendations**:
 - The response builder methods (`replica`, `scribe`, `funde`) are sync helpers inside handlers — correct.
-- If sync HTTP clients are ever added, they should use non-future forms of the same roots (`petere`, `mittere`, etc.), which may feel slightly awkward. Consider documenting this.
+- Keep HTTP client/server operations async-only in the stdlib. Sync HTTP forms do not need library declarations.
+- In a future root-based stdlib, declare only the allowed async forms. Users who need sync behavior can wrap or collect at their own boundary.
 
 ---
 
@@ -246,6 +247,7 @@ Create (or expand) a document that defines the expected conjugation patterns for
 | `arca`     | `quaerent`         | Keep | Done | Real future plural for `quaerere`; same query operation remains one root |
 | `arca`     | `capiet`           | Keep as separate root | Done | Single-row retrieval has distinct result shape and wrapper possibilities |
 | `processus`| `exsequetur`       | Keep deponent execution root | Done | Root declarations can allow only sync/async collected-output forms |
+| `http`     | async client/server forms | Keep async-only | Done | Sync HTTP forms do not belong in the stdlib surface |
 | `solum`    | `carpiet`          | Keep as async line collection | Done | Streaming should add `carpunt` / `carpent`, not rename collected-list forms |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
