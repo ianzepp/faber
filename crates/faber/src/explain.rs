@@ -334,14 +334,46 @@ pub fn render_json(lookup: &Lookup<'_>) -> Result<String, ExplainError> {
 
 pub fn render_list(registry: &Registry) -> String {
     let mut out = String::new();
-    for entry in registry.entries() {
-        if entry.canonical {
-            out.push_str(&format!(
-                "{}\t{}\t{}\n",
-                entry.term,
-                entry.kind.as_str(),
-                entry.category
-            ));
+    let entries = registry
+        .entries()
+        .iter()
+        .filter(|entry| entry.canonical)
+        .collect::<Vec<_>>();
+
+    for kind in [
+        Kind::Keyword,
+        Kind::Operator,
+        Kind::Annotation,
+        Kind::Modifier,
+        Kind::Type,
+        Kind::Concept,
+    ] {
+        let group = entries
+            .iter()
+            .copied()
+            .filter(|entry| entry.kind == kind)
+            .collect::<Vec<_>>();
+        if group.is_empty() {
+            continue;
+        }
+
+        if !out.is_empty() {
+            out.push('\n');
+        }
+        out.push_str(kind.list_title());
+        out.push('\n');
+
+        let term_width = group
+            .iter()
+            .map(|entry| display_width(&entry.term))
+            .max()
+            .unwrap_or(0);
+        for entry in group {
+            out.push_str("  ");
+            push_padded(&mut out, &entry.term, term_width);
+            out.push_str("  ");
+            out.push_str(&entry.category);
+            out.push('\n');
         }
     }
     out
@@ -354,10 +386,28 @@ pub fn render_category(registry: &Registry, category: &str) -> Option<String> {
     }
 
     let mut out = String::new();
+    let term_width = entries
+        .iter()
+        .map(|entry| display_width(&entry.term))
+        .max()
+        .unwrap_or(0);
     for entry in entries {
-        out.push_str(&format!("{}\t{}\n", entry.term, entry.summary));
+        push_padded(&mut out, &entry.term, term_width);
+        out.push_str("  ");
+        out.push_str(&entry.summary);
+        out.push('\n');
     }
     Some(out)
+}
+
+fn push_padded(out: &mut String, value: &str, width: usize) {
+    out.push_str(value);
+    let padding = width.saturating_sub(display_width(value));
+    out.push_str(&" ".repeat(padding));
+}
+
+fn display_width(value: &str) -> usize {
+    value.chars().count()
 }
 
 #[derive(Serialize)]
@@ -620,6 +670,18 @@ impl Kind {
             Kind::Modifier => "modifier",
             Kind::Legacy => "legacy",
             Kind::Concept => "concept",
+        }
+    }
+
+    fn list_title(self) -> &'static str {
+        match self {
+            Kind::Keyword => "KEYWORDS",
+            Kind::Operator => "OPERATORS",
+            Kind::Annotation => "ANNOTATIONS",
+            Kind::Type => "TYPES",
+            Kind::Modifier => "MODIFIERS",
+            Kind::Legacy => "LEGACY",
+            Kind::Concept => "CONCEPTS",
         }
     }
 }
