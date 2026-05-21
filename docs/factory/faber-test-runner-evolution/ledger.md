@@ -228,3 +228,43 @@ No changes to HIR/metadata (Phase 4+) or docs (Phase 6) in this slice.
 ### Validation
 - Readback inspection of the updated docs and README against the live `faber test --help` surface from phase 5.
 - `git diff --check`
+
+### Follow-up Polish
+- Clarified `faber test --help` so `--ignored` and `--include-ignored` describe Rust-ignored tests, including selection-ignored cases.
+- Documented setup/teardown keywords in `docs/grammatica/test.md`.
+- Documented that Faber line coverage is future work and generated Rust coverage is not Faber source coverage.
+
+## Phase 7: Validation and Release Readiness
+
+**Date**: 2026-05-21
+
+### Validation
+- `cargo fmt --all -- --check`
+- `cargo test --all`
+- `cargo clippy --all-targets --all-features -- -D warnings`
+- `cargo run -p faber -- test --help`
+- `cargo run -p faber -- targets`
+- `cargo run -p faber -- check examples/exempla/proba/proba.fab`
+- `cargo run -p faber -- check examples/exempla/proba/modificatores.fab`
+- `cargo run -p faber -- check examples/exempla/proba/packages/passing`
+- `cargo run -p faber -- check examples/exempla/proba/packages/ignored`
+- `cargo run -p faber -- check examples/exempla/proba/packages/suite`
+- `cargo run -p faber -- check examples/exempla/proba/packages/solum`
+- `cargo run -p faber -- check examples/exempla/proba/packages/selectors`
+- `cargo build --release -p faber`
+- `cargo build --release -p radix`
+- `cargo run -p faber -- test examples/exempla/proba/packages/passing`
+- `cargo run -p faber -- test examples/exempla/proba/packages/ignored`
+- `cargo run -p faber -- test examples/exempla/proba/packages/suite`
+- `cargo run -p faber -- test examples/exempla/proba/packages/failing` exits nonzero as expected.
+- `find examples/exempla/proba/packages -path '*/target/faber/target' -type d -print` returns no paths.
+
+### Release Readiness
+- `faber --version` reports `faber 0.34.0`.
+- `radix --version` reports `radix 0.34.0`.
+- `crates/faber/Cargo.toml`, `crates/radix/Cargo.toml`, and `Cargo.lock` all carry `0.34.0`.
+- `docs/factory/faber-radix-tool-split/release-notes-v0.34.md` was updated to remove stale stub language and describe the implemented v0.34 surface.
+
+## Final Status
+- Phases 0-7 are complete.
+- The test runner evolution plan is closed.
