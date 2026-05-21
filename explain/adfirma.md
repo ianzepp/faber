@@ -3,20 +3,17 @@ term: "adfirma"
 kind: "keyword"
 category: "testing"
 canonical: true
-summary: "Asserts that an expression is true at runtime or inside a test."
-syntax: "adfirma <expression>"
-examples:
-  - "examples/exempla/adfirma/adfirma.fab"
+summary: "Asserts that a condition is true at runtime."
+syntax: "adfirma <expression> [, <message>]"
 aliases:
   - "assert"
 related:
   - "proba"
-  - "≡"
-  - "≠"
+  - "tempta"
 ---
 
-Use `adfirma` to fail execution when a required condition is false.
+Asserts that a condition is true at runtime.
 
 ```fab
-adfirma result ≡ "hello world"
+adfirma verum, "msg"
 ```

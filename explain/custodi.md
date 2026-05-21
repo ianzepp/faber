@@ -18,8 +18,8 @@ Use `custodi` to place validation and early returns at the top of a function.
 
 ```fab
 custodi {
-    si b ≡ 0 {
-        redde 0
-    }
+si b ≡ 0 {
+    redde 0
+}
 }
 ```

@@ -19,6 +19,6 @@ Use `si` for ordinary conditional control flow.
 
 ```fab
 si age ≥ 18 {
-    scribe "Adult"
+scribe "Adult"
 }
 ```

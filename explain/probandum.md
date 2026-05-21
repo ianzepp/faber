@@ -17,8 +17,8 @@ related:
 
 ```fab
 probandum "math" {
-    proba "addition" {
-        adfirma 1 + 1 ≡ 2
-    }
+proba "addition" {
+    adfirma 1 + 1 ≡ 2
+}
 }
 ```

@@ -21,6 +21,6 @@ related:
 
 ```fab
 proba "arithmetic passes" {
-    adfirma 1 + 1 ≡ 2
+adfirma 1 + 1 ≡ 2
 }
 ```

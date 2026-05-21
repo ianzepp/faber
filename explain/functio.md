@@ -18,6 +18,6 @@ Use `functio` for reusable named behavior with optional parameters and return ty
 
 ```fab
 functio duplica(numerus n) → numerus {
-    redde n * 2
+redde n * 2
 }
 ```

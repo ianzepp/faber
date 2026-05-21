@@ -12,7 +12,6 @@ aliases:
   - "inequality"
 legacy:
   - "!="
-  - "!=="
 related:
   - "≡"
   - "adfirma"

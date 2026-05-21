@@ -19,6 +19,6 @@ Use `futurum` after `proba` for a test case that documents planned behavior.
 
 ```fab
 proba futurum "needs API" "creates users" {
-    adfirma verum
+adfirma verum
 }
 ```

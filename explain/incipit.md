@@ -19,6 +19,6 @@ Use `incipit` for code that should run when the compiled program starts.
 
 ```fab
 incipit {
-    scribe "Salve, munde!"
+scribe "Salve, munde!"
 }
 ```

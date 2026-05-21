@@ -12,7 +12,6 @@ aliases:
   - "equality"
 legacy:
   - "=="
-  - "==="
 related:
   - "≠"
   - "adfirma"

@@ -18,6 +18,6 @@ Use `omitte` after `proba` when the test should be recorded but not run.
 
 ```fab
 proba omitte "blocked" "database connection" {
-    adfirma falsum
+adfirma falsum
 }
 ```

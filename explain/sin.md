@@ -18,6 +18,6 @@ Use `sin` after `si` when another condition should be tested before the final fa
 
 ```fab
 sin score ≥ 80 {
-    scribe "B"
+scribe "B"
 }
 ```

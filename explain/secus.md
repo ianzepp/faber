@@ -19,6 +19,6 @@ Use `secus` as the default branch in an `si` chain or as the alternate side of a
 
 ```fab
 secus {
-    scribe "Minor"
+scribe "Minor"
 }
 ```

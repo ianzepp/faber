@@ -21,6 +21,6 @@ Use `→` after a parameter list when a declaration or closure spells out its re
 
 ```fab
 functio duplica(numerus n) → numerus {
-    redde n * 2
+redde n * 2
 }
 ```

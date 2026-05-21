@@ -15,6 +15,6 @@ related:
 
 ```fab
 functio value() → numerus {
-    redde 1
+redde 1
 }
 ```
