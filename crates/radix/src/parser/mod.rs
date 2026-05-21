@@ -367,6 +367,7 @@ impl Parser {
                 | TokenKind::Perge
                 | TokenKind::Iace
                 | TokenKind::Mori
+                | TokenKind::Tacet
                 | TokenKind::Tempta
                 | TokenKind::Adfirma
                 | TokenKind::Scribe

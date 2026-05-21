@@ -6,7 +6,7 @@ canonical = true
 summary = "Returns a value from a function."
 syntax = "redde <expression>"
 aliases = ["return"]
-related = ["reddit", "tacet"]
+related = ["ergo", "tacet"]
 +++
 
 Returns a value from a function.

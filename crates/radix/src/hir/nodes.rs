@@ -294,6 +294,7 @@ pub enum HirStmtKind {
     Redde(Option<HirExpr>),
     Rumpe,
     Perge,
+    Tacet,
 }
 
 #[derive(Debug)]

@@ -3,7 +3,7 @@
 //! ARCHITECTURE OVERVIEW
 //! =====================
 //! Transforms AST statements into HIR statements, handling control flow
-//! constructs (si, dum, itera, discerne) and desugaring ergo/reddit syntax.
+//! constructs (si, dum, itera, discerne) and desugaring ergo syntax.
 //!
 //! COMPILER PHASE: HIR Lowering (submodule)
 //! INPUT: AST statements (syntax::Stmt)
@@ -12,7 +12,6 @@
 //! CONTROL FLOW DESUGARING
 //! =======================
 //! - ergo: Single statement becomes block with one statement
-//! - reddit: Inline return becomes explicit HirStmtKind::Redde
 //! - custodi: Multiple clauses desugar to nested si expressions
 //! - discerne: Pattern matching with scope management for bindings
 //!
@@ -47,6 +46,7 @@ pub fn lower_stmt(lowerer: &mut Lowerer, stmt: &Stmt) -> HirStmt {
         StmtKind::Perge(_) => HirStmtKind::Perge,
         StmtKind::Iace(iace_stmt) => lowerer.lower_iace(iace_stmt),
         StmtKind::Mori(mori_stmt) => lowerer.lower_mori(mori_stmt),
+        StmtKind::Tacet(_) => HirStmtKind::Tacet,
         StmtKind::Tempta(tempta_stmt) => lowerer.lower_tempta(tempta_stmt),
         StmtKind::Adfirma(adfirma_stmt) => lowerer.lower_adfirma(adfirma_stmt),
         StmtKind::Scribe(scribe_stmt) => lowerer.lower_scribe(scribe_stmt),
@@ -667,10 +667,6 @@ impl<'a> Lowerer<'a> {
             crate::syntax::SecusClause::Block(block) => self.lower_block(block),
             crate::syntax::SecusClause::Stmt(stmt) => {
                 HirBlock { stmts: lower_stmt_expanded(self, stmt), expr: None, span: stmt.span }
-            }
-            crate::syntax::SecusClause::InlineReturn(ret) => {
-                let stmts = self.lower_inline_return(ret).into_iter().collect();
-                HirBlock { stmts, expr: None, span: self.current_span }
             }
         }
     }

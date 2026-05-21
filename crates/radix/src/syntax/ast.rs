@@ -117,6 +117,8 @@ pub enum StmtKind {
     Iace(IaceStmt),
     /// Panic: mori
     Mori(MoriStmt),
+    /// Explicit noop: tacet
+    Tacet(TacetStmt),
     /// Try/catch: tempta
     Tempta(TemptaStmt),
     /// Assert: adfirma
@@ -422,15 +424,6 @@ pub struct SiStmt {
 pub enum IfBody {
     Block(BlockStmt),
     Ergo(Box<Stmt>),
-    InlineReturn(InlineReturn),
-}
-
-#[derive(Debug)]
-pub enum InlineReturn {
-    Reddit(Box<Expr>),
-    Iacit(Box<Expr>),
-    Moritor(Box<Expr>),
-    Tacet,
 }
 
 #[derive(Debug)]
@@ -438,7 +431,6 @@ pub enum SecusClause {
     Sin(Box<SiStmt>),
     Block(BlockStmt),
     Stmt(Box<Stmt>),
-    InlineReturn(InlineReturn),
 }
 
 #[derive(Debug)]
@@ -564,6 +556,11 @@ pub struct IaceStmt {
 #[derive(Debug)]
 pub struct MoriStmt {
     pub value: Box<Expr>,
+}
+
+#[derive(Debug)]
+pub struct TacetStmt {
+    pub span: Span,
 }
 
 #[derive(Debug)]

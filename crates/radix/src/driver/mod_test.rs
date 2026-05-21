@@ -473,13 +473,13 @@ incipit {
 }
 
 #[test]
-fn inline_iacit_moritor_and_tacet_compile_for_faber_target() {
+fn ergo_iace_mori_and_tacet_compile_for_faber_target() {
     let session = session(Target::Faber);
     let source = r#"functio probe(bivalens ok) → vacuum {
-  si ok iacit "boom"
-  secus moritor "bad"
+  si ok ergo iace "boom"
+  secus ergo mori "bad"
 
-  si ok tacet
+  si ok ergo tacet
 }
 
 incipit {
@@ -498,7 +498,7 @@ incipit {
 fn rust_target_rejects_exception_constructs() {
     let session = session(Target::Rust);
     let source = r#"functio probe(bivalens ok) → vacuum {
-  si ok iacit "boom"
+  si ok ergo iace "boom"
 
   tempta {
     iace "bad"
@@ -510,9 +510,10 @@ fn rust_target_rejects_exception_constructs() {
 
     assert!(result.output.is_none());
     assert!(!result.success());
-    assert!(result.diagnostics.iter().any(|d| d.is_error()
-        && d.message
-            .contains("iacit is not supported for Rust targets")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("iace is not supported for Rust targets")));
     assert!(result.diagnostics.iter().any(|d| d.is_error()
         && d.message
             .contains("tempta is not supported for Rust targets")));

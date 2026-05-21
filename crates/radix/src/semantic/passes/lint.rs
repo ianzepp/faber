@@ -219,7 +219,7 @@ impl<'a> LintContext<'a> {
                     self.check_expr(expr, in_loop);
                 }
             }
-            HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
         }
     }
 

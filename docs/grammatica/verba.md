@@ -29,7 +29,7 @@ Keywords for directing program flow through conditionals, loops, and branching:
 | `rumpe`    | break       | Exit loop                              |
 | `perge`    | continue    | Skip to next iteration                 |
 | `redde`    | return      | Return value from function             |
-| `reddit`   | then return | Sugar for `ergo redde`                 |
+| `tacet`    | it is silent | Explicit no-op statement               |
 | `custodi`  | guard       | Early-exit guard clause                |
 | `adfirma`  | assert      | Runtime assertion                      |
 | `discerne` | match       | Pattern matching on `discretio`        |
@@ -77,7 +77,6 @@ Keywords for managing errors and cleanup:
 | `cape`   | catch      | Handle thrown error                                           |
 | `demum`  | finally    | Cleanup block (runs regardless)                               |
 | `iace`   | throw      | Throw recoverable error                                       |
-| `iacit`  | then throw | Sugar for `ergo iace` (also used as a post-function modifier) |
 | `mori`   | panic      | Fatal/unrecoverable error                                     |
 
 ---

@@ -189,7 +189,7 @@ fn emits_parameter_references_with_original_names() {
 }
 
 #[test]
-fn emits_si_sin_secus_chain_with_reddit_shorthand() {
+fn emits_si_sin_secus_chain_with_ergo_redde() {
     let mut interner = Interner::new();
     let name_grade = interner.intern("grade");
     let text_a = interner.intern("A");

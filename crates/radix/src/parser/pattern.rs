@@ -62,13 +62,7 @@ impl Parser {
                 break;
             }
             // EDGE: Stop if we hit body-starting tokens
-            if self.check(&TokenKind::LBrace)
-                || self.check_keyword(TokenKind::Reddit)
-                || self.check_keyword(TokenKind::Iacit)
-                || self.check_keyword(TokenKind::Moritor)
-                || self.check_keyword(TokenKind::Tacet)
-                || self.check_keyword(TokenKind::Ergo)
-            {
+            if self.check(&TokenKind::LBrace) || self.check_keyword(TokenKind::Ergo) {
                 break;
             }
         }
@@ -158,10 +152,6 @@ impl Parser {
             }
             // EDGE: Stop at body-starting tokens or pattern separators
             if self.check(&TokenKind::LBrace)
-                || self.check_keyword(TokenKind::Reddit)
-                || self.check_keyword(TokenKind::Iacit)
-                || self.check_keyword(TokenKind::Moritor)
-                || self.check_keyword(TokenKind::Tacet)
                 || self.check_keyword(TokenKind::Ergo)
                 || self.check_keyword(TokenKind::Et)
             {

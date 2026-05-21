@@ -10,13 +10,13 @@
 //! INPUT: AST with resolved names from Resolver
 //! OUTPUT: HirProgram with DefIds embedded; lowering errors
 //!
-//! WHY: HIR eliminates syntactic sugar (ergo, reddit, inline returns) and
+//! WHY: HIR eliminates syntactic sugar (ergo bodies) and
 //! normalizes constructs (method calls, implicit returns) so later passes
 //! (type checking, borrow analysis) work with simpler structures.
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Explicit Returns: ergo/reddit syntax becomes explicit HirStmtKind::Redde
+//! - Explicit Returns: ergo return syntax becomes explicit HirStmtKind::Redde
 //!   for simpler control-flow analysis
 //! - Method Normalization: `obj.method()` becomes HirExprKind::MethodCall,
 //!   distinguishing from field access for type checking
@@ -429,7 +429,7 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower a block body (ergo/reddit/inline return desugaring)
+    /// Lower a block body.
     fn lower_ergo_body(&mut self, body: &crate::syntax::IfBody) -> HirBlock {
         match body {
             crate::syntax::IfBody::Block(block) => self.lower_block(block),
@@ -437,51 +437,7 @@ impl<'a> Lowerer<'a> {
                 let stmts = stmt::lower_stmt_expanded(self, stmt);
                 HirBlock { stmts, expr: None, span: self.current_span }
             }
-            crate::syntax::IfBody::InlineReturn(ret) => {
-                let stmts = self.lower_inline_return(ret).into_iter().collect();
-                HirBlock { stmts, expr: None, span: self.current_span }
-            }
         }
-    }
-
-    /// Lower inline control-flow to an optional statement.
-    ///
-    /// WHY: `reddit`, `iacit`, and `moritor` are distinct exits, while `tacet`
-    /// is an explicit no-op and should not be rewritten into an implicit return.
-    fn lower_inline_return(&mut self, ret: &crate::syntax::InlineReturn) -> Option<HirStmt> {
-        let id = self.next_hir_id();
-        let (kind, span) = match ret {
-            crate::syntax::InlineReturn::Reddit(expr) => {
-                let expr_hir = self.lower_expr(expr);
-                (HirStmtKind::Redde(Some(expr_hir)), expr.span)
-            }
-            crate::syntax::InlineReturn::Iacit(expr) => {
-                let value = self.lower_expr(expr);
-                (
-                    HirStmtKind::Expr(HirExpr {
-                        id: self.next_hir_id(),
-                        kind: HirExprKind::Throw(Box::new(value)),
-                        ty: None,
-                        span: expr.span,
-                    }),
-                    expr.span,
-                )
-            }
-            crate::syntax::InlineReturn::Moritor(expr) => {
-                let value = self.lower_expr(expr);
-                (
-                    HirStmtKind::Expr(HirExpr {
-                        id: self.next_hir_id(),
-                        kind: HirExprKind::Panic(Box::new(value)),
-                        ty: None,
-                        span: expr.span,
-                    }),
-                    expr.span,
-                )
-            }
-            crate::syntax::InlineReturn::Tacet => return None,
-        };
-        Some(HirStmt { id, kind, span })
     }
 
     /// Lower a block statement

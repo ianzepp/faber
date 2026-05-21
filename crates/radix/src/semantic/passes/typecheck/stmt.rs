@@ -65,7 +65,7 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirStmtKind::Redde(value) => self.check_return(value.as_mut(), stmt.span),
-            HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
         }
     }
     pub(super) fn check_block(&mut self, block: &mut HirBlock, expected: Option<TypeId>) -> TypeId {

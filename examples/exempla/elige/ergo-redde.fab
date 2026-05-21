@@ -1,0 +1,60 @@
+# Elige with ergo redde syntax
+#
+# Use 'ergo redde' when each case simply returns a value.
+#
+# casu <value> ergo redde <expression>
+# ceterum ergo redde <expression>
+
+# HTTP status code lookup using ergo redde
+functio getStatusText(numerus code) → textus {
+    elige code {
+        casu 200 ergo redde "OK"
+        casu 201 ergo redde "Created"
+        casu 204 ergo redde "No Content"
+        casu 400 ergo redde "Bad Request"
+        casu 401 ergo redde "Unauthorized"
+        casu 403 ergo redde "Forbidden"
+        casu 404 ergo redde "Not Found"
+        casu 500 ergo redde "Internal Server Error"
+        casu 502 ergo redde "Bad Gateway"
+        casu 503 ergo redde "Service Unavailable"
+        ceterum ergo redde "Unknown Status"
+    }
+}
+
+# Type mapping using ergo redde
+functio getTypeCode(textus name) → numerus {
+    elige name {
+        casu "textus" ergo redde 1
+        casu "numerus" ergo redde 2
+        casu "fractus" ergo redde 3
+        casu "bivalens" ergo redde 4
+        ceterum ergo redde 0
+    }
+}
+
+# Mixed ergo redde and blocks
+# Use ergo redde for simple returns, blocks for complex logic
+functio processCode(numerus code) → textus {
+    elige code {
+        casu 1 ergo redde "simple"
+        casu 2 {
+            nota "Processing code 2..."
+            redde "complex"
+        }
+        casu 3 ergo redde "also simple"
+        ceterum ergo redde "default"
+    }
+}
+
+incipit {
+    nota getStatusText(200)    # OK
+    nota getStatusText(404)    # Not Found
+    nota getStatusText(999)    # Unknown Status
+
+    nota getTypeCode("textus")   # 1
+    nota getTypeCode("unknown")  # 0
+
+    nota processCode(1)  # simple
+    nota processCode(2)  # Processing code 2... complex
+}

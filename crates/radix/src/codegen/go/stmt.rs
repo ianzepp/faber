@@ -204,6 +204,7 @@ pub fn generate_stmt(
         }
         HirStmtKind::Rumpe => w.writeln("break"),
         HirStmtKind::Perge => w.writeln("continue"),
+        HirStmtKind::Tacet => w.writeln("{ /* tacet: explicit noop */ }"),
     }
     Ok(())
 }

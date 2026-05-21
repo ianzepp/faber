@@ -214,7 +214,7 @@ impl<'a> BorrowChecker<'a> {
                     self.check_expr(expr);
                 }
             }
-            HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
         }
     }
 

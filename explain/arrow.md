@@ -8,7 +8,7 @@ syntax = "functio <name>(<params>) → <type> <block>"
 examples = ["examples/exempla/functio/functio.fab"]
 aliases = ["return arrow", "arrow"]
 legacy = ["->"]
-related = ["functio", "reddit"]
+related = ["functio", "redde"]
 +++
 
 Use `→` after a parameter list when a declaration or closure spells out its return type.

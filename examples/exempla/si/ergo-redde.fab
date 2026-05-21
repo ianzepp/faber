@@ -1,38 +1,37 @@
-# Si with reddit syntax
+# Si with ergo redde syntax
 #
-# 'reddit' is syntactic sugar for 'ergo redde' - a one-liner return.
-# Use it for early returns and guard clauses.
+# Use 'ergo redde' for one-line early returns and guard clauses.
 #
-# si <condition> reddit <expression>
-# sin <condition> reddit <expression>
-# secus reddit <expression>
+# si <condition> ergo redde <expression>
+# sin <condition> ergo redde <expression>
+# secus ergo redde <expression>
 
 # Early return pattern
 functio classify(numerus x) → textus {
-    si x < 0 reddit "negative"
-    si x ≡ 0 reddit "zero"
+    si x < 0 ergo redde "negative"
+    si x ≡ 0 ergo redde "zero"
     redde "positive"
 }
 
 # Guard clause pattern
 functio divide(numerus a, numerus b) → si numerus {
-    si b ≡ 0 reddit nihil
+    si b ≡ 0 ergo redde nihil
     redde a / b
 }
 
-# Sin/secus chain with reddit
+# Sin/secus chain with ergo redde
 functio grade(numerus score) → textus {
-    si score ≥ 90 reddit "A"
-    sin score ≥ 80 reddit "B"
-    sin score ≥ 70 reddit "C"
-    sin score ≥ 60 reddit "D"
-    secus reddit "F"
+    si score ≥ 90 ergo redde "A"
+    sin score ≥ 80 ergo redde "B"
+    sin score ≥ 70 ergo redde "C"
+    sin score ≥ 60 ergo redde "D"
+    secus ergo redde "F"
 }
 
 # Find first in list (early return from loop)
 functio findFirst(lista<numerus> items, numerus target) → si numerus {
     itera ex items fixum item {
-        si item ≡ target reddit item
+        si item ≡ target ergo redde item
     }
     redde nihil
 }
@@ -40,7 +39,7 @@ functio findFirst(lista<numerus> items, numerus target) → si numerus {
 # Check if key exists (early return from iteration)
 functio hasKey(tabula<textus, numerus> obj, textus key) → bivalens {
     itera de obj fixum k {
-        si k ≡ key reddit verum
+        si k ≡ key ergo redde verum
     }
     redde falsum
 }

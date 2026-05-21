@@ -290,7 +290,7 @@ impl super::FaberCodegen {
                         self.collect_expr_names(names, expr);
                     }
                 }
-                HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+                HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
             }
         }
         if let Some(expr) = &block.expr {

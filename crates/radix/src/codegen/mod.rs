@@ -218,7 +218,7 @@ fn find_error_expr_in_stmt(stmt: &crate::hir::HirStmt) -> Option<crate::lexer::S
             .or_else(|| ad.body.as_ref().and_then(find_error_expr_in_block))
             .or_else(|| ad.catch.as_ref().and_then(find_error_expr_in_block)),
         crate::hir::HirStmtKind::Redde(expr) => expr.as_ref().and_then(find_error_expr_in_expr),
-        crate::hir::HirStmtKind::Rumpe | crate::hir::HirStmtKind::Perge => None,
+        crate::hir::HirStmtKind::Rumpe | crate::hir::HirStmtKind::Perge | crate::hir::HirStmtKind::Tacet => None,
     }
 }
 

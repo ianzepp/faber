@@ -168,6 +168,7 @@ pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
         StmtKind::Mori(panic) => {
             visitor.visit_expr(&panic.value);
         }
+        StmtKind::Tacet(_) => {}
         // NOTE: Add other statement kinds as needed for specific visitors
         _ => {}
     }
@@ -308,19 +309,13 @@ pub fn walk_block<V: Visitor>(visitor: &mut V, block: &BlockStmt) {
     }
 }
 
-/// Walk an if-statement body (which can be a block, single statement, or inline return).
+/// Walk an if-statement body (which can be a block or single statement).
 ///
 /// WHY: Faber allows `si cond ergo stmt` as a shorthand. This helper handles
-/// all three body styles uniformly.
+/// both body styles uniformly.
 fn walk_if_body<V: Visitor>(visitor: &mut V, body: &IfBody) {
     match body {
         IfBody::Block(block) => visitor.visit_block(block),
         IfBody::Ergo(stmt) => visitor.visit_stmt(stmt),
-        IfBody::InlineReturn(ret) => match ret {
-            InlineReturn::Reddit(e) | InlineReturn::Iacit(e) | InlineReturn::Moritor(e) => {
-                visitor.visit_expr(e);
-            }
-            InlineReturn::Tacet => {}
-        },
     }
 }

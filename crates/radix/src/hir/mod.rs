@@ -15,7 +15,7 @@
 //! =================
 //! - Name Resolution: All identifiers become DefId references, eliminating
 //!   the need for repeated symbol table lookups in later passes
-//! - Explicit Control Flow: Implicit returns (ergo/reddit) become explicit
+//! - Explicit Control Flow: Ergo return bodies become explicit
 //!   return statements for simpler control-flow analysis
 //! - Normalized Structure: Entry point code is separated from item declarations,
 //!   mirroring target language semantics (e.g., Rust's main function vs items)

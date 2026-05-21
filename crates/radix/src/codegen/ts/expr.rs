@@ -812,7 +812,7 @@ fn contains_await_in_stmt(stmt: &crate::hir::HirStmt) -> bool {
                 || ad.catch.as_ref().is_some_and(contains_await_in_block)
         }
         HirStmtKind::Redde(expr) => expr.as_ref().is_some_and(contains_await_in_expr),
-        HirStmtKind::Rumpe | HirStmtKind::Perge => false,
+        HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => false,
     }
 }
 

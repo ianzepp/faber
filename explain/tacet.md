@@ -3,14 +3,14 @@ term = "tacet"
 kind = "keyword"
 category = "transfer"
 canonical = true
-summary = "Ends a branch without producing a value."
+summary = "Marks an explicit no-op statement."
 syntax = "tacet"
-aliases = ["silent return"]
-related = ["redde", "reddit"]
+aliases = ["silent noop"]
+related = ["ergo", "redde"]
 +++
 
-Ends a branch without producing a value.
+Marks an explicit no-op statement.
 
 ```fab
-si verum tacet
+si verum ergo tacet
 ```

@@ -86,6 +86,7 @@ impl Parser {
             TokenKind::Perge => self.parse_perge_stmt()?,
             TokenKind::Iace => self.parse_iace_stmt()?,
             TokenKind::Mori => self.parse_mori_stmt()?,
+            TokenKind::Tacet => self.parse_tacet_stmt()?,
 
             // Error handling
             TokenKind::Tempta => self.parse_tempta_stmt()?,

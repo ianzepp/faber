@@ -23,7 +23,7 @@ fn exempla_rust_e2e() {
     let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
     let mut exempla = collect_exempla_files(&exempla_dir);
     exempla.sort();
-    assert_eq!(exempla.len(), 131, "expected 131 exempla files");
+    assert_eq!(exempla.len(), 137, "expected 137 exempla files");
 
     let compiler = Compiler::new(Config::default());
     let temp_root = make_temp_root();
@@ -159,7 +159,7 @@ fn exempla_faber_roundtrip_e2e() {
     let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
     let mut exempla = collect_exempla_files(&exempla_dir);
     exempla.sort();
-    assert_eq!(exempla.len(), 131, "expected 131 exempla files");
+    assert_eq!(exempla.len(), 137, "expected 137 exempla files");
 
     let compiler = Compiler::new(Config::default().with_target(Target::Faber));
     let mut results = Vec::with_capacity(exempla.len());

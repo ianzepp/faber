@@ -686,7 +686,6 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
 
         // Transfer
         "redde" => TokenKind::Redde,
-        "reddit" => TokenKind::Reddit,
         "rumpe" => TokenKind::Rumpe,
         "perge" => TokenKind::Perge,
         "tacet" => TokenKind::Tacet,
@@ -697,7 +696,6 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "demum" => TokenKind::Demum,
         "iace" => TokenKind::Iace,
         "mori" => TokenKind::Mori,
-        "moritor" => TokenKind::Moritor,
         "adfirma" => TokenKind::Adfirma,
 
         // Closures

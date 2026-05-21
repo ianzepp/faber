@@ -6,7 +6,7 @@ Update:
 - This started as a read-only mechanics pass.
 - The highest-priority findings around inline lowering and Rust-target exception handling have since been implemented.
 - Parser recovery boundaries and parser-local regression coverage have since been improved.
-- `PARSE022` now acknowledges inline exits instead of teaching an outdated subset of the grammar.
+- `PARSE022` now teaches the block-or-`ergo` body rule.
 - The remaining sections below are preserved as review context, but some items are now resolved.
 
 Scope:
@@ -51,7 +51,7 @@ What looks solid:
 Findings:
 - Resolved: recovery synchronization in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/mod.rs` now stops at the full statement restart surface instead of a stale subset, and block parsing now treats `}` as a distinct recovery boundary. This closes the bug where a missing body could consume the next valid statement before recovery had a chance to stop.
 - Improved: parser-local regression coverage now exists in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/mod_test.rs`, including direct tests for recovery boundaries and broad keyword-surface parsing. This is no longer a zero-coverage surface.
-- `parse_secus_stmt` allows a bare expression-statement fallback when neither block, inline return, nor `ergo` is present in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/stmt.rs:139`. This is permissive and may be correct, but it means `secus` is less structurally explicit than `si` bodies. That asymmetry should be intentional and documented if kept.
+- Resolved: `parse_secus_stmt` no longer accepts bare statement fallback; `secus` now requires a block or `ergo` statement like the other branch body sites.
 
 Assessment:
 - The parser still reads like the grammar in most places, and the worst recovery drift has been corrected. The remaining parser mechanics work is now less about missing basic defenses and more about deepening malformed-input coverage and deciding whether permissive `secus` fallback is intentional.
@@ -62,13 +62,13 @@ Mechanical boundary:
 - Preserve distinctions the source already made explicit, without forcing downstream reconstruction
 
 What looks solid:
-- Control-flow bodies remain structurally distinct as `Block`, `Ergo`, and `InlineReturn` in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/syntax/ast.rs:421`
-- `SecusClause` also preserves whether the source used `sin`, block form, statement form, or inline return in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/syntax/ast.rs:436`
+- Control-flow bodies remain structurally distinct as `Block` and `Ergo` in `/Users/ianzepp/work/ianzepp/faber/crates/radix/src/syntax/ast.rs`
+- `SecusClause` also preserves whether the source used `sin`, block form, or `ergo` statement form in `/Users/ianzepp/work/ianzepp/faber/crates/radix/src/syntax/ast.rs`
 - `CapeClause`, `CeterumDefault`, and case-arm spans are all explicit
 
 Findings:
 - The AST preserves the distinctions correctly, but several of those distinctions are not honored later. The AST is doing its job; the downstream phases are where blurring starts.
-- `InlineReturn` deliberately separates `reddit`, `iacit`, `moritor`, and `tacet` in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/syntax/ast.rs:428`. That is the right source contract and should not be collapsed early.
+- `tacet` is now a normal statement, which preserves intentional no-op branches without keeping a second inline-exit grammar.
 
 Assessment:
 - The syntax layer is not the main problem. It is carrying more truth than later phases currently respect. That makes it a stable source-of-truth anchor for future mechanics passes.
@@ -83,7 +83,7 @@ What looks solid:
 - Error-code discipline is explicit and stable
 
 Findings:
-- Resolved: `PARSE022` in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/catalog.rs:122` now mentions inline exits, which matches the grammar accepted by `parse_ergo_body` in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/stmt.rs:97`.
+- Resolved: `PARSE022` in `/Users/ianzepp/work/ianzepp/faber/crates/radix/src/diagnostics/catalog.rs` now matches the block-or-`ergo` grammar accepted by `parse_ergo_body`.
 - `ParseErrorKind` is fairly granular in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser/error.rs`, but a large amount of parser behavior still routes through generic `Expected` or `MissingBlock`. That is serviceable, not polished.
 - Late semantic finalization uses `MissingTypeAnnotation` as a catch-all for unresolved inference outcomes in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:22`, `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:45`, `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:71`, and `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/typecheck/finalize.rs:112`. That blurs true missing annotations together with deeper inference failures or unsupported lowering outcomes.
 
@@ -100,7 +100,7 @@ What looks solid:
 - Lowering keeps its own local-binding scope and synthetic `DefId` discipline in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/hir/lower/mod.rs`
 
 High-severity findings:
-- Resolved: inline `iacit` and `moritor` were being lowered as returns. They now lower to `Throw` and `Panic`, and `tacet` now remains a no-op instead of becoming `Redde(None)`.
+- Resolved: `ergo iace` and `ergo mori` lower through ordinary statement handling, and `tacet` remains an explicit no-op instead of becoming `Redde(None)`.
 - Resolved: Rust-target compilation now rejects exception constructs directly instead of drifting into partial pseudo-support.
 - `resolve` walks type aliases twice: once through ordinary `resolve_stmt` processing and again through `resolve_alias_types` in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/resolve.rs:65` and `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/semantic/passes/resolve.rs:79`. That may be functionally tolerable, but it weakens the phase contract by mixing ordinary name resolution with special fixpoint alias lowering instead of drawing a cleaner boundary.
 - `cape` is preserved in the AST and resolve layer, but several lowerings flatten it into extra statements rather than preserving it as a first-class control-flow construct. For example, `lower_cape_clause_stmts` spills the catch block directly into an output statement list in `/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/hir/lower/stmt.rs:714`. That may be sufficient for some backends, but it hides the fact that the source described exceptional control flow.

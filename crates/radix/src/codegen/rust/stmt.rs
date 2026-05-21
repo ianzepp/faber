@@ -93,6 +93,9 @@ pub fn generate_stmt(
         HirStmtKind::Perge => {
             w.writeln("continue;");
         }
+        HirStmtKind::Tacet => {
+            w.writeln("{ /* tacet: explicit noop */ }");
+        }
     }
     Ok(())
 }

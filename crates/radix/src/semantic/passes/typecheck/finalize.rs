@@ -100,7 +100,7 @@ impl<'a> TypeChecker<'a> {
                     self.finalize_expr(expr);
                 }
             }
-            HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
         }
     }
 

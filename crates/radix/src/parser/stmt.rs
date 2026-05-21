@@ -12,9 +12,8 @@
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Inline return syntax: Statements like `si` support `reddit expr` as shorthand
 //! - Error attachment: Many statements support `cape` (catch) clauses for error handling
-//! - Expression-oriented: Statement bodies can be blocks, ergo (single stmt), or inline returns
+//! - Expression-oriented: Statement bodies can be blocks or ergo (single stmt)
 //! - Pattern exhaustiveness: `discerne omnia` requires matching all variants
 //!
 //! GRAMMAR COVERAGE
@@ -46,12 +45,10 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   si-stmt := 'si' expr if-body ['cape' ident block] ['secus' secus-clause | 'sin' si-stmt]
-    ///   if-body := block | 'ergo' stmt | inline-return
-    ///   inline-return := 'reddit' expr | 'iacit' expr | 'moritor' expr | 'tacet'
+    ///   if-body := block | 'ergo' stmt
     ///
     /// WHY: Faber supports multiple if-body styles for conciseness. Block style for
-    /// multi-statement bodies, 'ergo' for single statements, inline returns for
-    /// early returns without braces.
+    /// multi-statement bodies, 'ergo' for single statements.
     ///
     /// ERROR HANDLING: Optional 'cape' clause catches errors thrown in condition or body.
     pub(super) fn parse_si_stmt(&mut self) -> Result<StmtKind, ParseError> {
@@ -93,23 +90,15 @@ impl Parser {
         Ok(SiStmt { cond, then, catch, else_ })
     }
 
-    /// Parse if body (block, ergo, or inline return)
+    /// Parse branch body (block or ergo statement).
     fn parse_ergo_body(&mut self) -> Result<IfBody, ParseError> {
         if self.check(&TokenKind::LBrace) {
             Ok(IfBody::Block(self.parse_block()?))
-        } else if self.eat_keyword(TokenKind::Reddit) {
-            Ok(IfBody::InlineReturn(InlineReturn::Reddit(Box::new(self.parse_expression()?))))
-        } else if self.eat_keyword(TokenKind::Iacit) {
-            Ok(IfBody::InlineReturn(InlineReturn::Iacit(Box::new(self.parse_expression()?))))
-        } else if self.eat_keyword(TokenKind::Moritor) {
-            Ok(IfBody::InlineReturn(InlineReturn::Moritor(Box::new(self.parse_expression()?))))
-        } else if self.eat_keyword(TokenKind::Tacet) {
-            Ok(IfBody::InlineReturn(InlineReturn::Tacet))
         } else if self.eat_keyword(TokenKind::Ergo) {
             // "ergo" style - single statement treated as block
             Ok(IfBody::Ergo(Box::new(self.parse_statement()?)))
         } else {
-            Err(self.error(ParseErrorKind::MissingBlock, "expected block, inline exit, or 'ergo'"))
+            Err(self.error(ParseErrorKind::MissingBlock, "expected block or 'ergo'"))
         }
     }
 
@@ -120,28 +109,10 @@ impl Parser {
 
         if self.check(&TokenKind::LBrace) {
             Ok(SecusClause::Block(self.parse_block()?))
-        } else if self.eat_keyword(TokenKind::Reddit) {
-            Ok(SecusClause::InlineReturn(InlineReturn::Reddit(Box::new(
-                self.parse_expression()?,
-            ))))
-        } else if self.eat_keyword(TokenKind::Iacit) {
-            Ok(SecusClause::InlineReturn(InlineReturn::Iacit(Box::new(
-                self.parse_expression()?,
-            ))))
-        } else if self.eat_keyword(TokenKind::Moritor) {
-            Ok(SecusClause::InlineReturn(InlineReturn::Moritor(Box::new(
-                self.parse_expression()?,
-            ))))
-        } else if self.eat_keyword(TokenKind::Tacet) {
-            Ok(SecusClause::InlineReturn(InlineReturn::Tacet))
         } else if self.eat_keyword(TokenKind::Ergo) {
             Ok(SecusClause::Stmt(Box::new(self.parse_statement()?)))
         } else {
-            let id = self.next_id();
-            let start = self.current_span();
-            let kind = self.parse_expr_stmt()?;
-            let span = start.merge(self.previous_span());
-            Ok(SecusClause::Stmt(Box::new(Stmt { id, kind, span, annotations: Vec::new() })))
+            Err(self.error(ParseErrorKind::MissingBlock, "expected block or 'ergo'"))
         }
     }
 
@@ -314,7 +285,7 @@ impl Parser {
     ///   custodi-stmt := 'custodi' '{' ('si' expr if-body)+ '}'
     ///
     /// WHY: Guard clauses for early returns. Similar to Swift's guard statement.
-    /// Typically used with inline return bodies for validation sequences.
+    /// Typically used with ergo return bodies for validation sequences.
     pub(super) fn parse_custodi_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Custodi, "expected 'custodi'")?;
         self.expect(&TokenKind::LBrace, "expected '{'")?;
@@ -406,6 +377,13 @@ impl Parser {
         self.expect_keyword(TokenKind::Mori, "expected 'mori'")?;
         let value = Box::new(self.parse_expression()?);
         Ok(StmtKind::Mori(MoriStmt { value }))
+    }
+
+    /// Parse explicit noop statement.
+    pub(super) fn parse_tacet_stmt(&mut self) -> Result<StmtKind, ParseError> {
+        let span = self.current_span();
+        self.expect_keyword(TokenKind::Tacet, "expected 'tacet'")?;
+        Ok(StmtKind::Tacet(TacetStmt { span }))
     }
 
     // =============================================================================

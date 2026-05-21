@@ -60,7 +60,7 @@ How it works:
 
 - Empty collections need explicit types: `[] innatum lista<T>`, `{} innatum tabula<K,V>`.
 - Missing type info in codegen is an upstream bug, not a reason to guess in codegen.
-- Prefer `reddit` for single-expression returns: `si cond reddit x`.
+- Prefer `ergo redde` for single-expression returns: `si cond ergo redde x`.
 - Use Stroustrup brace style.
 
 ## Commands

@@ -6,7 +6,7 @@ canonical = true
 summary = "Raises a fatal error or panic."
 syntax = "mori <expression>"
 aliases = ["panic"]
-related = ["iace", "moritor"]
+related = ["iace", "ergo"]
 +++
 
 Raises a fatal error or panic.

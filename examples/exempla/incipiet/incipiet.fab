@@ -6,7 +6,7 @@
 # Syntax:
 #   incipiet { <async body> }
 #   incipiet ergo <statement>
-#   incipiet reddit <expression>
+#   incipiet ergo redde <expression>
 
 # Helper async function
 @ futura

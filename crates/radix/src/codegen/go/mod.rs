@@ -178,7 +178,7 @@ impl<'a> GoCodegen<'a> {
                         self.collect_expr_use_counts(counts, expr);
                     }
                 }
-                HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+                HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
             }
         }
         if let Some(expr) = &block.expr {
@@ -505,7 +505,7 @@ fn stmt_contains_ad(stmt: &crate::hir::HirStmt) -> bool {
         HirStmtKind::Local(local) => local.init.as_ref().is_some_and(expr_contains_ad),
         HirStmtKind::Expr(expr) => expr_contains_ad(expr),
         HirStmtKind::Redde(expr) => expr.as_ref().is_some_and(expr_contains_ad),
-        HirStmtKind::Rumpe | HirStmtKind::Perge => false,
+        HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => false,
     }
 }
 

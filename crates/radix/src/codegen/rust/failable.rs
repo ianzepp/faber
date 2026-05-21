@@ -104,7 +104,7 @@ fn visit_block(block: &HirBlock, suppressed: bool, deps: &mut FnDeps) {
                     visit_expr(expr, suppressed, deps);
                 }
             }
-            HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
         }
     }
 

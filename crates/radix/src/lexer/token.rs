@@ -163,11 +163,10 @@ pub enum TokenKind {
     Ergo,     // therefore (single-statement then)
 
     // === Keywords: Transfer ===
-    Redde,  // return
-    Reddit, // return (inline)
-    Rumpe,  // break
-    Perge,  // continue
-    Tacet,  // silent return (no value)
+    Redde, // return
+    Rumpe, // break
+    Perge, // continue
+    Tacet, // explicit noop
 
     // === Keywords: Error handling ===
     Tempta,  // try
@@ -175,7 +174,6 @@ pub enum TokenKind {
     Demum,   // finally
     Iace,    // throw
     Mori,    // panic
-    Moritor, // panic (inline)
     Adfirma, // assert
 
     // === Keywords: Async ===
@@ -397,7 +395,6 @@ impl TokenKind {
                 | Fac
                 | Ergo
                 | Redde
-                | Reddit
                 | Rumpe
                 | Perge
                 | Tacet
@@ -406,7 +403,6 @@ impl TokenKind {
                 | Demum
                 | Iace
                 | Mori
-                | Moritor
                 | Adfirma
                 | Futura
                 | Cursor

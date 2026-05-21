@@ -275,7 +275,7 @@ Control flow:
 - `sin`
 - `secus`
 - `custodi`
-- `reddit`
+- `redde`
 
 Functions and packages:
 

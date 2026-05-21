@@ -377,6 +377,7 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
         }
         StmtKind::Iace(stmt) => resolve_expr(resolver, interner, &stmt.value, errors),
         StmtKind::Mori(stmt) => resolve_expr(resolver, interner, &stmt.value, errors),
+        StmtKind::Tacet(_) => {}
         StmtKind::Tempta(stmt) => {
             resolve_block(resolver, interner, &stmt.body, errors);
             if let Some(catch) = &stmt.catch {
@@ -539,12 +540,6 @@ fn resolve_if_body(resolver: &mut Resolver, interner: &Interner, body: &IfBody, 
     match body {
         IfBody::Block(block) => resolve_block(resolver, interner, block, errors),
         IfBody::Ergo(stmt) => resolve_stmt(resolver, interner, stmt, errors),
-        IfBody::InlineReturn(ret) => match ret {
-            crate::syntax::InlineReturn::Reddit(expr)
-            | crate::syntax::InlineReturn::Iacit(expr)
-            | crate::syntax::InlineReturn::Moritor(expr) => resolve_expr(resolver, interner, expr, errors),
-            crate::syntax::InlineReturn::Tacet => {}
-        },
     }
 }
 
@@ -598,12 +593,6 @@ fn resolve_secus_clause(
         crate::syntax::SecusClause::Sin(stmt) => resolve_si_stmt(resolver, interner, stmt, errors),
         crate::syntax::SecusClause::Block(block) => resolve_block(resolver, interner, block, errors),
         crate::syntax::SecusClause::Stmt(stmt) => resolve_stmt(resolver, interner, stmt, errors),
-        crate::syntax::SecusClause::InlineReturn(ret) => match ret {
-            crate::syntax::InlineReturn::Reddit(expr)
-            | crate::syntax::InlineReturn::Iacit(expr)
-            | crate::syntax::InlineReturn::Moritor(expr) => resolve_expr(resolver, interner, expr, errors),
-            crate::syntax::InlineReturn::Tacet => {}
-        },
     }
 }
 

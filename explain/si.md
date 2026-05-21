@@ -7,7 +7,7 @@ summary = "Starts a conditional branch that runs when its condition is true."
 syntax = "si <condition> <block>"
 examples = ["examples/exempla/si/si.fab"]
 aliases = ["if"]
-related = ["sin", "secus", "reddit"]
+related = ["sin", "secus", "ergo"]
 +++
 
 Use `si` for ordinary conditional control flow.

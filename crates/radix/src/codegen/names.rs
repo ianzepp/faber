@@ -132,7 +132,7 @@ fn collect_block_names(names: &mut FxHashMap<crate::hir::DefId, Symbol>, block: 
                     collect_expr_names(names, expr);
                 }
             }
-            HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+            HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
         }
     }
 

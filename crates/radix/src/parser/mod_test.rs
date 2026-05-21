@@ -1,9 +1,9 @@
 use super::parse;
 use crate::lexer::lex;
 use crate::syntax::{
-    AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, ExprKind, IfBody, ImportKind, InlineReturn, IteraMode,
-    Literal, Mutability, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause,
-    StmtKind, TypeExprKind,
+    AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, ExprKind, IfBody, ImportKind, IteraMode, Literal,
+    Mutability, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause, StmtKind,
+    TypeExprKind,
 };
 
 fn parse_program(source: &str) -> super::ParseResult {
@@ -694,12 +694,12 @@ probandum "suite" {
 fn parses_control_flow_transfer_and_clause_keywords() {
     let result = parse_ok(
         r#"
-si verum ergo nota "yes" cape err {} sin falsum reddit 1 secus tacet
+si verum ergo nota "yes" cape err {} sin falsum ergo redde 1 secus ergo tacet
 dum verum { perge } cape err {}
-itera pro items fixum item reddit item cape err {}
-elige value { casu 1 reddit 1 ceterum tacet } cape err {}
-discerne omnia value, other { casu Ok ut result, _ reddit result ceterum moritor "bad" }
-custodi { si verum reddit 1 si falsum ergo nota "no" }
+itera pro items fixum item ergo redde item cape err {}
+elige value { casu 1 ergo redde 1 ceterum ergo tacet } cape err {}
+discerne omnia value, other { casu Ok ut result, _ ergo redde result ceterum ergo mori "bad" }
+custodi { si verum ergo redde 1 si falsum ergo nota "no" }
 fac {} cape err {} dum verum
 tempta {} cape err {} demum {}
 adfirma verum, "msg"
@@ -712,6 +712,7 @@ rumpe
 perge
 iace "err"
 mori "panic"
+tacet
 "#,
     );
 
@@ -719,7 +720,7 @@ mori "panic"
         .program
         .as_ref()
         .expect("parser should produce a program");
-    assert_eq!(program.stmts.len(), 18);
+    assert_eq!(program.stmts.len(), 19);
 
     let StmtKind::Si(if_stmt) = &program.stmts[0].kind else {
         panic!("expected if statement");
@@ -729,11 +730,8 @@ mori "panic"
     let SecusClause::Sin(sin_stmt) = if_stmt.else_.as_ref().expect("else clause") else {
         panic!("expected sin clause");
     };
-    assert!(matches!(sin_stmt.then, IfBody::InlineReturn(InlineReturn::Reddit(_))));
-    assert!(matches!(
-        sin_stmt.else_.as_ref().expect("secus clause"),
-        SecusClause::InlineReturn(InlineReturn::Tacet)
-    ));
+    assert!(matches!(sin_stmt.then, IfBody::Ergo(_)));
+    assert!(matches!(sin_stmt.else_.as_ref().expect("secus clause"), SecusClause::Stmt(_)));
 
     let StmtKind::Dum(while_stmt) = &program.stmts[1].kind else {
         panic!("expected while statement");
@@ -746,7 +744,7 @@ mori "panic"
     };
     assert!(matches!(iter_stmt.mode, IteraMode::Pro));
     assert!(matches!(iter_stmt.mutability, Mutability::Immutable));
-    assert!(matches!(iter_stmt.body, IfBody::InlineReturn(InlineReturn::Reddit(_))));
+    assert!(matches!(iter_stmt.body, IfBody::Ergo(_)));
 
     let StmtKind::Elige(switch_stmt) = &program.stmts[3].kind else {
         panic!("expected elige statement");
@@ -808,6 +806,16 @@ mori "panic"
     assert!(matches!(program.stmts[15].kind, StmtKind::Perge(_)));
     assert!(matches!(program.stmts[16].kind, StmtKind::Iace(_)));
     assert!(matches!(program.stmts[17].kind, StmtKind::Mori(_)));
+    assert!(matches!(program.stmts[18].kind, StmtKind::Tacet(_)));
+}
+
+#[test]
+fn rejects_non_ergo_tacet_branch_forms() {
+    assert_parse_error_contains("si verum tacet", "expected block or 'ergo'");
+    assert_parse_error_contains("si verum ergo tacet secus tacet", "expected block or 'ergo'");
+    assert_parse_error_contains("elige value { casu 1 tacet }", "expected block or 'ergo'");
+    assert_parse_error_contains("dum verum tacet", "expected block or 'ergo'");
+    assert_parse_error_contains("incipit tacet", "expected block or 'ergo'");
 }
 
 #[test]
@@ -815,7 +823,7 @@ fn parses_entry_resource_endpoint_and_extract_keywords() {
     let result = parse_ok(
         r#"
 incipit argumenta args exitus 1 {}
-incipiet argumenta argv reddit argv
+incipiet argumenta argv ergo redde argv
 cura arena {}
 cura page source fixum textus page {}
 ad "/salve" (request, sparge extra) → textus pro res ut alias {} cape err {}
@@ -841,7 +849,7 @@ ex source varia nomen ut name, ceteri reliqua
         panic!("expected incipiet statement");
     };
     assert!(async_main.is_async);
-    assert!(matches!(async_main.body, IfBody::InlineReturn(InlineReturn::Reddit(_))));
+    assert!(matches!(async_main.body, IfBody::Ergo(_)));
 
     let StmtKind::Cura(arena_stmt) = &program.stmts[2].kind else {
         panic!("expected anonymous arena cura");

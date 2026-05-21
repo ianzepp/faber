@@ -12,7 +12,7 @@ statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pac
              | typeAliasDecl | enumDecl | discretioDecl
              | ifStmt | whileStmt | iteraStmt
              | eligeStmt | discerneStmt | guardStmt | curaStmt
-             | tryStmt | returnStmt | breakStmt | continueStmt | throwStmt
+             | tryStmt | returnStmt | breakStmt | continueStmt | noopStmt | throwStmt
              | assertStmt | outputStmt | adStmt | incipitStmt
              | extractStmt
              | probandumDecl | probaStmt | blockStmt | exprStmt
@@ -244,22 +244,20 @@ functio compose((A) → B f, (B) → C g) → (A) → C
 ### Conditionals
 
 ```ebnf
-ifStmt     := 'si' expression (blockStmt | 'ergo' statement | inlineReturn)
+ifStmt     := 'si' expression (blockStmt | 'ergo' statement)
               ('cape' IDENTIFIER blockStmt)? (elseClause | 'sin' ifStmt)?
-elseClause := 'secus' (ifStmt | blockStmt | statement | inlineReturn)
-inlineReturn := 'reddit' expression | 'iacit' expression | 'moritor' expression | 'tacet'
+elseClause := 'secus' (blockStmt | 'ergo' statement | 'sin' ifStmt)
 ```
 
 - `si` = if, `sin` = else-if, `secus` = else
-- `ergo` for one-liners, `reddit` for early return
-- `iacit` for inline throw, `moritor` for inline panic
+- `ergo` for one-liners, including `ergo redde`, `ergo iace`, `ergo mori`, and `ergo tacet`
 - `tacet` for explicit no-op (from musical notation: "it is silent")
 
 ### Loops
 
 ```ebnf
-whileStmt  := 'dum' expression (blockStmt | 'ergo' statement | inlineReturn) ('cape' IDENTIFIER blockStmt)?
-iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expression)?) ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement | inlineReturn) catchClause?
+whileStmt  := 'dum' expression (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
+iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expression)?) ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
 ```
 
 - `dum` = while
@@ -271,8 +269,8 @@ iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expres
 
 ```ebnf
 eligeStmt    := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
-eligeCase    := 'casu' expression (blockStmt | 'ergo' statement | inlineReturn)
-defaultCase  := 'ceterum' (blockStmt | statement | inlineReturn)
+eligeCase    := 'casu' expression (blockStmt | 'ergo' statement)
+defaultCase  := 'ceterum' (blockStmt | 'ergo' statement)
 ```
 
 ### Pattern Matching
@@ -280,7 +278,7 @@ defaultCase  := 'ceterum' (blockStmt | statement | inlineReturn)
 ```ebnf
 discerneStmt := 'discerne' 'omnia'? discriminants '{' variantCase* defaultCase? '}'
 discriminants := expression (',' expression)*
-variantCase  := 'casu' patterns (blockStmt | 'ergo' statement | inlineReturn)
+variantCase  := 'casu' patterns (blockStmt | 'ergo' statement)
 patterns     := pattern ((',' | 'et') pattern)*
 pattern      := '_' | literal | (IDENTIFIER patternBind?)
 patternBind  := ('ut' IDENTIFIER) | (('fixum' | 'varia') IDENTIFIER (',' IDENTIFIER)*)
@@ -290,7 +288,7 @@ patternBind  := ('ut' IDENTIFIER) | (('fixum' | 'varia') IDENTIFIER (',' IDENTIF
 
 ```ebnf
 guardStmt   := 'custodi' '{' guardClause+ '}'
-guardClause := 'si' expression (blockStmt | 'ergo' statement | inlineReturn)
+guardClause := 'si' expression (blockStmt | 'ergo' statement)
 ```
 
 ### Resource Management
@@ -315,6 +313,7 @@ restField     := 'ceteri' IDENTIFIER
 returnStmt   := 'redde' expression?
 breakStmt    := 'rumpe'
 continueStmt := 'perge'
+noopStmt     := 'tacet'
 ```
 
 ---
@@ -437,8 +436,8 @@ outputStmt := ('nota' | 'vide' | 'mone' | 'scribe') expression (',' expression)*
 ## Entry Points
 
 ```ebnf
-incipitStmt  := 'incipit' (blockStmt | 'ergo' statement | inlineReturn)
-incipietStmt := 'incipiet' (blockStmt | 'ergo' statement | inlineReturn)
+incipitStmt  := 'incipit' (blockStmt | 'ergo' statement)
+incipietStmt := 'incipiet' (blockStmt | 'ergo' statement)
 ```
 
 - `incipit` = sync entry, `incipiet` = async entry
@@ -584,7 +583,6 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `discerne`                    | pattern match       |
 |                     | `custodi`                     | guard               |
 |                     | `redde`                       | return              |
-|                     | `reddit`                      | inline return       |
 |                     | `rumpe`                       | break               |
 |                     | `perge`                       | continue            |
 |                     | `tacet`                       | no-op (silence)     |
@@ -592,9 +590,8 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `cape`                        | catch               |
 |                     | `demum`                       | finally             |
 |                     | `iace`                        | throw               |
-|                     | `iacit`                       | inline throw        |
+|                     | `iacit`                       | throws modifier     |
 |                     | `mori`                        | panic               |
-|                     | `moritor`                     | inline panic        |
 |                     | `adfirma`                     | assert              |
 | **Async**           | `futura`                      | async modifier      |
 |                     | `cede`                        | await               |

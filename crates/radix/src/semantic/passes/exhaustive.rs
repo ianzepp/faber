@@ -124,7 +124,7 @@ fn check_stmt(
                 check_expr(expr, types, enum_variants, errors);
             }
         }
-        HirStmtKind::Rumpe | HirStmtKind::Perge => {}
+        HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
     }
 }
 

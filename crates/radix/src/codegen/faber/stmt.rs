@@ -25,7 +25,7 @@ impl super::FaberCodegen {
         Some((&block.stmts[..block.stmts.len() - 1], inner))
     }
 
-    pub(super) fn reddit_expr<'a>(&self, block: &'a HirBlock) -> Option<&'a HirExpr> {
+    pub(super) fn return_expr<'a>(&self, block: &'a HirBlock) -> Option<&'a HirExpr> {
         if block.stmts.is_empty() {
             return block.expr.as_deref();
         }
@@ -97,7 +97,7 @@ impl super::FaberCodegen {
             return false;
         }
 
-        let Some(then_expr) = self.reddit_expr(then_block) else {
+        let Some(then_expr) = self.return_expr(then_block) else {
             return false;
         };
         let Some(else_block) = else_block else {
@@ -113,7 +113,7 @@ impl super::FaberCodegen {
             return self.write_sic_secus_chain(sin_cond, sin_then, sin_else, types, names, interner, w);
         }
 
-        let Some(else_expr) = self.reddit_expr(else_block) else {
+        let Some(else_expr) = self.return_expr(else_block) else {
             return false;
         };
         self.write_expr_prec(else_expr, 2, types, names, interner, w);
@@ -121,7 +121,7 @@ impl super::FaberCodegen {
     }
 
     pub(super) fn can_write_sic_secus_chain(&self, then_block: &HirBlock, else_block: Option<&HirBlock>) -> bool {
-        if self.reddit_expr(then_block).is_none() {
+        if self.return_expr(then_block).is_none() {
             return false;
         }
 
@@ -133,7 +133,7 @@ impl super::FaberCodegen {
             return self.can_write_sic_secus_chain(sin_then, sin_else);
         }
 
-        self.reddit_expr(else_block).is_some()
+        self.return_expr(else_block).is_some()
     }
 
     pub(super) fn write_si_branch_body(
@@ -144,9 +144,9 @@ impl super::FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) {
-        if let Some(reddit_expr) = self.reddit_expr(block) {
-            w.write(" reddit ");
-            self.write_expr(reddit_expr, types, names, interner, w);
+        if let Some(return_expr) = self.return_expr(block) {
+            w.write(" ergo redde ");
+            self.write_expr(return_expr, types, names, interner, w);
             return;
         }
 
@@ -301,6 +301,9 @@ impl super::FaberCodegen {
             }
             HirStmtKind::Perge => {
                 w.writeln("perge");
+            }
+            HirStmtKind::Tacet => {
+                w.writeln("tacet");
             }
         }
     }

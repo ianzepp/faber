@@ -15,7 +15,7 @@ The first `faber explain` implementation established the command, the embedded M
 Current seed coverage includes:
 
 - core binding/function/testing keywords such as `fixum`, `varia`, `functio`, `proba`, `probandum`, and `adfirma`,
-- core conditional keywords such as `si`, `sin`, `secus`, `custodi`, and `reddit`,
+- core conditional keywords such as `si`, `sin`, `secus`, `custodi`, and `ergo`,
 - comparison and assignment glyphs such as `≡`, `≠`, `≤`, `≥`, `←`, `→`, `⊕`, `⊖`, `⊛`, and `⊘`,
 - legacy redirect entries for `==`, `!=`, `<=`, `>=`, and `->`.
 
@@ -247,7 +247,7 @@ incipit
 omitte
 proba
 probandum
-reddit
+redde
 secus
 si
 sin
@@ -269,7 +269,7 @@ Known missing keyword families include:
 - declarations and types: `genus`, `pactum`, `typus`, `ordo`, `discretio`,
 - modifiers: `abstractus`, `generis`, `nexum`, `publica`, `privata`, `protecta`, `prae`, `ceteri`, `immutata`, `iacit`, `curata`, `errata`, `exitus`, `optiones`,
 - control flow: `sic`, `dum`, `itera`, `elige`, `casu`, `ceterum`, `discerne`, `fac`, `ergo`,
-- transfer and errors: `redde`, `rumpe`, `perge`, `tacet`, `tempta`, `cape`, `demum`, `iace`, `mori`, `moritor`,
+- transfer and errors: `redde`, `rumpe`, `perge`, `tacet`, `tempta`, `cape`, `demum`, `iace`, `mori`,
 - async and closure: `futura`, `cursor`, `cede`, `clausura`,
 - boolean, null, and logic: `verum`, `falsum`, `nihil`, `et`, `aut`, `non`, `vel`, `est`,
 - object and type operations: `ego`, `finge`, `sub`, `implet`, `qua`, `innatum`, `novum`, `numeratum`, `fractatum`, `textatum`, `bivalentum`,

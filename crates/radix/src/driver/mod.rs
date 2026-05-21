@@ -581,7 +581,8 @@ fn scan_stmt_for_go_unsupported_errors(
         | StmtKind::Union(_)
         | StmtKind::Interface(_)
         | StmtKind::Rumpe(_)
-        | StmtKind::Perge(_) => {}
+        | StmtKind::Perge(_)
+        | StmtKind::Tacet(_) => {}
     }
 }
 
@@ -622,9 +623,6 @@ fn scan_if_body_for_go_unsupported_errors(
     match body {
         IfBody::Block(block) => scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics),
         IfBody::Ergo(stmt) => scan_stmt_for_go_unsupported_errors(stmt, file, dynamic_externa, diagnostics),
-        IfBody::InlineReturn(ret) => {
-            scan_inline_return_for_go_unsupported_errors(ret, file, dynamic_externa, diagnostics)
-        }
     }
 }
 
@@ -647,23 +645,6 @@ fn scan_else_for_go_unsupported_errors(
         }
         SecusClause::Block(block) => scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics),
         SecusClause::Stmt(stmt) => scan_stmt_for_go_unsupported_errors(stmt, file, dynamic_externa, diagnostics),
-        SecusClause::InlineReturn(ret) => {
-            scan_inline_return_for_go_unsupported_errors(ret, file, dynamic_externa, diagnostics)
-        }
-    }
-}
-
-fn scan_inline_return_for_go_unsupported_errors(
-    ret: &InlineReturn,
-    file: &str,
-    dynamic_externa: &GoDynamicExterna,
-    diagnostics: &mut Vec<Diagnostic>,
-) {
-    match ret {
-        InlineReturn::Reddit(expr) | InlineReturn::Iacit(expr) | InlineReturn::Moritor(expr) => {
-            scan_expr_for_go_unsupported_errors(expr, file, dynamic_externa, diagnostics);
-        }
-        InlineReturn::Tacet => {}
     }
 }
 
@@ -1092,7 +1073,8 @@ fn scan_stmt_for_rust_unsupported_errors(stmt: &Stmt, file: &str, diagnostics: &
         | StmtKind::Union(_)
         | StmtKind::Interface(_)
         | StmtKind::Rumpe(_)
-        | StmtKind::Perge(_) => {}
+        | StmtKind::Perge(_)
+        | StmtKind::Tacet(_) => {}
         StmtKind::Ex(stmt) => scan_expr_for_rust_unsupported_errors(&stmt.source, file, diagnostics),
     }
 }
@@ -1119,7 +1101,6 @@ fn scan_if_body_for_rust_unsupported_errors(body: &IfBody, file: &str, diagnosti
     match body {
         IfBody::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
         IfBody::Ergo(stmt) => scan_stmt_for_rust_unsupported_errors(stmt, file, diagnostics),
-        IfBody::InlineReturn(ret) => scan_inline_return_for_rust_unsupported_errors(ret, file, diagnostics),
     }
 }
 
@@ -1142,24 +1123,6 @@ fn scan_else_for_rust_unsupported_errors(clause: &SecusClause, file: &str, diagn
         }
         SecusClause::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
         SecusClause::Stmt(stmt) => scan_stmt_for_rust_unsupported_errors(stmt, file, diagnostics),
-        SecusClause::InlineReturn(ret) => scan_inline_return_for_rust_unsupported_errors(ret, file, diagnostics),
-    }
-}
-
-fn scan_inline_return_for_rust_unsupported_errors(ret: &InlineReturn, file: &str, diagnostics: &mut Vec<Diagnostic>) {
-    match ret {
-        InlineReturn::Reddit(expr) | InlineReturn::Moritor(expr) => {
-            scan_expr_for_rust_unsupported_errors(expr, file, diagnostics);
-        }
-        InlineReturn::Iacit(expr) => {
-            diagnostics.push(rust_target_exception_diagnostic(
-                file,
-                expr.span,
-                "iacit is not supported for Rust targets",
-            ));
-            scan_expr_for_rust_unsupported_errors(expr, file, diagnostics);
-        }
-        InlineReturn::Tacet => {}
     }
 }
 
@@ -1300,7 +1263,7 @@ fn rust_target_exception_diagnostic(file: &str, span: crate::lexer::Span, messag
         .with_code("TARGET001")
         .with_file(file)
         .with_span(span)
-        .with_help("use 'mori'/'moritor' for panic-style aborts, or target Faber/TypeScript for exception flow")
+        .with_help("use 'mori' for panic-style aborts, or target Faber/TypeScript for exception flow")
 }
 
 /// Collect warnings for Rust-specific no-ops.
@@ -1441,7 +1404,6 @@ fn scan_if_body_for_rust_warnings(body: &IfBody, file: &str, diagnostics: &mut V
     match body {
         IfBody::Block(block) => scan_block_for_rust_warnings(block, file, diagnostics),
         IfBody::Ergo(stmt) => scan_stmt_for_rust_warnings(stmt, file, diagnostics),
-        IfBody::InlineReturn(_) => {}
     }
 }
 
@@ -1458,7 +1420,6 @@ fn scan_else_for_rust_warnings(else_: &SecusClause, file: &str, diagnostics: &mu
         }
         SecusClause::Block(block) => scan_block_for_rust_warnings(block, file, diagnostics),
         SecusClause::Stmt(stmt) => scan_stmt_for_rust_warnings(stmt, file, diagnostics),
-        SecusClause::InlineReturn(_) => {}
     }
 }
 

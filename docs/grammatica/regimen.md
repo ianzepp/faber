@@ -96,17 +96,17 @@ si x > 5 {
 The `ergo` form works with `secus` for one-liner if-else:
 
 ```fab
-si age ≥ 18 ergo nota "Adult" secus nota "Minor"
+si age ≥ 18 ergo nota "Adult" secus ergo nota "Minor"
 ```
 
-#### reddit (Early Return)
+#### ergo redde (Early Return)
 
-The keyword `reddit` means "it returns" in Latin (third person singular of _reddere_, "to give back"). It combines `ergo` with `redde` for early return patterns.
+The sequence `ergo redde` combines the one-line consequent marker with the ordinary return statement.
 
 ```fab
 functio classify(numerus x) → textus {
-    si x < 0 reddit "negative"
-    si x ≡ 0 reddit "zero"
+    si x < 0 ergo redde "negative"
+    si x ≡ 0 ergo redde "zero"
     redde "positive"
 }
 ```
@@ -125,11 +125,11 @@ functio classify(numerus x) → textus {
 }
 ```
 
-The `reddit` form excels at guard clauses—conditions that validate input and exit early:
+This form excels at guard clauses—conditions that validate input and exit early:
 
 ```fab
 functio divide(numerus a, numerus b) → numerus? {
-    si b ≡ 0 reddit nihil
+    si b ≡ 0 ergo redde nihil
     redde a / b
 }
 ```
@@ -138,11 +138,11 @@ It works throughout a conditional chain:
 
 ```fab
 functio grade(numerus score) → textus {
-    si score ≥ 90 reddit "A"
-    sin score ≥ 80 reddit "B"
-    sin score ≥ 70 reddit "C"
-    sin score ≥ 60 reddit "D"
-    secus reddit "F"
+    si score ≥ 90 ergo redde "A"
+    sin score ≥ 80 ergo redde "B"
+    sin score ≥ 70 ergo redde "C"
+    sin score ≥ 60 ergo redde "D"
+    secus ergo redde "F"
 }
 ```
 
@@ -427,19 +427,19 @@ One-liner cases use `ergo`:
 elige status {
     casu "pending" ergo nota "waiting"
     casu "active" ergo nota "running"
-    ceterum iace "Unknown status"
+    ceterum ergo iace "Unknown status"
 }
 ```
 
-Early returns use `reddit`:
+Early returns use `ergo redde`:
 
 ```fab
 functio statusMessage(numerus code) → textus {
     elige code {
-        casu 200 reddit "OK"
-        casu 404 reddit "Not Found"
-        casu 500 reddit "Server Error"
-        ceterum reddit "Unknown"
+        casu 200 ergo redde "OK"
+        casu 404 ergo redde "Not Found"
+        casu 500 ergo redde "Server Error"
+        ceterum ergo redde "Unknown"
     }
 }
 ```
@@ -568,13 +568,13 @@ functio sqrt(numerus n) → numerus {
 }
 ```
 
-The `reddit` shorthand works within `custodi`:
+The `ergo redde` form works within `custodi`:
 
 ```fab
 functio clamp(numerus value, numerus min, numerus max) → numerus {
     custodi {
-        si value < min reddit min
-        si value > max reddit max
+        si value < min ergo redde min
+        si value > max ergo redde max
     }
 
     redde value
@@ -647,7 +647,7 @@ functio processArray(lista<numerus> items) {
 | `sin`      | "but if"         | Else-if branch         |
 | `secus`    | "otherwise"      | Else branch            |
 | `ergo`     | "therefore"      | One-liner consequent   |
-| `reddit`   | "it returns"     | One-liner early return |
+| `ergo redde` | "therefore return" | One-liner early return |
 | `dum`      | "while"          | While loop             |
 | `ex`       | "from, out of"   | Iteration source       |
 | `de`       | "concerning"     | Key iteration source   |

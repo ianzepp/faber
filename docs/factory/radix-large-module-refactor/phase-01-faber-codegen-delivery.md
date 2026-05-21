@@ -91,7 +91,7 @@ If a method has a clippy allowance such as `#[allow(clippy::too_many_arguments)]
    - `names.rs`: `collect_names`, name collectors, `name_for_def`, `symbol_to_string`
    - `pattern.rs`: `write_pattern`, `write_match_arms`/match-arm helpers if present
    - `expr.rs`: `write_expr`, `write_expr_prec`, expression-only helpers
-   - `stmt.rs`: `write_block`, `write_stmt`, control-flow statement helpers, branch body helpers, loop-shape helpers, `reddit_expr` if used by statement rendering
+   - `stmt.rs`: `write_block`, `write_stmt`, control-flow statement helpers, branch body helpers, loop-shape helpers, return-expression helpers if used by statement rendering
    - `decl.rs`: `generate_item`, declarations, functions, proba functions, structs, enums, interfaces, `is_synthetic_proba_function`
 4. **Glue edits**:
    - Add `mod decl; mod stmt; ...` declarations
