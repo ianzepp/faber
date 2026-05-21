@@ -229,4 +229,3 @@ impl TryFrom<toml::Value> for Valor {
         }
     }
 }
-

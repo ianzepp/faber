@@ -39,17 +39,15 @@ pub(super) fn generate_method_call_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    // Phase 3 targeted bridge for built-in data-format library modules.
-    // When the receiver is a simple path named "json" or "toml", emit a direct
-    // call to the norma runtime module instead of a trait method call.
-    // This will be replaced by proper library module resolution in Phase 4.
+    // Targeted bridge for built-in norma library modules.
+    // WHY: Built-in pactum imports typecheck as module-like values in Faber,
+    // but Rust links them as functions in the norma runtime crate.
     if let HirExprKind::Path(def_id) = &receiver.kind {
         let recv_name = codegen.resolve_def(*def_id);
-        if recv_name == "json" || recv_name == "toml" {
-            w.write("norma::");
-            w.write(&recv_name);
+        if let Some(runtime_module) = norma_runtime_module_path(recv_name) {
+            w.write(runtime_module);
             w.write("::");
-            w.write(codegen.resolve_symbol(method));
+            w.write(&norma_runtime_method_name(codegen.resolve_symbol(method)));
             w.write("(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
@@ -89,4 +87,28 @@ pub(super) fn generate_method_call_expr(
         w.write("?");
     }
     Ok(())
+}
+
+fn norma_runtime_module_path(receiver_name: &str) -> Option<&'static str> {
+    match receiver_name {
+        "json" => Some("norma::json"),
+        "toml" => Some("norma::toml"),
+        "consolum" => Some("norma::hal::consolum"),
+        _ => None,
+    }
+}
+
+fn norma_runtime_method_name(method_name: &str) -> String {
+    let mut lowered = String::with_capacity(method_name.len());
+    for (i, ch) in method_name.chars().enumerate() {
+        if ch.is_ascii_uppercase() {
+            if i > 0 {
+                lowered.push('_');
+            }
+            lowered.push(ch.to_ascii_lowercase());
+        } else {
+            lowered.push(ch);
+        }
+    }
+    lowered
 }

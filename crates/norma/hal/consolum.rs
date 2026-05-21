@@ -18,8 +18,8 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};
 // Verb: hauri/hauriet from "haurire" (to draw up)
 
 /// Draw bytes from stdin (sync)
-pub fn hauri(magnitudo: usize) -> Vec<u8> {
-    let mut buffer = vec![0u8; magnitudo];
+pub fn hauri(magnitudo: i64) -> Vec<u8> {
+    let mut buffer = vec![0u8; magnitudo.max(0) as usize];
     let bytes_read = io::stdin()
         .lock()
         .read(&mut buffer)
@@ -29,8 +29,8 @@ pub fn hauri(magnitudo: usize) -> Vec<u8> {
 }
 
 /// Draw bytes from stdin (async)
-pub async fn hauriet(magnitudo: usize) -> Vec<u8> {
-    let mut buffer = vec![0u8; magnitudo];
+pub async fn hauriet(magnitudo: i64) -> Vec<u8> {
+    let mut buffer = vec![0u8; magnitudo.max(0) as usize];
     let bytes_read = tokio::io::stdin()
         .read(&mut buffer)
         .await
@@ -84,19 +84,19 @@ pub async fn leget() -> String {
 // Verb: funde/fundet from "fundere" (to pour)
 
 /// Pour bytes to stdout (sync)
-pub fn funde(data: &[u8]) {
+pub fn funde(data: impl AsRef<[u8]>) {
     io::stdout()
         .lock()
-        .write_all(data)
+        .write_all(data.as_ref())
         .expect("failed to write to stdout");
     io::stdout().lock().flush().expect("failed to flush stdout");
 }
 
 /// Pour bytes to stdout (async)
-pub async fn fundet(data: &[u8]) {
+pub async fn fundet(data: impl AsRef<[u8]>) {
     let mut stdout = tokio::io::stdout();
     stdout
-        .write_all(data)
+        .write_all(data.as_ref())
         .await
         .expect("failed to write to stdout");
     stdout.flush().await.expect("failed to flush stdout");
@@ -108,17 +108,17 @@ pub async fn fundet(data: &[u8]) {
 // Verb: scribe/scribet from "scribere" (to write)
 
 /// Write line to stdout with newline (sync)
-pub fn scribe(msg: &str) {
+pub fn scribe(msg: impl AsRef<str>) {
     let mut stdout = io::stdout().lock();
-    writeln!(stdout, "{}", msg).expect("failed to write to stdout");
+    writeln!(stdout, "{}", msg.as_ref()).expect("failed to write to stdout");
     stdout.flush().expect("failed to flush stdout");
 }
 
 /// Write line to stdout with newline (async)
-pub async fn scribet(msg: &str) {
+pub async fn scribet(msg: impl AsRef<str>) {
     let mut stdout = tokio::io::stdout();
     stdout
-        .write_all(msg.as_bytes())
+        .write_all(msg.as_ref().as_bytes())
         .await
         .expect("failed to write to stdout");
     stdout
@@ -134,17 +134,17 @@ pub async fn scribet(msg: &str) {
 // Verb: dic/dicet from "dicere" (to say)
 
 /// Say text to stdout without newline (sync)
-pub fn dic(msg: &str) {
+pub fn dic(msg: impl AsRef<str>) {
     let mut stdout = io::stdout().lock();
-    write!(stdout, "{}", msg).expect("failed to write to stdout");
+    write!(stdout, "{}", msg.as_ref()).expect("failed to write to stdout");
     stdout.flush().expect("failed to flush stdout");
 }
 
 /// Say text to stdout without newline (async)
-pub async fn dicet(msg: &str) {
+pub async fn dicet(msg: impl AsRef<str>) {
     let mut stdout = tokio::io::stdout();
     stdout
-        .write_all(msg.as_bytes())
+        .write_all(msg.as_ref().as_bytes())
         .await
         .expect("failed to write to stdout");
     stdout.flush().await.expect("failed to flush stdout");
@@ -156,17 +156,17 @@ pub async fn dicet(msg: &str) {
 // Verb: mone/monet from "monere" (to warn)
 
 /// Warn line to stderr with newline (sync)
-pub fn mone(msg: &str) {
+pub fn mone(msg: impl AsRef<str>) {
     let mut stderr = io::stderr().lock();
-    writeln!(stderr, "{}", msg).expect("failed to write to stderr");
+    writeln!(stderr, "{}", msg.as_ref()).expect("failed to write to stderr");
     stderr.flush().expect("failed to flush stderr");
 }
 
 /// Warn line to stderr with newline (async)
-pub async fn monet(msg: &str) {
+pub async fn monet(msg: impl AsRef<str>) {
     let mut stderr = tokio::io::stderr();
     stderr
-        .write_all(msg.as_bytes())
+        .write_all(msg.as_ref().as_bytes())
         .await
         .expect("failed to write to stderr");
     stderr
@@ -182,17 +182,17 @@ pub async fn monet(msg: &str) {
 // Verb: vide/videbit from "videre" (to see)
 
 /// Debug line with newline (sync)
-pub fn vide(msg: &str) {
+pub fn vide(msg: impl AsRef<str>) {
     let mut stderr = io::stderr().lock();
-    writeln!(stderr, "{}", msg).expect("failed to write to stderr");
+    writeln!(stderr, "{}", msg.as_ref()).expect("failed to write to stderr");
     stderr.flush().expect("failed to flush stderr");
 }
 
 /// Debug line with newline (async)
-pub async fn videbit(msg: &str) {
+pub async fn videbit(msg: impl AsRef<str>) {
     let mut stderr = tokio::io::stderr();
     stderr
-        .write_all(msg.as_bytes())
+        .write_all(msg.as_ref().as_bytes())
         .await
         .expect("failed to write to stderr");
     stderr

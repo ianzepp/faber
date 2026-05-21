@@ -10,7 +10,7 @@ fn json_roundtrip_basic_shapes() {
         "null": null,
         "bool": true,
         "int": 42,
-        "float": 3.14,
+        "float": 3.125,
         "str": "hello",
         "arr": [1, "x", false],
         "obj": {"nested": {"k": 1}}

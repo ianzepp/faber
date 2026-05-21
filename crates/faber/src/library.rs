@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-const BUILTIN_NORMA_MODULES: &[&str] = &["json", "toml"];
+const BUILTIN_NORMA_MODULES: &[&str] = &["json", "toml", "hal/consolum"];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -78,7 +78,8 @@ impl LibraryResolver {
             return Ok(None);
         }
 
-        if segments.len() != 2 || !BUILTIN_NORMA_MODULES.contains(&segments[1]) {
+        let module_path = segments[1..].join("/");
+        if segments.len() < 2 || !BUILTIN_NORMA_MODULES.contains(&module_path.as_str()) {
             return Err(LibraryResolveError::UnknownBuiltinModule {
                 specifier: specifier.to_owned(),
                 package: "norma".to_owned(),
@@ -89,8 +90,10 @@ impl LibraryResolver {
             });
         }
 
-        let module = segments[1].to_owned();
-        let interface_path = self.stdlib_root.join("norma").join(format!("{module}.fab"));
+        let interface_path = self
+            .stdlib_root
+            .join("norma")
+            .join(format!("{module_path}.fab"));
         if !interface_path.exists() {
             return Err(LibraryResolveError::MissingInterface {
                 specifier: specifier.to_owned(),
@@ -100,7 +103,10 @@ impl LibraryResolver {
 
         Ok(Some(ResolvedLibraryModule::new(
             "norma",
-            vec![module],
+            segments[1..]
+                .iter()
+                .map(|segment| (*segment).to_owned())
+                .collect(),
             interface_path,
             LibraryProviderKind::Builtin,
         )))

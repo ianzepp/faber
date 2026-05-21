@@ -1591,7 +1591,7 @@ fn propagates_failable_calls_with_question_mark() {
 
 #[test]
 fn valor_type_renders_to_norma_datum_valor_and_supports_si_valor() {
-    let mut interner = Interner::new();
+    let interner = Interner::new();
     let prog = HirProgram { items: vec![], entry: None };
     let codegen = super::RustCodegen::new(&prog, &interner);
 
@@ -1600,7 +1600,10 @@ fn valor_type_renders_to_norma_datum_valor_and_supports_si_valor() {
     let option_valor = types.intern(Type::Option(valor));
 
     assert_eq!(super::types::type_to_rust(&codegen, valor, &types), "norma::datum::Valor");
-    assert_eq!(super::types::type_to_rust(&codegen, option_valor, &types), "Option<norma::datum::Valor>");
+    assert_eq!(
+        super::types::type_to_rust(&codegen, option_valor, &types),
+        "Option<norma::datum::Valor>"
+    );
 
     // Explicitly prove we do not fall back to Box<dyn Any> for the data-format type
     let rendered = super::types::type_to_rust(&codegen, valor, &types);

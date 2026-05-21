@@ -444,6 +444,10 @@ impl Parser {
             TokenKind::Cape => Ok(self.keyword_ident("cape", span)),
             TokenKind::Inter => Ok(self.keyword_ident("inter", span)),
             TokenKind::Tempta => Ok(self.keyword_ident("tempta", span)),
+            TokenKind::Scribe => Ok(self.keyword_ident("scribe", span)),
+            TokenKind::Vide => Ok(self.keyword_ident("vide", span)),
+            TokenKind::Mone => Ok(self.keyword_ident("mone", span)),
+            TokenKind::Lege => Ok(self.keyword_ident("lege", span)),
             _ => Err(ParseError { kind: ParseErrorKind::Expected, message: "expected identifier".to_owned(), span }),
         }
     }

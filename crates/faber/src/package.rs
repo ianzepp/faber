@@ -743,6 +743,7 @@ fn load_package(
     }
 }
 
+#[allow(clippy::result_large_err)]
 fn analysis_source_for_file(file: &PackageFile) -> Result<String, Diagnostic> {
     if file.library_imports.is_empty() {
         return Ok(file.source.clone());
@@ -770,12 +771,14 @@ fn strip_library_imports(source: &str, imports: &[LibraryImportBinding]) -> Stri
     String::from_utf8(bytes).unwrap_or_else(|_| source.to_owned())
 }
 
+#[allow(clippy::result_large_err)]
 fn library_interface_source(import: &LibraryImportBinding) -> Result<String, Diagnostic> {
     let source = fs::read_to_string(&import.module.interface_path)
         .map_err(|err| Diagnostic::io_error(&import.module.interface_path, err))?;
     rename_library_interface(&source, import)
 }
 
+#[allow(clippy::result_large_err)]
 fn rename_library_interface(
     source: &str,
     import: &LibraryImportBinding,
@@ -1478,6 +1481,7 @@ fn generate_cargo_toml(meta: &FaberManifest, binary_name: &str) -> String {
     } else {
         meta.package.version.trim()
     };
+    let norma_path = norma_runtime_path();
     format!(
         r#"[package]
 name = "{name}"
@@ -1493,10 +1497,21 @@ edition = "2021"
 # package lives inside the faber repository workspace tree (e.g. examples/).
 # Prevents "current package believes it's in a workspace" errors for
 # `cargo build/test --manifest-path target/faber/Cargo.toml`.
+
+[dependencies]
+norma = {{ path = "{norma_path}" }}
 "#,
         name = binary_name,
-        version = version
+        version = version,
+        norma_path = norma_path.display()
     )
+}
+
+fn norma_runtime_path() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join("norma")
 }
 
 /// Write the generated Rust crate tree under the layout's `target/faber/` directory.
@@ -1524,6 +1539,7 @@ pub fn emit_generated_crate(
     let cargo_src = if let Some(m) = meta {
         generate_cargo_toml(m, layout.binary_name())
     } else {
+        let norma_path = norma_runtime_path();
         format!(
             r#"[package]
 name = "{name}"
@@ -1535,8 +1551,12 @@ edition = "2021"
 [workspace]
 # Empty workspace table keeps this generated crate independent when the
 # package lives inside the faber repository workspace tree (e.g. examples/).
+
+[dependencies]
+norma = {{ path = "{norma_path}" }}
 "#,
-            name = layout.binary_name()
+            name = layout.binary_name(),
+            norma_path = norma_path.display()
         )
     };
     if let Err(err) = fs::write(&layout.generated_cargo_manifest, &cargo_src) {
