@@ -14,12 +14,12 @@ Faber needs first-class standard library support for common data formats:
 - JSON for ubiquitous structured data interchange.
 - TOML for project and tool configuration.
 
-This work must not be a one-off patch around two modules. It should establish the reusable pattern for future standard library modules that have:
+This work must not be a one-off patch around two modules. It should establish the reusable pattern for future Faber libraries that have:
 
 1. A Fabra-facing interface in `stdlib/norma`.
 2. A Rust implementation in `crates/norma`.
-3. Compiler knowledge for resolving stdlib imports.
-4. Build-tool knowledge for linking the Rust runtime into generated packages.
+3. Compiler knowledge for resolving Faber library imports.
+4. Build-tool knowledge for linking Rust backend crates into generated packages.
 5. Fabra tests that prove compiled programs can call the runtime backend.
 
 The first implementation should prefer existing Rust crates for the actual format parsers and serializers, while isolating Faber from crate churn through a narrow runtime adapter boundary.
@@ -45,7 +45,7 @@ Known blockers at plan creation:
 - Several stdlib files use ASCII `->` in places where the canonical grammar uses `→`; phase work must normalize syntax rather than relying on parser accidents.
 - `quidlibet` maps to `Box<dyn std::any::Any>` in Rust codegen, while the current data-format runtime functions expect concrete crate values such as `serde_json::Value` and `toml::Value`.
 - Generated package `Cargo.toml` does not inject a `norma` runtime dependency.
-- Package import discovery currently focuses on local package files; stdlib imports need explicit resolution and linking semantics.
+- Package import discovery currently focuses on local package files; library imports need explicit resolution and linking semantics.
 
 ## Non-Negotiable Runtime Contract
 
@@ -59,7 +59,7 @@ norma::datum::Valor
 
 The exact name may change if the implementation finds a better Latin term, but the contract is:
 
-- one runtime type represents structured dynamic data for JSON, TOML, database rows, and future data-oriented stdlib modules,
+- one runtime type represents structured dynamic data for JSON, TOML, database rows, and future data-oriented Faber library modules,
 - JSON/TOML implementations convert between that runtime type and their parser crate's native value type,
 - Faber codegen maps the Fabra stdlib data type to this runtime type,
 - `quidlibet` remains a general escape hatch and should not become the implicit format-value ABI.
@@ -93,9 +93,9 @@ Initial naming can preserve the existing Latin verbs:
 - `tempta` for parse-if-valid behavior.
 - `cape`, `carpe`, and `inveni` for access helpers if they remain part of the public API.
 
-## Import and Linking Contract
+## Library Import and Linking Contract
 
-Generated Rust packages must compile without manual edits when they import standard library modules.
+Generated Rust packages must compile without manual edits when they import Faber library modules. `norma` is the first built-in provider, but the architecture must leave room for future external Faber libraries such as SQLite wrappers.
 
 Target behavior:
 
@@ -104,16 +104,45 @@ importa ex "norma/json" privata json
 importa ex "norma/toml" privata toml
 ```
 
-The compiler and build tool should:
+Future non-builtin behavior should use the same conceptual path:
 
-- resolve `norma/*` imports against the configured stdlib root,
-- typecheck against the `.fab` interface files,
-- avoid copying stdlib implementation source into user packages unless that becomes an explicit design,
-- emit Rust references to the `norma` runtime crate,
-- inject `norma = { path = "<repo>/crates/norma" }` into generated `target/faber/Cargo.toml` when used,
+```fab
+importa ex "sqlite" privata sqlite
+importa ex "sqlite/transactio" privata transactio
+```
+
+The compiler and build tool should treat both examples as library imports:
+
+- resolve import specifiers through a library resolver,
+- typecheck against Faber `.fab` interface files,
+- avoid copying library implementation source into user packages unless that becomes an explicit design,
+- emit Rust references to the declared backend crate/module,
+- inject the backend Cargo dependency declared by the resolved library metadata,
 - keep generated crate artifacts under the existing package-level `target/` contract.
 
-This is the reference pattern for later runtime-backed stdlib modules.
+For the current data-format work, the only implemented provider should be the built-in `norma` provider:
+
+```text
+specifier: norma/json
+provider: builtin
+interface: <repo>/stdlib/norma/json.fab
+rust crate: norma
+rust module: json
+cargo dependency: norma = { path = "<repo>/crates/norma" }
+```
+
+A future SQLite package should fit the same resolved shape:
+
+```text
+specifier: sqlite
+provider: package dependency
+interface: <package-cache-or-path>/sqlite.fab
+rust crate: faber_sqlite
+rust module: sqlite
+cargo dependency: faber_sqlite = { version/path/git/features = ... }
+```
+
+Faber should typecheck against Faber interfaces, not Rust APIs. Cargo should resolve and build Rust crates; Faber should only preserve the backend dependency metadata into generated `Cargo.toml`.
 
 ## Test Fixture Contract
 
@@ -154,12 +183,12 @@ The tests should prove compiled Faber code calls the Rust runtime backend, not o
 | 0 | Baseline and dependency decision | Capture current parser, runtime, and build status. | Ledger records current failures and crate choices; no behavior changed. |
 | 1 | Stdlib interface parsing | Make stdlib `.fab` interface files valid, parseable, and checkable. | `faber check stdlib/norma/json.fab` and `toml.fab` succeed or fail only on intentionally deferred semantics. |
 | 2 | Canonical runtime data value | Add the shared `norma::datum::Valor` ABI and conversion helpers. | Rust tests prove conversion to/from JSON/TOML backend values for supported shapes. |
-| 3 | Rust codegen type and call bridge | Teach Radix how Faber stdlib data-format types map to Rust runtime calls. | A tiny generated Rust program can call a `norma` data-format function without manual edits. |
-| 4 | Stdlib import resolution | Resolve `norma/*` imports through stdlib roots and typecheck against interface files. | A package importing `norma/json` sees typed functions and no unresolved identifiers. |
-| 5 | Generated Cargo dependency injection | Inject runtime dependencies into generated package manifests based on used stdlib modules. | `target/faber/Cargo.toml` contains `norma` only when needed and package builds link successfully. |
+| 3 | Rust codegen type and call bridge | Teach Radix how Faber data-format values and library-backed module calls map to Rust runtime code. | Generated Rust uses `norma::datum::Valor` and runtime module calls for known data-format symbols, with no `Box<dyn Any>` in the ABI. |
+| 4 | Library import resolution | Introduce a general Faber library resolver and implement `norma` as the first built-in provider. | `norma/json` resolves through provider metadata; the model can also describe a future external SQLite package. |
+| 5 | Generated Cargo dependency injection | Inject backend Cargo dependencies from resolved library metadata. | `target/faber/Cargo.toml` contains `norma` when built-in data-format modules are used and can represent future package dependencies. |
 | 6 | JSON reference implementation | Implement JSON end to end as the canonical example module. | Fabra package tests parse, inspect, serialize, and safely reject invalid JSON. |
 | 7 | TOML implementation | Implement TOML on the same ABI and document TOML-specific constraints. | Fabra package tests parse config tables, serialize tables, and reject invalid/root-invalid TOML. |
-| 8 | Docs and examples | Update grammar/stdlib docs and stale examples to match the shipped API. | README/docs/examples use canonical import paths and current function names. |
+| 8 | Docs and examples | Update grammar/library docs and stale examples to match the shipped API and provider model. | README/docs/examples use canonical import paths and document the library interface/backend pattern. |
 | 9 | Full validation and release readiness | Run compiler, runtime, package, and fixture gates. | `scripta/ci` plus all stdlib package tests pass; plan status can move to complete. |
 
 ## Phase Details
@@ -222,49 +251,95 @@ Checkpoint:
 
 Steps:
 
-- Add or identify the Fabra-facing type name for standard data values.
-- Map that type to `norma::datum::Valor` in Rust codegen.
-- Ensure function signatures can pass and return `Valor`, `Option<Valor>`, `String`, numbers, booleans, lists, and maps.
-- Avoid expanding `quidlibet` into the data-format ABI unless explicitly required.
-- Add codegen tests for Rust type rendering and calls.
+- Finish any Phase 2 ABI cleanup before depending on it:
+  - `Valor` to backend-value conversions should be fallible where unsupported values exist,
+  - tests should live in the crate's normal test layout rather than making the runtime file the long-term pattern.
+- Add or identify the Fabra-facing type name for standard data values. Preferred public spelling for this plan is `valor`.
+- Update JSON/TOML interface signatures to use `valor` rather than `quidlibet` for parse/serialize/access APIs.
+- Map `valor` to `norma::datum::Valor` in Rust codegen.
+- Ensure function signatures can pass and return `norma::datum::Valor`, `Option<norma::datum::Valor>`, `String`, numbers, booleans, lists, and maps.
+- Avoid expanding `quidlibet` into the data-format ABI unless explicitly required for a separate dynamic-host interop path.
+- Define the codegen shape for library-backed module calls before import resolution is fully general:
+  - `json.solve(...)` should lower to a Rust runtime module call such as `norma::json::solve(...)`,
+  - `toml.solve(...)` should lower similarly,
+  - these calls must not lower as Rust trait dispatch from `pactum json` / `pactum toml`.
+- Keep this phase focused on type/call meaning. It may use targeted compiler tests or hand-assembled HIR/module metadata rather than a full package import path.
+- Add codegen tests for:
+  - `valor` type rendering,
+  - function signatures using `valor` and `si valor`,
+  - generated Rust call paths for known data-format runtime calls,
+  - absence of `Box<dyn Any>` in JSON/TOML stdlib signatures.
 
 Checkpoint:
 
-- Generated Rust uses `norma::datum::Valor` for the chosen Fabra data type.
+- Generated Rust uses `norma::datum::Valor` for the `valor` data type.
+- JSON/TOML `.fab` interfaces no longer expose `quidlibet` as the primary data-format value type.
+- Known data-format calls lower to Rust runtime module paths, not Rust traits or unresolved local modules.
 - No generated `Box<dyn Any>` appears in JSON/TOML stdlib call signatures.
 
-### Phase 4: Stdlib Import Resolution
+### Phase 4: Library Import Resolution
 
 Steps:
 
-- Define stdlib import path rules for `norma/*`.
-- Teach package loading or analysis to include interface files for typechecking without treating them as user package modules.
+- Introduce a general library import resolution layer. Implement only the built-in `norma` provider in this phase, but keep the model suitable for future external Faber packages.
+- Define a resolved library module shape that separates:
+  - Faber package name, e.g. `norma` or future `sqlite`,
+  - module path, e.g. `json`, `toml`, `transactio`,
+  - interface file path for Faber typechecking,
+  - provider kind, initially `builtin`,
+  - Rust backend crate name,
+  - Rust backend module path,
+  - backend Cargo dependency spec.
+- Represent import resolution as a distinction between local package modules and library modules, for example:
+  - local relative imports keep the existing package source behavior,
+  - `norma/json` and `norma/toml` become library module resolutions,
+  - future dependency imports such as `sqlite` or `sqlite/transactio` should fit the same data structure.
+- Centralize provider-specific string checks. `norma/` may be recognized inside the built-in provider, but `norma/` checks should not be scattered across package loading, resolver, codegen, and manifest generation.
+- Teach package loading or analysis to include library interface files for typechecking without treating them as user package modules.
 - Preserve module alias behavior:
   - `importa ex "norma/json" privata json`
   - `json.solve(...)`
+- Record enough backend metadata for later phases:
+  - generated Rust can target the backend crate/module,
+  - generated Cargo dependency injection can copy the dependency spec,
+  - unsupported targets can produce targeted diagnostics.
+- Add diagnostics for unknown built-in library modules, such as `norma/nope`.
+- Add a small design-proof test or fixture for the future package model. It does not need to implement SQLite, but should prove the resolved module shape can represent:
+  - package `sqlite`,
+  - interface path,
+  - Rust crate `faber_sqlite`,
+  - a Cargo dependency spec.
 - Ensure relative imports and local package imports keep their existing behavior.
-- Add diagnostics for unknown stdlib modules.
 
 Checkpoint:
 
-- A package importing `norma/json` typechecks.
-- A misspelled stdlib import gets a useful diagnostic.
+- A package importing `norma/json` or `norma/toml` typechecks against the interface.
+- A misspelled built-in library import gets a useful diagnostic.
+- The resolver/provider metadata model is not `norma`-specific and can describe a future external SQLite wrapper package.
+- Generated Rust no longer normalizes library imports like `norma/json` to `crate::norma::json`.
 - Existing local import tests remain green.
 
 ### Phase 5: Generated Cargo Dependency Injection
 
 Steps:
 
-- Detect when generated Rust uses the `norma` runtime crate.
-- Emit deterministic dependency entries in generated `target/faber/Cargo.toml`.
+- Consume backend Cargo dependency specs from resolved library module metadata.
+- For built-in `norma`, emit a deterministic path dependency in generated `target/faber/Cargo.toml`.
+- Keep the representation broad enough for future external libraries:
+  - crates.io package/version,
+  - local path,
+  - git/rev,
+  - feature flags.
 - Keep the existing `[workspace]` generated-crate isolation.
-- Avoid adding every possible stdlib dependency unconditionally unless the implementation explicitly chooses a simple first-pass policy and documents it.
+- Avoid adding every possible library dependency unconditionally unless the implementation explicitly chooses a simple first-pass policy and documents it.
+- Do not implement Cargo dependency solving in Faber. Faber copies normalized backend dependency specs; Cargo resolves transitive Rust dependencies.
 - Add writer tests for generated manifest contents.
 
 Checkpoint:
 
-- Generated package manifests include `norma` when data-format modules are used.
-- Packages without runtime-backed stdlib imports do not gain unnecessary dependencies, unless a deliberate all-runtime policy is documented.
+- Generated package manifests include `norma` when built-in data-format modules are used.
+- Packages without runtime-backed library imports do not gain unnecessary dependencies, unless a deliberate all-runtime policy is documented.
+- A fake external dependency spec can be represented without teaching Faber how to fetch/build that crate itself.
 - `cargo build --manifest-path target/faber/Cargo.toml --target-dir target` succeeds for a fixture.
 
 ### Phase 6: JSON Reference Implementation
@@ -274,6 +349,8 @@ Steps:
 - Make JSON the reference end-to-end module.
 - Implement parser/serializer/access helpers through `Valor`.
 - Replace panics with language-visible failures.
+- Route calls through the Phase 3/4 library-backed call path, not special JSON-only codegen.
+- Use `norma/json` as the first proof that a Faber interface can be backed by a Rust adapter crate/module.
 - Add Fabra package fixture tests for:
   - parsing object text,
   - reading string/number/bool/null values,
@@ -285,7 +362,7 @@ Steps:
 Checkpoint:
 
 - `faber test examples/exempla/stdlib/packages/json` exits `0`.
-- Generated Rust links `norma` and calls JSON runtime functions.
+- Generated Rust links `norma`, calls JSON runtime functions through the library backend metadata, and does not require manual Cargo edits.
 - Runtime Rust tests and compiler tests both pass.
 
 ### Phase 7: TOML Implementation
@@ -295,6 +372,7 @@ Steps:
 - Implement TOML parse/serialize through `Valor`.
 - Enforce TOML root table behavior explicitly.
 - Decide and document datetime behavior.
+- Use the same library-backed call and dependency path proven by JSON, not TOML-specific resolver hooks.
 - Add Fabra package fixture tests for:
   - project-style config parsing,
   - nested table access,
@@ -315,14 +393,20 @@ Steps:
 - Update stdlib documentation for data formats.
 - Update stale examples under `examples/exempla/hal/` or move them to the canonical stdlib example location.
 - Document import paths and function names.
-- Document the runtime-backed stdlib implementation contract for future modules.
-- Add notes to grammar docs if interface annotations or stdlib imports changed.
+- Document the runtime-backed Faber library contract for future modules.
+- Include a short future-package example, such as SQLite:
+  - Faber interface package,
+  - Rust adapter crate,
+  - backend crate/module metadata,
+  - Cargo dependency spec copied into generated packages.
+- State explicitly that Faber typechecks Faber interfaces and Cargo owns Rust dependency resolution.
+- Add notes to grammar docs if interface annotations or library imports changed.
 
 Checkpoint:
 
 - No docs point to `norma/hal/json` if the canonical path is `norma/json`.
 - Examples compile or are clearly marked as future/non-runnable.
-- Future stdlib modules have a documented pattern to follow.
+- Future Faber library modules have a documented pattern to follow.
 
 ### Phase 9: Full Validation and Release Readiness
 
@@ -364,9 +448,9 @@ Use these review passes before completing major phases:
 
 This plan is complete only when:
 
-- JSON and TOML are accessible from compiled Faber packages through canonical stdlib imports.
+- JSON and TOML are accessible from compiled Faber packages through canonical library imports.
 - Generated Rust packages link the required runtime crate automatically.
 - Runtime failures are surfaced through Faber semantics rather than Rust panics.
 - Fabra package tests prove both modules work end to end.
 - Docs and examples match the shipped API.
-- The pattern is documented well enough to implement the next runtime-backed stdlib module without rediscovering the architecture.
+- The pattern is documented well enough to implement the next runtime-backed Faber library, including an external Rust-backed package such as SQLite, without rediscovering the architecture.
