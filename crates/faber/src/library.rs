@@ -1,7 +1,5 @@
 use std::path::{Path, PathBuf};
 
-const BUILTIN_NORMA_MODULES: &[&str] = &["json", "toml", "hal/consolum"];
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
 pub(crate) enum LibraryProviderKind {
@@ -44,10 +42,6 @@ pub(crate) enum LibraryResolveError {
         package: String,
         known_modules: Vec<String>,
     },
-    MissingInterface {
-        specifier: String,
-        interface_path: PathBuf,
-    },
 }
 
 #[derive(Debug, Clone)]
@@ -78,26 +72,28 @@ impl LibraryResolver {
             return Ok(None);
         }
 
-        let module_path = segments[1..].join("/");
-        if segments.len() < 2 || !BUILTIN_NORMA_MODULES.contains(&module_path.as_str()) {
+        if segments.len() < 2
+            || !segments[1..]
+                .iter()
+                .all(|segment| is_valid_module_segment(segment))
+        {
             return Err(LibraryResolveError::UnknownBuiltinModule {
                 specifier: specifier.to_owned(),
                 package: "norma".to_owned(),
-                known_modules: BUILTIN_NORMA_MODULES
-                    .iter()
-                    .map(|module| (*module).to_owned())
-                    .collect(),
+                known_modules: self.known_norma_modules(),
             });
         }
 
+        let module_path = segments[1..].join("/");
         let interface_path = self
             .stdlib_root
             .join("norma")
             .join(format!("{module_path}.fab"));
         if !interface_path.exists() {
-            return Err(LibraryResolveError::MissingInterface {
+            return Err(LibraryResolveError::UnknownBuiltinModule {
                 specifier: specifier.to_owned(),
-                interface_path,
+                package: "norma".to_owned(),
+                known_modules: self.known_norma_modules(),
             });
         }
 
@@ -110,6 +106,53 @@ impl LibraryResolver {
             interface_path,
             LibraryProviderKind::Builtin,
         )))
+    }
+
+    fn known_norma_modules(&self) -> Vec<String> {
+        let mut modules = Vec::new();
+        let norma_root = self.stdlib_root.join("norma");
+        collect_fab_modules(&norma_root, &norma_root, &mut modules);
+        modules.sort();
+        modules
+    }
+}
+
+fn is_valid_module_segment(segment: &str) -> bool {
+    !segment.is_empty()
+        && segment != "."
+        && segment != ".."
+        && segment
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-'))
+}
+
+fn collect_fab_modules(root: &Path, dir: &Path, modules: &mut Vec<String>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_fab_modules(root, &path, modules);
+            continue;
+        }
+
+        if path.extension().and_then(|ext| ext.to_str()) != Some("fab") {
+            continue;
+        }
+
+        let Ok(relative) = path.strip_prefix(root) else {
+            continue;
+        };
+        let mut module = relative
+            .with_extension("")
+            .to_string_lossy()
+            .replace('\\', "/");
+        if module.starts_with('/') {
+            module.remove(0);
+        }
+        modules.push(module);
     }
 }
 

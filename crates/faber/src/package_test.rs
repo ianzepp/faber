@@ -2,7 +2,7 @@ use super::{
     check_package, compile_package, discover_build_layout, emit_generated_crate, read_manifest,
     sanitize_crate_name, BuildLayout,
 };
-use crate::library::{LibraryProviderKind, ResolvedLibraryModule};
+use crate::library::{LibraryProviderKind, LibraryResolver, ResolvedLibraryModule};
 use radix::diagnostics::Diagnostic;
 use radix::driver::Config;
 use radix::Output;
@@ -140,6 +140,21 @@ incipit {
 }
 
 #[test]
+fn library_resolver_discovers_builtin_norma_hal_modules_without_allowlist() {
+    let resolved = LibraryResolver::default()
+        .resolve("norma/hal/solum")
+        .expect("resolve should not fail")
+        .expect("norma/hal/solum should resolve");
+
+    assert_eq!(resolved.package, "norma");
+    assert_eq!(resolved.module_path, vec!["hal", "solum"]);
+    assert!(resolved
+        .interface_path
+        .ends_with("stdlib/norma/hal/solum.fab"));
+    assert_eq!(resolved.provider, LibraryProviderKind::Builtin);
+}
+
+#[test]
 fn check_package_typechecks_builtin_library_imports_against_interfaces() {
     let dir = temp_dir("norma-json-interface");
     let entry = dir.join("main.fab");
@@ -179,6 +194,10 @@ incipit {}
     assert!(result.diagnostics.iter().any(|diag| diag
         .message
         .contains("unknown built-in library module `norma/nope`")));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("hal/consolum") && diag.message.contains("hal/solum")));
 }
 
 #[test]

@@ -1325,14 +1325,6 @@ fn library_resolve_diagnostic(file: &Path, err: LibraryResolveError) -> Diagnost
             known_modules.join(", ")
         ))
         .with_file(file.display().to_string()),
-        LibraryResolveError::MissingInterface {
-            specifier,
-            interface_path,
-        } => Diagnostic::error(format!(
-            "built-in library module `{specifier}` resolved to missing interface `{}`",
-            interface_path.display()
-        ))
-        .with_file(file.display().to_string()),
     }
 }
 
