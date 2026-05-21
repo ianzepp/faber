@@ -328,6 +328,51 @@ functio show() argumenta args -> vacuum {
 }
 
 #[test]
+fn rust_subcommand_cli_prefers_longest_matching_command_path() {
+    let session = session(Target::Rust);
+    let source = r#"@ cli "tool"
+incipit argumenta args {}
+
+@ imperium "jobs"
+functio jobs() -> vacuum {
+  scribe "root"
+}
+
+@ imperium "jobs/list"
+functio list() -> vacuum {
+  scribe "list"
+}"#;
+    let result = compile(&session, "cli.fab", source);
+    assert!(
+        result.success(),
+        "diagnostics: {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|d| &d.message)
+            .collect::<Vec<_>>()
+    );
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+    let binary = compile_rust_source_with_rustc(&output.code, "subcommand-prefix");
+
+    let nested = Command::new(&binary)
+        .args(["jobs", "list"])
+        .output()
+        .expect("run nested command");
+    assert!(nested.status.success());
+    assert_eq!(String::from_utf8_lossy(&nested.stdout), "list\n");
+
+    let root = Command::new(&binary)
+        .arg("jobs")
+        .output()
+        .expect("run root command");
+    assert!(root.status.success());
+    assert_eq!(String::from_utf8_lossy(&root.stdout), "root\n");
+}
+
+#[test]
 fn compile_reports_lex_errors() {
     let session = session(Target::Rust);
     let result = compile(&session, "test.fab", "😀");

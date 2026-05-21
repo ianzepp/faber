@@ -509,7 +509,9 @@ fn generate_dispatcher(program: &CliProgram, w: &mut CodeWriter) {
             w.writeln("std::process::exit(2);");
         });
         w.writeln("}");
-        for command in &program.commands {
+        let mut commands = program.commands.iter().collect::<Vec<_>>();
+        commands.sort_by(|left, right| right.path.len().cmp(&left.path.len()));
+        for command in commands {
             generate_dispatch_arm(program, command, w);
             for alias in &command.aliases {
                 generate_alias_dispatch_arm(program, command, alias, w);
