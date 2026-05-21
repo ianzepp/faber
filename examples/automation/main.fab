@@ -1,0 +1,15 @@
+# Automation CLI skeleton.
+#
+# Emit: cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab
+
+importa ex "./commands/inventory" privata * ut inventoryModule
+importa ex "./commands/runner" privata * ut runnerModule
+
+@ cli "automation"
+@ versio "0.1.0"
+@ descriptio "Faber automation executor experiment"
+@ optio root longum "root" typus textus vel "examples/automation/fixtures" ubique descriptio "Automation repository root"
+@ optio verbose brevis "v" longum "verbose" typus bivalens ubique descriptio "Print additional diagnostic output"
+@ imperia "inventory" ex inventoryModule
+@ imperia "runner" ex runnerModule
+incipit argumenta args {}

@@ -1,0 +1,33 @@
+# Inventory commands for the automation example.
+
+@ imperium "list"
+@ descriptio "List automation skill records"
+functio list() argumenta args -> vacuum {
+    scribe scriptum("root: §", args.root)
+    si args.verbose {
+        scribe "mode: inventory list"
+    }
+    scribe "sample-automation  PAUSED  codex  RRULE:FREQ=HOURLY;INTERVAL=1;BYMINUTE=0"
+}
+
+@ imperium "show"
+@ descriptio "Show one automation record"
+@ operandus textus id descriptio "Automation id"
+functio show() argumenta args -> vacuum {
+    scribe scriptum("id: §", args.id)
+    scribe scriptum("root: §", args.root)
+    scribe "status: PAUSED"
+    scribe "execute: codex"
+    scribe "model: gpt-5.4-mini"
+}
+
+@ imperium "check"
+@ descriptio "Validate one automation record"
+@ operandus textus id descriptio "Automation id"
+functio check() argumenta args -> vacuum {
+    scribe scriptum("checking: §", args.id)
+    si args.verbose {
+        scribe "required fields: id, kind, execute, status, rrule, model, reasoning_effort, cwds"
+    }
+    scribe "ok: fixture metadata shape is valid"
+}

@@ -1,0 +1,14 @@
+# Runner commands for the automation example.
+
+@ imperium "dry-run"
+@ descriptio "Render the execution plan without launching an agent"
+@ operandus textus id descriptio "Automation id"
+functio dryRun() argumenta args -> vacuum {
+    scribe scriptum("dry-run: §", args.id)
+    scribe scriptum("root: §", args.root)
+    scribe "executor: codex"
+    scribe "command: codex exec --model gpt-5.4-mini -c model_reasoning_effort=high -C <cwd> -- <prompt>"
+    si args.verbose {
+        scribe "side effects: none"
+    }
+}
