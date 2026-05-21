@@ -245,8 +245,19 @@ fn cmd_explain(args: ExplainArgs) {
     }
 
     let Some(term) = args.term else {
-        eprintln!("error: missing term");
-        eprintln!("hint: run `faber explain --list`");
+        eprintln!("error: no explain query was provided");
+        eprintln!();
+        eprintln!("Usage:");
+        eprintln!("    faber explain <term>");
+        eprintln!("    faber explain --list");
+        eprintln!("    faber explain --category <category>");
+        eprintln!("    faber explain --search <query>");
+        eprintln!();
+        eprintln!("Examples:");
+        eprintln!("    faber explain functio");
+        eprintln!("    faber explain ≡");
+        eprintln!("    faber explain ==");
+        eprintln!("    faber explain --list");
         std::process::exit(2);
     };
 
