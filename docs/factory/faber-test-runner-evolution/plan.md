@@ -724,21 +724,96 @@ Phase 5 completion metrics:
 
 ### Phase 6: Reporting and Docs
 
-Steps:
+Goal:
+
+Make the user-facing test documentation and command descriptions match the implemented Phases 1-5 behavior. This phase is about truthfulness, discoverability, and small reporting polish, not new test-runner semantics.
+
+Scope:
 
 - Add or update a test grammar doc if one does not exist.
 - Update `README.md`.
 - Update `docs/grammatica/manifest.md` with `faber test` and test artifact behavior.
 - Update `docs/grammatica/verba.md`; `solum` is parsed today and should not be documented as merely planned once behavior is settled.
+- Update `faber test --help` text only if it is inaccurate or omits Phase 5 behavior that users need to understand.
 - Document current limits honestly:
   - Rust-only package test execution,
-  - generated Rust test names may still appear until reporting improves,
-  - richer modifiers may be parsed before fully enforced.
+  - Cargo-backed standard Rust test harness output,
+  - generated Rust `proba_*` names may still appear until reporting improves,
+  - `--ignored` / `--include-ignored` also affect selection-ignored tests in the current Cargo-backed implementation,
+  - richer modifiers may be parsed and represented in HIR before fully enforced.
+
+Required docs content:
+
+- `proba` syntax:
+  - basic test case,
+  - `adfirma`,
+  - source-level test names.
+- `probandum` syntax:
+  - nested suites,
+  - suite path format used by `--suite`, joined with `/`.
+- setup/teardown:
+  - `praepara`,
+  - `praeparabit`,
+  - `postpara`,
+  - `postparabit`,
+  - `omnia` behavior where currently supported.
+- ignored/future tests:
+  - `omitte "reason"` is skipped by default,
+  - `futurum "reason"` is skipped by default for now,
+  - both can be run with `--ignored` / `--include-ignored`.
+- selection:
+  - `solum`,
+  - `tag`,
+  - `--name`,
+  - `--suite`,
+  - `--tag`,
+  - selector combination semantics.
+- compilation invariant:
+  - selection affects execution, not compilation,
+  - all tests are generated and compiled,
+  - non-selected tests are temporarily emitted as Rust ignored tests with `faber: not selected by ...` reasons.
+- artifact layout:
+  - generated Rust crate under `target/faber/`,
+  - Cargo test artifacts under package-level `target/debug/`,
+  - no `target/faber/target`.
+- currently parsed but not fully enforced modifiers:
+  - `requirit`,
+  - `solum_in`,
+  - `temporis`,
+  - `metior`,
+  - `repete`,
+  - `fragilis`.
+- coverage status:
+  - Faber line coverage is not implemented in Phase 6,
+  - generated Rust coverage is not the same as Faber source coverage,
+  - future coverage work needs Faber source mapping or Faber-native instrumentation.
+
+Reporting polish allowed:
+
+- Improve wording in help text or error messages for `faber test` selectors if the implementation is already present and the change is low risk.
+- Do not introduce a custom reporter.
+- Do not change pass/fail/ignored semantics.
+- Do not add line coverage, coverage flags, coverage reports, or source-map machinery.
 
 Checkpoint:
 
 - Docs match live CLI help and `faber targets`.
+- Docs explain `proba`, `probandum`, setup/teardown, ignored/future tests, `solum`, tags, and selector flags.
+- Docs explain the generated Rust ignore-reason model for selection.
+- Docs explain the `--ignored` / `--include-ignored` caveat.
+- Docs explicitly say Faber line coverage is not yet implemented.
 - Examples under `examples/exempla/proba/` still parse and make sense.
+- New or updated examples use current single-glyph syntax and documented Faber grammar.
+
+Phase 6 completion metrics:
+
+- There is a stable user-facing doc page for Faber tests.
+- `README.md` points users at `faber test` or the test docs if README currently describes package workflows.
+- `docs/grammatica/manifest.md` describes test artifact layout accurately.
+- `docs/grammatica/verba.md` no longer misclassifies implemented test behavior as planned.
+- `faber test --help` and docs do not contradict each other.
+- Documentation states that coverage is future work, not part of the current runner.
+- Phase 1-5 fixture smoke commands still behave the same after docs/reporting edits.
 
 ### Phase 7: Validation and Release Readiness
 
