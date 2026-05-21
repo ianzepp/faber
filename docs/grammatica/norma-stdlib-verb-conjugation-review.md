@@ -192,8 +192,8 @@ All client/server operations are async-only, so only future forms are defined (`
 
 - **`tempus.fab`**: `dormiet` for sleep is fine.
 - **`crypta.fab`**: Async hash functions are intentionally slow — future forms are correct.
-- **`caelum.fab`**, **`nuncius.fab`**, **`pressura.fab`**: Mostly future-only networking/messaging. Review for consistent use of `-et`/`-abit` forms.
-- Data format modules (`json`, `toml`, `yaml`): Currently only define base forms. When async versions are added, they should follow the established `-et` pattern (`panget`, `solvet`, `temptet`, etc.).
+- **`caelum.fab`**, **`nuncius.fab`**, **`pressura.fab`**: Mostly future-only networking/messaging. Review for real Latin conjugation of each root rather than suffix uniformity.
+- Data format modules (`json`, `toml`, `yaml`): Currently only define base forms. When async versions are added, they should use the real future form for each root rather than forcing an artificial `-et` pattern.
 
 ---
 
@@ -216,11 +216,18 @@ Examples already done well (`genera`/`dimitte`, response builders):
 - Continue this pattern when the difference is about lifecycle, ownership, cardinality, or side effects rather than just wrapper behavior.
 - Keep the same root when the difference is collect vs stream, sync vs async, or both, assuming the underlying operation is conceptually the same.
 
-### 3. Make Future Forms Regular
+### 3. Prefer Real Latin Conjugation
 
-Aim for predictability:
-- Prefer `-et` or `-ebit` for async versions of existing verbs.
-- Allow classical forms like `videbit` when the form is well-established and readable. Avoid invented regularizations such as `videet` unless the language deliberately chooses artificial regularity over Latin.
+Resolved policy: prefer real Latin conjugation over artificial suffix regularity.
+
+Rationale:
+- LLMs and Latin-aware users are more likely to generate and recognize real conjugated forms.
+- Predictability should come from declaring each root and conjugation class, not from forcing every verb into one visible suffix pattern.
+- Forms such as `videbit` should stay. Invented regularizations such as `videet` should be avoided.
+
+Implications:
+- `quaerent` is acceptable if the async-stream form is the real future plural of `quaerere`.
+- `nuntient` needs review if its intended root is `nuntiare`; a real future plural form would be closer to `nuntiabunt`.
 
 ### 4. Document the Conjugation Contract Explicitly
 
@@ -234,14 +241,14 @@ Create (or expand) a document that defines the expected conjugation patterns for
 
 | Module     | Current Method     | Suggested Change                  | Priority | Rationale |
 |------------|--------------------|-----------------------------------|----------|---------|
-| Cross-cutting | Generator form policy | Decide `-ent` vs present participle vs composed async-generator spelling | High | This decision controls whether current `quaerent` / `nuntient` are stable call-site forms |
+| Cross-cutting | Generator form policy | Decide real conjugation shape for stream and async-stream forms | High | This decision controls whether current `quaerent` / `nuntient` are stable call-site forms |
 | `arca`     | `quaerent`         | Keep `quaer-`; rename only if generator policy rejects `-ent` | High | Same query operation should remain one root |
 | `arca`     | `capiet`           | Decide whether first-row retrieval is a separate root | Medium | Likely separate operation, but should be explicit before runtime implementation |
 | `thesaurus`| `nuntient`         | Review after generator policy decision | Medium | Same unresolved async-generator spelling issue as `arca` |
 
 ### Medium Priority
 
-- Audit all remaining `-abit` / `-ebit` / `-et` forms for regularity across `caelum`, `nuncius`, `pressura`.
+- Audit all remaining future forms across `caelum`, `nuncius`, `pressura` for real conjugation.
 - Decide on a canonical streaming conjugation and document how async composes with it.
 - Ensure data-format modules (`json`/`toml`/`yaml`) have placeholder future forms documented even if not yet implemented.
 
