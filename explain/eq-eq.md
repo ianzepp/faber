@@ -1,22 +1,15 @@
----
-term: "≡"
-kind: "operator"
-category: "comparison"
-canonical: true
-summary: "Compares two values for equality and returns bivalens."
-syntax: "<expression> ≡ <expression>"
-examples:
-  - "examples/exempla/proba/proba.fab"
-aliases:
-  - "equals"
-  - "equality"
-legacy:
-  - "=="
-related:
-  - "≠"
-  - "adfirma"
-  - "proba"
----
++++
+term = "≡"
+kind = "operator"
+category = "comparison"
+canonical = true
+summary = "Compares two values for equality and returns bivalens."
+syntax = "<expression> ≡ <expression>"
+examples = ["examples/exempla/proba/proba.fab"]
+aliases = ["equals", "equality"]
+legacy = ["=="]
+related = ["≠", "adfirma", "proba"]
++++
 
 Use `≡` when an expression should be true only when both sides compare equal.
 

@@ -1,14 +1,12 @@
----
-term: "usque"
-kind: "keyword"
-category: "range"
-canonical: true
-summary: "Creates an inclusive range with a Latin keyword."
-syntax: "<expression> usque <expression>"
-related:
-  - "ante"
-  - "…"
----
++++
+term = "usque"
+kind = "keyword"
+category = "range"
+canonical = true
+summary = "Creates an inclusive range with a Latin keyword."
+syntax = "<expression> usque <expression>"
+related = ["ante", "…"]
++++
 
 Creates an inclusive range with a Latin keyword.
 

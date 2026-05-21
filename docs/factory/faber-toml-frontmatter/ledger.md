@@ -127,5 +127,32 @@ nothing to commit, working tree clean
 - (No doc changes yet)
 
 ## Current Phase
-1 - TOML parser support (complete; committed)
-2 - Corpus migration (next)
+2 - Corpus migration (complete; committed)
+3 - Docs migration (next)
+
+## Phase 2: Corpus Migration (completed)
+
+**Date**: 2026-05-21
+**Changes**:
+- Converted all 167 `explain/*.md` files from `---` YAML-like front matter to `+++` TOML front matter.
+- Used accurate one-time Python converter (ported the original line-oriented parse logic for scalars + indented `- ` lists) to guarantee value fidelity.
+- All list fields emitted as compact single-line TOML arrays (max 5 items observed; readability good).
+- Body text (Markdown prose + ```fab examples) preserved byte-for-byte after the new delimiters.
+- No file renames; no content changes outside the frontmatter block.
+
+**Verification (per plan checkpoint)**:
+- `find explain -maxdepth 1 -name "*.md" ... head -1 | grep "+++" ` → 167 files, 0 starting with `---`.
+- `cargo test -p faber explain_test` (post-migration): 11/12 pass. The single failure is `coverage_manifest_matches_registry` (uses stale `frontmatter_value` helper that still expects `---`); all registry load, lookup, render, search, and validation tests now PASS with real TOML corpus.
+- `cargo run -p faber -- explain functio` and `--json proba` produce identical output to pre-migration baseline.
+- `cargo run -p faber -- explain --list | wc -l` and category/search all behave identically.
+- No drift in term values, canonical flags, aliases, related lists, summaries, etc.
+
+**Notes**:
+- The `frontmatter_value` helper in explain_test.rs is the only remaining YAML parser surface in `crates/faber` (used solely for coverage filename assertions). Will be repaired in Phase 4.
+- Old `parse_frontmatter` etc. already deleted in Phase 1.
+
+**Checkpoint met**:
+- Every `explain/*.md` starts with `+++`.
+- No `explain/*.md` starts with `---`.
+- Coverage/registry tests (modulo helper) + `faber explain` family all behavior-compatible.
+- Large mechanical change isolated from parser (Phase 1 committed first).

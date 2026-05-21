@@ -1,13 +1,12 @@
----
-term: "est"
-kind: "keyword"
-category: "logic"
-canonical: true
-summary: "Tests whether a value is or matches a type-like target."
-syntax: "<expression> est <expression>"
-related:
-  - "non est"
----
++++
+term = "est"
+kind = "keyword"
+category = "logic"
+canonical = true
+summary = "Tests whether a value is or matches a type-like target."
+syntax = "<expression> est <expression>"
+related = ["non est"]
++++
 
 Tests whether a value is or matches a type-like target.
 

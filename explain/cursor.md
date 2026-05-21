@@ -1,14 +1,12 @@
----
-term: "cursor"
-kind: "annotation"
-category: "async"
-canonical: true
-summary: "Marks a function as a generator."
-syntax: "@ cursor"
-related:
-  - "futura"
-  - "cede"
----
++++
+term = "cursor"
+kind = "annotation"
+category = "async"
+canonical = true
+summary = "Marks a function as a generator."
+syntax = "@ cursor"
+related = ["futura", "cede"]
++++
 
 Marks a function as a generator.
 

@@ -1,14 +1,13 @@
----
-term: "<="
-kind: "legacy"
-category: "comparison"
-canonical: false
-canonical_term: "≤"
-summary: "Legacy less-than-or-equal spelling; use ≤ in Faber source."
-syntax: "<expression> ≤ <expression>"
-related:
-  - "≤"
----
++++
+term = "<="
+kind = "legacy"
+category = "comparison"
+canonical = false
+summary = "Legacy less-than-or-equal spelling; use ≤ in Faber source."
+syntax = "<expression> ≤ <expression>"
+related = ["≤"]
+canonical_term = "≤"
++++
 
 `<=` is not canonical Faber source. Use `≤`.
 

@@ -1,13 +1,12 @@
----
-term: "lineam"
-kind: "keyword"
-category: "io"
-canonical: true
-summary: "Reads one line of input."
-syntax: "lege lineam"
-related:
-  - "lege"
----
++++
+term = "lineam"
+kind = "keyword"
+category = "io"
+canonical = true
+summary = "Reads one line of input."
+syntax = "lege lineam"
+related = ["lege"]
++++
 
 Reads one line of input.
 

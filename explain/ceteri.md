@@ -1,16 +1,13 @@
----
-term: "ceteri"
-kind: "modifier"
-category: "function"
-canonical: true
-summary: "Collects remaining parameters or extracted fields."
-syntax: "ceteri <type> <name>"
-aliases:
-  - "rest"
-related:
-  - "functio"
-  - "ex"
----
++++
+term = "ceteri"
+kind = "modifier"
+category = "function"
+canonical = true
+summary = "Collects remaining parameters or extracted fields."
+syntax = "ceteri <type> <name>"
+aliases = ["rest"]
+related = ["functio", "ex"]
++++
 
 Collects remaining parameters or extracted fields.
 

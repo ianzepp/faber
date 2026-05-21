@@ -1,14 +1,12 @@
----
-term: "finge"
-kind: "keyword"
-category: "object"
-canonical: true
-summary: "Constructs a tagged union variant."
-syntax: "finge <variant> [{ <field>: <expr>, ... }] [verte <type>]"
-related:
-  - "discretio"
-  - "verte"
----
++++
+term = "finge"
+kind = "keyword"
+category = "object"
+canonical = true
+summary = "Constructs a tagged union variant."
+syntax = "finge <variant> [{ <field>: <expr>, ... }] [verte <type>]"
+related = ["discretio", "verte"]
++++
 
 Constructs a tagged union variant.
 

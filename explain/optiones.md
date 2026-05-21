@@ -1,14 +1,12 @@
----
-term: "optiones"
-kind: "modifier"
-category: "entry"
-canonical: true
-summary: "Binds CLI options metadata to a function declaration."
-syntax: "functio <name>(...) optiones <ident> → <type>"
-related:
-  - "argumenta"
-  - "ad"
----
++++
+term = "optiones"
+kind = "modifier"
+category = "entry"
+canonical = true
+summary = "Binds CLI options metadata to a function declaration."
+syntax = "functio <name>(...) optiones <ident> → <type>"
+related = ["argumenta", "ad"]
++++
 
 Binds CLI options metadata to a function declaration.
 

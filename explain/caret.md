@@ -1,17 +1,13 @@
----
-term: "⊻"
-kind: "operator"
-category: "bitwise"
-canonical: true
-summary: "Combines two expressions with exclusive or."
-syntax: "<expression> ⊻ <expression>"
-aliases:
-  - "xor"
-related:
-  - "∧"
-  - "∨"
-  - "¬"
----
++++
+term = "⊻"
+kind = "operator"
+category = "bitwise"
+canonical = true
+summary = "Combines two expressions with exclusive or."
+syntax = "<expression> ⊻ <expression>"
+aliases = ["xor"]
+related = ["∧", "∨", "¬"]
++++
 
 Combines two expressions with exclusive or.
 

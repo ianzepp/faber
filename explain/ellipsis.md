@@ -1,14 +1,12 @@
----
-term: "…"
-kind: "operator"
-category: "range"
-canonical: true
-summary: "Creates an inclusive range using a Unicode glyph."
-syntax: "<expression> … <expression>"
-related:
-  - "‥"
-  - "usque"
----
++++
+term = "…"
+kind = "operator"
+category = "range"
+canonical = true
+summary = "Creates an inclusive range using a Unicode glyph."
+syntax = "<expression> … <expression>"
+related = ["‥", "usque"]
++++
 
 Creates an inclusive range using a Unicode glyph.
 

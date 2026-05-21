@@ -1,13 +1,12 @@
----
-term: "intra"
-kind: "keyword"
-category: "range"
-canonical: true
-summary: "Checks whether a value lies within a range."
-syntax: "<expression> intra <range>"
-related:
-  - "inter"
----
++++
+term = "intra"
+kind = "keyword"
+category = "range"
+canonical = true
+summary = "Checks whether a value lies within a range."
+syntax = "<expression> intra <range>"
+related = ["inter"]
++++
 
 Checks whether a value lies within a range.
 
