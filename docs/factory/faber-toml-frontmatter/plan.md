@@ -1,6 +1,6 @@
 # Faber TOML Front Matter Factory Plan
 
-**Status**: planned
+**Status**: delivered (2026-05-21)
 **Created**: 2026-05-21
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/faber-toml-frontmatter/`

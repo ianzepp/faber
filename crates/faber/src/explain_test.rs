@@ -400,10 +400,11 @@ fn frontmatter_value(source: &str, key: &str) -> Option<String> {
             }
             let mut val = line[eq_pos + 1..].trim();
             // strip optional surrounding quotes (single or double)
-            if (val.starts_with('"') && val.ends_with('"')) || (val.starts_with('\'') && val.ends_with('\'')) {
-                if val.len() >= 2 {
-                    val = &val[1..val.len() - 1];
-                }
+            if ((val.starts_with('"') && val.ends_with('"'))
+                || (val.starts_with('\'') && val.ends_with('\'')))
+                && val.len() >= 2
+            {
+                val = &val[1..val.len() - 1];
             }
             return Some(val.to_owned());
         }

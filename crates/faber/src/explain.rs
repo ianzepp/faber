@@ -523,7 +523,6 @@ fn parse_entry(filename: &str, source: &str) -> Result<Entry, ExplainError> {
     Ok(entry)
 }
 
-
 fn parse_kind(filename: &str, value: &str) -> Result<Kind, ExplainError> {
     match value {
         "keyword" => Ok(Kind::Keyword),

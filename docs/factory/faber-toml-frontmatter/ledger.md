@@ -127,8 +127,19 @@ nothing to commit, working tree clean
 - (No doc changes yet)
 
 ## Current Phase
-3 - Docs migration (complete; committed)
-4 - Residue cleanup (next)
+(all phases complete — TOML front matter delivered)
+
+## Final Validation
+- All 167 explain/*.md use `+++` TOML front matter; zero use old `---`.
+- Parser in crates/faber/src/explain.rs is TOML + serde only (FrontValue and hand-rolled YAML removed).
+- 4+ explicit negative tests prove old delimiters, missing, unterm, unknown fields, and type errors (array/scalar) are rejected with clear messages.
+- `cargo test -p faber explain_test`: 12/12 PASS.
+- `cargo fmt --all -- --check`, `cargo test --all`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo build --release -p faber` all PASS.
+- Full explain smokes (functio, ≡, --json, --search, --list, --category) produce correct behavior-identical output.
+- Residue searches (`rg` for YAML-like / ^---$ frontmatter in explain + key docs + faber crate) clean for prescriptive content (only historical notes in plan/ledger, table rules in grammatica, etc.).
+- crates/faber has no yaml/serde_yaml dependency or parser code.
+- Ledger and plan status updated; all phases committed.
+- Semantic contract preserved: unknown fields fail, required fields enforced, lists/booleans/strings roundtrip correctly in JSON and render.
 
 ## Phase 2: Corpus Migration (completed)
 
@@ -196,3 +207,24 @@ nothing to commit, working tree clean
 - `crates/faber` front matter logic and tests are TOML-only.
 - No YAML dependency or parser code remains in the crate.
 - All explain tests pass.
+
+## Phase 5: Validation and Closeout (completed)
+
+**Date**: 2026-05-21
+**Gates executed (all passed)**:
+- `cargo fmt --all -- --check` (and auto-formatted 2 small sites)
+- `cargo test --all`
+- `cargo clippy --all-targets --all-features -- -D warnings` (fixed one collapsible_if in test helper)
+- `cargo build --release -p faber`
+- Explain smokes (6 commands): functio, ≡, --json, --search, --list, --category — all correct and behavior-stable.
+- Corpus delimiters: 167 × `+++`, 0 × `---` (verified by find + python).
+- Residue rg (exact plan command on explain/ + crates/faber/ + grammatica/explain.md + 2 factory plans): reviewed; only non-prescriptive hits (tables, historical plan text).
+
+**Artifacts updated**:
+- `docs/factory/faber-toml-frontmatter/plan.md` status → "delivered (2026-05-21)"
+- This ledger: added Final Validation + Phase 5 summary; open questions noted.
+
+**Summary**:
+All phases (0-5) completed with per-phase commits, full gate passes, and no behavior regression for valid entries. The explain corpus and its parser are now TOML-native using the pre-existing `toml` crate. Old YAML-like front matter is rejected cleanly.
+
+Opus perfectum est.
