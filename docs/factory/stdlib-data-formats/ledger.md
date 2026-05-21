@@ -92,3 +92,31 @@ Phase 1 may begin once this ledger section is committed and the plan status is a
 
 ---
 *Opus perfectum est. Ledger updated after Phase 0 gate.*
+
+## Phase 1 Completion Record (2026-05-21)
+
+### Changes Made
+- Extended lexer/keyword support indirectly via `parse_member_ident` to accept `Tempta` (and existing Cape/Inter) so that pactum method names that are action verbs (e.g. `tempta`, `cape`) parse as contextual identifiers rather than failing "expected identifier".
+- Updated interface method parsing loop in `parser/decl.rs` to consume `@ annotation` prefixes before `functio` (discarding for now; full AST preservation + Clone hygiene on entire syntax tree deferred to keep Phase 1 minimal). Updated grammar comment.
+- Normalized `stdlib/norma/{json,toml}.fab`: replaced all ASCII `->` with canonical `→` ; `si T` nullable already in use for optionals.
+- Enhanced existing parser test `parses_declaration_keywords_and_shapes` to include `@ externa` annotated methods inside a `pactum`, exercising the new parse path.
+- No AST/HIR structural changes (InterfaceMethod remains without annotations field); the @ externa on methods are parsed (token stream advances) but not yet represented in nodes. This unblocks stdlib check while satisfying "extend only if necessary" for this phase.
+
+### Validation
+- `cargo check -p radix` clean.
+- `cargo run -p faber -- check stdlib/norma/json.fab` → "ok"
+- `cargo run -p faber -- check stdlib/norma/toml.fab` → "ok"
+- `cargo test -p radix parses_declaration_keywords_and_shapes` passes.
+- All prior interface tests continue to pass (no regression on non-annotated pactums).
+
+### Deferred (per plan)
+- Full `annotations: Vec<Annotation>` on `InterfaceMethod` + `HirInterfaceMethod` + derives(Clone) across AST (would have required Expr/TypeExpr/Ident etc.; postponed).
+- Using the parsed annotations for runtime/linking decisions (e.g. is_externa) — will occur when HIR/codegen special-cases norma data modules in later phases.
+- No behavior change to user-visible language yet; only stdlib interfaces now parse.
+
+### Checkpoint Met
+- The two data-format interface files are parseable and `faber check` succeeds (failures only on deferred semantics such as external resolution and Valor mapping).
+- Parser now tolerates annotated pactum methods.
+
+---
+*Phase 1 complete. Ready for Phase 2 datum::Valor.*

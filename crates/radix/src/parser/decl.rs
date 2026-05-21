@@ -495,7 +495,7 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   interface-decl := 'pactum' ident ['<' type-params '>'] '{' method-sig* '}'
-    ///   method-sig := 'functio' ident '(' params ')' modifiers ['→' type]
+    ///   method-sig := annotation* 'functio' ident '(' params ')' modifiers ['→' type]
     ///
     /// WHY: Interfaces define method contracts without implementations.
     fn parse_interface_decl(&mut self) -> Result<StmtKind, ParseError> {
@@ -508,10 +508,17 @@ impl Parser {
 
         let mut methods = Vec::new();
         while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
+            // Parse (and currently discard) annotations on interface methods (e.g. @ externa).
+            // WHY (Phase 1): allows stdlib pactum files with annotated methods to parse.
+            // Full preservation into AST/HIR + Clone hygiene deferred; annotations on methods
+            // carry linking meaning (externa, futura) but are not yet represented on InterfaceMethod.
+            if self.check(&TokenKind::At) {
+                let _ = self.parse_annotations()?;
+            }
             let start = self.current_span();
 
             self.expect_keyword(TokenKind::Functio, "expected 'functio'")?;
-            let method_name = self.parse_ident()?;
+            let method_name = self.parse_member_ident()?;
 
             self.expect(&TokenKind::LParen, "expected '('")?;
             let (_, params) = self.parse_param_list()?;

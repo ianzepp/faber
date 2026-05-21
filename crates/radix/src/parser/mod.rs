@@ -443,6 +443,7 @@ impl Parser {
             TokenKind::Ident(sym) | TokenKind::Underscore(sym) => Ok(Ident { name: sym, span }),
             TokenKind::Cape => Ok(self.keyword_ident("cape", span)),
             TokenKind::Inter => Ok(self.keyword_ident("inter", span)),
+            TokenKind::Tempta => Ok(self.keyword_ident("tempta", span)),
             _ => Err(ParseError { kind: ParseErrorKind::Expected, message: "expected identifier".to_owned(), span }),
         }
     }

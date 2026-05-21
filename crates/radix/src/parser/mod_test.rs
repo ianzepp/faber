@@ -603,7 +603,10 @@ abstractus genus Animal<T> sub Vivens implet Canens, Currens {
     nexum numerus aetas: 3
 }
 pactum Canens<T> {
+    @ externa
     functio canta(textus vox) iacit → vacuum
+    @ externa
+    functio aliter() → textus
 }
 probandum "suite" {
     praepara omnia {}
@@ -646,7 +649,7 @@ probandum "suite" {
         panic!("expected interface declaration");
     };
     assert_eq!(interface.type_params.len(), 1);
-    assert_eq!(interface.methods.len(), 1);
+    assert_eq!(interface.methods.len(), 2);
     assert_eq!(interface.methods[0].modifiers.len(), 1);
 
     let StmtKind::Probandum(test) = &program.stmts[2].kind else {
