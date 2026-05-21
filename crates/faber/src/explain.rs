@@ -344,6 +344,11 @@ pub fn render_list(registry: &Registry) -> String {
         .map(|entry| display_width(&entry.term))
         .max()
         .unwrap_or(0);
+    let category_width = entries
+        .iter()
+        .map(|entry| display_width(&entry.category))
+        .max()
+        .unwrap_or(0);
 
     for kind in [
         Kind::Keyword,
@@ -372,7 +377,9 @@ pub fn render_list(registry: &Registry) -> String {
             out.push_str("  ");
             push_padded(&mut out, &entry.term, term_width);
             out.push_str("  ");
-            out.push_str(&entry.category);
+            push_padded(&mut out, &entry.category, category_width);
+            out.push_str("  ");
+            out.push_str(&entry.summary);
             out.push('\n');
         }
     }
