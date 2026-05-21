@@ -3,7 +3,7 @@
 @ imperium "dry-run"
 @ descriptio "Render the execution plan without launching an agent"
 @ operandus textus id descriptio "Automation id"
-functio dryRun() argumenta args -> vacuum {
+functio dryRun() argumenta args → vacuum {
     scribe scriptum("dry-run: §", args.id)
     scribe scriptum("root: §", args.root)
     scribe "executor: codex"
