@@ -501,7 +501,52 @@ Phase 3 completion metrics:
 
 ### Phase 4: Faber Test Metadata Model
 
-Steps:
+Goal:
+
+Make Faber tests first-class in HIR so later tool phases can reason about source-level test names, suite membership, and modifiers without reverse-engineering synthetic Rust functions.
+
+Current problem:
+
+- `lower_proba_item` currently lowers each `proba` to a synthetic `HirFunction`.
+- Ignored-test state for `omitte` and `futurum` is carried by setting `HirFunction::is_generator`.
+- Rust codegen identifies tests by synthetic `def_id >= 1_000_000`.
+- That works for Cargo-backed Phase 1-3 behavior, but it overloads unrelated function metadata and gives `faber test` no honest source-level model for Phase 5 selection.
+
+Data model target:
+
+Add explicit HIR test metadata. The exact names can follow local style, but the shape should be equivalent to:
+
+```rust
+pub struct HirTestMetadata {
+    pub name: Symbol,
+    pub suite_path: Vec<Symbol>,
+    pub modifiers: Vec<HirTestModifier>,
+    pub span: Span,
+}
+
+pub enum HirTestModifier {
+    Omitte(Symbol),
+    Futurum(Symbol),
+    Solum,
+    Tag(Symbol),
+    Temporis(i64),
+    Metior,
+    Repete(i64),
+    Fragilis(i64),
+    Requirit(Symbol),
+    SolumIn(Symbol),
+}
+```
+
+Attach the metadata to synthetic test functions, likely as:
+
+```rust
+pub test: Option<HirTestMetadata>
+```
+
+on `HirFunction`. A normal user function has `test: None`; every lowered `proba` has `test: Some(...)`.
+
+Rules:
 
 - Add explicit test metadata to HIR rather than overloading `HirFunction::is_generator`.
 - Preserve:
@@ -509,14 +554,59 @@ Steps:
   - suite path,
   - source span,
   - modifiers and modifier payloads.
-- Update Rust codegen to emit the same Rust output initially.
-- Keep this phase behavior-preserving except for metadata availability.
+- Keep `HirFunction::is_generator` only for real generator/cursor semantics. Do not use it for ignored tests.
+- Keep this phase behavior-preserving except for metadata availability. Existing `faber test` CLI behavior should not change.
+- Rust codegen should still emit:
+  - `#[test]` for lowered `proba` functions,
+  - `#[ignore]` for metadata containing `Omitte(_)` or `Futurum(_)`,
+  - the same generated Rust test function naming scheme unless a small internal helper rename is necessary.
+- Do not implement Faber-specific selection in this phase.
+- Do not implement custom reporting in this phase.
+- Do not change `futurum` semantics yet; it remains ignored for now.
+- Do not change the parser syntax.
+
+Likely implementation steps:
+
+- Add `HirTestMetadata` and `HirTestModifier` to the HIR node model and exports.
+- Add `test: Option<HirTestMetadata>` to `HirFunction`.
+- Update all manual `HirFunction` construction sites and tests with `test: None`.
+- Convert parser-level `ProbaModifier` values into `HirTestModifier` values during lowering.
+- Thread suite path information through `lower_probandum_items` so nested tests retain their full source suite path.
+- Set `test: Some(...)` in `lower_proba_item`.
+- Set `is_generator: false` for all lowered `proba` functions.
+- Update Rust codegen test detection to use `func.test.is_some()` instead of synthetic `def_id` heuristics where practical.
+- Update Rust codegen ignore detection to inspect `func.test.modifiers`.
+- Update Faber codegen's synthetic proba round-trip path to use `func.test` instead of `is_generator` for ignored-test output.
+- Keep any remaining `def_id >= 1_000_000` checks only as a temporary naming fallback if removing them would broaden the phase.
 
 Checkpoint:
 
 - Existing proba/probandum compiler tests still pass.
-- New unit tests prove metadata survives parsing, lowering, and codegen inspection.
+- New unit tests prove metadata survives lowering for:
+  - top-level `proba`,
+  - nested `probandum`,
+  - `omitte`,
+  - `futurum`,
+  - `solum`,
+  - `tag`,
+  - `requirit`,
+  - `solum_in`.
+- Rust codegen tests prove `#[test]` and `#[ignore]` are emitted from `HirTestMetadata`, not `is_generator`.
+- Faber codegen tests prove ignored proba cases round-trip from test metadata.
 - No CLI behavior changes are required in this phase.
+- `rg "is_generator" crates/radix/src/hir/lower crates/radix/src/codegen` shows no use of `is_generator` as test metadata.
+- `faber test` Phase 1-3 fixture smokes still behave exactly the same.
+
+Phase 4 completion metrics:
+
+- `HirFunction::is_generator` is never set from a `proba` modifier.
+- `HirFunction::is_generator` is not read to decide whether a Faber test is ignored.
+- Every lowered `proba` function has `test: Some(HirTestMetadata)`.
+- Every non-test function has `test: None`.
+- Original source test names and suite paths are inspectable from HIR.
+- All parsed proba modifiers are represented in HIR metadata, including modifiers not yet enforced by the runner.
+- Existing generated Rust behavior for passing, failing, ignored, and suite fixtures is unchanged.
+- No `faber test` command-line flags are added or removed.
 
 ### Phase 5: Faber-Specific Selection
 
