@@ -1,5 +1,5 @@
 use super::Interner;
-use crate::lexer::{lex, LexErrorKind, TokenKind};
+use crate::lexer::{keyword_specs, lex, lookup_keyword_spec, KeywordOwner, KeywordScope, LexErrorKind, TokenKind};
 
 #[test]
 fn lexes_unicode_identifiers() {
@@ -9,6 +9,114 @@ fn lexes_unicode_identifiers() {
         .tokens
         .iter()
         .any(|token| matches!(token.kind, TokenKind::Ident(_))));
+}
+
+#[test]
+fn keyword_registry_covers_normal_mode_keyword_table() {
+    for (text, token_variant) in normal_mode_keyword_entries() {
+        let spec = lookup_keyword_spec(&text)
+            .unwrap_or_else(|| panic!("missing KeywordSpec for normal-mode keyword '{text}'"));
+        let token_kind = spec
+            .token_kind
+            .as_ref()
+            .unwrap_or_else(|| panic!("normal-mode keyword '{text}' must record its TokenKind"));
+
+        assert_eq!(
+            format!("{token_kind:?}"),
+            token_variant,
+            "KeywordSpec for '{text}' disagrees with keyword_or_ident()"
+        );
+    }
+}
+
+#[test]
+fn keyword_registry_specs_lex_to_current_tokens() {
+    for spec in keyword_specs()
+        .iter()
+        .filter(|spec| spec.currently_lexes_as_keyword())
+    {
+        let result = lex(spec.text);
+        assert!(result.errors.is_empty(), "failed to lex keyword spec '{}'", spec.text);
+        let token_kind = spec.token_kind.as_ref().expect("checked above");
+
+        assert_eq!(
+            format!("{:?}", result.tokens[0].kind),
+            format!("{token_kind:?}"),
+            "lexer disagrees with KeywordSpec for '{}'",
+            spec.text
+        );
+    }
+}
+
+#[test]
+fn keyword_registry_includes_contextual_cura_page() {
+    let spec = lookup_keyword_spec("page").expect("page should be registered as contextual cura vocabulary");
+    assert!(
+        spec.token_kind.is_none(),
+        "page currently lexes as an identifier, not a keyword token"
+    );
+
+    match spec.scope {
+        KeywordScope::Contextual(owners) => {
+            assert!(owners.contains(&KeywordOwner::CuraKind), "page must belong to CuraKind");
+        }
+        other => panic!("page should be contextual, got {other:?}"),
+    }
+}
+
+#[test]
+fn keyword_registry_alias_entries_preserve_source_text() {
+    let spec = lookup_keyword_spec("scribe").expect("scribe compatibility spelling should be registered");
+    assert_eq!(spec.text, "scribe");
+
+    match spec.scope {
+        KeywordScope::Alias { canonical } => assert_eq!(canonical, "nota"),
+        other => panic!("scribe should be recorded as an alias, got {other:?}"),
+    }
+}
+
+#[test]
+fn keyword_registry_texts_are_unique() {
+    let mut texts = std::collections::BTreeSet::new();
+    for spec in keyword_specs() {
+        assert!(texts.insert(spec.text), "duplicate KeywordSpec for '{}'", spec.text);
+    }
+}
+
+fn normal_mode_keyword_entries() -> Vec<(String, String)> {
+    let source = include_str!("scan.rs");
+    let table = source
+        .split("fn keyword_or_ident")
+        .nth(1)
+        .expect("keyword_or_ident should exist")
+        .split("fn annotation_keyword_or_ident")
+        .next()
+        .expect("annotation keyword table should follow normal keyword table");
+
+    table
+        .lines()
+        .filter_map(|line| {
+            let line = line.trim();
+            if !line.starts_with('"') {
+                return None;
+            }
+
+            let (text, token) = line.split_once("=> TokenKind::")?;
+            let text = text.trim().trim_matches('"');
+            if text == "_" {
+                return None;
+            }
+
+            let token = token
+                .split(['(', ','])
+                .next()
+                .expect("token variant")
+                .trim()
+                .to_owned();
+
+            Some((text.to_owned(), token))
+        })
+        .collect()
 }
 
 #[test]

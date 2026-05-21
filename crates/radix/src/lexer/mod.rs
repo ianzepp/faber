@@ -20,10 +20,12 @@
 //!   uses iterator cloning for lookahead
 
 mod cursor;
+mod keywords;
 mod scan;
 mod token;
 
 pub use cursor::Cursor;
+pub use keywords::{keyword_specs, lookup_keyword_spec, KeywordCategory, KeywordOwner, KeywordScope, KeywordSpec};
 pub use scan::{Interner, Lexer};
 pub use token::{Span, Symbol, Token, TokenKind};
 
