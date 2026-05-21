@@ -94,6 +94,29 @@ cargo build --manifest-path target/faber/Cargo.toml --target-dir target
 
 `faber emit -t rust --package` is the inspection path if you only want to see the generated Rust on stdout without writing the crate tree.
 
+## Testing Packages
+
+`faber test` uses the same generated-crate layout as `faber build`, but it executes Cargo's test harness instead of the binary build.
+
+The implementation first writes the package to `target/faber/`, then runs:
+
+```bash
+cargo test --manifest-path target/faber/Cargo.toml --target-dir target
+```
+
+That keeps Cargo artifacts in the package `target/` sibling directories and avoids `target/faber/target/`.
+
+Selection is implemented by the generated Rust harness:
+
+- `--name` matches the original Faber test name.
+- `--suite` matches the full suite path joined with `/`.
+- `--tag` matches the `tag` modifier.
+- `solum` cases are treated as focused tests and win the default selection set when any are present.
+- `omitte` and `futurum` still compile as ignored Rust tests with reasons.
+- `--ignored` and `--include-ignored` are forwarded to Cargo's Rust harness and therefore also affect selection-ignored tests.
+
+The current implementation is Rust-only and keeps all tests generated so the compiler still checks deselected test bodies.
+
 ## Current Limits
 
 - Dependency declarations are not implemented yet.

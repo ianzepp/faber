@@ -29,6 +29,7 @@ cargo run -p faber -- explain --search equality
 cargo run -p faber -- explain --json proba
 cargo run -p faber -- check examples/exempla/salve-munde.fab
 cargo run -p faber -- build examples/exempla/salve-munde.fab
+cargo run -p faber -- test examples/exempla/proba/packages/passing
 cargo run -p faber -- emit -t rust examples/exempla/salve-munde.fab
 
 cargo run -p radix --bin radix -- targets
@@ -66,6 +67,8 @@ kind = "bin"
 Run `cargo run -p faber -- init hello` to create a starter package. See
 [`docs/grammatica/manifest.md`](docs/grammatica/manifest.md) for the current manifest contract.
 
+[`docs/grammatica/test.md`](docs/grammatica/test.md) covers `proba`, `probandum`, and `faber test`.
+
 ## CLI Roles (v0.34)
 
 **Faber** is the user-facing project and package tool:
@@ -73,7 +76,7 @@ Run `cargo run -p faber -- init hello` to create a starter package. See
 - `faber check`, `faber build`, `faber targets`
 - `faber explain <term>`, `faber explain --search <query>`, `faber explain --list`, `faber explain --json <term>`
 - `faber init`
-- `faber run`; `faber test` (planned)
+- `faber run`; `faber test`
 - Compatibility aliases: `faber lex`, `faber parse`, `faber hir`, `faber emit`, `faber cli-ir`
 
 **Radix** is the compiler-developer tool:

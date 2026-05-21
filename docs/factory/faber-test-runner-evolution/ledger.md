@@ -153,10 +153,10 @@ No changes to HIR/metadata (Phase 4+) or docs (Phase 6) in this slice.
 - Two independent commits after the Phase 1 baseline.
 
 ## Current Overall Status
-- Phases 0–3 delivered and committed (each with its own gate + smoke proof).
-- `faber test` is now a fully functional Cargo-backed runner with the ergonomics and ignored-test controls specified in the updated plan.
-- Remaining work (Phase 4 HIR metadata cleanup, 5 selection, 6 docs, 7 full release validation) is explicitly out of scope for this slice per the original plan guidance.
-- Ledger and fixtures are the source of truth for repeatable verification.
+- Phases 0–6 are now delivered in this repository, with phases 0–3 committed earlier and phases 4–6 implemented in the current sequence.
+- `faber test` now has structured test metadata, source-level selection behavior, and docs that describe the live surface.
+- Remaining work is Phase 7 release validation.
+- The plan remains open until phase 7 lands and the plan status is updated truthfully.
 
 ---
 
@@ -208,3 +208,23 @@ No changes to HIR/metadata (Phase 4+) or docs (Phase 6) in this slice.
 - `faber test` now has structured test metadata and source-level selection behavior.
 - Remaining work is Phase 6 documentation/reporting polish and Phase 7 release validation.
 - The plan remains open until those later phases land and the plan status is updated truthfully.
+
+---
+
+## Phase 6: Documentation and Reporting
+
+**Date**: 2026-05-21
+
+### Implementation
+- Added `docs/grammatica/test.md` to cover:
+  - `proba` and `probandum`
+  - test modifiers and current limits
+  - `faber test` selector flags and ignored-test behavior
+  - the reusable smoke fixtures under `examples/exempla/proba/packages/`
+- Updated `docs/grammatica/manifest.md` with the Cargo-backed `faber test` layout and selector behavior.
+- Updated `docs/grammatica/verba.md` so `solum` is described as active behavior instead of planned vocabulary.
+- Updated `README.md` so `faber test` is presented as implemented and the test docs are discoverable from the main project entrypoint.
+
+### Validation
+- Readback inspection of the updated docs and README against the live `faber test --help` surface from phase 5.
+- `git diff --check`

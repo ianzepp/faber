@@ -58,6 +58,12 @@ Keywords for organizing test suites and cases:
 | `omnia`       | all              | Modifier: beforeAll/afterAll       |
 | `omitte`      | skip             | Skip this test                     |
 | `futurum`     | todo             | Mark test as pending               |
+| `solum`       | focus            | Run this test by default when any focused tests exist |
+| `tag`         | tag              | Attach a label used by `faber test --tag` |
+| `requirit`    | requires         | Requirement metadata for later phases |
+| `solum_in`    | only in          | Environment-scoping metadata for later phases |
+
+`temporis`, `metior`, `repete`, and `fragilis` are also parsed on test declarations and preserved in HIR metadata. The current `faber test` implementation does not enforce them yet.
 
 ---
 
@@ -309,13 +315,11 @@ Current `radix-rs` reality:
 
 ---
 
-## Planned Keywords
+## Selection Notes
 
-Not yet implemented:
-
-| Verbum  | Meaning | Status                             |
-| ------- | ------- | ---------------------------------- |
-| `solum` | only    | Test modifier (run only this test) |
+- `solum` is active in `faber test`: when a package contains one or more focused tests, default test runs execute only those focused cases.
+- `tag` is active in `faber test --tag`.
+- `requirit`, `solum_in`, `temporis`, `metior`, `repete`, and `fragilis` are currently carried through metadata for later runner phases rather than enforced immediately.
 
 ---
 
