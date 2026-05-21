@@ -80,7 +80,7 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 ## Module-by-Module Findings & Recommendations
 
-### 1. `solum.fab` (Filesystem) — Generally Good
+### 1. `solum.fab` (Filesystem) — Line Collection Resolved
 
 **Current Pattern**:
 - `lege` / `leget`
@@ -93,8 +93,8 @@ This document reviews the current interfaces and proposes targeted renames **bef
 **Assessment**: Strong. The `-et` / `-iet` future forms are used consistently for async file operations.
 
 **Recommendations**:
-- Keep as-is for now.
-- Consider whether `carpiet` (line-by-line) should eventually become a generator form instead of returning `lista<textus>`. If so, the name may need adjustment later.
+- Keep `carpe` / `carpiet` as sync/async collect-all-lines forms returning `lista<textus>`.
+- If line streaming is added later, use the real plural forms of `carpere`: `carpunt` for sync generator, `carpent` for async generator.
 
 ---
 
@@ -243,6 +243,7 @@ Create (or expand) a document that defines the expected conjugation patterns for
 | Cross-cutting | Generator form policy | Use real present plural for sync generators and real future plural for async generators | Done | Stabilizes stream call-site forms |
 | `arca`     | `quaerent`         | Keep | Done | Real future plural for `quaerere`; same query operation remains one root |
 | `arca`     | `capiet`           | Keep as separate root | Done | Single-row retrieval has distinct result shape and wrapper possibilities |
+| `solum`    | `carpiet`          | Keep as async line collection | Done | Streaming should add `carpunt` / `carpent`, not rename collected-list forms |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
 ### Medium Priority
