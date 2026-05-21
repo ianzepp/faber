@@ -1,0 +1,12 @@
+proba "arithmetic passes" {
+    adfirma 1 + 1 ≡ 2
+}
+
+proba "text passes" {
+    fixum greeting ← "salve"
+    adfirma greeting ≡ "salve"
+}
+
+incipit {
+    scribe "test fixture"
+}

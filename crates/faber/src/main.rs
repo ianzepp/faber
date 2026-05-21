@@ -34,7 +34,7 @@ enum Command {
     Explain(ExplainArgs),
     /// Build (if needed) and run a compiled package
     Run(RunArgs),
-    /// Run package tests (planned)
+    /// Run package tests via the generated Rust test harness (Cargo-backed)
     Test(TestArgs),
     /// Tokenize source and output JSON (compatibility alias for `radix lex`)
     Lex(radix::tool::InputArgs),
@@ -358,9 +358,65 @@ fn cmd_run(args: RunArgs) {
 }
 
 fn cmd_test(args: TestArgs) {
-    eprintln!(
-        "error: `faber test` is not implemented yet; use `faber check` on {}",
-        args.path.display()
-    );
-    std::process::exit(1);
+    use std::path::PathBuf;
+
+    let input_path = PathBuf::from(&args.path);
+
+    // Treat as package (test is a package-level operation; mirrors cmd_run).
+    let config = radix::driver::Config::default().with_target(radix::codegen::Target::Rust);
+    let result = package::compile_package(&config, &input_path);
+
+    for diag in &result.diagnostics {
+        if diag.is_error() {
+            eprintln!("error: {}", diag.message);
+        } else {
+            eprintln!("warning: {}", diag.message);
+        }
+    }
+
+    let Some(output) = result.output else {
+        eprintln!("compilation failed");
+        std::process::exit(1);
+    };
+
+    let layout = match package::discover_build_layout(&input_path) {
+        Ok(l) => l,
+        Err(d) => {
+            eprintln!("error: {}", d.message);
+            std::process::exit(1);
+        }
+    };
+
+    let meta = if layout.manifest_path.exists() {
+        package::read_manifest(&layout.manifest_path).ok()
+    } else {
+        None
+    };
+
+    let code_string = match output {
+        radix::Output::Rust(r) => r.code,
+        _ => {
+            eprintln!("error: test only supports Rust backend packages");
+            std::process::exit(1);
+        }
+    };
+
+    if let Err(d) = package::emit_generated_crate(&layout, &code_string, meta.as_ref()) {
+        eprintln!("error emitting: {}", d.message);
+        std::process::exit(1);
+    }
+
+    let status = match package::invoke_cargo_test(&layout) {
+        Ok(s) => s,
+        Err(d) => {
+            eprintln!("error: {}", d.message);
+            std::process::exit(1);
+        }
+    };
+
+    if let Some(code) = status.code() {
+        std::process::exit(code);
+    } else {
+        std::process::exit(1);
+    }
 }

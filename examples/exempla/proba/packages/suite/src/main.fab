@@ -1,0 +1,18 @@
+probandum "math suite" {
+    praepara omnia {
+        fixum setup_value ← 1
+        adfirma setup_value ≡ 1
+    }
+
+    proba "top level suite case" {
+        adfirma 2 + 2 ≡ 4
+    }
+
+    probandum "nested suite" {
+        proba "nested case" {
+            adfirma verum
+        }
+    }
+}
+
+incipit {}

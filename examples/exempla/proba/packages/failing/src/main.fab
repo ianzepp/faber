@@ -1,0 +1,5 @@
+proba "intentional failure" {
+    adfirma 1 + 1 ≡ 3
+}
+
+incipit {}
