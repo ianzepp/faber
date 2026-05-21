@@ -120,3 +120,31 @@ Phase 1 may begin once this ledger section is committed and the plan status is a
 
 ---
 *Phase 1 complete. Ready for Phase 2 datum::Valor.*
+
+## Phase 2 Completion Record (2026-05-21)
+
+### Changes Made
+- Added `crates/norma/datum.rs` with the canonical `pub enum Valor` (Nihil, Bivalens, Numerus(i64), Fractus(f64), Textus, Lista, Tabula<BTreeMap>, Tempus(String for datetimes)).
+- Implemented `TryFrom<serde_json::Value>` / `From<Valor> for serde_json::Value` and equivalent for `toml::Value` with deterministic BTreeMap ordering and explicit error paths (`DatumError::UnsupportedValue`).
+- Numeric policy: JSON/TOML ints -> Numerus when exact i64, else Fractus; datetimes -> Tempus(text) (degrades safely to textus when crossing to JSON).
+- 5 unit tests exercising roundtrips, datetime handling, and edge numeric cases (no panics).
+- Exposed via `pub mod datum;` in `lib.rs`.
+
+### Validation
+- `cargo check -p norma` clean.
+- `cargo test -p norma datum` : all 5 tests pass, conversions verified, errors are typed.
+- No changes to existing json.rs / toml.rs signatures yet (adapters come in Phase 6/7 when functions are reimplemented over Valor).
+
+### Design Notes / Caveats
+- `Tempus` is the chosen representation for TOML datetimes (text form); the toml-specific `est_tempus` etc. will pattern-match the variant in later phases.
+- `nihil` through TOML becomes the string "null" (documented limitation; safe variants should be preferred by callers).
+- `BTreeMap` chosen for Tabula to give stable serialization order (important for golden tests and reproducibility).
+
+### Checkpoint Met
+- `cargo test -p norma` proves supported conversions for JSON and TOML shapes.
+- Unsupported cases (if any) return `DatumError`, not panics.
+- `cargo check -p norma` remains clean.
+- `norma::datum::Valor` is now the single runtime ABI type.
+
+---
+*Phase 2 complete. Valor is the law.*
