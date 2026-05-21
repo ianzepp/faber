@@ -257,6 +257,29 @@ impl<'a> Lowerer<'a> {
         self.types.array(textus)
     }
 
+    pub(super) fn command_args_type(&mut self, function: Symbol) -> TypeId {
+        if let Some(cli) = self.cli_program {
+            if let Some(command) = cli
+                .commands
+                .iter()
+                .find(|command| command.function_symbol == function)
+            {
+                let mut fields = FxHashMap::default();
+                for option in cli.global_options.iter().chain(command.options.iter()) {
+                    let ty = self.cli_value_type(&option.ty, option.default.is_none() && !option.flag, false);
+                    fields.insert(option.binding_symbol, ty);
+                }
+                for operand in cli.global_operands.iter().chain(command.operands.iter()) {
+                    let ty = self.cli_value_type(&operand.ty, false, operand.rest);
+                    fields.insert(operand.binding_symbol, ty);
+                }
+                return self.types.intern(Type::Record(fields));
+            }
+        }
+
+        self.types.primitive(Primitive::Ignotum)
+    }
+
     fn cli_value_type(&mut self, ty: &CliType, optional: bool, rest: bool) -> TypeId {
         let base = match ty {
             CliType::Textus | CliType::Ignotum => self.types.primitive(Primitive::Textus),
@@ -364,6 +387,7 @@ impl<'a> Lowerer<'a> {
                 name: case.name,
                 type_params: Vec::new(),
                 params: Vec::new(),
+                cli_args: None,
                 ret_ty: Some(self.types.primitive(crate::semantic::Primitive::Vacuum)),
                 body: Some(HirBlock { stmts, expr: None, span: case.span }),
                 is_async: false,

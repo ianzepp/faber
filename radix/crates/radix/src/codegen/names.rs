@@ -43,6 +43,9 @@ pub(crate) fn collect_names(hir: &HirProgram) -> FxHashMap<crate::hir::DefId, Sy
                 for param in &func.params {
                     names.insert(param.def_id, param.name);
                 }
+                if let Some(param) = &func.cli_args {
+                    names.insert(param.def_id, param.name);
+                }
                 collect_block_names(&mut names, func.body.as_ref());
             }
             HirItemKind::Struct(strukt) => {
@@ -59,6 +62,9 @@ pub(crate) fn collect_names(hir: &HirProgram) -> FxHashMap<crate::hir::DefId, Sy
                         names.insert(type_param.def_id, type_param.name);
                     }
                     for param in &method.func.params {
+                        names.insert(param.def_id, param.name);
+                    }
+                    if let Some(param) = &method.func.cli_args {
                         names.insert(param.def_id, param.name);
                     }
                     collect_block_names(&mut names, method.func.body.as_ref());

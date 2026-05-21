@@ -21,6 +21,7 @@ fn infers_function_return_type() {
             id: crate::hir::HirId(0),
             def_id: DefId(0),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: crate::lexer::Symbol(1),
                 type_params: Vec::new(),
                 params: Vec::new(),
@@ -105,6 +106,7 @@ fn resolves_method_call_type() {
                 methods: vec![crate::hir::HirMethod {
                     def_id: DefId(2),
                     func: HirFunction {
+                        cli_args: None,
                         name: method_name,
                         type_params: Vec::new(),
                         params: Vec::new(),

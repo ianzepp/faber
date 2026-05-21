@@ -235,7 +235,7 @@ incipit argumenta args exitus 5 {
 }
 
 #[test]
-fn cli_codegen_gates_non_rust_targets_and_subcommands() {
+fn cli_codegen_gates_non_rust_targets() {
     let source = r#"@ cli "tool"
 incipit argumenta args {}"#;
     let ts = compile(&session(Target::TypeScript), "cli.fab", source);
@@ -244,18 +244,87 @@ incipit argumenta args {}"#;
         .diagnostics
         .iter()
         .any(|d| d.message.contains("only implemented for Rust")));
+}
 
-    let subcommand = r#"@ cli "tool"
+#[test]
+fn rust_subcommand_cli_dispatches_aliases_nested_commands_and_command_args() {
+    let session = session(Target::Rust);
+    let source = r#"@ cli "tool"
+@ versio "2.0.0"
+@ optio verbose brevis "v" longum "verbose" typus bivalens ubique
 incipit argumenta args {}
 
-@ imperium "run"
-functio run() -> vacuum {}"#;
-    let rust = compile(&session(Target::Rust), "cli.fab", subcommand);
-    assert!(rust.output.is_none());
-    assert!(rust
-        .diagnostics
-        .iter()
-        .any(|d| d.message.contains("subcommand CLI code generation") && d.message.contains("Phase 04")));
+@ imperium "jobs/list"
+@ alias "ls"
+@ descriptio "List jobs"
+@ optio limit longum "limit" typus numerus vel 20
+functio list() argumenta args -> vacuum {
+  scribe args.verbose
+  scribe args.limit
+}
+
+@ imperium "jobs/show"
+@ operandus numerus id
+functio show() argumenta args -> vacuum {
+  scribe args.verbose
+  scribe args.id
+}"#;
+    let result = compile(&session, "cli.fab", source);
+    assert!(
+        result.success(),
+        "diagnostics: {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|d| &d.message)
+            .collect::<Vec<_>>()
+    );
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+    let binary = compile_rust_source_with_rustc(&output.code, "subcommand-cli");
+
+    let nested = Command::new(&binary)
+        .args(["--verbose", "jobs", "list", "--limit", "3"])
+        .output()
+        .expect("run nested command");
+    assert!(nested.status.success());
+    assert_eq!(String::from_utf8_lossy(&nested.stdout), "true\n3\n");
+
+    let alias = Command::new(&binary)
+        .args(["ls"])
+        .output()
+        .expect("run alias");
+    assert!(alias.status.success());
+    assert_eq!(String::from_utf8_lossy(&alias.stdout), "false\n20\n");
+
+    let operand = Command::new(&binary)
+        .args(["jobs", "show", "42"])
+        .output()
+        .expect("run operand command");
+    assert!(operand.status.success());
+    assert_eq!(String::from_utf8_lossy(&operand.stdout), "false\n42\n");
+
+    let help = Command::new(&binary)
+        .args(["jobs", "list", "--help"])
+        .output()
+        .expect("run command help");
+    assert!(help.status.success());
+    let help_stdout = String::from_utf8_lossy(&help.stdout);
+    assert!(help_stdout.contains("Usage: tool jobs list [OPTIONS]"));
+    assert!(help_stdout.contains("--verbose"));
+    assert!(help_stdout.contains("--limit"));
+
+    let missing = Command::new(&binary).output().expect("run missing command");
+    assert_eq!(missing.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&missing.stdout).contains("Usage: tool [OPTIONS] <COMMAND>"));
+
+    let unknown = Command::new(&binary)
+        .arg("bogus")
+        .output()
+        .expect("run unknown command");
+    assert_eq!(unknown.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&unknown.stderr).contains("unknown command 'bogus'"));
 }
 
 #[test]

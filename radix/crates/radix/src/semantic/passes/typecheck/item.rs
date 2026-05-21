@@ -7,6 +7,9 @@ impl<'a> TypeChecker<'a> {
             let mutable = matches!(param.mode, HirParamMode::MutRef);
             self.insert_binding(param.def_id, param.ty, mutable);
         }
+        if let Some(param) = &func.cli_args {
+            self.insert_binding(param.def_id, param.ty, false);
+        }
 
         let prev_return = self.current_return;
         let prev_inferred = self.inferred_return;

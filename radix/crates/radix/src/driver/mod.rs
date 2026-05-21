@@ -76,19 +76,10 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         if session.config.target != Target::Rust {
             analysis.diagnostics.push(
                 Diagnostic::error(
-                    "runnable CLI code generation is only implemented for Rust in CLI framework Phase 03",
+                    "runnable CLI code generation is only implemented for Rust in CLI framework Phase 04",
                 )
                 .with_code("CODEGEN002")
                 .with_file(name.to_owned()),
-            );
-            return CompileResult { output: None, diagnostics: analysis.diagnostics };
-        }
-
-        if cli_program.mode == crate::cli::CliMode::Subcommand {
-            analysis.diagnostics.push(
-                Diagnostic::error("subcommand CLI code generation is not implemented until CLI framework Phase 04")
-                    .with_code("CODEGEN003")
-                    .with_file(name.to_owned()),
             );
             return CompileResult { output: None, diagnostics: analysis.diagnostics };
         }
@@ -142,7 +133,17 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
 }
 
 fn phase03_cli_codegen_gap(program: &crate::cli::CliProgram) -> Option<String> {
-    for option in program.global_options.iter().chain(program.options.iter()) {
+    for option in program
+        .global_options
+        .iter()
+        .chain(program.options.iter())
+        .chain(
+            program
+                .commands
+                .iter()
+                .flat_map(|command| command.options.iter()),
+        )
+    {
         if !matches!(
             option.ty,
             crate::cli::CliType::Textus
@@ -161,6 +162,12 @@ fn phase03_cli_codegen_gap(program: &crate::cli::CliProgram) -> Option<String> {
         .global_operands
         .iter()
         .chain(program.operands.iter())
+        .chain(
+            program
+                .commands
+                .iter()
+                .flat_map(|command| command.operands.iter()),
+        )
     {
         let supported_scalar = matches!(
             operand.ty,

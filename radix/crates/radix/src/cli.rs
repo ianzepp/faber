@@ -49,6 +49,8 @@ pub enum CliExit {
 pub struct CliCommand {
     pub path: Vec<String>,
     pub function: String,
+    pub function_symbol: crate::lexer::Symbol,
+    pub args_binding: Option<String>,
     pub aliases: Vec<String>,
     pub description: Option<String>,
     pub options: Vec<CliOption>,
@@ -140,6 +142,7 @@ impl CliBuilder<'_> {
         let mut globals = CliSurface::default();
         let mut single = CliSurface::default();
         self.collect_surface(&entry_stmt.annotations, SurfacePlacement::TopLevel, &mut globals, &mut single);
+        self.reject_module_mounts(program);
 
         let commands = self.collect_commands(program);
         let mode = if commands.is_empty() {
@@ -149,6 +152,12 @@ impl CliBuilder<'_> {
                 self.error(
                     entry_stmt.span,
                     "subcommand CLI programs may only declare top-level options or operands with 'ubique'",
+                );
+            }
+            if !incipit_body_is_empty(&entry.body) {
+                self.error(
+                    entry_stmt.span,
+                    "subcommand CLI programs must use an empty root incipit body in Phase 04",
                 );
             }
             CliMode::Subcommand
@@ -219,6 +228,8 @@ impl CliBuilder<'_> {
             let command = CliCommand {
                 path,
                 function: self.ident(&func.name),
+                function_symbol: func.name.name,
+                args_binding: command_argument_binding(&func.modifiers).map(|ident| self.ident(ident)),
                 aliases: string_metadata_all(&stmt.annotations, self.interner, "alias"),
                 description: string_metadata(&stmt.annotations, self.interner, "descriptio"),
                 options: surface.options,
@@ -247,6 +258,21 @@ impl CliBuilder<'_> {
                     );
                 }
                 _ => {}
+            }
+        }
+    }
+
+    fn reject_module_mounts(&mut self, program: &Program) {
+        for stmt in &program.stmts {
+            for annotation in &stmt.annotations {
+                if let AnnotationKind::Statement(annotation_stmt) = &annotation.kind {
+                    if self.interner.resolve(annotation_stmt.name.name) == "imperia" {
+                        self.error(
+                            annotation.span,
+                            "@ imperia module-mounted commands are gated until CLI framework Phase 05",
+                        );
+                    }
+                }
             }
         }
     }
@@ -524,7 +550,7 @@ impl CliBuilder<'_> {
         if !func.params.is_empty() {
             self.error(
                 span,
-                "Phase 02 CLI commands must receive parsed values through the entry-point args object",
+                "Phase 04 CLI commands must receive parsed values through 'argumenta <ident>', not ordinary parameters",
             );
         }
     }
@@ -606,6 +632,17 @@ fn has_cli_annotation(annotations: &[Annotation]) -> bool {
     annotations
         .iter()
         .any(|annotation| matches!(annotation.kind, AnnotationKind::Cli(_)))
+}
+
+fn command_argument_binding(modifiers: &[crate::syntax::FuncModifier]) -> Option<&Ident> {
+    modifiers.iter().find_map(|modifier| match modifier {
+        crate::syntax::FuncModifier::Argumenta(ident) => Some(ident),
+        _ => None,
+    })
+}
+
+fn incipit_body_is_empty(body: &crate::syntax::IfBody) -> bool {
+    matches!(body, crate::syntax::IfBody::Block(block) if block.stmts.is_empty())
 }
 
 fn string_metadata(annotations: &[Annotation], interner: &Interner, name: &str) -> Option<String> {

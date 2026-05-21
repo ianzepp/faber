@@ -158,6 +158,7 @@ fn ts_codegen_collects_function_param_names() {
             id: HirId(1),
             def_id: DefId(11),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: f_name,
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -193,6 +194,7 @@ fn emits_function_and_entry_iife() {
             id: HirId(1),
             def_id: DefId(1),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: f_name,
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -297,6 +299,7 @@ fn emits_class_interface_import_and_variable_statements() {
                     methods: vec![HirMethod {
                         def_id: DefId(7),
                         func: HirFunction {
+                            cli_args: None,
                             name: method_name,
                             type_params: Vec::new(),
                             params: vec![HirParam {
@@ -549,6 +552,7 @@ fn emits_optional_chain_closure_template_and_await() {
             id: HirId(100),
             def_id: DefId(3),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: interner.intern("fetch"),
                 type_params: Vec::new(),
                 params: Vec::new(),

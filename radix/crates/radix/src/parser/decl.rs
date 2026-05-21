@@ -356,7 +356,10 @@ impl Parser {
         let mut modifiers = Vec::new();
 
         loop {
-            if self.eat_keyword(TokenKind::Curata) {
+            if self.eat_keyword(TokenKind::Argumenta) {
+                let name = self.parse_ident()?;
+                modifiers.push(FuncModifier::Argumenta(name));
+            } else if self.eat_keyword(TokenKind::Curata) {
                 let name = self.parse_ident()?;
                 modifiers.push(FuncModifier::Curata(name));
             } else if self.eat_keyword(TokenKind::Errata) {

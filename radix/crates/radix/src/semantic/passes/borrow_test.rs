@@ -41,6 +41,7 @@ fn reports_use_after_move() {
             id: crate::hir::HirId(0),
             def_id: DefId(0),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: crate::lexer::Symbol(1),
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -113,6 +114,7 @@ fn reports_mutable_borrow_conflict() {
             id: crate::hir::HirId(0),
             def_id: DefId(0),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: crate::lexer::Symbol(1),
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -177,6 +179,7 @@ fn reports_assign_to_de_parameter() {
             id: crate::hir::HirId(0),
             def_id: DefId(0),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: crate::lexer::Symbol(1),
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -244,6 +247,7 @@ fn reports_de_passed_to_in_position() {
             id: crate::hir::HirId(0),
             def_id: DefId(0),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: crate::lexer::Symbol(1),
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -287,6 +291,7 @@ fn warns_when_in_parameter_is_never_mutated() {
             id: crate::hir::HirId(0),
             def_id: DefId(0),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: crate::lexer::Symbol(1),
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -330,6 +335,7 @@ fn warns_when_ex_parameter_is_never_consumed() {
             id: crate::hir::HirId(0),
             def_id: DefId(0),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: crate::lexer::Symbol(1),
                 type_params: Vec::new(),
                 params: vec![HirParam {

@@ -25,6 +25,7 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
             id: HirId(0),
             def_id: DefId(1),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: name_f,
                 type_params: Vec::new(),
                 params: vec![HirParam {
@@ -227,6 +228,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
                 id: HirId(15),
                 def_id: DefId(31),
                 kind: HirItemKind::Function(HirFunction {
+                    cli_args: None,
                     name: interner.intern("collector"),
                     type_params: Vec::new(),
                     params: Vec::new(),
@@ -342,6 +344,7 @@ fn resolves_type_names_for_named_defs() {
                 id: HirId(67),
                 def_id: DefId(75),
                 kind: HirItemKind::Function(HirFunction {
+                    cli_args: None,
                     name: interner.intern("iface_ret"),
                     type_params: Vec::new(),
                     params: Vec::new(),
@@ -384,6 +387,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                 id: HirId(260),
                 def_id: DefId(1),
                 kind: HirItemKind::Function(HirFunction {
+                    cli_args: None,
                     name: interner.intern("fn_name"),
                     type_params: Vec::new(),
                     params: Vec::new(),
@@ -1178,6 +1182,7 @@ fn emits_result_and_err_for_direct_iace() {
             id: HirId(900),
             def_id: DefId(900),
             kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
                 name: boom,
                 type_params: Vec::new(),
                 params: Vec::new(),
@@ -1236,6 +1241,7 @@ fn propagates_failable_calls_with_question_mark() {
                 id: HirId(910),
                 def_id: DefId(910),
                 kind: HirItemKind::Function(HirFunction {
+                    cli_args: None,
                     name: callee,
                     type_params: Vec::new(),
                     params: Vec::new(),
@@ -1268,6 +1274,7 @@ fn propagates_failable_calls_with_question_mark() {
                 id: HirId(920),
                 def_id: DefId(920),
                 kind: HirItemKind::Function(HirFunction {
+                    cli_args: None,
                     name: caller,
                     type_params: Vec::new(),
                     params: Vec::new(),

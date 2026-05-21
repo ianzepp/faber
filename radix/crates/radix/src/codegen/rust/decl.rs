@@ -40,6 +40,17 @@ pub fn generate_function(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    generate_function_with_cli_args_type(codegen, def_id, func, types, w, None)
+}
+
+pub fn generate_function_with_cli_args_type(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    func: &HirFunction,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    cli_args_type: Option<&str>,
+) -> Result<(), CodegenError> {
     let is_failable = codegen.is_failable_def(def_id);
     let is_proba = def_id.0 >= 1_000_000;
 
@@ -83,6 +94,14 @@ pub fn generate_function(
         w.write(codegen.resolve_symbol(param.name));
         w.write(": ");
         w.write(&type_to_rust(codegen, param.ty, types));
+    }
+    if let Some(param) = &func.cli_args {
+        if !func.params.is_empty() {
+            w.write(", ");
+        }
+        w.write(codegen.resolve_symbol(param.name));
+        w.write(": ");
+        w.write(cli_args_type.unwrap_or("CliArgs"));
     }
     w.write(")");
 

@@ -75,7 +75,7 @@ incipit argumenta args {}
 @ alias "ls"
 @ descriptio "List jobs"
 @ optio limit longum "limit" typus numerus vel 20
-functio list() {}
+functio list() argumenta args {}
 "#,
     );
 
@@ -86,6 +86,7 @@ functio list() {}
     assert_eq!(program.commands.len(), 1);
     assert_eq!(program.commands[0].path, vec!["jobs", "list"]);
     assert_eq!(program.commands[0].aliases, vec!["ls"]);
+    assert_eq!(program.commands[0].args_binding.as_deref(), Some("args"));
 }
 
 #[test]
@@ -160,6 +161,40 @@ incipit argumenta args {}
     assert!(messages(&analysis)
         .iter()
         .any(|message| message.contains("single-command option 'config' collides with a global CLI binding")));
+}
+
+#[test]
+fn rejects_non_empty_root_body_for_subcommand_cli() {
+    let analysis = analyze_source(
+        r#"
+@ cli "bad"
+incipit argumenta args {
+  scribe "setup"
+}
+
+@ imperium "run"
+functio run() {}
+"#,
+    );
+
+    assert!(messages(&analysis)
+        .iter()
+        .any(|message| message.contains("empty root incipit body")));
+}
+
+#[test]
+fn rejects_module_mounted_commands_until_phase_05() {
+    let analysis = analyze_source(
+        r#"
+@ cli "bad"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    );
+
+    assert!(messages(&analysis)
+        .iter()
+        .any(|message| message.contains("Phase 05")));
 }
 
 #[test]

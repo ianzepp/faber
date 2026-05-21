@@ -122,10 +122,24 @@ impl<'a> Lowerer<'a> {
                 span: param.span,
             });
         }
+        let cli_args = command_argument_binding(&decl.modifiers).map(|ident| {
+            let def_id = self.next_def_id();
+            HirParam {
+                def_id,
+                name: ident.name,
+                ty: self.command_args_type(decl.name.name),
+                mode: HirParamMode::Owned,
+                optional: false,
+                span: ident.span,
+            }
+        });
 
         let ret_ty = decl.ret.as_ref().map(|ty| self.lower_type(ty));
         self.push_scope();
         for param in &params {
+            self.bind_local(param.name, param.def_id);
+        }
+        if let Some(param) = &cli_args {
             self.bind_local(param.name, param.def_id);
         }
         let mut modifier_locals = Vec::new();
@@ -160,6 +174,7 @@ impl<'a> Lowerer<'a> {
             name: decl.name.name,
             type_params,
             params,
+            cli_args,
             ret_ty,
             body,
             is_async: false,
@@ -258,6 +273,7 @@ impl<'a> Lowerer<'a> {
                             })
                             .collect(),
                         params,
+                        cli_args: None,
                         ret_ty: method.ret.as_ref().map(|ty| self.lower_type(ty)),
                         body,
                         is_async: false,
@@ -453,4 +469,11 @@ fn modifier_bindings(modifiers: &[crate::syntax::FuncModifier]) -> Vec<&crate::s
         }
     }
     out
+}
+
+fn command_argument_binding(modifiers: &[crate::syntax::FuncModifier]) -> Option<&crate::syntax::Ident> {
+    modifiers.iter().find_map(|modifier| match modifier {
+        crate::syntax::FuncModifier::Argumenta(ident) => Some(ident),
+        _ => None,
+    })
 }

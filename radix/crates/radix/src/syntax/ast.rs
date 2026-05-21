@@ -201,6 +201,7 @@ pub enum ParamMode {
 
 #[derive(Debug)]
 pub enum FuncModifier {
+    Argumenta(Ident),
     Curata(Ident),
     Errata(Ident),
     Exitus(ExitusValue),

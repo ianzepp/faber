@@ -1,7 +1,12 @@
 use super::super::CodeWriter;
-use crate::cli::{CliDefault, CliExit, CliOperand, CliOption, CliProgram, CliType};
+use crate::cli::{CliDefault, CliExit, CliMode, CliOperand, CliOption, CliProgram, CliType};
 
 pub(super) fn generate_cli_support(program: &CliProgram, w: &mut CodeWriter) {
+    if program.mode == CliMode::Subcommand {
+        generate_subcommand_cli_support(program, w);
+        return;
+    }
+
     let options = program
         .global_options
         .iter()
@@ -20,6 +25,12 @@ pub(super) fn generate_cli_support(program: &CliProgram, w: &mut CodeWriter) {
     generate_help(program, &options, &operands, w);
     w.newline();
     generate_parser(program, &options, &operands, w);
+}
+
+pub(super) fn generate_command_dispatch(program: &CliProgram, w: &mut CodeWriter) {
+    if program.mode == CliMode::Subcommand {
+        w.writeln("dispatch_cli_or_exit();");
+    }
 }
 
 pub(super) fn generate_cli_exit(exit: &CliExit, w: &mut CodeWriter) {
@@ -47,9 +58,78 @@ pub(super) fn generate_cli_exit(exit: &CliExit, w: &mut CodeWriter) {
     }
 }
 
+pub(super) fn command_args_struct_name(command: &crate::cli::CliCommand) -> String {
+    let suffix = command
+        .path
+        .iter()
+        .flat_map(|part| part.split(|ch: char| !ch.is_ascii_alphanumeric()))
+        .filter(|part| !part.is_empty())
+        .map(|part| {
+            let mut chars = part.chars();
+            match chars.next() {
+                Some(first) => format!("{}{}", first.to_ascii_uppercase(), chars.as_str()),
+                None => String::new(),
+            }
+        })
+        .collect::<String>();
+    format!("CliArgs{suffix}")
+}
+
+fn command_parser_name(command: &crate::cli::CliCommand) -> String {
+    format!("parse_cli_args_{}", command.path.join("_").replace('-', "_"))
+}
+
+fn command_help_name(command: &crate::cli::CliCommand) -> String {
+    format!("print_cli_help_{}", command.path.join("_").replace('-', "_"))
+}
+
+fn generate_subcommand_cli_support(program: &CliProgram, w: &mut CodeWriter) {
+    for command in &program.commands {
+        let options = program
+            .global_options
+            .iter()
+            .chain(command.options.iter())
+            .collect::<Vec<_>>();
+        let operands = program
+            .global_operands
+            .iter()
+            .chain(command.operands.iter())
+            .collect::<Vec<_>>();
+        generate_named_args_struct(&command_args_struct_name(command), &options, &operands, w);
+        w.newline();
+    }
+    generate_parse_error(w);
+    w.newline();
+    generate_root_subcommand_help(program, w);
+    w.newline();
+    for command in &program.commands {
+        let options = program
+            .global_options
+            .iter()
+            .chain(command.options.iter())
+            .collect::<Vec<_>>();
+        let operands = program
+            .global_operands
+            .iter()
+            .chain(command.operands.iter())
+            .collect::<Vec<_>>();
+        generate_command_help(program, command, &options, &operands, w);
+        w.newline();
+        generate_command_parser(command, &options, &operands, w);
+        w.newline();
+    }
+    generate_dispatcher(program, w);
+}
+
 fn generate_args_struct(options: &[&CliOption], operands: &[&CliOperand], w: &mut CodeWriter) {
+    generate_named_args_struct("CliArgs", options, operands, w);
+}
+
+fn generate_named_args_struct(name: &str, options: &[&CliOption], operands: &[&CliOperand], w: &mut CodeWriter) {
     w.writeln("#[derive(Debug, Clone)]");
-    w.writeln("struct CliArgs {");
+    w.write("struct ");
+    w.write(name);
+    w.writeln(" {");
     w.indented(|w| {
         for option in options {
             w.write("pub ");
@@ -115,6 +195,101 @@ fn generate_help(program: &CliProgram, options: &[&CliOption], operands: &[&CliO
         if program.version.is_some() {
             write_println(w, "      --version           Print version");
         }
+    });
+    w.writeln("}");
+}
+
+fn generate_root_subcommand_help(program: &CliProgram, w: &mut CodeWriter) {
+    w.writeln("fn print_cli_help() {");
+    w.indented(|w| {
+        write_println(w, &format!("Usage: {} [OPTIONS] <COMMAND>", program.name));
+        if let Some(description) = &program.description {
+            w.writeln("println!();");
+            write_println(w, description);
+        }
+        if !program.global_options.is_empty() {
+            w.writeln("println!();");
+            write_println(w, "Global Options:");
+            for option in &program.global_options {
+                write_println(
+                    w,
+                    &format!("  {:<24}{}", option_label(option), option.description.as_deref().unwrap_or("")),
+                );
+            }
+        }
+        w.writeln("println!();");
+        write_println(w, "Commands:");
+        for command in &program.commands {
+            let path = command.path.join(" ");
+            let aliases = if command.aliases.is_empty() {
+                String::new()
+            } else {
+                format!(" (alias: {})", command.aliases.join(", "))
+            };
+            write_println(
+                w,
+                &format!("  {:<24}{}{}", path, command.description.as_deref().unwrap_or(""), aliases),
+            );
+        }
+        w.writeln("println!();");
+        write_println(w, "  -h, --help              Print help");
+        if program.version.is_some() {
+            write_println(w, "      --version           Print version");
+        }
+    });
+    w.writeln("}");
+}
+
+fn generate_command_help(
+    program: &CliProgram,
+    command: &crate::cli::CliCommand,
+    options: &[&CliOption],
+    operands: &[&CliOperand],
+    w: &mut CodeWriter,
+) {
+    w.write("fn ");
+    w.write(&command_help_name(command));
+    w.writeln("() {");
+    w.indented(|w| {
+        write_println(
+            w,
+            &format!(
+                "Usage: {}{}{}",
+                program.name,
+                format!(" {}", command.path.join(" ")),
+                usage_suffix(options, operands)
+            ),
+        );
+        if let Some(description) = &command.description {
+            w.writeln("println!();");
+            write_println(w, description);
+        }
+        if !options.is_empty() {
+            w.writeln("println!();");
+            write_println(w, "Options:");
+            for option in options {
+                write_println(
+                    w,
+                    &format!("  {:<24}{}", option_label(option), option.description.as_deref().unwrap_or("")),
+                );
+            }
+        }
+        if !operands.is_empty() {
+            w.writeln("println!();");
+            write_println(w, "Operands:");
+            for operand in operands {
+                write_println(
+                    w,
+                    &format!(
+                        "  {:<24}{}",
+                        operand_label(operand),
+                        operand.description.as_deref().unwrap_or("")
+                    ),
+                );
+            }
+        }
+        w.writeln("println!();");
+        write_println(w, "  -h, --help              Print help");
     });
     w.writeln("}");
 }
@@ -197,6 +372,207 @@ fn generate_parser(program: &CliProgram, options: &[&CliOption], operands: &[&Cl
         w.writeln("}");
     });
     w.writeln("}");
+}
+
+fn generate_command_parser(
+    command: &crate::cli::CliCommand,
+    options: &[&CliOption],
+    operands: &[&CliOperand],
+    w: &mut CodeWriter,
+) {
+    w.write("fn ");
+    w.write(&command_parser_name(command));
+    w.write("(__radix_cli_input: Vec<String>");
+    for option in options.iter().filter(|option| option.global) {
+        w.write(", mut ");
+        w.write(&storage_name(&option.binding));
+        w.write(": ");
+        w.write(&rust_cli_type(&option.ty, option.default.is_none() && !option.flag, false));
+    }
+    w.write(") -> ");
+    w.write(&command_args_struct_name(command));
+    w.writeln(" {");
+    w.indented(|w| {
+        for option in options.iter().filter(|option| !option.global) {
+            w.write("let mut ");
+            w.write(&storage_name(&option.binding));
+            w.write(" = ");
+            write_default(option.default.as_ref(), &option.ty, option.flag, w);
+            w.writeln(";");
+        }
+        for operand in operands {
+            w.write("let mut ");
+            w.write(&storage_name(&operand.binding));
+            w.write(": ");
+            w.write(&rust_cli_storage_type(&operand.ty, operand.rest));
+            w.write(" = ");
+            if operand.rest {
+                w.writeln("Vec::new();");
+            } else {
+                w.writeln("None;");
+            }
+        }
+        w.writeln("let mut positional: Vec<String> = Vec::new();");
+        w.writeln("let mut iter = __radix_cli_input.into_iter().peekable();");
+        w.writeln("while let Some(arg) = iter.next() {");
+        w.indented(|w| {
+            w.writeln("if arg == \"--\" {");
+            w.indented(|w| {
+                w.writeln("positional.extend(iter);");
+                w.writeln("break;");
+            });
+            w.writeln("}");
+            w.writeln("if arg == \"--help\" || arg == \"-h\" {");
+            w.indented(|w| {
+                w.write(&command_help_name(command));
+                w.writeln("();");
+                w.writeln("std::process::exit(0);");
+            });
+            w.writeln("}");
+            w.writeln("if arg.starts_with(\"--\") {");
+            w.indented(|w| generate_long_option_parser(options, w));
+            w.writeln("}");
+            w.writeln("if arg.starts_with('-') && arg.len() > 1 {");
+            w.indented(|w| generate_short_option_parser(options, w));
+            w.writeln("}");
+            w.writeln("positional.push(arg);");
+        });
+        w.writeln("}");
+        generate_operand_assignment(operands, w);
+        w.write(&command_args_struct_name(command));
+        w.writeln(" {");
+        w.indented(|w| {
+            for option in options {
+                w.write(&option.binding);
+                w.write(": ");
+                w.write(&storage_name(&option.binding));
+                w.writeln(",");
+            }
+            for operand in operands {
+                w.write(&operand.binding);
+                w.write(": ");
+                if operand.rest {
+                    w.write(&storage_name(&operand.binding));
+                } else {
+                    w.write(&operand.binding);
+                }
+                w.writeln(",");
+            }
+        });
+        w.writeln("}");
+    });
+    w.writeln("}");
+}
+
+fn generate_dispatcher(program: &CliProgram, w: &mut CodeWriter) {
+    w.writeln("fn dispatch_cli_or_exit() -> ! {");
+    w.indented(|w| {
+        for option in &program.global_options {
+            w.write("let mut ");
+            w.write(&storage_name(&option.binding));
+            w.write(" = ");
+            write_default(option.default.as_ref(), &option.ty, option.flag, w);
+            w.writeln(";");
+        }
+        w.writeln("let mut iter = std::env::args().skip(1).peekable();");
+        w.writeln("let mut command_parts: Vec<String> = Vec::new();");
+        w.writeln("while let Some(arg) = iter.next() {");
+        w.indented(|w| {
+            w.writeln("if arg == \"--help\" || arg == \"-h\" {");
+            w.indented(|w| {
+                w.writeln("print_cli_help();");
+                w.writeln("std::process::exit(0);");
+            });
+            w.writeln("}");
+            if let Some(version) = &program.version {
+                w.writeln("if arg == \"--version\" {");
+                w.indented(|w| {
+                    write_println(w, version);
+                    w.writeln("std::process::exit(0);");
+                });
+                w.writeln("}");
+            }
+            w.writeln("if arg.starts_with(\"--\") {");
+            w.indented(|w| generate_long_option_parser(&program.global_options.iter().collect::<Vec<_>>(), w));
+            w.writeln("}");
+            w.writeln("if arg.starts_with('-') && arg.len() > 1 {");
+            w.indented(|w| generate_short_option_parser(&program.global_options.iter().collect::<Vec<_>>(), w));
+            w.writeln("}");
+            w.writeln("command_parts.push(arg);");
+            w.writeln("command_parts.extend(iter);");
+            w.writeln("break;");
+        });
+        w.writeln("}");
+        w.writeln("if command_parts.is_empty() {");
+        w.indented(|w| {
+            w.writeln("print_cli_help();");
+            w.writeln("std::process::exit(2);");
+        });
+        w.writeln("}");
+        for command in &program.commands {
+            generate_dispatch_arm(program, command, w);
+            for alias in &command.aliases {
+                generate_alias_dispatch_arm(program, command, alias, w);
+            }
+        }
+        w.writeln("eprintln!(\"error: unknown command '{}'\", command_parts[0]);");
+        w.writeln("print_cli_help();");
+        w.writeln("std::process::exit(2);");
+    });
+    w.writeln("}");
+}
+
+fn generate_dispatch_arm(program: &CliProgram, command: &crate::cli::CliCommand, w: &mut CodeWriter) {
+    let len = command.path.len();
+    w.write("if command_parts.len() >= ");
+    w.write(&len.to_string());
+    w.write(" && ");
+    for (index, part) in command.path.iter().enumerate() {
+        if index > 0 {
+            w.write(" && ");
+        }
+        w.write("command_parts[");
+        w.write(&index.to_string());
+        w.write("] == ");
+        write_rust_string_literal(part, w);
+    }
+    w.writeln(" {");
+    w.indented(|w| generate_dispatch_call(program, command, len, w));
+    w.writeln("}");
+}
+
+fn generate_alias_dispatch_arm(
+    program: &CliProgram,
+    command: &crate::cli::CliCommand,
+    alias: &str,
+    w: &mut CodeWriter,
+) {
+    w.write("if command_parts[0] == ");
+    write_rust_string_literal(alias, w);
+    w.writeln(" {");
+    w.indented(|w| generate_dispatch_call(program, command, 1, w));
+    w.writeln("}");
+}
+
+fn generate_dispatch_call(program: &CliProgram, command: &crate::cli::CliCommand, consumed: usize, w: &mut CodeWriter) {
+    w.write("let args = ");
+    w.write(&command_parser_name(command));
+    w.write("(command_parts[");
+    w.write(&consumed.to_string());
+    w.write("..].to_vec()");
+    for option in &program.global_options {
+        w.write(", ");
+        w.write(&storage_name(&option.binding));
+    }
+    w.writeln(");");
+    if command.args_binding.is_some() {
+        w.write(&command.function);
+        w.writeln("(args);");
+    } else {
+        w.write(&command.function);
+        w.writeln("();");
+    }
+    w.writeln("std::process::exit(0);");
 }
 
 fn generate_long_option_parser(options: &[&CliOption], w: &mut CodeWriter) {

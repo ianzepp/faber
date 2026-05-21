@@ -101,6 +101,7 @@ pub struct HirFunction {
     pub name: Symbol,
     pub type_params: Vec<HirTypeParam>,
     pub params: Vec<HirParam>,
+    pub cli_args: Option<HirParam>,
     /// Return type; None until type checker infers it
     pub ret_ty: Option<TypeId>,
     /// Function body; None for interface methods

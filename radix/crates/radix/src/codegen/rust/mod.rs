@@ -104,10 +104,26 @@ impl<'a> RustCodegen<'a> {
             .any(|(def_id, name)| *name == method && self.failable_defs.contains(def_id))
     }
 
-    fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
+    fn generate_item(
+        &self,
+        item: &HirItem,
+        types: &TypeTable,
+        w: &mut CodeWriter,
+        cli_program: Option<&crate::cli::CliProgram>,
+    ) -> Result<(), CodegenError> {
         match &item.kind {
             HirItemKind::Function(func) => {
-                decl::generate_function(self, item.def_id, func, types, w)?;
+                if let Some(command) = cli_program.and_then(|program| {
+                    program
+                        .commands
+                        .iter()
+                        .find(|command| command.function_symbol == func.name)
+                }) {
+                    let args_type = cli::command_args_struct_name(command);
+                    decl::generate_function_with_cli_args_type(self, item.def_id, func, types, w, Some(&args_type))?;
+                } else {
+                    decl::generate_function(self, item.def_id, func, types, w)?;
+                }
             }
             HirItemKind::Struct(s) => {
                 decl::generate_struct(self, s, types, w)?;
@@ -249,7 +265,7 @@ impl RustCodegen<'_> {
         let mut body = CodeWriter::new();
 
         for item in &hir.items {
-            self.generate_item(item, types, &mut body)?;
+            self.generate_item(item, types, &mut body, cli_program)?;
             body.newline();
         }
 
@@ -263,6 +279,12 @@ impl RustCodegen<'_> {
             body.writeln("fn main() {");
             let mut entry_result = Ok(());
             body.indented(|w| {
+                if let Some(cli_program) = cli_program {
+                    if cli_program.mode == crate::cli::CliMode::Subcommand {
+                        cli::generate_command_dispatch(cli_program, w);
+                        return;
+                    }
+                }
                 if let Some(cli_program) = cli_program {
                     w.write("let ");
                     w.write(&cli_program.entry_args);

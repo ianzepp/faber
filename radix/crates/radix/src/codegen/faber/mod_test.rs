@@ -21,6 +21,7 @@ fn emits_basic_function_and_entry() {
     let textus = types.primitive(Primitive::Textus);
 
     let function = HirFunction {
+        cli_args: None,
         name: name_greet,
         type_params: Vec::new(),
         params: vec![HirParam {
@@ -138,6 +139,7 @@ fn emits_parameter_references_with_original_names() {
     let numerus = types.primitive(Primitive::Numerus);
 
     let function = HirFunction {
+        cli_args: None,
         name: name_identity,
         type_params: Vec::new(),
         params: vec![HirParam {
@@ -269,6 +271,7 @@ fn emits_si_sin_secus_chain_with_reddit_shorthand() {
     };
 
     let function = HirFunction {
+        cli_args: None,
         name: name_grade,
         type_params: Vec::new(),
         params: Vec::new(),
@@ -309,6 +312,7 @@ fn emits_synthetic_proba_functions_as_proba_cases() {
     let vacuum = types.primitive(Primitive::Vacuum);
 
     let function = HirFunction {
+        cli_args: None,
         name,
         type_params: Vec::new(),
         params: Vec::new(),
