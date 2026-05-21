@@ -280,11 +280,11 @@ impl Parser {
     /// GRAMMAR:
     ///   param-list := type-param* (',' type-param)* regular-param* (',' regular-param)*
     ///   type-param := 'prae' 'typus' ident
-    ///   regular-param := ['si'] ['de'|'in'|'ex'] ['ceteri'] type ident ['ut' ident] ['vel' expr]
+    ///   regular-param := ['de'|'in'|'ex'] ['ceteri'] type ident [sponte] [fixus] ['ut' ident] ['vel' expr]
     ///
     /// WHY: Type parameters must appear first, followed by regular parameters.
-    /// Regular parameters support optional (si), ownership modes (de/in/ex),
-    /// variadic (ceteri), aliases (ut), and defaults (vel).
+    /// Regular parameters support ownership modes (de/in/ex), variadic (ceteri),
+    /// post-name voluntary (sponte) / fixed (fixus), aliases (ut), and defaults (vel).
     fn parse_param_list(&mut self) -> Result<(Vec<TypeParam>, Vec<Param>), ParseError> {
         let mut type_params = Vec::new();
         let mut params = Vec::new();
@@ -304,10 +304,7 @@ impl Parser {
         while !self.check(&TokenKind::RParen) && !self.is_at_end() {
             let start = self.current_span();
 
-            // Optional: si
-            let optional = self.eat_keyword(TokenKind::Si);
-
-            // Mode: de/in/ex
+            // Mode: de/in/ex (prefix on type)
             let mode = if self.eat_keyword(TokenKind::De) {
                 ParamMode::Ref
             } else if self.eat_keyword(TokenKind::In) {
@@ -327,6 +324,24 @@ impl Parser {
             // Name
             let name = self.parse_ident()?;
 
+            // Post-name markers: sponte (voluntary), fixus (fixed-after-init). Canonical order only.
+            let sponte = self.eat_keyword(TokenKind::Sponte);
+            let fixus = self.eat_keyword(TokenKind::Fixus);
+            if !sponte && self.check_keyword(TokenKind::Sponte) {
+                return Err(self.error(
+                    ParseErrorKind::InvalidParameter,
+                    "unexpected 'sponte' after 'fixus'; canonical order is '<type> <name> [sponte] [fixus] [vel default]'",
+                ));
+            }
+
+            // Phase 2 bridge: set legacy nullable flag so that HIR lowering, codegen, and
+            // optional-chain tests that have not yet been taught about Field/Param.sponte
+            // continue to see Option<T> for voluntary slots. Removed in Phase 3.
+            let mut ty = ty;
+            if sponte {
+                ty.nullable = true;
+            }
+
             // Alias: ut NAME
             let alias = if self.eat_keyword(TokenKind::Ut) {
                 Some(self.parse_ident()?)
@@ -342,7 +357,7 @@ impl Parser {
             };
 
             let span = start.merge(self.previous_span());
-            params.push(Param { optional, mode, rest, ty, name, alias, default, span });
+            params.push(Param { sponte, fixus, mode, rest, ty, name, alias, default, span });
 
             if !self.eat(&TokenKind::Comma) {
                 break;
@@ -475,13 +490,29 @@ impl Parser {
             let ty = self.parse_type()?;
             let name = self.parse_ident()?;
 
+            // Post-name declaration markers for fields (mirrors param syntax)
+            let sponte = self.eat_keyword(TokenKind::Sponte);
+            let fixus = self.eat_keyword(TokenKind::Fixus);
+            if !sponte && self.check_keyword(TokenKind::Sponte) {
+                return Err(self.error(
+                    ParseErrorKind::InvalidParameter,
+                    "unexpected 'sponte' after 'fixus'; use 'type name sponte fixus' order",
+                ));
+            }
+
+            // Phase 2 bridge (see param site)
+            let mut ty = ty;
+            if sponte {
+                ty.nullable = true;
+            }
+
             let init = if self.eat(&TokenKind::Colon) {
                 Some(Box::new(self.parse_expression()?))
             } else {
                 None
             };
 
-            ClassMemberKind::Field(FieldDecl { is_static, is_bound, ty, name, init })
+            ClassMemberKind::Field(FieldDecl { is_static, is_bound, sponte, fixus, ty, name, init })
         };
 
         let span = start.merge(self.previous_span());

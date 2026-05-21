@@ -20,7 +20,7 @@
 //!
 //! GRAMMAR COVERAGE
 //! ================
-//! - Nullable: si Type (Option<Type> semantics)
+//! - Nullable via union: T ∪ nihil (lowers to Option<T> in Phase 3)
 //! - Ownership modes: de Type (borrow), in Type (mutable borrow)
 //! - Named types: Ident or Ident<Type, Type>
 //! - Function types: (Type, Type) → Type
@@ -35,7 +35,7 @@
 //!   syntax deferred to avoid parsing ambiguity
 
 use super::{ParseError, Parser};
-use crate::lexer::TokenKind;
+use crate::lexer::{Span, TokenKind};
 use crate::syntax::*;
 
 // =============================================================================
@@ -49,12 +49,12 @@ impl Parser {
     /// without committing. Used internally for disambiguation.
     #[allow(dead_code)]
     pub(super) fn try_parse_type(&mut self) -> Result<Option<TypeExpr>, ParseError> {
-        // Check for type modifiers or type name
-        if self.check_keyword(TokenKind::Si)
-            || self.check_keyword(TokenKind::De)
+        // Check for type start (mode prefix or base: ident, '(', or later ∪ handled inside parse_type)
+        if self.check_keyword(TokenKind::De)
             || self.check_keyword(TokenKind::In)
             || matches!(self.peek().kind, TokenKind::Ident(_))
             || self.check(&TokenKind::LParen)
+            || self.check(&TokenKind::Cup)
         {
             Ok(Some(self.parse_type()?))
         } else {
@@ -64,27 +64,22 @@ impl Parser {
 
     /// Parse a type annotation.
     ///
-    /// GRAMMAR:
-    ///   type := ['si'] ['de'|'in'] (func-type | named-type) ('[]')*
+    /// GRAMMAR (Phase 2):
+    ///   type := ['de'|'in'] (func-type | named-type | union-type) ('[]')*
     ///   func-type := '(' type-list ')' '→' type
     ///   named-type := ident ['<' type-list '>']
+    ///   union-type := type '∪' type ('∪' type)*
     ///
-    /// WHY: Type expressions combine optional prefix modifiers (nullable, ownership),
-    /// a base type (named or function), and optional postfix array dimensions.
+    /// WHY: Post-Phase 2, nullable optionality is expressed via `T ∪ nihil` union
+    /// syntax in pure type positions. Declaration-level optionality uses `sponte`
+    /// after the name (see parse_param_list / parse_class_member).
     ///
     /// EDGE: 'nihil' is both a value literal and type name. In type position,
-    /// parsed as type name via keyword_ident.
+    /// parsed as type name via keyword_ident. Unions are flat lists.
     pub(super) fn parse_type(&mut self) -> Result<TypeExpr, ParseError> {
         let start = self.current_span();
 
-        // Nullable modifier: si Type
-        let nullable = self.eat_keyword(TokenKind::Si);
-
-        // Ownership mode: de/in
-        // WHY: Ownership modes control aliasing and mutation:
-        // - de Type: immutable borrow (Rust's &T)
-        // - in Type: mutable borrow (Rust's &mut T)
-        // - (none): owned value
+        // Ownership mode: de/in (prefix). Nullable is no longer a prefix; use T ∪ nihil.
         let mode = if self.eat_keyword(TokenKind::De) {
             Some(TypeMode::Ref)
         } else if self.eat_keyword(TokenKind::In) {
@@ -97,7 +92,8 @@ impl Parser {
         if self.check(&TokenKind::LParen) {
             let func = self.parse_func_type()?;
             let span = start.merge(self.previous_span());
-            return Ok(TypeExpr { nullable, mode, kind: TypeExprKind::Func(func), span });
+            let core = TypeExpr { nullable: false, mode, kind: TypeExprKind::Func(func), span };
+            return self.parse_union_tail(core, start);
         }
 
         // Named type (including 'nihil' as type name)
@@ -127,8 +123,6 @@ impl Parser {
         let mut kind = TypeExprKind::Named(name, params);
 
         // Array postfix: Type[][]
-        // WHY: Arrays applied postfix allow natural reading: "Array of Type"
-        // becomes "Type[]". Multi-dimensional arrays stack naturally: Type[][]
         while self.check(&TokenKind::LBracket) {
             self.advance();
             self.expect(&TokenKind::RBracket, "expected ']'")?;
@@ -137,7 +131,28 @@ impl Parser {
         }
 
         let span = start.merge(self.previous_span());
-        Ok(TypeExpr { nullable, mode, kind, span })
+        let core = TypeExpr { nullable: false, mode, kind, span };
+        self.parse_union_tail(core, start)
+    }
+
+    /// After parsing a core type (named/func/array), consume any trailing `∪ T` chain.
+    fn parse_union_tail(&mut self, first: TypeExpr, start: Span) -> Result<TypeExpr, ParseError> {
+        if !self.eat(&TokenKind::Cup) {
+            return Ok(first);
+        }
+        let mut members = vec![first];
+        // Parse the next member (full type, allowing nested structure)
+        members.push(self.parse_type()?);
+        while self.eat(&TokenKind::Cup) {
+            members.push(self.parse_type()?);
+        }
+        let span = start.merge(self.previous_span());
+        Ok(TypeExpr {
+            nullable: false,
+            mode: None, // modes belong on members or parenthesized forms (future)
+            kind: TypeExprKind::Union(members),
+            span,
+        })
     }
 
     /// Parse function type: (A, B) → C

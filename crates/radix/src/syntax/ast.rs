@@ -182,7 +182,8 @@ pub struct TypeParam {
 
 #[derive(Debug)]
 pub struct Param {
-    pub optional: bool,  // si
+    pub sponte: bool,    // sponte — voluntary/optional param (replaces old `si` prefix)
+    pub fixus: bool,     // fixus — fixed after initialization
     pub mode: ParamMode, // de/in/ex
     pub rest: bool,      // ceteri
     pub ty: TypeExpr,
@@ -245,6 +246,8 @@ pub enum ClassMemberKind {
 pub struct FieldDecl {
     pub is_static: bool, // generis
     pub is_bound: bool,  // nexum
+    pub sponte: bool,    // sponte — voluntary field
+    pub fixus: bool,     // fixus — fixed after init
     pub ty: TypeExpr,
     pub name: Ident,
     pub init: Option<Box<Expr>>,
@@ -1068,7 +1071,7 @@ pub enum PraefixumBody {
 
 #[derive(Debug)]
 pub struct TypeExpr {
-    pub nullable: bool,         // si
+    pub nullable: bool,         // si (legacy; always false after Phase 2; unions use Kind::Union)
     pub mode: Option<TypeMode>, // de/in
     pub kind: TypeExprKind,
     pub span: Span,
@@ -1088,6 +1091,8 @@ pub enum TypeExprKind {
     Array(Box<TypeExpr>),
     /// Function type: (A, B) -> C
     Func(FuncTypeExpr),
+    /// Inline union type: T ∪ U (including T ∪ nihil for nullables)
+    Union(Vec<TypeExpr>),
 }
 
 #[derive(Debug)]

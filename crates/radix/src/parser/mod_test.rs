@@ -514,7 +514,7 @@ importa ex "mod" publica Value ut Alias
 fixum numerus count ← 1
 varia [head, ceteri tail] ← values
 @ futura
-functio mitte(prae typus T, si de textus nomen ut alias vel "anon", ex numerus item, ceteri T reliqua) curata allocator errata Error exitus 7 immutata iacit optiones Opts → textus {}
+functio mitte(prae typus T, de textus nomen sponte ut alias vel "anon", ex numerus item, ceteri T reliqua) curata allocator errata Error exitus 7 immutata iacit optiones Opts → textus {}
 typus Nomen = textus
 ordo Status { Bonus = 1, Malus = -1, Textus = "x" }
 discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
@@ -563,7 +563,7 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
     assert_eq!(func.type_params.len(), 1);
     assert_eq!(func.params.len(), 3);
     assert!(func.body.is_some());
-    assert!(func.params[0].optional);
+    assert!(func.params[0].sponte);
     assert!(matches!(func.params[0].mode, ParamMode::Ref));
     assert_eq!(
         symbol_name(&result, func.params[0].alias.as_ref().expect("alias").name),

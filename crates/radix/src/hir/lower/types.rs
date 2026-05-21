@@ -57,6 +57,19 @@ impl<'a> Lowerer<'a> {
                 self.types
                     .function(FuncSig { params, ret, is_async: false, is_generator: false })
             }
+            TypeExprKind::Union(members) => {
+                if members.is_empty() {
+                    self.types.intern(Type::Error)
+                } else if members.iter().any(|m| matches!(&m.kind, TypeExprKind::Named(n, _) if self.interner.resolve(n.name) == "nihil")) {
+                    // Narrow nullable form: T ∪ nihil  →  Option<T>  (bridge for Phase 2 tests)
+                    let non_nihil = members.iter().find(|m| !matches!(&m.kind, TypeExprKind::Named(n, _) if self.interner.resolve(n.name) == "nihil")).unwrap_or(&members[0]);
+                    let base = self.lower_type(non_nihil);
+                    self.types.option(base)
+                } else {
+                    // General union: lower first member as placeholder (proper union types in Phase 3)
+                    self.lower_type(&members[0])
+                }
+            }
         };
 
         if let Some(mode) = ty.mode {

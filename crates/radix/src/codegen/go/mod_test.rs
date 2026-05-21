@@ -235,12 +235,12 @@ fn optional_struct_fields_wrap_pointer_values() {
     let code = compile_go(
         r#"genus Address {
   textus city
-  si textus state
+  textus state sponte
 }
 
 genus User {
   textus name
-  si Address address
+  Address address sponte
 }
 
 incipit {
@@ -263,7 +263,7 @@ fn optional_chain_members_emit_nil_safe_access() {
 }
 
 genus User {
-  si Address address
+  Address address sponte
 }
 
 incipit {
@@ -283,11 +283,11 @@ incipit {
 fn optional_chain_preserves_optional_fields_without_double_wrap() {
     let code = compile_go(
         r#"genus Address {
-  si textus state
+  textus state sponte
 }
 
 genus User {
-  si Address address
+  Address address sponte
 }
 
 incipit {
@@ -311,7 +311,7 @@ fn optional_coalesce_returns_inner_value() {
 }
 
 genus User {
-  si Address address
+  Address address sponte
 }
 
 incipit {
@@ -330,7 +330,7 @@ incipit {
 fn explicit_optional_local_initializers_wrap_pointer_values() {
     let code = compile_go(
         r#"incipit {
-  fixum si textus name ← "Marcus"
+  fixum textus ∪ nihil name ← "Marcus"
   fixum display ← name vel "Anonymous"
   nota display
 }"#,
@@ -344,7 +344,7 @@ fn explicit_optional_local_initializers_wrap_pointer_values() {
 fn inferred_optional_nil_local_emits_typed_var() {
     let code = compile_go(
         r#"incipit {
-  varia maybe ← nihil ⇢ si textus
+  varia maybe ← nihil ⇢ textus ∪ nihil
   nota maybe
 }"#,
     );
@@ -357,7 +357,7 @@ fn inferred_optional_nil_local_emits_typed_var() {
 fn ternary_optional_result_coerces_branches_once() {
     let code = compile_go(
         r#"incipit {
-  varia maybe ← nihil ⇢ si textus
+  varia maybe ← nihil ⇢ textus ∪ nihil
   fixum result ← nonnihil maybe sic maybe secus "default"
   nota result
 }"#,

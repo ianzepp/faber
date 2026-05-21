@@ -188,6 +188,7 @@ impl<'a> Lexer<'a> {
             '⊚' => TokenKind::PipeEq,
             '⇢' => TokenKind::Verte,
             '⇒' => TokenKind::Conversio,
+            '∪' => TokenKind::Cup,
             '+' => TokenKind::Plus,
             '*' => TokenKind::Star,
             '%' => TokenKind::Percent,
@@ -668,6 +669,8 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "errata" => TokenKind::Errata,
         "exitus" => TokenKind::Exitus,
         "optiones" => TokenKind::Optiones,
+        "sponte" => TokenKind::Sponte,
+        "fixus" => TokenKind::Fixus,
 
         // Control flow
         "si" => TokenKind::Si,

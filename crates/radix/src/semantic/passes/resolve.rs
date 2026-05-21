@@ -837,6 +837,11 @@ fn resolve_type(resolver: &mut Resolver, interner: &Interner, ty: &TypeExpr, err
             }
             resolve_type(resolver, interner, &func.ret, errors);
         }
+        TypeExprKind::Union(members) => {
+            for m in members {
+                resolve_type(resolver, interner, m, errors);
+            }
+        }
     }
 }
 
@@ -1077,6 +1082,19 @@ fn lower_type_expr(
                 .collect::<Result<Vec<_>, _>>()?;
             let ret = lower_type_expr(&func.ret, resolver, interner, types)?;
             types.function(FuncSig { params, ret, is_async: false, is_generator: false })
+        }
+        TypeExprKind::Union(members) => {
+            if members.is_empty() {
+                return Err(TypeLowerError::Error("empty union type".to_string()));
+            }
+            // Bridge for T ∪ nihil → option (see hir/lower/types.rs for identical logic)
+            let has_nihil = members.iter().any(|m| matches!(&m.kind, TypeExprKind::Named(n, _) if interner.resolve(n.name) == "nihil"));
+            if has_nihil {
+                let non = members.iter().find(|m| !matches!(&m.kind, TypeExprKind::Named(n, _) if interner.resolve(n.name) == "nihil")).unwrap_or(&members[0]);
+                let base = lower_type_expr(non, resolver, interner, types)?;
+                return Ok(types.option(base));
+            }
+            lower_type_expr(&members[0], resolver, interner, types)?
         }
     };
 

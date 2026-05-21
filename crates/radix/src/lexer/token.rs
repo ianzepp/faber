@@ -273,6 +273,10 @@ pub enum TokenKind {
     Negativum, // is negative check
     Positivum, // is positive check
 
+    // === Declaration markers (post-name, sponte/fixus) ===
+    Sponte, // voluntary / optional declaration slot
+    Fixus,  // fixed after first initialization
+
     // === Punctuation ===
     LParen,    // (
     RParen,    // )
@@ -285,6 +289,7 @@ pub enum TokenKind {
     Semicolon, // ;
     Dot,       // .
     Arrow,     // →
+    Cup,       // ∪ (inline union type T ∪ U, T ∪ nihil)
     At,        // @ (annotation marker)
     Section,   // § (section marker)
 
@@ -455,6 +460,8 @@ impl TokenKind {
                 | Nonnihil
                 | Negativum
                 | Positivum
+                | Sponte
+                | Fixus
         )
     }
 

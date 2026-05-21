@@ -247,6 +247,18 @@ pub static KEYWORD_SPECS: &[KeywordSpec] = &[
         category: KeywordCategory::Modifier,
     },
     KeywordSpec {
+        text: "sponte",
+        token_kind: Some(TokenKind::Sponte),
+        scope: KeywordScope::Global,
+        category: KeywordCategory::Modifier,
+    },
+    KeywordSpec {
+        text: "fixus",
+        token_kind: Some(TokenKind::Fixus),
+        scope: KeywordScope::Global,
+        category: KeywordCategory::Modifier,
+    },
+    KeywordSpec {
         text: "si",
         token_kind: Some(TokenKind::Si),
         scope: KeywordScope::Global,

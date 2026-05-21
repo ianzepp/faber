@@ -299,6 +299,11 @@ pub fn walk_type_expr<V: Visitor>(visitor: &mut V, ty: &TypeExpr) {
             }
             visitor.visit_type_expr(&func.ret);
         }
+        TypeExprKind::Union(members) => {
+            for m in members {
+                visitor.visit_type_expr(m);
+            }
+        }
     }
 }
 

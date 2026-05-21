@@ -703,7 +703,7 @@ incipit {
 #[test]
 fn compile_accepts_param_alias_binding() {
     let session = session(Target::Rust);
-    let source = r#"functio greet(textus name, si bivalens formal ut f) → vacuum {
+    let source = r#"functio greet(textus name, bivalens formal sponte ut f) → vacuum {
   si f {
     nota name
   }
@@ -1004,7 +1004,7 @@ fn rust_output_converts_textus_literals_to_owned_strings() {
 incipit {
   varia textus name ← "Marcus"
   fixum textus[] words ← ["a", "b"]
-  fixum si textus maybe ← nihil
+  fixum textus ∪ nihil maybe ← nihil
   fixum fallback ← maybe vel "x"
   nota pick(verum), name, words, fallback
 }"#;
@@ -1028,8 +1028,8 @@ incipit {
 fn rust_output_wraps_optional_local_initializers_in_some() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum si textus actualName ← "Marcus"
-  fixum si textus maybe ← nihil
+  fixum textus ∪ nihil actualName ← "Marcus"
+  fixum textus ∪ nihil maybe ← nihil
   nota actualName, maybe
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1048,8 +1048,8 @@ fn rust_output_wraps_optional_local_initializers_in_some() {
 fn rust_output_uses_or_for_option_coalesce() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum si textus a ← nihil
-  fixum si textus b ← nihil
+  fixum textus ∪ nihil a ← nihil
+  fixum textus ∪ nihil b ← nihil
   fixum first ← a vel b
   nota first
 }"#;
@@ -1369,7 +1369,7 @@ fn compile_supports_extended_binary_operators() {
     let source = r#"incipit {
   fixum a ← 1
   fixum b ← 2
-  fixum si numerus maybe ← nihil
+  fixum numerus ∪ nihil maybe ← nihil
 
   nota a ≡ b
   nota a ≠ b
@@ -1392,7 +1392,7 @@ fn compile_supports_extended_unary_operators() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum flag ← verum
-  fixum si textus maybe ← nihil
+  fixum textus ∪ nihil maybe ← nihil
   fixum n ← -3
 
   nota non flag
@@ -1745,9 +1745,9 @@ functio id(textus x) → textus {
 }
 
 incipit {
-  fixum si User maybeUser ← nihil
+  fixum User ∪ nihil maybeUser ← nihil
   fixum a ← maybeUser?.name
-  fixum si (textus) → textus maybeFn ← id
+  fixum (textus) → textus ∪ nihil maybeFn ← id
   fixum c ← maybeFn?("x")
   nota a, c
 }"#;
@@ -1906,7 +1906,7 @@ fn verte_vel_no_longer_reports_invalid_cast() {
 fn rust_output_emits_verte_construction_and_coalesce_unwrap() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum si textus name ← nihil
+  fixum textus ∪ nihil name ← nihil
   fixum display ← name vel "Anonymous"
   fixum cache ← { alice: 95 } ⇢ tabula<textus, numerus>
   fixum items ← [] ⇢ lista<textus>
@@ -1980,18 +1980,18 @@ fn ordo_exemplum_no_longer_reports_elige_literal_error() {
 #[test]
 fn optional_params_no_longer_require_all_arguments() {
     let session = session(Target::Rust);
-    let source = r#"functio greet(textus nomen, si textus titulus) curata alloc → textus {
+    let source = r#"functio greet(textus nomen, textus titulus sponte) curata alloc → textus {
   si titulus est nihil {
     redde nomen
   }
   redde titulus
 }
 
-functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) → numerus {
+functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) → numerus {
   redde pagina + per_pagina
 }
 
-functio analyze(textus source, de si numerus depth) → numerus {
+functio analyze(textus source, de numerus depth sponte) → numerus {
   si depth est nihil {
     redde source.longitudo()
   }
