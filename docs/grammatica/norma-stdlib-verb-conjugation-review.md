@@ -27,9 +27,9 @@ Possible wrapper dimensions include:
 - Imperative / base forms (`-a`, `-e`, `-i`): synchronous
 - Future indicative forms (`-et`, `-ebit`, `-abit`): asynchronous (`promissum<T>`)
 - Future plural forms: async generators (`cursor<T>`)
-- Present participles (`-ans`, `-ens`): possible sync/lazy generator forms, still to be reconciled with `morphologia.md`
+- Present plural forms: synchronous generators (`cursor<T>`)
 
-Resolved policy: async generators use the real future plural form of the declared root. Existing docs still need reconciliation where they describe present participles (`-ans`, `-ens`) as the general generator form.
+Resolved policy: generators use the real present plural form of the declared root; async generators use the real future plural form.
 
 Compiler caveat: the active `radix-rs` compiler can parse these stdlib interface files, but future root-form declaration lowering and morphology-based wrapper synthesis are not implemented yet. This review is about freezing the intended user-facing call forms before the runtime/API surface hardens.
 
@@ -71,7 +71,7 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 ### Weaknesses / Open Policy
 
-- Async-generator spelling is now resolved as real future plural, but `morphologia.md` still needs reconciliation for present participles and sync/lazy generator semantics.
+- Generator spelling is now resolved as real present plural for sync generators and real future plural for async generators. Companion docs must stay aligned with that policy.
 - Several modules only define one side of what should eventually be a pair.
 - Some verb choices feel strained when trying to force conjugation to carry too much meaning (especially around streaming vs single-value results).
 - A few roots need explicit policy decisions before they become public API.
@@ -201,13 +201,13 @@ All client/server operations are async-only, so only future forms are defined (`
 
 ### 1. Standardize Generator/Streaming Signaling
 
-Resolved policy: async generators use the real future plural form of the declared root.
+Resolved policy: generators use real plural conjugation of the declared root.
 
 Examples:
+- `quaerere` -> `quaerunt` for sync query stream.
 - `quaerere` -> `quaerent` for async query stream.
+- `nuntiare` -> `nuntiant` for sync message stream.
 - `nuntiare` -> `nuntiabunt` for async message stream.
-
-Open follow-up: reconcile `morphologia.md`, which currently describes present participles (`-ans`, `-ens`) as generator methods. Those may still be useful for sync/lazy streams, but they are not the async-generator form.
 
 ### 2. Prefer Distinct Roots for Large Semantic Differences
 
@@ -240,7 +240,7 @@ Create (or expand) a document that defines the expected conjugation patterns for
 
 | Module     | Current Method     | Suggested Change                  | Priority | Rationale |
 |------------|--------------------|-----------------------------------|----------|---------|
-| Cross-cutting | Generator form policy | Use real future plural for async generators | Done | Stabilizes async stream call-site forms |
+| Cross-cutting | Generator form policy | Use real present plural for sync generators and real future plural for async generators | Done | Stabilizes stream call-site forms |
 | `arca`     | `quaerent`         | Keep | Done | Real future plural for `quaerere`; same query operation remains one root |
 | `arca`     | `capiet`           | Decide whether first-row retrieval is a separate root | Medium | Likely separate operation, but should be explicit before runtime implementation |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
@@ -248,7 +248,7 @@ Create (or expand) a document that defines the expected conjugation patterns for
 ### Medium Priority
 
 - Audit all remaining future forms across `caelum`, `nuncius`, `pressura` for real conjugation.
-- Reconcile present participle generator language in `morphologia.md` with the resolved future-plural async-generator policy.
+- Keep `morphologia.md` aligned with the resolved present-plural generator and future-plural async-generator policy.
 - Ensure data-format modules (`json`/`toml`/`yaml`) have placeholder future forms documented even if not yet implemented.
 
 ### Low Priority / Future
@@ -260,8 +260,8 @@ Create (or expand) a document that defines the expected conjugation patterns for
 ## Next Steps
 
 1. Review this document with the project owner.
-2. Decide on policy for generator/streaming naming and async-generator composition.
-3. Apply only the renames required by that policy while the Rust `norma` crates are still early.
+2. Continue resolving module-specific edge cases, especially first-row database retrieval.
+3. Apply only the renames required by resolved policies while the Rust `norma` crates are still early.
 4. Add a short "Verb Conjugation Guidelines" section to the Norma contributor docs.
 
 ---

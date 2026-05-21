@@ -4,13 +4,13 @@ Latin is an inflected language. Where English relies on word order and helper wo
 
 Faber Romanus applies this principle to standard library methods. Instead of proliferating method names—`filter`, `filterAsync`, `filterInPlace`, `filterNewAsync`—we use Latin verb conjugations. The stem carries the action; the ending carries the behavior.
 
-This is not decoration. It is compression. One stem, five forms, five behaviors—all learnable from a single pattern.
+This is not decoration. It is compression. One stem, six forms, six behaviors—all learnable from a single pattern.
 
 ---
 
-## The Five Forms
+## The Six Forms
 
-Latin verbs conjugate through dozens of forms. Faber uses five, chosen for their semantic clarity and practical utility:
+Latin verbs conjugate through dozens of forms. Faber uses six, chosen for their semantic clarity and practical utility:
 
 | Form                     | Endings              | Semantics                       |
 | ------------------------ | -------------------- | ------------------------------- |
@@ -18,9 +18,10 @@ Latin verbs conjugate through dozens of forms. Faber uses five, chosen for their
 | **Perfectum**            | -ata, -ita, -ta, -sa | Returns new value, synchronous  |
 | **Futurum Indicativum**  | -abit, -ebit, -iet   | Mutates receiver, asynchronous  |
 | **Futurum Activum**      | -atura, -itura       | Returns new value, asynchronous |
-| **Participium Praesens** | -ans, -ens           | Streaming/generator             |
+| **Praesens Plurale**     | real present plural  | Streaming/generator             |
+| **Futurum Plurale**      | real future plural   | Async streaming/generator       |
 
-The pattern emerges: **imperative forms mutate**, **participle forms allocate**. **Present tense is synchronous**, **future tense is asynchronous**. The grammar encodes the behavior.
+The pattern emerges: **imperative forms mutate**, **perfect and future-active forms allocate**, and **plural finite forms stream**. **Present tense is synchronous**, **future tense is asynchronous**. The grammar encodes the behavior.
 
 ---
 
@@ -89,25 +90,43 @@ This is the async equivalent of the perfect participle: functional transformatio
 
 ---
 
-## Participium Praesens: The Streaming Form
+## Praesens Plurale: The Streaming Form
 
-The present participle describes ongoing action: _legens_ ("reading"), _scribens_ ("writing"), _filtrans_ ("filtering"). In Faber, present participle methods produce **streams or generators**.
+The present plural describes an operation producing many values now: _legunt_ ("they read"), _scribunt_ ("they write"), _quaerunt_ ("they seek/query"). In Faber, present plural methods produce synchronous **streams or generators**.
 
 ```fab
-itera ex solum.legens(path) fixum chunk {
+itera ex solum.legunt(path) fixum chunk {
     processa(chunk)  # process each chunk as it arrives
 }
 
-itera ex items.filtrans(pred) fixum item {
+itera ex items.filtrant(pred) fixum item {
     scribe item  # lazy evaluation, processes one at a time
 }
 ```
 
-This is the most distinctive form. Where imperative and perfect handle batch operations, the present participle handles streaming data—reading files chunk by chunk, processing infinite sequences, transforming data lazily.
+This is the most distinctive synchronous form. Where imperative and perfect handle batch operations, the present plural handles streaming data—reading files chunk by chunk, processing infinite sequences, transforming data lazily.
 
-**Endings:** First conjugation uses `-ans` (_filtrans_), other conjugations use `-ens` (_legens_, _scribens_).
+**Endings:** Use the real Latin present plural for the declared root: first conjugation often uses `-ant` (_nuntiant_), second conjugation `-ent` (_vident_), third conjugation `-unt` (_quaerunt_), and fourth conjugation `-iunt` (_audiunt_).
 
-**Etymology:** The present participle is active and ongoing—_legens_ means "one who is reading" or "while reading." The action is in progress, not completed.
+**Etymology:** The plural form signals multiple yielded values. It is not "one thing is returned"; many values are produced over the lifetime of the generator.
+
+---
+
+## Futurum Plurale: The Async Streaming Form
+
+The future plural is the async counterpart to present plural streaming. It produces many values in the future, so Faber treats it as an async generator.
+
+```fab
+itera ex cede conn.quaerent(sql, params) fixum row {
+    processa(row)
+}
+
+itera ex cede sub.nuntiabunt() fixum nuntius {
+    scribe nuntius.corpus()
+}
+```
+
+**Endings:** Use the real Latin future plural for the declared root: _quaerent_ from _quaerere_, _nuntiabunt_ from _nuntiare_, _videbunt_ from _videre_, and _audient_ from _audire_.
 
 ---
 
@@ -115,16 +134,18 @@ This is the most distinctive form. Where imperative and perfect handle batch ope
 
 Each morphological form maps to semantic flags that the compiler uses for optimization and validation:
 
-| Form                 | mutare | async | reddeNovum | allocatio |
-| -------------------- | :----: | :---: | :--------: | :-------: |
-| Imperativus          |  yes   |  no   |     no     |    no     |
-| Perfectum            |   no   |  no   |    yes     |    yes    |
-| Futurum Indicativum  |  yes   |  yes  |     no     |    no     |
-| Futurum Activum      |   no   |  yes  |    yes     |    yes    |
-| Participium Praesens |   no   |  no   |     no     |    no     |
+| Form                | mutare | async | cursor | reddeNovum | allocatio |
+| ------------------- | :----: | :---: | :----: | :--------: | :-------: |
+| Imperativus         |  yes   |  no   |   no   |     no     |    no     |
+| Perfectum           |   no   |  no   |   no   |    yes     |    yes    |
+| Futurum Indicativum |  yes   |  yes  |   no   |     no     |    no     |
+| Futurum Activum     |   no   |  yes  |   no   |    yes     |    yes    |
+| Praesens Plurale    |   no   |  no   |  yes   |     no     |    no     |
+| Futurum Plurale     |   no   |  yes  |  yes   |     no     |    no     |
 
 - **mutare**: Method modifies the receiver in place
 - **async**: Method returns a Promise/Future
+- **cursor**: Method yields a stream/generator
 - **reddeNovum**: Method returns a new value (doesn't modify receiver)
 - **allocatio**: Method allocates memory (relevant for Zig target)
 
@@ -182,8 +203,13 @@ fixum content = solum.lege(path)
 # Future: asynchronous, returns Promise
 fixum content = cede solum.leget(path)
 
-# Present participle: streaming
-itera ex solum.legens(path) fixum chunk {
+# Present plural: synchronous streaming
+itera ex solum.legunt(path) fixum chunk {
+    processa(chunk)
+}
+
+# Future plural: asynchronous streaming
+itera ex cede solum.legent(path) fixum chunk {
     processa(chunk)
 }
 ```
@@ -217,7 +243,7 @@ The compiler's stem-guided parsing handles these cases: when validating `inversa
 
 A reasonable question. Why `appende`/`appendita` instead of `append`/`appendNew` or `push`/`pushed`?
 
-**Compression.** Five forms from one stem means five behaviors encoded in a learnable pattern. Once you know the pattern, you can predict the meaning of unfamiliar methods.
+**Compression.** Six forms from one stem means six behaviors encoded in a learnable pattern. Once you know the pattern, you can predict the meaning of unfamiliar methods.
 
 **Consistency.** Every collection, every I/O operation, every domain uses the same morphological system. No need to remember that arrays use `push` but strings use `append`.
 
@@ -237,6 +263,7 @@ Latin morphology is not an affectation. It is a compression scheme: one stem, mu
 | Get new value, sync    | Perfectum            | `items.addita(x)`     |
 | Mutate in place, async | Futurum Indicativum  | `items.appendebit(x)` |
 | Get new value, async   | Futurum Activum      | `items.additura(x)`   |
-| Stream/generate        | Participium Praesens | `items.appendens(x)`  |
+| Stream/generate        | Praesens Plurale     | `conn.quaerunt(sql)`  |
+| Async stream/generate  | Futurum Plurale      | `conn.quaerent(sql)`  |
 
 The compiler validates your choices. The grammar guides your intuition. The Latin carries the meaning.
