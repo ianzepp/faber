@@ -555,11 +555,7 @@ pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic
     // Case 1: explicit manifest file
     if input.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE) {
         let manifest = read_manifest(&input)?;
-        let root = normalize_path(
-            input
-                .parent()
-                .unwrap_or_else(|| Path::new(".")),
-        );
+        let root = normalize_path(input.parent().unwrap_or_else(|| Path::new(".")));
         let name = manifest.package.name.clone();
         return Ok(BuildLayout::from_package_root(root, &name));
     }
@@ -1334,7 +1330,7 @@ edition = "2021"
 ///
 /// Inherits Cargo's stdout/stderr for live progress and diagnostics.
 #[allow(dead_code)]
-pub fn invoke_cargo_build(layout: &BuildLayout) -> Result<PathBuf, Box<Diagnostic>> {
+pub fn invoke_cargo_build(layout: &BuildLayout, release: bool) -> Result<PathBuf, Box<Diagnostic>> {
     use std::process::Command;
 
     let mut cmd = Command::new("cargo");
@@ -1343,6 +1339,10 @@ pub fn invoke_cargo_build(layout: &BuildLayout) -> Result<PathBuf, Box<Diagnosti
         .arg(&layout.generated_cargo_manifest)
         .arg("--target-dir")
         .arg(&layout.cargo_target_dir);
+
+    if release {
+        cmd.arg("--release");
+    }
 
     let status = cmd.status().map_err(|e| {
         Box::new(Diagnostic::error(format!(
@@ -1356,7 +1356,12 @@ pub fn invoke_cargo_build(layout: &BuildLayout) -> Result<PathBuf, Box<Diagnosti
         ))));
     }
 
-    Ok(layout.debug_binary.clone())
+    let bin = if release {
+        &layout.release_binary
+    } else {
+        &layout.debug_binary
+    };
+    Ok(bin.clone())
 }
 
 #[cfg(test)]
@@ -1408,8 +1413,8 @@ pub fn cmd_build(command: radix::tool::BuildCommand) {
         };
         match emit_generated_crate(&layout, &output_code(output), meta.as_ref()) {
             Ok(_crate_root) => {
-                // Phase 3: now invoke Cargo to produce the real binary
-                let binary_path = match invoke_cargo_build(&layout) {
+                // Phase 3/4: now invoke Cargo to produce the real binary (debug or release)
+                let binary_path = match invoke_cargo_build(&layout, command.release) {
                     Ok(p) => p,
                     Err(d) => {
                         eprintln!("error: {}", d.message);

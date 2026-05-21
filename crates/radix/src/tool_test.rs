@@ -101,6 +101,7 @@ fn cmd_build_writes_file_output_to_disk() {
         input: file,
         out_dir: out_dir.clone(),
         package: false,
+        release: false,
         target: crate::codegen::Target::Rust,
     });
 

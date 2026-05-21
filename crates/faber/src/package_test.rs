@@ -1,4 +1,7 @@
-use super::{check_package, compile_package, discover_build_layout, emit_generated_crate, read_manifest, sanitize_crate_name, BuildLayout};
+use super::{
+    check_package, compile_package, discover_build_layout, emit_generated_crate, read_manifest,
+    sanitize_crate_name, BuildLayout,
+};
 use radix::diagnostics::Diagnostic;
 use radix::driver::Config;
 use radix::Output;
@@ -587,7 +590,10 @@ version = "0.2.0"
     assert_eq!(layout.package_root, dir);
     assert!(layout.manifest_path.ends_with("faber.toml"));
     // still sibling even with odd casing in name
-    assert!(layout.debug_binary.to_string_lossy().ends_with("manifest-pkg"));
+    assert!(layout
+        .debug_binary
+        .to_string_lossy()
+        .ends_with("manifest-pkg"));
 }
 
 #[test]
@@ -606,7 +612,10 @@ name = "dir-pkg"
 
     let layout = discover_build_layout(&dir).expect("discover from dir");
     assert_eq!(layout.binary_name(), "dir-pkg");
-    assert_eq!(layout.generated_rust_entry, dir.join("target/faber/src/main.rs"));
+    assert_eq!(
+        layout.generated_rust_entry,
+        dir.join("target/faber/src/main.rs")
+    );
 }
 
 #[test]
@@ -625,12 +634,11 @@ fn discover_build_layout_supports_entry_file_input_and_falls_back_to_dir_name() 
 #[test]
 fn build_layout_never_produces_faber_target_nested_path() {
     let layout = BuildLayout::from_package_root("/tmp/xyz", "xyz");
-    let bad = layout.generated_crate_root.join("target").join("debug");
+    let nested = layout.generated_crate_root.join("target");
     assert!(
-        !layout.debug_binary.starts_with(&layout.generated_crate_root.join("target")),
+        !layout.debug_binary.starts_with(&nested),
         "no target/faber/target path allowed"
     );
-    assert!(!bad.exists() || true); // just documenting intent
 }
 
 // ---------------------------------------------------------------------------
@@ -664,8 +672,12 @@ version = "0.3.0"
         _ => panic!("expected rust output"),
     };
 
-    let written = emit_generated_crate(&layout, &code, Some(&read_manifest(&layout.manifest_path).unwrap()))
-        .expect("emit");
+    let written = emit_generated_crate(
+        &layout,
+        &code,
+        Some(&read_manifest(&layout.manifest_path).unwrap()),
+    )
+    .expect("emit");
 
     assert_eq!(written, layout.generated_crate_root);
     assert!(layout.generated_cargo_manifest.exists());

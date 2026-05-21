@@ -53,8 +53,17 @@ struct InitArgs {
 
 #[derive(clap::Args, Debug)]
 struct RunArgs {
-    /// Package path to run
+    /// Package path to run (defaults to current directory)
+    #[arg(default_value = ".")]
     path: PathBuf,
+
+    /// Run the release binary
+    #[arg(long)]
+    release: bool,
+
+    /// Arguments passed to the executed program (after --)
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    args: Vec<String>,
 }
 
 #[derive(clap::Args, Debug)]
@@ -72,6 +81,7 @@ fn main() {
             input: args.input,
             out_dir: args.out_dir,
             package: args.package,
+            release: args.release,
             target: args.target.into(),
         }),
         Command::Targets => tool::cmd_targets(),
@@ -157,11 +167,79 @@ fn cmd_init(args: InitArgs) {
 }
 
 fn cmd_run(args: RunArgs) {
-    eprintln!(
-        "error: `faber run` is not implemented yet; build with `faber build` and run the generated Rust artifact from {}",
-        args.path.display()
-    );
-    std::process::exit(1);
+    use std::path::PathBuf;
+    use std::process::Command;
+
+    let input_path = PathBuf::from(&args.path);
+
+    // Always (re)build for the package at the given path.
+    // run is intended for packages; treat the input as package input.
+    let config = radix::driver::Config::default().with_target(radix::codegen::Target::Rust);
+    let result = package::compile_package(&config, &input_path);
+
+    for diag in &result.diagnostics {
+        if diag.is_error() {
+            eprintln!("error: {}", diag.message);
+        } else {
+            eprintln!("warning: {}", diag.message);
+        }
+    }
+
+    let Some(output) = result.output else {
+        eprintln!("compilation failed");
+        std::process::exit(1);
+    };
+
+    // Discover layout (works for package or legacy entry)
+    let layout = match package::discover_build_layout(&input_path) {
+        Ok(l) => l,
+        Err(d) => {
+            eprintln!("error: {}", d.message);
+            std::process::exit(1);
+        }
+    };
+
+    let meta = if layout.manifest_path.exists() {
+        package::read_manifest(&layout.manifest_path).ok()
+    } else {
+        None
+    };
+
+    let code_string = match output {
+        radix::Output::Rust(r) => r.code,
+        _ => {
+            eprintln!("error: run only supports Rust backend packages");
+            std::process::exit(1);
+        }
+    };
+
+    if let Err(d) = package::emit_generated_crate(&layout, &code_string, meta.as_ref()) {
+        eprintln!("error emitting: {}", d.message);
+        std::process::exit(1);
+    }
+
+    let binary = match package::invoke_cargo_build(&layout, args.release) {
+        Ok(b) => b,
+        Err(d) => {
+            eprintln!("error: {}", d.message);
+            std::process::exit(1);
+        }
+    };
+
+    // Now exec the binary, forwarding args and exit status
+    let status = Command::new(&binary)
+        .args(&args.args)
+        .status()
+        .unwrap_or_else(|e| {
+            eprintln!("error: failed to execute {}: {}", binary.display(), e);
+            std::process::exit(1);
+        });
+
+    if let Some(code) = status.code() {
+        std::process::exit(code);
+    } else {
+        std::process::exit(1);
+    }
 }
 
 fn cmd_test(args: TestArgs) {

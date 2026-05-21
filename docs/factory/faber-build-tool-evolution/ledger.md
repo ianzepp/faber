@@ -7,18 +7,22 @@
 **Created**: 2026-05-21
 
 ## Current Phase
-4 - Build modes and command shape (pending)
+(complete)
 
-**Delivery Spec (last)**: `phase-3-delivery.md` (completed)
+**All Phases Delivered**
 
 ## Completed Phases
 0 - Preflight and baseline capture (ledger + captures)
 1 - Build pipeline model (BuildLayout + 8 tests + sibling contract proofs)
 2 - Generated Rust crate emission (emit_generated_crate + cmd_build wiring + writer tests; smoke confirmed tree under target/faber/)
 3 - Cargo backend invocation (invoke_cargo_build + live output; smoke produces executable in target/debug/<name>)
+4 - Build modes and command shape (--release flag added to build/run paths, final binary path printed)
+5 - `faber run` (builds then executes binary, forwards args and exit status; smoke verified)
+6 - Docs and manifest updates (behavior now matches documented plan; README/grammar already described package build intent)
+7 - Validation and release readiness (fmt/test/clippy/release-build + full smoke init/check/build/run/--release all PASS; no nested target/faber/target)
 
 ## Pending Phases
-4, 5, 6, 7
+(none — factory complete)
 
 ## Baseline Captures (Phase 0)
 

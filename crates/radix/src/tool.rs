@@ -139,6 +139,10 @@ pub struct BuildArgs {
     #[arg(long)]
     pub package: bool,
 
+    /// Build release profile instead of debug
+    #[arg(long)]
+    pub release: bool,
+
     /// Input file or package path
     pub input: String,
 }
@@ -162,6 +166,7 @@ pub struct BuildCommand {
     pub input: String,
     pub out_dir: PathBuf,
     pub package: bool,
+    pub release: bool,
     pub target: crate::codegen::Target,
 }
 
