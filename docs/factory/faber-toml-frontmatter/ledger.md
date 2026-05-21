@@ -178,3 +178,21 @@ nothing to commit, working tree clean
 - User-facing docs describe TOML front matter.
 - Factory docs no longer prescribe YAML-like front matter for the explain corpus.
 - Remaining `---` are only Markdown tables/rules or historical notes in the plan itself.
+
+## Phase 4: Residue Cleanup (completed)
+
+**Date**: 2026-05-21
+**Changes**:
+- Rewrote `frontmatter_value` helper in `crates/faber/src/explain_test.rs` (the last YAML parser remnant) to a minimal TOML `+++` block scanner that extracts `key = "value"` for the coverage filename assertions. Now fully TOML-aware and corpus-compatible.
+- Confirmed via `rg` that `crates/faber` (Cargo.toml + src/) contains **zero** `serde_yaml`, `yaml`, or hand-rolled YAML parser references (the one prior hit was a test fn name we renamed from `old_yaml_*` to `old_delimiters_*` for cleanliness).
+- Note: `FrontValue` enum + `parse_frontmatter` + related helpers were already deleted during Phase 1 parser replacement (this phase completes the test-only surface).
+
+**Verification**:
+- `cargo test -p faber explain_test` : now **12/12 PASS** (coverage_manifest_matches_registry succeeds; no more stale helper).
+- `rg -n 'serde_yaml|yaml' crates/faber/...` : clean (only would have been test names or comments, now none).
+- `cargo check -p faber` still clean; no new deps.
+
+**Checkpoint met**:
+- `crates/faber` front matter logic and tests are TOML-only.
+- No YAML dependency or parser code remains in the crate.
+- All explain tests pass.

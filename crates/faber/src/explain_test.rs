@@ -110,7 +110,7 @@ incipit {}
 }
 
 #[test]
-fn old_yaml_frontmatter_delimiters_fail() {
+fn old_delimiters_frontmatter_fail() {
     let raw = [crate::explain::RawEntry {
         filename: "old.md",
         source: r#"---
@@ -380,27 +380,33 @@ fn expected_filename(term: &str, legacy: bool) -> String {
 }
 
 fn frontmatter_value(source: &str, key: &str) -> Option<String> {
+    // Minimal TOML frontmatter extractor for test helper (only "term" etc. used).
+    // Looks for +++ delimited block and simple `key = "value"` (or 'value') lines.
     let mut lines = source.lines();
-    if lines.next()? != "---" {
+    if lines.next()? != "+++" {
         return None;
     }
 
     for line in lines {
-        if line == "---" {
+        if line.trim() == "+++" {
             break;
         }
-        let Some((found_key, raw_value)) = line.split_once(':') else {
-            continue;
-        };
-        if found_key.trim() != key {
-            continue;
+        // Match key = "..." or key="..." (common in our corpus)
+        let line = line.trim();
+        if let Some(eq_pos) = line.find('=') {
+            let found_key = line[..eq_pos].trim();
+            if found_key != key {
+                continue;
+            }
+            let mut val = line[eq_pos + 1..].trim();
+            // strip optional surrounding quotes (single or double)
+            if (val.starts_with('"') && val.ends_with('"')) || (val.starts_with('\'') && val.ends_with('\'')) {
+                if val.len() >= 2 {
+                    val = &val[1..val.len() - 1];
+                }
+            }
+            return Some(val.to_owned());
         }
-
-        let value = raw_value.trim();
-        if value.len() >= 2 && value.starts_with('"') && value.ends_with('"') {
-            return Some(value[1..value.len() - 1].to_owned());
-        }
-        return Some(value.to_owned());
     }
 
     None
