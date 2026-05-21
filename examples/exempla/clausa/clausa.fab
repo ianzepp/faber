@@ -5,23 +5,23 @@
 incipit {
     # Simple lambda with single parameter
     fixum double ← clausura numerus x: x * 2
-    scribe double(5)
+    nota double(5)
 
     # Multi-parameter lambda
     fixum add ← clausura numerus a, numerus b → numerus: a + b
-    scribe add(3, 4)
+    nota add(3, 4)
 
     # Lambda with array map
     fixum numbers ← [1, 2, 3]
     fixum doubled ← numbers.map(clausura numerus x: x * 2)
-    scribe doubled
+    nota doubled
 
     # Lambda with array filter
     fixum evens ← numbers.filter(clausura numerus x: x % 2 ≡ 0)
-    scribe evens
+    nota evens
 
     # Lambda stored and reused
     fixum isPositive ← clausura numerus n → bivalens: n > 0
-    scribe isPositive(10)
-    scribe isPositive(-5)
+    nota isPositive(10)
+    nota isPositive(-5)
 }

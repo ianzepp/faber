@@ -15,26 +15,26 @@ incipit {
     # Switch on enum
     elige color {
         casu Color.rubrum {
-            scribe "Red"
+            nota "Red"
         }
         casu Color.viridis {
-            scribe "Green"
+            nota "Green"
         }
         casu Color.caeruleum {
-            scribe "Blue"
+            nota "Blue"
         }
     }
 
     # Switch on enum with numeric values
     elige status {
         casu Status.pendens {
-            scribe "Pending"
+            nota "Pending"
         }
         casu Status.actum {
-            scribe "Active"
+            nota "Active"
         }
         casu Status.finitum {
-            scribe "Finished"
+            nota "Finished"
         }
     }
 }

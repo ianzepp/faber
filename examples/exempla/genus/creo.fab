@@ -43,20 +43,20 @@ incipit {
         value: 50
     } ⇢ BoundedValue
 
-    scribe normal.getValue()
+    nota normal.getValue()
 
     fixum clamped ← {
         value: 200
     } ⇢ BoundedValue
 
-    scribe clamped.getValue()
+    nota clamped.getValue()
 
     # Derived initialization in creo
     fixum c ← {
         radius: 5
     } ⇢ Circle
 
-    scribe c.radius
-    scribe c.diameter
-    scribe c.area
+    nota c.radius
+    nota c.diameter
+    nota c.area
 }

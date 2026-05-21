@@ -315,8 +315,17 @@ pub fn generate_expr(
             in_entry,
             suppress_error_propagation,
         )?,
-        HirExprKind::Scribe(args) => {
-            generate_scribe_expr(codegen, args, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        HirExprKind::Scribe(kind, args) => {
+            generate_scribe_expr(
+                codegen,
+                *kind,
+                args,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
         }
         HirExprKind::Scriptum(template, args) => generate_scriptum_expr(
             codegen,

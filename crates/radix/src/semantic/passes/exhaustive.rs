@@ -253,7 +253,7 @@ fn check_expr(
                 check_expr(element, types, enum_variants, errors);
             }
         }
-        HirExprKind::Scribe(elements) => {
+        HirExprKind::Scribe(_, elements) => {
             for element in elements {
                 check_expr(element, types, enum_variants, errors);
             }

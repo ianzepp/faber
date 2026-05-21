@@ -372,6 +372,7 @@ impl Parser {
                 | TokenKind::Scribe
                 | TokenKind::Vide
                 | TokenKind::Mone
+                | TokenKind::Nota
                 | TokenKind::Incipit
                 | TokenKind::Incipiet
                 | TokenKind::Cura
@@ -447,6 +448,7 @@ impl Parser {
             TokenKind::Scribe => Ok(self.keyword_ident("scribe", span)),
             TokenKind::Vide => Ok(self.keyword_ident("vide", span)),
             TokenKind::Mone => Ok(self.keyword_ident("mone", span)),
+            TokenKind::Nota => Ok(self.keyword_ident("nota", span)),
             TokenKind::Lege => Ok(self.keyword_ident("lege", span)),
             _ => Err(ParseError { kind: ParseErrorKind::Expected, message: "expected identifier".to_owned(), span }),
         }

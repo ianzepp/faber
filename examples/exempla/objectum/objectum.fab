@@ -3,30 +3,30 @@
 incipit {
     # Empty object
     fixum empty ← {}
-    scribe empty
+    nota empty
 
     # Simple object with numeric values
     fixum point ← { x: 10, y: 20 }
-    scribe point
+    nota point
 
     # String keys
     fixum value ← 42
     fixum withStringKey ← { "key": value }
-    scribe withStringKey
+    nota withStringKey
 
     # Properties from variables
     fixum name ← "Marcus"
     fixum age ← 30
     fixum person ← { name: name, age: age }
-    scribe person
+    nota person
 
     # Nested objects
     fixum nested ← { outer: { inner: 1 } }
-    scribe nested
+    nota nested
 
     # Spread operator
     fixum base ← { a: 1, b: 2 }
-    scribe base
+    nota base
     fixum extended ← { sparge base, c: 3 }
-    scribe extended
+    nota extended
 }

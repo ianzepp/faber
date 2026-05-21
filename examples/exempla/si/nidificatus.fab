@@ -6,13 +6,13 @@ incipit {
 
     si isLoggedIn {
         si hasPermission {
-            scribe "Access granted"
+            nota "Access granted"
         }
         secus {
-            scribe "Permission denied"
+            nota "Permission denied"
         }
     }
     secus {
-        scribe "Please log in"
+        nota "Please log in"
     }
 }

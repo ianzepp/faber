@@ -344,7 +344,7 @@ impl<'a> BorrowChecker<'a> {
                     self.check_expr(element);
                 }
             }
-            HirExprKind::Scribe(elements) => {
+            HirExprKind::Scribe(_, elements) => {
                 for element in elements {
                     self.check_expr(element);
                 }

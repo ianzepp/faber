@@ -7,7 +7,7 @@
 //!   - Imperative (-a, -e, -i): synchronous
 //!   - Future indicative (-et, -ebit): asynchronous (returns impl Future)
 //!
-//! Aligns with language keywords: scribe (info), mone (warn), vide (debug)
+//! Provides real console output while language diagnostics use nota/vide/mone.
 
 use std::io::{self, BufRead, Read, Write};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};

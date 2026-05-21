@@ -43,14 +43,14 @@ functio clamp(numerus value, numerus min, numerus max) → numerus {
 }
 
 incipit {
-    scribe divide(10, 2)
-    scribe divide(10, 0)
+    nota divide(10, 2)
+    nota divide(10, 0)
 
-    scribe processValue(50)
-    scribe processValue(-10)
-    scribe processValue(150)
+    nota processValue(50)
+    nota processValue(-10)
+    nota processValue(150)
 
-    scribe clamp(5, 0, 10)
-    scribe clamp(-5, 0, 10)
-    scribe clamp(15, 0, 10)
+    nota clamp(5, 0, 10)
+    nota clamp(-5, 0, 10)
+    nota clamp(15, 0, 10)
 }

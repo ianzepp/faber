@@ -36,6 +36,7 @@ pub(super) fn rust_scribe_format(expr: &HirExpr, types: &TypeTable) -> &'static 
 #[allow(clippy::too_many_arguments)]
 pub(super) fn generate_scribe_expr(
     codegen: &RustCodegen<'_>,
+    kind: HirScribeKind,
     args: &[HirExpr],
     types: &TypeTable,
     w: &mut CodeWriter,
@@ -43,8 +44,13 @@ pub(super) fn generate_scribe_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let macro_name = match kind {
+        HirScribeKind::Mone => "eprintln",
+        HirScribeKind::Nota | HirScribeKind::Vide | HirScribeKind::Scribe => "println",
+    };
     if args.is_empty() {
-        w.write("println!()");
+        w.write(macro_name);
+        w.write("!()");
         return Ok(());
     }
 
@@ -53,7 +59,8 @@ pub(super) fn generate_scribe_expr(
         .map(|arg| rust_scribe_format(arg, types))
         .collect::<Vec<_>>()
         .join(" ");
-    w.write("println!(\"");
+    w.write(macro_name);
+    w.write("!(\"");
     w.write(&format);
     w.write("\"");
     for arg in args {

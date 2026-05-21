@@ -31,17 +31,17 @@ functio summatio(numerus n) → numerus {
 
 incipit {
     # Factorial examples
-    scribe factorial(0)
-    scribe factorial(1)
-    scribe factorial(5)
-    scribe factorial(10)
+    nota factorial(0)
+    nota factorial(1)
+    nota factorial(5)
+    nota factorial(10)
 
     # Fibonacci examples
-    scribe fibonacci(0)
-    scribe fibonacci(1)
-    scribe fibonacci(10)
+    nota fibonacci(0)
+    nota fibonacci(1)
+    nota fibonacci(10)
 
     # Sum examples
-    scribe summatio(5)
-    scribe summatio(10)
+    nota summatio(5)
+    nota summatio(10)
 }

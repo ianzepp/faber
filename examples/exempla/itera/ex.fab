@@ -7,14 +7,14 @@ incipit {
     fixum numbers ← [1, 2, 3, 4, 5]
 
     itera ex numbers fixum n {
-        scribe n
+        nota n
     }
 
     # Iterate over string array
     fixum names ← ["Marcus", "Julia", "Claudia"]
 
     itera ex names fixum name {
-        scribe name
+        nota name
     }
 
     # Process items
@@ -22,6 +22,6 @@ incipit {
 
     itera ex values fixum v {
         fixum doubled ← v * 2
-        scribe doubled
+        nota doubled
     }
 }

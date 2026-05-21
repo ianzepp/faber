@@ -11,13 +11,13 @@ incipit ergo cura arena {
 
     elige day {
         casu "monday" {
-            scribe "Start of week"
+            nota "Start of week"
         }
         casu "friday" {
-            scribe "End of week"
+            nota "End of week"
         }
         ceterum {
-            scribe "Midweek"
+            nota "Midweek"
         }
     }
 
@@ -26,16 +26,16 @@ incipit ergo cura arena {
 
     elige command {
         casu "start" {
-            scribe "Starting..."
+            nota "Starting..."
         }
         casu "stop" {
-            scribe "Stopping..."
+            nota "Stopping..."
         }
         casu "restart" {
-            scribe "Restarting..."
+            nota "Restarting..."
         }
         ceterum {
-            scribe "Unknown command"
+            nota "Unknown command"
         }
     }
 
@@ -44,17 +44,17 @@ incipit ergo cura arena {
 
     elige level {
         casu 1 {
-            scribe "Beginner"
+            nota "Beginner"
         }
         casu 2 {
-            scribe "Intermediate"
+            nota "Intermediate"
         }
         casu 3 {
-            scribe "Advanced"
+            nota "Advanced"
         }
         ceterum {
-            scribe "Custom level"
-            scribe "Level: §", level
+            nota "Custom level"
+            nota "Level: §", level
         }
     }
 }

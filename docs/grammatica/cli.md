@@ -118,7 +118,7 @@ Use a single-command CLI when the program has no subcommands.
 @ optio newline brevis "n" longum "newline" typus bivalens descriptio "Print trailing newline"
 @ operandus ceteri textus strings descriptio "Text to print"
 incipit argumenta args {
-    scribe args.strings
+    nota args.strings
 }
 ```
 
@@ -140,15 +140,15 @@ incipit argumenta args {}
 @ descriptio "List jobs"
 @ optio limit longum "limit" typus numerus vel 20
 functio list() argumenta args → vacuum {
-    scribe args.verbose
-    scribe args.limit
+    nota args.verbose
+    nota args.limit
 }
 
 @ imperium "show"
 @ operandus numerus id
 functio show() argumenta args → vacuum {
-    scribe args.verbose
-    scribe args.id
+    nota args.verbose
+    nota args.id
 }
 ```
 
@@ -189,7 +189,7 @@ Mounted module:
 @ alias "hi"
 @ operandus textus name
 functio hello() argumenta args → vacuum {
-    scribe scriptum("Hello, §!", args.name)
+    nota scriptum("Hello, §!", args.name)
 }
 ```
 

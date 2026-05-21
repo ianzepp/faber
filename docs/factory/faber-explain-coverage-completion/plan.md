@@ -273,7 +273,7 @@ Known missing keyword families include:
 - async and closure: `futura`, `cursor`, `cede`, `clausura`,
 - boolean, null, and logic: `verum`, `falsum`, `nihil`, `et`, `aut`, `non`, `vel`, `est`,
 - object and type operations: `ego`, `finge`, `sub`, `implet`, `qua`, `innatum`, `novum`, `numeratum`, `fractatum`, `textatum`, `bivalentum`,
-- output and entry surfaces: `scribe`, `vide`, `mone`, `incipiet`, `argumenta`, `cura`, `arena`, `ad`,
+- diagnostic and entry surfaces: `nota`, `vide`, `mone`, `scribe`, `incipiet`, `argumenta`, `cura`, `arena`, `ad`,
 - miscellaneous language forms: `ex`, `de`, `in`, `ut`, `pro`, `omnia`, `sparge`, `praefixum`, `scriptum`, `lege`, `lineam`, `sed`,
 - ranges: `ante`, `usque`, `per`, `intra`, `inter`,
 - collection DSL: `ab`, `ubi`, `prima`, `ultima`, `summa`,

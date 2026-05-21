@@ -15,5 +15,5 @@ incipit argumenta args {}
 @ imperium "version"
 @ alias "v"
 functio version() → vacuum {
-    scribe "Example CLI v1.0.0"
+    nota "Example CLI v1.0.0"
 }

@@ -166,7 +166,7 @@ proba "text passes" {
 }
 
 incipit {
-    scribe "test fixture"
+    nota "test fixture"
 }
 ```
 

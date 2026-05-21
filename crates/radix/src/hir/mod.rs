@@ -38,7 +38,7 @@ pub use nodes::{
     HirCollectionFilterKind, HirCollectionTransform, HirConst, HirEndpointVerb, HirEnum, HirExpr, HirExprKind,
     HirField, HirFunction, HirId, HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem, HirItemKind,
     HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
-    HirParam, HirParamMode, HirPattern, HirProgram, HirRangeKind, HirReceiver, HirRefKind, HirStmt, HirStmtKind,
-    HirStruct, HirTestMetadata, HirTestModifier, HirTransformKind, HirTypeAlias, HirTypeParam, HirUnOp, HirVariant,
-    HirVariantField,
+    HirParam, HirParamMode, HirPattern, HirProgram, HirRangeKind, HirReceiver, HirRefKind, HirScribeKind, HirStmt,
+    HirStmtKind, HirStruct, HirTestMetadata, HirTestModifier, HirTransformKind, HirTypeAlias, HirTypeParam, HirUnOp,
+    HirVariant, HirVariantField,
 };

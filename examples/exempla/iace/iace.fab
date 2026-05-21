@@ -8,7 +8,7 @@ incipit {
         iace "Something went wrong"
     }
     cape err {
-        scribe "Caught:", err
+        nota "Caught:", err
     }
 
     # Throw with formatted message
@@ -17,7 +17,7 @@ incipit {
         iace scriptum("Error code: §", code)
     }
     cape err {
-        scribe "Caught:", err
+        nota "Caught:", err
     }
 
     # Throw from conditional
@@ -26,9 +26,9 @@ incipit {
         si value < 0 {
             iace "Value must be non-negative"
         }
-        scribe "Value is valid"
+        nota "Value is valid"
     }
     cape err {
-        scribe "Validation failed:", err
+        nota "Validation failed:", err
     }
 }

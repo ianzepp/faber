@@ -48,11 +48,11 @@ functio getHttpMessage(numerus code) → textus {
 }
 
 incipit {
-    scribe getGreeting("latin")
-    scribe getGreeting("spanish")
-    scribe getGreeting("unknown")
+    nota getGreeting("latin")
+    nota getGreeting("spanish")
+    nota getGreeting("unknown")
 
-    scribe getHttpMessage(200)
-    scribe getHttpMessage(404)
-    scribe getHttpMessage(999)
+    nota getHttpMessage(200)
+    nota getHttpMessage(404)
+    nota getHttpMessage(999)
 }

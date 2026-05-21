@@ -52,14 +52,14 @@ functio sqrt(numerus n) → numerus {
 }
 
 incipit ergo cura arena {
-    scribe processAge(-5)
-    scribe processAge(200)
-    scribe processAge(25)
-    scribe processAge(12)
+    nota processAge(-5)
+    nota processAge(200)
+    nota processAge(25)
+    nota processAge(12)
 
-    scribe createUser("Marcus", "marcus@roma.com", 30)
-    scribe createUser("", "test@test.com", 25)
-    scribe createUser("Julia", "julia@roma.com", 10)
+    nota createUser("Marcus", "marcus@roma.com", 30)
+    nota createUser("", "test@test.com", 25)
+    nota createUser("Julia", "julia@roma.com", 10)
 
-    scribe sqrt(16)
+    nota sqrt(16)
 }

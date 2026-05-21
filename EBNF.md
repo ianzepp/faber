@@ -183,7 +183,7 @@ Example:
 ```fab
 importa ex "hono" privata Hono
 importa ex "hono" privata Context
-importa ex "norma:scribe" privata scribe ut s
+importa ex "norma:hal/consolum" privata consolum
 importa ex "lodash" privata * ut _
 importa ex "./types" publica User               # re-export
 ```
@@ -265,7 +265,7 @@ iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expres
 - `dum` = while
 - `itera ex...fixum`/`itera ex...varia` = for-of (values)
 - `itera de...fixum`/`itera de...varia` = for-in (keys)
-- `itera pro range ('per' step)? fixum/varia i` = range iteration (e.g. `itera pro 0‥10 per 2 fixum i { scribe i }`)
+- `itera pro range ('per' step)? fixum/varia i` = range iteration (e.g. `itera pro 0‥10 per 2 fixum i { nota i }`)
 
 ### Switch/Match
 
@@ -423,13 +423,14 @@ arrayPatternElement := '_' | 'ceteri'? IDENTIFIER
 
 ---
 
-## Output
+## Diagnostics
 
 ```ebnf
-outputStmt := ('scribe' | 'vide' | 'mone') expression (',' expression)*
+outputStmt := ('nota' | 'vide' | 'mone' | 'scribe') expression (',' expression)*
 ```
 
-- `scribe` = log, `vide` = debug, `mone` = warn
+- `nota` = neutral diagnostic note, `vide` = debug/inspect, `mone` = warn
+- `scribe` is a compatibility alias for neutral diagnostic output; use HAL stdlib methods for real output
 
 ---
 
@@ -614,9 +615,10 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `Hex` / `Oct` / `Bin` / `Dec` | radix types         |
 | **Bitwise**         | `∧` / `∨` / `⊻` / `¬`         | and/or/xor/not      |
 |                     | `≪` / `≫`                     | left/right shift    |
-| **Output**          | `scribe`                      | log                 |
-|                     | `vide`                        | debug               |
+| **Diagnostics**     | `nota`                        | neutral note        |
+|                     | `vide`                        | debug/inspect       |
 |                     | `mone`                        | warn                |
+|                     | `scribe`                      | legacy note alias   |
 
 ---
 
@@ -626,4 +628,4 @@ Not all Faber features are supported across all compilation targets. Some featur
 2. **Type-first declarations**: `fixum textus name` NOT `fixum name: textus`
 3. **Iteration loops**: `itera ex/de/pro collection/range fixum/varia item { }` (verb-first, source, then binding)
 4. **Parentheses around conditions are valid but not idiomatic**: prefer `si x > 0 { }` or `si positivum x { }` over `si (x > 0) { }`
-5. **Output keywords are statements**, not functions — `scribe x` works, `scribe(x)` also works (parentheses group the expression), but `scribe` is not a callable value
+5. **Diagnostic keywords are statements**, not functions — `nota x` works, `nota(x)` also works (parentheses group the expression), but `nota` is not a callable value

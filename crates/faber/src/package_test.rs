@@ -26,7 +26,7 @@ fn compile_package_reports_unresolved_external_imports() {
     let entry = dir.join("main.fab");
     fs::write(
         &entry,
-        "importa ex \"lodash\" privata map\nincipit { scribe \"x\" }",
+        "importa ex \"lodash\" privata map\nincipit { nota \"x\" }",
     )
     .expect("write entry");
 
@@ -221,7 +221,7 @@ fn compile_package_resolves_relative_input_from_current_working_directory() {
     let dir = temp_dir("relative-input");
     let project_dir = dir.join("project");
     fs::create_dir_all(&project_dir).expect("create project dir");
-    fs::write(project_dir.join("main.fab"), "incipit { scribe \"salve\" }").expect("write entry");
+    fs::write(project_dir.join("main.fab"), "incipit { nota \"salve\" }").expect("write entry");
 
     let original_cwd = std::env::current_dir().expect("current dir");
     std::env::set_current_dir(&dir).expect("set current dir");
@@ -257,7 +257,7 @@ incipit argumenta args {}
 @ alias "set"
 @ operandus textus name
 functio set_config() argumenta args {
-  scribe args.name
+  nota args.name
 }
 "#,
     )
@@ -307,7 +307,7 @@ incipit argumenta args {}
         r#"
 @ imperium "run"
 functio run() argumenta args {
-  scribe "running"
+  nota "running"
 }
 "#,
     )
@@ -345,7 +345,7 @@ incipit argumenta args {}
         r#"
 @ imperium "run"
 functio run() argumenta args {
-  scribe args.verbose
+  nota args.verbose
 }
 "#,
     )
@@ -598,7 +598,7 @@ fn compile_package_discovers_faber_toml_from_directory() {
     let dir = temp_dir("manifest-dir");
     let src = dir.join("src");
     fs::create_dir_all(&src).expect("create src");
-    fs::write(src.join("main.fab"), "incipit { scribe \"ok\" }").expect("write package entry");
+    fs::write(src.join("main.fab"), "incipit { nota \"ok\" }").expect("write package entry");
     fs::write(
         dir.join("faber.toml"),
         r#"
@@ -802,7 +802,7 @@ name = "dir-pkg"
 fn discover_build_layout_supports_entry_file_input_and_falls_back_to_dir_name() {
     let dir = temp_dir("layout-entry-no-manifest");
     let entry = dir.join("main.fab");
-    fs::write(&entry, "incipit { scribe \"x\" }").expect("entry");
+    fs::write(&entry, "incipit { nota \"x\" }").expect("entry");
 
     let layout = discover_build_layout(&entry).expect("discover from entry file");
     // falls back to directory name since no manifest
@@ -831,7 +831,7 @@ fn emit_generated_crate_writes_cargo_toml_and_main_rs_under_target_faber() {
     fs::create_dir_all(pkg.join("src")).expect("src");
     fs::write(
         pkg.join("src/main.fab"),
-        r#"incipit { scribe "writer test" }"#,
+        r#"incipit { nota "writer test" }"#,
     )
     .expect("entry");
     fs::write(

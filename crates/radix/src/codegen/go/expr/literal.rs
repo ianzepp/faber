@@ -1,4 +1,5 @@
 use super::*;
+use crate::hir::HirScribeKind;
 pub(super) fn render_scriptum_template(template: &str, arg_count: usize) -> String {
     let mut rendered = template.to_owned();
     // Replace §N placeholders with Go's %v format verbs
@@ -11,11 +12,16 @@ pub(super) fn render_scriptum_template(template: &str, arg_count: usize) -> Stri
 }
 pub(super) fn generate_scribe_expr(
     codegen: &GoCodegen<'_>,
+    kind: HirScribeKind,
     args: &[HirExpr],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    w.write("fmt.Println(");
+    let function = match kind {
+        HirScribeKind::Mone => "fmt.Fprintln(os.Stderr, ",
+        HirScribeKind::Nota | HirScribeKind::Vide | HirScribeKind::Scribe => "fmt.Println(",
+    };
+    w.write(function);
     for (idx, arg) in args.iter().enumerate() {
         if idx > 0 {
             w.write(", ");

@@ -1,6 +1,6 @@
-# Output statements with different log levels
+# Diagnostic statements with different levels
 #
-# scribe <expr>  → console.log (standard output)
+# nota <expr>    → neutral diagnostic note
 # vide <expr>    → console.debug (debug output)
 # mone <expr>    → console.warn (warning output)
 
@@ -8,9 +8,9 @@ incipit {
     fixum status ← "running"
     fixum count ← 42
 
-    # Standard output (console.log)
-    scribe "Application started"
-    scribe "Status:", status
+    # Neutral diagnostic note
+    nota "Application started"
+    nota "Status:", status
 
     # Debug output (console.debug)
     vide "Debug: entering main loop"

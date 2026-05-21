@@ -9,18 +9,18 @@ incipit {
     fixum hour ← 14
 
     si hour < 6 {
-        scribe "Late night"
+        nota "Late night"
     }
     sin hour < 12 {
-        scribe "Morning"
+        nota "Morning"
     }
     sin hour < 18 {
-        scribe "Afternoon"
+        nota "Afternoon"
     }
     sin hour < 22 {
-        scribe "Evening"
+        nota "Evening"
     }
     secus {
-        scribe "Night"
+        nota "Night"
     }
 }

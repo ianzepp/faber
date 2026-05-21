@@ -13,7 +13,7 @@ incipit ergo cura arena {
             perge
         }
 
-        scribe i
+        nota i
     }
 
     # Continue in nested loop (affects inner only)
@@ -29,7 +29,7 @@ incipit ergo cura arena {
                 perge
             }
 
-            scribe "outer←§, inner←§", outer, inner
+            nota "outer←§, inner←§", outer, inner
         }
 
         outer ← outer + 1

@@ -123,15 +123,15 @@ Faber provides unary prefix operators for checking null state:
 ```fab
 fixum textus? maybe = nihil
 
-scribe nihil maybe       # verum (is null)
-scribe nonnihil maybe    # falsum (is not null)
+nota nihil maybe       # verum (is null)
+nota nonnihil maybe    # falsum (is not null)
 ```
 
 For checking whether a value is null or empty (strings, arrays, collections):
 
 ```fab
-scribe nulla maybe       # verum (null or empty)
-scribe nonnulla maybe    # falsum (has content)
+nota nulla maybe       # verum (null or empty)
+nota nonnulla maybe    # falsum (has content)
 ```
 
 The distinction matters:
@@ -212,7 +212,7 @@ The `..` operator creates a range that excludes the end value:
 
 ```fab
 itera ex 0..10 fixum i {
-    scribe i    # 0, 1, 2, ..., 9
+    nota i    # 0, 1, 2, ..., 9
 }
 ```
 
@@ -220,7 +220,7 @@ The Latin keyword `ante` ("before") means the same thing:
 
 ```fab
 itera ex 0 ante 10 fixum i {
-    scribe i    # 0, 1, 2, ..., 9
+    nota i    # 0, 1, 2, ..., 9
 }
 ```
 
@@ -230,7 +230,7 @@ The `usque` operator includes the end value:
 
 ```fab
 itera ex 0 usque 10 fixum i {
-    scribe i    # 0, 1, 2, ..., 10
+    nota i    # 0, 1, 2, ..., 10
 }
 ```
 
@@ -242,7 +242,7 @@ The `per` modifier controls the step size:
 
 ```fab
 itera ex 0..10 per 2 fixum i {
-    scribe i    # 0, 2, 4, 6, 8
+    nota i    # 0, 2, 4, 6, 8
 }
 ```
 
@@ -250,7 +250,7 @@ For descending ranges, use a negative step:
 
 ```fab
 itera ex 10..0 per -1 fixum i {
-    scribe i    # 10, 9, 8, ..., 1
+    nota i    # 10, 9, 8, ..., 1
 }
 ```
 
@@ -262,11 +262,11 @@ The `intra` operator tests whether a value falls within a range:
 
 ```fab
 si age intra 18 usque 65 {
-    scribe "working age"
+    nota "working age"
 }
 
 si value intra 0..100 {
-    scribe "valid percentage"
+    nota "valid percentage"
 }
 ```
 
@@ -280,7 +280,7 @@ The `inter` operator tests whether a value appears in a collection:
 
 ```fab
 si status inter ["pending", "active", "paused"] {
-    scribe "valid status"
+    nota "valid status"
 }
 ```
 

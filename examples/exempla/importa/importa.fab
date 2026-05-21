@@ -39,5 +39,5 @@ importa ex "mod" privata bar ut b
 importa ex "mod" privata baz ut z
 
 incipit {
-    scribe "Import statements are declarations at module scope"
+    nota "Import statements are declarations at module scope"
 }

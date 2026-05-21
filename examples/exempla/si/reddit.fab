@@ -46,18 +46,18 @@ functio hasKey(tabula<textus, numerus> obj, textus key) → bivalens {
 }
 
 incipit {
-    scribe classify(-5)   # negative
-    scribe classify(0)    # zero
-    scribe classify(10)   # positive
+    nota classify(-5)   # negative
+    nota classify(0)    # zero
+    nota classify(10)   # positive
 
-    scribe divide(10, 2)  # 5
-    scribe divide(10, 0)  # nihil
+    nota divide(10, 2)  # 5
+    nota divide(10, 0)  # nihil
 
-    scribe grade(95)  # A
-    scribe grade(85)  # B
-    scribe grade(55)  # F
+    nota grade(95)  # A
+    nota grade(85)  # B
+    nota grade(55)  # F
 
     fixum nums ← [1, 2, 3, 4, 5]
-    scribe findFirst(nums, 3)  # 3
-    scribe findFirst(nums, 9)  # nihil
+    nota findFirst(nums, 3)  # 3
+    nota findFirst(nums, 9)  # nihil
 }

@@ -33,5 +33,5 @@ incipit {
     fixum Result r1 ← finge Success { message: "Operation completed" } ⇢ Result
     fixum Result r2 ← finge Failure { error: "Something went wrong" } ⇢ Result
 
-    scribe "Finge expressions created"
+    nota "Finge expressions created"
 }

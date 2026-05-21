@@ -7,24 +7,24 @@
 
 incipit argumenta args exitus 0 {
     si args.verbose {
-        scribe "Starting verification..."
+        nota "Starting verification..."
     }
 
     # Type check
     si args.verbose {
-        scribe "Running type check..."
+        nota "Running type check..."
     }
-    scribe "faber build --check"
+    nota "faber build --check"
 
     # Tests (unless skipped)
     si non args.skipTests {
         si args.verbose {
-            scribe "Running tests..."
+            nota "Running tests..."
         }
-        scribe "bun test"
+        nota "bun test"
     }
 
     si args.verbose {
-        scribe "Verification complete."
+        nota "Verification complete."
     }
 }

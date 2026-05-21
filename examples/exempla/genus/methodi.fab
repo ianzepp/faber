@@ -41,19 +41,19 @@ incipit {
         height: 5
     } ⇢ Rectangle
 
-    scribe rect.area()
-    scribe rect.perimeter()
-    scribe rect.isSquare()
+    nota rect.area()
+    nota rect.perimeter()
+    nota rect.isSquare()
 
     # Methods that modify state
     varia counter ← {} ⇢ Counter
 
-    scribe counter.getValue()
+    nota counter.getValue()
 
     counter.increment()
-    scribe counter.getValue()
+    nota counter.getValue()
 
     counter.increment()
     counter.increment()
-    scribe counter.getValue()
+    nota counter.getValue()
 }

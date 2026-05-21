@@ -10,54 +10,54 @@ incipit {
     fixum person ← { name: "Marcus", age: 30, city: "Roma" }
     ex person fixum name, age
 
-    scribe name
-    scribe age
+    nota name
+    nota age
 
     # Extract with alias using 'ut'
     fixum user ← { name: "Julia", email: "julia@roma.com" }
     ex user fixum name ut userName, email ut userEmail
 
-    scribe userName
-    scribe userEmail
+    nota userName
+    nota userEmail
 
     # Mutable destructuring with varia
     fixum data ← { count: 100, active: verum }
     ex data varia count, active
 
-    scribe count
-    scribe active
+    nota count
+    nota active
 
     count ← 200
     active ← falsum
 
-    scribe count
-    scribe active
+    nota count
+    nota active
 
     # Mixed alias and regular fields
     fixum config ← { host: "localhost", port: 8080, secure: verum }
     ex config fixum host, port ut serverPort, secure
 
-    scribe host
-    scribe serverPort
-    scribe secure
+    nota host
+    nota serverPort
+    nota secure
 
     # Rest pattern with ceteri
     fixum fullUser ← { id: 1, name: "Gaius", email: "g@roma.com", role: "admin" }
     ex fullUser fixum id, ceteri details
 
-    scribe id
-    scribe details
+    nota id
+    nota details
 
     # Destructure from nested access
     fixum response ← { data: { user: { name: "Claudia", verified: verum } } }
     ex response.data.user fixum name ut nestedName, verified
 
-    scribe nestedName
-    scribe verified
+    nota nestedName
+    nota verified
 
     # Single field extraction
     fixum settings ← { theme: "dark", lang: "la" }
     ex settings fixum theme
 
-    scribe theme
+    nota theme
 }

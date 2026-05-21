@@ -5,27 +5,27 @@
 incipit {
     # Basic endpoint dispatch with sync handler
     ad "fasciculus:lege" ("hello.txt") → textus pro content {
-        scribe scriptum("File contents: §", content)
+        nota scriptum("File contents: §", content)
     }
 
     # Async endpoint dispatch
     @ futura
     ad "caelum:pete" ("https://api.example.com/data") → objectum pro response {
         fixum data ← cede response.json()
-        scribe data
+        nota data
     }
 
     # Multiple arguments
     ad "processus:executa" ("ls", "-la") → textus pro output {
-        scribe output
+        nota output
     }
 
     # Complex dispatch with error handling
     #ad "rete:connecta" ("127.0.0.1", 8080) → rete.Socket pro socket {
-    #    scribe "Connected successfully"
+    #    nota "Connected successfully"
     #    socket.claude()
     #} cape err {
-    #    scribe scriptum("Connection failed: §", err.nuntius)
+    #    nota scriptum("Connection failed: §", err.nuntius)
     #}
 
     # Endpoint dispatch without handler (fire-and-forget)

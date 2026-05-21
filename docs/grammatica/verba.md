@@ -98,13 +98,14 @@ See `cura.md` in `consilia/completa/` for full details on resource management.
 
 ## I/O and Debugging
 
-Keywords for input, output, and diagnostic operations:
+Keywords for input, diagnostic operations, and formatting:
 
 | Verbum     | Meaning     | Usage                        |
 | ---------- | ----------- | ---------------------------- |
-| `scribe`   | print       | Write to stdout              |
-| `vide`     | debug       | Debug output                 |
-| `mone`     | warn        | Warning output               |
+| `nota`     | note        | Neutral diagnostic note      |
+| `vide`     | debug       | Debug/inspection diagnostic  |
+| `mone`     | warn        | Warning diagnostic           |
+| `scribe`   | note        | Legacy alias for `nota`      |
 | `lege`     | read        | Read input                   |
 | `lineam`   | line        | With `lege`: read one line   |
 | `scriptum` | format      | Create formatted string      |

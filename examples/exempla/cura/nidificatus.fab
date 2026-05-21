@@ -10,12 +10,12 @@ incipit {
 
         cura arena fixum inner {
             varia textus[] b ← ["two"]
-            scribe "Inner:", b
+            nota "Inner:", b
         }
         # inner freed here
 
         a.appende("three")
-        scribe "Outer:", a
+        nota "Outer:", a
     }
     # outer freed here
 }

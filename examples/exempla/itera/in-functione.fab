@@ -40,10 +40,10 @@ functio countAbove(numerus[] nums, numerus threshold) → numerus {
 incipit {
     fixum numbers ← [1, 2, 3, 4, 5]
 
-    scribe sumArray(numbers)
-    scribe maxValue(numbers)
-    scribe countAbove(numbers, 3)
+    nota sumArray(numbers)
+    nota maxValue(numbers)
+    nota countAbove(numbers, 3)
 
-    scribe sumArray([10, 20, 30])
-    scribe maxValue([5, 12, 8, 20, 3])
+    nota sumArray([10, 20, 30])
+    nota maxValue([5, 12, 8, 20, 3])
 }

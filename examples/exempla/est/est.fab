@@ -8,24 +8,24 @@ incipit {
     # Null checking with est
     fixum si numerus maybeValue ← nihil
     fixum isNull ← maybeValue est nihil
-    scribe isNull
+    nota isNull
 
     # Boolean true check with verum prefix
     fixum enabled ← verum
     fixum isTrue ← verum enabled
-    scribe isTrue
+    nota isTrue
 
     # Boolean false check with falsum prefix
     fixum disabled ← falsum
     fixum isFalse ← falsum disabled
-    scribe isFalse
+    nota isFalse
 
     # Chained with logical operators
     fixum si textus name ← nihil
     fixum needsDefault ← name est nihil et verum enabled
-    scribe needsDefault
+    nota needsDefault
 
     # Parenthesized for clarity
     fixum bothNull ← (maybeValue est nihil) et (name est nihil)
-    scribe bothNull
+    nota bothNull
 }

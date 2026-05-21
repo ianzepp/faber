@@ -271,7 +271,7 @@ fn collect_expr_names(names: &mut FxHashMap<crate::hir::DefId, Symbol>, expr: &H
                 }
             }
         }
-        HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+        HirExprKind::Tuple(elements) | HirExprKind::Scribe(_, elements) => {
             for element in elements {
                 collect_expr_names(names, element);
             }

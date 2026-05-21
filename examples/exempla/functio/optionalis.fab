@@ -34,26 +34,26 @@ functio createUser(textus nomen, si numerus aetas vel 0, si bivalens activus vel
 
 incipit ergo cura arena fixum alloc {
     # Without optional arg
-    scribe greet("Marcus")
+    nota greet("Marcus")
 
     # With optional arg
-    scribe greet("Marcus", "Dominus")
+    nota greet("Marcus", "Dominus")
 
     # Default pagination
-    scribe paginate()
+    nota paginate()
 
     # Custom pagination
-    scribe paginate(2, 25)
+    nota paginate(2, 25)
 
     # Partial defaults
-    scribe paginate(5)
+    nota paginate(5)
 
     # With borrowed optional
-    scribe analyze("code")
-    scribe analyze("code", 5)
+    nota analyze("code")
+    nota analyze("code", 5)
 
     # Mixed args
-    scribe createUser("Julia")
-    scribe createUser("Julia", 25)
-    scribe createUser("Julia", 25, falsum)
+    nota createUser("Julia")
+    nota createUser("Julia", 25)
+    nota createUser("Julia", 25, falsum)
 }

@@ -121,7 +121,7 @@ pub enum StmtKind {
     Tempta(TemptaStmt),
     /// Assert: adfirma
     Adfirma(AdfirmaStmt),
-    /// Output: scribe/vide/mone
+    /// Diagnostics: nota/vide/mone/scribe
     Scribe(ScribeStmt),
     /// Entry point: incipit/incipiet
     Incipit(IncipitStmt),
@@ -597,6 +597,7 @@ pub enum ScribeKind {
     Scribe,
     Vide,
     Mone,
+    Nota,
 }
 
 #[derive(Debug)]

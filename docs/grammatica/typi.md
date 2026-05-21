@@ -76,7 +76,7 @@ From the Latin _vacuum_, "empty, void." This is the return type of functions tha
 
 ```fab
 functio log(textus message) → vacuum {
-    scribe message
+    nota message
 }
 ```
 
@@ -94,11 +94,11 @@ From _in-_, "not," and _gnoscere_, "to know." The unknown type. Unlike permissiv
 fixum ignotum data = getExternalData()
 
 # Error: cannot use ignotum directly
-# scribe data.length
+# nota data.length
 
 # Must narrow first
 si data est textus {
-    scribe data.longitudo()
+    nota data.longitudo()
 }
 ```
 
@@ -179,7 +179,7 @@ A function that returns nothing uses `vacuum` or omits the return type entirely:
 
 ```fab
 functio log(textus message) → vacuum {
-    scribe message
+    nota message
 }
 ```
 
@@ -241,10 +241,10 @@ fixum textus? name = getOptionalName()
 
 # Using type guard
 si name est nihil {
-    scribe "No name provided"
+    nota "No name provided"
 }
 secus {
-    scribe name.longitudo()
+    nota name.longitudo()
 }
 ```
 
@@ -392,7 +392,7 @@ genus capsa<T> {
 }
 
 fixum c = novum capsa<numerus> { valor: 42 }
-scribe c.accipe()
+nota c.accipe()
 ```
 
 Generic constraints can limit what types are acceptable:
@@ -436,10 +436,10 @@ fixum unio<textus, numerus> value = getValue()
 
 # Must narrow
 si value est numerus {
-    scribe value * 2
+    nota value * 2
 }
 sin value est textus {
-    scribe value.longitudo()
+    nota value.longitudo()
 }
 ```
 
@@ -482,7 +482,7 @@ fixum maybeValue = getValue()
 
 si maybeValue est textus {
     # Within this block, maybeValue is known to be textus
-    scribe maybeValue.longitudo()
+    nota maybeValue.longitudo()
 }
 ```
 
@@ -492,10 +492,10 @@ Type guards work with nullable types:
 fixum textus? name = getOptionalName()
 
 si name est nihil {
-    scribe "No name"
+    nota "No name"
 }
 secus {
-    scribe name
+    nota name
 }
 ```
 

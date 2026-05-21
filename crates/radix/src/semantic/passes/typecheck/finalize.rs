@@ -224,7 +224,7 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
             }
-            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(_, elements) => {
                 for element in elements {
                     self.finalize_expr(element);
                 }

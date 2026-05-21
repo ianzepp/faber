@@ -6,26 +6,26 @@
 incipit {
     # Mutable variable with varia
     varia counter ← 0
-    scribe counter
+    nota counter
 
     counter ← 1
-    scribe counter
+    nota counter
 
     counter ← counter + 10
-    scribe counter
+    nota counter
 
     # Immutable variable with fixum
     fixum greeting ← "Salve, Mundus!"
-    scribe greeting
+    nota greeting
 
     # Multiple declarations
     fixum x ← 10
     fixum y ← 20
     fixum sum ← x + y
-    scribe sum
+    nota sum
 
     # Mutable reassignment
     varia message ← "Hello"
     message ← "Goodbye"
-    scribe message
+    nota message
 }

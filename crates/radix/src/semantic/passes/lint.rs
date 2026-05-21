@@ -363,7 +363,7 @@ impl<'a> LintContext<'a> {
                     self.check_expr(element, in_loop);
                 }
             }
-            HirExprKind::Scribe(elements) => {
+            HirExprKind::Scribe(_, elements) => {
                 for element in elements {
                     self.check_expr(element, in_loop);
                 }

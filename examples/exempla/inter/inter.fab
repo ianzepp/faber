@@ -5,14 +5,14 @@ fixum age ← 21
 
 # Basic inter with string array
 si status inter ["pending", "active", "paused"] {
-    scribe "valid status"
+    nota "valid status"
 }
 
 # inter with numeric array
 si age inter [18, 21, 65] {
-    scribe "milestone age"
+    nota "milestone age"
 }
 
 incipit {
-    scribe "inter operator examples"
+    nota "inter operator examples"
 }

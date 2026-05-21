@@ -23,9 +23,9 @@ functio rangeAsync(numerus n) → numerus {
 
 incipit {
     # Iterate over sync generator function results
-    scribe "Sync cursor iteration:"
+    nota "Sync cursor iteration:"
     itera ex rangeSync(3) fixum num {
-        scribe "  num: {num}"
+        nota "  num: {num}"
     }
 
     # Collect all results from generator function
@@ -33,11 +33,11 @@ incipit {
     itera ex rangeSync(5) fixum num {
         syncResults.appende(num * 2)
     }
-    scribe "Sync collected:"
-    scribe syncResults
+    nota "Sync collected:"
+    nota syncResults
 
     # Note: Async iteration would require async context
     # itera ex rangeAsync(3) fixum num {
-    #     scribe num
+    #     nota num
     # }
 }

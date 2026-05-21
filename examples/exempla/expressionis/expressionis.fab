@@ -14,10 +14,10 @@ incipit {
     fixum email ← sed "[^@]+@[^@]+"
     fixum paths ← sed "/usr/local/.*"
 
-    scribe digits
-    scribe word
-    scribe insensitive
-    scribe multiline
-    scribe email
-    scribe paths
+    nota digits
+    nota word
+    nota insensitive
+    nota multiline
+    nota email
+    nota paths
 }

@@ -165,8 +165,15 @@ pub fn generate_expr(
             }
             w.write("]");
         }
-        HirExprKind::Scribe(args) => {
-            w.write("console.log(");
+        HirExprKind::Scribe(kind, args) => {
+            let method = match kind {
+                crate::hir::HirScribeKind::Vide => "debug",
+                crate::hir::HirScribeKind::Mone => "warn",
+                crate::hir::HirScribeKind::Nota | crate::hir::HirScribeKind::Scribe => "log",
+            };
+            w.write("console.");
+            w.write(method);
+            w.write("(");
             for (idx, arg) in args.iter().enumerate() {
                 if idx > 0 {
                     w.write(", ");
@@ -876,7 +883,7 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
         HirExprKind::Array(values) => values.iter().any(|value| match value {
             HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => contains_await_in_expr(expr),
         }),
-        HirExprKind::Tuple(values) | HirExprKind::Scribe(values) => values.iter().any(contains_await_in_expr),
+        HirExprKind::Tuple(values) | HirExprKind::Scribe(_, values) => values.iter().any(contains_await_in_expr),
         HirExprKind::Scriptum(_, args) => args.iter().any(contains_await_in_expr),
         HirExprKind::Adfirma(cond, msg) => {
             contains_await_in_expr(cond) || msg.as_ref().is_some_and(|msg| contains_await_in_expr(msg))

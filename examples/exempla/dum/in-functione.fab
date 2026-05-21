@@ -23,9 +23,9 @@ functio nextPowerOf2(numerus n) → numerus {
 }
 
 incipit {
-    scribe "5! ←", factorial(5)
-    scribe "10! ←", factorial(10)
+    nota "5! ←", factorial(5)
+    nota "10! ←", factorial(10)
 
-    scribe "Next power of 2 after 100:", nextPowerOf2(100)
-    scribe "Next power of 2 after 1000:", nextPowerOf2(1000)
+    nota "Next power of 2 after 100:", nextPowerOf2(100)
+    nota "Next power of 2 after 1000:", nextPowerOf2(1000)
 }

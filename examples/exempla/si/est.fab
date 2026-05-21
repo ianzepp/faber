@@ -12,7 +12,7 @@ functio checkValue(ignotum x) → textus {
 }
 
 incipit {
-    scribe checkValue(nihil)
-    scribe checkValue(verum)
-    scribe checkValue(42)
+    nota checkValue(nihil)
+    nota checkValue(verum)
+    nota checkValue(42)
 }

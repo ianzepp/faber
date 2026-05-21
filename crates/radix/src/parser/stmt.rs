@@ -27,7 +27,7 @@
 //! - Transfers: redde (return), rumpe (break), perge (continue), iace (throw), mori (panic)
 //! - Error handling: tempta/cape/demum (try/catch/finally)
 //! - Assertions: adfirma (assert)
-//! - I/O: scribe/vide/mone (print/debug/warn)
+//! - Diagnostics: nota/vide/mone/scribe (note/debug/warn/compat)
 //! - Entry points: incipit/incipiet (main/async main)
 //! - Resources: cura (resource management)
 //! - Endpoints: ad (HTTP endpoint definition)
@@ -462,12 +462,13 @@ impl Parser {
     /// Parse output statement.
     ///
     /// GRAMMAR:
-    ///   scribe-stmt := ('scribe'|'vide'|'mone') expr (',' expr)*
+    ///   scribe-stmt := ('scribe'|'vide'|'mone'|'nota') expr (',' expr)*
     ///
     /// WHY: Built-in output statements for different severity levels:
-    /// - 'scribe' (println) - standard output
+    /// - 'scribe' (compatibility alias) - neutral diagnostic output
     /// - 'vide' (debug) - debug output
     /// - 'mone' (warn) - warning output
+    /// - 'nota' (note) - neutral diagnostic output
     pub(super) fn parse_scribe_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let kind = if self.eat_keyword(TokenKind::Scribe) {
             ScribeKind::Scribe
@@ -475,6 +476,8 @@ impl Parser {
             ScribeKind::Vide
         } else if self.eat_keyword(TokenKind::Mone) {
             ScribeKind::Mone
+        } else if self.eat_keyword(TokenKind::Nota) {
+            ScribeKind::Nota
         } else {
             unreachable!()
         };

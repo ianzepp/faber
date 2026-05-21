@@ -5,12 +5,12 @@
 
 # Function with no parameters, no return
 functio saluta() {
-    scribe "Salve, Mundus!"
+    nota "Salve, Mundus!"
 }
 
 # Function with parameter, no explicit return type
 functio dic(textus verbum) {
-    scribe verbum
+    nota verbum
 }
 
 # Function with return type
@@ -29,7 +29,7 @@ incipit {
     dic("Bonum diem!")
 
     fixum rex ← nomen()
-    scribe rex
+    nota rex
 
-    scribe duplica(21)
+    nota duplica(21)
 }

@@ -6,26 +6,26 @@
 incipit {
     # Step by 2 (exclusive: 0, 2, 4, 6, 8)
     itera pro 0‥10 per 2 fixum i {
-        scribe i
+        nota i
     }
 
     # Step by 2 (inclusive: 0, 2, 4, 6, 8, 10)
     itera pro 0…10 per 2 fixum i {
-        scribe i
+        nota i
     }
 
     # Step by 3
     itera pro 0‥15 per 3 fixum i {
-        scribe i
+        nota i
     }
 
     # Countdown with negative step
     itera pro 10‥0 per -1 fixum i {
-        scribe i
+        nota i
     }
 
     # Countdown by 2
     itera pro 10‥0 per -2 fixum i {
-        scribe i
+        nota i
     }
 }

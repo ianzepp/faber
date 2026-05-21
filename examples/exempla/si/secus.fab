@@ -8,40 +8,40 @@ incipit {
     fixum score ← 85
 
     si score ≥ 90 {
-        scribe "Grade: A"
+        nota "Grade: A"
     }
     secus {
-        scribe "Grade: B or lower"
+        nota "Grade: B or lower"
     }
 
     # Multiple statements in branches
     fixum temperature ← 22
 
     si temperature > 30 {
-        scribe "Hot"
-        scribe "Stay hydrated"
+        nota "Hot"
+        nota "Stay hydrated"
     }
     secus {
-        scribe "Comfortable"
-        scribe "Enjoy the weather"
+        nota "Comfortable"
+        nota "Enjoy the weather"
     }
 
     # If-else-if chain
     fixum grade ← 75
 
     si grade ≥ 90 {
-        scribe "A - Excellent"
+        nota "A - Excellent"
     }
     sin grade ≥ 80 {
-        scribe "B - Good"
+        nota "B - Good"
     }
     sin grade ≥ 70 {
-        scribe "C - Satisfactory"
+        nota "C - Satisfactory"
     }
     sin grade ≥ 60 {
-        scribe "D - Passing"
+        nota "D - Passing"
     }
     secus {
-        scribe "F - Failing"
+        nota "F - Failing"
     }
 }

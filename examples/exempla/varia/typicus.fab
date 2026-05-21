@@ -9,35 +9,35 @@ incipit {
     fixum textus name ← "Marcus"
     fixum bivalens active ← verum
 
-    scribe age
-    scribe name
-    scribe active
+    nota age
+    nota name
+    nota active
 
     # Typed mutable declarations
     varia numerus count ← 0
     varia textus status ← "pending"
     varia bivalens running ← falsum
 
-    scribe count
-    scribe status
-    scribe running
+    nota count
+    nota status
+    nota running
 
     # Reassign mutable typed variables
     count ← 100
     status ← "complete"
     running ← verum
 
-    scribe count
-    scribe status
-    scribe running
+    nota count
+    nota status
+    nota running
 
     # Fractional numbers
     fixum fractus pi ← 3.14159
     varia fractus rate ← 0.05
 
-    scribe pi
-    scribe rate
+    nota pi
+    nota rate
 
     rate ← 0.10
-    scribe rate
+    nota rate
 }

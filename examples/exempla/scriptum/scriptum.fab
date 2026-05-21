@@ -6,13 +6,13 @@ incipit ergo cura arena {
 
     # Single placeholder
     fixum greeting ← scriptum("Salve, §!", name)
-    scribe greeting
+    nota greeting
 
     # Multiple placeholders
     fixum info ← scriptum("§ is § years old", name, age)
-    scribe info
+    nota info
 
     # With expression
     fixum calc ← scriptum("10 + 20 ← §", 10 + 20)
-    scribe calc
+    nota calc
 }

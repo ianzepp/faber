@@ -61,7 +61,7 @@ pub fn generate_expr(
         }
         HirExprKind::Struct(def_id, fields) => generate_struct_expr(codegen, *def_id, fields, types, w)?,
         HirExprKind::Tuple(elements) => generate_tuple_expr(codegen, elements, types, w)?,
-        HirExprKind::Scribe(args) => generate_scribe_expr(codegen, args, types, w)?,
+        HirExprKind::Scribe(kind, args) => generate_scribe_expr(codegen, *kind, args, types, w)?,
         HirExprKind::Scriptum(template, args) => generate_scriptum_expr(codegen, *template, args, types, w)?,
         HirExprKind::Panic(value) | HirExprKind::Throw(value) => generate_panic_expr(codegen, value, types, w)?,
         HirExprKind::Tempta { body, catch, .. } => generate_tempta_expr(codegen, body, catch.as_ref(), types, w)?,

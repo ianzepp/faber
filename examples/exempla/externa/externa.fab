@@ -22,9 +22,9 @@ functio require(textus path) → ignotum
 incipit {
     # Access runtime globals
     fixum args ← process.argv ⇢ lista<textus>
-    scribe "Args:", args.longitudo()
+    nota "Args:", args.longitudo()
 
     # Check runtime
     fixum runtime ← Bun.version ⇢ textus
-    scribe "Bun version:", runtime
+    nota "Bun version:", runtime
 }

@@ -14,7 +14,7 @@ The keyword `incipit` marks the synchronous entry point. It is the third person 
 
 ```fab
 incipit {
-    scribe "Salve, Munde!"
+    nota "Salve, Munde!"
 }
 ```
 
@@ -26,7 +26,7 @@ functio greet(textus name) → textus {
 }
 
 incipit {
-    scribe greet("Marcus")
+    nota greet("Marcus")
 }
 ```
 
@@ -37,7 +37,7 @@ When your program needs to perform asynchronous operations at the top level, use
 ```fab
 incipiet {
     fixum data = cede fetchData()
-    scribe data
+    nota data
 }
 ```
 
@@ -76,13 +76,13 @@ The keyword `varia` declares a mutable binding. It comes from _variare_ (to vary
 
 ```fab
 varia counter = 0
-scribe counter       # 0
+nota counter       # 0
 
 counter = 1
-scribe counter       # 1
+nota counter       # 1
 
 counter = counter + 10
-scribe counter       # 11
+nota counter       # 11
 ```
 
 Use `varia` when a value genuinely needs to change, such as loop counters, accumulators, or state that evolves over time.
@@ -154,27 +154,29 @@ The absence of a value is expressed as `nihil` (nothing). This is clearer than s
 fixum nothing = nihil
 ```
 
-## Output
+## Diagnostics
 
-Faber provides three output statements corresponding to different severity levels. These are imperative forms that write to the console.
+Faber provides diagnostic statements corresponding to different severity levels. These are for developer-facing notes, inspection, and warnings; use HAL stdlib methods such as `consolum.scribe` or `solum.scribe` for program output.
 
-### Standard Output: scribe
+### Neutral Note: nota
 
-The keyword `scribe` writes to standard output. It is the imperative of _scribere_ (to write): "write!"
+The keyword `nota` emits a neutral diagnostic note. It is the imperative of _notare_ (to note, mark).
 
 ```fab
-scribe "Hello, world!"
+nota "Hello, world!"
 ```
 
-Multiple arguments are printed space-separated:
+Multiple arguments are emitted space-separated:
 
 ```fab
 fixum nomen = "Marcus"
 fixum aetas = 30
-scribe "Name:", nomen
-scribe "Age:", aetas
-scribe "Coordinates:", x, y
+nota "Name:", nomen
+nota "Age:", aetas
+nota "Coordinates:", x, y
 ```
+
+`scribe` remains as a compatibility alias for neutral diagnostic output, but new code should prefer `nota`.
 
 ### Debug Output: vide
 
@@ -217,8 +219,8 @@ To extract properties from an object, use `ex <source> fixum <properties>`:
 fixum person = { name: "Marcus", age: 30, city: "Roma" }
 ex person fixum name, age
 
-scribe name   # "Marcus"
-scribe age    # 30
+nota name   # "Marcus"
+nota age    # 30
 ```
 
 Use `ut` (as) to rename properties during extraction:
@@ -227,8 +229,8 @@ Use `ut` (as) to rename properties during extraction:
 fixum user = { name: "Julia", email: "julia@roma.com" }
 ex user fixum name ut userName, email ut userEmail
 
-scribe userName    # "Julia"
-scribe userEmail   # "julia@roma.com"
+nota userName    # "Julia"
+nota userEmail   # "julia@roma.com"
 ```
 
 Use `varia` instead of `fixum` for mutable bindings:
@@ -247,8 +249,8 @@ The rest pattern `ceteri` (the rest, the others) collects remaining properties:
 fixum fullUser = { id: 1, name: "Gaius", email: "g@roma.com", role: "admin" }
 ex fullUser fixum id, ceteri details
 
-scribe id       # 1
-scribe details  # { name: "Gaius", email: "g@roma.com", role: "admin" }
+nota id       # 1
+nota details  # { name: "Gaius", email: "g@roma.com", role: "admin" }
 ```
 
 ### Array Destructuring
@@ -259,9 +261,9 @@ Arrays use bracket notation in the pattern:
 fixum numbers = [1, 2, 3]
 fixum [a, b, c] = numbers
 
-scribe a  # 1
-scribe b  # 2
-scribe c  # 3
+nota a  # 1
+nota b  # 2
+nota c  # 3
 ```
 
 Partial destructuring extracts only what you need:
@@ -270,8 +272,8 @@ Partial destructuring extracts only what you need:
 fixum values = [1, 2, 3, 4, 5]
 fixum [one, two] = values
 
-scribe one  # 1
-scribe two  # 2
+nota one  # 1
+nota two  # 2
 ```
 
 The underscore `_` skips elements:
@@ -280,7 +282,7 @@ The underscore `_` skips elements:
 fixum triple = [10, 20, 30]
 fixum [_, middle, _] = triple
 
-scribe middle  # 20
+nota middle  # 20
 ```
 
 The rest pattern works with arrays too:
@@ -289,8 +291,8 @@ The rest pattern works with arrays too:
 fixum items = [1, 2, 3, 4, 5]
 fixum [head, ceteri tail] = items
 
-scribe head  # 1
-scribe tail  # [2, 3, 4, 5]
+nota head  # 1
+nota tail  # [2, 3, 4, 5]
 ```
 
 Mutable array destructuring uses `varia`:
@@ -302,8 +304,8 @@ varia [x, y] = coords
 x = x + 50
 y = y + 50
 
-scribe x  # 150
-scribe y  # 250
+nota x  # 150
+nota y  # 250
 ```
 
 ---

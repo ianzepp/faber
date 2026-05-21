@@ -222,7 +222,7 @@ fn cmd_init(args: InitArgs) {
         std::process::exit(1);
     }
 
-    if let Err(err) = std::fs::write(&entry, "incipit {\n    scribe \"Salve, munde!\"\n}\n") {
+    if let Err(err) = std::fs::write(&entry, "incipit {\n    nota \"Salve, munde!\"\n}\n") {
         eprintln!("error: failed to write '{}': {}", entry.display(), err);
         std::process::exit(1);
     }

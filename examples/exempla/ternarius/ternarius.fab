@@ -11,7 +11,7 @@ incipit {
 
     # Latin ternary
     fixum statusLatin ← age ≥ 18 sic "adult" secus "minor"
-    scribe statusLatin  # "adult"
+    nota statusLatin  # "adult"
 
     # Latin nested (reads more clearly)
     fixum score ← 85
@@ -19,18 +19,18 @@ incipit {
         score ≥ 90 sic "A" secus
         score ≥ 80 sic "B" secus
         score ≥ 70 sic "C" secus "F"
-    scribe gradeLatin  # "B"
+    nota gradeLatin  # "B"
 
     # In expressions
     fixum max ← age > 30 sic age secus 30
-    scribe "Max:", max
+    nota "Max:", max
 
     # With nullish values
     varia maybe ← nihil ⇢ si textus
     fixum result ← nonnihil maybe sic maybe secus "default"
-    scribe result  # "default"
+    nota result  # "default"
 
     # Prefer sic/secus for clarity
     fixum readable ← age ≥ 21 sic "can drink" secus "cannot drink"
-    scribe readable
+    nota readable
 }

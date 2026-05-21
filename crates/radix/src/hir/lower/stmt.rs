@@ -20,7 +20,7 @@
 //! passes (type checking doesn't need to handle multiple return syntaxes).
 
 use super::{pattern, HirBlock, HirExpr, HirExprKind, HirStmt, HirStmtKind, Lowerer};
-use crate::hir::{HirCasuArm, HirLiteral, HirPattern};
+use crate::hir::{HirCasuArm, HirLiteral, HirPattern, HirScribeKind};
 use crate::lexer::Span;
 use crate::syntax::{Stmt, StmtKind};
 
@@ -333,9 +333,15 @@ impl<'a> Lowerer<'a> {
 
     fn lower_scribe(&mut self, stmt: &crate::syntax::ScribeStmt) -> HirStmtKind {
         let args = stmt.args.iter().map(|arg| self.lower_expr(arg)).collect();
+        let kind = match stmt.kind {
+            crate::syntax::ScribeKind::Nota => HirScribeKind::Nota,
+            crate::syntax::ScribeKind::Vide => HirScribeKind::Vide,
+            crate::syntax::ScribeKind::Mone => HirScribeKind::Mone,
+            crate::syntax::ScribeKind::Scribe => HirScribeKind::Scribe,
+        };
         HirStmtKind::Expr(HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Scribe(args),
+            kind: HirExprKind::Scribe(kind, args),
             ty: None,
             span: self.current_span,
         })

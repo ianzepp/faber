@@ -23,17 +23,17 @@ incipit {
         y: 20
     } ⇢ Punctum
 
-    scribe p.x
-    scribe p.y
+    nota p.x
+    nota p.y
 
     # Instantiate with required + optional defaults
     fixum marcus ← {
         nomen: "Marcus"
     } ⇢ Persona
 
-    scribe marcus.nomen
-    scribe marcus.aetas
-    scribe marcus.activus
+    nota marcus.nomen
+    nota marcus.aetas
+    nota marcus.activus
 
     # Override defaults
     fixum julia ← {
@@ -42,7 +42,7 @@ incipit {
         activus: falsum
     } ⇢ Persona
 
-    scribe julia.nomen
-    scribe julia.aetas
-    scribe julia.activus
+    nota julia.nomen
+    nota julia.aetas
+    nota julia.activus
 }

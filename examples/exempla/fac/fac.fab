@@ -8,13 +8,13 @@ incipit {
     # Basic scope block (explicit scoping)
     fac {
         fixum x ← 42
-        scribe x
+        nota x
     }
 
     # Scope block isolates variables
     fac {
         fixum message ← "Hello from fac block"
-        scribe message
+        nota message
     }
 
     # Multiple statements in scope
@@ -22,34 +22,34 @@ incipit {
         fixum a ← 10
         fixum b ← 20
         fixum sum ← a + b
-        scribe sum
+        nota sum
     }
 
     # Fac with do-while condition (repeats until condition is false)
     varia counter ← 0
     fac {
         counter ← counter + 1
-        scribe scriptum("Iteration §", counter)
+        nota scriptum("Iteration §", counter)
     } dum counter < 3
 
     # Fac with error handling
     fac {
         # This would normally throw an error
         # iace "Test error"
-        scribe "Block executed successfully"
+        nota "Block executed successfully"
     } cape err {
-        scribe scriptum("Caught error: §", err.nuntius)
+        nota scriptum("Caught error: §", err.nuntius)
     }
 
     # Fac with both do-while and error handling
     varia attempts ← 0
     fac {
         attempts ← attempts + 1
-        scribe scriptum("Attempt §", attempts)
+        nota scriptum("Attempt §", attempts)
         si attempts ≡ 2 {
             iace "Simulated failure"
         }
     } cape err {
-        scribe scriptum("Failed on attempt §: §", attempts, err.nuntius)
+        nota scriptum("Failed on attempt §: §", attempts, err.nuntius)
     } dum attempts < 5
 }

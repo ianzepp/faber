@@ -8,8 +8,8 @@
 @ descriptio "Say hello"
 @ operandus textus name descriptio "Name to greet"
 functio hello() argumenta args → vacuum {
-    scribe args.verbose
-    scribe scriptum("Hello, §!", args.name)
+    nota args.verbose
+    nota scriptum("Hello, §!", args.name)
 }
 
 @ imperium "goodbye"
@@ -19,9 +19,9 @@ functio hello() argumenta args → vacuum {
 @ operandus textus name descriptio "Name to greet"
 functio goodbye() argumenta args → vacuum {
     si args.formal {
-        scribe scriptum("Farewell, §.", args.name)
+        nota scriptum("Farewell, §.", args.name)
     }
     secus {
-        scribe scriptum("Bye, §!", args.name)
+        nota scriptum("Bye, §!", args.name)
     }
 }

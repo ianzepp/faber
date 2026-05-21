@@ -1,6 +1,6 @@
 # Importa
 
-Faber's module system lets programs organize code across files and incorporate external libraries. The design follows a simple principle: imports should read like Latin sentences. When you write `importa ex "norma:scribe" privata scribe`, you are saying "bring in scribe from the standard library, privately." The syntax mirrors how Latin expresses provenance and acquisition.
+Faber's module system lets programs organize code across files and incorporate external libraries. The design follows a simple principle: imports should read like Latin sentences. When you write `importa ex "norma:hal/consolum" privata consolum`, you are saying "bring in consolum from the standard library, privately." The syntax mirrors how Latin expresses provenance and acquisition.
 
 The verb `importa` is the imperative of _importare_ (to bring in, to carry into). The preposition `ex` means "from" or "out of," indicating origin or source. You are drawing bindings _out of_ a module into your local scope.
 
@@ -11,7 +11,7 @@ The verb `importa` is the imperative of _importare_ (to bring in, to carry into)
 Every import begins with `importa ex`, followed by a source path, visibility (`privata` or `publica`), and the symbol to import:
 
 ```fab
-importa ex "norma:scribe" privata scribe
+importa ex "norma:hal/consolum" privata consolum
 importa ex "lodash" privata map
 importa ex "./utils" privata helper
 ```

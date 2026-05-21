@@ -7,26 +7,26 @@
 incipit {
     # Basic range (exclusive: 0, 1, 2, 3, 4)
     itera pro 0‥5 fixum i {
-        scribe i
+        nota i
     }
 
     # Explicit exclusive with ante (same as ‥)
     itera pro 0 ante 5 fixum i {
-        scribe i
+        nota i
     }
 
     # Inclusive range with … (0, 1, 2, 3, 4, 5)
     itera pro 0…5 fixum i {
-        scribe i
+        nota i
     }
 
     # Range starting from non-zero
     itera pro 5‥10 fixum i {
-        scribe i
+        nota i
     }
 
     # Countdown (negative direction)
     itera pro 5‥0 fixum i {
-        scribe i
+        nota i
     }
 }

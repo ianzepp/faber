@@ -20,13 +20,13 @@ fn empty_incipit_emits_main() {
 
 #[test]
 fn function_emits_func() {
-    let code = compile_go("functio salve() { scribe(1) }");
+    let code = compile_go("functio salve() { nota(1) }");
     assert!(code.contains("func salve()"));
 }
 
 #[test]
 fn scribe_emits_println() {
-    let code = compile_go("incipit { scribe(42) }");
+    let code = compile_go("incipit { nota(42) }");
     assert!(code.contains("fmt.Println(42)"));
 }
 
@@ -37,7 +37,7 @@ fn tempta_catch_binds_recovered_value() {
   tempta {
     iace "ignis"
   } cape err {
-    scribe err
+    nota err
   }
 }"#,
     );
@@ -54,7 +54,7 @@ fn ad_is_rejected_for_go_targets() {
         "<test>",
         r#"incipit {
   ad "fasciculus:lege" ("hello.txt") → textus pro content {
-    scribe content
+    nota content
   }
 }"#,
     );
@@ -74,9 +74,9 @@ fn ad_with_catch_is_rejected_for_go_targets() {
         "<test>",
         r#"incipit {
   ad "fasciculus:lege" ("hello.txt") → textus pro content {
-    scribe content
+    nota content
   } cape err {
-    scribe err
+    nota err
   }
 }"#,
     );
@@ -93,7 +93,7 @@ fn nested_object_honors_enclosing_map_value_type() {
     let code = compile_go(
         r#"incipit {
   fixum nested ← { outer: { inner: 1 } }
-  scribe nested
+  nota nested
 }"#,
     );
 
@@ -107,8 +107,8 @@ fn map_member_access_asserts_precise_types_when_map_values_are_any() {
         r#"incipit {
   fixum nested ← { outer: { inner: { deep: "found" } } }
   fixum data ← { items: ["first", "second", "third"] }
-  scribe nested.outer.inner.deep
-  scribe data.items[0]
+  nota nested.outer.inner.deep
+  nota data.items[0]
 }"#,
     );
 
@@ -123,9 +123,9 @@ fn optional_map_members_deref_pointer_maps_and_unknown_maps_explicitly() {
     let code = compile_go(
         r#"incipit {
   fixum maybe ← { present: { value: 100 } }
-  scribe maybe?.present?.value
+  nota maybe?.present?.value
   fixum empty ← nihil
-  scribe empty?.missing
+  nota empty?.missing
 }"#,
     );
 
@@ -168,11 +168,11 @@ fn discerne_variant_bindings_extract_fields() {
 functio handle(Event event) {
   discerne event {
     casu Click fixum x, y {
-      scribe x
-      scribe y
+      nota x
+      nota y
     }
     casu Quit {
-      scribe "quit"
+      nota "quit"
     }
   }
 }"#,
@@ -193,13 +193,13 @@ fn elige_emits_single_evaluation_switch_for_literal_cases() {
 incipit {
   elige accipeNumerum() {
     casu 1 {
-      scribe "one"
+      nota "one"
     }
     casu 2 {
-      scribe "two"
+      nota "two"
     }
     ceterum {
-      scribe "other"
+      nota "other"
     }
   }
 }"#,
@@ -218,7 +218,7 @@ fn discerne_binding_pattern_binds_scrutinee_in_default_case() {
         r#"functio describe(numerus value) {
   discerne value {
     casu other {
-      scribe other
+      nota other
     }
   }
 }"#,
@@ -269,7 +269,7 @@ genus User {
 incipit {
   fixum bob ← {} ⇢ User
   fixum city ← bob?.address?.city
-  scribe city
+  nota city
 }"#,
     );
 
@@ -293,7 +293,7 @@ genus User {
 incipit {
   fixum alice ← {} ⇢ User
   fixum state ← alice?.address?.state
-  scribe state
+  nota state
 }"#,
     );
 
@@ -317,7 +317,7 @@ genus User {
 incipit {
   fixum bob ← {} ⇢ User
   fixum city ← bob?.address?.city vel "Unknown"
-  scribe city
+  nota city
 }"#,
     );
 
@@ -332,7 +332,7 @@ fn explicit_optional_local_initializers_wrap_pointer_values() {
         r#"incipit {
   fixum si textus name ← "Marcus"
   fixum display ← name vel "Anonymous"
-  scribe display
+  nota display
 }"#,
     );
 
@@ -345,7 +345,7 @@ fn inferred_optional_nil_local_emits_typed_var() {
     let code = compile_go(
         r#"incipit {
   varia maybe ← nihil ⇢ si textus
-  scribe maybe
+  nota maybe
 }"#,
     );
 
@@ -359,7 +359,7 @@ fn ternary_optional_result_coerces_branches_once() {
         r#"incipit {
   varia maybe ← nihil ⇢ si textus
   fixum result ← nonnihil maybe sic maybe secus "default"
-  scribe result
+  nota result
 }"#,
     );
 
@@ -386,7 +386,7 @@ incipit {
   fixum asBool ← value ⇢ bivalens
   fixum raw ← getData()
   fixum items ← raw ⇢ lista<textus>
-  scribe asText, asNum, asBool, items
+  nota asText, asNum, asBool, items
 }"#,
     );
 
@@ -402,7 +402,7 @@ fn innatum_empty_and_nonempty_lists_emit_typed_slices() {
         r#"incipit {
   fixum empty ← [] ⇢ lista<textus>
   fixum nums ← [1, 2, 3] ⇢ lista<numerus>
-  scribe empty, nums
+  nota empty, nums
 }"#,
     );
 
@@ -489,7 +489,7 @@ fn returning_ego_and_chaining_uses_value_return_with_pointer_temps() {
 incipit {
   varia calc ← {} ⇢ Calculator
   fixum result ← calc.setValue(5).double().getResult()
-  scribe result
+  nota result
 }"#,
     );
 
@@ -531,7 +531,7 @@ fn translated_slice_helpers_emit_go_loops() {
   fixum reversed ← items.inversa()
   fixum sorted ← items.ordinata()
   items.inverte()
-  scribe first, doubled, evens, extended, reversed, sorted
+  nota first, doubled, evens, extended, reversed, sorted
 }"#,
     );
 
@@ -560,7 +560,7 @@ fn ab_property_filters_and_transforms_emit_real_go_pipeline() {
   fixum top2 ← ab nums, prima 2
   fixum last2 ← ab nums, ultima 2
   fixum sumFirst ← ab nums, prima 3, summa
-  scribe active, inactive, top2, last2, sumFirst
+  nota active, inactive, top2, last2, sumFirst
 }"#,
     );
 
@@ -583,7 +583,7 @@ fn ab_member_source_pipeline_emits_filtered_slice() {
   ]
   fixum data ← { users: users }
   fixum active ← ab data.users activus
-  scribe active
+  nota active
 }"#,
     );
 
@@ -603,7 +603,7 @@ fn spread_calls_recover_fixed_arity_array_arguments() {
 incipit {
   fixum numerus[] numbers ← [3, 7]
   fixum total ← add(sparge numbers)
-  scribe total
+  nota total
 }"#,
     );
 

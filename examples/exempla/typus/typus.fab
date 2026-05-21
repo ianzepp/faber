@@ -21,14 +21,14 @@ incipit {
     fixum Username name ← "Marcus"
     fixum IsActive active ← verum
 
-    scribe id
-    scribe name
-    scribe active
+    nota id
+    nota name
+    nota active
 
     # Using generic type aliases
     fixum Names friends ← ["Gaius", "Lucius", "Titus"]
-    scribe friends
+    nota friends
 
     fixum Scores points ← [100, 95, 87]
-    scribe points
+    nota points
 }

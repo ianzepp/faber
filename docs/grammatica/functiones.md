@@ -10,7 +10,7 @@ A function declaration begins with `functio` followed by the function name, para
 
 ```fab
 functio saluta() {
-    scribe "Salve, Mundus!"
+    nota "Salve, Mundus!"
 }
 ```
 
@@ -54,7 +54,7 @@ Following Swift's pattern, parameters can have separate external (callsite) and 
 
 ```fab
 functio greet(textus location ut loc) {
-    scribe loc  # internal name
+    nota loc  # internal name
 }
 
 greet(location: "Roma")  # external name at callsite
@@ -62,7 +62,7 @@ greet(location: "Roma")  # external name at callsite
 
 The `ut` keyword provides a unified aliasing syntax across the language:
 
-- Imports: `ex norma importa scribe ut s`
+- Imports: `importa ex "norma:hal/consolum" privata consolum`
 - Destructuring: `ex persona fixum nomen ut n`
 - Parameters: `textus location ut loc`
 
@@ -261,7 +261,7 @@ Generator results can be consumed with `itera ex` loops:
 
 ```fab
 itera ex rangeSync(5) fixum num {
-    scribe num
+    nota num
 }
 ```
 
@@ -386,7 +386,7 @@ At call sites, the allocator is automatically injected when calling from within 
 
 ```fab
 incipit ergo cura arena fit alloc {
-    scribe greet("World")  # alloc auto-injected
+    nota greet("World")  # alloc auto-injected
 }
 ```
 

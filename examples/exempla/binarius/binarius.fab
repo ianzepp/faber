@@ -152,19 +152,19 @@ incipit {
     # --------------------------------------------------------------------------
 
     fixum sum ← 10 + 5
-    scribe sum
+    nota sum
 
     fixum diff ← 10 - 5
-    scribe diff
+    nota diff
 
     fixum prod ← 10 * 5
-    scribe prod
+    nota prod
 
     fixum quot ← 10 / 5
-    scribe quot
+    nota quot
 
     fixum rem ← 10 % 3
-    scribe rem
+    nota rem
 
     # --------------------------------------------------------------------------
     # Compound assignment: ⊕ ⊖ ⊛ ⊘ ⊜ ⊚
@@ -174,36 +174,36 @@ incipit {
     counter ⊕ 10
     counter ⊖ 3
     counter ⊛ 2
-    scribe counter
+    nota counter
 
     # --------------------------------------------------------------------------
     # Comparison operators: < > ≤ ≥ ≡ ≠ ≡ ≠
     # --------------------------------------------------------------------------
 
     fixum isEqual ← 10 ≡ 10
-    scribe isEqual
+    nota isEqual
 
     fixum isNotEqual ← 10 ≠ 5
-    scribe isNotEqual
+    nota isNotEqual
 
     fixum isStrictEqual ← 10 ≡ 10
-    scribe isStrictEqual
+    nota isStrictEqual
 
     fixum isLess ← 5 < 10
-    scribe isLess
+    nota isLess
 
     fixum isGreater ← 10 > 5
-    scribe isGreater
+    nota isGreater
 
     fixum isLessOrEqual ← 5 ≤ 5
-    scribe isLessOrEqual
+    nota isLessOrEqual
 
     fixum isGreaterOrEqual ← 10 ≥ 10
-    scribe isGreaterOrEqual
+    nota isGreaterOrEqual
 
     # Comparison chaining
     fixum inRange ← 0 < 5 et 5 < 10
-    scribe inRange
+    nota inRange
 
     # --------------------------------------------------------------------------
     # Logical operators: et (and), aut (or), non (not)
@@ -211,17 +211,17 @@ incipit {
     # PREFER: 'et' over 'et', 'aut' over 'aut'
 
     fixum both ← verum et verum
-    scribe both
+    nota both
 
     fixum either ← falsum aut verum
-    scribe either
+    nota either
 
     fixum neither ← falsum et falsum
-    scribe neither
+    nota neither
 
     # Short-circuit evaluation works as expected
     fixum shortCircuit ← falsum et expensiveCheck()
-    scribe shortCircuit
+    nota shortCircuit
 
     # --------------------------------------------------------------------------
     # Nullish coalescing: vel (replaces ??)
@@ -230,14 +230,14 @@ incipit {
 
     fixum si textus maybeName ← nihil
     fixum resolvedName ← maybeName vel "default"
-    scribe resolvedName
+    nota resolvedName
 
     # Chain multiple fallbacks
     fixum si textus first ← nihil
     fixum si textus second ← nihil
     fixum textus third ← "fallback"
     fixum fallbackResult ← first vel second vel third
-    scribe fallbackResult
+    nota fallbackResult
 
     # --------------------------------------------------------------------------
     # Ternary: condition sic then secus else
@@ -246,12 +246,12 @@ incipit {
 
     fixum age ← 25
     fixum ageCategory ← age ≥ 18 sic "adult" secus "minor"
-    scribe ageCategory
+    nota ageCategory
 
     # Nested ternary (right-associative)
     fixum score ← 85
     fixum grade ← score ≥ 90 sic "A" secus score ≥ 80 sic "B" secus score ≥ 70 sic "C" secus "F"
-    scribe grade
+    nota grade
 
     # --------------------------------------------------------------------------
     # Bitwise operators: ∧ ∨ ⊻
@@ -262,27 +262,27 @@ incipit {
     fixum mask ← 0b1100
 
     fixum bitwiseAnd ← flags ∧ mask
-    scribe bitwiseAnd
+    nota bitwiseAnd
 
     fixum bitwiseOr ← flags ∨ mask
-    scribe bitwiseOr
+    nota bitwiseOr
 
     fixum bitwiseXor ← flags ⊻ mask
-    scribe bitwiseXor
+    nota bitwiseXor
 
     # --------------------------------------------------------------------------
     # Bit shift: ≪ (<<), ≫ (>>)
     # --------------------------------------------------------------------------
     fixum leftShift ← 1 ≪ 4
-    scribe leftShift
+    nota leftShift
 
     fixum rightShift ← 16 ≫ 2
-    scribe rightShift
+    nota rightShift
 
     # Precedence: (flags ∧ mask) ≡ 0, not flags ∧ (mask ≡ 0)
     # Using explicit parens to avoid TS literal comparison warning
     fixum checkMask ← (flags ∧ mask) ≡ 0
-    scribe checkMask
+    nota checkMask
 }
 
 # --------------------------------------------------------------------------
@@ -290,6 +290,6 @@ incipit {
 # --------------------------------------------------------------------------
 
 functio expensiveCheck() → bivalens {
-    scribe "This should not print if short-circuited"
+    nota "This should not print if short-circuited"
     redde verum
 }

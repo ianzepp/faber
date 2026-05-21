@@ -282,8 +282,14 @@ impl super::FaberCodegen {
                 }
                 w.write(")");
             }
-            HirExprKind::Scribe(args) => {
-                w.write("scribe ");
+            HirExprKind::Scribe(kind, args) => {
+                let keyword = match kind {
+                    crate::hir::HirScribeKind::Vide => "vide",
+                    crate::hir::HirScribeKind::Mone => "mone",
+                    crate::hir::HirScribeKind::Nota | crate::hir::HirScribeKind::Scribe => "nota",
+                };
+                w.write(keyword);
+                w.write(" ");
                 for (idx, arg) in args.iter().enumerate() {
                     if idx > 0 {
                         w.write(", ");

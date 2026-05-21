@@ -27,10 +27,10 @@ functio earlyExit(numerus x) → numerus {
 }
 
 incipit {
-    scribe add(10, 20)
-    scribe greet("World")
-    scribe getFortyTwo()
+    nota add(10, 20)
+    nota greet("World")
+    nota getFortyTwo()
     doNothing()
-    scribe earlyExit(-5)
-    scribe earlyExit(10)
+    nota earlyExit(-5)
+    nota earlyExit(10)
 }

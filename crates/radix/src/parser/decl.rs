@@ -92,7 +92,7 @@ impl Parser {
             TokenKind::Adfirma => self.parse_adfirma_stmt()?,
 
             // Output
-            TokenKind::Scribe | TokenKind::Vide | TokenKind::Mone => self.parse_scribe_stmt()?,
+            TokenKind::Scribe | TokenKind::Vide | TokenKind::Mone | TokenKind::Nota => self.parse_scribe_stmt()?,
 
             // Entry points
             TokenKind::Incipit | TokenKind::Incipiet => self.parse_incipit_stmt()?,

@@ -21,7 +21,7 @@ Phase 04 extends the Phase 03 Rust single-command path. It should not redesign C
     @ imperium "jobs/list"
     @ optio limit longum "limit" typus numerus vel 20
     functio list() argumenta args -> vacuum {
-        scribe args.limit
+        nota args.limit
     }
     ```
 

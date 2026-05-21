@@ -323,7 +323,7 @@ impl<'a> GoCodegen<'a> {
                     }
                 }
             }
-            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(_, elements) => {
                 for element in elements {
                     self.collect_expr_use_counts(counts, element);
                 }
@@ -569,7 +569,7 @@ fn expr_contains_ad(expr: &HirExpr) -> bool {
             }
         }),
         HirExprKind::Struct(_, fields) => fields.iter().any(|(_, expr)| expr_contains_ad(expr)),
-        HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => elements.iter().any(expr_contains_ad),
+        HirExprKind::Tuple(elements) | HirExprKind::Scribe(_, elements) => elements.iter().any(expr_contains_ad),
         HirExprKind::Scriptum(_, args) => args.iter().any(expr_contains_ad),
         HirExprKind::Clausura(_, _, body) => expr_contains_ad(body),
         HirExprKind::Verte { source, entries, .. } => {

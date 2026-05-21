@@ -40,7 +40,7 @@ functio processCode(numerus code) → textus {
     elige code {
         casu 1 reddit "simple"
         casu 2 {
-            scribe "Processing code 2..."
+            nota "Processing code 2..."
             redde "complex"
         }
         casu 3 reddit "also simple"
@@ -49,13 +49,13 @@ functio processCode(numerus code) → textus {
 }
 
 incipit {
-    scribe getStatusText(200)    # OK
-    scribe getStatusText(404)    # Not Found
-    scribe getStatusText(999)    # Unknown Status
+    nota getStatusText(200)    # OK
+    nota getStatusText(404)    # Not Found
+    nota getStatusText(999)    # Unknown Status
 
-    scribe getTypeCode("textus")   # 1
-    scribe getTypeCode("unknown")  # 0
+    nota getTypeCode("textus")   # 1
+    nota getTypeCode("unknown")  # 0
 
-    scribe processCode(1)  # simple
-    scribe processCode(2)  # Processing code 2... complex
+    nota processCode(1)  # simple
+    nota processCode(2)  # Processing code 2... complex
 }

@@ -102,7 +102,7 @@ impl<'a> TypeChecker<'a> {
                 self.check_conversio(source, *target, fallback.as_deref_mut(), expr.span)
             }
             HirExprKind::Tuple(items) => self.check_tuple(items),
-            HirExprKind::Scribe(items) => {
+            HirExprKind::Scribe(_, items) => {
                 for item in items {
                     self.check_expr(item);
                 }

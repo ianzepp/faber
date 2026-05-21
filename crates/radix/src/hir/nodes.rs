@@ -387,8 +387,8 @@ pub enum HirExprKind {
     Struct(DefId, Vec<(Symbol, HirExpr)>),
     /// Tuple (for multiple return, etc)
     Tuple(Vec<HirExpr>),
-    /// Print/log statement expression
-    Scribe(Vec<HirExpr>),
+    /// Diagnostic statement expression
+    Scribe(HirScribeKind, Vec<HirExpr>),
     /// String interpolation expression (scriptum)
     Scriptum(Symbol, Vec<HirExpr>),
     /// Assert statement expression
@@ -434,6 +434,14 @@ pub enum HirExprKind {
     Deref(Box<HirExpr>),
     /// Error placeholder
     Error,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HirScribeKind {
+    Nota,
+    Vide,
+    Mone,
+    Scribe,
 }
 
 #[derive(Debug)]

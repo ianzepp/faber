@@ -100,7 +100,7 @@ itera ex solum.legunt(path) fixum chunk {
 }
 
 itera ex items.filtrant(pred) fixum item {
-    scribe item  # lazy evaluation, processes one at a time
+    nota item  # lazy evaluation, processes one at a time
 }
 ```
 
@@ -122,7 +122,7 @@ itera ex cede conn.quaerent(sql, params) fixum row {
 }
 
 itera ex cede sub.nuntiabunt() fixum nuntius {
-    scribe nuntius.corpus()
+    nota nuntius.corpus()
 }
 ```
 

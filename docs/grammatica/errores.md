@@ -22,9 +22,9 @@ From Latin _temptare_ (to attempt, to try). The `tempta` block wraps code that m
 
 ```fab
 tempta {
-    scribe "Attempting operation..."
+    nota "Attempting operation..."
     riskyOperation()
-    scribe "Operation succeeded"
+    nota "Operation succeeded"
 }
 ```
 
@@ -37,10 +37,10 @@ From Latin _capere_ (to seize, to catch). The `cape` clause binds the thrown err
 ```fab
 tempta {
     iace "Something went wrong"
-    scribe "This line never runs"
+    nota "This line never runs"
 }
 cape err {
-    scribe "Caught error:", err
+    nota "Caught error:", err
 }
 ```
 
@@ -50,10 +50,10 @@ A `tempta` block can omit `cape` if you only need cleanup behavior via `demum`:
 
 ```fab
 tempta {
-    scribe "Operation succeeds"
+    nota "Operation succeeds"
 }
 demum {
-    scribe "Cleanup runs anyway"
+    nota "Cleanup runs anyway"
 }
 ```
 
@@ -63,14 +63,14 @@ From Latin _demum_ (at last, finally). The `demum` block contains cleanup code t
 
 ```fab
 tempta {
-    scribe "Opening resource..."
+    nota "Opening resource..."
     iace "Failed to open"
 }
 cape err {
-    scribe "Error occurred:", err
+    nota "Error occurred:", err
 }
 demum {
-    scribe "Cleanup: always runs"
+    nota "Cleanup: always runs"
 }
 ```
 
@@ -81,14 +81,14 @@ When a function returns from within a `tempta` block, the `demum` block still ex
 ```fab
 functio withReturnInDemum() → textus {
     tempta {
-        scribe "Starting operation"
+        nota "Starting operation"
         redde "success"
     }
     cape err {
         redde "error"
     }
     demum {
-        scribe "Demum runs before return"
+        nota "Demum runs before return"
     }
 }
 ```
@@ -99,20 +99,20 @@ functio withReturnInDemum() → textus {
 
 ```fab
 tempta {
-    scribe "Outer try"
+    nota "Outer try"
 
     tempta {
-        scribe "Inner try"
+        nota "Inner try"
         iace "Inner error"
     }
     cape inner {
-        scribe "Caught inner:", inner
+        nota "Caught inner:", inner
     }
 
-    scribe "Continues after inner catch"
+    nota "Continues after inner catch"
 }
 cape outer {
-    scribe "Outer catch:", outer
+    nota "Outer catch:", outer
 }
 ```
 
@@ -180,7 +180,7 @@ From Latin _facere_ (to do, to make). A `fac` block creates an explicit scope fo
 ```fab
 fac {
     fixum x = 42
-    scribe x
+    nota x
 }
 # x is not accessible here
 ```
@@ -194,9 +194,9 @@ A `fac` block can include a `cape` clause to handle errors from the block's body
 ```fab
 fac {
     fixum value = riskyComputation()
-    scribe value
+    nota value
 } cape err {
-    scribe "Error occurred:", err
+    nota "Error occurred:", err
 }
 ```
 
@@ -205,10 +205,10 @@ This is more concise than `tempta`/`cape` when you also want scope isolation, an
 ```fab
 tempta {
     fixum value = riskyComputation()
-    scribe value
+    nota value
 }
 cape err {
-    scribe "Error occurred:", err
+    nota "Error occurred:", err
 }
 ```
 
@@ -226,7 +226,7 @@ This pattern can combine with `cape` for do-while loops with error handling:
 fac {
     processNextItem()
 } cape err {
-    scribe "Item failed:", err
+    nota "Item failed:", err
 } dum hasMoreItems()
 ```
 
@@ -251,7 +251,7 @@ functio safeDivide(numerus a, numerus b) → numerus {
         redde a / b
     }
     cape err {
-        scribe "Error:", err
+        nota "Error:", err
         redde 0
     }
 }
@@ -274,7 +274,7 @@ tempta {
     fixum result = divide(10, 0)
 }
 cape err {
-    scribe "Division failed:", err
+    nota "Division failed:", err
 }
 ```
 
@@ -287,20 +287,20 @@ functio processWithCleanup(textus name) {
     varia resource = "pending"
 
     tempta {
-        scribe "Opening:", name
+        nota "Opening:", name
         resource = name
 
         si name ≡ "" {
             iace "Empty name"
         }
 
-        scribe "Processing:", resource
+        nota "Processing:", resource
     }
     cape err {
-        scribe "Error:", err
+        nota "Error:", err
     }
     demum {
-        scribe "Closing:", resource
+        nota "Closing:", resource
     }
 }
 ```

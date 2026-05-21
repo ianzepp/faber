@@ -10,7 +10,7 @@ incipit ergo cura arena {
         si i ≡ 5 {
             rumpe
         }
-        scribe i
+        nota i
         i ← i + 1
     }
 
@@ -24,7 +24,7 @@ incipit ergo cura arena {
             si inner ≡ 2 {
                 rumpe
             }
-            scribe "outer←§, inner←§", outer, inner
+            nota "outer←§, inner←§", outer, inner
             inner ← inner + 1
         }
 

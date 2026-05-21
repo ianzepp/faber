@@ -1,26 +1,26 @@
-# Basic scribe (print) statements
+# Basic nota diagnostic statements
 #
-# scribe <expr>
-# scribe <expr>, <expr>, ...
+# nota <expr>
+# nota <expr>, <expr>, ...
 
 incipit {
     # Simple string output
-    scribe "Hello, world!"
+    nota "Hello, world!"
 
     # Variable output
     fixum nomen ← "Marcus"
-    scribe nomen
+    nota nomen
 
     # Multiple arguments
     fixum aetas ← 30
-    scribe "Name:", nomen
-    scribe "Age:", aetas
+    nota "Name:", nomen
+    nota "Age:", aetas
 
     # Expressions
     fixum x ← 10
     fixum y ← 20
-    scribe "Sum:", x + y
+    nota "Sum:", x + y
 
     # Multiple values in one statement
-    scribe "Coordinates:", x, y
+    nota "Coordinates:", x, y
 }

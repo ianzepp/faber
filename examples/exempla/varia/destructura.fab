@@ -8,41 +8,41 @@ incipit {
     fixum numbers ← [1, 2, 3]
     fixum [a, b, c] ← numbers
 
-    scribe a
-    scribe b
-    scribe c
+    nota a
+    nota b
+    nota c
 
     # Destructure inline array
     fixum [first, second, third] ← [10, 20, 30]
 
-    scribe first
-    scribe second
-    scribe third
+    nota first
+    nota second
+    nota third
 
     # Mutable destructuring
     fixum coords ← [100, 200]
     varia [x, y] ← coords
 
-    scribe x
-    scribe y
+    nota x
+    nota y
 
     x ← x + 50
     y ← y + 50
 
-    scribe x
-    scribe y
+    nota x
+    nota y
 
     # Destructure with fewer variables (partial)
     fixum values ← [1, 2, 3, 4, 5]
     fixum [one, two] ← values
 
-    scribe one
-    scribe two
+    nota one
+    nota two
 
     # Nested arrays
     fixum matrix ← [[1, 2], [3, 4]]
     fixum [row1, row2] ← matrix
 
-    scribe row1
-    scribe row2
+    nota row1
+    nota row2
 }

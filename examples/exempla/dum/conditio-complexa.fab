@@ -9,7 +9,7 @@ incipit {
     varia numerus attempts ← 0
 
     dum running et attempts < 5 {
-        scribe "Attempt:", attempts
+        nota "Attempt:", attempts
         attempts ← attempts + 1
 
         si attempts ≥ 3 {
@@ -22,7 +22,7 @@ incipit {
     varia numerus b ← 3
 
     dum a > 0 aut b > 0 {
-        scribe "a:", a, "b:", b
+        nota "a:", a, "b:", b
         a ← a - 1
         b ← b - 1
     }

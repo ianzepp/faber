@@ -28,14 +28,14 @@ functio media(fractus a, fractus b) → fractus {
 }
 
 incipit ergo cura arena fixum alloc {
-    scribe quadratum(7)
+    nota quadratum(7)
 
-    scribe adde(100, 200)
+    nota adde(100, 200)
 
-    scribe describe("Julius", 30)
+    nota describe("Julius", 30)
 
-    scribe nega(verum)
-    scribe nega(falsum)
+    nota nega(verum)
+    nota nega(falsum)
 
-    scribe media(3.0, 7.0)
+    nota media(3.0, 7.0)
 }

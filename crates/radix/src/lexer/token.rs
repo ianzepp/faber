@@ -218,6 +218,7 @@ pub enum TokenKind {
     Scribe, // print
     Vide,   // debug print
     Mone,   // warn print
+    Nota,   // neutral diagnostic note
 
     // === Keywords: Entry points ===
     Incipit,   // main (sync)
@@ -432,6 +433,7 @@ impl TokenKind {
                 | Scribe
                 | Vide
                 | Mone
+                | Nota
                 | Incipit
                 | Incipiet
                 | Argumenta

@@ -11,17 +11,17 @@ incipit {
     # Compile-time constant expression
     fixum myPi ← praefixum(3.14159)
     fixum myTau ← praefixum(2 * 3.14159)
-    scribe "myPi:", myPi
-    scribe "myTau:", myTau
+    nota "myPi:", myPi
+    nota "myTau:", myTau
 
     # Compile-time computation
     fixum DAYS_IN_YEAR ← praefixum(365)
     fixum HOURS_IN_YEAR ← praefixum(365 * 24)
     fixum SECONDS_IN_YEAR ← praefixum(365 * 24 * 60 * 60)
 
-    scribe "Days:", DAYS_IN_YEAR
-    scribe "Hours:", HOURS_IN_YEAR
-    scribe "Seconds:", SECONDS_IN_YEAR
+    nota "Days:", DAYS_IN_YEAR
+    nota "Hours:", HOURS_IN_YEAR
+    nota "Seconds:", SECONDS_IN_YEAR
 
     # Compile-time block
     fixum STATUS_CODES ← praefixum({
@@ -31,5 +31,5 @@ incipit {
         error: 500
     })
 
-    scribe "OK code:", STATUS_CODES.ok
+    nota "OK code:", STATUS_CODES.ok
 }

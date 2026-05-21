@@ -10,12 +10,12 @@ incipit {
     cura arena fixum mem {
         # All allocations in this block use the arena
         varia textus[] items ← ["hello", "world"]
-        scribe items
+        nota items
     }
     # Arena freed, all allocations released
 
     # Page allocator variant
     cura page fixum pageMem {
-        scribe "Using page allocator"
+        nota "Using page allocator"
     }
 }

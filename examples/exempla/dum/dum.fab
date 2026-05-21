@@ -6,7 +6,7 @@ incipit {
     varia numerus counter ← 0
 
     dum counter < 5 {
-        scribe counter
+        nota counter
         counter ← counter + 1
     }
 
@@ -14,9 +14,9 @@ incipit {
     varia numerus countdown ← 3
 
     dum countdown > 0 {
-        scribe "Countdown:", countdown
+        nota "Countdown:", countdown
         countdown ← countdown - 1
     }
 
-    scribe "Done!"
+    nota "Done!"
 }

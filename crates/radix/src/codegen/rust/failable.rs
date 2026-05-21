@@ -267,7 +267,7 @@ fn visit_expr(expr: &HirExpr, suppressed: bool, deps: &mut FnDeps) {
                 }
             }
         }
-        HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+        HirExprKind::Tuple(elements) | HirExprKind::Scribe(_, elements) => {
             for element in elements {
                 visit_expr(element, suppressed, deps);
             }

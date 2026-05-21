@@ -22,14 +22,14 @@ functio processData(textus data) → numerus {
 
 # Async entry point
 incipiet {
-    scribe "Starting async program..."
+    nota "Starting async program..."
 
     # Await async functions with cede
     fixum data ← cede fetchData()
-    scribe "Received:", data
+    nota "Received:", data
 
     fixum length ← cede processData(data)
-    scribe "Length:", length
+    nota "Length:", length
 
-    scribe "Program complete"
+    nota "Program complete"
 }

@@ -169,7 +169,7 @@ fn rejects_non_empty_root_body_for_subcommand_cli() {
         r#"
 @ cli "bad"
 incipit argumenta args {
-  scribe "setup"
+  nota "setup"
 }
 
 @ imperium "run"

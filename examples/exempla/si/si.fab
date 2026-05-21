@@ -6,18 +6,18 @@ incipit {
     fixum x ← 10
 
     si x > 5 {
-        scribe "x is greater than 5"
+        nota "x is greater than 5"
     }
 
     si x > 20 {
-        scribe "x is greater than 20"
+        nota "x is greater than 20"
     }
 
     # Multiple statements in block
     fixum age ← 25
 
     si age ≥ 18 {
-        scribe "Adult"
-        scribe "Can vote"
+        nota "Adult"
+        nota "Can vote"
     }
 }

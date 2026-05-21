@@ -6,6 +6,6 @@
 § ex "norma:solum" importa solum
 
 incipit {
-    scribe "Salve, Munde!"
-    scribe solum.cwd()
+    nota "Salve, Munde!"
+    nota solum.cwd()
 }

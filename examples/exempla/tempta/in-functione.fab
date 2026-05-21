@@ -11,7 +11,7 @@ functio safeDivide(numerus a, numerus b) → numerus {
         redde a / b
     }
     cape err {
-        scribe "Error:", err
+        nota "Error:", err
         redde 0
     }
 }
@@ -24,7 +24,7 @@ functio validatePositive(numerus value) → numerus {
         redde value * 2
     }
     cape err {
-        scribe "Validation failed:", err
+        nota "Validation failed:", err
         redde 0
     }
 }
@@ -33,45 +33,45 @@ functio processWithCleanup(textus name) {
     varia resource ← "pending"
 
     tempta {
-        scribe "Opening:", name
+        nota "Opening:", name
         resource ← name
 
         si name ≡ "" {
             iace "Empty name"
         }
 
-        scribe "Processing:", resource
+        nota "Processing:", resource
     }
     cape err {
-        scribe "Error:", err
+        nota "Error:", err
     }
     demum {
-        scribe "Closing:", resource
+        nota "Closing:", resource
     }
 }
 
 functio withReturnInDemum() → textus {
     tempta {
-        scribe "Starting operation"
+        nota "Starting operation"
         redde "success"
     }
     cape err {
         redde "error"
     }
     demum {
-        scribe "Demum runs before return"
+        nota "Demum runs before return"
     }
 }
 
 incipit {
-    scribe "Safe divide 10/2:", safeDivide(10, 2)
-    scribe "Safe divide 10/0:", safeDivide(10, 0)
+    nota "Safe divide 10/2:", safeDivide(10, 2)
+    nota "Safe divide 10/0:", safeDivide(10, 0)
 
-    scribe "Validate 5:", validatePositive(5)
-    scribe "Validate -3:", validatePositive(-3)
+    nota "Validate 5:", validatePositive(5)
+    nota "Validate -3:", validatePositive(-3)
 
     processWithCleanup("data.txt")
     processWithCleanup("")
 
-    scribe "Result:", withReturnInDemum()
+    nota "Result:", withReturnInDemum()
 }

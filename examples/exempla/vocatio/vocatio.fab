@@ -1,7 +1,7 @@
 # Call expressions: simple, with arguments, method calls, chaining, spread
 
 functio greet() {
-    scribe "Salve!"
+    nota "Salve!"
 }
 
 functio add(numerus a, numerus b) → numerus {
@@ -36,24 +36,24 @@ incipit ergo cura arena fixum alloc {
 
     # Call with arguments
     fixum sum ← add(10, 20)
-    scribe sum  # 30
+    nota sum  # 30
 
     # Multiple arguments
     fixum product ← multiply(5, 6)
-    scribe product  # 30
+    nota product  # 30
 
     # Method call on object
     varia calc ← {} ⇢ Calculator
     calc.setValue(10)
-    scribe calc.getResult()  # 10
+    nota calc.getResult()  # 10
 
     # Chained method calls
     varia calc2 ← {} ⇢ Calculator
     fixum result ← calc2.setValue(5).double().double().getResult()
-    scribe result  # 20
+    nota result  # 20
 
     # Call with spread operator
     fixum numerus[] numbers ← [3, 7]
     fixum spreadSum ← add(sparge numbers)
-    scribe spreadSum  # 10
+    nota spreadSum  # 10
 }

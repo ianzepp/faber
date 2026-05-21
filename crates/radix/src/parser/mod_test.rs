@@ -694,18 +694,19 @@ probandum "suite" {
 fn parses_control_flow_transfer_and_clause_keywords() {
     let result = parse_ok(
         r#"
-si verum ergo scribe "yes" cape err {} sin falsum reddit 1 secus tacet
+si verum ergo nota "yes" cape err {} sin falsum reddit 1 secus tacet
 dum verum { perge } cape err {}
 itera pro items fixum item reddit item cape err {}
 elige value { casu 1 reddit 1 ceterum tacet } cape err {}
 discerne omnia value, other { casu Ok ut result, _ reddit result ceterum moritor "bad" }
-custodi { si verum reddit 1 si falsum ergo scribe "no" }
+custodi { si verum reddit 1 si falsum ergo nota "no" }
 fac {} cape err {} dum verum
 tempta {} cape err {} demum {}
 adfirma verum, "msg"
-scribe "a", "b"
+nota "a", "b"
 vide "c"
 mone "d"
+scribe "e"
 redde 1
 rumpe
 perge
@@ -718,7 +719,7 @@ mori "panic"
         .program
         .as_ref()
         .expect("parser should produce a program");
-    assert_eq!(program.stmts.len(), 17);
+    assert_eq!(program.stmts.len(), 18);
 
     let StmtKind::Si(if_stmt) = &program.stmts[0].kind else {
         panic!("expected if statement");
@@ -787,8 +788,8 @@ mori "panic"
 
     assert!(matches!(program.stmts[8].kind, StmtKind::Adfirma(_)));
     match &program.stmts[9].kind {
-        StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Scribe)),
-        _ => panic!("expected scribe statement"),
+        StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Nota)),
+        _ => panic!("expected diagnostic statement"),
     }
     match &program.stmts[10].kind {
         StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Vide)),
@@ -798,11 +799,15 @@ mori "panic"
         StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Mone)),
         _ => panic!("expected mone statement"),
     }
-    assert!(matches!(program.stmts[12].kind, StmtKind::Redde(_)));
-    assert!(matches!(program.stmts[13].kind, StmtKind::Rumpe(_)));
-    assert!(matches!(program.stmts[14].kind, StmtKind::Perge(_)));
-    assert!(matches!(program.stmts[15].kind, StmtKind::Iace(_)));
-    assert!(matches!(program.stmts[16].kind, StmtKind::Mori(_)));
+    match &program.stmts[12].kind {
+        StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Scribe)),
+        _ => panic!("expected scribe compatibility statement"),
+    }
+    assert!(matches!(program.stmts[13].kind, StmtKind::Redde(_)));
+    assert!(matches!(program.stmts[14].kind, StmtKind::Rumpe(_)));
+    assert!(matches!(program.stmts[15].kind, StmtKind::Perge(_)));
+    assert!(matches!(program.stmts[16].kind, StmtKind::Iace(_)));
+    assert!(matches!(program.stmts[17].kind, StmtKind::Mori(_)));
 }
 
 #[test]

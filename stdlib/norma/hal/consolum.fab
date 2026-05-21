@@ -9,7 +9,7 @@
 #   - Verb conjugation encodes sync/async:
 #     - Imperative (-a, -e, -i): synchronous
 #     - Future indicative (-et, -ebit): asynchronous
-#   - Aligns with language keywords: scribe (info), mone (warn), vide (debug)
+#   - Provides real console output while language diagnostics use nota/vide/mone.
 #   - Default output includes newline (common case)
 #   - Use dic() for partial output without newline
 
@@ -70,7 +70,7 @@ pactum consolum {
     # STDOUT - Text with Newline
     # =========================================================================
     # Verb: scribe/scribet from "scribere" (to write)
-    # Why: Aligns with language keyword "scribe". Writes complete line.
+    # Why: Writes a complete line to stdout through the console HAL.
     #      Default behavior includes newline (most common use case).
     # Maps to: console.log / process.stdout.write + "\n"
 

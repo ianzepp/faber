@@ -21,13 +21,13 @@ incipit {
     fixum name ← "Mundus"
     fixum message ← `Hello ${name}`
 
-    scribe integer
-    scribe decimal
-    scribe negative
-    scribe greeting
-    scribe single
-    scribe yes
-    scribe no
-    scribe nothing
-    scribe message
+    nota integer
+    nota decimal
+    nota negative
+    nota greeting
+    nota single
+    nota yes
+    nota no
+    nota nothing
+    nota message
 }

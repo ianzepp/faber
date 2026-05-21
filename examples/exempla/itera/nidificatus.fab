@@ -7,21 +7,21 @@ incipit {
 
     itera ex rows fixum row {
         itera ex cols fixum col {
-            scribe row, col
+            nota row, col
         }
     }
 
     # Multiplication table
     itera pro 1‥4 fixum i {
         itera pro 1‥4 fixum j {
-            scribe i, "*", j, "←", i * j
+            nota i, "*", j, "←", i * j
         }
     }
 
     # Nested ranges
     itera pro 0‥3 fixum x {
         itera pro 0‥3 fixum y {
-            scribe x, y
+            nota x, y
         }
     }
 }

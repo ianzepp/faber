@@ -128,7 +128,7 @@ genus Colores {
 Access static members through the type name:
 
 ```fab
-scribe Colores.ruber      # "#FF0000"
+nota Colores.ruber      # "#FF0000"
 ```
 
 Static `generis` fields are useful for constants and shared configuration. The broader `generis functio` surface still lags between older fixtures and the active `radix-rs` checker, so this page keeps the example to the code-backed field form.
@@ -173,7 +173,7 @@ genus Capsa<T> {
 }
 
 fixum c = { valor: 42 } novum Capsa<numerus>
-scribe c.accipe()  # 42
+nota c.accipe()  # 42
 ```
 
 Multiple type parameters are comma-separated: `genus Pair<K, V> { ... }`.
@@ -210,7 +210,7 @@ genus Circle implet Drawable {
     numerus radius: 10
 
     functio draw() {
-        scribe scriptum("Drawing circle with radius §", ego.radius)
+        nota scriptum("Drawing circle with radius §", ego.radius)
     }
 }
 
@@ -218,7 +218,7 @@ genus Square implet Drawable {
     numerus side: 5
 
     functio draw() {
-        scribe scriptum("Drawing square with side §", ego.side)
+        nota scriptum("Drawing square with side §", ego.side)
     }
 }
 ```
@@ -255,7 +255,7 @@ genus Persona {
 
 # nomen is required, aetas is optional
 fixum marcus = { nomen: "Marcus" } novum Persona
-scribe marcus.aetas  # 0 (default)
+nota marcus.aetas  # 0 (default)
 
 # Override defaults by providing values
 fixum julia = { nomen: "Julia", aetas: 25 } novum Persona
@@ -327,8 +327,8 @@ genus Circle {
 }
 
 fixum c = { radius: 5 } novum Circle
-scribe c.diameter  # 10
-scribe c.area      # 78.54
+nota c.diameter  # 10
+nota c.area      # 78.54
 ```
 
 Most types will not need `creo()`. The declarative field defaults handle the common case. Reserve `creo()` for invariants, validation, or derived initialization that cannot be expressed as simple defaults.

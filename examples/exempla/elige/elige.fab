@@ -12,13 +12,13 @@ incipit {
 
     elige status {
         casu "pending" {
-            scribe "Waiting..."
+            nota "Waiting..."
         }
         casu "active" {
-            scribe "Running"
+            nota "Running"
         }
         casu "done" {
-            scribe "Completed"
+            nota "Completed"
         }
     }
 
@@ -27,13 +27,13 @@ incipit {
 
     elige code {
         casu 200 {
-            scribe "OK"
+            nota "OK"
         }
         casu 404 {
-            scribe "Not Found"
+            nota "Not Found"
         }
         casu 500 {
-            scribe "Server Error"
+            nota "Server Error"
         }
     }
 
@@ -42,12 +42,12 @@ incipit {
 
     elige mode {
         casu "development" {
-            scribe "Dev mode enabled"
-            scribe "Verbose logging on"
+            nota "Dev mode enabled"
+            nota "Verbose logging on"
         }
         casu "production" {
-            scribe "Production mode"
-            scribe "Optimizations enabled"
+            nota "Production mode"
+            nota "Optimizations enabled"
         }
     }
 }

@@ -26,7 +26,7 @@ functio accessArray(lista<numerus> items, numerus index) → numerus {
 incipit {
     # Normal operation
     fixum result ← divide(10, 2)
-    scribe "Result:", result  # 5.0
+    nota "Result:", result  # 5.0
 
     # This would panic (uncomment to test):
     # fixum bad ← divide(10, 0)  # Fatal: Division by zero
@@ -34,7 +34,7 @@ incipit {
     # Array access
     fixum nums ← [1, 2, 3]
     fixum val ← accessArray(nums, 1)
-    scribe "Value:", val  # 2
+    nota "Value:", val  # 2
 
     # This would panic (uncomment to test):
     # fixum bad ← accessArray(nums, 10)  # Fatal: Index out of bounds

@@ -153,7 +153,7 @@ impl super::FaberCodegen {
                     }
                 }
             }
-            HirExprKind::Tuple(elements) | HirExprKind::Scribe(elements) => {
+            HirExprKind::Tuple(elements) | HirExprKind::Scribe(_, elements) => {
                 for element in elements {
                     self.collect_expr_names(names, element);
                 }

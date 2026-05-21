@@ -6,23 +6,23 @@ incipit {
 
     # Simple assignment
     x ← 20
-    scribe x  # 20
+    nota x  # 20
 
     # Compound assignments
     x ⊕ 5
-    scribe x  # 25
+    nota x  # 25
 
     x ⊖ 10
-    scribe x  # 15
+    nota x  # 15
 
     x ⊛ 2
-    scribe x  # 30
+    nota x  # 30
 
     x ⊘ 3
-    scribe x  # 10
+    nota x  # 10
 
     # String concatenation
     varia textus s ← "hello"
     s ⊕ " world"
-    scribe s  # hello world
+    nota s  # hello world
 }

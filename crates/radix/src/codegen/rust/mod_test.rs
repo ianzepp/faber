@@ -3,8 +3,8 @@ use crate::codegen::{self, Target};
 use crate::hir::{
     DefId, HirArrayElement, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId,
     HirImport, HirImportItem, HirInterface, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirParam, HirParamMode,
-    HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct, HirTestMetadata, HirTestModifier, HirTypeAlias,
-    HirVariant, HirVariantField,
+    HirPattern, HirProgram, HirScribeKind, HirStmt, HirStmtKind, HirStruct, HirTestMetadata, HirTestModifier,
+    HirTypeAlias, HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
@@ -344,12 +344,15 @@ fn emits_main_body_and_scribe_as_println() {
                 id: HirId(1),
                 kind: HirStmtKind::Expr(HirExpr {
                     id: HirId(2),
-                    kind: HirExprKind::Scribe(vec![HirExpr {
-                        id: HirId(3),
-                        kind: HirExprKind::Literal(HirLiteral::String(salve)),
-                        ty: None,
-                        span: span(),
-                    }]),
+                    kind: HirExprKind::Scribe(
+                        HirScribeKind::Nota,
+                        vec![HirExpr {
+                            id: HirId(3),
+                            kind: HirExprKind::Literal(HirLiteral::String(salve)),
+                            ty: None,
+                            span: span(),
+                        }],
+                    ),
                     ty: None,
                     span: span(),
                 }),
@@ -1089,20 +1092,23 @@ fn expr_codegen_handles_control_flow_and_operators() {
             },
             HirExpr {
                 id: HirId(851),
-                kind: HirExprKind::Scribe(vec![
-                    HirExpr {
-                        id: HirId(852),
-                        kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
-                        ty: Some(types.primitive(Primitive::Textus)),
-                        span: span(),
-                    },
-                    HirExpr {
-                        id: HirId(853),
-                        kind: HirExprKind::Literal(HirLiteral::Int(3)),
-                        ty: Some(numerus),
-                        span: span(),
-                    },
-                ]),
+                kind: HirExprKind::Scribe(
+                    HirScribeKind::Nota,
+                    vec![
+                        HirExpr {
+                            id: HirId(852),
+                            kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
+                            ty: Some(types.primitive(Primitive::Textus)),
+                            span: span(),
+                        },
+                        HirExpr {
+                            id: HirId(853),
+                            kind: HirExprKind::Literal(HirLiteral::Int(3)),
+                            ty: Some(numerus),
+                            span: span(),
+                        },
+                    ],
+                ),
                 ty: None,
                 span: span(),
             },

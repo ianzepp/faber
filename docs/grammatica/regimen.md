@@ -16,7 +16,7 @@ The keyword `si` means "if" in Latin. It introduces a condition that, when true,
 
 ```fab
 si x > 0 {
-    scribe "positive"
+    nota "positive"
 }
 ```
 
@@ -26,7 +26,7 @@ Multiple statements can appear within the block:
 
 ```fab
 si user.authenticated {
-    scribe "Welcome back"
+    nota "Welcome back"
     loadUserPreferences(user)
     updateLastLogin(user)
 }
@@ -40,16 +40,16 @@ The keyword `sin` is a classical Latin contraction of `si non`—"but if" or "if
 fixum hour = 14
 
 si hour < 6 {
-    scribe "Late night"
+    nota "Late night"
 }
 sin hour < 12 {
-    scribe "Morning"
+    nota "Morning"
 }
 sin hour < 18 {
-    scribe "Afternoon"
+    nota "Afternoon"
 }
 sin hour < 22 {
-    scribe "Evening"
+    nota "Evening"
 }
 ```
 
@@ -61,13 +61,13 @@ The keyword `secus` means "otherwise" in Latin. It provides a default branch whe
 
 ```fab
 si hour < 12 {
-    scribe "Morning"
+    nota "Morning"
 }
 sin hour < 18 {
-    scribe "Afternoon"
+    nota "Afternoon"
 }
 secus {
-    scribe "Evening or night"
+    nota "Evening or night"
 }
 ```
 
@@ -82,21 +82,21 @@ Faber provides concise syntax for simple conditionals.
 The keyword `ergo` means "therefore" or "thus" in Latin—expressing logical consequence. Use it for one-liner conditionals where a block would be verbose.
 
 ```fab
-si x > 5 ergo scribe "x is big"
+si x > 5 ergo nota "x is big"
 ```
 
 This is equivalent to:
 
 ```fab
 si x > 5 {
-    scribe "x is big"
+    nota "x is big"
 }
 ```
 
 The `ergo` form works with `secus` for one-liner if-else:
 
 ```fab
-si age ≥ 18 ergo scribe "Adult" secus scribe "Minor"
+si age ≥ 18 ergo nota "Adult" secus nota "Minor"
 ```
 
 #### reddit (Early Return)
@@ -160,7 +160,7 @@ The keyword `dum` means "while" or "as long as" in Latin. It executes a block re
 varia numerus counter = 0
 
 dum counter < 5 {
-    scribe counter
+    nota counter
     counter = counter + 1
 }
 ```
@@ -173,10 +173,10 @@ While loops work well for countdown patterns:
 varia numerus countdown = 3
 
 dum countdown > 0 {
-    scribe "Countdown:", countdown
+    nota "Countdown:", countdown
     countdown = countdown - 1
 }
-scribe "Done!"
+nota "Done!"
 ```
 
 The one-liner form uses `ergo`:
@@ -193,13 +193,13 @@ The `itera ex` construct iterates over values in a collection. The syntax follow
 fixum numbers = [1, 2, 3, 4, 5]
 
 itera ex numbers fixum n {
-    scribe n
+    nota n
 }
 ```
 
 The verb `itera` is the imperative of _iterare_ ("to repeat, traverse"). The preposition `ex` means "from" or "out of"—the source from which values are drawn. The binding uses `fixum` (immutable) or `varia` (mutable).
 
-This verb-first syntax aligns with other Faber statements like `scribe`, `iace`, and `importa`. Where JavaScript writes `for (const item of items)`, Faber writes `itera ex items fixum item`.
+This verb-first syntax aligns with other Faber statements like `nota`, `iace`, and `importa`. Where JavaScript writes `for (const item of items)`, Faber writes `itera ex items fixum item`.
 
 The syntax works with any iterable:
 
@@ -207,7 +207,7 @@ The syntax works with any iterable:
 fixum names = ["Marcus", "Julia", "Claudia"]
 
 itera ex names fixum name {
-    scribe name
+    nota name
 }
 ```
 
@@ -218,14 +218,14 @@ fixum values = [10, 20, 30]
 
 itera ex values fixum v {
     fixum doubled = v * 2
-    scribe doubled
+    nota doubled
 }
 ```
 
 The one-liner form:
 
 ```fab
-itera ex numbers fixum n ergo scribe n
+itera ex numbers fixum n ergo nota n
 ```
 
 #### Range Expressions
@@ -242,7 +242,7 @@ The `..` operator is convenient shorthand matching common programming convention
 
 ```fab
 itera ex 0..5 fixum i {
-    scribe i
+    nota i
 }
 ```
 
@@ -250,7 +250,7 @@ The `ante` keyword makes exclusivity explicit—the range stops _before_ the end
 
 ```fab
 itera ex 0 ante 5 fixum i {
-    scribe i
+    nota i
 }
 ```
 
@@ -258,7 +258,7 @@ The `usque` keyword includes the end value—the range goes _up to and including
 
 ```fab
 itera ex 0 usque 5 fixum i {
-    scribe i
+    nota i
 }
 ```
 
@@ -266,11 +266,11 @@ For step increments, use `per`:
 
 ```fab
 itera ex 0..10 per 2 fixum i {
-    scribe i  # 0, 2, 4, 6, 8
+    nota i  # 0, 2, 4, 6, 8
 }
 
 itera ex 0 usque 10 per 2 fixum i {
-    scribe i  # 0, 2, 4, 6, 8, 10
+    nota i  # 0, 2, 4, 6, 8, 10
 }
 ```
 
@@ -282,7 +282,7 @@ The `itera de` construct iterates over keys (property names or indices) rather t
 fixum persona = { nomen: "Marcus", aetas: 30, urbs: "Roma" }
 
 itera de persona fixum clavis {
-    scribe clavis
+    nota clavis
 }
 ```
 
@@ -292,7 +292,7 @@ To access values, use the key with bracket notation:
 
 ```fab
 itera de persona fixum clavis {
-    scribe scriptum("Key: §, Value: §", clavis, persona[clavis])
+    nota scriptum("Key: §, Value: §", clavis, persona[clavis])
 }
 ```
 
@@ -302,7 +302,7 @@ For arrays, `de` iterates indices:
 fixum numeri = [10, 20, 30]
 
 itera de numeri fixum index {
-    scribe scriptum("Index §: §", index, numeri[index])
+    nota scriptum("Index §: §", index, numeri[index])
 }
 ```
 
@@ -317,7 +317,7 @@ For asynchronous streams, use `cede` (await) prefix with `itera`:
 
 ```fab
 cede itera ex stream fixum chunk {
-    scribe chunk
+    nota chunk
 }
 ```
 
@@ -338,7 +338,7 @@ dum i < 10 {
     si i ≡ 5 {
         rumpe
     }
-    scribe i
+    nota i
     i = i + 1
 }
 ```
@@ -353,7 +353,7 @@ itera ex 0..3 fixum outer {
         si inner ≡ 2 {
             rumpe  # exits inner loop only
         }
-        scribe scriptum("outer=§, inner=§", outer, inner)
+        nota scriptum("outer=§, inner=§", outer, inner)
     }
 }
 ```
@@ -367,7 +367,7 @@ itera ex 0..10 fixum i {
     si i % 2 ≡ 0 {
         perge  # skip even numbers
     }
-    scribe i
+    nota i
 }
 ```
 
@@ -390,13 +390,13 @@ fixum status = "active"
 
 elige status {
     casu "pending" {
-        scribe "Waiting..."
+        nota "Waiting..."
     }
     casu "active" {
-        scribe "Running"
+        nota "Running"
     }
     casu "done" {
-        scribe "Completed"
+        nota "Completed"
     }
 }
 ```
@@ -410,13 +410,13 @@ For a default branch, use `ceterum` ("otherwise" or "for the rest"):
 ```fab
 elige code {
     casu 200 {
-        scribe "OK"
+        nota "OK"
     }
     casu 404 {
-        scribe "Not Found"
+        nota "Not Found"
     }
     ceterum {
-        scribe "Unknown status"
+        nota "Unknown status"
     }
 }
 ```
@@ -425,8 +425,8 @@ One-liner cases use `ergo`:
 
 ```fab
 elige status {
-    casu "pending" ergo scribe "waiting"
-    casu "active" ergo scribe "running"
+    casu "pending" ergo nota "waiting"
+    casu "active" ergo nota "running"
     ceterum iace "Unknown status"
 }
 ```
@@ -464,13 +464,13 @@ Then match against it:
 functio handle_event(Event e) → nihil {
     discerne e {
         casu Click pro x, y {
-            scribe scriptum("Clicked at §, §", x, y)
+            nota scriptum("Clicked at §, §", x, y)
         }
         casu Keypress pro key {
-            scribe scriptum("Key: §", key)
+            nota scriptum("Key: §", key)
         }
         casu Quit {
-            scribe "Goodbye"
+            nota "Goodbye"
         }
     }
 }

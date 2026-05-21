@@ -125,7 +125,7 @@ Plan rules observed:
 - Filter before `--`, harness flags after `--`.
 - No raw trailing pass-through (`-- <raw>`) in Phase 2.
 - Clap `conflicts_with` for ignored flags in Phase 3.
-- `--nocapture` proof via test-body stdout (scribe inside a proba) or dedicated behavior.
+- `--nocapture` proof via test-body stdout (nota inside a proba) or dedicated behavior.
 
 Work will proceed Phase 2 (full gate + commit) then Phase 3 (full gate + commit), then final ledger + smoke matrix.
 
@@ -133,7 +133,7 @@ No changes to HIR/metadata (Phase 4+) or docs (Phase 6) in this slice.
 
 ### Phase 2 Implementation
 - TestArgs + invoke_cargo_test + cmd_test extended.
-- Smokes: filter + --exact narrows (1 filtered out), --test-threads accepted, --nocapture emits the scribe line from inside a proba body.
+- Smokes: filter + --exact narrows (1 filtered out), --test-threads accepted, --nocapture emits the nota line from inside a proba body.
 - Gate: fmt/test/clippy clean.
 - Commit: independent after Phase 1.
 
