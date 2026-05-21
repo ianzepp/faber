@@ -1,5 +1,6 @@
 proba "arithmetic passes" {
     adfirma 1 + 1 ≡ 2
+    scribe "nocapture-demo: this line appears only with --nocapture"
 }
 
 proba "text passes" {

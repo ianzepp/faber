@@ -1386,11 +1386,24 @@ pub fn invoke_cargo_build(layout: &BuildLayout, release: bool) -> Result<PathBuf
 /// is returned so `faber test` can forward the exact code (0 for pass, nonzero
 /// for fail) that Cargo test produced.
 ///
-/// This is the Phase-1 minimal implementation: no custom Faber harness,
-/// no filtering beyond what Cargo supports, no --ignored yet.
+/// Invoke `cargo test` against the generated Rust crate (Phase 2+ ergonomics).
+///
+/// Uses the Non-Negotiable Directory Contract:
+///   --manifest-path <pkg>/target/faber/Cargo.toml
+///   --target-dir <pkg>/target
+///
+/// The optional `filter` (if present) is passed as the Rust test name filter
+/// (appears before the `--` separator).
+///
+/// `harness_args` are forwarded after `--` (e.g. --exact, --nocapture,
+/// --test-threads N, --ignored, --include-ignored).
+///
+/// Output is inherited; exit status from the harness is returned verbatim.
 #[allow(dead_code)]
 pub fn invoke_cargo_test(
     layout: &BuildLayout,
+    filter: Option<&str>,
+    harness_args: &[String],
 ) -> Result<std::process::ExitStatus, Box<Diagnostic>> {
     use std::process::Command;
 
@@ -1400,6 +1413,17 @@ pub fn invoke_cargo_test(
         .arg(&layout.generated_cargo_manifest)
         .arg("--target-dir")
         .arg(&layout.cargo_target_dir);
+
+    if let Some(f) = filter {
+        cmd.arg(f);
+    }
+
+    if !harness_args.is_empty() {
+        cmd.arg("--");
+        for arg in harness_args {
+            cmd.arg(arg);
+        }
+    }
 
     let status = cmd.status().map_err(|e| {
         Box::new(Diagnostic::error(format!(

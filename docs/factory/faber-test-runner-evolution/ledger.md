@@ -109,3 +109,24 @@ error: `faber test` is not implemented yet; use `faber check` on <path>
 - First implementation slice done. Later phases will be separate commits.
 - `plan.md` status left as "planned" (per "when the full plan is actually complete").
 - Ready to clean targets, run full fmt/test/clippy gate, commit.
+
+---
+
+## Phase 2 + 3 Continuation (document update received)
+
+**Date**: 2026-05-21 (continuation session)
+
+User notified that `plan.md` was updated with concrete specs for:
+- Phase 2: Test Command Ergonomics (positional `[filter]`, `--exact`, `--nocapture`, `--test-threads <n>`)
+- Phase 3: Ignored and Future Tests (`--ignored`, `--include-ignored`, mutual exclusion, docs for `omitte`/`futurum`)
+
+Plan rules observed:
+- Phases committed independently.
+- Filter before `--`, harness flags after `--`.
+- No raw trailing pass-through (`-- <raw>`) in Phase 2.
+- Clap `conflicts_with` for ignored flags in Phase 3.
+- `--nocapture` proof via test-body stdout (scribe inside a proba) or dedicated behavior.
+
+Work will proceed Phase 2 (full gate + commit) then Phase 3 (full gate + commit), then final ledger + smoke matrix.
+
+No changes to HIR/metadata (Phase 4+) or docs (Phase 6) in this slice.

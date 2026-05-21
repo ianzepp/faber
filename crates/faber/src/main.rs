@@ -97,6 +97,22 @@ struct TestArgs {
     /// Package path to test
     #[arg(default_value = ".")]
     path: PathBuf,
+
+    /// Test name filter passed to the Rust test harness (matches on generated proba_* names)
+    #[arg(value_name = "FILTER")]
+    filter: Option<String>,
+
+    /// Run only tests whose name exactly matches the filter
+    #[arg(long)]
+    exact: bool,
+
+    /// Show test output (do not capture stdout/stderr from test bodies)
+    #[arg(long)]
+    nocapture: bool,
+
+    /// Limit the number of test threads used by the harness
+    #[arg(long, value_name = "N")]
+    test_threads: Option<usize>,
 }
 
 fn main() {
@@ -406,7 +422,21 @@ fn cmd_test(args: TestArgs) {
         std::process::exit(1);
     }
 
-    let status = match package::invoke_cargo_test(&layout) {
+    // Phase 2 ergonomics: build the filter + harness args list.
+    // Filter (positional) goes before `--`; the bools and --test-threads go after.
+    let mut harness_args: Vec<String> = Vec::new();
+    if args.exact {
+        harness_args.push("--exact".to_string());
+    }
+    if args.nocapture {
+        harness_args.push("--nocapture".to_string());
+    }
+    if let Some(n) = args.test_threads {
+        harness_args.push("--test-threads".to_string());
+        harness_args.push(n.to_string());
+    }
+
+    let status = match package::invoke_cargo_test(&layout, args.filter.as_deref(), &harness_args) {
         Ok(s) => s,
         Err(d) => {
             eprintln!("error: {}", d.message);
