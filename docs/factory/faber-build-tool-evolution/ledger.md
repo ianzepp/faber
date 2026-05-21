@@ -7,16 +7,17 @@
 **Created**: 2026-05-21
 
 ## Current Phase
-2 - Generated Rust crate emission (pending)
+3 - Cargo backend invocation (pending)
 
-**Delivery Spec (last)**: `phase-1-delivery.md` (completed)
+**Delivery Spec (last)**: `phase-2-delivery.md` (completed)
 
 ## Completed Phases
 0 - Preflight and baseline capture (ledger + captures)
 1 - Build pipeline model (BuildLayout + 8 tests + sibling contract proofs)
+2 - Generated Rust crate emission (emit_generated_crate + cmd_build wiring + writer tests; smoke confirmed tree under target/faber/)
 
 ## Pending Phases
-2, 3, 4, 5, 6, 7
+3, 4, 5, 6, 7
 
 ## Baseline Captures (Phase 0)
 
@@ -172,3 +173,27 @@ Proceed to Phase 1: Build pipeline model (add path structs, testable layout).
 **Next Phase Readiness**: Phase 2 (Generated Rust Crate Emission) is now unblocked. The layout model provides the exact paths needed for writing Cargo.toml + main.rs under target/faber/.
 
 **Ledger Updated**: 2026-05-21 (post Phase 1)
+
+---
+
+## Phase 2: Generated Rust Crate Emission - Completion Record
+
+**Delivery Spec**: `phase-2-delivery.md`
+**Changes**:
+- Added `generate_cargo_toml` + `emit_generated_crate` (pub for tests) in package.rs
+- Wired package-Rust path in `cmd_build` to use layout + emit (non-package paths untouched)
+- 2 new writer tests (pure, no cargo) + full suite 25/25 green
+- Manual smoke: `faber build` on inited package now produces `target/faber/Cargo.toml` + `src/main.rs` with correct edition 2021, sanitized name, version, and source marker. No `target/faber/target` created.
+
+**Verification**:
+- `cargo test -p faber` PASS
+- `cargo clippy -p faber -- -D warnings` PASS
+- Smoke tree inspection matches plan contract exactly
+
+**Poker-Face**: 95/100 — writer + integration complete and correct per spec. Only print message and Cargo invocation remain for later phases (intentional). Dead_code allows still present but justified.
+
+**Checkpoint**: PASS ( "package build helper can produce the expected crate tree before Cargo is invoked", "generated crate files not committed", "no Cargo in writer tests").
+
+**Commit**: "Complete Phase 2: Generated Rust crate emission"
+
+**Next**: Phase 3 invokes Cargo using the written manifest + --target-dir target.
