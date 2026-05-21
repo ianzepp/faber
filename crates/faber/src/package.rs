@@ -1327,6 +1327,38 @@ edition = "2021"
     Ok(layout.generated_crate_root.clone())
 }
 
+/// Invoke Cargo to build the generated crate and produce the final binary.
+///
+/// Uses the layout's paths so that artifacts land in `<pkg>/target/debug/<name>`
+/// (sibling to `target/faber/`, never nested).
+///
+/// Inherits Cargo's stdout/stderr for live progress and diagnostics.
+#[allow(dead_code)]
+pub fn invoke_cargo_build(layout: &BuildLayout) -> Result<PathBuf, Box<Diagnostic>> {
+    use std::process::Command;
+
+    let mut cmd = Command::new("cargo");
+    cmd.arg("build")
+        .arg("--manifest-path")
+        .arg(&layout.generated_cargo_manifest)
+        .arg("--target-dir")
+        .arg(&layout.cargo_target_dir);
+
+    let status = cmd.status().map_err(|e| {
+        Box::new(Diagnostic::error(format!(
+            "failed to spawn cargo (ensure cargo is installed and on PATH): {e}"
+        )))
+    })?;
+
+    if !status.success() {
+        return Err(Box::new(Diagnostic::error(format!(
+            "cargo build exited with status {status}"
+        ))));
+    }
+
+    Ok(layout.debug_binary.clone())
+}
+
 #[cfg(test)]
 #[path = "package_test.rs"]
 mod tests;
@@ -1376,8 +1408,15 @@ pub fn cmd_build(command: radix::tool::BuildCommand) {
         };
         match emit_generated_crate(&layout, &output_code(output), meta.as_ref()) {
             Ok(_crate_root) => {
-                // Print the entry point for now (will become binary path in phase 4)
-                println!("{}", layout.generated_rust_entry.display());
+                // Phase 3: now invoke Cargo to produce the real binary
+                let binary_path = match invoke_cargo_build(&layout) {
+                    Ok(p) => p,
+                    Err(d) => {
+                        eprintln!("error: {}", d.message);
+                        std::process::exit(1);
+                    }
+                };
+                println!("{}", binary_path.display());
                 return;
             }
             Err(d) => {

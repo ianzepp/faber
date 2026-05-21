@@ -7,17 +7,18 @@
 **Created**: 2026-05-21
 
 ## Current Phase
-3 - Cargo backend invocation (pending)
+4 - Build modes and command shape (pending)
 
-**Delivery Spec (last)**: `phase-2-delivery.md` (completed)
+**Delivery Spec (last)**: `phase-3-delivery.md` (completed)
 
 ## Completed Phases
 0 - Preflight and baseline capture (ledger + captures)
 1 - Build pipeline model (BuildLayout + 8 tests + sibling contract proofs)
 2 - Generated Rust crate emission (emit_generated_crate + cmd_build wiring + writer tests; smoke confirmed tree under target/faber/)
+3 - Cargo backend invocation (invoke_cargo_build + live output; smoke produces executable in target/debug/<name>)
 
 ## Pending Phases
-3, 4, 5, 6, 7
+4, 5, 6, 7
 
 ## Baseline Captures (Phase 0)
 
@@ -197,3 +198,27 @@ Proceed to Phase 1: Build pipeline model (add path structs, testable layout).
 **Commit**: "Complete Phase 2: Generated Rust crate emission"
 
 **Next**: Phase 3 invokes Cargo using the written manifest + --target-dir target.
+
+---
+
+## Phase 3: Cargo Backend Invocation - Completion Record
+
+**Delivery Spec**: phase-3-delivery.md
+**Implementation**:
+- Added `invoke_cargo_build(layout)` using std::process::Command with correct --manifest-path and --target-dir
+- Wired after emit in package build path; inherits cargo output for transparency
+- On success prints the final `target/debug/<binary-name>`
+
+**Verification**:
+- Full `cargo test -p faber` + clippy -D PASS
+- Live smoke: `faber build <pkg>` now:
+  - recompiles the generated crate via Cargo
+  - produces executable at target/debug/faber-p2-smoke-...
+  - shows Cargo's "Compiling ... Finished ..." lines
+  - No target/faber/target/ directory created (contract preserved)
+
+**Poker-Face**: 97/100 — core goal achieved. --release and output polish in phase 4.
+
+**Checkpoint**: PASS per plan ("`faber build <package>` creates <package>/target/debug/<package-name> . No <package>/target/faber/target/ ").
+
+**Commit**: "Complete Phase 3: Cargo backend invocation"
