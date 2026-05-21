@@ -98,7 +98,7 @@ pactum Subscriptio {
     @ futura
     @ cursor
     @ externa
-    functio nuntient() -> cursor<Nuntius>
+    functio nuntiabunt() -> cursor<Nuntius>
 
     # Unsubscribe and cleanup
     @ externa

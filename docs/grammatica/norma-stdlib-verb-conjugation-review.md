@@ -71,7 +71,7 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 ### Weaknesses / Open Policy
 
-- The generator spelling is not yet canonicalized across docs. `arca` and `thesaurus` use `-ent` for async generators, while `morphologia.md` points to present participles (`-ans`, `-ens`) for generator semantics.
+- The generator spelling is not yet canonicalized across docs. `arca` still uses a future plural-looking async-generator form, while `morphologia.md` points to present participles (`-ans`, `-ens`) for generator semantics.
 - Several modules only define one side of what should eventually be a pair.
 - Some verb choices feel strained when trying to force conjugation to carry too much meaning (especially around streaming vs single-value results).
 - A few roots need explicit policy decisions before they become public API.
@@ -164,16 +164,16 @@ If async generators use `-ent`, `quaerent` is acceptable. If generators use pres
 
 ---
 
-### 5. `thesaurus.fab` (Cache + Pub/Sub) — Mixed
+### 5. `thesaurus.fab` (Cache + Pub/Sub) — Pub/Sub Stream Resolved
 
 **Problems**:
 - Heavy use of future forms for almost everything (reasonable for a remote cache).
-- `nuntient()` on `Subscriptio` for the message stream uses `-ent` for generator, same pattern as `arca`.
+- `nuntient()` on `Subscriptio` for the message stream used artificial suffix regularity instead of the real future plural of `nuntiare`.
 - Many short TTL / existence methods feel like they should stay simple.
 
 **Recommendations**:
-- The pub/sub streaming method (`nuntient`) should be reviewed together with `arca`'s streaming methods.
-- Keep the message/announcement root if that is the conceptual operation. Rename only if `nuntient` is not the final conjugated form for that root.
+- Rename `nuntient()` to `nuntiabunt()` for the async message stream.
+- Keep the message/announcement root because that is the conceptual operation of delivered messages.
 - Do not switch to `auscultet` merely to signal streaming; `auscultabit` already means subscribe/listen and returns the subscription object.
 
 ---
@@ -227,7 +227,7 @@ Rationale:
 
 Implications:
 - `quaerent` is acceptable if the async-stream form is the real future plural of `quaerere`.
-- `nuntient` needs review if its intended root is `nuntiare`; a real future plural form would be closer to `nuntiabunt`.
+- `nuntient` became `nuntiabunt` because the intended root is `nuntiare`.
 
 ### 4. Document the Conjugation Contract Explicitly
 
@@ -241,10 +241,10 @@ Create (or expand) a document that defines the expected conjugation patterns for
 
 | Module     | Current Method     | Suggested Change                  | Priority | Rationale |
 |------------|--------------------|-----------------------------------|----------|---------|
-| Cross-cutting | Generator form policy | Decide real conjugation shape for stream and async-stream forms | High | This decision controls whether current `quaerent` / `nuntient` are stable call-site forms |
+| Cross-cutting | Generator form policy | Decide real conjugation shape for stream and async-stream forms | High | This decision controls whether current `quaerent` and similar stream forms are stable call-site forms |
 | `arca`     | `quaerent`         | Keep `quaer-`; rename only if generator policy rejects `-ent` | High | Same query operation should remain one root |
 | `arca`     | `capiet`           | Decide whether first-row retrieval is a separate root | Medium | Likely separate operation, but should be explicit before runtime implementation |
-| `thesaurus`| `nuntient`         | Review after generator policy decision | Medium | Same unresolved async-generator spelling issue as `arca` |
+| `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
 ### Medium Priority
 
