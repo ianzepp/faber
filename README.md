@@ -25,6 +25,7 @@ The active surface is intentionally narrow: the compiler library, two CLI binari
 
 cargo run -p faber -- targets
 cargo run -p faber -- explain ≡
+cargo run -p faber -- explain --search equality
 cargo run -p faber -- explain --json proba
 cargo run -p faber -- check examples/exempla/salve-munde.fab
 cargo run -p faber -- build examples/exempla/salve-munde.fab
@@ -70,7 +71,7 @@ Run `cargo run -p faber -- init hello` to create a starter package. See
 **Faber** is the user-facing project and package tool:
 
 - `faber check`, `faber build`, `faber targets`
-- `faber explain <term>`, `faber explain --list`, `faber explain --json <term>`
+- `faber explain <term>`, `faber explain --search <query>`, `faber explain --list`, `faber explain --json <term>`
 - `faber init`
 - `faber run`; `faber test` (planned)
 - Compatibility aliases: `faber lex`, `faber parse`, `faber hir`, `faber emit`, `faber cli-ir`

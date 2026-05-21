@@ -56,6 +56,12 @@ pub enum Lookup<'a> {
     },
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SearchHit<'a> {
+    pub entry: &'a Entry,
+    pub score: u8,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Registry {
     entries: Vec<Entry>,
@@ -165,6 +171,51 @@ impl Registry {
         })
     }
 
+    pub fn search(&self, query: &str) -> Vec<SearchHit<'_>> {
+        let query = normalize_query(query);
+        let mut hits: BTreeMap<String, SearchHit<'_>> = BTreeMap::new();
+
+        for entry in &self.entries {
+            let Some(score) = search_score(entry, &query) else {
+                continue;
+            };
+
+            let Some(display_entry) = self.display_search_entry(entry) else {
+                continue;
+            };
+
+            let key = display_entry.term.clone();
+            let should_replace = match hits.get(&key) {
+                Some(existing) => {
+                    score < existing.score
+                        || (score == existing.score
+                            && display_entry.canonical
+                            && !existing.entry.canonical)
+                }
+                None => true,
+            };
+
+            if should_replace {
+                hits.insert(
+                    key,
+                    SearchHit {
+                        entry: display_entry,
+                        score,
+                    },
+                );
+            }
+        }
+
+        let mut results: Vec<SearchHit<'_>> = hits.into_values().collect();
+        results.sort_by(|left, right| {
+            left.score
+                .cmp(&right.score)
+                .then_with(|| right.entry.canonical.cmp(&left.entry.canonical))
+                .then_with(|| left.entry.term.cmp(&right.entry.term))
+        });
+        results
+    }
+
     fn index(&mut self) -> Result<(), ExplainError> {
         for (index, entry) in self.entries.iter().enumerate() {
             insert_unique(&mut self.terms, &entry.term, index, "term")?;
@@ -238,15 +289,24 @@ impl Registry {
 
         Ok(())
     }
+
+    fn display_search_entry<'a>(&'a self, entry: &'a Entry) -> Option<&'a Entry> {
+        if entry.canonical {
+            return Some(entry);
+        }
+
+        let canonical_term = entry.canonical_term.as_deref()?;
+        let index = self.terms.get(canonical_term)?;
+        Some(&self.entries[*index])
+    }
 }
 
 pub fn render_plain(lookup: &Lookup<'_>) -> String {
-    match lookup {
-        Lookup::Exact(entry) | Lookup::Alias { entry, .. } => render_entry(entry),
-        Lookup::Legacy {
-            entry, canonical, ..
-        } => render_legacy(entry, canonical),
-    }
+    crate::explain_render::render_lookup_plain(lookup)
+}
+
+pub fn render_search(query: &str, hits: &[SearchHit<'_>]) -> String {
+    crate::explain_render::render_search(query, hits)
 }
 
 pub fn render_json(lookup: &Lookup<'_>) -> Result<String, ExplainError> {
@@ -307,51 +367,6 @@ struct JsonLookup<'a> {
     entry: &'a Entry,
     #[serde(skip_serializing_if = "Option::is_none")]
     canonical: Option<&'a Entry>,
-}
-
-fn render_entry(entry: &Entry) -> String {
-    let mut out = String::new();
-    out.push_str(&entry.term);
-    out.push('\n');
-    out.push_str(&format!("Kind: {}\n", entry.kind.as_str()));
-    out.push_str(&format!("Category: {}\n", entry.category));
-    out.push_str(&format!("Meaning: {}\n", entry.summary));
-
-    if let Some(example) = first_faber_example(&entry.body) {
-        out.push_str("\nExample:\n");
-        out.push_str(example.trim());
-        out.push('\n');
-    }
-
-    out.push_str(&format!("\nSyntax: {}\n", entry.syntax));
-    if !entry.examples.is_empty() {
-        out.push_str(&format!("Examples: {}\n", entry.examples.join(", ")));
-    }
-    if !entry.related.is_empty() {
-        out.push_str(&format!("Related: {}\n", entry.related.join(", ")));
-    }
-    out
-}
-
-fn render_legacy(entry: &Entry, canonical: &Entry) -> String {
-    let mut out = String::new();
-    out.push_str(&entry.term);
-    out.push('\n');
-    out.push_str("Legacy: not canonical Faber source.\n");
-    out.push_str(&format!("Use: {}\n", canonical.term));
-    out.push_str(&format!("Meaning: {}\n", entry.summary));
-
-    if let Some(example) = first_faber_example(&entry.body) {
-        out.push_str("\nExample:\n");
-        out.push_str(example.trim());
-        out.push('\n');
-    }
-
-    out.push_str(&format!("\nSyntax: {}\n", entry.syntax));
-    if !entry.related.is_empty() {
-        out.push_str(&format!("Related: {}\n", entry.related.join(", ")));
-    }
-    out
 }
 
 fn first_faber_example(body: &str) -> Option<&str> {
@@ -605,6 +620,64 @@ impl Kind {
             Kind::Modifier => "modifier",
             Kind::Legacy => "legacy",
             Kind::Concept => "concept",
+        }
+    }
+}
+
+fn normalize_query(query: &str) -> String {
+    query.trim().to_lowercase()
+}
+
+fn search_score(entry: &Entry, query: &str) -> Option<u8> {
+    if query.is_empty() {
+        return None;
+    }
+
+    let mut best: Option<u8> = None;
+    score_term(&mut best, &entry.term, query, 0);
+
+    for alias in &entry.aliases {
+        score_term(&mut best, alias, query, 1);
+    }
+
+    for legacy in &entry.legacy {
+        score_term(&mut best, legacy, query, 1);
+    }
+
+    if let Some(canonical_term) = &entry.canonical_term {
+        score_term(&mut best, canonical_term, query, 1);
+    }
+
+    score_field(&mut best, &entry.summary, query, 3);
+    score_field(&mut best, &entry.syntax, query, 3);
+    for related in &entry.related {
+        score_field(&mut best, related, query, 3);
+    }
+    score_field(&mut best, &entry.body, query, 4);
+
+    best
+}
+
+fn score_term(best: &mut Option<u8>, candidate: &str, query: &str, bias: u8) {
+    score_field(best, candidate, query, bias);
+}
+
+fn score_field(best: &mut Option<u8>, candidate: &str, query: &str, bias: u8) {
+    let candidate = candidate.to_lowercase();
+    let score = if candidate == query {
+        Some(bias)
+    } else if candidate.starts_with(query) {
+        Some(bias + 1)
+    } else if candidate.contains(query) {
+        Some(bias + 2)
+    } else {
+        None
+    };
+
+    if let Some(score) = score {
+        match best {
+            Some(current) if *current <= score => {}
+            _ => *best = Some(score),
         }
     }
 }

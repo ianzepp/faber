@@ -1,4 +1,4 @@
-use crate::explain::{render_json, render_plain, Lookup, Registry, RAW_ENTRIES};
+use crate::explain::{render_json, render_plain, render_search, Lookup, Registry, RAW_ENTRIES};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -113,9 +113,39 @@ fn render_plain_includes_short_contract() {
     let registry = Registry::load().expect("registry loads");
     let lookup = registry.lookup("≡").expect("lookup equality");
     let rendered = render_plain(&lookup);
-    assert!(rendered.contains("Kind: operator"));
-    assert!(rendered.contains("Syntax: <expression> ≡ <expression>"));
+    assert!(rendered.contains("NAME"));
+    assert!(rendered.contains("SYNTAX"));
+    assert!(rendered.contains("DESCRIPTION"));
+    assert!(rendered.contains("<expression> ≡ <expression>"));
+    assert!(rendered.contains("operator / comparison"));
     assert!(rendered.contains("adfirma 1 + 1 ≡ 2"));
+    assert!(rendered.contains("RELATED"));
+}
+
+#[test]
+fn render_legacy_uses_distinct_layout() {
+    let registry = Registry::load().expect("registry loads");
+    let lookup = registry.lookup("===").expect("lookup legacy equality");
+    let rendered = render_plain(&lookup);
+    assert!(rendered.contains("STATUS"));
+    assert!(rendered.contains("legacy"));
+    assert!(rendered.contains("USE INSTEAD"));
+    assert!(rendered.contains("est"));
+    assert!(rendered.contains("Legacy equality spelling"));
+}
+
+#[test]
+fn search_returns_ranked_candidates() {
+    let registry = Registry::load().expect("registry loads");
+    let hits = registry.search("equality");
+    assert!(!hits.is_empty());
+    assert_eq!(hits[0].entry.term, "≡");
+    assert!(hits.iter().any(|hit| hit.entry.term == "est"));
+
+    let rendered = render_search("equality", &hits);
+    assert!(rendered.starts_with("Search: equality"));
+    assert!(rendered.contains("≡"));
+    assert!(rendered.contains("est"));
 }
 
 #[test]
