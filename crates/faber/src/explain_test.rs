@@ -131,7 +131,7 @@ fn render_legacy_uses_distinct_layout() {
     assert!(rendered.contains("legacy"));
     assert!(rendered.contains("USE INSTEAD"));
     assert!(rendered.contains("est"));
-    assert!(rendered.contains("Legacy equality spelling"));
+    assert!(rendered.contains("not canonical Faber source"));
 }
 
 #[test]
