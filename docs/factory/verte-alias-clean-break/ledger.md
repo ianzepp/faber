@@ -8,11 +8,13 @@
 **Mode**: clean-break / prerequisite to contextual-keyword-scope
 
 ## Current Phase
-1 - Front-end break (lexer removal)
+4 - Guardrail (search + test enforcement)
 
 ## Completed Phases
 0 - Inventory (ledger + full classified inventory of postfix vs annotation uses)
-1 - Front-end break (removed "qua"/"innatum"/"novum" -> Verte mappings in scan.rs; updated all related comments and repurposed lexer test)
+1 - Front-end break (removed mappings + comments + test)
+2 - Tests/examples (driver/mod_test.rs sources rewritten to ⇢ + negative rejection test added)
+3 - Docs (EBNF.md, AGENTS.md, grammatica/{verba,structurae,typi}.md updated; prose/examples use only ⇢; @ innatum and paths preserved)
 
 ## Baseline (Phase 0 Start)
 
@@ -113,9 +115,30 @@ Any bare postfix `qua|innatum|novum` in examples, grammatica/*.md, EBNF cast gra
 - `./scripta/test`
 - `rg -n "\\b(qua|innatum|novum)\\b" EBNF.md docs examples stdlib crates/radix/src -g '!target'` — every hit classified above
 
-## Phase 0 Exit Criteria
-- This ledger written and committed
-- Plan status still "planned" (implementation follows)
-- All occurrences classified; no ambiguity on KEEP vs CHANGE
+## Final Validation (All Phases)
 
-**Phase 0 complete.** Ready for front-end break (Phase 1).
+- `cargo test -p radix` (verte/parser/driver/lexer/scan + new rejection test): **PASS** (all 100+ driver tests, repurposed alias lex test, negative rejection test)
+- `./scripta/test`: **PASS** (full suite including 268+ radix tests + doc-tests)
+- `cargo fmt --all -- --check`: **PASS** (after auto-fmt on added test)
+- `cargo clippy -p radix -- -D warnings`: **PASS** (clean)
+- Residue `rg ...`: **PASS** — 0 unclassified bare postfix aliases in active source/docs. All hits are:
+  - @ innatum / innatumAnnotation / § innatum (KEEP)
+  - stdlib/norma/innatum/ paths + param `novum` (KEEP)
+  - "formerly ..." comments in exempla/innatum & novum .fab (historical note, OK)
+  - our plan/ledger + test strings + removal comments (intentional)
+  - historical prose in critique/other plans (contextual)
+- No reintroduction of expression aliases in grammar or examples.
+- `⇢` glyph path remains fully functional and is the only accepted spelling.
+
+### Post-Implementation Git
+Changes committed in slices (phase 0-1, then docs+tests, then fmt). Working tree will be clean after final autocommit.
+
+**All phases complete. Clean break delivered.**
+
+- Only `⇢` accepted for postfix Verte in normal lexer mode.
+- `qua`, `innatum`, `novum` now ordinary identifiers (usable as params, etc.).
+- @ innatum metadata and paths untouched.
+- Docs, tests, grammar, and negative tests enforce the boundary.
+- Prerequisite satisfied for contextual-keyword-scope work.
+
+*Opus perfectum est.*

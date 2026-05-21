@@ -352,7 +352,7 @@ range      := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' addit
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
 unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'finge') unary | cast
-cast       := call (('⇢' | 'qua' | 'innatum' | 'novum') typeAnnotation | conversio)*
+cast       := call ('⇢' typeAnnotation | conversio)*
 conversio  := '⇒' typeAnnotation typeParams? ('vel' unary)?
 ```
 
@@ -364,7 +364,7 @@ The `⇢` glyph (U+21E2, "rightwards dashed arrow") is the unified type conversi
 - Built-in collection → native construction: `[] ⇢ lista<T>` → typed empty array, `{} ⇢ tabula<K,V>` → `new Map<K,V>()`
 - `genus` type → struct instantiation: `{ x: 10 } ⇢ Point` → `Point { x: 10 }`
 
-The keywords `qua`, `innatum`, and `novum` are permanent aliases for `⇢`.
+Only the `⇢` glyph is accepted as the postfix type conversion/construction operator. The Latin forms `qua`, `innatum`, and `novum` were aliases and have been removed (see verte-alias-clean-break).
 
 **Runtime conversion (`⇒` / conversio):**
 
@@ -398,8 +398,8 @@ primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
 ### Special Expressions
 
 ```ebnf
-// verte (⇢/qua/innatum/novum) is postfix — parsed in the cast production above
-fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? (('⇢' | 'qua') IDENTIFIER)?
+// verte (⇢) is postfix — parsed in the cast production above
+fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('⇢' IDENTIFIER)?
 praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
 scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'  # § placeholders filled positionally
 legeExpr      := 'lege' 'lineam'?
@@ -600,7 +600,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `vel`                         | nullish coalescing  |
 | **Objects**         | `ego`                         | this/self           |
 |                     | `finge`                       | construct variant   |
-| **Type Cast**       | `⇢` / `qua` / `innatum` / `novum` | compile-time type cast |
+| **Type Cast**       | `⇢` | compile-time type cast / native construction / instantiation |
 | **Type Conversion** | `⇒ target`                    | runtime value conversion |
 |                     | `⇒ numerus`                   | parse to integer    |
 |                     | `⇒ fractus`                   | parse to float      |

@@ -31,7 +31,7 @@ Do not restore archived bootstrap, self-hosting, old reference, proba, or golden
 The stdlib source of truth is [`stdlib/norma`](stdlib/norma). These `.fab` files define collection methods, HAL contracts, and target translations:
 
 ```fab
-# From stdlib/norma/innatum/lista.fab
+# From stdlib/norma/innatum/lista.fab  (innatum/ here is @ annotation metadata + dir name, not expression syntax)
 @ verte ts "push"
 @ verte rs "push"
 functio adde(T elem) → vacuum
@@ -58,7 +58,7 @@ How it works:
 
 ## Grammar Rules
 
-- Empty collections need explicit types: `[] innatum lista<T>`, `{} innatum tabula<K,V>`.
+- Empty collections need explicit types: `[] ⇢ lista<T>`, `{} ⇢ tabula<K,V>`.
 - Missing type info in codegen is an upstream bug, not a reason to guess in codegen.
 - Prefer `ergo redde` for single-expression returns: `si cond ergo redde x`.
 - Use Stroustrup brace style.

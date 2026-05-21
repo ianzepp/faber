@@ -636,8 +636,8 @@ fn compile_accepts_finge_variant_construction() {
 }
 
 incipit {
-  fixum Event e1 ← finge Click { x: 1, y: 2 } qua Event
-  fixum Event e2 ← finge Quit qua Event
+  fixum Event e1 ← finge Click { x: 1, y: 2 } ⇢ Event
+  fixum Event e2 ← finge Quit ⇢ Event
   nota e1
   nota e2
 }"#;
@@ -822,7 +822,7 @@ fn ignotum_receiver_method_calls_no_longer_leave_infer_type() {
 fixum ignotum process
 
 incipit {
-  fixum args = process.argv qua lista<textus>
+  fixum args = process.argv ⇢ lista<textus>
   nota args.longitudo()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -876,7 +876,7 @@ fn go_target_allows_externa_with_explicit_cast_contract() {
 functio argv() → ignotum
 
 incipit {
-  fixum args ← argv() qua lista<textus>
+  fixum args ← argv() ⇢ lista<textus>
   nota args.longitudo()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1145,7 +1145,7 @@ fn ego_field_access_no_longer_reports_non_struct_member_error() {
 }
 
 incipit {
-  fixum c = {} novum Counter
+  fixum c = {} ⇢ Counter
   nota c.inc()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1190,7 +1190,7 @@ functio render(Drawable d) → vacuum {
 }
 
 incipit {
-  fixum c = {} novum Circle
+  fixum c = {} ⇢ Circle
   render(c)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1502,7 +1502,7 @@ fn ego_field_assignment_no_longer_reports_assignment_type_mismatch() {
 }
 
 incipit {
-  fixum c = {} novum Circulus
+  fixum c = {} ⇢ Circulus
   c.crescere(2)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1533,7 +1533,7 @@ fn typed_array_index_assignment_no_longer_reports_assignment_type_mismatch() {
 fn ex_destructured_object_fields_can_be_used_in_arithmetic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum point = { x: 4, y: 6 } novum Point
+  fixum point = { x: 4, y: 6 } ⇢ Point
   ex point fixum x, y
   fixum numerus sum = x + y
   nota sum
@@ -1853,7 +1853,7 @@ incipit {
 fn quidlibet_container_annotation_no_longer_reports_unknown_type() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum lista<quidlibet> docs ← [] innatum lista<quidlibet>
+  fixum lista<quidlibet> docs ← [] ⇢ lista<quidlibet>
   nota docs
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1880,14 +1880,14 @@ fn conversio_type_params_no_longer_report_unknown_type() {
 }
 
 #[test]
-fn qua_innatum_vel_no_longer_report_invalid_cast() {
+fn verte_vel_no_longer_reports_invalid_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum data ← 42
-  fixum asText ← data qua textus
+  fixum asText ← data ⇢ textus
   fixum parsed ← "invalid" ⇒ numerus vel 0
-  fixum cache ← { alice: 95, bob: 87 } innatum tabula<textus, numerus>
-  fixum items ← [] innatum lista<textus>
+  fixum cache ← { alice: 95, bob: 87 } ⇢ tabula<textus, numerus>
+  fixum items ← [] ⇢ lista<textus>
   nota asText, parsed, cache, items
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1903,13 +1903,13 @@ fn qua_innatum_vel_no_longer_report_invalid_cast() {
 }
 
 #[test]
-fn rust_output_emits_innatum_construction_and_coalesce_unwrap() {
+fn rust_output_emits_verte_construction_and_coalesce_unwrap() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum si textus name ← nihil
   fixum display ← name vel "Anonymous"
-  fixum cache ← { alice: 95 } innatum tabula<textus, numerus>
-  fixum items ← [] innatum lista<textus>
+  fixum cache ← { alice: 95 } ⇢ tabula<textus, numerus>
+  fixum items ← [] ⇢ lista<textus>
   nota display, cache, items
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2086,7 +2086,7 @@ fn verte_qua_still_emits_as_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum n ← 42
-  fixum f ← n qua fractus
+  fixum f ← n ⇢ fractus
   nota f
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2182,4 +2182,34 @@ fn ad_roundtrips_through_faber_codegen() {
     let output = faber_roundtrip(source);
     assert!(output.contains("ad \"fasciculus:lege\" (\"hello.txt\") → textus pro content {"));
     assert!(output.contains("cape err {"));
+}
+
+#[test]
+fn rejects_old_verte_aliases_as_postfix_operators() {
+    // Post clean-break: qua/innatum/novum no longer produce Verte tokens.
+    // Using them in postfix position now yields clear parse diagnostics (not silent aliasing).
+    let session = session(Target::Rust);
+    for alias in &["qua", "innatum", "novum"] {
+        // Use parenthesized expr to force postfix cast site and unambiguous parse error.
+        let source = format!("incipit {{ nota (42 {} textus) }}", alias);
+        let result = compile(&session, "test.fab", &source);
+
+        assert!(!result.success(), "source using old postfix alias '{}' must fail", alias);
+        assert!(
+            result.diagnostics.iter().any(|d| d.is_error()),
+            "expected at least one error diagnostic for old alias '{}'",
+            alias
+        );
+        // The precise message is parser-level "expected ')'" (or similar) at the alias token,
+        // because the ident no longer matches the Verte check in parse_postfix.
+        // We assert a clear error position around the alias rather than brittle string match.
+        assert!(
+            result
+                .diagnostics
+                .iter()
+                .any(|d| d.is_error() && d.span.map_or(false, |s| s.start > 10 && s.start < 30)),
+            "error should be reported near the alias token for '{}'",
+            alias
+        );
+    }
 }

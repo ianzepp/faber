@@ -172,7 +172,7 @@ genus Capsa<T> {
     }
 }
 
-fixum c = { valor: 42 } novum Capsa<numerus>
+fixum c = { valor: 42 } ⇢ Capsa<numerus>
 nota c.accipe()  # 42
 ```
 
@@ -237,12 +237,12 @@ genus Document implet Readable, Writable, Printable {
 
 ## Instantiation
 
-### Creating Instances with novum
+### Postfix Construction with ⇢
 
-The `novum` keyword participates in postfix construction. The word is Latin for "new", and the current `radix-rs` surface uses it after the source literal:
+The `⇢` operator participates in postfix construction (and type conversion). The glyph is the canonical spelling; previous Latin aliases (`novum` etc.) have been removed.
 
 ```fab
-fixum p = { x: 10, y: 20 } novum Punctum
+fixum p = { x: 10, y: 20 } ⇢ Punctum
 ```
 
 Field values are provided in an object literal before the type name. Required fields (those without defaults) must be specified:
@@ -254,11 +254,11 @@ genus Persona {
 }
 
 # nomen is required, aetas is optional
-fixum marcus = { nomen: "Marcus" } novum Persona
+fixum marcus = { nomen: "Marcus" } ⇢ Persona
 nota marcus.aetas  # 0 (default)
 
 # Override defaults by providing values
-fixum julia = { nomen: "Julia", aetas: 25 } novum Persona
+fixum julia = { nomen: "Julia", aetas: 25 } ⇢ Persona
 ```
 
 When all fields have defaults, the literal can be omitted entirely:
@@ -268,19 +268,19 @@ genus Counter {
     numerus count: 0
 }
 
-varia counter = {} novum Counter
+varia counter = {} ⇢ Counter
 ```
 
 ### Construction from Existing Values
 
-When you already have source values, build the object literal explicitly and then apply `novum`:
+When you already have source values, build the object literal explicitly and then apply `⇢`:
 
 ```fab
 fixum props = getPersonaProps()
 fixum p = {
     nomen: props.nomen,
     aetas: props.aetas
-} novum Persona
+} ⇢ Persona
 ```
 
 This keeps construction explicit and uses the same field-checking rules as any other struct literal.
@@ -326,7 +326,7 @@ genus Circle {
     }
 }
 
-fixum c = { radius: 5 } novum Circle
+fixum c = { radius: 5 } ⇢ Circle
 nota c.diameter  # 10
 nota c.area      # 78.54
 ```
@@ -345,7 +345,7 @@ Faber's type system reflects several deliberate choices:
 
 **Struct semantics by default.** Fields are public by default in the current docs and examples. This transparency suits data-oriented design where types are containers of state rather than encapsulated black boxes.
 
-**No classes, no constructors.** The `genus` keyword names a type of thing, not a blueprint for objects. Construction happens through postfix `novum` with declarative field specification, not imperative constructor logic.
+**No classes, no constructors.** The `genus` keyword names a type of thing, not a blueprint for objects. Construction happens through postfix `⇢` with declarative field specification, not imperative constructor logic. (The former `novum` spelling is no longer valid source.)
 
 These choices produce code that is explicit about data flow and honest about computation. The Roman craftsman built things to last; Faber aims for code that remains comprehensible as it evolves.
 

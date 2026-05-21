@@ -1,6 +1,7 @@
 # Verte Alias Clean-Break Plan
 
-**Status**: planned
+**Status**: completed
+**Completed**: 2026-05-21 (phases 0-4 + validation in one session)
 **Created**: 2026-05-21
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/verte-alias-clean-break/`

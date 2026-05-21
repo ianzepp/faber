@@ -128,7 +128,7 @@ Keywords for declaring variables, types, and structures:
 | Verbum    | Meaning  | Usage                         |
 | --------- | -------- | ----------------------------- |
 | `functio` | function | Function declaration          |
-| `novum`   | new      | Object instantiation          |
+| `⇢` (postfix) | n/a | Type conversion / construction / instantiation |
 | `finge`   | form     | Construct `discretio` variant |
 
 ### Types and Modules
@@ -278,7 +278,7 @@ Latin prepositions used in various syntactic contexts:
 | `ex`   | from       | Value iteration (`itera ex`); module import (`importa ex`)    |
 | `ad`   | to         | Target/destination (planned)                                  |
 | `per`  | through    | Iteration step in ranges                                      |
-| `qua`  | as (type)  | Type cast: `x qua textus`                                     |
+| `⇢`    | as (type)  | Type cast / construction: `x ⇢ textus` (Latin aliases removed)     |
 | `ut`   | as (alias) | Rename in import/destructure: `nomen ut n`                    |
 
 ---

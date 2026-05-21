@@ -102,7 +102,7 @@ si data est textus {
 }
 ```
 
-Faber deliberately omits an "any" type. When you receive data of unknown type, you must either narrow it with type guards (`est`) or cast it explicitly (`qua`). This design makes uncertainty visible and intentional.
+Faber deliberately omits an "any" type. When you receive data of unknown type, you must either narrow it with type guards (`est`) or cast it explicitly (`⇢`). This design makes uncertainty visible and intentional.
 
 ### numquam (Never)
 
@@ -110,7 +110,7 @@ From the Latin _numquam_, "never." This is the return type of functions that nev
 
 ```fab
 functio moritur() → numquam {
-    iace novum Error { message: "fatal" }
+    iace Error { message: "fatal" }
 }
 
 functio infinitus() → numquam {
@@ -285,14 +285,14 @@ fixum textus[] names = ["Marcus", "Julia", "Gaius"]
 
 The shorthand `textus[]` is equivalent to `lista<textus>`.
 
-For empty collections, use `innatum` to construct the native type:
+For empty collections, use `⇢` (postfix) to construct the native type:
 
 ```fab
-varia items = [] innatum lista<textus>
-varia cache = {} innatum tabula<textus, numerus>
+varia items = [] ⇢ lista<textus>
+varia cache = {} ⇢ tabula<textus, numerus>
 ```
 
-Without `innatum`, empty literals lack methods. The `innatum` keyword (Latin "inborn") creates proper native instances---`new Map()` in TypeScript, `HashMap` in Rust, etc.
+Without `⇢`, empty literals lack methods. The operator creates proper native instances (e.g. `new Map()` in TypeScript, `HashMap` in Rust, etc.). The former `innatum` spelling is no longer valid.
 
 Access elements by index:
 
@@ -391,7 +391,7 @@ genus capsa<T> {
     }
 }
 
-fixum c = novum capsa<numerus> { valor: 42 }
+fixum c = { valor: 42 } ⇢ capsa<numerus>
 nota c.accipe()
 ```
 
@@ -447,26 +447,26 @@ sin value est textus {
 
 ## Type Casting
 
-The `qua` keyword performs explicit type conversion:
+The `⇢` operator performs explicit type conversion (and native construction / instantiation):
 
 ```fab
 fixum data = 42
-fixum asText = data qua textus
+fixum asText = data ⇢ textus
 ```
 
-Casts are explicit acknowledgments of risk. When you write `qua`, you are telling the compiler: "I know what I am doing." The compiler trusts you---but if you are wrong, runtime errors follow.
+Casts are explicit acknowledgments of risk. When you write `⇢`, you are telling the compiler: "I know what I am doing." The compiler trusts you---but if you are wrong, runtime errors follow. (The former spellings `qua`, `innatum`, `novum` are no longer accepted in expression position.)
 
 ```fab
 # Cast to nullable type
 fixum num = 10
-fixum maybe = num qua numerus?
+fixum maybe = num ⇢ numerus?
 
 # Cast with member access
 fixum response = getResponse()
-fixum body = response.body qua textus
+fixum body = response.body ⇢ textus
 
 # Cast for chaining
-fixum len = (data qua textus).length
+fixum len = (data ⇢ textus).length
 ```
 
 Use casts sparingly. Prefer type guards (`est`) when possible, as they provide compile-time safety.
