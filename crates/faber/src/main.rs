@@ -12,6 +12,7 @@ use std::path::PathBuf;
     name = "faber",
     bin_name = "faber",
     about = "Faber project and package tool",
+    after_help = "Examples:\n  faber init hello\n  faber check examples/exempla/salve-munde.fab\n  faber build .\n  faber explain --list\n  faber explain functio\n  faber explain ≡",
     version
 )]
 struct Cli {
