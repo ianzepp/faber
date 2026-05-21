@@ -21,7 +21,7 @@ incipit {
 This is the simplest possible Faber program. The `incipit` block contains the statements that execute when the program runs. Functions and types defined outside `incipit` become module-level declarations that the entry point can call.
 
 ```fab
-functio greet(textus name) -> textus {
+functio greet(textus name) → textus {
     redde scriptum("Salve, §!", name)
 }
 

@@ -34,7 +34,7 @@ The stdlib source of truth is [`stdlib/norma`](stdlib/norma). These `.fab` files
 # From stdlib/norma/innatum/lista.fab
 @ verte ts "push"
 @ verte rs "push"
-functio adde(T elem) -> vacuum
+functio adde(T elem) → vacuum
 ```
 
 Runtime-backed Rust support lives in [`crates/norma`](crates/norma).
@@ -103,7 +103,7 @@ Use `crates/radix` for compiler feature development. Use `crates/faber` for pack
 # Correct
 textus nomen
 numerus aetas
-functio greet(textus name) -> textus
+functio greet(textus name) → textus
 
 # Wrong
 nomen: textus
@@ -126,14 +126,14 @@ discerne # discerne val { casu Var { } }
 ### Function Annotations
 
 ```fab
-functio parse() -> numerus
+functio parse() → numerus
 @ futura
-functio fetch() -> textus
+functio fetch() → textus
 @ cursor
-functio items() -> numerus
+functio items() → numerus
 @ futura
 @ cursor
-functio stream() -> datum
+functio stream() → datum
 ```
 
 ### String Formatting

@@ -90,7 +90,7 @@ Faber stdlib definitions live in [`stdlib/norma`](stdlib/norma):
 ```fab
 @ verte ts "push"
 @ verte rs "push"
-functio adde(T elem) -> vacuum
+functio adde(T elem) → vacuum
 ```
 
 Runtime-backed Rust support lives in [`crates/norma`](crates/norma).
@@ -102,7 +102,7 @@ Faber uses type-first syntax:
 ```fab
 textus nomen
 numerus aetas
-functio salve(textus name) -> textus
+functio salve(textus name) → textus
 ```
 
 Use [`EBNF.md`](EBNF.md) as the formal grammar source, and [`docs/grammatica`](docs/grammatica) for prose explanations.

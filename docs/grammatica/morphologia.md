@@ -136,10 +136,10 @@ Standard library methods declare their morphological forms using the `@ radix` a
 
 ```fab
 @ radix append, imperativus, perfectum
-functio appende(T elem) -> vacuum
+functio appende(T elem) → vacuum
 
 @ radix append, imperativus, perfectum
-functio appendita(T elem) -> lista<T>
+functio appendita(T elem) → lista<T>
 ```
 
 This declares that stem `append` supports two forms:
@@ -206,7 +206,7 @@ The `@ radix` annotation handles this by declaring the actual stem:
 ```fab
 # Stem is 'inver', not 'invert', because participle is 'inversa'
 @ radix inver, perfectum
-functio inversa() -> lista<T>
+functio inversa() → lista<T>
 ```
 
 The compiler's stem-guided parsing handles these cases: when validating `inversa`, it knows to look for stem `inver` + `-sa`, not `invert` + `-a`.

@@ -42,20 +42,18 @@ Relational operators compare values and return boolean results:
 ```fab
 fixum isLess = 5 < 10           # less than
 fixum isGreater = 10 > 5        # greater than
-fixum isLessOrEqual = 5 <= 5    # less than or equal
-fixum isGreaterOrEqual = 10 >= 10
+fixum isLessOrEqual = 5 ≤ 5     # less than or equal
+fixum isGreaterOrEqual = 10 ≥ 10
 ```
 
-For equality, Faber follows JavaScript's distinction between loose and strict comparison:
+For equality, use the canonical glyphs (or Latin keywords `est` / `non est` for strict identity):
 
 ```fab
-fixum loose = 10 == "10"        # true (type coercion)
-fixum strict = 10 === 10        # true (same type and value)
-fixum notEqual = 10 != 5
-fixum strictNotEqual = 10 !== "10"
+fixum eq = 10 ≡ 10              # equality
+fixum neq = 10 ≠ 5              # inequality
 ```
 
-In practice, prefer strict equality (`===`, `!==`) to avoid subtle bugs from type coercion.
+Legacy ASCII forms (`==`, `!=`, `===`, `!==`) are no longer accepted in Faber source; use `≡` / `≠` or `est` / `non est`. See `faber explain ==` for migration guidance.
 
 ---
 
@@ -81,15 +79,15 @@ Etymology:
 
 ### Symbolic Forms
 
-The familiar C-style operators remain available:
+Symbolic logical operators (`&&`, `||`, `!`) are not canonical Faber source. Use the Latin keywords:
 
 ```fab
-fixum both = verum && verum
-fixum either = falsum || verum
-fixum negated = !flag
+fixum both = verum et verum
+fixum either = falsum aut verum
+fixum negated = non flag
 ```
 
-**Style guidance:** Prefer Latin forms (`et`, `aut`, `non`) over symbols. The Latin reads more clearly and avoids the visual ambiguity between `!` (logical not) and `!.` (non-null assertion).
+**Style guidance:** Always prefer Latin forms (`et`, `aut`, `non`). They read clearly and avoid ambiguity with non-null postfix `!.` `![` `!(`. (The `!` bare logical not is not supported in source.)
 
 Short-circuit evaluation works as expected. In `falsum et expensiveCheck()`, the function never executes because the first operand is already false.
 

@@ -40,17 +40,17 @@ If you need current repo status at a glance, see [`project.yaml`](../../project.
 Some older docs used verb-form return syntax such as `fit`, `fiet`, `fiunt`, and `fient`. The current grammar contract lives in [`EBNF.md`](../../EBNF.md) and uses arrow returns plus annotations:
 
 ```fab
-functio parse() -> numerus
+functio parse() → numerus
 
 @ futura
-functio fetch(textus url) -> textus
+functio fetch(textus url) → textus
 
 @ cursor
-functio count(numerus n) -> numerus
+functio count(numerus n) → numerus
 
 @ futura
 @ cursor
-functio stream() -> textus
+functio stream() → textus
 ```
 
 When reading target examples, prefer this syntax over older prose that still reflects pre-annotation documentation.

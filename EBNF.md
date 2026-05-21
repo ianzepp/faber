@@ -520,7 +520,7 @@ dslVerb       := 'prima' | 'ultima' | 'summa'
 `ab` is the sole collection DSL entry point. Filter is optional, allowing direct transforms:
 
 - `ab users activus` - filter by boolean property
-- `ab users ubi aetas >= 18` - filter by condition
+- `ab users ubi aetas ≥ 18` - filter by condition
 - `ab items prima 5` - direct transform (no filter)
 - `ab items prima 10, ultima 3` - chained transforms
 

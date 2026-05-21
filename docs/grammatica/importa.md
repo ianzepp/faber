@@ -101,7 +101,7 @@ The `@ publica` annotation marks a declaration as exported:
 fixum VERSION = "1.0.0"
 
 @ publica
-functio greet(textus name) -> textus {
+functio greet(textus name) → textus {
     redde scriptum("Salve, §!", name)
 }
 

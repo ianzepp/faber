@@ -104,7 +104,7 @@ si age >= 18 ergo scribe "Adult" secus scribe "Minor"
 The keyword `reddit` means "it returns" in Latin (third person singular of _reddere_, "to give back"). It combines `ergo` with `redde` for early return patterns.
 
 ```fab
-functio classify(numerus x) -> textus {
+functio classify(numerus x) → textus {
     si x < 0 reddit "negative"
     si x == 0 reddit "zero"
     redde "positive"
@@ -114,7 +114,7 @@ functio classify(numerus x) -> textus {
 This is equivalent to:
 
 ```fab
-functio classify(numerus x) -> textus {
+functio classify(numerus x) → textus {
     si x < 0 {
         redde "negative"
     }
@@ -128,7 +128,7 @@ functio classify(numerus x) -> textus {
 The `reddit` form excels at guard clauses—conditions that validate input and exit early:
 
 ```fab
-functio divide(numerus a, numerus b) -> numerus? {
+functio divide(numerus a, numerus b) → numerus? {
     si b == 0 reddit nihil
     redde a / b
 }
@@ -137,7 +137,7 @@ functio divide(numerus a, numerus b) -> numerus? {
 It works throughout a conditional chain:
 
 ```fab
-functio grade(numerus score) -> textus {
+functio grade(numerus score) → textus {
     si score >= 90 reddit "A"
     sin score >= 80 reddit "B"
     sin score >= 70 reddit "C"
@@ -434,7 +434,7 @@ elige status {
 Early returns use `reddit`:
 
 ```fab
-functio statusMessage(numerus code) -> textus {
+functio statusMessage(numerus code) → textus {
     elige code {
         casu 200 reddit "OK"
         casu 404 reddit "Not Found"
@@ -461,7 +461,7 @@ discretio Event {
 Then match against it:
 
 ```fab
-functio handle_event(Event e) -> nihil {
+functio handle_event(Event e) → nihil {
     discerne e {
         casu Click pro x, y {
             scribe scriptum("Clicked at §, §", x, y)
@@ -483,7 +483,7 @@ For simple variants without data, the body can use `ergo`:
 ```fab
 discretio Status { Active, Inactive, Pending }
 
-functio describe(Status s) -> textus {
+functio describe(Status s) → textus {
     discerne s {
         casu Active ergo redde "active"
         casu Inactive ergo redde "inactive"
@@ -523,7 +523,7 @@ Guards and assertions enforce invariants—conditions that must hold for the pro
 The keyword `custodi` is the imperative of _custodire_ ("to guard" or "watch over"). It groups early-exit conditions at the start of a function.
 
 ```fab
-functio divide(numerus a, numerus b) -> numerus {
+functio divide(numerus a, numerus b) → numerus {
     custodi {
         si b == 0 {
             redde 0
@@ -539,7 +539,7 @@ The `custodi` block creates a visual separation between validation and main logi
 Multiple guards in one block:
 
 ```fab
-functio processValue(numerus x) -> numerus {
+functio processValue(numerus x) → numerus {
     custodi {
         si x < 0 {
             redde -1
@@ -557,7 +557,7 @@ functio processValue(numerus x) -> numerus {
 Guards can throw instead of returning:
 
 ```fab
-functio sqrt(numerus n) -> numerus {
+functio sqrt(numerus n) → numerus {
     custodi {
         si n < 0 {
             iace "Cannot compute square root of negative number"
@@ -571,7 +571,7 @@ functio sqrt(numerus n) -> numerus {
 The `reddit` shorthand works within `custodi`:
 
 ```fab
-functio clamp(numerus value, numerus min, numerus max) -> numerus {
+functio clamp(numerus value, numerus min, numerus max) → numerus {
     custodi {
         si value < min reddit min
         si value > max reddit max
@@ -584,7 +584,7 @@ functio clamp(numerus value, numerus min, numerus max) -> numerus {
 Input validation patterns:
 
 ```fab
-functio createUser(textus name, textus email, numerus age) -> textus {
+functio createUser(textus name, textus email, numerus age) → textus {
     custodi {
         si name == nihil aut name == "" {
             redde "Error: name required"

@@ -75,7 +75,7 @@ A variable holding `nihil` holds nothing---not zero, not an empty string, but th
 From the Latin _vacuum_, "empty, void." This is the return type of functions that complete but return no value:
 
 ```fab
-functio log(textus message) -> vacuum {
+functio log(textus message) → vacuum {
     scribe message
 }
 ```
@@ -109,11 +109,11 @@ Faber deliberately omits an "any" type. When you receive data of unknown type, y
 From the Latin _numquam_, "never." This is the return type of functions that never return---those that throw exceptions, loop infinitely, or exit the process:
 
 ```fab
-functio moritur() -> numquam {
+functio moritur() → numquam {
     iace novum Error { message: "fatal" }
 }
 
-functio infinitus() -> numquam {
+functio infinitus() → numquam {
     dum verum { }
 }
 ```
@@ -125,7 +125,7 @@ A function marked `numquam` is a one-way door. Control enters but does not exit.
 From the Latin _objectum_, "something thrown before." The root of the English word "object." This type represents any non-primitive value---anything that is not a number, string, boolean, or null:
 
 ```fab
-functio getUser() -> objectum {
+functio getUser() → objectum {
     redde { name: "Marcus", age: 30 }
 }
 ```
@@ -166,11 +166,11 @@ fixum count = 42         # inferred as numerus
 Function parameters use the same type-first pattern. Return types follow the arrow:
 
 ```fab
-functio adde(numerus a, numerus b) -> numerus {
+functio adde(numerus a, numerus b) → numerus {
     redde a + b
 }
 
-functio describe(textus nomen, numerus aetas) -> textus {
+functio describe(textus nomen, numerus aetas) → textus {
     redde scriptum("§ habet § annos", nomen, aetas)
 }
 ```
@@ -178,7 +178,7 @@ functio describe(textus nomen, numerus aetas) -> textus {
 A function that returns nothing uses `vacuum` or omits the return type entirely:
 
 ```fab
-functio log(textus message) -> vacuum {
+functio log(textus message) → vacuum {
     scribe message
 }
 ```
@@ -188,13 +188,13 @@ functio log(textus message) -> vacuum {
 Higher-order functions accept or return other functions. Faber uses parenthesized syntax for function type annotations:
 
 ```fab
-(paramTypes) -> returnType
+(paramTypes) → returnType
 ```
 
 A predicate function that takes a value and returns a boolean:
 
 ```fab
-functio filtra(lista<T> items, (T) -> bivalens pred) -> lista<T> {
+functio filtra(lista<T> items, (T) → bivalens pred) → lista<T> {
     # ...
 }
 ```
@@ -202,7 +202,7 @@ functio filtra(lista<T> items, (T) -> bivalens pred) -> lista<T> {
 A transformer that takes two functions and returns their composition:
 
 ```fab
-functio compone((A) -> B f, (B) -> C g) -> (A) -> C {
+functio compone((A) → B f, (B) → C g) → (A) → C {
     redde pro a: f(a) |> g
 }
 ```
@@ -210,17 +210,17 @@ functio compone((A) -> B f, (B) -> C g) -> (A) -> C {
 Function types can appear anywhere a type annotation is valid---parameters, return types, variable declarations, and generics:
 
 ```fab
-fixum (numerus) -> numerus doubler = pro x: x * 2
-typus Predicate<T> = (T) -> bivalens
-typus Mapper<A, B> = (A) -> B
+fixum (numerus) → numerus doubler = pro x: x * 2
+typus Predicate<T> = (T) → bivalens
+typus Mapper<A, B> = (A) → B
 ```
 
 Multiple parameters are comma-separated; no parameters use empty parentheses:
 
 ```fab
-() -> vacuum                     # no params, returns nothing
-(numerus) -> textus              # one param
-(textus, numerus) -> bivalens    # two params
+() → vacuum                     # no params, returns nothing
+(numerus) → textus              # one param
+(textus, numerus) → bivalens    # two params
 ```
 
 ---
@@ -257,7 +257,7 @@ fixum isNull = maybeValue est nihil
 Function return types can be nullable to indicate that a function might not find what it is looking for:
 
 ```fab
-functio inveni(textus id) -> persona? {
+functio inveni(textus id) → persona? {
     # might return nihil if not found
 }
 ```
@@ -360,7 +360,7 @@ typus OptionalName = textus?
 This makes function signatures more readable:
 
 ```fab
-functio findUser(UserId id) -> Username? {
+functio findUser(UserId id) → Username? {
     # ...
 }
 ```
@@ -386,7 +386,7 @@ Type parameters allow writing code that works with multiple types. Enclose param
 genus capsa<T> {
     T valor
 
-    functio accipe() -> T {
+    functio accipe() → T {
         redde ego.valor
     }
 }
@@ -399,10 +399,10 @@ Generic constraints can limit what types are acceptable:
 
 ```fab
 pactum Comparable<T> {
-    functio compare(T other) -> numerus
+    functio compare(T other) → numerus
 }
 
-functio maximum<T implet Comparable<T>>(T a, T b) -> T {
+functio maximum<T implet Comparable<T>>(T a, T b) → T {
     si a.compare(b) > 0 {
         redde a
     }
@@ -421,7 +421,7 @@ The `unio<A, B>` generic expresses that a value may be one of several types:
 ```fab
 typus StringOrNumber = unio<textus, numerus>
 
-functio process(StringOrNumber value) -> textus {
+functio process(StringOrNumber value) → textus {
     si value est textus {
         redde value
     }

@@ -139,14 +139,14 @@ incipit argumenta args {}
 @ alias "ls"
 @ descriptio "List jobs"
 @ optio limit longum "limit" typus numerus vel 20
-functio list() argumenta args -> vacuum {
+functio list() argumenta args → vacuum {
     scribe args.verbose
     scribe args.limit
 }
 
 @ imperium "show"
 @ operandus numerus id
-functio show() argumenta args -> vacuum {
+functio show() argumenta args → vacuum {
     scribe args.verbose
     scribe args.id
 }
@@ -188,7 +188,7 @@ Mounted module:
 @ imperium "hello"
 @ alias "hi"
 @ operandus textus name
-functio hello() argumenta args -> vacuum {
+functio hello() argumenta args → vacuum {
     scribe scriptum("Hello, §!", args.name)
 }
 ```

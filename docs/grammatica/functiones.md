@@ -17,7 +17,7 @@ functio saluta() {
 Functions that return values specify the return type after an arrow (`->`) and use `redde` (Latin "give back, return") to yield the result:
 
 ```fab
-functio nomen() -> textus {
+functio nomen() → textus {
     redde "Marcus Aurelius"
 }
 ```
@@ -27,15 +27,15 @@ functio nomen() -> textus {
 Faber uses type-first syntax for parameters, placing the type before the parameter name. This mirrors natural language order ("a string called name") and aligns with languages like Go, Rust, and Zig:
 
 ```fab
-functio quadratum(numerus n) -> numerus {
+functio quadratum(numerus n) → numerus {
     redde n * n
 }
 
-functio adde(numerus a, numerus b) -> numerus {
+functio adde(numerus a, numerus b) → numerus {
     redde a + b
 }
 
-functio describe(textus nomen, numerus aetas) -> textus {
+functio describe(textus nomen, numerus aetas) → textus {
     redde scriptum("§ habet § annos", nomen, aetas)
 }
 ```
@@ -43,7 +43,7 @@ functio describe(textus nomen, numerus aetas) -> textus {
 When a parameter has no explicit type annotation, the compiler infers it from usage:
 
 ```fab
-functio duplica(n) -> numerus {
+functio duplica(n) → numerus {
     redde n * 2
 }
 ```
@@ -73,7 +73,7 @@ All three express the same concept: "X, known locally as Y."
 The `si` modifier (Latin "if") marks a parameter as optional. Without a default value, the parameter type becomes nullable (`ignotum<T>`):
 
 ```fab
-functio greet(textus nomen, si textus titulus) -> textus {
+functio greet(textus nomen, si textus titulus) → textus {
     si titulus est nihil {
         redde scriptum("Salve, §!", nomen)
     }
@@ -89,7 +89,7 @@ greet("Marcus", "Dominus")   # titulus receives "Dominus"
 Default values use `vel` (Latin "or"), consistent with the nullish coalescing operator in expressions:
 
 ```fab
-functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) -> textus {
+functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) → textus {
     redde scriptum("Page § with § items", pagina, per_pagina)
 }
 
@@ -107,7 +107,7 @@ Default values only make sense for owned parameters. Borrowed (`de`) and mutable
 The `ceteri` modifier (Latin "the rest, the others") collects remaining arguments into an array:
 
 ```fab
-functio sum(ceteri numerus[] nums) -> numerus {
+functio sum(ceteri numerus[] nums) → numerus {
     varia total = 0
     itera ex nums fixum n {
         total += n
@@ -127,7 +127,7 @@ Rest parameters must come last in the parameter list.
 The arrow `->` specifies a function's return type directly. This is the simplest form and compiles with minimal overhead:
 
 ```fab
-functio compute() -> numerus {
+functio compute() → numerus {
     redde 42
 }
 ```
@@ -139,7 +139,7 @@ functio doNothing() {
     # no return value
 }
 
-functio doNothingExplicit() -> vacuum {
+functio doNothingExplicit() → vacuum {
     redde
 }
 ```
@@ -156,17 +156,17 @@ Today, function return shape is expressed with:
 - both `@ futura` and `@ cursor` for async generators
 
 ```fab
-functio getId() -> textus {
+functio getId() → textus {
     redde "abc"
 }
 
 @ futura
-functio fetchData(textus url) -> textus {
+functio fetchData(textus url) → textus {
     redde "data"
 }
 
 @ cursor
-functio range(numerus n) -> numerus {
+functio range(numerus n) → numerus {
     itera ex 0..n fixum i {
         cede i
     }
@@ -183,7 +183,7 @@ The `@ futura` annotation (Latin "future things," neuter plural of _futurus_) ma
 
 ```fab
 @ futura
-functio fetchData(textus url) -> textus {
+functio fetchData(textus url) → textus {
     fixum response = cede fetch(url)
     redde response.text()
 }
@@ -197,7 +197,7 @@ Inside async functions, `cede` (Latin "yield, give way, surrender") awaits a pro
 
 ```fab
 @ futura
-functio processAll(textus[] urls) -> textus[] {
+functio processAll(textus[] urls) → textus[] {
     varia results = []
     itera ex urls fixum url {
         fixum data = cede fetchData(url)
@@ -215,7 +215,7 @@ Use `@ futura` with arrow return syntax for async functions:
 
 ```fab
 @ futura
-functio fetchData() -> textus {
+functio fetchData() → textus {
     redde "data"
 }
 ```
@@ -230,7 +230,7 @@ The `@ cursor` annotation (Latin "runner," from _currere_ "to run") creates a ge
 
 ```fab
 @ cursor
-functio range(numerus n) -> numerus {
+functio range(numerus n) → numerus {
     itera ex 0..n fixum i {
         cede i
     }
@@ -246,7 +246,7 @@ Async generators combine both annotations:
 ```fab
 @ futura
 @ cursor
-functio fetchAll(textus[] urls) -> textus {
+functio fetchAll(textus[] urls) → textus {
     itera ex urls fixum url {
         cede fetch(url)
     }
@@ -272,7 +272,7 @@ itera ex rangeSync(5) fixum num {
 The `prae` keyword (Latin "before") declares compile-time type parameters. Combined with `typus` ("type"), it introduces generic type variables:
 
 ```fab
-functio max(prae typus T, T a, T b) -> T {
+functio max(prae typus T, T a, T b) → T {
     si a > b { redde a }
     redde b
 }
@@ -286,7 +286,7 @@ Type parameters must come first in the parameter list, followed by regular param
 Multiple type parameters are supported:
 
 ```fab
-functio pair(prae typus T, prae typus U, T first, U second) -> [T, U] {
+functio pair(prae typus T, prae typus U, T first, U second) → [T, U] {
     redde [first, second]
 }
 ```
@@ -309,8 +309,8 @@ The colon separates parameters from the body. For single expressions, the result
 When type annotation is needed, use an arrow before the colon:
 
 ```fab
-fixum add = clausura a, b -> numerus: a + b
-fixum isPositive = clausura n -> bivalens: n > 0
+fixum add = clausura a, b → numerus: a + b
+fixum isPositive = clausura n → bivalens: n > 0
 ```
 
 ### Block Bodies
@@ -375,7 +375,7 @@ fixum sum = numbers.reduce(0, clausura acc, x: acc + x)
 The `curata` modifier (Latin "cared for," from _curare_ "to care for") declares that a function requires an allocator. This is essential for Zig targets where memory allocation is explicit:
 
 ```fab
-functio greet(textus name) curata alloc -> textus {
+functio greet(textus name) curata alloc → textus {
     redde scriptum("Hello, §!", name)
 }
 ```
@@ -414,7 +414,7 @@ functio processPoints(de Point[] points, in Point[] targets) {
 These prepositions combine naturally with other parameter modifiers:
 
 ```fab
-functio analyze(textus source, de si numerus depth) -> numerus {
+functio analyze(textus source, de si numerus depth) → numerus {
     si depth est nihil { redde 3 }
     redde depth
 }

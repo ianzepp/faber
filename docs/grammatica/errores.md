@@ -79,7 +79,7 @@ The `demum` block executes after both the `tempta` body and any `cape` handler, 
 When a function returns from within a `tempta` block, the `demum` block still executes before the return completes:
 
 ```fab
-functio withReturnInDemum() -> textus {
+functio withReturnInDemum() → textus {
     tempta {
         scribe "Starting operation"
         redde "success"
@@ -243,7 +243,7 @@ Functions can handle errors internally or let them propagate to callers.
 When a function handles errors internally, it returns a fallback value:
 
 ```fab
-functio safeDivide(numerus a, numerus b) -> numerus {
+functio safeDivide(numerus a, numerus b) → numerus {
     tempta {
         si b == 0 {
             iace "Division by zero"
@@ -262,7 +262,7 @@ functio safeDivide(numerus a, numerus b) -> numerus {
 When a function doesn't catch an error, it propagates to the caller:
 
 ```fab
-functio divide(numerus a, numerus b) -> numerus {
+functio divide(numerus a, numerus b) → numerus {
     si b == 0 {
         iace "Division by zero"
     }

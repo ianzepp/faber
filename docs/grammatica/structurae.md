@@ -69,15 +69,15 @@ genus Rectangle {
     numerus width: 1
     numerus height: 1
 
-    functio area() -> numerus {
+    functio area() → numerus {
         redde ego.width * ego.height
     }
 
-    functio perimeter() -> numerus {
+    functio perimeter() → numerus {
         redde 2 * (ego.width + ego.height)
     }
 
-    functio isSquare() -> bivalens {
+    functio isSquare() → bivalens {
         redde ego.width == ego.height
     }
 }
@@ -93,7 +93,7 @@ genus Counter {
         ego.count ← ego.count + 1
     }
 
-    functio getValue() -> numerus {
+    functio getValue() → numerus {
         redde ego.count
     }
 }
@@ -153,7 +153,7 @@ The `abstractus` modifier creates a type that cannot be instantiated directly. A
 ```fab
 abstractus genus Figura {
     @ abstracta
-    functio area() -> numerus
+    functio area() → numerus
 }
 ```
 
@@ -167,7 +167,7 @@ A `genus` can be parameterized with type variables:
 genus Capsa<T> {
     T valor
 
-    functio accipe() -> T {
+    functio accipe() → T {
         redde ego.valor
     }
 }
@@ -190,12 +190,12 @@ A `pactum` declares method signatures without implementations:
 
 ```fab
 pactum Drawable {
-    functio draw() -> vacuum
+    functio draw() → vacuum
 }
 
 pactum Iterabilis<T> {
-    functio sequens() -> si numerus
-    functio habet() -> bivalens
+    functio sequens() → si numerus
+    functio habet() → bivalens
 }
 ```
 
@@ -385,10 +385,10 @@ The `@ radix` annotation (Latin "root, stem") declares the morphological stem an
 ```fab
 @ radix append, imperativus, perfectum
 @ externa
-functio appende(T elem) -> vacuum
+functio appende(T elem) → vacuum
 
 @ externa
-functio addita(T elem) -> lista<T>
+functio addita(T elem) → lista<T>
 ```
 
 The first identifier is the verb stem (`append-`), followed by valid conjugation forms. In stdlib declarations the receiver is implicit: these signatures live inside the `lista` genus rather than spelling `ego` as a normal parameter.
@@ -414,7 +414,7 @@ The `@ verte` annotation (Latin "turn, transform") defines how a method call tra
 @ verte py "append"
 @ verte rs "push"
 @ externa
-functio appende(T elem) -> vacuum
+functio appende(T elem) → vacuum
 ```
 
 This compiles `items.appende(x)` to `items.push(x)` in TypeScript and `items.append(x)` in Python.
@@ -422,11 +422,11 @@ This compiles `items.appende(x)` to `items.push(x)` in TypeScript and `items.app
 **Template with placeholders:**
 
 ```fab
-@ verte ts (ego, elem) -> "[...§0, §1]"
-@ verte py (ego, elem) -> "[*§0, §1]"
-@ verte zig (ego, elem, alloc) -> "§0.addita(§2, §1)"
+@ verte ts (ego, elem) → "[...§0, §1]"
+@ verte py (ego, elem) → "[*§0, §1]"
+@ verte zig (ego, elem, alloc) → "§0.addita(§2, §1)"
 @ externa
-functio addita(T elem) -> lista<T>
+functio addita(T elem) → lista<T>
 ```
 
 The `§` placeholders are filled positionally with the parameter values. `§0` refers to the receiver, `§1` to the first explicit argument, and so on. For Zig, the allocator parameter comes last when needed.
@@ -439,9 +439,9 @@ Each `@ verte` specifies exactly one target. Use multiple annotations for multip
 @ verte py "append"
 @ verte rs "push"
 @ verte cpp "push_back"
-@ verte zig (ego, elem, alloc) -> "§0.appende(§2, §1)"
+@ verte zig (ego, elem, alloc) → "§0.appende(§2, §1)"
 @ externa
-functio appende(T elem) -> vacuum
+functio appende(T elem) → vacuum
 ```
 
 ### Design Philosophy
