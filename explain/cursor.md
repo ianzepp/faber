@@ -14,7 +14,7 @@ Marks a function as a generator.
 
 ```fab
 @ cursor
-functio range(numerus n) -> numerus {
+functio range(numerus n) → numerus {
 cede n
 }
 ```

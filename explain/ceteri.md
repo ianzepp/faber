@@ -15,7 +15,7 @@ related:
 Collects remaining parameters or extracted fields.
 
 ```fab
-functio sum(ceteri numerus[] nums) -> numerus {
+functio sum(ceteri numerus[] nums) → numerus {
 redde 0
 }
 ```

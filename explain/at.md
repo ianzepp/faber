@@ -15,7 +15,7 @@ Introduces an annotation for the following declaration or statement.
 
 ```fab
 @ futura
-functio fetch() -> textus {
+functio fetch() → textus {
     redde "ok"
 }
 ```

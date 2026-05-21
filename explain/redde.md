@@ -15,7 +15,7 @@ related:
 Returns a value from a function.
 
 ```fab
-functio answer() -> numerus {
+functio answer() → numerus {
     redde 42
 }
 ```

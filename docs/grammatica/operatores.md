@@ -382,22 +382,22 @@ varia x = 10
 x = 20
 ```
 
-Compound assignment operators combine an operation with assignment:
+Compound assignment operators combine an operation with assignment using the canonical glyphs:
 
 ```fab
 varia counter = 0
-counter += 10    # add and assign
-counter -= 3     # subtract and assign
-counter *= 2     # multiply and assign
-counter /= 2     # divide and assign
+counter ⊕ 10    # add and assign
+counter ⊖ 3     # subtract and assign
+counter ⊛ 2     # multiply and assign
+counter ⊘ 2     # divide and assign
 ```
 
-Bitwise compound assignment is also available:
+Bitwise compound assignment uses the corresponding glyphs:
 
 ```fab
 varia flags = 0b1010
-flags &= mask    # bitwise AND and assign
-flags |= flag    # bitwise OR and assign
+flags ⊜ mask    # bitwise AND and assign
+flags ⊚ flag    # bitwise OR and assign
 ```
 
 ---

@@ -14,6 +14,6 @@ Marks a type or member as abstract.
 
 ```fab
 abstractus genus Figura {
-functio area() -> numerus
+functio area() → numerus
 }
 ```

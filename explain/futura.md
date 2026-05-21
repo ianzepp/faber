@@ -14,7 +14,7 @@ Marks a function as asynchronous.
 
 ```fab
 @ futura
-functio fetchData() -> textus {
+functio fetchData() → textus {
 redde "data"
 }
 ```

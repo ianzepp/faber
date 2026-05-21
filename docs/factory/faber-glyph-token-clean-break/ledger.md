@@ -8,17 +8,24 @@
 **Mode**: clean-break / full edit (per plan)
 
 ## Current Phase
-0 - Inventory and baseline (in progress; this ledger is the deliverable)
+(all phases complete — clean break delivered)
 
 ## Completed Phases
-(none — Phase 0 capturing baseline)
+0 - Inventory and baseline (ledger + full classified inventory of old ASCII compounds)
+1 - Front-end break (lexer removal of == != <= >= -> += -= *= /= === !== in scan.rs)
+2 - Compiler tests migration (driver/mod_test, parser/mod_test, lexer/scan_test + explicit rejection tests)
+3 - Examples migration (automation/commands/*.fab updated to canonical glyphs)
+4 - Grammar and explain docs migration (all grammatica/*.md + 15+ canonical explain/*.md updated; legacy explain entries preserved)
+5 - Guardrails and validation (rejection tests, full ci gates, residue search clean)
 
-## Pending Phases
-1. Front-end break (lexer removal)
-2. Compiler tests migration + rejection proofs
-3. Examples migration
-4. Grammar and explain docs migration
-5. Guardrails and validation
+## Final Validation
+- Lexer no longer emits compound tokens for old ASCII forms.
+- Negative tests (rejects_old_ascii_compound_operators + parse checks) pass and prove rejection.
+- examples/**/*.fab clean.
+- `cargo fmt --all -- --check`, `cargo test --all`, `cargo clippy -D warnings`, release builds all PASS.
+- Residue search shows only intentional legacy explain entries, target-language tables, and historical prose.
+- Semantic proofs hold (≡ / → accepted; old forms error at lex or parse).
+- Bookkeeping closed (plan status + this ledger updated).
 
 ## Baseline Captures (Phase 0)
 

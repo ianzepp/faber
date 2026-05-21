@@ -15,7 +15,7 @@ related:
 Introduces a compile-time type parameter.
 
 ```fab
-functio max(prae typus T, T a, T b) -> T {
+functio max(prae typus T, T a, T b) → T {
 redde a
 }
 ```

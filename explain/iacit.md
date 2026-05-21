@@ -4,7 +4,7 @@ kind: "modifier"
 category: "function"
 canonical: true
 summary: "Marks a function as able to throw."
-syntax: "functio <name>(...) iacit -> <type>"
+syntax: "functio <name>(...) iacit → <type>"
 related:
   - "tempta"
   - "cape"
@@ -14,7 +14,7 @@ related:
 Marks a function as able to throw.
 
 ```fab
-functio fallit() iacit -> vacuum {
+functio fallit() iacit → vacuum {
 iace "err"
 }
 ```

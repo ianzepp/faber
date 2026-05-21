@@ -16,6 +16,6 @@ Declares a behavioral contract with method signatures.
 
 ```fab
 pactum Drawable {
-functio draw() -> vacuum
+functio draw() → vacuum
 }
 ```

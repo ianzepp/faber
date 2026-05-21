@@ -1,6 +1,6 @@
 # Faber Glyph Token Clean-Break Factory Plan
 
-**Status**: planned
+**Status**: completed
 **Created**: 2026-05-21
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/faber-glyph-token-clean-break/`
