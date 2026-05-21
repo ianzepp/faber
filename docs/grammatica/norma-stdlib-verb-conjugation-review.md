@@ -132,7 +132,7 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 ---
 
-### 4. `arca.fab` + `Transactio` (Database) — Query Stream Resolved
+### 4. `arca.fab` + `Transactio` (Database) — Query Forms Resolved
 
 This is the key test case for migration-safe conjugation. The root `quaer-` remains shared because `quaeret` and `quaerent` are the same database query operation with different wrapper semantics.
 
@@ -147,7 +147,7 @@ This is the key test case for migration-safe conjugation. The root `quaer-` rema
 **Problems**:
 - `quaerent` / `quaeret` are visually similar, but that is not by itself a reason to split roots. Compiler morphology validation should catch invalid forms.
 - `quaerent` is correct under the resolved policy that async generators use the real future plural form.
-- `capiet` uses a different root for "return first row." That may be correct: first-row consumption is a different operation from query-all vs query-stream wrapper selection.
+- `capiet` uses a different root for "return first row." This is correct: single-row retrieval is a distinct operation family, not just a wrapper over query-all/query-stream.
 
 **Recommendations**:
 
@@ -155,12 +155,12 @@ This is the key test case for migration-safe conjugation. The root `quaer-` rema
 |--------------|----------------|-----------|
 | `quaerent`   | Keep. | Real future plural async-generator form of `quaerere`; query streaming and query collection remain conjugations of the same operation. |
 | `quaeret`    | Keep. | Good future-form call site for async query returning collected rows. |
-| `capiet`     | Tentatively keep as a separate root. | "Take/fetch first row" is a different consumption policy, not just a wrapper over the query root. |
+| `capiet`     | Keep as a separate root. | Single-row retrieval returns one object/row and can have its own sync, async, or at-most-one generator forms. |
 | `exsequetur` | Keep. | Mutation execution is separate from query result production. |
 | `inseret`    | Keep. | Insert returning ID is a distinct database operation. |
 
 **Resolved**:
-`quaerent` is the correct async-generator form for the query root. Do not solve visual similarity by switching to an unrelated root.
+`quaerent` is the correct async-generator form for the query root. `capiet` is a separate single-result retrieval root. Do not solve visual similarity by switching either operation to an unrelated root.
 
 ---
 
@@ -242,7 +242,7 @@ Create (or expand) a document that defines the expected conjugation patterns for
 |------------|--------------------|-----------------------------------|----------|---------|
 | Cross-cutting | Generator form policy | Use real present plural for sync generators and real future plural for async generators | Done | Stabilizes stream call-site forms |
 | `arca`     | `quaerent`         | Keep | Done | Real future plural for `quaerere`; same query operation remains one root |
-| `arca`     | `capiet`           | Decide whether first-row retrieval is a separate root | Medium | Likely separate operation, but should be explicit before runtime implementation |
+| `arca`     | `capiet`           | Keep as separate root | Done | Single-row retrieval has distinct result shape and wrapper possibilities |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
 ### Medium Priority
