@@ -445,7 +445,7 @@ impl Parser {
     /// WHY: Some keywords (verum, falsum, nihil) can be either unary operators or
     /// literals. Lookahead disambiguates: if followed by an operand, it's an operator.
     ///
-    /// EDGE: Special handling for 'novum' (new) and 'finge' (variant construction).
+    /// EDGE: Special handling for 'finge' (variant construction). 'novum' is no longer a keyword.
     fn parse_unary(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
 
@@ -555,7 +555,7 @@ impl Parser {
     ///   call := '(' args ')'
     ///   member := '.' ident
     ///   index := '[' expr ']'
-    ///   cast := ('⇢' | 'qua' | 'innatum' | 'novum') type
+    ///   cast := '⇢' type   (qua/innatum/novum aliases removed; only glyph accepted)
     ///   optional-chain := '?.' ident | '?[' expr ']' | '?(' args ')'
     ///   conversion := '⇒' type [type-params] ['vel' fallback]
     ///
@@ -634,7 +634,7 @@ impl Parser {
                     span,
                 };
             } else if self.check_keyword(TokenKind::Verte) {
-                // Unified type conversion: ⇢ / qua / innatum / novum
+                // Unified type conversion via ⇢ (only accepted spelling post clean-break)
                 self.advance();
                 let ty = self.parse_type()?;
                 let span = start.merge(self.previous_span());

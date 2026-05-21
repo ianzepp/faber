@@ -191,14 +191,16 @@ fn lexes_conversio_glyph() {
 }
 
 #[test]
-fn lexes_verte_keyword_aliases() {
-    for keyword in &["qua", "innatum", "novum"] {
-        let result = lex(&format!("x {} textus", keyword));
-        assert!(result.errors.is_empty(), "failed for keyword: {}", keyword);
+fn removed_verte_aliases_now_lex_as_identifiers() {
+    // Post verte-alias-clean-break: qua/innatum/novum are ordinary identifiers in normal mode.
+    // Only the ⇢ glyph produces TokenKind::Verte.
+    for word in &["qua", "innatum", "novum"] {
+        let result = lex(&format!("x {} textus", word));
+        assert!(result.errors.is_empty(), "failed for word: {}", word);
         assert!(
-            matches!(result.tokens[1].kind, TokenKind::Verte),
-            "'{}' should lex as TokenKind::Verte",
-            keyword
+            matches!(&result.tokens[1].kind, TokenKind::Ident(_)),
+            "'{}' should now lex as Ident (Verte aliases removed)",
+            word
         );
     }
 }

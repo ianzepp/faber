@@ -698,7 +698,7 @@ pub enum ExprKind {
     NonNull(NonNullExpr),
     /// Assignment
     Assign(AssignExpr),
-    /// Unified type conversion: ⇢ / qua / innatum / novum
+    /// Unified type conversion: ⇢ (postfix only; Latin aliases removed)
     Verte(VerteExpr),
     /// Variant construction: finge
     Finge(FingeExpr),
@@ -903,7 +903,7 @@ pub struct VerteExpr {
 pub struct FingeExpr {
     pub variant: Ident,
     pub fields: Vec<FingeFieldInit>,
-    pub cast: Option<Ident>, // ⇢ / qua
+    pub cast: Option<Ident>, // ⇢ (finge verte form)
 }
 
 #[derive(Debug)]

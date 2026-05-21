@@ -296,11 +296,11 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Cede(Box::new(expr))
     }
 
-    /// Lower unified type conversion (⇢ / qua / innatum / novum)
+    /// Lower unified type conversion (⇢)
     ///
-    /// WHY unified: All three share the same grammar (`expr ⇢ type`) and produce
-    /// the same HIR node. The codegen dispatches on the resolved target type, not
-    /// the source keyword. Object literal sources get their entries extracted for
+    /// WHY unified: Grammar is `expr ⇢ type`; codegen dispatches on target type. Latin aliases removed.
+    /// The codegen dispatches on the resolved target type, not the source keyword.
+    /// Object literal sources get their entries extracted for
     /// struct/collection construction; everything else passes through as a cast.
     fn lower_verte(&mut self, verte: &crate::syntax::VerteExpr) -> HirExprKind {
         let target = self.lower_type(&verte.ty);

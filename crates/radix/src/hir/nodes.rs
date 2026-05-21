@@ -408,9 +408,9 @@ pub enum HirExprKind {
     Clausura(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
     /// Await
     Cede(Box<HirExpr>),
-    /// Unified type conversion / construction expression.
-    /// Subsumes qua (cast), innatum (native construction), and novum (struct instantiation).
-    /// The type checker and codegen dispatch on the resolved target TypeId to determine semantics.
+    /// Unified type conversion / construction expression (via ⇢).
+    /// The type checker and codegen dispatch on the resolved target TypeId to determine semantics
+    /// (cast vs native construction vs struct instantiation). Latin aliases removed in clean-break.
     Verte {
         source: Box<HirExpr>,
         target: TypeId,

@@ -720,10 +720,8 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "sub" => TokenKind::Sub,
         "implet" => TokenKind::Implet,
 
-        // Type operations (qua/innatum/novum are keyword aliases for ⇢)
-        "qua" => TokenKind::Verte,
-        "innatum" => TokenKind::Verte,
-        "novum" => TokenKind::Verte,
+        // Type operations: only the ⇢ glyph produces Verte (postfix type conversion/construction).
+        // qua/innatum/novum are now ordinary identifiers (see verte-alias-clean-break).
 
         // Output
         "scribe" => TokenKind::Scribe,
