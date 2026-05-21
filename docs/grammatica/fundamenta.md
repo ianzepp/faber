@@ -2,6 +2,8 @@
 
 The fundamentals of Faber: program structure, variable bindings, literals, output, and patterns. These are the building blocks upon which all Faber programs rest. Understanding them means understanding how Faber uses Latin's clarity to make programming concepts visible.
 
+For quick installed help on a glyph or keyword, use `faber explain <term>`, for example `faber explain ≡` or `faber explain proba`. The explain corpus is embedded into the Faber tool so it works outside a checkout.
+
 ## Program Structure
 
 Every Faber program needs an entry point. This is where execution begins, and Faber provides two forms depending on whether your program is synchronous or asynchronous.

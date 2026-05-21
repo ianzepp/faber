@@ -12,6 +12,7 @@ The active surface is intentionally narrow: the compiler library, two CLI binari
 | [`crates/faber`](crates/faber) | User-facing project and package tool (`faber` binary) |
 | [`crates/radix`](crates/radix) | Compiler library and developer tool (`radix` binary) |
 | [`crates/norma`](crates/norma) | Rust runtime support crate for stdlib and HAL features |
+| [`explain`](explain) | Embedded explanation corpus for `faber explain` |
 | [`stdlib/norma`](stdlib/norma) | Faber standard library definitions with `@ verte` translation metadata |
 | [`examples/exempla`](examples/exempla) | Example Faber programs |
 | [`docs/grammatica`](docs/grammatica) | Language documentation |
@@ -23,6 +24,8 @@ The active surface is intentionally narrow: the compiler library, two CLI binari
 ./scripta/ci
 
 cargo run -p faber -- targets
+cargo run -p faber -- explain ≡
+cargo run -p faber -- explain --json proba
 cargo run -p faber -- check examples/exempla/salve-munde.fab
 cargo run -p faber -- build examples/exempla/salve-munde.fab
 cargo run -p faber -- emit -t rust examples/exempla/salve-munde.fab
@@ -67,6 +70,7 @@ Run `cargo run -p faber -- init hello` to create a starter package. See
 **Faber** is the user-facing project and package tool:
 
 - `faber check`, `faber build`, `faber targets`
+- `faber explain <term>`, `faber explain --list`, `faber explain --json <term>`
 - `faber init`
 - `faber run`; `faber test` (planned)
 - Compatibility aliases: `faber lex`, `faber parse`, `faber hir`, `faber emit`, `faber cli-ir`

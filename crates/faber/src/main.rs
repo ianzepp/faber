@@ -3,6 +3,7 @@
 mod package;
 
 use clap::{Parser, Subcommand};
+use faber::explain::{self, Registry};
 use radix::tool::{self, BuildCommand, CheckCommand, EmitCommand};
 use std::path::PathBuf;
 
@@ -28,6 +29,8 @@ enum Command {
     Check(radix::tool::CheckArgs),
     /// Create a new Faber package (planned)
     Init(InitArgs),
+    /// Explain a Faber glyph, keyword, or grammar term
+    Explain(ExplainArgs),
     /// Build (if needed) and run a compiled package
     Run(RunArgs),
     /// Run package tests (planned)
@@ -49,6 +52,24 @@ struct InitArgs {
     /// Target directory for the new package
     #[arg(default_value = ".")]
     path: PathBuf,
+}
+
+#[derive(clap::Args, Debug)]
+struct ExplainArgs {
+    /// Emit a machine-readable JSON explanation
+    #[arg(long)]
+    json: bool,
+
+    /// List canonical explain terms
+    #[arg(long)]
+    list: bool,
+
+    /// List canonical and legacy entries in a category
+    #[arg(long)]
+    category: Option<String>,
+
+    /// Term, alias, or legacy spelling to explain
+    term: Option<String>,
 }
 
 #[derive(clap::Args, Debug)]
@@ -101,6 +122,7 @@ fn main() {
             }
         }
         Command::Init(args) => cmd_init(args),
+        Command::Explain(args) => cmd_explain(args),
         Command::Run(args) => cmd_run(args),
         Command::Test(args) => cmd_test(args),
         Command::Lex(args) => tool::cmd_lex(&args.input),
@@ -164,6 +186,62 @@ fn cmd_init(args: InitArgs) {
     }
 
     println!("{}", manifest.display());
+}
+
+fn cmd_explain(args: ExplainArgs) {
+    let registry = match Registry::load() {
+        Ok(registry) => registry,
+        Err(err) => {
+            eprintln!("error: failed to load explain corpus: {err}");
+            std::process::exit(1);
+        }
+    };
+
+    if args.list {
+        print!("{}", explain::render_list(&registry));
+        return;
+    }
+
+    if let Some(category) = args.category {
+        match explain::render_category(&registry, &category) {
+            Some(output) => print!("{output}"),
+            None => {
+                eprintln!("error: no explanations found in category '{category}'");
+                let categories = registry
+                    .categories()
+                    .into_iter()
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                eprintln!("hint: available categories: {categories}");
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+
+    let Some(term) = args.term else {
+        eprintln!("error: missing term");
+        eprintln!("hint: run `faber explain --list`");
+        std::process::exit(2);
+    };
+
+    let Some(lookup) = registry.lookup(&term) else {
+        eprintln!("error: no explanation found for '{term}'");
+        eprintln!("hint: run `faber explain --list`");
+        std::process::exit(1);
+    };
+
+    if args.json {
+        match explain::render_json(&lookup) {
+            Ok(json) => println!("{json}"),
+            Err(err) => {
+                eprintln!("error: {err}");
+                std::process::exit(1);
+            }
+        }
+    } else {
+        print!("{}", explain::render_plain(&lookup));
+    }
 }
 
 fn cmd_run(args: RunArgs) {
