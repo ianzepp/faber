@@ -89,7 +89,7 @@ pub enum KeywordScope {
     Annotation,
     Section,
     TestOwned,
-    LegacyAlias { canonical: &'static str },
+    Alias { canonical: &'static str },
 }
 
 pub enum KeywordOwner {
@@ -107,7 +107,7 @@ pub enum KeywordOwner {
 
 pub struct KeywordSpec {
     pub text: &'static str,
-    pub legacy_kind: Option<TokenKind>,
+    pub token_kind: Option<TokenKind>,
     pub scope: KeywordScope,
     pub category: KeywordCategory,
 }
@@ -130,6 +130,8 @@ The registry must cover both:
 - contextual vocabulary that already exists without a global keyword token, such as `page` under `cura`.
 
 Validation must be text-first, not token-first, because several spellings can map to the same `TokenKind` today (`qua`, `innatum`, and `novum` all map to `TokenKind::Verte`).
+
+`token_kind` is a neutral current-state bridge: the `TokenKind` emitted for this word in normal lexer mode today, if any. It is `None` for contextual words that already lex as identifiers, such as `page`.
 
 The registry does not need to drive lexing in Phase 1.
 
@@ -166,7 +168,7 @@ During migration, helpers should work when the current token is either:
 
 This compatibility shape lets one keyword family migrate at a time without requiring a flag day.
 
-Legacy `TokenKind` acceptance is temporary per migrated family. Once a word leaves `keyword_or_ident()`, follow-up cleanup should either remove the unused token variant or prove another grammar site still owns it.
+Compatibility `TokenKind` acceptance is temporary per migrated family. Once a word leaves `keyword_or_ident()`, follow-up cleanup should either remove the unused token variant or prove another grammar site still owns it.
 
 Contextual recovery also needs an executable rule. If a migrated word previously participated in parser restart boundaries, the owning parser code must recover on the parent construct rather than relying on a global token kind.
 
@@ -204,7 +206,7 @@ Next candidates:
 
 Potential cleanup backlog after context support exists:
 
-- `scribe` as a legacy diagnostic alias
+- `scribe` as a diagnostic alias redirect
 - `vide` and `mone` if diagnostic levels move to stdlib/HAL
 - `lege` and `lineam` if input moves to stdlib/HAL
 - `scriptum` if formatting becomes stdlib or string interpolation syntax
@@ -277,7 +279,7 @@ Steps:
 - Include enough category and scope metadata to answer:
   - is this globally reserved?
   - if contextual, which grammar construct owns it?
-  - if legacy/alias, what is the canonical spelling?
+  - if alias/redirect, what is the canonical spelling?
 - Add tests that every active spelling in `keyword_or_ident()` has a registry entry.
 - Add tests that contextual non-lexer vocabulary such as `page` has a registry entry.
 - Add tests that alias spellings are represented by text, not collapsed by shared `TokenKind`.
@@ -296,8 +298,8 @@ Checkpoint:
 Steps:
 
 - Add parser helpers for contextual grammar matching.
-- Add separate parser helpers for identifier positions that allow registered contextual/legacy keywords.
-- Make helpers accept both `Ident("word")` and current legacy `TokenKind::Word` forms during migration.
+- Add separate parser helpers for identifier positions that allow registered contextual words or current keyword-token words.
+- Make helpers accept both `Ident("word")` and current `TokenKind::Word` forms during migration.
 - Replace local string checks where obvious, starting with `cura page`.
 - Do not remove any keyword from the lexer table yet.
 - Wire helper validation to `KeywordOwner` so a word registered for one owner cannot be silently accepted in another owner.
@@ -414,7 +416,7 @@ Steps:
 - Keep `faber explain` aligned with keyword scope:
   - global keyword,
   - contextual keyword,
-  - legacy/removed keyword,
+  - removed alias,
   - stdlib concept.
 
 Checkpoint:
