@@ -78,6 +78,21 @@ Do not create or rely on `target/faber/target/...`.
 
 This is intentionally not a custom Faber test runner yet.
 
+### Phase-One Completion Metrics
+
+Phase 1 should not be called complete unless these user-visible checks are true:
+
+- `faber test --help` describes an implemented command, not a planned/stub command.
+- `faber test` with no path defaults to the current directory and uses the same package discovery rules as `faber build`.
+- Passing, failing, ignored, and suite fixtures are committed under `examples/exempla/proba/packages/`.
+- Passing, ignored, and suite fixtures exit `0`.
+- The failing fixture exits nonzero because a generated Rust test fails, not because Faber parse/check/build failed.
+- Cargo test output is visible enough to see pass/fail/ignored counts.
+- Exit status matches Cargo test status.
+- No smoke run creates `target/faber/target`.
+- The implementation does not add Faber-specific filtering, tags, custom reporting, or a custom harness in Phase 1.
+- `docs/factory/faber-test-runner-evolution/ledger.md` is created or updated, and the plan status is updated when the full plan is complete.
+
 ### Later Target Behavior
 
 Later phases should progressively expose Faber-specific test behavior:
@@ -260,7 +275,7 @@ Expected Phase 1 behavior:
 ### Fixture Policy
 
 - Keep fixtures intentionally small. They are command smoke fixtures, not exhaustive compiler tests.
-- Use ASCII operators in fixtures unless a specific Unicode syntax behavior is under test.
+- Use canonical Faber syntax in fixtures. After the glyph clean break, examples must use glyph forms such as `≡`, `→`, `≤`, `≥`, `⊕`, `⊖`, `⊛`, and `⊘` where those operators are needed.
 - Do not rely on generated Rust function names being stable beyond the `proba_` prefix in Phase 1.
 - Do not commit generated `target/` contents from fixture runs.
 
@@ -349,7 +364,10 @@ Checkpoint:
 - A package containing a failing `proba` exits nonzero.
 - `proba omitte` / `proba futurum` are ignored by default through Rust `#[ignore]`.
 - The suite fixture proves nested `probandum` tests execute.
+- Cargo test output remains visible to the user.
+- The command exits with Cargo test's exit status.
 - No package test creates `target/faber/target`.
+- `faber test --help` no longer advertises the command as planned or stubbed.
 
 ### Phase 2: Test Command Ergonomics
 
@@ -474,6 +492,13 @@ cargo run -p faber -- test examples/exempla/proba/packages/suite
 
 - Confirm no `target/faber/target` exists.
 - Confirm working tree contains no generated target output.
+- Review the human command surface:
+  - `faber test --help`,
+  - `faber test examples/exempla/proba/packages/passing`,
+  - `faber test examples/exempla/proba/packages/failing`,
+  - `faber test examples/exempla/proba/packages/ignored`,
+  - `faber test examples/exempla/proba/packages/suite`.
+- Update `docs/factory/faber-test-runner-evolution/plan.md` status and ledger state when the full plan is actually complete.
 
 Checkpoint:
 
@@ -539,6 +564,8 @@ Acceptance:
 
 The first implementation slice should stop after Phase 1 unless the session is explicitly asked to continue. That gives the project a working `faber test` quickly without prematurely designing a custom Faber test runner.
 
+For Phase 1, "done" means the command works end-to-end for the four committed fixtures and the output/exit-status/layout checks in the Phase-One Completion Metrics all pass. Do not treat a compiled adapter or unit tests alone as sufficient.
+
 Later phases should be committed independently:
 
 - after minimal Cargo-backed runner,
@@ -571,6 +598,9 @@ Additional smoke for Phase 1:
 - `faber test examples/exempla/proba/packages/failing` exits nonzero.
 - `faber test examples/exempla/proba/packages/ignored` exits `0` and skips ignored tests by default.
 - `faber test examples/exempla/proba/packages/suite` exits `0`.
+- `faber test --help` describes real behavior.
+- failing fixture output shows a Rust test failure.
+- ignored fixture output shows ignored tests.
 - no `target/faber/target` is created.
 
 ## Open Questions
