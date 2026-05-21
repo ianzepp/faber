@@ -19,7 +19,9 @@ Coverage is governed by `explain/coverage.toml`. The manifest lists the required
 
 Canonical entries use stable ASCII slugs in the filename while keeping the exact Faber term in frontmatter. Legacy redirects use the adjacent `<slug>.legacy.md` filename pattern.
 
-Exact lookups render as compact reference pages with `NAME`, `SYNTAX`, `DESCRIPTION`, `EXAMPLE`, `RELATED`, and `EXAMPLES` sections. Legacy lookups render a correction page with `NAME`, `STATUS`, `USE INSTEAD`, `DESCRIPTION`, `EXAMPLE`, and `SEE ALSO`.
+Exact lookups render as compact reference pages with `NAME`, `KIND`, `SYNTAX`, `DESCRIPTION`, `EXAMPLE`, and `RELATED` sections. Legacy lookups render a correction page with `NAME`, `STATUS`, `USE INSTEAD`, `DESCRIPTION`, `EXAMPLE`, and `SEE ALSO`.
+
+The `examples` frontmatter field remains available in JSON and for corpus validation, but the plain installed CLI output does not print repository example paths.
 
 `faber explain --search <query>` is a separate discovery mode. It returns a ranked list of matching entries instead of choosing one fuzzy match automatically.
 

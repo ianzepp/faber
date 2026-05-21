@@ -56,11 +56,6 @@ fn render_canonical(entry: &Entry) -> String {
         section(&mut out, "RELATED", [related.as_str()]);
     }
 
-    if !entry.examples.is_empty() {
-        let examples = entry.examples.join(", ");
-        section(&mut out, "EXAMPLES", [examples.as_str()]);
-    }
-
     out
 }
 
