@@ -14,38 +14,38 @@ genus fractus { }
 # =============================================================================
 
 # Absolute value
-@ verte ts (ego) -> "Math.abs(§)"
-@ verte py (ego) -> "abs(§)"
-@ verte rs (ego) -> "§.abs()"
-@ verte cpp (ego) -> "std::abs(§)"
-@ verte zig (ego) -> "@abs(§)"
+@ verte ts (ego) → "Math.abs(§)"
+@ verte py (ego) → "abs(§)"
+@ verte rs (ego) → "§.abs()"
+@ verte cpp (ego) → "std::abs(§)"
+@ verte zig (ego) → "@abs(§)"
 @ externa
 functio absolutum() → fractus
 
 # Sign (-1, 0, or 1)
-@ verte ts (ego) -> "Math.sign(§)"
-@ verte py (ego) -> "math.copysign(1, §)"
-@ verte rs (ego) -> "§.signum()"
-@ verte cpp (ego) -> "std::copysign(1.0, §)"
-@ verte zig (ego) -> "std.math.sign(§)"
+@ verte ts (ego) → "Math.sign(§)"
+@ verte py (ego) → "math.copysign(1, §)"
+@ verte rs (ego) → "§.signum()"
+@ verte cpp (ego) → "std::copysign(1.0, §)"
+@ verte zig (ego) → "std.math.sign(§)"
 @ externa
 functio signum() → fractus
 
 # Minimum of two values
-@ verte ts (ego, other) -> "Math.min(§, §)"
-@ verte py (ego, other) -> "min(§, §)"
-@ verte rs (ego, other) -> "§.min(§)"
-@ verte cpp (ego, other) -> "std::min(§, §)"
-@ verte zig (ego, other) -> "@min(§, §)"
+@ verte ts (ego, other) → "Math.min(§, §)"
+@ verte py (ego, other) → "min(§, §)"
+@ verte rs (ego, other) → "§.min(§)"
+@ verte cpp (ego, other) → "std::min(§, §)"
+@ verte zig (ego, other) → "@min(§, §)"
 @ externa
 functio minimus(fractus other) → fractus
 
 # Maximum of two values
-@ verte ts (ego, other) -> "Math.max(§, §)"
-@ verte py (ego, other) -> "max(§, §)"
-@ verte rs (ego, other) -> "§.max(§)"
-@ verte cpp (ego, other) -> "std::max(§, §)"
-@ verte zig (ego, other) -> "@max(§, §)"
+@ verte ts (ego, other) → "Math.max(§, §)"
+@ verte py (ego, other) → "max(§, §)"
+@ verte rs (ego, other) → "§.max(§)"
+@ verte cpp (ego, other) → "std::max(§, §)"
+@ verte zig (ego, other) → "@max(§, §)"
 @ externa
 functio maximus(fractus other) → fractus
 
@@ -54,37 +54,37 @@ functio maximus(fractus other) → fractus
 # =============================================================================
 
 # Round to nearest integer
-@ verte ts (ego) -> "Math.round(§)"
-@ verte py (ego) -> "round(§)"
-@ verte rs (ego) -> "§.round() as i64"
-@ verte cpp (ego) -> "static_cast<int64_t>(std::round(§))"
-@ verte zig (ego) -> "@intFromFloat(@round(§))"
+@ verte ts (ego) → "Math.round(§)"
+@ verte py (ego) → "round(§)"
+@ verte rs (ego) → "§.round() as i64"
+@ verte cpp (ego) → "static_cast<int64_t>(std::round(§))"
+@ verte zig (ego) → "@intFromFloat(@round(§))"
 @ externa
 functio rotunda() → numerus
 
 # Floor (round down)
-@ verte ts (ego) -> "Math.floor(§)"
-@ verte py (ego) -> "math.floor(§)"
-@ verte rs (ego) -> "§.floor() as i64"
-@ verte cpp (ego) -> "static_cast<int64_t>(std::floor(§))"
-@ verte zig (ego) -> "@intFromFloat(@floor(§))"
+@ verte ts (ego) → "Math.floor(§)"
+@ verte py (ego) → "math.floor(§)"
+@ verte rs (ego) → "§.floor() as i64"
+@ verte cpp (ego) → "static_cast<int64_t>(std::floor(§))"
+@ verte zig (ego) → "@intFromFloat(@floor(§))"
 @ externa
 functio pavimentum() → numerus
 
 # Ceiling (round up)
-@ verte ts (ego) -> "Math.ceil(§)"
-@ verte py (ego) -> "math.ceil(§)"
-@ verte rs (ego) -> "§.ceil() as i64"
-@ verte cpp (ego) -> "static_cast<int64_t>(std::ceil(§))"
-@ verte zig (ego) -> "@intFromFloat(@ceil(§))"
+@ verte ts (ego) → "Math.ceil(§)"
+@ verte py (ego) → "math.ceil(§)"
+@ verte rs (ego) → "§.ceil() as i64"
+@ verte cpp (ego) → "static_cast<int64_t>(std::ceil(§))"
+@ verte zig (ego) → "@intFromFloat(@ceil(§))"
 @ externa
 functio tectum() → numerus
 
 # Truncate toward zero
-@ verte ts (ego) -> "Math.trunc(§)"
-@ verte py (ego) -> "math.trunc(§)"
-@ verte rs (ego) -> "§.trunc() as i64"
-@ verte cpp (ego) -> "static_cast<int64_t>(std::trunc(§))"
-@ verte zig (ego) -> "@intFromFloat(@trunc(§))"
+@ verte ts (ego) → "Math.trunc(§)"
+@ verte py (ego) → "math.trunc(§)"
+@ verte rs (ego) → "§.trunc() as i64"
+@ verte cpp (ego) → "static_cast<int64_t>(std::trunc(§))"
+@ verte zig (ego) → "@intFromFloat(@trunc(§))"
 @ externa
 functio trunca() → numerus

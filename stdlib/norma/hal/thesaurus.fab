@@ -21,7 +21,7 @@ pactum thesaurus {
     # Get value by key (returns nihil if not found)
     @ futura
     @ externa
-    functio capiet(textus clavis) → textus?
+    functio capiet(textus clavis) → si textus
 
     # Set value with optional TTL in seconds
     @ futura

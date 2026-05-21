@@ -20,16 +20,16 @@ genus copia { }
 @ verte py "add"
 @ verte rs "insert"
 @ verte cpp "insert"
-@ verte zig (ego, elem, alloc) -> "§0.adde(§2, §1)"
+@ verte zig (ego, elem, alloc) → "§0.adde(§2, §1)"
 @ externa
 functio adde(T elem) → vacuum
 
 # Check if element exists
 @ verte ts "has"
-@ verte py (ego, elem) -> "(§1 in §0)"
-@ verte rs (ego, elem) -> "§0.contains(&§1)"
-@ verte cpp (ego, elem) -> "§0.contains(§1)"
-@ verte zig (ego, elem) -> "§0.habet(§1)"
+@ verte py (ego, elem) → "(§1 in §0)"
+@ verte rs (ego, elem) → "§0.contains(&§1)"
+@ verte cpp (ego, elem) → "§0.contains(§1)"
+@ verte zig (ego, elem) → "§0.habet(§1)"
 @ externa
 functio habet(T elem) → bivalens
 
@@ -37,27 +37,27 @@ functio habet(T elem) → bivalens
 @ radix del, imperativus
 @ verte ts "delete"
 @ verte py "discard"
-@ verte rs (ego, elem) -> "§0.remove(&§1)"
-@ verte cpp (ego, elem) -> "§0.erase(§1)"
-@ verte zig (ego, elem) -> "_ = §0.dele(§1)"
+@ verte rs (ego, elem) → "§0.remove(&§1)"
+@ verte cpp (ego, elem) → "§0.erase(§1)"
+@ verte zig (ego, elem) → "_ = §0.dele(§1)"
 @ externa
 functio dele(T elem) → bivalens
 
 # Get size
-@ verte ts (ego) -> "§.size"
-@ verte py (ego) -> "len(§)"
-@ verte rs (ego) -> "§.len()"
-@ verte cpp (ego) -> "§.size()"
-@ verte zig (ego) -> "§.longitudo()"
+@ verte ts (ego) → "§.size"
+@ verte py (ego) → "len(§)"
+@ verte rs (ego) → "§.len()"
+@ verte cpp (ego) → "§.size()"
+@ verte zig (ego) → "§.longitudo()"
 @ externa
 functio longitudo() → numerus
 
 # Check if empty
-@ verte ts (ego) -> "§.size === 0"
-@ verte py (ego) -> "len(§) == 0"
-@ verte rs (ego) -> "§.is_empty()"
-@ verte cpp (ego) -> "§.empty()"
-@ verte zig (ego) -> "§.vacua()"
+@ verte ts (ego) → "§.size === 0"
+@ verte py (ego) → "len(§) == 0"
+@ verte rs (ego) → "§.is_empty()"
+@ verte cpp (ego) → "§.empty()"
+@ verte zig (ego) → "§.vacua()"
 @ externa
 functio vacua() → bivalens
 
@@ -67,7 +67,7 @@ functio vacua() → bivalens
 @ verte py "clear"
 @ verte rs "clear"
 @ verte cpp "clear"
-@ verte zig (ego) -> "§.purga()"
+@ verte zig (ego) → "§.purga()"
 @ externa
 functio purga() → vacuum
 
@@ -77,19 +77,19 @@ functio purga() → vacuum
 
 # Get values iterator (for sets, iterates elements)
 @ verte ts "values"
-@ verte py (ego) -> "iter(§)"
-@ verte rs (ego) -> "§.iter()"
-@ verte cpp (ego) -> "§"
-@ verte zig (ego) -> "§.valores()"
+@ verte py (ego) → "iter(§)"
+@ verte rs (ego) → "§.iter()"
+@ verte cpp (ego) → "§"
+@ verte zig (ego) → "§.valores()"
 @ externa
 functio valores() → cursor<T>
 
 # Iterate with callback
 @ verte ts "forEach"
-@ verte py (ego, fn) -> "[(§1)(x) for x in §0]"
-@ verte rs (ego, fn) -> "§0.iter().for_each(§1)"
-@ verte cpp (ego, fn) -> "std::ranges::for_each(§0, §1)"
-@ verte zig (ego, fn) -> "@compileError(\"perambula not implemented for Zig - use 'ex set.valores() pro item { ... }' loop\")"
+@ verte py (ego, fn) → "[(§1)(x) for x in §0]"
+@ verte rs (ego, fn) → "§0.iter().for_each(§1)"
+@ verte cpp (ego, fn) → "std::ranges::for_each(§0, §1)"
+@ verte zig (ego, fn) → "@compileError(\"perambula not implemented for Zig - use 'ex set.valores() pro item { ... }' loop\")"
 @ externa
 functio perambula((T) → vacuum fn) → vacuum
 
@@ -98,38 +98,38 @@ functio perambula((T) → vacuum fn) → vacuum
 # =============================================================================
 
 # Union: A ∪ B (returns new set)
-@ verte ts (ego, alia) -> "new Set([...§0, ...§1])"
-@ verte py (ego, alia) -> "§0 | §1"
-@ verte rs (ego, alia) -> "faber::copia_unio(&§0, &§1)"
-@ verte cpp (ego, alia) -> "faber::copia_unio(§0, §1)"
-@ verte zig (ego, alia) -> "@compileError(\"unio not implemented for Zig - use explicit loop to merge sets\")"
+@ verte ts (ego, alia) → "new Set([...§0, ...§1])"
+@ verte py (ego, alia) → "§0 | §1"
+@ verte rs (ego, alia) → "faber::copia_unio(&§0, &§1)"
+@ verte cpp (ego, alia) → "faber::copia_unio(§0, §1)"
+@ verte zig (ego, alia) → "@compileError(\"unio not implemented for Zig - use explicit loop to merge sets\")"
 @ externa
 functio unio(copia<T> alia) → copia<T>
 
 # Intersection: A ∩ B (returns new set)
-@ verte ts (ego, alia) -> "new Set([...§0].filter(x => §1.has(x)))"
-@ verte py (ego, alia) -> "§0 & §1"
-@ verte rs (ego, alia) -> "faber::copia_intersectio(&§0, &§1)"
-@ verte cpp (ego, alia) -> "faber::copia_intersectio(§0, §1)"
-@ verte zig (ego, alia) -> "@compileError(\"intersectio not implemented for Zig - use explicit loop\")"
+@ verte ts (ego, alia) → "new Set([...§0].filter(x => §1.has(x)))"
+@ verte py (ego, alia) → "§0 & §1"
+@ verte rs (ego, alia) → "faber::copia_intersectio(&§0, &§1)"
+@ verte cpp (ego, alia) → "faber::copia_intersectio(§0, §1)"
+@ verte zig (ego, alia) → "@compileError(\"intersectio not implemented for Zig - use explicit loop\")"
 @ externa
 functio intersectio(copia<T> alia) → copia<T>
 
 # Difference: A - B (returns new set)
-@ verte ts (ego, alia) -> "new Set([...§0].filter(x => !§1.has(x)))"
-@ verte py (ego, alia) -> "§0 - §1"
-@ verte rs (ego, alia) -> "faber::copia_differentia(&§0, &§1)"
-@ verte cpp (ego, alia) -> "faber::copia_differentia(§0, §1)"
-@ verte zig (ego, alia) -> "@compileError(\"differentia not implemented for Zig - use explicit loop\")"
+@ verte ts (ego, alia) → "new Set([...§0].filter(x => !§1.has(x)))"
+@ verte py (ego, alia) → "§0 - §1"
+@ verte rs (ego, alia) → "faber::copia_differentia(&§0, &§1)"
+@ verte cpp (ego, alia) → "faber::copia_differentia(§0, §1)"
+@ verte zig (ego, alia) → "@compileError(\"differentia not implemented for Zig - use explicit loop\")"
 @ externa
 functio differentia(copia<T> alia) → copia<T>
 
 # Symmetric difference: (A - B) ∪ (B - A) (returns new set)
-@ verte ts (ego, alia) -> "new Set([...[...§0].filter(x => !§1.has(x)), ...[...§1].filter(x => !§0.has(x))])"
-@ verte py (ego, alia) -> "§0 ^ §1"
-@ verte rs (ego, alia) -> "faber::copia_symmetrica(&§0, &§1)"
-@ verte cpp (ego, alia) -> "faber::copia_symmetrica(§0, §1)"
-@ verte zig (ego, alia) -> "@compileError(\"symmetrica not implemented for Zig - use explicit loop\")"
+@ verte ts (ego, alia) → "new Set([...[...§0].filter(x => !§1.has(x)), ...[...§1].filter(x => !§0.has(x))])"
+@ verte py (ego, alia) → "§0 ^ §1"
+@ verte rs (ego, alia) → "faber::copia_symmetrica(&§0, &§1)"
+@ verte cpp (ego, alia) → "faber::copia_symmetrica(§0, §1)"
+@ verte zig (ego, alia) → "@compileError(\"symmetrica not implemented for Zig - use explicit loop\")"
 @ externa
 functio symmetrica(copia<T> alia) → copia<T>
 
@@ -138,20 +138,20 @@ functio symmetrica(copia<T> alia) → copia<T>
 # =============================================================================
 
 # Is subset of other
-@ verte ts (ego, alia) -> "[...§0].every(x => §1.has(x))"
-@ verte py (ego, alia) -> "§0 <= §1"
-@ verte rs (ego, alia) -> "§0.is_subset(&§1)"
-@ verte cpp (ego, alia) -> "faber::copia_subcopia(§0, §1)"
-@ verte zig (ego, alia) -> "@compileError(\"subcopia not implemented for Zig - use explicit loop\")"
+@ verte ts (ego, alia) → "[...§0].every(x => §1.has(x))"
+@ verte py (ego, alia) → "§0 <= §1"
+@ verte rs (ego, alia) → "§0.is_subset(&§1)"
+@ verte cpp (ego, alia) → "faber::copia_subcopia(§0, §1)"
+@ verte zig (ego, alia) → "@compileError(\"subcopia not implemented for Zig - use explicit loop\")"
 @ externa
 functio subcopia(copia<T> alia) → bivalens
 
 # Is superset of other
-@ verte ts (ego, alia) -> "[...§1].every(x => §0.has(x))"
-@ verte py (ego, alia) -> "§0 >= §1"
-@ verte rs (ego, alia) -> "§0.is_superset(&§1)"
-@ verte cpp (ego, alia) -> "faber::copia_supercopia(§0, §1)"
-@ verte zig (ego, alia) -> "@compileError(\"supercopia not implemented for Zig - use explicit loop\")"
+@ verte ts (ego, alia) → "[...§1].every(x => §0.has(x))"
+@ verte py (ego, alia) → "§0 >= §1"
+@ verte rs (ego, alia) → "§0.is_superset(&§1)"
+@ verte cpp (ego, alia) → "faber::copia_supercopia(§0, §1)"
+@ verte zig (ego, alia) → "@compileError(\"supercopia not implemented for Zig - use explicit loop\")"
 @ externa
 functio supercopia(copia<T> alia) → bivalens
 
@@ -160,10 +160,10 @@ functio supercopia(copia<T> alia) → bivalens
 # =============================================================================
 
 # Convert to list
-@ verte ts (ego) -> "[...§]"
-@ verte py (ego) -> "list(§)"
-@ verte rs (ego) -> "faber::copia_in_lista(&§)"
-@ verte cpp (ego) -> "faber::copia_in_lista(§)"
-@ verte zig (ego) -> "@compileError(\"inLista not implemented for Zig - iterate with ex...pro into ArrayList\")"
+@ verte ts (ego) → "[...§]"
+@ verte py (ego) → "list(§)"
+@ verte rs (ego) → "faber::copia_in_lista(&§)"
+@ verte cpp (ego) → "faber::copia_in_lista(§)"
+@ verte zig (ego) → "@compileError(\"inLista not implemented for Zig - iterate with ex...pro into ArrayList\")"
 @ externa
 functio inLista() → lista<T>

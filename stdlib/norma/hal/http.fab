@@ -103,7 +103,7 @@ pactum Replicatio {
     functio capita() → tabula<textus, textus>
 
     @ externa
-    functio caput(textus nomen) → textus?
+    functio caput(textus nomen) → si textus
 
     # True if status is 2xx
     @ externa
@@ -128,10 +128,10 @@ pactum Rogatio {
     functio capita() → tabula<textus, textus>
 
     @ externa
-    functio caput(textus nomen) → textus?
+    functio caput(textus nomen) → si textus
 
     @ externa
-    functio param(textus nomen) → textus?
+    functio param(textus nomen) → si textus
 }
 
 # HTTP Server handle

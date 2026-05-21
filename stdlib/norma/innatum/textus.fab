@@ -14,11 +14,11 @@ genus textus { }
 # =============================================================================
 
 # Get string length
-@ verte ts (ego) -> "§.length"
-@ verte py (ego) -> "len(§)"
-@ verte rs (ego) -> "§.len()"
-@ verte cpp (ego) -> "§.length()"
-@ verte zig (ego) -> "§.len"
+@ verte ts (ego) → "§.length"
+@ verte py (ego) → "len(§)"
+@ verte rs (ego) → "§.len()"
+@ verte cpp (ego) → "§.length()"
+@ verte zig (ego) → "§.len"
 @ externa
 functio longitudo() → numerus
 
@@ -28,10 +28,10 @@ functio longitudo() → numerus
 
 # Get substring from start to end (exclusive)
 @ verte ts "slice"
-@ verte py (ego, start, end) -> "§[§:§]"
-@ verte rs (ego, start, end) -> "&§[§..§]"
-@ verte cpp (ego, start, end) -> "§.substr(§, § - §)"
-@ verte zig (ego, start, end) -> "§[§..§]"
+@ verte py (ego, start, end) → "§[§:§]"
+@ verte rs (ego, start, end) → "&§[§..§]"
+@ verte cpp (ego, start, end) → "§.substr(§, § - §)"
+@ verte zig (ego, start, end) → "§[§..§]"
 @ externa
 functio sectio(numerus start, numerus end) → textus
 
@@ -41,10 +41,10 @@ functio sectio(numerus start, numerus end) → textus
 
 # Check if string contains substring
 @ verte ts "includes"
-@ verte py (ego, sub) -> "§ in §"
+@ verte py (ego, sub) → "§ in §"
 @ verte rs "contains"
-@ verte cpp (ego, sub) -> "(§.find(§) != std::string::npos)"
-@ verte zig (ego, sub) -> "(std.mem.indexOf(u8, §, §) != null)"
+@ verte cpp (ego, sub) → "(§.find(§) != std::string::npos)"
+@ verte zig (ego, sub) → "(std.mem.indexOf(u8, §, §) != null)"
 @ externa
 functio continet(textus sub) → bivalens
 
@@ -52,8 +52,8 @@ functio continet(textus sub) → bivalens
 @ verte ts "startsWith"
 @ verte py "startswith"
 @ verte rs "starts_with"
-@ verte cpp (ego, prefix) -> "(§.rfind(§, 0) == 0)"
-@ verte zig (ego, prefix) -> "std.mem.startsWith(u8, §, §)"
+@ verte cpp (ego, prefix) → "(§.rfind(§, 0) == 0)"
+@ verte zig (ego, prefix) → "std.mem.startsWith(u8, §, §)"
 @ externa
 functio initium(textus prefix) → bivalens
 
@@ -61,8 +61,8 @@ functio initium(textus prefix) → bivalens
 @ verte ts "endsWith"
 @ verte py "endswith"
 @ verte rs "ends_with"
-@ verte cpp (ego, suffix) -> "(§.size() >= §.size() && §.compare(§.size() - §.size(), §.size(), §) == 0)"
-@ verte zig (ego, suffix) -> "std.mem.endsWith(u8, §, §)"
+@ verte cpp (ego, suffix) → "(§.size() >= §.size() && §.compare(§.size() - §.size(), §.size(), §) == 0)"
+@ verte zig (ego, suffix) → "std.mem.endsWith(u8, §, §)"
 @ externa
 functio finis(textus suffix) → bivalens
 
@@ -74,8 +74,8 @@ functio finis(textus suffix) → bivalens
 @ verte ts "toUpperCase"
 @ verte py "upper"
 @ verte rs "to_uppercase"
-@ verte cpp (ego) -> "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::toupper); return s; }()"
-@ verte zig (ego) -> "std.ascii.upperString(§)"
+@ verte cpp (ego) → "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::toupper); return s; }()"
+@ verte zig (ego) → "std.ascii.upperString(§)"
 @ externa
 functio maiuscula() → textus
 
@@ -83,8 +83,8 @@ functio maiuscula() → textus
 @ verte ts "toLowerCase"
 @ verte py "lower"
 @ verte rs "to_lowercase"
-@ verte cpp (ego) -> "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }()"
-@ verte zig (ego) -> "std.ascii.lowerString(§)"
+@ verte cpp (ego) → "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }()"
+@ verte zig (ego) → "std.ascii.lowerString(§)"
 @ externa
 functio minuscula() → textus
 
@@ -96,8 +96,8 @@ functio minuscula() → textus
 @ verte ts "trim"
 @ verte py "strip"
 @ verte rs "trim"
-@ verte cpp (ego) -> "[&]{ auto s = §; s.erase(0, s.find_first_not_of(\" \\t\\n\\r\")); s.erase(s.find_last_not_of(\" \\t\\n\\r\") + 1); return s; }()"
-@ verte zig (ego) -> "std.mem.trim(u8, §, \" \\t\\n\\r\")"
+@ verte cpp (ego) → "[&]{ auto s = §; s.erase(0, s.find_first_not_of(\" \\t\\n\\r\")); s.erase(s.find_last_not_of(\" \\t\\n\\r\") + 1); return s; }()"
+@ verte zig (ego) → "std.mem.trim(u8, §, \" \\t\\n\\r\")"
 @ externa
 functio recide() → textus
 
@@ -108,9 +108,9 @@ functio recide() → textus
 # Split by separator
 @ verte ts "split"
 @ verte py "split"
-@ verte rs (ego, sep) -> "§.split(§).collect::<Vec<_>>()"
-@ verte cpp (ego, sep) -> "@compileError(\"No single-expression split in C++ - use manual loop\")"
-@ verte zig (ego, sep) -> "@compileError(\"Use std.mem.splitSequence for Zig\")"
+@ verte rs (ego, sep) → "§.split(§).collect::<Vec<_>>()"
+@ verte cpp (ego, sep) → "@compileError(\"No single-expression split in C++ - use manual loop\")"
+@ verte zig (ego, sep) → "@compileError(\"Use std.mem.splitSequence for Zig\")"
 @ externa
 functio divide(textus sep) → lista<textus>
 
@@ -122,7 +122,7 @@ functio divide(textus sep) → lista<textus>
 @ verte ts "replaceAll"
 @ verte py "replace"
 @ verte rs "replace"
-@ verte cpp (ego, old, new) -> "std::regex_replace(§, std::regex(§), §)"
-@ verte zig (ego, old, new) -> "@compileError(\"Use std.mem.replace for Zig\")"
+@ verte cpp (ego, old, new) → "std::regex_replace(§, std::regex(§), §)"
+@ verte zig (ego, old, new) → "@compileError(\"Use std.mem.replace for Zig\")"
 @ externa
 functio muta(textus vetus, textus novum) → textus

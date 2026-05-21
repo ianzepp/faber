@@ -236,10 +236,10 @@ This is an application of the existing shape, not a new policy decision.
 Resolved policy: generators use real plural conjugation of the declared root.
 
 Examples:
-- `quaerere` -> `quaerunt` for sync query stream.
-- `quaerere` -> `quaerent` for async query stream.
-- `nuntiare` -> `nuntiant` for sync message stream.
-- `nuntiare` -> `nuntiabunt` for async message stream.
+- `quaerere` → `quaerunt` for sync query stream.
+- `quaerere` → `quaerent` for async query stream.
+- `nuntiare` → `nuntiant` for sync message stream.
+- `nuntiare` → `nuntiabunt` for async message stream.
 
 ### 2. Prefer Distinct Roots for Large Semantic Differences
 
