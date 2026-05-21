@@ -90,6 +90,180 @@ Later phases should progressively expose Faber-specific test behavior:
 - report Faber source names and locations rather than only generated Rust test names,
 - document test syntax and command behavior together.
 
+## Test Fixture Contract
+
+The implementation must add concrete package fixtures before claiming `faber test` works. These fixtures should live in the repository, not only in `/tmp`, so future sessions can rerun the same cases.
+
+Recommended fixture root:
+
+```text
+examples/exempla/proba/packages/
+├── passing/
+├── failing/
+├── ignored/
+└── suite/
+```
+
+Each fixture is a normal Faber package:
+
+```text
+<fixture>/
+├── faber.toml
+└── src/
+    └── main.fab
+```
+
+The `faber.toml` shape should be identical except for package name:
+
+```toml
+[package]
+name = "proba-passing"
+version = "0.1.0"
+edition = "2026"
+
+[paths]
+source = "src"
+entry = "main.fab"
+
+[build]
+target = "rust"
+kind = "bin"
+```
+
+### Fixture: Passing
+
+Path:
+
+```text
+examples/exempla/proba/packages/passing/
+```
+
+`src/main.fab`:
+
+```fab
+proba "arithmetic passes" {
+    adfirma 1 + 1 == 2
+}
+
+proba "text passes" {
+    fixum greeting = "salve"
+    adfirma greeting == "salve"
+}
+
+incipit {
+    scribe "test fixture"
+}
+```
+
+Expected Phase 1 behavior:
+
+- `faber test examples/exempla/proba/packages/passing` exits `0`.
+- Cargo reports two passing tests.
+- Generated Rust contains at least two `#[test]` functions.
+- No `target/faber/target` directory is created.
+
+### Fixture: Failing
+
+Path:
+
+```text
+examples/exempla/proba/packages/failing/
+```
+
+`src/main.fab`:
+
+```fab
+proba "intentional failure" {
+    adfirma 1 + 1 == 3
+}
+
+incipit {}
+```
+
+Expected Phase 1 behavior:
+
+- `faber test examples/exempla/proba/packages/failing` exits nonzero.
+- Cargo reports a failed test.
+- The command failure comes from the Rust test harness, not from Faber parse/check/build failure.
+
+### Fixture: Ignored
+
+Path:
+
+```text
+examples/exempla/proba/packages/ignored/
+```
+
+`src/main.fab`:
+
+```fab
+proba omitte "blocked by external service" "skipped failing case" {
+    adfirma falsum
+}
+
+proba futurum "not implemented yet" "future case" {
+    adfirma falsum
+}
+
+proba "normal passing case" {
+    adfirma verum
+}
+
+incipit {}
+```
+
+Expected Phase 1 behavior:
+
+- `faber test examples/exempla/proba/packages/ignored` exits `0`.
+- Cargo reports one passing test and two ignored tests.
+- Generated Rust contains `#[ignore]` for the `omitte` and `futurum` cases.
+- Running ignored tests is not required until Phase 3.
+
+### Fixture: Suite
+
+Path:
+
+```text
+examples/exempla/proba/packages/suite/
+```
+
+`src/main.fab`:
+
+```fab
+probandum "math suite" {
+    praepara omnia {
+        fixum setup_value = 1
+        adfirma setup_value == 1
+    }
+
+    proba "top level suite case" {
+        adfirma 2 + 2 == 4
+    }
+
+    probandum "nested suite" {
+        proba "nested case" {
+            adfirma verum
+        }
+    }
+}
+
+incipit {}
+```
+
+Expected Phase 1 behavior:
+
+- `faber test examples/exempla/proba/packages/suite` exits `0`.
+- Cargo reports two passing tests.
+- Nested `probandum` cases are lowered into runnable Rust tests.
+- Suite setup marked `praepara omnia` is included in generated test bodies.
+
+### Fixture Policy
+
+- Keep fixtures intentionally small. They are command smoke fixtures, not exhaustive compiler tests.
+- Use ASCII operators in fixtures unless a specific Unicode syntax behavior is under test.
+- Do not rely on generated Rust function names being stable beyond the `proba_` prefix in Phase 1.
+- Do not commit generated `target/` contents from fixture runs.
+
 ## Repo-Aware Baseline
 
 Relevant files:
@@ -105,6 +279,7 @@ Relevant files:
 - `docs/grammatica/verba.md`
 - `examples/exempla/proba/proba.fab`
 - `examples/exempla/proba/modificatores.fab`
+- `examples/exempla/proba/packages/` once Phase 1 fixture work lands
 
 Current implementation details to preserve:
 
@@ -138,11 +313,7 @@ Steps:
 - Capture `faber test --help` and `faber test <sample>` behavior before changes.
 - Capture existing Radix evidence that `proba` lowers to Rust `#[test]`.
 - Create a ledger in this artifact directory if implementation spans multiple commits.
-- Pick or create a package fixture containing:
-  - one passing `proba`,
-  - one failing `proba`,
-  - one `proba omitte`,
-  - optionally one nested `probandum`.
+- Confirm the repository either already has the fixtures from the Test Fixture Contract or create them before implementing the runner.
 
 Checkpoint:
 
@@ -177,6 +348,7 @@ Checkpoint:
 - A package containing passing `proba` tests passes with `faber test`.
 - A package containing a failing `proba` exits nonzero.
 - `proba omitte` / `proba futurum` are ignored by default through Rust `#[ignore]`.
+- The suite fixture proves nested `probandum` tests execute.
 - No package test creates `target/faber/target`.
 
 ### Phase 2: Test Command Ergonomics
@@ -294,10 +466,10 @@ cargo build --release -p radix
 - Run smoke tests:
 
 ```bash
-cargo run -p faber -- init /tmp/faber-test-smoke
-# add or use a fixture with proba/probandum cases
-cargo run -p faber -- test /tmp/faber-test-smoke
-cargo run -p faber -- test /tmp/faber-test-smoke --ignored
+cargo run -p faber -- test examples/exempla/proba/packages/passing
+cargo run -p faber -- test examples/exempla/proba/packages/ignored
+cargo run -p faber -- test examples/exempla/proba/packages/suite
+! cargo run -p faber -- test examples/exempla/proba/packages/failing
 ```
 
 - Confirm no `target/faber/target` exists.
@@ -338,10 +510,11 @@ Add focused tests or smoke fixtures for test execution.
 
 Acceptance:
 
-- passing test package,
-- failing test package,
-- ignored test package,
-- nested `probandum` package.
+- `examples/exempla/proba/packages/passing` exists and exits `0` under `faber test`,
+- `examples/exempla/proba/packages/failing` exists and exits nonzero under `faber test`,
+- `examples/exempla/proba/packages/ignored` exists and exits `0` with ignored cases skipped,
+- `examples/exempla/proba/packages/suite` exists and proves nested `probandum` execution,
+- generated fixture output stays untracked.
 
 ### Issue D: Metadata Cleanup
 
@@ -394,9 +567,10 @@ cargo clippy --all-targets --all-features -- -D warnings
 
 Additional smoke for Phase 1:
 
-- `faber test` runs a package with a passing `proba`.
-- `faber test` exits nonzero for a package with a failing `proba`.
-- ignored `proba omitte` / `proba futurum` tests are skipped by default.
+- `faber test examples/exempla/proba/packages/passing` exits `0`.
+- `faber test examples/exempla/proba/packages/failing` exits nonzero.
+- `faber test examples/exempla/proba/packages/ignored` exits `0` and skips ignored tests by default.
+- `faber test examples/exempla/proba/packages/suite` exits `0`.
 - no `target/faber/target` is created.
 
 ## Open Questions
@@ -406,4 +580,3 @@ Additional smoke for Phase 1:
 - Should `futurum` eventually mean expected failure, todo, ignored, or a separate report status?
 - Should `solum` be honored by filtering before codegen or by generated Rust harness behavior?
 - Should Faber eventually generate a custom test harness to preserve suite names, tags, and source locations?
-
