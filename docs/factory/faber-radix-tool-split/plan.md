@@ -270,8 +270,8 @@ Steps:
 - If a shared crate is useful, add one only when it reduces coupling. Do not add a shared crate just for appearance.
 - Preserve current behavior:
   - directory input maps to `main.fab`
-  - `faber.fab` supports `fons` and `ingressus`
-  - manifest `dependentia` is rejected until dependency resolution exists
+  - `faber.toml` supports `[paths] source` and `entry`
+  - manifest dependencies are deferred until dependency resolution exists
   - package compilation remains Rust-only unless a separate phase expands it
   - package-local `@ imperia` CLI mounts continue to work
 

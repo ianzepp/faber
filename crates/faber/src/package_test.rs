@@ -1,4 +1,4 @@
-use super::{check_package, compile_package};
+use super::{check_package, compile_package, read_manifest};
 use radix::diagnostics::Diagnostic;
 use radix::driver::Config;
 use radix::Output;
@@ -389,11 +389,100 @@ fn compile_package_rejects_import_cycles() {
 #[test]
 fn compile_package_supports_manifest_example() {
     let dir = temp_dir("manifest");
-    fs::write(dir.join("main.fab"), "incipit {}").expect("write package entry");
-    fs::write(dir.join("faber.fab"), "ingressus \"main.fab\"\n").expect("write manifest");
+    let src = dir.join("src");
+    fs::create_dir_all(&src).expect("create src");
+    fs::write(src.join("main.fab"), "incipit {}").expect("write package entry");
+    fs::write(
+        dir.join("faber.toml"),
+        r#"
+[package]
+name = "manifest-example"
+version = "0.1.0"
 
-    let result = compile_package(&Config::default(), &dir.join("faber.fab"));
+[paths]
+source = "src"
+entry = "main.fab"
+"#,
+    )
+    .expect("write manifest");
+
+    let result = compile_package(&Config::default(), &dir.join("faber.toml"));
     assert!(result.success(), "expected package compile success");
+}
+
+#[test]
+fn compile_package_discovers_faber_toml_from_directory() {
+    let dir = temp_dir("manifest-dir");
+    let src = dir.join("src");
+    fs::create_dir_all(&src).expect("create src");
+    fs::write(src.join("main.fab"), "incipit { scribe \"ok\" }").expect("write package entry");
+    fs::write(
+        dir.join("faber.toml"),
+        r#"
+[package]
+name = "manifest-dir"
+
+[paths]
+source = "src"
+entry = "main.fab"
+"#,
+    )
+    .expect("write manifest");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(
+        result.success(),
+        "expected package directory compile success"
+    );
+}
+
+#[test]
+fn read_manifest_applies_default_paths_and_build_values() {
+    let dir = temp_dir("manifest-defaults");
+    let manifest = dir.join("faber.toml");
+    fs::write(
+        &manifest,
+        r#"
+[package]
+name = "defaults"
+"#,
+    )
+    .expect("write manifest");
+
+    let manifest = read_manifest(&manifest).expect("read manifest");
+    assert_eq!(manifest.package.name, "defaults");
+    assert_eq!(manifest.package.version, "0.1.0");
+    assert_eq!(manifest.package.edition, "2026");
+    assert_eq!(manifest.paths.source, "src");
+    assert_eq!(manifest.paths.entry, "main.fab");
+    assert_eq!(manifest.build.target, "rust");
+    assert_eq!(manifest.build.kind, "bin");
+}
+
+#[test]
+fn compile_package_rejects_unsupported_manifest_target() {
+    let dir = temp_dir("manifest-target");
+    let src = dir.join("src");
+    fs::create_dir_all(&src).expect("create src");
+    fs::write(src.join("main.fab"), "incipit {}").expect("write package entry");
+    fs::write(
+        dir.join("faber.toml"),
+        r#"
+[package]
+name = "bad-target"
+
+[build]
+target = "go"
+"#,
+    )
+    .expect("write manifest");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("build.target 'go' is not supported")));
 }
 
 #[test]

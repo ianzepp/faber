@@ -227,6 +227,9 @@ cargo run -p faber -- emit -t rust --package examples/exempla/cli/main.fab
 cargo run -p faber -- build -t rust --package examples/exempla/cli/main.fab
 ```
 
+For package projects, prefer a `faber.toml` manifest with `[paths]` pointing at the CLI entry file. See
+[`manifest.md`](manifest.md) for the package manifest format.
+
 ## Current Limits
 
 - Runnable CLI codegen is Rust-only.

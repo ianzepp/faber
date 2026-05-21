@@ -67,10 +67,12 @@ This matters for command selection:
 ```bash
 cargo run --manifest-path Cargo.toml -p faber -- build examples/exempla/salve-munde.fab
 cargo run --manifest-path Cargo.toml -p faber -- build --package examples/exempla/cli/main.fab
+cargo run --manifest-path Cargo.toml -p faber -- build --package path/to/faber.toml
 cargo run -p radix --bin radix -- emit -t go examples/exempla/salve-munde.fab
 ```
 
 Use `build --package` only when the target actually supports package compilation.
+When a package directory contains `faber.toml`, Faber uses that manifest to find the source root and entry file.
 
 ## CLI Framework Support
 

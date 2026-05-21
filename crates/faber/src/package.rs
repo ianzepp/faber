@@ -3,15 +3,98 @@ use radix::diagnostics::Diagnostic;
 use radix::driver::{analyze_source_with_cli_program, Config, Session};
 use radix::lexer::{Interner, Span, TokenKind};
 use radix::parser;
-use radix::syntax::{AnnotationKind, DirectiveArg, ImportDecl, ImportKind, Program, StmtKind};
+use radix::syntax::{AnnotationKind, ImportDecl, ImportKind, Program, StmtKind};
 use radix::{CompileResult, Output, RustOutput};
+use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
+const MANIFEST_FILE: &str = "faber.toml";
+
 struct PackageSpec {
     source_root: PathBuf,
     entry: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FaberManifest {
+    pub package: ManifestPackage,
+    #[serde(default)]
+    pub paths: ManifestPaths,
+    #[serde(default)]
+    pub build: ManifestBuild,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ManifestPackage {
+    pub name: String,
+    #[serde(default = "default_version")]
+    pub version: String,
+    #[serde(default = "default_edition")]
+    pub edition: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ManifestPaths {
+    #[serde(default = "default_source_path")]
+    pub source: String,
+    #[serde(default = "default_entry_path")]
+    pub entry: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ManifestBuild {
+    #[serde(default = "default_build_target")]
+    pub target: String,
+    #[serde(default = "default_build_kind")]
+    pub kind: String,
+}
+
+impl Default for ManifestPaths {
+    fn default() -> Self {
+        Self {
+            source: default_source_path(),
+            entry: default_entry_path(),
+        }
+    }
+}
+
+impl Default for ManifestBuild {
+    fn default() -> Self {
+        Self {
+            target: default_build_target(),
+            kind: default_build_kind(),
+        }
+    }
+}
+
+fn default_version() -> String {
+    "0.1.0".to_owned()
+}
+
+fn default_edition() -> String {
+    "2026".to_owned()
+}
+
+fn default_source_path() -> String {
+    "src".to_owned()
+}
+
+fn default_entry_path() -> String {
+    "main.fab".to_owned()
+}
+
+fn default_build_target() -> String {
+    "rust".to_owned()
+}
+
+fn default_build_kind() -> String {
+    "bin".to_owned()
 }
 
 struct PackageFile {
@@ -241,12 +324,17 @@ fn discover_package(input: &Path) -> PackageDiscoveryResult {
         )));
     }
 
-    if input.file_name().and_then(|name| name.to_str()) == Some("faber.fab") {
+    if input.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE) {
         return parse_manifest(&input);
     }
 
     if input.is_dir() {
         let root = normalize_path(&input);
+        let manifest = root.join(MANIFEST_FILE);
+        if manifest.exists() {
+            return parse_manifest(&manifest);
+        }
+
         return Ok(PackageSpec {
             entry: root.join("main.fab"),
             source_root: root,
@@ -265,46 +353,87 @@ fn discover_package(input: &Path) -> PackageDiscoveryResult {
 }
 
 fn parse_manifest(path: &Path) -> PackageDiscoveryResult {
-    let source =
-        fs::read_to_string(path).map_err(|err| Box::new(Diagnostic::io_error(path, err)))?;
-    let parse = parser::parse(radix::lexer::lex(&source));
-    let program = parse.program.ok_or_else(|| {
-        Box::new(Diagnostic::error("manifest parse failed").with_file(path.display().to_string()))
-    })?;
+    let manifest = read_manifest(path)?;
     let package_root = path
         .parent()
         .unwrap_or_else(|| Path::new("."))
         .to_path_buf();
-    let mut source_root = package_root.clone();
-    let mut entry = source_root.join("main.fab");
 
-    for directive in &program.directives {
-        let name = parse.interner.resolve(directive.name.name);
-        match name {
-            "fons" => {
-                if let Some(DirectiveArg::String(value)) = directive.args.first() {
-                    source_root = package_root.join(parse.interner.resolve(*value));
-                }
-            }
-            "ingressus" => {
-                if let Some(DirectiveArg::String(value)) = directive.args.first() {
-                    entry = source_root.join(parse.interner.resolve(*value));
-                }
-            }
-            "dependentia" => {
-                return Err(Box::new(
-                    Diagnostic::error(
-                        "package compilation does not support manifest dependencies yet",
-                    )
-                    .with_file(path.display().to_string())
-                    .with_span(directive.span),
-                ));
-            }
-            _ => {}
-        }
+    validate_manifest(&manifest, path)?;
+
+    let source_root = package_root.join(&manifest.paths.source);
+    let entry = source_root.join(&manifest.paths.entry);
+    Ok(PackageSpec { source_root, entry })
+}
+
+pub fn read_manifest(path: &Path) -> Result<FaberManifest, Box<Diagnostic>> {
+    let source =
+        fs::read_to_string(path).map_err(|err| Box::new(Diagnostic::io_error(path, err)))?;
+    toml::from_str::<FaberManifest>(&source).map_err(|err| {
+        Box::new(
+            Diagnostic::error(format!("invalid faber.toml manifest: {err}"))
+                .with_file(path.display().to_string()),
+        )
+    })
+}
+
+fn validate_manifest(manifest: &FaberManifest, path: &Path) -> Result<(), Box<Diagnostic>> {
+    if manifest.package.name.trim().is_empty() {
+        return Err(Box::new(
+            Diagnostic::error("faber.toml package.name must not be empty")
+                .with_file(path.display().to_string()),
+        ));
     }
 
-    Ok(PackageSpec { source_root, entry })
+    if manifest.package.version.trim().is_empty() {
+        return Err(Box::new(
+            Diagnostic::error("faber.toml package.version must not be empty")
+                .with_file(path.display().to_string()),
+        ));
+    }
+
+    if manifest.package.edition.trim().is_empty() {
+        return Err(Box::new(
+            Diagnostic::error("faber.toml package.edition must not be empty")
+                .with_file(path.display().to_string()),
+        ));
+    }
+
+    if manifest.paths.source.trim().is_empty() {
+        return Err(Box::new(
+            Diagnostic::error("faber.toml paths.source must not be empty")
+                .with_file(path.display().to_string()),
+        ));
+    }
+
+    if manifest.paths.entry.trim().is_empty() {
+        return Err(Box::new(
+            Diagnostic::error("faber.toml paths.entry must not be empty")
+                .with_file(path.display().to_string()),
+        ));
+    }
+
+    if manifest.build.target != "rust" {
+        return Err(Box::new(
+            Diagnostic::error(format!(
+                "faber.toml build.target '{}' is not supported for package compilation yet",
+                manifest.build.target
+            ))
+            .with_file(path.display().to_string()),
+        ));
+    }
+
+    if manifest.build.kind != "bin" {
+        return Err(Box::new(
+            Diagnostic::error(format!(
+                "faber.toml build.kind '{}' is not supported yet",
+                manifest.build.kind
+            ))
+            .with_file(path.display().to_string()),
+        ));
+    }
+
+    Ok(())
 }
 
 fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>> {
@@ -1001,7 +1130,7 @@ pub fn cmd_build(command: radix::tool::BuildCommand) {
 }
 
 fn should_treat_as_package(path: &std::path::Path) -> bool {
-    path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some("faber.fab")
+    path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE)
 }
 
 pub fn should_treat_as_package_from_args(input: &[String]) -> bool {
@@ -1009,7 +1138,7 @@ pub fn should_treat_as_package_from_args(input: &[String]) -> bool {
         return false;
     }
     let path = std::path::Path::new(&input[0]);
-    path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some("faber.fab")
+    path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE)
 }
 
 pub fn cmd_check_package(command: radix::tool::CheckCommand) {

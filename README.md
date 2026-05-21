@@ -40,12 +40,35 @@ cargo build --release -p faber
 cargo build --release -p radix --bin radix
 ```
 
+## Package Manifest
+
+Faber packages use `faber.toml` for project metadata and build configuration:
+
+```toml
+[package]
+name = "salve"
+version = "0.1.0"
+edition = "2026"
+
+[paths]
+source = "src"
+entry = "main.fab"
+
+[build]
+target = "rust"
+kind = "bin"
+```
+
+Run `cargo run -p faber -- init hello` to create a starter package. See
+[`docs/grammatica/manifest.md`](docs/grammatica/manifest.md) for the current manifest contract.
+
 ## CLI Roles (v0.34)
 
 **Faber** is the user-facing project and package tool:
 
 - `faber check`, `faber build`, `faber targets`
-- `faber init`, `faber run`, `faber test` (stubs in v0.34)
+- `faber init`
+- `faber run`, `faber test` (stubs in v0.34)
 - Compatibility aliases: `faber lex`, `faber parse`, `faber hir`, `faber emit`, `faber cli-ir`
 
 **Radix** is the compiler-developer tool:

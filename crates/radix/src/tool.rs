@@ -647,7 +647,7 @@ pub fn cmd_targets() {
 }
 
 pub fn should_treat_as_package(path: &std::path::Path) -> bool {
-    path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some("faber.fab")
+    path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some("faber.toml")
 }
 
 pub fn resolve_package_mode(path: &std::path::Path, force_package: bool) -> bool {
