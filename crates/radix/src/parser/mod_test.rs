@@ -514,7 +514,7 @@ importa ex "mod" publica Value ut Alias
 fixum numerus count ← 1
 varia [head, ceteri tail] ← values
 @ futura
-functio mitte(prae typus T, si de textus nomen ut alias vel "anon", ex numerus item, ceteri T reliqua) curata allocator errata Error exitus 7 immutata iacit optiones Opts -> textus {}
+functio mitte(prae typus T, si de textus nomen ut alias vel "anon", ex numerus item, ceteri T reliqua) curata allocator errata Error exitus 7 immutata iacit optiones Opts → textus {}
 typus Nomen = textus
 ordo Status { Bonus = 1, Malus = -1, Textus = "x" }
 discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
@@ -598,12 +598,12 @@ fn parses_class_interface_and_test_keywords() {
         r#"
 abstractus genus Animal<T> sub Vivens implet Canens, Currens {
     @ futura
-    functio canta(textus vox) -> vacuum {}
+    functio canta(textus vox) → vacuum {}
     generis textus nomen: "leo"
     nexum numerus aetas: 3
 }
 pactum Canens<T> {
-    functio canta(textus vox) iacit -> vacuum
+    functio canta(textus vox) iacit → vacuum
 }
 probandum "suite" {
     praepara omnia {}
@@ -810,7 +810,7 @@ incipit argumenta args exitus 1 {}
 incipiet argumenta argv reddit argv
 cura arena {}
 cura page source fixum textus page {}
-ad "/salve" (request, sparge extra) -> textus pro res ut alias {} cape err {}
+ad "/salve" (request, sparge extra) → textus pro res ut alias {} cape err {}
 ex source varia nomen ut name, ceteri reliqua
 "#,
     );

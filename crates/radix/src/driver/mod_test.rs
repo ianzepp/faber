@@ -258,14 +258,14 @@ incipit argumenta args {}
 @ alias "ls"
 @ descriptio "List jobs"
 @ optio limit longum "limit" typus numerus vel 20
-functio list() argumenta args -> vacuum {
+functio list() argumenta args → vacuum {
   scribe args.verbose
   scribe args.limit
 }
 
 @ imperium "jobs/show"
 @ operandus numerus id
-functio show() argumenta args -> vacuum {
+functio show() argumenta args → vacuum {
   scribe args.verbose
   scribe args.id
 }"#;
@@ -334,12 +334,12 @@ fn rust_subcommand_cli_prefers_longest_matching_command_path() {
 incipit argumenta args {}
 
 @ imperium "jobs"
-functio jobs() -> vacuum {
+functio jobs() → vacuum {
   scribe "root"
 }
 
 @ imperium "jobs/list"
-functio list() -> vacuum {
+functio list() → vacuum {
   scribe "list"
 }"#;
     let result = compile(&session, "cli.fab", source);
@@ -420,7 +420,7 @@ fn incipit_argumenta_compiles_for_faber_target() {
 #[test]
 fn tempta_iace_fac_custodi_compile_for_faber_target() {
     let session = session(Target::Faber);
-    let source = r#"functio probe(numerus n) -> vacuum {
+    let source = r#"functio probe(numerus n) → vacuum {
   custodi {
     si n < 0 {
       iace "neg"
@@ -453,7 +453,7 @@ incipit {
 #[test]
 fn inline_iacit_moritor_and_tacet_compile_for_faber_target() {
     let session = session(Target::Faber);
-    let source = r#"functio probe(bivalens ok) -> vacuum {
+    let source = r#"functio probe(bivalens ok) → vacuum {
   si ok iacit "boom"
   secus moritor "bad"
 
@@ -475,7 +475,7 @@ incipit {
 #[test]
 fn rust_target_rejects_exception_constructs() {
     let session = session(Target::Rust);
-    let source = r#"functio probe(bivalens ok) -> vacuum {
+    let source = r#"functio probe(bivalens ok) → vacuum {
   si ok iacit "boom"
 
   tempta {
@@ -680,7 +680,7 @@ incipit {
 #[test]
 fn compile_accepts_param_alias_binding() {
     let session = session(Target::Rust);
-    let source = r#"functio greet(textus name, si bivalens formal ut f) -> vacuum {
+    let source = r#"functio greet(textus name, si bivalens formal ut f) → vacuum {
   si f {
     scribe name
   }
@@ -698,7 +698,7 @@ incipit {
 #[test]
 fn unary_verum_and_falsum_accept_ignotum_operands() {
     let session = session(Target::Rust);
-    let source = r#"functio check(ignotum x) -> vacuum {
+    let source = r#"functio check(ignotum x) → vacuum {
   si verum x { scribe "t" }
   si falsum x { scribe "f" }
 }
@@ -721,7 +721,7 @@ fn externa_top_level_var_without_initializer_no_longer_errors() {
 fixum ignotum Bun
 
 @ externa
-functio require(textus path) -> ignotum
+functio require(textus path) → ignotum
 
 incipit {
   scribe Bun
@@ -737,7 +737,7 @@ incipit {
 #[test]
 fn spread_array_argument_can_satisfy_multi_parameter_function() {
     let session = session(Target::Rust);
-    let source = r#"functio add(numerus a, numerus b) -> numerus {
+    let source = r#"functio add(numerus a, numerus b) → numerus {
   redde a + b
 }
 
@@ -850,7 +850,7 @@ incipit {
 fn go_target_allows_externa_with_explicit_cast_contract() {
     let session = session(Target::Go);
     let source = r#"@ externa
-functio argv() -> ignotum
+functio argv() → ignotum
 
 incipit {
   fixum args ← argv() qua lista<textus>
@@ -971,7 +971,7 @@ fn rust_output_uses_format_macro_for_scriptum() {
 #[test]
 fn rust_output_converts_textus_literals_to_owned_strings() {
     let session = session(Target::Rust);
-    let source = r#"functio pick(bivalens flag) -> textus {
+    let source = r#"functio pick(bivalens flag) → textus {
   si flag {
     redde "yes"
   }
@@ -1058,7 +1058,7 @@ fn rust_output_uses_debug_format_for_collection_scribe() {
 #[test]
 fn rust_output_avoids_redundant_parentheses_in_common_contexts() {
     let session = session(Target::Rust);
-    let source = r#"functio sum(numerus a, numerus b) -> numerus {
+    let source = r#"functio sum(numerus a, numerus b) → numerus {
   redde a + b
 }
 
@@ -1115,7 +1115,7 @@ fn ego_field_access_no_longer_reports_non_struct_member_error() {
     let session = session(Target::Rust);
     let source = r#"genus Counter {
   numerus count: 0
-  functio inc() -> numerus {
+  functio inc() → numerus {
     ego.count = ego.count + 1
     redde ego.count
   }
@@ -1153,7 +1153,7 @@ fn array_method_call_no_longer_reports_non_struct_member_error() {
 fn interface_method_call_no_longer_reports_non_struct_member_error() {
     let session = session(Target::Rust);
     let source = r#"pactum Drawable {
-  functio draw() -> vacuum
+  functio draw() → vacuum
 }
 
 genus Circle implet Drawable {
@@ -1162,7 +1162,7 @@ genus Circle implet Drawable {
   }
 }
 
-functio render(Drawable d) -> vacuum {
+functio render(Drawable d) → vacuum {
   d.draw()
 }
 
@@ -1395,7 +1395,7 @@ fn compile_supports_extended_unary_operators() {
 fn compile_lowers_top_level_proba_to_rust_test_function() {
     let session = session(Target::Rust);
     let source = r#"proba "one plus one equals two" {
-  adfirma 1 + 1 == 2
+  adfirma 1 + 1 ≡ 2
 }
 
 incipit {}"#;
@@ -1446,7 +1446,7 @@ fn compile_lowers_probandum_nested_cases_without_lowering_errors() {
   }
 
   proba "case one" {
-    adfirma 1 == 1
+    adfirma 1 ≡ 1
   }
 
   probandum "nested" {
@@ -1468,7 +1468,7 @@ fn ego_field_assignment_no_longer_reports_assignment_type_mismatch() {
     let session = session(Target::Rust);
     let source = r#"genus Circulus {
   varia numerus diameter: 1
-  functio crescere(numerus factor) -> vacuum {
+  functio crescere(numerus factor) → vacuum {
     ego.diameter = ego.diameter * factor
   }
 }
@@ -1544,8 +1544,8 @@ fn array_destructured_vars_can_be_used_in_arithmetic() {
 #[test]
 fn method_return_values_can_participate_in_numeric_comparisons() {
     let session = session(Target::Rust);
-    let source = r#"functio accessArray(lista<numerus> items, numerus index) -> numerus {
-  si index < 0 aut index >= items.longitudo() {
+    let source = r#"functio accessArray(lista<numerus> items, numerus index) → numerus {
+  si index < 0 aut index ≥ items.longitudo() {
     mori "Index out of bounds"
   }
   redde items[index]
@@ -1566,7 +1566,7 @@ incipit {
 #[test]
 fn repeated_owned_calls_no_longer_report_use_after_move() {
     let session = session(Target::Rust);
-    let source = r#"functio sumArray(numerus[] nums) -> numerus {
+    let source = r#"functio sumArray(numerus[] nums) → numerus {
   varia numerus total = 0
   itera ex nums fixum n {
     total = total + n
@@ -1574,7 +1574,7 @@ fn repeated_owned_calls_no_longer_report_use_after_move() {
   redde total
 }
 
-functio maxValue(numerus[] nums) -> numerus {
+functio maxValue(numerus[] nums) → numerus {
   varia numerus max = nums[0]
   itera ex nums fixum n {
     si n > max {
@@ -1600,11 +1600,11 @@ incipit {
 #[test]
 fn assignment_and_tempta_flow_no_longer_report_use_after_move() {
     let session = session(Target::Rust);
-    let source = r#"functio process(textus name) -> vacuum {
+    let source = r#"functio process(textus name) → vacuum {
   varia resource = "pending"
   tempta {
     resource = name
-    si name == "" {
+    si name ≡ "" {
       iace "Empty name"
     }
     scribe resource
@@ -1653,7 +1653,7 @@ fn empty_array_and_spread_literals_no_longer_report_annotation_or_type_errors() 
 fn cursor_iteration_accumulator_from_empty_array_no_longer_reports_inference_error() {
     let session = session(Target::Rust);
     let source = r#"@ cursor
-functio rangeSync(numerus n) -> numerus {
+functio rangeSync(numerus n) → numerus {
   itera pro 0‥n fixum i {
     cede i
   }
@@ -1686,7 +1686,7 @@ fn optional_chain_no_longer_reports_lowering_stub() {
   lista<numerus> nums: [1, 2, 3]
 }
 
-functio id(textus x) -> textus {
+functio id(textus x) → textus {
   redde x
 }
 
@@ -1694,7 +1694,7 @@ incipit {
   fixum si User maybeUser ← nihil
   fixum a ← maybeUser?.name
   fixum b ← maybeUser?.nums?[0]
-  fixum si (textus) -> textus maybeFn ← id
+  fixum si (textus) → textus maybeFn ← id
   fixum c ← maybeFn?("x")
   scribe a, b, c
 }"#;
@@ -1712,14 +1712,14 @@ fn rust_output_emits_option_map_and_and_then_for_optional_chain() {
   textus name: "Anon"
 }
 
-functio id(textus x) -> textus {
+functio id(textus x) → textus {
   redde x
 }
 
 incipit {
   fixum si User maybeUser ← nihil
   fixum a ← maybeUser?.name
-  fixum si (textus) -> textus maybeFn ← id
+  fixum si (textus) → textus maybeFn ← id
   fixum c ← maybeFn?("x")
   scribe a, c
 }"#;
@@ -1787,7 +1787,7 @@ fn rust_output_emits_iterator_pipeline_for_ab_expr() {
 #[test]
 fn objectum_return_type_no_longer_reports_unknown_type() {
     let session = session(Target::Rust);
-    let source = r#"functio getResponse() -> objectum {
+    let source = r#"functio getResponse() → objectum {
   redde { body: "ok" }
 }
 
@@ -1806,7 +1806,7 @@ incipit {
 #[test]
 fn curator_param_type_no_longer_reports_unknown_type() {
     let session = session(Target::Rust);
-    let source = r#"functio createUser(textus name, curator alloc) -> textus {
+    let source = r#"functio createUser(textus name, curator alloc) → textus {
   redde name
 }
 
@@ -1901,7 +1901,7 @@ fn rust_output_emits_innatum_construction_and_coalesce_unwrap() {
 #[test]
 fn ignotum_callee_no_longer_reports_not_callable() {
     let session = session(Target::Rust);
-    let source = r#"functio invoke(ignotum callee) -> ignotum {
+    let source = r#"functio invoke(ignotum callee) → ignotum {
   redde callee(1)
 }
 
@@ -1952,18 +1952,18 @@ fn ordo_exemplum_no_longer_reports_elige_literal_error() {
 #[test]
 fn optional_params_no_longer_require_all_arguments() {
     let session = session(Target::Rust);
-    let source = r#"functio greet(textus nomen, si textus titulus) curata alloc -> textus {
+    let source = r#"functio greet(textus nomen, si textus titulus) curata alloc → textus {
   si titulus est nihil {
     redde nomen
   }
   redde titulus
 }
 
-functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) -> numerus {
+functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) → numerus {
   redde pagina + per_pagina
 }
 
-functio analyze(textus source, de si numerus depth) -> numerus {
+functio analyze(textus source, de si numerus depth) → numerus {
   si depth est nihil {
     redde source.longitudo()
   }
@@ -2124,7 +2124,7 @@ fn discerne_alias_and_multi_subject_roundtrip_through_faber_codegen() {
   Quit
 }
 
-functio compare(Event left, Event right) -> vacuum {
+functio compare(Event left, Event right) → vacuum {
   discerne left, right {
     casu Click ut l, Quit ut r {
       scribe l.x

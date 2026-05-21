@@ -48,8 +48,10 @@ fn lexer_interns_equivalent_unicode_forms_as_one_symbol() {
 
 #[test]
 fn lexes_operator_tokens_consistently() {
+    // Post-clean-break: only canonical glyphs produce compound tokens.
+    // Old ASCII multi-char forms (== != <= >= -> += etc) are rejected at lex time.
     let result = lex(
-        "+ ⊕ += - ⊖ -= -> → * ⊛ *= / ⊘ /= % ⊻ == ≡ === != ≠ !== ¬ !. ![ !( < <= ≤ > >= ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←",
+        "+ ⊕ - ⊖ * ⊛ / ⊘ % ⊻ ≡ ≠ ≤ ≥ → ¬ !. ![ !( < ≤ > ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←",
     );
     assert!(result.errors.is_empty());
 
@@ -57,35 +59,26 @@ fn lexes_operator_tokens_consistently() {
     let expected = vec![
         TokenKind::Plus,
         TokenKind::PlusEq,
-        TokenKind::PlusEq,
         TokenKind::Minus,
         TokenKind::MinusEq,
-        TokenKind::MinusEq,
-        TokenKind::Arrow,
-        TokenKind::Arrow,
         TokenKind::Star,
         TokenKind::StarEq,
-        TokenKind::StarEq,
         TokenKind::Slash,
-        TokenKind::SlashEq,
         TokenKind::SlashEq,
         TokenKind::Percent,
         TokenKind::Caret,
         TokenKind::EqEq,
-        TokenKind::EqEq,
-        TokenKind::EqEqEq,
         TokenKind::BangEq,
-        TokenKind::BangEq,
-        TokenKind::BangEqEq,
+        TokenKind::LtEq,
+        TokenKind::GtEq,
+        TokenKind::Arrow,
         TokenKind::Tilde,
         TokenKind::BangDot,
         TokenKind::BangBracket,
         TokenKind::BangParen,
         TokenKind::Lt,
         TokenKind::LtEq,
-        TokenKind::LtEq,
         TokenKind::Gt,
-        TokenKind::GtEq,
         TokenKind::GtEq,
         TokenKind::Amp,
         TokenKind::AmpEq,
@@ -105,6 +98,38 @@ fn lexes_operator_tokens_consistently() {
     ];
 
     assert_eq!(kinds, expected);
+}
+
+#[test]
+fn rejects_old_ascii_compound_operators() {
+    // Explicit negative tests proving the clean break.
+    // Old ASCII compounds no longer produce the compound TokenKind (they lex as separate chars).
+    // Full parse will fail or misinterpret; here we prove lexer no longer recognizes them as units.
+    let cases: &[(&str, TokenKind)] = &[
+        ("==", TokenKind::EqEq),
+        ("!=", TokenKind::BangEq),
+        ("<=", TokenKind::LtEq),
+        (">=", TokenKind::GtEq),
+        ("->", TokenKind::Arrow),
+        ("+=", TokenKind::PlusEq),
+        ("-=", TokenKind::MinusEq),
+        ("*=", TokenKind::StarEq),
+        ("/=", TokenKind::SlashEq),
+    ];
+    for &(op, ref compound) in cases {
+        let src = format!("fixum x = 1 {} 2", op);
+        let result = lex(&src);
+        // Lex itself does not error (single-char tokens are valid), but must not emit the compound.
+        let emits_compound = result.tokens.iter().any(|t| std::mem::discriminant(&t.kind) == std::mem::discriminant(compound));
+        assert!(
+            !emits_compound,
+            "legacy operator {op} must not produce {compound:?} token after clean break",
+        );
+    }
+
+    // Triple forms also gone (no EqEqEq etc from source).
+    let triples = lex("1 === 2");
+    assert!(!triples.tokens.iter().any(|t| matches!(t.kind, TokenKind::EqEqEq | TokenKind::BangEqEq)));
 }
 
 #[test]
