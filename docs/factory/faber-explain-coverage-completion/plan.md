@@ -28,6 +28,7 @@ The follow-on work is to move from seed coverage to complete audited coverage.
 This plan owns:
 
 - expanding the root `explain/` corpus,
+- renaming corpus files to stable ASCII slugs,
 - adding coverage validation so missing explain entries fail tests,
 - documenting the coverage policy,
 - keeping entries embedded into the `faber` binary,
@@ -42,6 +43,53 @@ This plan does not own:
 - making the compiler depend on the explain corpus.
 
 The `radix` lexer is used as the implementation inventory for active tokens. The compiled `faber explain` corpus remains the public interface; entries must stand alone and must not require installed users to have this source tree.
+
+## Corpus File Naming
+
+Explain lookup must be driven by frontmatter, not by the filename.
+
+Use stable ASCII filenames derived from the compiler token or AST-style name, converted to kebab case:
+
+| Term | Token-style name | Corpus filename |
+| ---- | ---------------- | --------------- |
+| `≡` | `EqEq` | `eq-eq.md` |
+| `≠` | `BangEq` | `bang-eq.md` |
+| `≤` | `LtEq` | `lt-eq.md` |
+| `≥` | `GtEq` | `gt-eq.md` |
+| `→` | `Arrow` | `arrow.md` |
+| `←` | `Assign` or `LeftArrow` | `assign.md` or `left-arrow.md` |
+| `⊕` | `PlusEq` | `plus-eq.md` |
+| `⇢` | `Verte` | `verte.md` |
+| `⇒` | `Conversio` | `conversio.md` |
+
+The frontmatter remains the source of the user-facing term:
+
+```markdown
+---
+term: "≡"
+kind: "operator"
+category: "comparison"
+canonical: true
+summary: "Compares two values for equality and returns bivalens."
+syntax: "<expression> ≡ <expression>"
+---
+```
+
+This avoids filesystem and tooling problems with glyph filenames while preserving exact `faber explain ≡` lookup behavior.
+
+Keywords may keep their literal keyword names as filenames because they are already stable ASCII spellings, for example `functio.md` and `proba.md`.
+
+Legacy redirect files should also use ASCII token-style slugs, not punctuation filenames. For example:
+
+| Legacy term | Corpus filename |
+| ----------- | --------------- |
+| `==` | `legacy-eq-eq.md` |
+| `!=` | `legacy-bang-eq.md` |
+| `<=` | `legacy-lt-eq.md` |
+| `>=` | `legacy-gt-eq.md` |
+| `->` | `legacy-arrow.md` |
+
+Coverage validation should fail if a required entry uses a non-ASCII or punctuation-heavy filename when an ASCII token slug is available.
 
 ## Coverage Definition
 
@@ -152,12 +200,13 @@ Do not use invented syntax in examples. Check existing examples, grammar docs, a
 | Phase | Name | Goal | Checkpoint |
 | ----- | ---- | ---- | ---------- |
 | 0 | Inventory refresh | Generate the current explain coverage ledger from the live lexer and corpus. | Ledger lists covered, missing, excluded, and redirect terms. |
-| 1 | Coverage validator | Add automated validation for required explain entries. | Tests fail when required keyword/operator entries are missing. |
-| 2 | Keyword corpus expansion | Add entries for all active keyword spellings. | Keyword coverage test passes. |
-| 3 | Glyph/operator corpus expansion | Add entries for all canonical glyph/operator terms and useful punctuation forms. | Operator coverage test passes. |
-| 4 | Redirect and alias pass | Add or normalize legacy redirects and search aliases. | Legacy lookups return canonical guidance. |
-| 5 | Docs and UX pass | Document the coverage contract and improve list/category output if needed. | User-facing docs match behavior. |
-| 6 | Full validation | Run formatting, tests, clippy, and release builds. | Repo passes validation and coverage gates. |
+| 1 | Filename normalization | Rename existing punctuation/glyph corpus files to ASCII token slugs. | Existing lookups still work after rename. |
+| 2 | Coverage validator | Add automated validation for required explain entries and filename policy. | Tests fail when required entries are missing or misnamed. |
+| 3 | Keyword corpus expansion | Add entries for all active keyword spellings. | Keyword coverage test passes. |
+| 4 | Glyph/operator corpus expansion | Add entries for all canonical glyph/operator terms and useful punctuation forms. | Operator coverage test passes. |
+| 5 | Redirect and alias pass | Add or normalize legacy redirects and search aliases. | Legacy lookups return canonical guidance. |
+| 6 | Docs and UX pass | Document the coverage contract and improve list/category output if needed. | User-facing docs match behavior. |
+| 7 | Full validation | Run formatting, tests, clippy, and release builds. | Repo passes validation and coverage gates. |
 
 ## Phase Details
 
@@ -167,6 +216,7 @@ Steps:
 
 - Inspect `git status --short`.
 - List current `explain/*.md` terms.
+- Record current filenames separately from frontmatter terms.
 - Extract keyword spellings from the normal keyword table and any annotation keyword table.
 - Extract canonical glyph/operator terms from scanner branches and `TokenKind`.
 - Classify each term as:
@@ -181,7 +231,28 @@ Checkpoint:
 
 - The implementation session has a concrete missing-entry checklist before adding corpus files.
 
-### Phase 1: Coverage Validator
+### Phase 1: Filename Normalization
+
+Steps:
+
+- Rename existing glyph and legacy punctuation filenames to ASCII token-style slugs.
+- Keep each file's `term` frontmatter unchanged.
+- Prefer token names from `TokenKind` when obvious.
+- Record any ambiguous slug choice in the inventory, especially for `←`.
+- Run focused lookup checks for renamed entries:
+
+```bash
+cargo run -p faber -- explain ≡
+cargo run -p faber -- explain →
+cargo run -p faber -- explain ==
+```
+
+Checkpoint:
+
+- No required entry uses a glyph filename or punctuation filename where an ASCII token slug is available.
+- Existing `faber explain <term>` behavior survives the rename.
+
+### Phase 2: Coverage Validator
 
 Steps:
 
@@ -194,13 +265,14 @@ Steps:
   - every legacy redirect has `canonical = false` and `canonical_term`,
   - every `canonical_term` points to an existing canonical entry,
   - every `related` term points to an existing entry unless explicitly marked external,
+  - filenames follow the ASCII token-slug policy,
   - unknown frontmatter fields fail validation.
 
 Checkpoint:
 
 - Focused coverage tests fail before corpus expansion and pass after missing entries are added.
 
-### Phase 2: Keyword Corpus Expansion
+### Phase 3: Keyword Corpus Expansion
 
 Steps:
 
@@ -217,7 +289,7 @@ Checkpoint:
 - `faber explain <keyword>` works for every active keyword spelling.
 - Keyword coverage validation passes.
 
-### Phase 3: Glyph/Operator Corpus Expansion
+### Phase 4: Glyph/Operator Corpus Expansion
 
 Steps:
 
@@ -234,7 +306,7 @@ Checkpoint:
 - `faber explain <glyph>` works for every canonical glyph/operator form.
 - Operator coverage validation passes.
 
-### Phase 4: Redirect and Alias Pass
+### Phase 5: Redirect and Alias Pass
 
 Steps:
 
@@ -258,7 +330,7 @@ Checkpoint:
 
 - Legacy and natural-language lookups guide users to canonical Faber syntax.
 
-### Phase 5: Docs and UX Pass
+### Phase 6: Docs and UX Pass
 
 Steps:
 
@@ -273,7 +345,7 @@ Checkpoint:
 - Docs tell users what coverage to expect.
 - Large-corpus list output is still readable.
 
-### Phase 6: Full Validation
+### Phase 7: Full Validation
 
 Run:
 
@@ -305,6 +377,7 @@ Checkpoint:
 
 - Every active keyword spelling accepted by the lexer has an `explain/` entry or a deliberate exclusion recorded in the inventory.
 - Every canonical glyph/operator token accepted by the lexer has an `explain/` entry or a deliberate exclusion recorded in the inventory.
+- Corpus filenames use stable ASCII token slugs, while frontmatter `term` stores the exact keyword, glyph, or legacy spelling.
 - Legacy spellings that users are likely to ask about redirect to canonical entries.
 - Coverage validation is automated.
 - `faber explain` remains implemented in the Faber build tool, not the Radix compiler.
@@ -317,4 +390,3 @@ Checkpoint:
 - Annotation-mode keywords may not appear in the normal keyword table. Inventory must check all lexer keyword tables, not just one function.
 - The glyph clean-break plan may remove some legacy ASCII acceptance. Redirect entries can still be useful after removal because users and agents may ask what the old spelling means.
 - Complete coverage can create a lot of files. Use consistent frontmatter and compact prose so the corpus remains maintainable.
-
