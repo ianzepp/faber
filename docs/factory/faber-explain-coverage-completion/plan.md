@@ -79,15 +79,15 @@ This avoids filesystem and tooling problems with glyph filenames while preservin
 
 Keywords may keep their literal keyword names as filenames because they are already stable ASCII spellings, for example `functio.md` and `proba.md`.
 
-Legacy redirect files should also use ASCII token-style slugs, not punctuation filenames. For example:
+Legacy redirect files should use the canonical token slug with a `.legacy.md` suffix so they sort next to the canonical entry. For example:
 
 | Legacy term | Corpus filename |
 | ----------- | --------------- |
-| `==` | `legacy-eq-eq.md` |
-| `!=` | `legacy-bang-eq.md` |
-| `<=` | `legacy-lt-eq.md` |
-| `>=` | `legacy-gt-eq.md` |
-| `->` | `legacy-arrow.md` |
+| `==` | `eq-eq.legacy.md` |
+| `!=` | `bang-eq.legacy.md` |
+| `<=` | `lt-eq.legacy.md` |
+| `>=` | `gt-eq.legacy.md` |
+| `->` | `arrow.legacy.md` |
 
 Coverage validation should fail if a required entry uses a non-ASCII or punctuation-heavy filename when an ASCII token slug is available.
 
@@ -235,7 +235,8 @@ Checkpoint:
 
 Steps:
 
-- Rename existing glyph and legacy punctuation filenames to ASCII token-style slugs.
+- Rename existing glyph filenames to ASCII token-style slugs.
+- Rename existing legacy punctuation filenames to the adjacent-sort `<token-slug>.legacy.md` pattern.
 - Keep each file's `term` frontmatter unchanged.
 - Prefer token names from `TokenKind` when obvious.
 - Record any ambiguous slug choice in the inventory, especially for `←`.
@@ -265,7 +266,8 @@ Steps:
   - every legacy redirect has `canonical = false` and `canonical_term`,
   - every `canonical_term` points to an existing canonical entry,
   - every `related` term points to an existing entry unless explicitly marked external,
-  - filenames follow the ASCII token-slug policy,
+  - canonical filenames follow the ASCII token-slug policy,
+  - legacy filenames follow the adjacent-sort `<token-slug>.legacy.md` policy,
   - unknown frontmatter fields fail validation.
 
 Checkpoint:
@@ -377,7 +379,8 @@ Checkpoint:
 
 - Every active keyword spelling accepted by the lexer has an `explain/` entry or a deliberate exclusion recorded in the inventory.
 - Every canonical glyph/operator token accepted by the lexer has an `explain/` entry or a deliberate exclusion recorded in the inventory.
-- Corpus filenames use stable ASCII token slugs, while frontmatter `term` stores the exact keyword, glyph, or legacy spelling.
+- Canonical corpus filenames use stable ASCII token slugs, while frontmatter `term` stores the exact keyword or glyph.
+- Legacy redirect filenames use `<token-slug>.legacy.md`, while frontmatter `term` stores the exact legacy spelling.
 - Legacy spellings that users are likely to ask about redirect to canonical entries.
 - Coverage validation is automated.
 - `faber explain` remains implemented in the Faber build tool, not the Radix compiler.
