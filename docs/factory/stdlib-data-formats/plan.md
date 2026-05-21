@@ -13,9 +13,8 @@ Faber needs first-class standard library support for common data formats:
 
 - JSON for ubiquitous structured data interchange.
 - TOML for project and tool configuration.
-- YAML for Markdown front matter and configuration files that use YAML syntax.
 
-This work must not be a one-off patch around three files. It should establish the reusable pattern for future standard library modules that have:
+This work must not be a one-off patch around two modules. It should establish the reusable pattern for future standard library modules that have:
 
 1. A Fabra-facing interface in `stdlib/norma`.
 2. A Rust implementation in `crates/norma`.
@@ -31,10 +30,8 @@ Relevant files already exist:
 
 - `stdlib/norma/json.fab`
 - `stdlib/norma/toml.fab`
-- `stdlib/norma/yaml.fab`
 - `crates/norma/json.rs`
 - `crates/norma/toml.rs`
-- `crates/norma/yaml.rs`
 - `crates/norma/Cargo.toml`
 - `crates/faber/src/package.rs`
 - `crates/faber/src/main.rs`
@@ -46,10 +43,9 @@ Known blockers at plan creation:
 
 - `pactum` methods do not currently parse annotations such as `@ externa`, but the stdlib interface files use them.
 - Several stdlib files use ASCII `->` in places where the canonical grammar uses `→`; phase work must normalize syntax rather than relying on parser accidents.
-- `quidlibet` maps to `Box<dyn std::any::Any>` in Rust codegen, while the current data-format runtime functions expect concrete crate values such as `serde_json::Value`, `toml::Value`, and `serde_yaml::Value`.
+- `quidlibet` maps to `Box<dyn std::any::Any>` in Rust codegen, while the current data-format runtime functions expect concrete crate values such as `serde_json::Value` and `toml::Value`.
 - Generated package `Cargo.toml` does not inject a `norma` runtime dependency.
 - Package import discovery currently focuses on local package files; stdlib imports need explicit resolution and linking semantics.
-- YAML backend choice has maintenance risk. `serde_yaml` is marked deprecated/unmaintained; RustSec flags some adjacent YAML crates. The implementation may still use a Rust crate initially, but the dependency must sit behind a small adapter.
 
 ## Non-Negotiable Runtime Contract
 
@@ -63,8 +59,8 @@ norma::datum::Valor
 
 The exact name may change if the implementation finds a better Latin term, but the contract is:
 
-- one runtime type represents structured dynamic data for JSON, TOML, YAML, database rows, and future data-oriented stdlib modules,
-- JSON/TOML/YAML implementations convert between that runtime type and their parser crate's native value type,
+- one runtime type represents structured dynamic data for JSON, TOML, database rows, and future data-oriented stdlib modules,
+- JSON/TOML implementations convert between that runtime type and their parser crate's native value type,
 - Faber codegen maps the Fabra stdlib data type to this runtime type,
 - `quidlibet` remains a general escape hatch and should not become the implicit format-value ABI.
 
@@ -79,7 +75,7 @@ Required value space:
 - `tabula<textus, Valor>`
 - a representation for TOML datetime, either as a tagged runtime value or a documented text conversion
 
-The implementation must choose explicit behavior for numeric boundaries, map key ordering, YAML non-string mapping keys, aliases, tags, and unsupported values. Unsupported cases should produce deterministic errors, not panics.
+The implementation must choose explicit behavior for numeric boundaries, map key ordering, TOML datetime values, and unsupported values. Unsupported cases should produce deterministic errors, not panics.
 
 ## Error Contract
 
@@ -106,7 +102,6 @@ Target behavior:
 ```fab
 importa ex "norma/json" privata json
 importa ex "norma/toml" privata toml
-importa ex "norma/yaml" privata yaml
 ```
 
 The compiler and build tool should:
@@ -130,7 +125,6 @@ Recommended fixture root:
 examples/exempla/stdlib/packages/
 ├── json/
 ├── toml/
-├── yaml/
 └── data-formats/
 ```
 
@@ -148,7 +142,6 @@ Tests should run through:
 ```bash
 cargo run -p faber -- test examples/exempla/stdlib/packages/json
 cargo run -p faber -- test examples/exempla/stdlib/packages/toml
-cargo run -p faber -- test examples/exempla/stdlib/packages/yaml
 cargo run -p faber -- test examples/exempla/stdlib/packages/data-formats
 ```
 
@@ -158,17 +151,16 @@ The tests should prove compiled Faber code calls the Rust runtime backend, not o
 
 | Phase | Name | Goal | Checkpoint |
 | ----- | ---- | ---- | ---------- |
-| 0 | Baseline and dependency decision | Capture current parser, runtime, build, and YAML dependency status. | Ledger records current failures and crate choices; no behavior changed. |
-| 1 | Stdlib interface parsing | Make stdlib `.fab` interface files valid, parseable, and checkable. | `faber check stdlib/norma/json.fab`, `toml.fab`, and `yaml.fab` succeed or fail only on intentionally deferred semantics. |
-| 2 | Canonical runtime data value | Add the shared `norma::datum::Valor` ABI and conversion helpers. | Rust tests prove conversion to/from JSON/TOML/YAML backend values for supported shapes. |
+| 0 | Baseline and dependency decision | Capture current parser, runtime, and build status. | Ledger records current failures and crate choices; no behavior changed. |
+| 1 | Stdlib interface parsing | Make stdlib `.fab` interface files valid, parseable, and checkable. | `faber check stdlib/norma/json.fab` and `toml.fab` succeed or fail only on intentionally deferred semantics. |
+| 2 | Canonical runtime data value | Add the shared `norma::datum::Valor` ABI and conversion helpers. | Rust tests prove conversion to/from JSON/TOML backend values for supported shapes. |
 | 3 | Rust codegen type and call bridge | Teach Radix how Faber stdlib data-format types map to Rust runtime calls. | A tiny generated Rust program can call a `norma` data-format function without manual edits. |
 | 4 | Stdlib import resolution | Resolve `norma/*` imports through stdlib roots and typecheck against interface files. | A package importing `norma/json` sees typed functions and no unresolved identifiers. |
 | 5 | Generated Cargo dependency injection | Inject runtime dependencies into generated package manifests based on used stdlib modules. | `target/faber/Cargo.toml` contains `norma` only when needed and package builds link successfully. |
 | 6 | JSON reference implementation | Implement JSON end to end as the canonical example module. | Fabra package tests parse, inspect, serialize, and safely reject invalid JSON. |
 | 7 | TOML implementation | Implement TOML on the same ABI and document TOML-specific constraints. | Fabra package tests parse config tables, serialize tables, and reject invalid/root-invalid TOML. |
-| 8 | YAML implementation | Implement YAML on the same ABI with explicit dependency and unsupported-feature policy. | Fabra package tests parse Markdown front matter-shaped YAML, serialize basic values, and handle invalid YAML. |
-| 9 | Docs and examples | Update grammar/stdlib docs and stale examples to match the shipped API. | README/docs/examples use canonical import paths and current function names. |
-| 10 | Full validation and release readiness | Run compiler, runtime, package, and fixture gates. | `scripta/ci` plus all stdlib package tests pass; plan status can move to complete. |
+| 8 | Docs and examples | Update grammar/stdlib docs and stale examples to match the shipped API. | README/docs/examples use canonical import paths and current function names. |
+| 9 | Full validation and release readiness | Run compiler, runtime, package, and fixture gates. | `scripta/ci` plus all stdlib package tests pass; plan status can move to complete. |
 
 ## Phase Details
 
@@ -177,13 +169,9 @@ The tests should prove compiled Faber code calls the Rust runtime backend, not o
 Steps:
 
 - Inspect `git status --short`.
-- Record current `faber check` behavior for `stdlib/norma/json.fab`, `toml.fab`, and `yaml.fab`.
+- Record current `faber check` behavior for `stdlib/norma/json.fab` and `toml.fab`.
 - Record current `cargo check -p norma` behavior.
 - Record current generated `Cargo.toml` behavior for a package with no stdlib runtime dependency.
-- Decide the initial YAML backend:
-  - use `serde_yaml` temporarily behind the adapter,
-  - switch to a maintained fork,
-  - or roll a constrained internal YAML front matter parser for the first slice.
 - Create `docs/factory/stdlib-data-formats/ledger.md` if implementation spans multiple turns.
 
 Checkpoint:
@@ -208,7 +196,7 @@ Steps:
 
 Checkpoint:
 
-- The three data-format interface files are parseable.
+- The two data-format interface files are parseable.
 - Existing interface parsing tests still pass.
 - New parser tests cover annotated `pactum` methods.
 
@@ -220,9 +208,8 @@ Steps:
 - Define `Valor` and helper constructors/accessors.
 - Add conversion modules or traits for:
   - `serde_json::Value`,
-  - `toml::Value` / `toml::Table`,
-  - the chosen YAML value type.
-- Decide how TOML datetime and YAML tags/non-string keys degrade or error.
+  - `toml::Value` / `toml::Table`.
+- Decide how TOML datetime values degrade or error.
 - Add Rust unit tests in dedicated test files or focused crate tests, following repo standards.
 
 Checkpoint:
@@ -244,7 +231,7 @@ Steps:
 Checkpoint:
 
 - Generated Rust uses `norma::datum::Valor` for the chosen Fabra data type.
-- No generated `Box<dyn Any>` appears in JSON/TOML/YAML stdlib call signatures.
+- No generated `Box<dyn Any>` appears in JSON/TOML stdlib call signatures.
 
 ### Phase 4: Stdlib Import Resolution
 
@@ -321,32 +308,7 @@ Checkpoint:
 - `faber test examples/exempla/stdlib/packages/toml` exits `0`.
 - TOML-specific constraints are documented and tested.
 
-### Phase 8: YAML Implementation
-
-Steps:
-
-- Implement YAML parse/serialize through `Valor` using the chosen backend.
-- Keep the adapter boundary small enough to replace the backend later.
-- Define policy for:
-  - front matter delimiters versus raw YAML content,
-  - multi-document streams,
-  - aliases,
-  - tags,
-  - non-string keys,
-  - YAML values that do not map cleanly to `Valor`.
-- Add Fabra package fixture tests for:
-  - Markdown front matter-shaped YAML body,
-  - nested mapping access,
-  - arrays,
-  - invalid YAML through safe parse,
-  - multi-document behavior if retained in the public API.
-
-Checkpoint:
-
-- `faber test examples/exempla/stdlib/packages/yaml` exits `0`.
-- YAML caveats are explicit in docs and tests.
-
-### Phase 9: Docs and Examples
+### Phase 8: Docs and Examples
 
 Steps:
 
@@ -362,7 +324,7 @@ Checkpoint:
 - Examples compile or are clearly marked as future/non-runnable.
 - Future stdlib modules have a documented pattern to follow.
 
-### Phase 10: Full Validation and Release Readiness
+### Phase 9: Full Validation and Release Readiness
 
 Steps:
 
@@ -377,7 +339,6 @@ Steps:
 ```bash
 cargo run -p faber -- test examples/exempla/stdlib/packages/json
 cargo run -p faber -- test examples/exempla/stdlib/packages/toml
-cargo run -p faber -- test examples/exempla/stdlib/packages/yaml
 cargo run -p faber -- test examples/exempla/stdlib/packages/data-formats
 ```
 
@@ -397,16 +358,15 @@ Use these review passes before completing major phases:
 - **Clean-break check**: remove any temporary compatibility names from stale examples unless they are intentionally supported.
 - **Consequences check**: verify new import/linking rules do not break local package imports.
 - **Poker-face check**: compare actual behavior against this plan before marking a phase complete.
-- **Security check**: review YAML dependency choice and parser behavior for untrusted input risks.
+- **Security check**: review parser behavior for untrusted JSON and TOML input risks.
 
 ## Completion Definition
 
 This plan is complete only when:
 
-- JSON, TOML, and YAML are accessible from compiled Faber packages through canonical stdlib imports.
+- JSON and TOML are accessible from compiled Faber packages through canonical stdlib imports.
 - Generated Rust packages link the required runtime crate automatically.
 - Runtime failures are surfaced through Faber semantics rather than Rust panics.
-- Fabra package tests prove all three modules work end to end.
+- Fabra package tests prove both modules work end to end.
 - Docs and examples match the shipped API.
 - The pattern is documented well enough to implement the next runtime-backed stdlib module without rediscovering the architecture.
-
