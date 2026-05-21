@@ -610,28 +610,117 @@ Phase 4 completion metrics:
 
 ### Phase 5: Faber-Specific Selection
 
-Steps:
+Goal:
 
-- Implement `solum` semantics.
-- Add tag selection, likely:
+Make `faber test` understand source-level Faber test selection while preserving the compiler invariant that every test is still generated and compiled.
 
-```bash
-faber test --tag smoke
+Core invariant:
+
+Selection affects execution, not compilation.
+
+```text
+Faber source
+  -> parse/lower/check all tests
+  -> generate Rust for all tests
+  -> compile all generated Rust tests
+  -> execute only the selected tests
 ```
 
-- Add environment/capability selection for:
-  - `requirit "capability"`,
-  - `solum_in "env"`.
-- Decide whether selection happens by:
-  - filtering before generated Rust is written,
-  - generating `#[ignore]` / test-name filters,
-  - or generating a custom Rust test harness.
+Non-selected tests must still appear in the generated Rust crate so the Rust compiler catches broken test code even during a focused run.
+
+Selection mechanism:
+
+Use generated Rust `#[ignore = "..."]` reasons for deselected tests in the Cargo-backed runner. Rust supports reason strings and prints them in standard harness output:
+
+```rust
+#[test]
+#[ignore = "faber: not selected by solum"]
+fn proba_1000000() {
+    // test body still compiles
+}
+```
+
+This is intentionally an execution mechanism, not the source of truth. Faber HIR test metadata from Phase 4 remains authoritative.
+
+Initial command surface:
+
+```bash
+faber test [path]
+faber test [path] --name <name>
+faber test [path] --suite <suite-path>
+faber test [path] --tag <tag>
+```
+
+Rules:
+
+- Implement `solum` semantics.
+- Add source-level selection flags:
+  - `--name <name>` selects by Faber `proba` name, not generated Rust function name,
+  - `--suite <suite-path>` selects by Faber `probandum` suite path,
+  - `--tag <tag>` selects by Faber `tag` modifier.
+- If one or more tests are marked `solum`, default `faber test` runs only the `solum` tests.
+- Explicit selectors narrow the execution set. If selectors are combined, use AND semantics unless the delivery artifact for this phase deliberately chooses another rule.
+- All tests are still generated and compiled.
+- Tests outside the selected execution set are emitted with generated ignore reasons such as:
+  - `#[ignore = "faber: not selected by solum"]`,
+  - `#[ignore = "faber: not selected by name arithmetic passes"]`,
+  - `#[ignore = "faber: not selected by suite math suite"]`,
+  - `#[ignore = "faber: not selected by tag smoke"]`.
+- Source-level `omitte` and `futurum` still emit ignore reasons distinct from selection reasons:
+  - `#[ignore = "faber: omitte - <reason>"]`,
+  - `#[ignore = "faber: futurum - <reason>"]`.
+- A selected test with `omitte` or `futurum` remains ignored unless `--ignored` or `--include-ignored` is used.
+- Phase 5 may accept that Rust `--ignored` / `--include-ignored` runs both source-level ignored tests and selection-ignored tests, because both compile to Rust `#[ignore]` in the Cargo-backed implementation. This limitation must be documented clearly.
+- Do not implement `requirit`, `solum_in`, `temporis`, `repete`, `fragilis`, or custom reporting in this phase. They remain represented in metadata for later phases.
+- Do not generate only selected tests.
+- Do not introduce a custom Rust test harness in this phase.
+
+Likely implementation steps:
+
+- Add test selection options to `TestArgs`: `--name`, `--suite`, and `--tag`.
+- Add a Faber test selection model in the build/test path that can inspect Phase 4 HIR metadata.
+- Detect implicit `solum` selection after lowering and before Rust codegen.
+- Pass selection context into Rust codegen or a HIR-to-codegen preparation step.
+- Generate all test functions regardless of selection.
+- For each test, compute:
+  - whether it is selected for execution,
+  - whether it is source-level ignored/future,
+  - the generated Rust ignore reason, if any.
+- Emit at most one Rust `#[ignore = "..."]` attribute per generated test. Prefer the most specific reason:
+  - source-level `omitte` / `futurum` reason when the test is selected but ignored,
+  - selection reason when the test is not selected.
+- Add fixtures or extend existing fixtures for:
+  - `solum`,
+  - `tag`,
+  - nested `probandum` suite selection,
+  - a deselected test whose body still must compile.
+- Update help text for the new flags.
 
 Checkpoint:
 
-- `solum` runs only focused tests.
-- `--tag` selection works for tagged tests.
-- required capability/environment behavior is explicit and tested.
+- `solum` runs only focused tests while non-focused tests still compile.
+- `--name` selects by original Faber test name.
+- `--suite` selects by original Faber suite path.
+- `--tag` selects by Faber tag metadata.
+- Deselected tests show readable Rust ignore reasons in Cargo output.
+- Source-level `omitte` and `futurum` still show distinct ignore reasons.
+- A compile error in a deselected test still fails `faber test`.
+- Existing Phase 1-3 flags still work.
+- `--ignored` / `--include-ignored` behavior with selection-ignored tests is documented in the phase delivery artifact and user docs.
+- No `target/faber/target` directory is created.
+
+Phase 5 completion metrics:
+
+- All generated Rust tests are present under `target/faber/src/main.rs` even when selection is active.
+- At least one smoke proves a deselected test compiles by making it reference valid code and then checking it appears in generated Rust.
+- At least one negative smoke proves a compile error in a deselected test still fails before execution.
+- `faber test <path>` with `solum` executes only `solum` tests and reports the others ignored with `faber: not selected by solum`.
+- `faber test <path> --name <name>` executes only matching source-name tests.
+- `faber test <path> --suite <suite-path>` executes only matching suite-path tests.
+- `faber test <path> --tag <tag>` executes only matching tagged tests.
+- Combining selectors is tested and follows the chosen semantics.
+- Phase 3 ignored-test controls still pass their existing smokes.
+- Full gate passes: fmt, test, clippy, and fixture smoke matrix.
 
 ### Phase 6: Reporting and Docs
 
