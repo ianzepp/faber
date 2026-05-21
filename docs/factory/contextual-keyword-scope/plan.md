@@ -85,26 +85,37 @@ Suggested names:
 ```rust
 pub enum KeywordScope {
     Global,
-    Contextual(&'static [KeywordContext]),
+    Contextual(&'static [KeywordOwner]),
     Annotation,
     Section,
+    TestOwned,
+    LegacyAlias { canonical: &'static str },
 }
 
-pub enum KeywordContext {
-    InConstruct(&'static str),
-    After(&'static str),
-    InPosition(&'static str),
+pub enum KeywordOwner {
+    CuraKind,
+    EntryModifier,
+    FunctionModifier,
+    GenusHeader,
+    GenusMember,
+    RestPattern,
+    SpreadExpression,
+    AnnotationName,
+    AnnotationModifier,
+    MemberIdentifier,
 }
 
 pub struct KeywordSpec {
     pub text: &'static str,
-    pub kind: Option<TokenKind>,
+    pub legacy_kind: Option<TokenKind>,
     pub scope: KeywordScope,
     pub category: KeywordCategory,
 }
 ```
 
 `KeywordScope`, not `TokenScope`, is the better first name because the immediate issue is reserved words, not every token kind. Punctuation, literals, EOF, and identifiers should not need fake scope metadata.
+
+`KeywordOwner` should be a closed enum, not descriptive strings. A string such as `"after function signature"` documents intent but does not stop a helper from being called in the wrong grammar position. Closed owners make tests and audits precise.
 
 The registry should support:
 
@@ -113,6 +124,13 @@ The registry should support:
 - parser helpers for contextual matching,
 - negative tests proving contextual words remain legal identifiers outside their owning construct.
 
+The registry must cover both:
+
+- words currently returned by `keyword_or_ident()`,
+- contextual vocabulary that already exists without a global keyword token, such as `page` under `cura`.
+
+Validation must be text-first, not token-first, because several spellings can map to the same `TokenKind` today (`qua`, `innatum`, and `novum` all map to `TokenKind::Verte`).
+
 The registry does not need to drive lexing in Phase 1.
 
 ## Parser Helper Target
@@ -120,18 +138,37 @@ The registry does not need to drive lexing in Phase 1.
 Add shared helpers instead of local string checks:
 
 ```rust
-eat_contextual("arena")
-expect_contextual("arena", "expected curator kind")
-eat_contextual_one_of(&["arena", "page"])
-parse_contextual_ident(&["cape", "inter", "nota"])
+eat_contextual(KeywordOwner::CuraKind, "arena")
+expect_contextual(KeywordOwner::CuraKind, "arena", "expected curator kind")
+eat_contextual_one_of(KeywordOwner::CuraKind, &["arena", "page"])
+parse_contextual_ident(KeywordOwner::MemberIdentifier, &["cape", "inter", "nota"])
 ```
 
-The helpers should work when the current token is either:
+Use two related but separate helper families:
+
+- contextual grammar helpers consume grammar words such as `arena` in `cura arena`,
+- contextual identifier helpers parse identifier positions that intentionally allow old reserved words, such as member names.
+
+Those jobs should not collapse into one helper. One consumes a local grammar terminal; the other returns an `Ident`.
+
+The helper contract should be explicit:
+
+- `eat_contextual(...) -> Option<Span>` advances only on match and returns the matched span,
+- `expect_contextual(...) -> Result<Span, ParseError>` emits the owning context's diagnostic on failure,
+- `eat_contextual_one_of(...) -> Option<(&'static str, Span)>` advances only on match,
+- `parse_contextual_ident(...) -> Result<Ident, ParseError>` returns an interned identifier and preserves the source span,
+- all helpers must accept only words registered for the requested `KeywordOwner`.
+
+During migration, helpers should work when the current token is either:
 
 - `TokenKind::Ident(sym)` with matching text, or
 - an old global `TokenKind` during migration, so phases can be sliced safely.
 
 This compatibility shape lets one keyword family migrate at a time without requiring a flag day.
+
+Legacy `TokenKind` acceptance is temporary per migrated family. Once a word leaves `keyword_or_ident()`, follow-up cleanup should either remove the unused token variant or prove another grammar site still owns it.
+
+Contextual recovery also needs an executable rule. If a migrated word previously participated in parser restart boundaries, the owning parser code must recover on the parent construct rather than relying on a global token kind.
 
 ## Keyword Classification Draft
 
@@ -165,7 +202,7 @@ Next candidates:
 - `ceteri` in parameter lists, destructuring rest patterns, import rest, and extraction rest
 - `sparge` in argument and literal spread positions
 
-Potential cleanup candidates after context support exists:
+Potential cleanup backlog after context support exists:
 
 - `scribe` as a legacy diagnostic alias
 - `vide` and `mone` if diagnostic levels move to stdlib/HAL
@@ -177,21 +214,20 @@ Potential cleanup candidates after context support exists:
 - `qua`, `innatum`, `novum` if `⇢` becomes the only compile-time cast spelling
 - `nulla`, `nonnulla`, `nonnihil`, `negativum`, `positivum` if convenience predicates are cut
 
-Those are not all Phase 1 work. They are the backlog unlocked by a real contextual mechanism.
+Those are not part of this implementation factory. They are a follow-up language-design backlog unlocked by a real contextual mechanism.
 
 ## Stage Graph
 
 | Phase | Name | Goal | Checkpoint |
 | ----- | ---- | ---- | ---------- |
-| 0 | Baseline inventory | Classify active non-test keywords by scope and parser ownership. | Ledger lists each keyword as global, contextual, alias, candidate cut, or test-owned. |
-| 1 | Metadata registry | Add `KeywordSpec` / `KeywordScope` metadata without behavior changes. | Registry agrees with current lexer table; validation test prevents unclassified non-test keywords. |
-| 2 | Contextual parser helpers | Add shared helpers for matching identifier-backed contextual words. | Existing parser behavior unchanged; helper tests cover ident and old-token migration forms. |
+| 0 | Baseline inventory | Classify active non-test keywords by scope and parser ownership. | Ledger lists each keyword as global, contextual, alias, backlog candidate, or test-owned. |
+| 1 | Metadata registry | Add `KeywordSpec` / `KeywordScope` metadata without behavior changes. | Registry agrees with current lexer table and contextual vocabulary; validation prevents unclassified active spellings. |
+| 2 | Contextual parser helpers | Add shared grammar-word and contextual-identifier helpers. | Existing parser behavior unchanged; helper tests cover ident and old-token migration forms. |
 | 3 | First migration: `cura` kind | Move `arena` out of global keyword handling and parse it contextually with `page`. | `cura arena ...` and `cura page ...` still parse; `fixum arena ← 1` is legal. |
 | 4 | Function and entry modifiers | Contextualize `argumenta`, `exitus`, `curata`, `errata`, `optiones`, `immutata`, `iacit`. | Modifier syntax still parses; those words become legal identifiers outside modifier positions. |
 | 5 | Genus/member modifiers | Contextualize `generis`, `nexum`, `sub`, `implet`, and possibly `abstractus`. | Genus syntax still parses; those words become legal identifiers outside genus contexts. |
 | 6 | Rest/spread/context operators | Contextualize `ceteri` and `sparge` where feasible. | Rest/spread syntax still parses; non-context usage is identifier-safe. |
-| 7 | Alias and low-value cuts | Decide whether to delete or demote low-value convenience keywords. | Removed aliases have explain legacy entries or migration notes; canonical docs are clean. |
-| 8 | Guardrails | Add tests/searches/docs checks preventing accidental global keyword additions. | New global keywords require explicit scope metadata and reviewer-visible justification. |
+| 7 | Guardrails | Add tests/searches/docs checks preventing accidental global keyword additions. | New global keywords require explicit scope metadata and reviewer-visible justification. |
 
 ## Phase Details
 
@@ -204,12 +240,15 @@ Steps:
 - For every remaining keyword, record:
   - source text,
   - `TokenKind`,
+  - `KeywordOwner` if contextual,
   - current parser owner,
   - whether it can start a statement,
+  - whether it is currently a parser recovery boundary,
   - whether it can appear as an expression operator/form,
   - whether it is only meaningful under a parent construct,
   - whether it has glyph or other aliases,
   - whether examples/docs teach it as canonical.
+- Record contextual vocabulary that is not currently in `keyword_or_ident()`, starting with `page`.
 - Capture existing ad hoc contextual sites:
   - `LexerMode::Annotation`,
   - `LexerMode::Section`,
@@ -221,48 +260,58 @@ Steps:
 Deliverable:
 
 - `docs/factory/contextual-keyword-scope/ledger.md` with a keyword inventory table.
+- A short identifier-safety matrix naming which syntactic positions each migrated word must remain legal in outside its owner context.
 
 Checkpoint:
 
 - No compiler behavior changed.
 - Inventory names the first migration family.
+- Every planned migration has an explicit owner, parser call site, and recovery note.
 
 ### Phase 1: Metadata Registry
 
 Steps:
 
 - Add a central registry near the lexer or a new language metadata module.
-- Start with non-test keywords only.
+- Start with active language keywords and known contextual vocabulary. Test-owned words can be marked `TestOwned` but should not drive this migration.
 - Include enough category and scope metadata to answer:
   - is this globally reserved?
   - if contextual, which grammar construct owns it?
   - if legacy/alias, what is the canonical spelling?
-- Add tests that every non-test keyword in `keyword_or_ident` has a registry entry.
+- Add tests that every active spelling in `keyword_or_ident()` has a registry entry.
+- Add tests that contextual non-lexer vocabulary such as `page` has a registry entry.
+- Add tests that alias spellings are represented by text, not collapsed by shared `TokenKind`.
 - Do not change `keyword_or_ident` yet.
+- Do not let the registry become a passive duplicate forever: Phase 2 helpers or Phase 7 guardrails must consume it.
 
 Checkpoint:
 
 - `cargo test -p radix keyword` or equivalent focused test passes.
 - `./scripta/test` passes.
 - No user-visible syntax change.
+- Registry and lexer agree on current active spellings, including spellings that share one token kind.
 
 ### Phase 2: Contextual Parser Helpers
 
 Steps:
 
-- Add parser helpers for contextual matching.
+- Add parser helpers for contextual grammar matching.
+- Add separate parser helpers for identifier positions that allow registered contextual/legacy keywords.
 - Make helpers accept both `Ident("word")` and current legacy `TokenKind::Word` forms during migration.
 - Replace local string checks where obvious, starting with `cura page`.
 - Do not remove any keyword from the lexer table yet.
+- Wire helper validation to `KeywordOwner` so a word registered for one owner cannot be silently accepted in another owner.
+- Add or preserve recovery behavior at the owning parser site before removing any globally reserved token kind.
 
 Checkpoint:
 
-- Parser code has a single obvious path for contextual words.
+- Parser code has one obvious path for contextual grammar words and one obvious path for contextual identifier exceptions.
 - Existing behavior is unchanged.
 - Tests cover:
   - successful contextual match from identifier,
   - successful contextual match from existing keyword token,
   - failure with a useful diagnostic.
+  - rejection when the same spelling is requested under the wrong `KeywordOwner`.
 
 ### Phase 3: First Migration: `cura`
 
@@ -274,8 +323,10 @@ Steps:
 - Add negative/identifier tests:
   - `fixum arena ← 1` parses as a variable declaration,
   - `fixum page ← 1` continues to parse,
+  - `cura page source fixum textus page {}` still distinguishes the `page` kind word from later type/binding identifiers,
   - `cura bogus {}` produces a curator-kind diagnostic.
 - Update docs and explain entries to say `arena` is contextual under `cura`.
+- Document the ambiguity rule: in the immediate `cura` kind slot, `arena` and `page` are consumed as kind words. Outside that slot they are ordinary identifiers.
 
 Checkpoint:
 
@@ -318,6 +369,7 @@ Steps:
   - `implet`
   - possibly `abstractus`
 - Keep `genus` and `pactum` global.
+- Treat `abstractus` as a harder case, not a default migration. If migrated, statement dispatch must explicitly parse `abstractus genus` by lookahead and preserve diagnostics for misspelled class declarations.
 - Parser ownership:
   - `genus` declaration owns inheritance and implementation words,
   - genus member parser owns member modifiers.
@@ -349,31 +401,7 @@ Checkpoint:
 - Rest/spread examples parse.
 - `fixum ceteri ← 1` and `fixum sparge ← 1` are legal if migrated.
 
-### Phase 7: Alias and Convenience Keyword Decisions
-
-This phase is design work plus implementation slices. Candidates:
-
-- Delete `scribe` or make it an explain legacy redirect to `nota`.
-- Collapse `qua` / `innatum` / `novum` aliases if `⇢` is canonical.
-- Cut unary convenience predicates:
-  - `nulla`
-  - `nonnulla`
-  - `nonnihil`
-  - `negativum`
-  - `positivum`
-- Move `lege` / `lineam` to HAL if input should not be syntax.
-- Move `vide` / `mone` to HAL/std diagnostics if only `nota` should remain syntax.
-- Decide whether `scriptum`, `sed`, and the collection DSL words should remain language syntax.
-
-Checkpoint:
-
-- Each deletion has:
-  - a concrete replacement,
-  - migration docs,
-  - negative tests,
-  - explain legacy/canonical updates if applicable.
-
-### Phase 8: Guardrails
+### Phase 7: Guardrails
 
 Steps:
 
@@ -438,4 +466,3 @@ Start with `cura arena/page` because it already exposes the problem cleanly:
 - neither should be globally reserved.
 
 If that migration is not clean, the framework is not ready for function modifiers or member modifiers.
-
