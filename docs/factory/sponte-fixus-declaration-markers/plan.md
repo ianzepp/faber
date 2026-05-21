@@ -3,7 +3,7 @@
 **Status**: planned
 **Created**: 2026-05-21
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
-**Factory Artifact Dir**: `docs/factory/datus-given-postfix/`
+**Factory Artifact Dir**: `docs/factory/sponte-fixus-declaration-markers/`
 **Mode**: language design / breaking change with migration
 
 ## Interpreted Problem
@@ -36,7 +36,7 @@ After exploration, the chosen direction is:
 
 This creates a principled split rather than forcing all optionality through one syntax. `sponte` marks obligation: the field, parameter, option, or other declared data slot is voluntary, accepted when provided but not required from the caller/provider. `fixus` marks lifecycle: once the declared slot receives its initial value, either from the provider or from a `vel` default, it cannot be changed. `T ∪ nihil` marks value domain: the value may be either `T` or `nihil`.
 
-**Word choice**: `sponte` (Latin "of one's own accord") was selected after evaluating several candidates (`datus`, `ultro`, `fortuitus`, `incertus`, `casus`, `fors`, etc.). It avoids the English-reader collision between `datus` and date/data terminology while preserving the intended idea: the slot is not demanded; it is supplied voluntarily. `fixus` mirrors the existing `fixum` immutability vocabulary while making the one-time-set field/property rule visible at the declaration site.
+**Word choice**: `sponte` (Latin "of one's own accord") expresses that the slot is not demanded; it is supplied voluntarily. `fixus` mirrors the existing `fixum` immutability vocabulary while making the one-time-set field/property rule visible at the declaration site.
 
 ## Break Boundary
 
