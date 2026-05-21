@@ -60,11 +60,11 @@ incipit argumenta args {}
 # @ optio - CLI Options
 # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # Keyword: optio
-# Grammar: @ optio [type] <binding> [brevis <s>] [longum <s>] [descriptio <s>]
+# Grammar: @ optio <binding> [brevis <s>] [longum <s>] [typus <type>] [descriptio <s>] [ubique] [vel <value>]
 
-@ optio bivalens verbose brevis "v" longum "verbose" descriptio "Enable verbose output"
-@ optio textus output brevis "o" longum "output" descriptio "Output file path"
-@ optio numerus count longum "count" descriptio "Number of iterations"
+@ optio verbose brevis "v" longum "verbose" typus bivalens descriptio "Enable verbose output"
+@ optio output brevis "o" longum "output" typus textus descriptio "Output file path"
+@ optio count longum "count" typus numerus descriptio "Number of iterations"
 
 # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ operandus - CLI Positional Arguments
@@ -87,14 +87,14 @@ incipit argumenta args {}
 @ imperium "build"
 @ alias "b"
 @ descriptio "Build the project"
-@ optio bivalens release longum "release" descriptio "Build in release mode"
-functio build(si bivalens release) → vacuum {}
+@ optio release longum "release" typus bivalens descriptio "Build in release mode"
+functio build() argumenta args → vacuum {}
 
 @ imperium "test"
 @ alias "t"
 @ descriptio "Run tests"
-@ optio textus filter brevis "f" longum "filter" descriptio "Filter tests by name"
-functio test(si textus filter) → vacuum {}
+@ optio filter brevis "f" longum "filter" typus textus descriptio "Filter tests by name"
+functio test() argumenta args → vacuum {}
 
 # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 # @ nomen - Named Blocks (for config)

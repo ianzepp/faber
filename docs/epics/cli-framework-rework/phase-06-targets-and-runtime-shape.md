@@ -1,42 +1,46 @@
 # Phase 06: Targets and Runtime Shape
 
-## Goal
+## Status
 
-Turn the first target-specific implementation into a maintainable multi-target strategy.
+Deferred out of the initial CLI framework rework.
 
-## Scope
+Phases 1-5 proved the Rust CLI path: syntax, CLI IR, single-command codegen, subcommand dispatch, and package-local
+module mounts. Target strategy and runtime extraction are broader follow-on work and should be handled as a separate
+future effort.
 
-- Revisit the Phase 03 choice to emit self-contained Rust parser logic.
-- Decide whether repeated Rust parser logic should move into `radix/crates/norma` as `norma::cli`, a separate runtime crate, or remain emitted inline.
-- Define target capability expectations for TypeScript, Rust, Go, and future targets.
-- Decide how target capability limits surface in `radix targets`.
-- Add conformance tests for shared CLI behavior across supported targets.
-- Document intentionally unsupported target/feature combinations.
+## Current Decision
 
-## Phase Decisions From Earlier Work
+- Keep generated Rust CLI support self-contained.
+- Do not add `norma::cli` in this epic.
+- Do not create a separate public CLI runtime crate in this epic.
+- Keep runnable CLI support Rust-only for now.
+- Keep TypeScript, Go, and Faber runnable CLI codegen explicitly gated.
+- Treat conformance tests for future targets as future target/runtime work.
 
-- Phase 03 deliberately starts with self-contained generated Rust parser code.
-- Phase 06 is the first phase that should consider extracting reusable runtime support.
-- If runtime support is needed, prefer an internal `norma::cli` module before creating a separate public crate.
-- A separate public CLI runtime crate should require evidence that the API is stable enough to publish and version independently.
+## Rationale
 
-## Out Of Scope
+The generated parser and dispatcher are still settling. Recent phases changed option grammar, subcommand dispatch,
+module mounts, mount-local aliases, global merging, and package codegen. Extracting a runtime now would freeze an API
+before the shape has earned that stability.
 
-- Adding every target at once.
-- Advanced interactive CLI features.
-- Shell completion generation.
+Runtime extraction should be reconsidered only when at least one of these becomes true:
 
-## Design Questions
+- generated Rust CLI helper code becomes meaningfully duplicated or hard to maintain,
+- a second runnable target needs shared behavior,
+- packaging generated programs with helper code becomes cleaner than emitting helpers inline.
 
-- Did the Phase 03 generated Rust parser create enough duplication or complexity to justify runtime extraction?
-- Should runtime support live in `radix/crates/norma`, a new crate, or target-local generated helpers?
-- Which target should become the reference implementation for behavior?
-- How much help formatting should be shared versus target-local?
-- What package/linkage contract should generated programs use when they depend on runtime support?
+## Future Epic Scope
 
-## Acceptance
+A future target/runtime epic should decide:
 
-- Target support is explicit and discoverable.
-- At least two targets share the same CLI IR contract.
-- Unsupported target/feature combinations fail before misleading code is emitted.
-- Any runtime extraction decision is backed by working Phase 03 behavior and conformance tests, not by speculation.
+- whether CLI support belongs in `radix/crates/norma` as an internal `norma::cli` module,
+- whether a separate public CLI runtime crate is justified,
+- which non-Rust target should become the next runnable CLI backend,
+- how target capabilities are reported by `radix targets`,
+- which shared conformance fixtures every runnable CLI target must pass.
+
+## Closeout Acceptance
+
+- Current docs state that Rust is the only runnable CLI target.
+- Non-Rust runnable CLI targets remain explicitly gated.
+- Runtime extraction is documented as deferred, not silently forgotten.

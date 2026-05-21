@@ -90,7 +90,8 @@ faber build --target wasm src/mycli.fab
 ./mycli --help
 ```
 
-This is future product behavior. Today, Faber CLI ergonomics also depend on reviving the declarative CLI lowering described in `docs/grammatica/cli.md`.
+This is future product behavior. Today, declarative CLI lowering exists for the Rust target; a WASM target would need
+its own launcher/runtime contract before compiled Faber CLI tools feel native.
 
 This implies the need for a small launcher story:
 

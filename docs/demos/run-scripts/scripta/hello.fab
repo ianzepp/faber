@@ -2,21 +2,14 @@
 
 @ cli "hello"
 @ descriptio "Say hello"
-@ optio textus name brevis "n" longum "name" descriptio "Name to greet"
-@ optio bivalens loud brevis "l" longum "loud" descriptio "Shout the greeting"
+@ optio name brevis "n" longum "name" typus textus vel "World" descriptio "Name to greet"
+@ optio loud brevis "l" longum "loud" typus bivalens descriptio "Shout the greeting"
 
-incipit {
-    varia greeting = "Hello"
-
-    si args.name {
-        greeting = greeting + ", " + args.name
-    } secus {
-        greeting = greeting + ", World"
-    }
-
+incipit argumenta args {
     si args.loud {
-        greeting = greeting + "!"
+        scribe scriptum("HELLO, §!", args.name)
     }
-
-    scribe greeting
+    secus {
+        scribe scriptum("Hello, §.", args.name)
+    }
 }

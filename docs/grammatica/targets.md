@@ -72,6 +72,16 @@ cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t go examples/exemp
 
 Use `build --package` only when the target actually supports package compilation.
 
+## CLI Framework Support
+
+Declarative CLI programs are runnable only on the Rust target today.
+
+- `rust`: supports single-command CLIs, subcommands, help/version output, and package-local `@ imperia` module mounts.
+- `go`, `ts`, `faber`: CLI syntax can be parsed and checked, but runnable CLI codegen is intentionally gated.
+
+Generated Rust CLI programs currently include their parser and dispatcher inline. There is no `norma::cli` runtime
+dependency yet.
+
 ## Portability Guidance For The Current Compiler
 
 If you want the least surprising cross-target results on the active `radix-rs` surface:

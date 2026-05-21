@@ -1,14 +1,14 @@
 # CLI Framework Example
 #
-# Demonstrates @ cli, @ imperium, @ imperia annotations.
-# Compile: faber compile main.fab -o cli.ts
-# Run: bun cli.ts --help
+# Demonstrates @ cli, @ imperium, @ optio, and @ imperia.
+# Emit: cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/exempla/cli/main.fab
 
 importa ex "./commands/greet" privata * ut greetModule
 
 @ cli "example"
 @ versio "1.0.0"
 @ descriptio "Example CLI application"
+@ optio verbose brevis "v" longum "verbose" typus bivalens ubique descriptio "Enable verbose output"
 @ imperia "greet" ex greetModule
 incipit argumenta args {}
 

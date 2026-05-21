@@ -2,7 +2,7 @@
 
 ## Goal
 
-Move `docs/grammatica/cli.md` from aspiration to accurate user documentation once implementation has caught up.
+Move `docs/grammatica/cli.md` from aspiration to accurate user documentation now that Phases 1-5 are implemented.
 
 ## Scope
 
@@ -20,13 +20,13 @@ Move `docs/grammatica/cli.md` from aspiration to accurate user documentation onc
 
 ## Design Questions
 
-- Should examples favor tiny vertical slices or realistic tools such as `vivi`-shaped command trees?
-- Where should generated help snapshots live?
-- Should historical syntax forms be documented as supported, deprecated, or archive-only?
+- Examples should favor small vertical slices that compile today.
+- Historical type-first option syntax should be documented as archive-only, not deprecated-supported.
+- Generated help snapshots should live in compiler tests when they are needed for behavior locks.
 
 ## Acceptance
 
 - The grammar doc accurately describes implemented behavior.
 - Every documented CLI feature has a corresponding test or example.
 - The aspirational status warning is removed or narrowed to explicitly future-only sections.
-
+- Active CLI examples compile with the current Rust package path.

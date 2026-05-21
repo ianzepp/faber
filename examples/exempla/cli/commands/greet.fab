@@ -3,21 +3,25 @@
 # Mounted at "greet" by main.fab.
 # Commands: greet hello, greet goodbye
 
-@ descriptio "Greeting commands"
-incipit {}
-
 @ imperium "hello"
-functio hello(textus name) → vacuum {
-    scribe "Hello, §!", name
+@ alias "hi"
+@ descriptio "Say hello"
+@ operandus textus name descriptio "Name to greet"
+functio hello() argumenta args → vacuum {
+    scribe args.verbose
+    scribe scriptum("Hello, §!", args.name)
 }
 
 @ imperium "goodbye"
 @ alias "bye"
-functio goodbye(textus name, si bivalens formal ut f) → vacuum {
-    si f {
-        scribe "Farewell, §.", name
+@ descriptio "Say goodbye"
+@ optio formal longum "formal" typus bivalens descriptio "Use a formal farewell"
+@ operandus textus name descriptio "Name to greet"
+functio goodbye() argumenta args → vacuum {
+    si args.formal {
+        scribe scriptum("Farewell, §.", args.name)
     }
     secus {
-        scribe "Bye, §!", name
+        scribe scriptum("Bye, §!", args.name)
     }
 }
