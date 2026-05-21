@@ -20,11 +20,11 @@ pactum pressura {
 
     # Compress bytes (optional level 1-9)
     @ externa
-    functio comprime(textus algorithmus, octeti data, si numerus nivel) -> octeti
+    functio comprime(textus algorithmus, octeti data, si numerus nivel) → octeti
 
     # Decompress bytes
     @ externa
-    functio solve(textus algorithmus, octeti data) -> octeti
+    functio solve(textus algorithmus, octeti data) → octeti
 
     # =========================================================================
     # STREAMING
@@ -32,35 +32,35 @@ pactum pressura {
 
     # Create compression stream (optional level 1-9)
     @ externa
-    functio comprimens(textus algorithmus, si numerus nivel) -> Compressor
+    functio comprimens(textus algorithmus, si numerus nivel) → Compressor
 
     # Create decompression stream
     @ externa
-    functio solvens(textus algorithmus) -> Decompressor
+    functio solvens(textus algorithmus) → Decompressor
 }
 
 # Compression stream
 pactum Compressor {
     # Pour data in
     @ externa
-    functio funde(octeti data) -> vacuum
+    functio funde(octeti data) → vacuum
 
     # Close and get compressed result
     @ externa
-    functio claude() -> octeti
+    functio claude() → octeti
 }
 
 # Decompression stream
 pactum Decompressor {
     # Pour compressed data in
     @ externa
-    functio funde(octeti data) -> vacuum
+    functio funde(octeti data) → vacuum
 
     # Draw decompressed data out (partial)
     @ externa
-    functio hauri() -> octeti
+    functio hauri() → octeti
 
     # Close and get final result
     @ externa
-    functio claude() -> octeti
+    functio claude() → octeti
 }

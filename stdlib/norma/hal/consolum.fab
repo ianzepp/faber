@@ -27,12 +27,12 @@ pactum consolum {
 
     # Draw bytes from stdin (sync)
     @ externa
-    functio hauri(numerus magnitudo) -> octeti
+    functio hauri(numerus magnitudo) → octeti
 
     # Draw bytes from stdin (async)
     @ futura
     @ externa
-    functio hauriet(numerus magnitudo) -> octeti
+    functio hauriet(numerus magnitudo) → octeti
 
     # =========================================================================
     # STDIN - Text
@@ -43,12 +43,12 @@ pactum consolum {
 
     # Read line from stdin (sync, blocks until newline)
     @ externa
-    functio lege() -> textus
+    functio lege() → textus
 
     # Read line from stdin (async)
     @ futura
     @ externa
-    functio leget() -> textus
+    functio leget() → textus
 
     # =========================================================================
     # STDOUT - Bytes
@@ -59,12 +59,12 @@ pactum consolum {
 
     # Pour bytes to stdout (sync)
     @ externa
-    functio funde(octeti data) -> vacuum
+    functio funde(octeti data) → vacuum
 
     # Pour bytes to stdout (async)
     @ futura
     @ externa
-    functio fundet(octeti data) -> vacuum
+    functio fundet(octeti data) → vacuum
 
     # =========================================================================
     # STDOUT - Text with Newline
@@ -76,12 +76,12 @@ pactum consolum {
 
     # Write line to stdout with newline (sync)
     @ externa
-    functio scribe(textus msg) -> vacuum
+    functio scribe(textus msg) → vacuum
 
     # Write line to stdout with newline (async)
     @ futura
     @ externa
-    functio scribet(textus msg) -> vacuum
+    functio scribet(textus msg) → vacuum
 
     # =========================================================================
     # STDOUT - Text without Newline
@@ -93,12 +93,12 @@ pactum consolum {
 
     # Say text to stdout without newline (sync)
     @ externa
-    functio dic(textus msg) -> vacuum
+    functio dic(textus msg) → vacuum
 
     # Say text to stdout without newline (async)
     @ futura
     @ externa
-    functio dicet(textus msg) -> vacuum
+    functio dicet(textus msg) → vacuum
 
     # =========================================================================
     # STDERR - Warning/Error Output
@@ -110,12 +110,12 @@ pactum consolum {
 
     # Warn line to stderr with newline (sync)
     @ externa
-    functio mone(textus msg) -> vacuum
+    functio mone(textus msg) → vacuum
 
     # Warn line to stderr with newline (async)
     @ futura
     @ externa
-    functio monet(textus msg) -> vacuum
+    functio monet(textus msg) → vacuum
 
     # =========================================================================
     # DEBUG Output
@@ -127,12 +127,12 @@ pactum consolum {
 
     # Debug line with newline (sync)
     @ externa
-    functio vide(textus msg) -> vacuum
+    functio vide(textus msg) → vacuum
 
     # Debug line with newline (async)
     @ futura
     @ externa
-    functio videbit(textus msg) -> vacuum
+    functio videbit(textus msg) → vacuum
 
     # =========================================================================
     # TTY Detection
@@ -142,9 +142,9 @@ pactum consolum {
 
     # Is stdin connected to a terminal?
     @ externa
-    functio estTerminale() -> bivalens
+    functio estTerminale() → bivalens
 
     # Is stdout connected to a terminal?
     @ externa
-    functio estTerminaleOutput() -> bivalens
+    functio estTerminaleOutput() → bivalens
 }

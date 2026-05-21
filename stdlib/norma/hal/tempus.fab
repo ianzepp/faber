@@ -22,15 +22,15 @@ pactum tempus {
 
     # Current epoch time in milliseconds
     @ externa
-    functio nunc() -> numerus
+    functio nunc() → numerus
 
     # Current epoch time in nanoseconds
     @ externa
-    functio nuncNano() -> magnus
+    functio nuncNano() → magnus
 
     # Current epoch time in seconds
     @ externa
-    functio nuncSecunda() -> numerus
+    functio nuncSecunda() → numerus
 
     # =========================================================================
     # MONOTONIC CLOCK (never decreases)
@@ -39,11 +39,11 @@ pactum tempus {
     # Monotonic nanoseconds since arbitrary fixed point
     # Use for measuring durations, not wall clock time
     @ externa
-    functio monotonicum() -> magnus
+    functio monotonicum() → magnus
 
     # Milliseconds since HAL initialization (uptime)
     @ externa
-    functio activum() -> numerus
+    functio activum() → numerus
 
     # =========================================================================
     # SLEEP / DELAY
@@ -54,7 +54,7 @@ pactum tempus {
     # Sleep for milliseconds (async)
     @ futura
     @ externa
-    functio dormiet(numerus ms) -> vacuum
+    functio dormiet(numerus ms) → vacuum
 
     # =========================================================================
     # SCHEDULED CALLBACKS
@@ -67,32 +67,32 @@ pactum tempus {
 
     # Appoint function to run once after delay (returns handle for cancellation)
     @ externa
-    functio destina(numerus ms, () -> vacuum fn) -> numerus
+    functio destina(numerus ms, () → vacuum fn) → numerus
 
     # Iterate function repeatedly at interval (returns handle for cancellation)
     @ externa
-    functio itera(numerus ms, () -> vacuum fn) -> numerus
+    functio itera(numerus ms, () → vacuum fn) → numerus
 
     # Cancel a scheduled callback by handle
     @ externa
-    functio siste(numerus handle) -> vacuum
+    functio siste(numerus handle) → vacuum
 
     # =========================================================================
     # DURATION CONSTANTS (milliseconds)
     # =========================================================================
 
     @ externa
-    functio MILLISECUNDUM() -> numerus
+    functio MILLISECUNDUM() → numerus
 
     @ externa
-    functio SECUNDUM() -> numerus
+    functio SECUNDUM() → numerus
 
     @ externa
-    functio MINUTUM() -> numerus
+    functio MINUTUM() → numerus
 
     @ externa
-    functio HORA() -> numerus
+    functio HORA() → numerus
 
     @ externa
-    functio DIES() -> numerus
+    functio DIES() → numerus
 }

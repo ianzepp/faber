@@ -20,7 +20,7 @@ genus textus { }
 @ verte cpp (ego) -> "§.length()"
 @ verte zig (ego) -> "§.len"
 @ externa
-functio longitudo() -> numerus
+functio longitudo() → numerus
 
 # =============================================================================
 # SLICING
@@ -33,7 +33,7 @@ functio longitudo() -> numerus
 @ verte cpp (ego, start, end) -> "§.substr(§, § - §)"
 @ verte zig (ego, start, end) -> "§[§..§]"
 @ externa
-functio sectio(numerus start, numerus end) -> textus
+functio sectio(numerus start, numerus end) → textus
 
 # =============================================================================
 # SEARCHING
@@ -46,7 +46,7 @@ functio sectio(numerus start, numerus end) -> textus
 @ verte cpp (ego, sub) -> "(§.find(§) != std::string::npos)"
 @ verte zig (ego, sub) -> "(std.mem.indexOf(u8, §, §) != null)"
 @ externa
-functio continet(textus sub) -> bivalens
+functio continet(textus sub) → bivalens
 
 # Check if string starts with prefix
 @ verte ts "startsWith"
@@ -55,7 +55,7 @@ functio continet(textus sub) -> bivalens
 @ verte cpp (ego, prefix) -> "(§.rfind(§, 0) == 0)"
 @ verte zig (ego, prefix) -> "std.mem.startsWith(u8, §, §)"
 @ externa
-functio initium(textus prefix) -> bivalens
+functio initium(textus prefix) → bivalens
 
 # Check if string ends with suffix
 @ verte ts "endsWith"
@@ -64,7 +64,7 @@ functio initium(textus prefix) -> bivalens
 @ verte cpp (ego, suffix) -> "(§.size() >= §.size() && §.compare(§.size() - §.size(), §.size(), §) == 0)"
 @ verte zig (ego, suffix) -> "std.mem.endsWith(u8, §, §)"
 @ externa
-functio finis(textus suffix) -> bivalens
+functio finis(textus suffix) → bivalens
 
 # =============================================================================
 # CASE CONVERSION
@@ -77,7 +77,7 @@ functio finis(textus suffix) -> bivalens
 @ verte cpp (ego) -> "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::toupper); return s; }()"
 @ verte zig (ego) -> "std.ascii.upperString(§)"
 @ externa
-functio maiuscula() -> textus
+functio maiuscula() → textus
 
 # Convert to lowercase
 @ verte ts "toLowerCase"
@@ -86,7 +86,7 @@ functio maiuscula() -> textus
 @ verte cpp (ego) -> "[&]{ auto s = §; std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }()"
 @ verte zig (ego) -> "std.ascii.lowerString(§)"
 @ externa
-functio minuscula() -> textus
+functio minuscula() → textus
 
 # =============================================================================
 # TRIMMING
@@ -99,7 +99,7 @@ functio minuscula() -> textus
 @ verte cpp (ego) -> "[&]{ auto s = §; s.erase(0, s.find_first_not_of(\" \\t\\n\\r\")); s.erase(s.find_last_not_of(\" \\t\\n\\r\") + 1); return s; }()"
 @ verte zig (ego) -> "std.mem.trim(u8, §, \" \\t\\n\\r\")"
 @ externa
-functio recide() -> textus
+functio recide() → textus
 
 # =============================================================================
 # SPLITTING
@@ -112,7 +112,7 @@ functio recide() -> textus
 @ verte cpp (ego, sep) -> "@compileError(\"No single-expression split in C++ - use manual loop\")"
 @ verte zig (ego, sep) -> "@compileError(\"Use std.mem.splitSequence for Zig\")"
 @ externa
-functio divide(textus sep) -> lista<textus>
+functio divide(textus sep) → lista<textus>
 
 # =============================================================================
 # REPLACEMENT
@@ -125,4 +125,4 @@ functio divide(textus sep) -> lista<textus>
 @ verte cpp (ego, old, new) -> "std::regex_replace(§, std::regex(§), §)"
 @ verte zig (ego, old, new) -> "@compileError(\"Use std.mem.replace for Zig\")"
 @ externa
-functio muta(textus vetus, textus novum) -> textus
+functio muta(textus vetus, textus novum) → textus

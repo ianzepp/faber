@@ -21,37 +21,37 @@ pactum thesaurus {
     # Get value by key (returns nihil if not found)
     @ futura
     @ externa
-    functio capiet(textus clavis) -> textus?
+    functio capiet(textus clavis) → textus?
 
     # Set value with optional TTL in seconds
     @ futura
     @ externa
-    functio ponet(textus clavis, textus valor, numerus ttl) -> vacuum
+    functio ponet(textus clavis, textus valor, numerus ttl) → vacuum
 
     # Set value only if key doesn't exist
     @ futura
     @ externa
-    functio ponetNovum(textus clavis, textus valor) -> bivalens
+    functio ponetNovum(textus clavis, textus valor) → bivalens
 
     # Delete key(s)
     @ futura
     @ externa
-    functio delet(lista<textus> claves) -> numerus
+    functio delet(lista<textus> claves) → numerus
 
     # Check if key exists
     @ futura
     @ externa
-    functio exstabit(textus clavis) -> bivalens
+    functio exstabit(textus clavis) → bivalens
 
     # Get remaining TTL in seconds (-1 = no expiry, -2 = not found)
     @ futura
     @ externa
-    functio ttl(textus clavis) -> numerus
+    functio ttl(textus clavis) → numerus
 
     # Set expiry on existing key
     @ futura
     @ externa
-    functio expirabit(textus clavis, numerus secundae) -> bivalens
+    functio expirabit(textus clavis, numerus secundae) → bivalens
 
     # =========================================================================
     # NUMERIC OPERATIONS
@@ -60,12 +60,12 @@ pactum thesaurus {
     # Increment by amount (default 1)
     @ futura
     @ externa
-    functio augebit(textus clavis, numerus quantum) -> numerus
+    functio augebit(textus clavis, numerus quantum) → numerus
 
     # Decrement by 1
     @ futura
     @ externa
-    functio minuet(textus clavis) -> numerus
+    functio minuet(textus clavis) → numerus
 
     # =========================================================================
     # KEY QUERIES
@@ -74,7 +74,7 @@ pactum thesaurus {
     # Find keys matching glob pattern
     @ futura
     @ externa
-    functio quaeret(textus exemplar) -> lista<textus>
+    functio quaeret(textus exemplar) → lista<textus>
 
     # =========================================================================
     # PUB/SUB
@@ -83,13 +83,13 @@ pactum thesaurus {
     # Publish message to topic, returns subscriber count
     @ futura
     @ externa
-    functio publicabit(textus thema, textus nuntius) -> numerus
+    functio publicabit(textus thema, textus nuntius) → numerus
 
     # Subscribe to topic patterns
     # Pattern: * matches one segment, ** matches multiple
     @ futura
     @ externa
-    functio auscultabit(lista<textus> exemplaria) -> Subscriptio
+    functio auscultabit(lista<textus> exemplaria) → Subscriptio
 }
 
 # Pub/Sub subscription
@@ -98,21 +98,21 @@ pactum Subscriptio {
     @ futura
     @ cursor
     @ externa
-    functio nuntiabunt() -> cursor<Nuntius>
+    functio nuntiabunt() → cursor<Nuntius>
 
     # Unsubscribe and cleanup
     @ externa
-    functio claude() -> vacuum
+    functio claude() → vacuum
 }
 
 # Pub/Sub message
 pactum Nuntius {
     @ externa
-    functio thema() -> textus
+    functio thema() → textus
 
     @ externa
-    functio corpus() -> textus
+    functio corpus() → textus
 
     @ externa
-    functio tempus() -> numerus
+    functio tempus() → numerus
 }

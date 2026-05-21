@@ -20,27 +20,27 @@ pactum http {
     # GET request
     @ futura
     @ externa
-    functio petet(textus url) -> Replicatio
+    functio petet(textus url) → Replicatio
 
     # POST request with body
     @ futura
     @ externa
-    functio mittet(textus url, textus corpus) -> Replicatio
+    functio mittet(textus url, textus corpus) → Replicatio
 
     # PUT request with body
     @ futura
     @ externa
-    functio ponet(textus url, textus corpus) -> Replicatio
+    functio ponet(textus url, textus corpus) → Replicatio
 
     # DELETE request
     @ futura
     @ externa
-    functio delet(textus url) -> Replicatio
+    functio delet(textus url) → Replicatio
 
     # PATCH request with body
     @ futura
     @ externa
-    functio mutabit(textus url, textus corpus) -> Replicatio
+    functio mutabit(textus url, textus corpus) → Replicatio
 
     # =========================================================================
     # HTTP CLIENT - Advanced
@@ -49,7 +49,7 @@ pactum http {
     # Generic request with full control
     @ futura
     @ externa
-    functio rogabit(textus modus, textus url, tabula<textus, textus> capita, textus corpus) -> Replicatio
+    functio rogabit(textus modus, textus url, tabula<textus, textus> capita, textus corpus) → Replicatio
 
     # =========================================================================
     # HTTP SERVER
@@ -58,7 +58,7 @@ pactum http {
     # Start server on port with handler
     @ futura
     @ externa
-    functio exspectabit(numerus portus, (Rogatio) -> Replicatio handler) -> Servitor
+    functio exspectabit(numerus portus, (Rogatio) → Replicatio handler) → Servitor
 
     # =========================================================================
     # RESPONSE BUILDERS (for server handlers)
@@ -66,79 +66,79 @@ pactum http {
 
     # Full control: explicit status, headers, body
     @ externa
-    functio replica(numerus status, tabula<textus, textus> capita, textus corpus) -> Replicatio
+    functio replica(numerus status, tabula<textus, textus> capita, textus corpus) → Replicatio
 
     # Text response (Content-Type: text/plain)
     @ externa
-    functio scribe(numerus status, textus corpus) -> Replicatio
+    functio scribe(numerus status, textus corpus) → Replicatio
 
     # Binary response (Content-Type: application/octet-stream)
     @ externa
-    functio funde(numerus status, octeti data) -> Replicatio
+    functio funde(numerus status, octeti data) → Replicatio
 
     # JSON response (Content-Type: application/json, auto-serializes)
     @ externa
-    functio json(numerus status, quidlibet data) -> Replicatio
+    functio json(numerus status, quidlibet data) → Replicatio
 
     # Redirect response (302 + Location header)
     @ externa
-    functio redirige(textus url) -> Replicatio
+    functio redirige(textus url) → Replicatio
 }
 
 # HTTP Response
 pactum Replicatio {
     @ externa
-    functio status() -> numerus
+    functio status() → numerus
 
     @ externa
-    functio corpus() -> textus
+    functio corpus() → textus
 
     @ externa
-    functio corpusOcteti() -> octeti
+    functio corpusOcteti() → octeti
 
     @ externa
-    functio corpusJson() -> quidlibet
+    functio corpusJson() → quidlibet
 
     @ externa
-    functio capita() -> tabula<textus, textus>
+    functio capita() → tabula<textus, textus>
 
     @ externa
-    functio caput(textus nomen) -> textus?
+    functio caput(textus nomen) → textus?
 
     # True if status is 2xx
     @ externa
-    functio bene() -> bivalens
+    functio bene() → bivalens
 }
 
 # HTTP Request (received by server)
 pactum Rogatio {
     @ externa
-    functio modus() -> textus
+    functio modus() → textus
 
     @ externa
-    functio via() -> textus
+    functio via() → textus
 
     @ externa
-    functio corpus() -> textus
+    functio corpus() → textus
 
     @ externa
-    functio corpusJson() -> quidlibet
+    functio corpusJson() → quidlibet
 
     @ externa
-    functio capita() -> tabula<textus, textus>
+    functio capita() → tabula<textus, textus>
 
     @ externa
-    functio caput(textus nomen) -> textus?
+    functio caput(textus nomen) → textus?
 
     @ externa
-    functio param(textus nomen) -> textus?
+    functio param(textus nomen) → textus?
 }
 
 # HTTP Server handle
 pactum Servitor {
     @ externa
-    functio siste() -> vacuum
+    functio siste() → vacuum
 
     @ externa
-    functio portus() -> numerus
+    functio portus() → numerus
 }

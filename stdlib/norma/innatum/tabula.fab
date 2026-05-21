@@ -22,7 +22,7 @@ genus tabula { }
 @ verte cpp (ego, k, v) -> "§0.insert_or_assign(§1, §2)"
 @ verte zig (ego, k, v, alloc) -> "§0.pone(§3, §1, §2)"
 @ externa
-functio pone(K clavis, V valor) -> vacuum
+functio pone(K clavis, V valor) → vacuum
 
 # Get value by key
 @ verte ts "get"
@@ -31,7 +31,7 @@ functio pone(K clavis, V valor) -> vacuum
 @ verte cpp (ego, k) -> "§0.at(§1)"
 @ verte zig (ego, k) -> "§0.accipe(§1)"
 @ externa
-functio accipe(K clavis) -> V?
+functio accipe(K clavis) → V?
 
 # Get value or return default
 @ verte ts (ego, k, def) -> "(§0.get(§1) ?? §2)"
@@ -40,7 +40,7 @@ functio accipe(K clavis) -> V?
 @ verte cpp (ego, k, def) -> "(§0.contains(§1) ? §0.at(§1) : §2)"
 @ verte zig (ego, k, def) -> "§0.accipeAut(§1, §2)"
 @ externa
-functio accipeAut(K clavis, V defalta) -> V
+functio accipeAut(K clavis, V defalta) → V
 
 # Check if key exists
 @ verte ts "has"
@@ -49,7 +49,7 @@ functio accipeAut(K clavis, V defalta) -> V
 @ verte cpp (ego, k) -> "§0.contains(§1)"
 @ verte zig (ego, k) -> "§0.habet(§1)"
 @ externa
-functio habet(K clavis) -> bivalens
+functio habet(K clavis) → bivalens
 
 # Delete key (mutates)
 @ radix del, imperativus
@@ -59,7 +59,7 @@ functio habet(K clavis) -> bivalens
 @ verte cpp (ego, k) -> "§0.erase(§1)"
 @ verte zig (ego, k) -> "_ = §0.dele(§1)"
 @ externa
-functio dele(K clavis) -> bivalens
+functio dele(K clavis) → bivalens
 
 # Get size
 @ verte ts (ego) -> "§.size"
@@ -68,7 +68,7 @@ functio dele(K clavis) -> bivalens
 @ verte cpp (ego) -> "§.size()"
 @ verte zig (ego) -> "§.longitudo()"
 @ externa
-functio longitudo() -> numerus
+functio longitudo() → numerus
 
 # Check if empty
 @ verte ts (ego) -> "§.size === 0"
@@ -77,7 +77,7 @@ functio longitudo() -> numerus
 @ verte cpp (ego) -> "§.empty()"
 @ verte zig (ego) -> "§.vacua()"
 @ externa
-functio vacua() -> bivalens
+functio vacua() → bivalens
 
 # Clear all entries (mutates)
 @ radix purg, imperativus
@@ -87,7 +87,7 @@ functio vacua() -> bivalens
 @ verte cpp "clear"
 @ verte zig (ego) -> "§.purga()"
 @ externa
-functio purga() -> vacuum
+functio purga() → vacuum
 
 # =============================================================================
 # ITERATION
@@ -100,7 +100,7 @@ functio purga() -> vacuum
 @ verte cpp (ego) -> "§ | std::views::keys"
 @ verte zig (ego) -> "§.claves()"
 @ externa
-functio claves() -> cursor<K>
+functio claves() → cursor<K>
 
 # Get values iterator
 @ verte ts "values"
@@ -109,7 +109,7 @@ functio claves() -> cursor<K>
 @ verte cpp (ego) -> "§ | std::views::values"
 @ verte zig (ego) -> "§.valores()"
 @ externa
-functio valores() -> cursor<V>
+functio valores() → cursor<V>
 
 # Get entries iterator
 @ verte ts "entries"
@@ -118,7 +118,7 @@ functio valores() -> cursor<V>
 @ verte cpp (ego) -> "§"
 @ verte zig (ego) -> "§.paria()"
 @ externa
-functio paria() -> cursor<par<K, V>>
+functio paria() → cursor<par<K, V>>
 
 # =============================================================================
 # ADVANCED OPERATIONS
@@ -132,7 +132,7 @@ functio paria() -> cursor<par<K, V>>
 @ verte cpp (ego, claves) -> "faber::tabula_selecta(§0, §1)"
 @ verte zig (ego, claves) -> "@compileError(\"selecta not implemented for Zig - use explicit loop\")"
 @ externa
-functio selecta(lista<K> claves) -> tabula<K, V>
+functio selecta(lista<K> claves) → tabula<K, V>
 
 # Remove specified keys (returns new map)
 # WHY: Latin omittere → omissus. Stem is 'omis', participle ending is '-sa'
@@ -143,7 +143,7 @@ functio selecta(lista<K> claves) -> tabula<K, V>
 @ verte cpp (ego, claves) -> "faber::tabula_omissa(§0, §1)"
 @ verte zig (ego, claves) -> "@compileError(\"omissa not implemented for Zig - use explicit loop\")"
 @ externa
-functio omissa(lista<K> claves) -> tabula<K, V>
+functio omissa(lista<K> claves) → tabula<K, V>
 
 # Merge maps (returns new map)
 @ radix confl, perfectum
@@ -153,7 +153,7 @@ functio omissa(lista<K> claves) -> tabula<K, V>
 @ verte cpp (ego, alia) -> "faber::tabula_conflata(§0, §1)"
 @ verte zig (ego, alia) -> "§0.conflata(&§1)"
 @ externa
-functio conflata(tabula<K, V> alia) -> tabula<K, V>
+functio conflata(tabula<K, V> alia) → tabula<K, V>
 
 # Swap keys and values (returns new map)
 @ radix inver, perfectum
@@ -163,21 +163,21 @@ functio conflata(tabula<K, V> alia) -> tabula<K, V>
 @ verte cpp (ego) -> "faber::tabula_inversa(§)"
 @ verte zig (ego) -> "@compileError(\"inversa not implemented for Zig - use explicit loop\")"
 @ externa
-functio inversa() -> tabula<V, K>
+functio inversa() → tabula<V, K>
 
 # Transform values (returns new map)
 @ verte ts (ego, fn) -> "new Map([...§0].map(([k, v]) => [k, (§1)(v)]))"
 @ verte py (ego, fn) -> "{k: (§1)(v) for k, v in §0.items()}"
 @ verte zig (ego, fn) -> "@compileError(\"mappaValores not implemented for Zig - use explicit loop\")"
 @ externa
-functio mappaValores((V) -> U fn) -> tabula<K, U>
+functio mappaValores((V) → U fn) → tabula<K, U>
 
 # Transform keys (returns new map)
 @ verte ts (ego, fn) -> "new Map([...§0].map(([k, v]) => [(§1)(k), v]))"
 @ verte py (ego, fn) -> "{(§1)(k): v for k, v in §0.items()}"
 @ verte zig (ego, fn) -> "@compileError(\"mappaClaves not implemented for Zig - use explicit loop\")"
 @ externa
-functio mappaClaves((K) -> J fn) -> tabula<J, V>
+functio mappaClaves((K) → J fn) → tabula<J, V>
 
 # =============================================================================
 # CONVERSIONS
@@ -190,11 +190,11 @@ functio mappaClaves((K) -> J fn) -> tabula<J, V>
 @ verte cpp (ego) -> "faber::tabula_in_lista(§)"
 @ verte zig (ego, alloc) -> "§.inLista(§)"
 @ externa
-functio inLista() -> lista<par<K, V>>
+functio inLista() → lista<par<K, V>>
 
 # Convert to object (JS/Python only)
 @ verte ts (ego) -> "Object.fromEntries(§)"
 @ verte py (ego) -> "dict(§)"
 @ verte zig (ego) -> "@compileError(\"inObjectum not implemented for Zig - Zig has no object type\")"
 @ externa
-functio inObjectum() -> objectum
+functio inObjectum() → objectum

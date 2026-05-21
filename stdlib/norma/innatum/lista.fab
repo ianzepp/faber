@@ -22,7 +22,7 @@ genus lista { }
 @ verte cpp "push_back"
 @ verte zig (ego, elem, alloc) -> "§0.appende(§2, §1)"
 @ externa
-functio appende(T elem) -> vacuum
+functio appende(T elem) → vacuum
 
 # Add element to end (returns new list)
 @ verte ts (ego, elem) -> "[...§, §]"
@@ -31,7 +31,7 @@ functio appende(T elem) -> vacuum
 @ verte cpp (ego, elem) -> "faber::lista_addita(§0, §1)"
 @ verte zig (ego, elem, alloc) -> "§0.addita(§2, §1)"
 @ externa
-functio addita(T elem) -> lista<T>
+functio addita(T elem) → lista<T>
 
 # Add element to start (mutates)
 @ radix praepon, imperativus, perfectum
@@ -41,7 +41,7 @@ functio addita(T elem) -> lista<T>
 @ verte cpp (ego, elem) -> "§.insert(§.begin(), §)"
 @ verte zig (ego, elem, alloc) -> "§0.praepone(§2, §1)"
 @ externa
-functio praepone(T elem) -> vacuum
+functio praepone(T elem) → vacuum
 
 # Add element to start (returns new list)
 @ verte ts (ego, elem) -> "[§1, ...§0]"
@@ -50,7 +50,7 @@ functio praepone(T elem) -> vacuum
 @ verte cpp (ego, elem) -> "faber::lista_praeposita(§0, §1)"
 @ verte zig (ego, elem, alloc) -> "§0.praeposita(§2, §1)"
 @ externa
-functio praeposita(T elem) -> lista<T>
+functio praeposita(T elem) → lista<T>
 
 # =============================================================================
 # REMOVING ELEMENTS
@@ -64,7 +64,7 @@ functio praeposita(T elem) -> lista<T>
 @ verte cpp (ego) -> "faber::lista_remove(§0)"
 @ verte zig (ego) -> "§.remove()"
 @ externa
-functio remove() -> T?
+functio remove() → T?
 
 # Remove last element (returns new list)
 @ verte ts (ego) -> "§.slice(0, -1)"
@@ -73,7 +73,7 @@ functio remove() -> T?
 @ verte cpp (ego) -> "std::vector(§0.begin(), §0.end() - 1)"
 @ verte zig (ego, alloc) -> "§.remota(§)"
 @ externa
-functio remota() -> lista<T>
+functio remota() → lista<T>
 
 # Remove and return first element (mutates)
 @ radix decapit, imperativus, perfectum
@@ -83,7 +83,7 @@ functio remota() -> lista<T>
 @ verte cpp (ego) -> "faber::lista_decapita(§0)"
 @ verte zig (ego) -> "§.decapita()"
 @ externa
-functio decapita() -> T?
+functio decapita() → T?
 
 # Remove first element (returns new list)
 @ verte ts (ego) -> "§.slice(1)"
@@ -92,7 +92,7 @@ functio decapita() -> T?
 @ verte cpp (ego) -> "std::vector(§0.begin() + 1, §0.end())"
 @ verte zig (ego, alloc) -> "§.decapitata(§)"
 @ externa
-functio decapitata() -> lista<T>
+functio decapitata() → lista<T>
 
 # Clear all elements (mutates)
 @ radix purg, imperativus
@@ -102,7 +102,7 @@ functio decapitata() -> lista<T>
 @ verte cpp "clear"
 @ verte zig (ego) -> "§.purga()"
 @ externa
-functio purga() -> vacuum
+functio purga() → vacuum
 
 # =============================================================================
 # ACCESSING ELEMENTS
@@ -115,7 +115,7 @@ functio purga() -> vacuum
 @ verte cpp (ego) -> "§.front()"
 @ verte zig (ego) -> "§.primus()"
 @ externa
-functio primus() -> T?
+functio primus() → T?
 
 # Get last element
 @ verte ts (ego) -> "§.at(-1)"
@@ -124,7 +124,7 @@ functio primus() -> T?
 @ verte cpp (ego) -> "§.back()"
 @ verte zig (ego) -> "§.ultimus()"
 @ externa
-functio ultimus() -> T?
+functio ultimus() → T?
 
 # Get element at index
 @ verte ts (ego, idx) -> "§[§]"
@@ -133,7 +133,7 @@ functio ultimus() -> T?
 @ verte cpp (ego, idx) -> "§.at(§)"
 @ verte zig (ego, idx) -> "§.accipe(§)"
 @ externa
-functio accipe(numerus idx) -> T?
+functio accipe(numerus idx) → T?
 
 # =============================================================================
 # PROPERTIES
@@ -146,7 +146,7 @@ functio accipe(numerus idx) -> T?
 @ verte cpp (ego) -> "§.size()"
 @ verte zig (ego) -> "§.longitudo()"
 @ externa
-functio longitudo() -> numerus
+functio longitudo() → numerus
 
 # Check if empty
 @ verte ts (ego) -> "§.length === 0"
@@ -155,7 +155,7 @@ functio longitudo() -> numerus
 @ verte cpp (ego) -> "§.empty()"
 @ verte zig (ego) -> "§.vacua()"
 @ externa
-functio vacua() -> bivalens
+functio vacua() → bivalens
 
 # =============================================================================
 # SEARCHING
@@ -168,7 +168,7 @@ functio vacua() -> bivalens
 @ verte cpp (ego, elem) -> "(std::find(§0.begin(), §0.end(), §1) != §0.end())"
 @ verte zig (ego, elem) -> "§.continet(§)"
 @ externa
-functio continet(T elem) -> bivalens
+functio continet(T elem) → bivalens
 
 # Find index of element
 @ verte ts "indexOf"
@@ -177,7 +177,7 @@ functio continet(T elem) -> bivalens
 @ verte cpp (ego, elem) -> "faber::lista_indice_de(§0, §1)"
 @ verte zig (ego, elem) -> "§.indiceDe(§)"
 @ externa
-functio indiceDe(T elem) -> numerus
+functio indiceDe(T elem) → numerus
 
 # Find first element matching predicate
 @ verte ts "find"
@@ -186,7 +186,7 @@ functio indiceDe(T elem) -> numerus
 @ verte cpp (ego, pred) -> "*std::find_if(§0.begin(), §0.end(), §1)"
 @ verte zig (ego, pred) -> "§.inveni(§)"
 @ externa
-functio inveni((T) -> bivalens pred) -> T?
+functio inveni((T) → bivalens pred) → T?
 
 # Find index of first element matching predicate
 @ verte ts "findIndex"
@@ -195,7 +195,7 @@ functio inveni((T) -> bivalens pred) -> T?
 @ verte cpp (ego, pred) -> "faber::lista_inveni_indicem(§0, §1)"
 @ verte zig (ego, pred) -> "§.inveniIndicem(§)"
 @ externa
-functio inveniIndicem((T) -> bivalens pred) -> numerus
+functio inveniIndicem((T) → bivalens pred) → numerus
 
 # =============================================================================
 # PREDICATES
@@ -208,7 +208,7 @@ functio inveniIndicem((T) -> bivalens pred) -> numerus
 @ verte cpp (ego, pred) -> "std::ranges::all_of(§, §)"
 @ verte zig (ego, pred) -> "§.omnes(§)"
 @ externa
-functio omnes((T) -> bivalens pred) -> bivalens
+functio omnes((T) → bivalens pred) → bivalens
 
 # Check if any element matches predicate
 @ verte ts "some"
@@ -217,7 +217,7 @@ functio omnes((T) -> bivalens pred) -> bivalens
 @ verte cpp (ego, pred) -> "std::ranges::any_of(§, §)"
 @ verte zig (ego, pred) -> "§.aliquis(§)"
 @ externa
-functio aliquis((T) -> bivalens pred) -> bivalens
+functio aliquis((T) → bivalens pred) → bivalens
 
 # =============================================================================
 # FUNCTIONAL METHODS (return new list)
@@ -231,7 +231,7 @@ functio aliquis((T) -> bivalens pred) -> bivalens
 @ verte cpp (ego, pred) -> "(§ | std::views::filter(§) | std::ranges::to<std::vector>())"
 @ verte zig (ego, pred, alloc) -> "§0.filtrata(§2, §1)"
 @ externa
-functio filtrata((T) -> bivalens pred) -> lista<T>
+functio filtrata((T) → bivalens pred) → lista<T>
 
 # Map elements (returns new list)
 @ radix mapp, perfectum
@@ -241,7 +241,7 @@ functio filtrata((T) -> bivalens pred) -> lista<T>
 @ verte cpp (ego, fn) -> "(§ | std::views::transform(§) | std::ranges::to<std::vector>())"
 @ verte zig (ego, fn, alloc) -> "§0.mappata(§2, §1)"
 @ externa
-functio mappata((T) -> U fn) -> lista<U>
+functio mappata((T) → U fn) → lista<U>
 
 # Flat map (map + flatten one level)
 @ radix explan, perfectum
@@ -250,7 +250,7 @@ functio mappata((T) -> U fn) -> lista<U>
 @ verte rs (ego, fn) -> "§.iter().flat_map(§).collect::<Vec<_>>()"
 @ verte cpp (ego, fn) -> "(§ | std::views::transform(§) | std::views::join | std::ranges::to<std::vector>())"
 @ externa
-functio explanata((T) -> lista<U> fn) -> lista<U>
+functio explanata((T) → lista<U> fn) → lista<U>
 
 # Flatten one level
 @ verte ts "flat"
@@ -258,7 +258,7 @@ functio explanata((T) -> lista<U> fn) -> lista<U>
 @ verte rs (ego) -> "§.iter().flatten().cloned().collect::<Vec<_>>()"
 @ verte cpp (ego) -> "(§ | std::views::join | std::ranges::to<std::vector>())"
 @ externa
-functio plana() -> lista<T>
+functio plana() → lista<T>
 
 # Reverse (returns new list)
 # WHY: Latin "invertere" has irregular participle "inversus" with stem "inver-"
@@ -269,7 +269,7 @@ functio plana() -> lista<T>
 @ verte cpp (ego) -> "faber::lista_inversa(§)"
 @ verte zig (ego, alloc) -> "§.inversa(§)"
 @ externa
-functio inversa() -> lista<T>
+functio inversa() → lista<T>
 
 # Sort (returns new list)
 @ radix ordin, imperativus, perfectum
@@ -279,7 +279,7 @@ functio inversa() -> lista<T>
 @ verte cpp (ego) -> "faber::lista_ordinata(§)"
 @ verte zig (ego, alloc) -> "§.ordinata(§)"
 @ externa
-functio ordinata() -> lista<T>
+functio ordinata() → lista<T>
 
 # Slice - take elements from start to end
 @ verte ts "slice"
@@ -288,7 +288,7 @@ functio ordinata() -> lista<T>
 @ verte cpp (ego, start, end) -> "std::vector(§0.begin() + §1, §0.begin() + §2)"
 @ verte zig (ego, start, end, alloc) -> "§0.sectio(§3, §1, §2)"
 @ externa
-functio sectio(numerus start, numerus end) -> lista<T>
+functio sectio(numerus start, numerus end) → lista<T>
 
 # Take first n elements (returns new list)
 @ verte ts (ego, n) -> "§.slice(0, §)"
@@ -297,7 +297,7 @@ functio sectio(numerus start, numerus end) -> lista<T>
 @ verte cpp (ego, n) -> "(§ | std::views::take(§) | std::ranges::to<std::vector>())"
 @ verte zig (ego, n, alloc) -> "§0.prima(§2, §1)"
 @ externa
-functio prima(numerus n) -> lista<T>
+functio prima(numerus n) → lista<T>
 
 # Take last n elements (returns new list)
 @ verte ts (ego, n) -> "§.slice(-§)"
@@ -306,7 +306,7 @@ functio prima(numerus n) -> lista<T>
 @ verte cpp (ego, n) -> "faber::lista_ultima(§0, §1)"
 @ verte zig (ego, n, alloc) -> "§0.ultima(§2, §1)"
 @ externa
-functio ultima(numerus n) -> lista<T>
+functio ultima(numerus n) → lista<T>
 
 # Drop first n elements (returns new list)
 # WHY: Latin omittere → omissus. Stem is 'omis', participle ending is '-sa'
@@ -317,7 +317,7 @@ functio ultima(numerus n) -> lista<T>
 @ verte cpp (ego, n) -> "(§ | std::views::drop(§) | std::ranges::to<std::vector>())"
 @ verte zig (ego, n, alloc) -> "§0.omissa(§2, §1)"
 @ externa
-functio omissa(numerus n) -> lista<T>
+functio omissa(numerus n) → lista<T>
 
 # Reduce to single value
 @ radix reduc, perfectum
@@ -327,7 +327,7 @@ functio omissa(numerus n) -> lista<T>
 @ verte cpp (ego, fn, init) -> "std::ranges::fold_left(§, §, §)"
 @ verte zig (ego, fn, init) -> "§.reducta(§, §)"
 @ externa
-functio reducta((U, T) -> U fn, U init) -> U
+functio reducta((U, T) → U fn, U init) → U
 
 # =============================================================================
 # MUTATING OPERATIONS
@@ -339,7 +339,7 @@ functio reducta((U, T) -> U fn, U init) -> U
 @ verte py (ego, pred) -> "§[:] = [x for x in § if (§)(x)]"
 @ verte cpp (ego, pred) -> "§0.erase(std::remove_if(§0.begin(), §0.end(), [&](auto& x) { return !(§1)(x); }), §0.end())"
 @ externa
-functio filtra((T) -> bivalens pred) -> vacuum
+functio filtra((T) → bivalens pred) → vacuum
 
 # Sort in place (mutates)
 @ radix ordin, imperativus, perfectum
@@ -349,7 +349,7 @@ functio filtra((T) -> bivalens pred) -> vacuum
 @ verte cpp (ego) -> "std::ranges::sort(§)"
 @ verte zig (ego) -> "§.ordina()"
 @ externa
-functio ordina() -> vacuum
+functio ordina() → vacuum
 
 # Reverse in place (mutates)
 # WHY: Different stem from 'inversa' due to Latin irregular participle
@@ -360,7 +360,7 @@ functio ordina() -> vacuum
 @ verte cpp (ego) -> "std::ranges::reverse(§)"
 @ verte zig (ego) -> "§.inverte()"
 @ externa
-functio inverte() -> vacuum
+functio inverte() → vacuum
 
 # =============================================================================
 # ITERATION
@@ -373,7 +373,7 @@ functio inverte() -> vacuum
 @ verte cpp (ego, fn) -> "std::ranges::for_each(§, §)"
 @ verte zig (ego, fn) -> "§.perambula(§)"
 @ externa
-functio perambula((T) -> vacuum fn) -> vacuum
+functio perambula((T) → vacuum fn) → vacuum
 
 # Join elements to string
 @ verte ts "join"
@@ -381,7 +381,7 @@ functio perambula((T) -> vacuum fn) -> vacuum
 @ verte rs (ego, sep) -> "§.join(§)"
 @ verte cpp (ego, sep) -> "faber::lista_coniunge(§0, §1)"
 @ externa
-functio coniunge(textus sep) -> textus
+functio coniunge(textus sep) → textus
 
 # =============================================================================
 # AGGREGATION
@@ -394,7 +394,7 @@ functio coniunge(textus sep) -> textus
 @ verte cpp (ego) -> "std::accumulate(§0.begin(), §0.end(), 0)"
 @ verte zig (ego) -> "§.summa()"
 @ externa
-functio summa() -> T
+functio summa() → T
 
 # Average of numeric elements
 @ verte ts (ego) -> "(§0.reduce((a, b) => a + b, 0) / §0.length)"
@@ -403,7 +403,7 @@ functio summa() -> T
 @ verte cpp (ego) -> "(std::accumulate(§0.begin(), §0.end(), 0.0) / §0.size())"
 @ verte zig (ego) -> "§.medium()"
 @ externa
-functio medium() -> fractus
+functio medium() → fractus
 
 # Minimum value
 @ verte ts (ego) -> "Math.min(...§)"
@@ -412,7 +412,7 @@ functio medium() -> fractus
 @ verte cpp (ego) -> "*std::ranges::min_element(§)"
 @ verte zig (ego) -> "§.minimus()"
 @ externa
-functio minimus() -> T?
+functio minimus() → T?
 
 # Maximum value
 @ verte ts (ego) -> "Math.max(...§)"
@@ -421,21 +421,21 @@ functio minimus() -> T?
 @ verte cpp (ego) -> "*std::ranges::max_element(§)"
 @ verte zig (ego) -> "§.maximus()"
 @ externa
-functio maximus() -> T?
+functio maximus() → T?
 
 # Minimum by key function
 @ verte ts (ego, fn) -> "§.reduce((min, x) => (§)(x) < (§)(min) ? x : min)"
 @ verte rs (ego, fn) -> "§.iter().min_by_key(§)"
 @ verte cpp (ego, fn) -> "*std::ranges::min_element(§, [&](auto& a, auto& b) { return (§)(a) < (§)(b); })"
 @ externa
-functio minimusPer((T) -> U fn) -> T?
+functio minimusPer((T) → U fn) → T?
 
 # Maximum by key function
 @ verte ts (ego, fn) -> "§.reduce((max, x) => (§)(x) > (§)(max) ? x : max)"
 @ verte rs (ego, fn) -> "§.iter().max_by_key(§)"
 @ verte cpp (ego, fn) -> "*std::ranges::max_element(§, [&](auto& a, auto& b) { return (§)(a) < (§)(b); })"
 @ externa
-functio maximusPer((T) -> U fn) -> T?
+functio maximusPer((T) → U fn) → T?
 
 # Count elements matching predicate
 @ verte ts (ego, pred) -> "§.filter(§).length"
@@ -444,7 +444,7 @@ functio maximusPer((T) -> U fn) -> T?
 @ verte cpp (ego, pred) -> "std::ranges::count_if(§, §)"
 @ verte zig (ego, pred) -> "§.numera(§)"
 @ externa
-functio numera((T) -> bivalens pred) -> numerus
+functio numera((T) → bivalens pred) → numerus
 
 # =============================================================================
 # LODASH-INSPIRED METHODS
@@ -456,7 +456,7 @@ functio numera((T) -> bivalens pred) -> numerus
 @ verte rs (ego, fn) -> "faber::lista_congrega(&§0, §1)"
 @ verte cpp (ego, fn) -> "faber::lista_congrega(§0, §1)"
 @ externa
-functio congrega((T) -> K fn) -> tabula<K, lista<T>>
+functio congrega((T) → K fn) → tabula<K, lista<T>>
 
 # Remove duplicates
 @ verte ts (ego) -> "[...new Set(§)]"
@@ -464,13 +464,13 @@ functio congrega((T) -> K fn) -> tabula<K, lista<T>>
 @ verte rs (ego) -> "faber::lista_unica(&§)"
 @ verte cpp (ego) -> "faber::lista_unica(§)"
 @ externa
-functio unica() -> lista<T>
+functio unica() → lista<T>
 
 # Flatten all levels
 @ verte ts (ego) -> "§.flat(Infinity)"
 @ verte cpp (ego) -> "(§ | std::views::join | std::ranges::to<std::vector>())"
 @ externa
-functio planaOmnia() -> lista<T>
+functio planaOmnia() → lista<T>
 
 # Split into chunks of size n
 @ verte ts (ego, n) -> "Array.from({ length: Math.ceil(§.length / §) }, (_, i) => §.slice(i * §, i * § + §))"
@@ -478,14 +478,14 @@ functio planaOmnia() -> lista<T>
 @ verte rs (ego, n) -> "§.chunks(§).map(|c| c.to_vec()).collect::<Vec<_>>()"
 @ verte cpp (ego, n) -> "faber::lista_fragmenta(§0, §1)"
 @ externa
-functio fragmenta(numerus n) -> lista<lista<T>>
+functio fragmenta(numerus n) → lista<lista<T>>
 
 # Remove falsy values
 @ verte ts (ego) -> "§.filter(Boolean)"
 @ verte py (ego) -> "[x for x in § if x]"
 @ verte cpp (ego) -> "(§ | std::views::filter([](auto& x) { return static_cast<bool>(x); }) | std::ranges::to<std::vector>())"
 @ externa
-functio densa() -> lista<T>
+functio densa() → lista<T>
 
 # Partition by predicate (returns tuple [truthy, falsy])
 @ verte ts (ego, pred) -> "§.reduce(([t, f], x) => (§)(x) ? [[...t, x], f] : [t, [...f, x]], [[], []])"
@@ -493,7 +493,7 @@ functio densa() -> lista<T>
 @ verte rs (ego, pred) -> "faber::lista_partire(&§0, §1)"
 @ verte cpp (ego, pred) -> "faber::lista_partire(§0, §1)"
 @ externa
-functio partire((T) -> bivalens pred) -> lista<lista<T>>
+functio partire((T) → bivalens pred) → lista<lista<T>>
 
 # Shuffle (returns new list)
 @ radix misc, perfectum
@@ -501,18 +501,18 @@ functio partire((T) -> bivalens pred) -> lista<lista<T>>
 @ verte py (ego) -> "random.shuffle(§)"
 @ verte cpp (ego) -> "faber::lista_miscita(§)"
 @ externa
-functio miscita() -> lista<T>
+functio miscita() → lista<T>
 
 # Random element
 @ verte ts (ego) -> "§0[Math.floor(Math.random() * §0.length)]"
 @ verte py (ego) -> "random.choice(§)"
 @ verte cpp (ego) -> "faber::lista_specimen(§0)"
 @ externa
-functio specimen() -> T
+functio specimen() → T
 
 # Random n elements
 @ verte ts (ego, n) -> "(() => { const a = [...§]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, §); })()"
 @ verte py (ego, n) -> "random.sample(§, §)"
 @ verte cpp (ego, n) -> "faber::lista_specimina(§0, §1)"
 @ externa
-functio specimina(numerus n) -> lista<T>
+functio specimina(numerus n) → lista<T>

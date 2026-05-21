@@ -44,7 +44,7 @@ pactum processus {
         lista<textus> argumenta,
         si textus directorium,
         si tabula<textus, textus> ambitus
-    ) -> Subprocessus
+    ) → Subprocessus
 
     # =========================================================================
     # SPAWN - Detached
@@ -61,7 +61,7 @@ pactum processus {
         lista<textus> argumenta,
         si textus directorium,
         si tabula<textus, textus> ambitus
-    ) -> numerus
+    ) → numerus
 
     # =========================================================================
     # SHELL EXECUTION
@@ -73,12 +73,12 @@ pactum processus {
 
     # Execute shell command, block until complete, return stdout (sync)
     @ externa
-    functio exsequi(textus imperium) -> textus
+    functio exsequi(textus imperium) → textus
 
     # Execute shell command, return stdout when complete (async)
     @ futura
     @ externa
-    functio exsequetur(textus imperium) -> textus
+    functio exsequetur(textus imperium) → textus
 
     # =========================================================================
     # ENVIRONMENT - Read
@@ -90,7 +90,7 @@ pactum processus {
 
     # Read environment variable (returns nihil if not set)
     @ externa
-    functio lege(textus nomen) -> si textus
+    functio lege(textus nomen) → si textus
 
     # =========================================================================
     # ENVIRONMENT - Write
@@ -102,7 +102,7 @@ pactum processus {
 
     # Write environment variable
     @ externa
-    functio scribe(textus nomen, textus valor) -> vacuum
+    functio scribe(textus nomen, textus valor) → vacuum
 
     # =========================================================================
     # PROCESS INFO - Working Directory
@@ -115,7 +115,7 @@ pactum processus {
 
     # Get current working directory (where the process dwells)
     @ externa
-    functio sedes() -> textus
+    functio sedes() → textus
 
     # =========================================================================
     # PROCESS INFO - Change Directory
@@ -127,7 +127,7 @@ pactum processus {
 
     # Change current working directory
     @ externa
-    functio muta(textus via) -> vacuum
+    functio muta(textus via) → vacuum
 
     # =========================================================================
     # PROCESS INFO - Identity
@@ -138,7 +138,7 @@ pactum processus {
 
     # Get process ID
     @ externa
-    functio identitas() -> numerus
+    functio identitas() → numerus
 
     # =========================================================================
     # PROCESS INFO - Arguments
@@ -149,7 +149,7 @@ pactum processus {
 
     # Get command line arguments (excludes runtime and script path)
     @ externa
-    functio argumenta() -> lista<textus>
+    functio argumenta() → lista<textus>
 
     # =========================================================================
     # EXIT
@@ -161,5 +161,5 @@ pactum processus {
 
     # Exit process with code (never returns)
     @ externa
-    functio exi(numerus code) -> numquam
+    functio exi(numerus code) → numquam
 }

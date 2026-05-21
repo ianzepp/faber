@@ -20,7 +20,7 @@ genus fractus { }
 @ verte cpp (ego) -> "std::abs(§)"
 @ verte zig (ego) -> "@abs(§)"
 @ externa
-functio absolutum() -> fractus
+functio absolutum() → fractus
 
 # Sign (-1, 0, or 1)
 @ verte ts (ego) -> "Math.sign(§)"
@@ -29,7 +29,7 @@ functio absolutum() -> fractus
 @ verte cpp (ego) -> "std::copysign(1.0, §)"
 @ verte zig (ego) -> "std.math.sign(§)"
 @ externa
-functio signum() -> fractus
+functio signum() → fractus
 
 # Minimum of two values
 @ verte ts (ego, other) -> "Math.min(§, §)"
@@ -38,7 +38,7 @@ functio signum() -> fractus
 @ verte cpp (ego, other) -> "std::min(§, §)"
 @ verte zig (ego, other) -> "@min(§, §)"
 @ externa
-functio minimus(fractus other) -> fractus
+functio minimus(fractus other) → fractus
 
 # Maximum of two values
 @ verte ts (ego, other) -> "Math.max(§, §)"
@@ -47,7 +47,7 @@ functio minimus(fractus other) -> fractus
 @ verte cpp (ego, other) -> "std::max(§, §)"
 @ verte zig (ego, other) -> "@max(§, §)"
 @ externa
-functio maximus(fractus other) -> fractus
+functio maximus(fractus other) → fractus
 
 # =============================================================================
 # ROUNDING OPERATIONS
@@ -60,7 +60,7 @@ functio maximus(fractus other) -> fractus
 @ verte cpp (ego) -> "static_cast<int64_t>(std::round(§))"
 @ verte zig (ego) -> "@intFromFloat(@round(§))"
 @ externa
-functio rotunda() -> numerus
+functio rotunda() → numerus
 
 # Floor (round down)
 @ verte ts (ego) -> "Math.floor(§)"
@@ -69,7 +69,7 @@ functio rotunda() -> numerus
 @ verte cpp (ego) -> "static_cast<int64_t>(std::floor(§))"
 @ verte zig (ego) -> "@intFromFloat(@floor(§))"
 @ externa
-functio pavimentum() -> numerus
+functio pavimentum() → numerus
 
 # Ceiling (round up)
 @ verte ts (ego) -> "Math.ceil(§)"
@@ -78,7 +78,7 @@ functio pavimentum() -> numerus
 @ verte cpp (ego) -> "static_cast<int64_t>(std::ceil(§))"
 @ verte zig (ego) -> "@intFromFloat(@ceil(§))"
 @ externa
-functio tectum() -> numerus
+functio tectum() → numerus
 
 # Truncate toward zero
 @ verte ts (ego) -> "Math.trunc(§)"
@@ -87,4 +87,4 @@ functio tectum() -> numerus
 @ verte cpp (ego) -> "static_cast<int64_t>(std::trunc(§))"
 @ verte zig (ego) -> "@intFromFloat(@trunc(§))"
 @ externa
-functio trunca() -> numerus
+functio trunca() → numerus

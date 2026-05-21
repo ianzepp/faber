@@ -42,12 +42,12 @@ pactum solum {
 
     # Read entire file as text (sync)
     @ externa
-    functio lege(textus via) -> textus
+    functio lege(textus via) → textus
 
     # Read entire file as text (async)
     @ futura
     @ externa
-    functio leget(textus via) -> textus
+    functio leget(textus via) → textus
 
     # =========================================================================
     # READING - Bytes
@@ -59,12 +59,12 @@ pactum solum {
 
     # Draw entire file as bytes (sync)
     @ externa
-    functio hauri(textus via) -> octeti
+    functio hauri(textus via) → octeti
 
     # Draw entire file as bytes (async)
     @ futura
     @ externa
-    functio hauriet(textus via) -> octeti
+    functio hauriet(textus via) → octeti
 
     # =========================================================================
     # READING - Lines
@@ -76,12 +76,12 @@ pactum solum {
 
     # Pluck lines from file (sync)
     @ externa
-    functio carpe(textus via) -> lista<textus>
+    functio carpe(textus via) → lista<textus>
 
     # Pluck lines from file (async)
     @ futura
     @ externa
-    functio carpiet(textus via) -> lista<textus>
+    functio carpiet(textus via) → lista<textus>
 
     # =========================================================================
     # WRITING - Text
@@ -93,12 +93,12 @@ pactum solum {
 
     # Write text to file, overwrites existing (sync)
     @ externa
-    functio scribe(textus via, textus data) -> vacuum
+    functio scribe(textus via, textus data) → vacuum
 
     # Write text to file, overwrites existing (async)
     @ futura
     @ externa
-    functio scribet(textus via, textus data) -> vacuum
+    functio scribet(textus via, textus data) → vacuum
 
     # =========================================================================
     # WRITING - Bytes
@@ -110,12 +110,12 @@ pactum solum {
 
     # Pour bytes to file, overwrites existing (sync)
     @ externa
-    functio funde(textus via, octeti data) -> vacuum
+    functio funde(textus via, octeti data) → vacuum
 
     # Pour bytes to file, overwrites existing (async)
     @ futura
     @ externa
-    functio fundet(textus via, octeti data) -> vacuum
+    functio fundet(textus via, octeti data) → vacuum
 
     # =========================================================================
     # WRITING - Append
@@ -127,12 +127,12 @@ pactum solum {
 
     # Append text to file (sync)
     @ externa
-    functio appone(textus via, textus data) -> vacuum
+    functio appone(textus via, textus data) → vacuum
 
     # Append text to file (async)
     @ futura
     @ externa
-    functio apponet(textus via, textus data) -> vacuum
+    functio apponet(textus via, textus data) → vacuum
 
     # =========================================================================
     # FILE INFO - Existence
@@ -143,12 +143,12 @@ pactum solum {
 
     # Check if path exists (sync)
     @ externa
-    functio exstat(textus via) -> bivalens
+    functio exstat(textus via) → bivalens
 
     # Check if path exists (async)
     @ futura
     @ externa
-    functio exstabit(textus via) -> bivalens
+    functio exstabit(textus via) → bivalens
 
     # =========================================================================
     # FILE INFO - Details
@@ -160,12 +160,12 @@ pactum solum {
 
     # Get file details (sync)
     @ externa
-    functio describe(textus via) -> SolumStatus
+    functio describe(textus via) → SolumStatus
 
     # Get file details (async)
     @ futura
     @ externa
-    functio describet(textus via) -> SolumStatus
+    functio describet(textus via) → SolumStatus
 
     # =========================================================================
     # FILE INFO - Symlinks
@@ -177,12 +177,12 @@ pactum solum {
 
     # Follow symlink to get target path (sync)
     @ externa
-    functio sequere(textus via) -> textus
+    functio sequere(textus via) → textus
 
     # Follow symlink to get target path (async)
     @ futura
     @ externa
-    functio sequetur(textus via) -> textus
+    functio sequetur(textus via) → textus
 
     # =========================================================================
     # FILE OPERATIONS - Delete
@@ -194,12 +194,12 @@ pactum solum {
 
     # Delete file (sync)
     @ externa
-    functio dele(textus via) -> vacuum
+    functio dele(textus via) → vacuum
 
     # Delete file (async)
     @ futura
     @ externa
-    functio delet(textus via) -> vacuum
+    functio delet(textus via) → vacuum
 
     # =========================================================================
     # FILE OPERATIONS - Copy
@@ -211,12 +211,12 @@ pactum solum {
 
     # Copy file (sync)
     @ externa
-    functio exscribe(textus fons, textus destinatio) -> vacuum
+    functio exscribe(textus fons, textus destinatio) → vacuum
 
     # Copy file (async)
     @ futura
     @ externa
-    functio exscribet(textus fons, textus destinatio) -> vacuum
+    functio exscribet(textus fons, textus destinatio) → vacuum
 
     # =========================================================================
     # FILE OPERATIONS - Rename/Move
@@ -228,12 +228,12 @@ pactum solum {
 
     # Rename or move file (sync)
     @ externa
-    functio renomina(textus fons, textus destinatio) -> vacuum
+    functio renomina(textus fons, textus destinatio) → vacuum
 
     # Rename or move file (async)
     @ futura
     @ externa
-    functio renominabit(textus fons, textus destinatio) -> vacuum
+    functio renominabit(textus fons, textus destinatio) → vacuum
 
     # =========================================================================
     # FILE OPERATIONS - Touch
@@ -245,12 +245,12 @@ pactum solum {
 
     # Touch file - create or update mtime (sync)
     @ externa
-    functio tange(textus via) -> vacuum
+    functio tange(textus via) → vacuum
 
     # Touch file - create or update mtime (async)
     @ futura
     @ externa
-    functio tanget(textus via) -> vacuum
+    functio tanget(textus via) → vacuum
 
     # =========================================================================
     # DIRECTORY OPERATIONS - Create
@@ -262,12 +262,12 @@ pactum solum {
 
     # Create directory (sync)
     @ externa
-    functio crea(textus via) -> vacuum
+    functio crea(textus via) → vacuum
 
     # Create directory (async)
     @ futura
     @ externa
-    functio creabit(textus via) -> vacuum
+    functio creabit(textus via) → vacuum
 
     # =========================================================================
     # DIRECTORY OPERATIONS - List
@@ -279,12 +279,12 @@ pactum solum {
 
     # List directory contents (sync)
     @ externa
-    functio enumera(textus via) -> lista<textus>
+    functio enumera(textus via) → lista<textus>
 
     # List directory contents (async)
     @ futura
     @ externa
-    functio enumerabit(textus via) -> lista<textus>
+    functio enumerabit(textus via) → lista<textus>
 
     # =========================================================================
     # DIRECTORY OPERATIONS - Prune/Remove
@@ -297,12 +297,12 @@ pactum solum {
 
     # Prune directory tree (sync)
     @ externa
-    functio amputa(textus via) -> vacuum
+    functio amputa(textus via) → vacuum
 
     # Prune directory tree (async)
     @ futura
     @ externa
-    functio amputabit(textus via) -> vacuum
+    functio amputabit(textus via) → vacuum
 
     # =========================================================================
     # PATH UTILITIES
@@ -314,35 +314,35 @@ pactum solum {
     # Join path segments
     # Maps to: path.join(...parts)
     @ externa
-    functio iunge(lista<textus> partes) -> textus
+    functio iunge(lista<textus> partes) → textus
 
     # Get directory part of path
     # Maps to: path.dirname(path)
     @ externa
-    functio directorium(textus via) -> textus
+    functio directorium(textus via) → textus
 
     # Get filename part of path
     # Maps to: path.basename(path)
     @ externa
-    functio basis(textus via) -> textus
+    functio basis(textus via) → textus
 
     # Get file extension (includes dot)
     # Maps to: path.extname(path)
     @ externa
-    functio extensio(textus via) -> textus
+    functio extensio(textus via) → textus
 
     # Resolve to absolute path
     # Maps to: path.resolve(path)
     @ externa
-    functio absolve(textus via) -> textus
+    functio absolve(textus via) → textus
 
     # Get user's home directory
     # Maps to: os.homedir()
     @ externa
-    functio domus() -> textus
+    functio domus() → textus
 
     # Get system temp directory
     # Maps to: os.tmpdir()
     @ externa
-    functio temporarium() -> textus
+    functio temporarium() → textus
 }

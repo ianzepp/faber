@@ -22,11 +22,11 @@ pactum caelum {
 
     # Create TCP listener (TLS when cert/key provided)
     @ externa
-    functio ausculta(numerus portus, si textus cert, si textus key) -> Auscultator
+    functio ausculta(numerus portus, si textus cert, si textus key) → Auscultator
 
     @ futura
     @ externa
-    functio auscultabit(numerus portus, si textus cert, si textus key) -> Auscultator
+    functio auscultabit(numerus portus, si textus cert, si textus key) → Auscultator
 
     # =========================================================================
     # TCP CLIENT
@@ -34,69 +34,69 @@ pactum caelum {
 
     # Connect to TCP server (TLS when tute=verum)
     @ externa
-    functio connecte(textus hospes, numerus portus, si bivalens tute vel falsum) -> Connexus
+    functio connecte(textus hospes, numerus portus, si bivalens tute vel falsum) → Connexus
 
     @ futura
     @ externa
-    functio connectet(textus hospes, numerus portus, si bivalens tute vel falsum) -> Connexus
+    functio connectet(textus hospes, numerus portus, si bivalens tute vel falsum) → Connexus
 }
 
 # TCP Listener
 pactum Auscultator {
     # Accept next incoming connection
     @ externa
-    functio accipe() -> Connexus
+    functio accipe() → Connexus
 
     @ futura
     @ externa
-    functio accipiet() -> Connexus
+    functio accipiet() → Connexus
 
     # Stop listening
     @ externa
-    functio claude() -> vacuum
+    functio claude() → vacuum
 
     # Local port
     @ externa
-    functio portus() -> numerus
+    functio portus() → numerus
 }
 
 # TCP Socket (connected byte stream)
 pactum Connexus {
     # Draw bytes (up to n if provided, otherwise whatever is available)
     @ externa
-    functio hauri(si numerus n) -> octeti
+    functio hauri(si numerus n) → octeti
 
     @ futura
     @ externa
-    functio hauriet(si numerus n) -> octeti
+    functio hauriet(si numerus n) → octeti
 
     # Pour bytes
     @ externa
-    functio funde(octeti data) -> vacuum
+    functio funde(octeti data) → vacuum
 
     @ futura
     @ externa
-    functio fundet(octeti data) -> vacuum
+    functio fundet(octeti data) → vacuum
 
     # Close connection
     @ externa
-    functio claude() -> vacuum
+    functio claude() → vacuum
 
     # Remote address
     @ externa
-    functio hospesRemotus() -> textus
+    functio hospesRemotus() → textus
 
     # Remote port
     @ externa
-    functio portusRemotus() -> numerus
+    functio portusRemotus() → numerus
 
     # Local address
     @ externa
-    functio hospesLocalis() -> textus
+    functio hospesLocalis() → textus
 
     # Local port
     @ externa
-    functio portusLocalis() -> numerus
+    functio portusLocalis() → numerus
 }
 
 # TODO: UDP support deferred

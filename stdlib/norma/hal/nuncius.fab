@@ -21,7 +21,7 @@ pactum nuncius {
 
     # Allocate shared memory buffer
     @ externa
-    functio alloca(numerus magnitudo) -> octeti
+    functio alloca(numerus magnitudo) → octeti
 
     # =========================================================================
     # MESSAGE PORTS
@@ -31,7 +31,7 @@ pactum nuncius {
 
     # Open a connected message port pair
     @ externa
-    functio aperi() -> ParPortarum
+    functio aperi() → ParPortarum
 
     # =========================================================================
     # SYNCHRONIZATION PRIMITIVES
@@ -47,95 +47,95 @@ pactum nuncius {
 
     # Restrict access via mutex backed by shared memory
     @ externa
-    functio restringe(octeti memoria, numerus offset) -> Mutex
+    functio restringe(octeti memoria, numerus offset) → Mutex
 
     # Count permits via semaphore backed by shared memory
     @ externa
-    functio numera(octeti memoria, numerus offset, numerus valor) -> Semaphorum
+    functio numera(octeti memoria, numerus offset, numerus valor) → Semaphorum
 
     # Keep watch via condition variable backed by shared memory
     @ externa
-    functio vigila(octeti memoria, numerus offset) -> Conditio
+    functio vigila(octeti memoria, numerus offset) → Conditio
 }
 
 # Message port pair
 pactum ParPortarum {
     @ externa
-    functio a() -> Porta
+    functio a() → Porta
 
     @ externa
-    functio b() -> Porta
+    functio b() → Porta
 }
 
 # Message port (one end of a channel)
 pactum Porta {
     # Send message
     @ externa
-    functio mitte(quidlibet nuntius) -> vacuum
+    functio mitte(quidlibet nuntius) → vacuum
 
     # Receive message (async, blocks until available)
     @ futura
     @ externa
-    functio recipiet() -> quidlibet
+    functio recipiet() → quidlibet
 
     # Check if message available
     @ externa
-    functio paratum() -> bivalens
+    functio paratum() → bivalens
 
     # Close port
     @ externa
-    functio claude() -> vacuum
+    functio claude() → vacuum
 }
 
 # Mutual exclusion lock
 pactum Mutex {
     # Acquire lock (blocks until available)
     @ externa
-    functio obstringe() -> vacuum
+    functio obstringe() → vacuum
 
     # Try to acquire without blocking
     @ externa
-    functio tempta() -> bivalens
+    functio tempta() → bivalens
 
     # Release lock
     @ externa
-    functio solve() -> vacuum
+    functio solve() → vacuum
 }
 
 # Counting semaphore
 pactum Semaphorum {
     # Wait (decrement, blocks if zero)
     @ externa
-    functio exspecta() -> vacuum
+    functio exspecta() → vacuum
 
     # Try to decrement without blocking
     @ externa
-    functio tempta() -> bivalens
+    functio tempta() → bivalens
 
     # Post (increment, wakes one waiter)
     @ externa
-    functio signa() -> vacuum
+    functio signa() → vacuum
 
     # Read current value
     @ externa
-    functio lege() -> numerus
+    functio lege() → numerus
 }
 
 # Condition variable
 pactum Conditio {
     # Wait for signal (must hold mutex)
     @ externa
-    functio exspecta(Mutex mutex) -> vacuum
+    functio exspecta(Mutex mutex) → vacuum
 
     # Wait with timeout, returns false if timed out
     @ externa
-    functio exspectaUsque(Mutex mutex, numerus ms) -> bivalens
+    functio exspectaUsque(Mutex mutex, numerus ms) → bivalens
 
     # Wake one waiting thread
     @ externa
-    functio signa() -> vacuum
+    functio signa() → vacuum
 
     # Wake all waiting threads
     @ externa
-    functio diffunde() -> vacuum
+    functio diffunde() → vacuum
 }

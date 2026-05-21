@@ -20,7 +20,7 @@ genus numerus { }
 @ verte cpp (ego) -> "std::abs(§)"
 @ verte zig (ego) -> "@intCast(@abs(§))"
 @ externa
-functio absolutum() -> numerus
+functio absolutum() → numerus
 
 # Sign (-1, 0, or 1)
 @ verte ts (ego) -> "Math.sign(§)"
@@ -29,7 +29,7 @@ functio absolutum() -> numerus
 @ verte cpp (ego) -> "((§0 > 0) - (§0 < 0))"
 @ verte zig (ego) -> "std.math.sign(§)"
 @ externa
-functio signum() -> numerus
+functio signum() → numerus
 
 # Minimum of two values
 @ verte ts (ego, other) -> "Math.min(§, §)"
@@ -38,7 +38,7 @@ functio signum() -> numerus
 @ verte cpp (ego, other) -> "std::min(§, §)"
 @ verte zig (ego, other) -> "@min(§, §)"
 @ externa
-functio minimus(numerus other) -> numerus
+functio minimus(numerus other) → numerus
 
 # Maximum of two values
 @ verte ts (ego, other) -> "Math.max(§, §)"
@@ -47,4 +47,4 @@ functio minimus(numerus other) -> numerus
 @ verte cpp (ego, other) -> "std::max(§, §)"
 @ verte zig (ego, other) -> "@max(§, §)"
 @ externa
-functio maximus(numerus other) -> numerus
+functio maximus(numerus other) → numerus

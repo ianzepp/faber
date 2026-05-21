@@ -22,14 +22,14 @@ pactum yaml {
 
     # Serialize value to YAML string
     @ externa
-    functio pange(quidlibet valor) -> textus
+    functio pange(quidlibet valor) → textus
 
     # Verb: necto from "nectere" (to bind, tie together)
     # Why: Binding multiple documents into a single YAML stream.
 
     # Bind multiple documents into multi-doc YAML string
     @ externa
-    functio necto(lista<quidlibet> documenta) -> textus
+    functio necto(lista<quidlibet> documenta) → textus
 
     # =========================================================================
     # PARSING
@@ -38,55 +38,55 @@ pactum yaml {
 
     # Parse YAML string to value (throws on error)
     @ externa
-    functio solve(textus yaml) -> quidlibet
+    functio solve(textus yaml) → quidlibet
 
     # Verb: tempta from "temptare" (to try, attempt)
 
     # Attempt to parse YAML string (returns null on error)
     @ externa
-    functio tempta(textus yaml) -> si quidlibet
+    functio tempta(textus yaml) → si quidlibet
 
     # Verb: collige from "colligere" (to collect, gather)
     # Why: Gathering all documents from a multi-doc YAML stream.
 
     # Gather all documents from multi-doc YAML string
     @ externa
-    functio collige(textus yaml) -> lista<quidlibet>
+    functio collige(textus yaml) → lista<quidlibet>
 
     # =========================================================================
     # TYPE CHECKING
     # =========================================================================
 
     @ externa
-    functio estNihil(quidlibet valor) -> bivalens
+    functio estNihil(quidlibet valor) → bivalens
 
     @ externa
-    functio estBivalens(quidlibet valor) -> bivalens
+    functio estBivalens(quidlibet valor) → bivalens
 
     @ externa
-    functio estNumerus(quidlibet valor) -> bivalens
+    functio estNumerus(quidlibet valor) → bivalens
 
     @ externa
-    functio estTextus(quidlibet valor) -> bivalens
+    functio estTextus(quidlibet valor) → bivalens
 
     @ externa
-    functio estLista(quidlibet valor) -> bivalens
+    functio estLista(quidlibet valor) → bivalens
 
     @ externa
-    functio estTabula(quidlibet valor) -> bivalens
+    functio estTabula(quidlibet valor) → bivalens
 
     # =========================================================================
     # VALUE EXTRACTION
     # =========================================================================
 
     @ externa
-    functio utTextus(quidlibet valor, textus defVal) -> textus
+    functio utTextus(quidlibet valor, textus defVal) → textus
 
     @ externa
-    functio utNumerus(quidlibet valor, numerus defVal) -> numerus
+    functio utNumerus(quidlibet valor, numerus defVal) → numerus
 
     @ externa
-    functio utBivalens(quidlibet valor, bivalens defVal) -> bivalens
+    functio utBivalens(quidlibet valor, bivalens defVal) → bivalens
 
     # =========================================================================
     # VALUE ACCESS
@@ -95,15 +95,15 @@ pactum yaml {
     # Verb: cape from "capere" (to take, seize)
     # Get value by key (returns null if missing)
     @ externa
-    functio cape(quidlibet valor, textus clavis) -> quidlibet
+    functio cape(quidlibet valor, textus clavis) → quidlibet
 
     # Verb: carpe from "carpere" (to pluck)
     # Pluck value by array index (returns null if out of bounds)
     @ externa
-    functio carpe(quidlibet valor, numerus index) -> quidlibet
+    functio carpe(quidlibet valor, numerus index) → quidlibet
 
     # Verb: inveni from "invenire" (to find)
     # Find value by dotted path (returns null if not found)
     @ externa
-    functio inveni(quidlibet valor, textus via) -> quidlibet
+    functio inveni(quidlibet valor, textus via) → quidlibet
 }
