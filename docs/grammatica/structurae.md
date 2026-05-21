@@ -78,7 +78,7 @@ genus Rectangle {
     }
 
     functio isSquare() → bivalens {
-        redde ego.width == ego.height
+        redde ego.width ≡ ego.height
     }
 }
 ```

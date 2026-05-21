@@ -14,7 +14,7 @@ functio saluta() {
 }
 ```
 
-Functions that return values specify the return type after an arrow (`->`) and use `redde` (Latin "give back, return") to yield the result:
+Functions that return values specify the return type after an arrow (`→`) and use `redde` (Latin "give back, return") to yield the result:
 
 ```fab
 functio nomen() → textus {
@@ -110,7 +110,7 @@ The `ceteri` modifier (Latin "the rest, the others") collects remaining argument
 functio sum(ceteri numerus[] nums) → numerus {
     varia total = 0
     itera ex nums fixum n {
-        total += n
+        total ⊕ n
     }
     redde total
 }
@@ -124,7 +124,7 @@ Rest parameters must come last in the parameter list.
 
 ### Arrow Syntax
 
-The arrow `->` specifies a function's return type directly. This is the simplest form and compiles with minimal overhead:
+The arrow `→` specifies a function's return type directly. This is the simplest form and compiles with minimal overhead:
 
 ```fab
 functio compute() → numerus {
@@ -150,7 +150,7 @@ Some older Faber docs and examples used verb-form return syntax such as `fit`, `
 
 Today, function return shape is expressed with:
 
-- `->` for the return type
+- `→` for the return type
 - `@ futura` for async functions
 - `@ cursor` for generator functions
 - both `@ futura` and `@ cursor` for async generators
@@ -320,7 +320,7 @@ For multi-statement clausuras, use braces and explicit `redde`:
 ```fab
 fixum process = clausura x {
     varia result = x * 2
-    result += 10
+    result ⊕ 10
     redde result
 }
 ```
@@ -361,7 +361,7 @@ Clausuras shine in functional operations:
 fixum numbers = [1, 2, 3, 4, 5]
 
 # Filter
-fixum evens = numbers.filter(clausura x: x % 2 == 0)
+fixum evens = numbers.filter(clausura x: x % 2 ≡ 0)
 
 # Map
 fixum doubled = numbers.map(clausura x: x * 2)
@@ -429,7 +429,7 @@ Faber's function system balances Latin linguistic authenticity with practical pr
 - `functio` for declaration, `redde` for return
 - Type-first parameters with `ut` aliasing
 - `si` for optional, `vel` for defaults, `ceteri` for rest
-- Arrow `->` for return types
+- Arrow `→` for return types
 - `@ futura` and `@ cursor` annotations for async and generator behavior, plus post-function modifiers such as `curata`, `errata`, `immutata`, and `iacit`
 - `cede` for await (async) or yield (generator)
 - `prae typus` for generics

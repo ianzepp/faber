@@ -245,7 +245,7 @@ When a function handles errors internally, it returns a fallback value:
 ```fab
 functio safeDivide(numerus a, numerus b) → numerus {
     tempta {
-        si b == 0 {
+        si b ≡ 0 {
             iace "Division by zero"
         }
         redde a / b
@@ -263,7 +263,7 @@ When a function doesn't catch an error, it propagates to the caller:
 
 ```fab
 functio divide(numerus a, numerus b) → numerus {
-    si b == 0 {
+    si b ≡ 0 {
         iace "Division by zero"
     }
     redde a / b
@@ -290,7 +290,7 @@ functio processWithCleanup(textus name) {
         scribe "Opening:", name
         resource = name
 
-        si name == "" {
+        si name ≡ "" {
             iace "Empty name"
         }
 

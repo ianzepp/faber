@@ -96,7 +96,7 @@ si x > 5 {
 The `ergo` form works with `secus` for one-liner if-else:
 
 ```fab
-si age >= 18 ergo scribe "Adult" secus scribe "Minor"
+si age ≥ 18 ergo scribe "Adult" secus scribe "Minor"
 ```
 
 #### reddit (Early Return)
@@ -106,7 +106,7 @@ The keyword `reddit` means "it returns" in Latin (third person singular of _redd
 ```fab
 functio classify(numerus x) → textus {
     si x < 0 reddit "negative"
-    si x == 0 reddit "zero"
+    si x ≡ 0 reddit "zero"
     redde "positive"
 }
 ```
@@ -118,7 +118,7 @@ functio classify(numerus x) → textus {
     si x < 0 {
         redde "negative"
     }
-    si x == 0 {
+    si x ≡ 0 {
         redde "zero"
     }
     redde "positive"
@@ -129,7 +129,7 @@ The `reddit` form excels at guard clauses—conditions that validate input and e
 
 ```fab
 functio divide(numerus a, numerus b) → numerus? {
-    si b == 0 reddit nihil
+    si b ≡ 0 reddit nihil
     redde a / b
 }
 ```
@@ -138,10 +138,10 @@ It works throughout a conditional chain:
 
 ```fab
 functio grade(numerus score) → textus {
-    si score >= 90 reddit "A"
-    sin score >= 80 reddit "B"
-    sin score >= 70 reddit "C"
-    sin score >= 60 reddit "D"
+    si score ≥ 90 reddit "A"
+    sin score ≥ 80 reddit "B"
+    sin score ≥ 70 reddit "C"
+    sin score ≥ 60 reddit "D"
     secus reddit "F"
 }
 ```
@@ -335,7 +335,7 @@ The keyword `rumpe` is the imperative of _rumpere_ ("to break"). It exits the in
 varia i = 0
 
 dum i < 10 {
-    si i == 5 {
+    si i ≡ 5 {
         rumpe
     }
     scribe i
@@ -350,7 +350,7 @@ In nested loops, `rumpe` exits only the inner loop:
 ```fab
 itera ex 0..3 fixum outer {
     itera ex 0..10 fixum inner {
-        si inner == 2 {
+        si inner ≡ 2 {
             rumpe  # exits inner loop only
         }
         scribe scriptum("outer=§, inner=§", outer, inner)
@@ -364,7 +364,7 @@ The keyword `perge` is the imperative of _pergere_ ("to continue" or "proceed").
 
 ```fab
 itera ex 0..10 fixum i {
-    si i % 2 == 0 {
+    si i % 2 ≡ 0 {
         perge  # skip even numbers
     }
     scribe i
@@ -497,7 +497,7 @@ To bind the entire variant (not just its fields), use `ut`:
 ```fab
 discerne left, right {
     casu Primitivum ut l, Primitivum ut r {
-        redde l.nomen == r.nomen
+        redde l.nomen ≡ r.nomen
     }
     casu _, _ {
         redde falsum
@@ -525,7 +525,7 @@ The keyword `custodi` is the imperative of _custodire_ ("to guard" or "watch ove
 ```fab
 functio divide(numerus a, numerus b) → numerus {
     custodi {
-        si b == 0 {
+        si b ≡ 0 {
             redde 0
         }
     }
@@ -586,10 +586,10 @@ Input validation patterns:
 ```fab
 functio createUser(textus name, textus email, numerus age) → textus {
     custodi {
-        si name == nihil aut name == "" {
+        si name ≡ nihil aut name ≡ "" {
             redde "Error: name required"
         }
-        si email == nihil aut email == "" {
+        si email ≡ nihil aut email ≡ "" {
             redde "Error: email required"
         }
         si age < 13 {
@@ -618,7 +618,7 @@ Add a message for clarity:
 
 ```fab
 adfirma x > 0, "x must be positive"
-adfirma name != "", "name must not be empty"
+adfirma name ≠ "", "name must not be empty"
 ```
 
 Assertions differ from guards:
@@ -630,7 +630,7 @@ Use `adfirma` for conditions that indicate bugs if violated:
 
 ```fab
 functio processArray(lista<numerus> items) {
-    adfirma items != nihil, "items must not be null"
+    adfirma items ≠ nihil, "items must not be null"
     adfirma items.longitudo > 0, "items must not be empty"
 
     # ... process items

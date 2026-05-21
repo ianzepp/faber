@@ -50,9 +50,7 @@ fn lexer_interns_equivalent_unicode_forms_as_one_symbol() {
 fn lexes_operator_tokens_consistently() {
     // Post-clean-break: only canonical glyphs produce compound tokens.
     // Old ASCII multi-char forms (== != <= >= -> += etc) are rejected at lex time.
-    let result = lex(
-        "+ ⊕ - ⊖ * ⊛ / ⊘ % ⊻ ≡ ≠ ≤ ≥ → ¬ !. ![ !( < ≤ > ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←",
-    );
+    let result = lex("+ ⊕ - ⊖ * ⊛ / ⊘ % ⊻ ≡ ≠ ≤ ≥ → ¬ !. ![ !( < ≤ > ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←");
     assert!(result.errors.is_empty());
 
     let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
@@ -120,7 +118,10 @@ fn rejects_old_ascii_compound_operators() {
         let src = format!("fixum x = 1 {} 2", op);
         let result = lex(&src);
         // Lex itself does not error (single-char tokens are valid), but must not emit the compound.
-        let emits_compound = result.tokens.iter().any(|t| std::mem::discriminant(&t.kind) == std::mem::discriminant(compound));
+        let emits_compound = result
+            .tokens
+            .iter()
+            .any(|t| std::mem::discriminant(&t.kind) == std::mem::discriminant(compound));
         assert!(
             !emits_compound,
             "legacy operator {op} must not produce {compound:?} token after clean break",
@@ -129,7 +130,10 @@ fn rejects_old_ascii_compound_operators() {
 
     // Triple forms also gone (no EqEqEq etc from source).
     let triples = lex("1 === 2");
-    assert!(!triples.tokens.iter().any(|t| matches!(t.kind, TokenKind::EqEqEq | TokenKind::BangEqEq)));
+    assert!(!triples
+        .tokens
+        .iter()
+        .any(|t| matches!(t.kind, TokenKind::EqEqEq | TokenKind::BangEqEq)));
 }
 
 #[test]

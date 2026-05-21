@@ -182,7 +182,7 @@ The familiar question-mark-colon syntax:
 
 ```fab
 fixum max = a > b ? a : b
-fixum grade = score >= 90 ? "A" : score >= 80 ? "B" : "C"
+fixum grade = score ≥ 90 ? "A" : score ≥ 80 ? "B" : "C"
 ```
 
 ### Latin Style
@@ -419,7 +419,7 @@ fixum bitwiseNot = ~flags            # NOT (complement)
 **Precedence note:** Unlike C, bitwise operators in Faber bind tighter than comparison operators. This means:
 
 ```fab
-flags & mask == 0    # parses as (flags & mask) == 0
+flags & mask ≡ 0    # parses as (flags & mask) ≡ 0
 ```
 
 This matches programmer intent and avoids a common source of bugs in C-family languages.
