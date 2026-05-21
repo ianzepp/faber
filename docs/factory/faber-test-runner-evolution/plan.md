@@ -142,12 +142,12 @@ examples/exempla/proba/packages/passing/
 
 ```fab
 proba "arithmetic passes" {
-    adfirma 1 + 1 == 2
+    adfirma 1 + 1 ≡ 2
 }
 
 proba "text passes" {
     fixum greeting = "salve"
-    adfirma greeting == "salve"
+    adfirma greeting ≡ "salve"
 }
 
 incipit {
@@ -174,7 +174,7 @@ examples/exempla/proba/packages/failing/
 
 ```fab
 proba "intentional failure" {
-    adfirma 1 + 1 == 3
+    adfirma 1 + 1 ≡ 3
 }
 
 incipit {}
@@ -233,11 +233,11 @@ examples/exempla/proba/packages/suite/
 probandum "math suite" {
     praepara omnia {
         fixum setup_value = 1
-        adfirma setup_value == 1
+        adfirma setup_value ≡ 1
     }
 
     proba "top level suite case" {
-        adfirma 2 + 2 == 4
+        adfirma 2 + 2 ≡ 4
     }
 
     probandum "nested suite" {
