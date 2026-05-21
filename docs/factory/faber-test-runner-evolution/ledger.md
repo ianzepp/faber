@@ -130,3 +130,30 @@ Plan rules observed:
 Work will proceed Phase 2 (full gate + commit) then Phase 3 (full gate + commit), then final ledger + smoke matrix.
 
 No changes to HIR/metadata (Phase 4+) or docs (Phase 6) in this slice.
+
+### Phase 2 Implementation
+- TestArgs + invoke_cargo_test + cmd_test extended.
+- Smokes: filter + --exact narrows (1 filtered out), --test-threads accepted, --nocapture emits the scribe line from inside a proba body.
+- Gate: fmt/test/clippy clean.
+- Commit: independent after Phase 1.
+
+### Phase 3 Implementation
+- --ignored / --include-ignored added with conflicts_with.
+- Clap rejects the pair early with "cannot be used with".
+- ignored fixture:
+  * default → 2 ignored, exit 0
+  * --ignored → executes falsum cases, 2 failed, nonzero
+  * --include-ignored → 1 passed + 2 failed, nonzero
+- Gate + commit independent.
+
+### Final Matrix (post-Phase 3)
+- All 4 fixtures + representative flag combos pass their expected exit/output counts.
+- No target/faber/target anywhere.
+- Help surface complete and accurate.
+- Two independent commits after the Phase 1 baseline.
+
+## Current Overall Status
+- Phases 0–3 delivered and committed (each with its own gate + smoke proof).
+- `faber test` is now a fully functional Cargo-backed runner with the ergonomics and ignored-test controls specified in the updated plan.
+- Remaining work (Phase 4 HIR metadata cleanup, 5 selection, 6 docs, 7 full release validation) is explicitly out of scope for this slice per the original plan guidance.
+- Ledger and fixtures are the source of truth for repeatable verification.
