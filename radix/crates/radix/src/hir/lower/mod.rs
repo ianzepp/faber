@@ -262,7 +262,7 @@ impl<'a> Lowerer<'a> {
             if let Some(command) = cli
                 .commands
                 .iter()
-                .find(|command| command.function_symbol == function)
+                .find(|command| command.module_path.is_none() && command.function_symbol == function)
             {
                 let mut fields = FxHashMap::default();
                 for option in cli.global_options.iter().chain(command.options.iter()) {

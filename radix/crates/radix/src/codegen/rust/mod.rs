@@ -118,7 +118,7 @@ impl<'a> RustCodegen<'a> {
                     program
                         .commands
                         .iter()
-                        .find(|command| command.function_symbol == func.name)
+                        .find(|command| command.module_path.is_none() && command.function_symbol == func.name)
                 }) {
                     let args_type = format!("{cli_args_type_prefix}{}", cli::command_args_struct_name(command));
                     decl::generate_function_with_cli_args_type(self, item.def_id, func, types, w, Some(&args_type))?;

@@ -94,6 +94,83 @@ functio set_config() argumenta args {
 }
 
 #[test]
+fn compile_package_mounted_handlers_can_access_root_globals() {
+    let dir = temp_dir("cli-mount-root-global");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ optio verbose longum "verbose" typus bivalens ubique
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        r#"
+@ imperium "run"
+functio run() argumenta args {
+  scribe args.verbose
+}
+"#,
+    )
+    .expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(
+        result.success(),
+        "expected mounted handler to see root globals, got {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+    let Some(Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+
+    assert!(output.code.contains("pub verbose: bool"));
+    assert!(output.code.contains("println!(\"{}\", args.verbose);"));
+}
+
+#[test]
+fn compile_package_rejects_mounted_local_binding_collision_with_root_global() {
+    let dir = temp_dir("cli-mount-root-global-collision");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ optio verbose longum "verbose" typus bivalens ubique
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        r#"
+@ imperium "run"
+@ optio verbose longum "local-verbose"
+functio run() {}
+"#,
+    )
+    .expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("collides with a global CLI binding")));
+}
+
+#[test]
 fn compile_package_rejects_named_import_mount_targets() {
     let dir = temp_dir("cli-mount-named");
     fs::write(

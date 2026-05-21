@@ -225,7 +225,7 @@ pub(crate) fn analyze_source_with_cli_program(
         return Err(diagnostics);
     }
 
-    let parser::ParseResult { program, interner, .. } = parse_result;
+    let parser::ParseResult { program, mut interner, .. } = parse_result;
     let Some(program) = program else {
         diagnostics.push(Diagnostic::error("successful parse result missing program").with_file(name.to_owned()));
         return Err(diagnostics);
@@ -245,7 +245,7 @@ pub(crate) fn analyze_source_with_cli_program(
     }
 
     let cli_program = if let Some(cli_program) = cli_program_override {
-        Some(cli_program)
+        Some(retarget_cli_program_symbols(cli_program, &mut interner))
     } else {
         let cli_analysis = crate::cli::analyze(&program, &interner);
         for err in &cli_analysis.errors {
@@ -285,6 +285,42 @@ pub(crate) fn analyze_source_with_cli_program(
         },
         diagnostics,
     })
+}
+
+fn retarget_cli_program_symbols(
+    mut cli_program: crate::cli::CliProgram,
+    interner: &mut Interner,
+) -> crate::cli::CliProgram {
+    for option in cli_program
+        .global_options
+        .iter_mut()
+        .chain(cli_program.options.iter_mut())
+        .chain(
+            cli_program
+                .commands
+                .iter_mut()
+                .flat_map(|command| command.options.iter_mut()),
+        )
+    {
+        option.binding_symbol = interner.intern(&option.binding);
+    }
+    for operand in cli_program
+        .global_operands
+        .iter_mut()
+        .chain(cli_program.operands.iter_mut())
+        .chain(
+            cli_program
+                .commands
+                .iter_mut()
+                .flat_map(|command| command.operands.iter_mut()),
+        )
+    {
+        operand.binding_symbol = interner.intern(&operand.binding);
+    }
+    for command in &mut cli_program.commands {
+        command.function_symbol = interner.intern(&command.function);
+    }
+    cli_program
 }
 
 // =============================================================================

@@ -371,6 +371,13 @@ fn build_mount_plan(spec: &PackageSpec, files: &[PackageFile]) -> Result<MountPl
         let Some(mut mounted_cli) = module_analysis.program else {
             continue;
         };
+        mounted_cli.global_options = root_cli.global_options.clone();
+        mounted_cli.global_operands = root_cli.global_operands.clone();
+        diagnostics.extend(validate_mounted_global_collisions(
+            &mounted_cli.commands,
+            &root_cli,
+            &module_file.path,
+        ));
 
         for command in &mut mounted_cli.commands {
             let mut root_command = command.clone();
@@ -521,6 +528,51 @@ fn validate_mounted_command_collisions(commands: &[(crate::cli::CliCommand, Path
                     Diagnostic::error(format!("command alias '{alias}' collides with a command path"))
                         .with_file(file.display().to_string())
                         .with_span(command.span),
+                );
+            }
+        }
+    }
+
+    diagnostics
+}
+
+fn validate_mounted_global_collisions(
+    commands: &[crate::cli::CliCommand],
+    root_cli: &crate::cli::CliProgram,
+    file: &Path,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let mut globals = BTreeSet::<&str>::new();
+    for option in &root_cli.global_options {
+        globals.insert(option.binding.as_str());
+    }
+    for operand in &root_cli.global_operands {
+        globals.insert(operand.binding.as_str());
+    }
+
+    for command in commands {
+        let label = command.path.join("/");
+        for option in &command.options {
+            if globals.contains(option.binding.as_str()) {
+                diagnostics.push(
+                    Diagnostic::error(format!(
+                        "command '{label}' option '{}' collides with a global CLI binding",
+                        option.binding
+                    ))
+                    .with_file(file.display().to_string())
+                    .with_span(option.span),
+                );
+            }
+        }
+        for operand in &command.operands {
+            if globals.contains(operand.binding.as_str()) {
+                diagnostics.push(
+                    Diagnostic::error(format!(
+                        "command '{label}' operand '{}' collides with a global CLI binding",
+                        operand.binding
+                    ))
+                    .with_file(file.display().to_string())
+                    .with_span(operand.span),
                 );
             }
         }
