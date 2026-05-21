@@ -41,8 +41,8 @@ Implement a compiling CLI skeleton with commands for:
 
 Acceptance:
 
-- Package checks with `cargo run --manifest-path radix/Cargo.toml -p radix -- check --package examples/automation/main.fab`.
-- Rust can be emitted with `cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab`.
+- Package checks with `cargo run --manifest-path Cargo.toml -p faber -- check --package examples/automation/main.fab`.
+- Rust can be emitted with `cargo run -p radix --bin radix -- emit -t rust --package examples/automation/main.fab`.
 - README documents current limitations.
 
 ### Stage 2: Real Metadata Parsing
@@ -126,12 +126,12 @@ Acceptance:
 Use these commands as gates while the example evolves:
 
 ```bash
-cargo run --manifest-path radix/Cargo.toml -p radix -- check examples/automation/main.fab
-cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab
-bun run check:radix
+cargo run --manifest-path Cargo.toml -p faber -- check examples/automation/main.fab
+cargo run -p radix --bin radix -- emit -t rust --package examples/automation/main.fab
+cargo run -p faber -- check --package examples/automation/main.fab
 ```
 
-When runtime/compiler behavior changes, add targeted Rust tests under `radix/crates/radix/src`.
+When runtime/compiler behavior changes, add targeted Rust tests under `crates/radix/src`.
 
 ## Open Questions
 

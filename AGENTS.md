@@ -4,44 +4,44 @@ A Latin programming language compiler ("The Roman Craftsman").
 
 ## Canonical Repo Shape
 
-Current development is centered on the `radix` Cargo workspace:
+Current development is centered on the root Cargo workspace:
 
 ```
-radix/
-├── Cargo.toml              # workspace manifest
-├── crates/
-│   ├── radix/              # active compiler and CLI
-│   └── norma/              # Rust runtime support crate
-└── stdlib/
-    └── norma/              # Faber stdlib definitions and @ verte metadata
+Cargo.toml              # workspace manifest
+crates/
+├── faber/              # user-facing project/package CLI (faber binary)
+├── radix/              # compiler library and developer CLI (radix binary)
+└── norma/              # Rust runtime support crate
+stdlib/
+└── norma/              # Faber stdlib definitions and @ verte metadata
 
 examples/
-└── exempla/                # example .fab programs
+└── exempla/            # example .fab programs
 
 docs/
-└── grammatica/             # language documentation
+└── grammatica/         # language documentation
 
-scripta/                    # current helper scripts only
+scripta/                # shell helper scripts
 ```
 
 Do not restore archived bootstrap, self-hosting, old reference, proba, or golden trees into this repository. Historical surfaces live in the sibling archive repository.
 
 ## Stdlib (norma)
 
-The stdlib source of truth is [`radix/stdlib/norma`](radix/stdlib/norma). These `.fab` files define collection methods, HAL contracts, and target translations:
+The stdlib source of truth is [`stdlib/norma`](stdlib/norma). These `.fab` files define collection methods, HAL contracts, and target translations:
 
 ```fab
-# From radix/stdlib/norma/innatum/lista.fab
+# From stdlib/norma/innatum/lista.fab
 @ verte ts "push"
 @ verte rs "push"
 functio adde(T elem) -> vacuum
 ```
 
-Runtime-backed Rust support lives in [`radix/crates/norma`](radix/crates/norma).
+Runtime-backed Rust support lives in [`crates/norma`](crates/norma).
 
 How it works:
 
-1. `radix/stdlib/norma/*.fab` defines stdlib methods and metadata.
+1. `stdlib/norma/*.fab` defines stdlib methods and metadata.
 2. The compiler loads stdlib translation metadata through the norma registry.
 3. Calls such as `myList.adde(x)` lower to target-specific calls like `push`.
 
@@ -52,7 +52,7 @@ How it works:
 3. **No invented syntax**: No `Type?`, no made-up suffixes.
 4. **Banned keyword**: `cum` (English homograph).
 5. **Nullable params**: Use `ignotum`, not invented patterns.
-6. **Run scripts via bun**: `bun run build:radix`, not direct script paths.
+6. **Rust-only tooling**: Use Cargo and `scripta/` helpers, not Bun or Node.
 7. **Correctness over completion**: Explicit over convenient.
 8. **Fix root causes**: Do not paper over upstream missing type information.
 
@@ -68,28 +68,23 @@ How it works:
 Use the workspace manifest from the repository root:
 
 ```bash
-bun run check:radix
-bun run test:radix
-bun run ci
-bun run build:radix
-```
-
-Equivalent raw Cargo commands:
-
-```bash
-cargo fmt --manifest-path radix/Cargo.toml --all -- --check
-cargo test --manifest-path radix/Cargo.toml
-cargo build --release --manifest-path radix/Cargo.toml -p radix
+./scripta/ci
+./scripta/test
+./scripta/lint
+cargo build --release -p faber
+cargo build --release -p radix --bin radix
 ```
 
 Compiler CLI examples:
 
 ```bash
-cargo run --manifest-path radix/Cargo.toml -p radix -- targets
-cargo run --manifest-path radix/Cargo.toml -p radix -- check examples/exempla/salve-munde.fab
-cargo run --manifest-path radix/Cargo.toml -p radix -- build examples/exempla/salve-munde.fab
-cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust examples/exempla/salve-munde.fab
-cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t go examples/exempla/salve-munde.fab
+cargo run -p faber -- targets
+cargo run -p faber -- check examples/exempla/salve-munde.fab
+cargo run -p faber -- build examples/exempla/salve-munde.fab
+cargo run -p faber -- emit -t rust examples/exempla/salve-munde.fab
+
+cargo run -p radix --bin radix -- targets
+cargo run -p radix --bin radix -- emit -t rust examples/exempla/salve-munde.fab
 ```
 
 Compilation pipeline:
@@ -98,7 +93,7 @@ Compilation pipeline:
 Lex -> Parse -> Collect -> Resolve -> Lower -> Typecheck -> Analysis -> Codegen
 ```
 
-Use `radix/crates/radix` for all new compiler feature development, semantic analysis, diagnostics, and codegen work.
+Use `crates/radix` for compiler feature development. Use `crates/faber` for package/project tool work.
 
 ## Syntax Patterns
 
@@ -118,14 +113,14 @@ functio greet(name: textus): textus
 ### Block Syntax
 
 ```text
-itera ex        # itera ex items fixum item { }
-itera de        # itera de obj fixum key { }
-cura            # cura expr fixum h { }
-tempta...cape   # tempta { } cape err { }
-dum             # dum cond { }
-si              # si cond { }
-elige           # elige val { casu case { } }
-discerne        # discerne val { casu Var { } }
+itera ex # itera ex items fixum item { }
+itera de # itera de obj fixum key { }
+cura # cura expr fixum h { }
+tempta...cape # tempta { } cape err { }
+dum # dum cond { }
+si # si cond { }
+elige # elige val { casu case { } }
+discerne # discerne val { casu Var { } }
 ```
 
 ### Function Annotations

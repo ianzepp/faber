@@ -20,8 +20,8 @@ The current command bodies print placeholder output. The fixture files under `fi
 From the repository root:
 
 ```bash
-cargo run --manifest-path radix/Cargo.toml -p radix -- check --package examples/automation/main.fab
-cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab
+cargo run --manifest-path Cargo.toml -p faber -- check --package examples/automation/main.fab
+cargo run -p radix --bin radix -- emit -t rust --package examples/automation/main.fab
 ```
 
 Runnable CLI generation is Rust-only in the active compiler. See `PLAN.md` for the staged path from this skeleton to a closer executor port.

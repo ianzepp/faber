@@ -1,6 +1,6 @@
 # Automation CLI skeleton.
 #
-# Emit: cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab
+# Emit: cargo run -p faber -- emit -t rust --package examples/automation/main.fab
 
 importa ex "./commands/inventory" privata * ut inventoryModule
 importa ex "./commands/runner" privata * ut runnerModule

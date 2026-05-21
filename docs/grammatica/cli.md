@@ -217,14 +217,14 @@ Rules:
 Use `cli-ir` to inspect the normalized CLI model:
 
 ```bash
-cargo run --manifest-path radix/Cargo.toml -p radix -- cli-ir examples/exempla/cli/main.fab
+cargo run --manifest-path Cargo.toml -p faber -- cli-ir examples/exempla/cli/main.fab
 ```
 
 Use `emit` or `build` for runnable Rust output:
 
 ```bash
-cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust examples/exempla/cli/main.fab --package
-cargo run --manifest-path radix/Cargo.toml -p radix -- build -t rust examples/exempla/cli/main.fab --package
+cargo run -p faber -- emit -t rust --package examples/exempla/cli/main.fab
+cargo run -p faber -- build -t rust --package examples/exempla/cli/main.fab
 ```
 
 ## Current Limits

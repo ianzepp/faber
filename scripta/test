@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Run the active radix workspace tests.
+# Run the Faber workspace tests.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-cargo test --manifest-path radix/Cargo.toml "$@"
+cargo test --all "$@"

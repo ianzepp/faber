@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Build, version bump, and release faber
+# Build, version bump, and release faber + radix
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# Parse arguments
 BUMP="minor"
 FORCE=false
 for arg in "$@"; do
@@ -17,7 +16,6 @@ for arg in "$@"; do
     esac
 done
 
-# Preflight checks
 if [[ $(git branch --show-current) != "main" ]]; then
     echo "Error: Must be on main branch"
     exit 1
@@ -30,19 +28,18 @@ fi
 
 echo "=== Running tests ==="
 if [[ "$FORCE" == true ]]; then
-    bun run ci || echo "Warning: CI failed but --force was specified, continuing..."
+    ./scripta/ci || echo "Warning: CI failed but --force was specified, continuing..."
 else
-    bun run ci
+    ./scripta/ci
 fi
 
-echo "=== Building faber ==="
-bun run build:radix
+echo "=== Building binaries ==="
+cargo build --release -p faber
+cargo build --release -p radix --bin radix
 
-# Read current version
-CURRENT=$(jq -r .version package.json)
+CURRENT=$(rg '^version = ' crates/faber/Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
 IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
 
-# Bump version
 case $BUMP in
     major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
     minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
@@ -52,16 +49,13 @@ esac
 VERSION="${MAJOR}.${MINOR}.${PATCH}"
 echo "=== Bumping version: $CURRENT → $VERSION ==="
 
-# Update package.json
-jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp
-mv package.json.tmp package.json
+for manifest in crates/faber/Cargo.toml crates/radix/Cargo.toml; do
+    perl -0pi -e 's/(^version = ")[^"]+/${1}'"$VERSION"'/m' "$manifest"
+done
 
-# Update the Cargo package version that drives `faber --version`.
-perl -0pi -e 's/(name = "radix"\nversion = ")[^"]+/${1}'"$VERSION"'/' radix/crates/radix/Cargo.toml
-cargo update --manifest-path radix/Cargo.toml -p radix
+cargo update -p faber -p radix
 
-# Commit and tag
-git add package.json radix/crates/radix/Cargo.toml radix/Cargo.lock
+git add crates/faber/Cargo.toml crates/radix/Cargo.toml Cargo.lock
 git commit -m "Release v${VERSION}"
 git tag "v${VERSION}"
 
@@ -69,7 +63,4 @@ echo "=== Pushing to origin ==="
 git push -u origin main
 git push --tags
 
-echo "=== Creating GitHub release ==="
-gh release create "v${VERSION}" radix/target/release/faber --title "v${VERSION}" --notes "Release v${VERSION}"
-
-echo "=== Released v${VERSION} ==="
+echo "=== Release v${VERSION} tagged; GitHub Actions will publish assets ==="

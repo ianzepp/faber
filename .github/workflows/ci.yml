@@ -5,13 +5,15 @@ on:
     workflow_dispatch:
 
 jobs:
-    radix:
+    workspace:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v5
             - name: Install Rust
-              run: rustup toolchain install stable --profile minimal --component rustfmt
+              run: rustup toolchain install stable --profile minimal --component rustfmt clippy
             - name: Format check
-              run: cargo +stable fmt --manifest-path radix/Cargo.toml --all -- --check
-            - name: Test radix workspace
-              run: cargo +stable test --manifest-path radix/Cargo.toml
+              run: cargo +stable fmt --all -- --check
+            - name: Test workspace
+              run: cargo +stable test --all
+            - name: Clippy
+              run: cargo +stable clippy --all-targets --all-features -- -D warnings

@@ -1,6 +1,6 @@
 # Faber/Radix Tool Split Factory Plan
 
-**Status**: planned
+**Status**: completed
 **Created**: 2026-05-21
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/faber-radix-tool-split/`

@@ -22,7 +22,7 @@ jobs:
                       --repo "$GITHUB_REPOSITORY" \
                       --verify-tag \
                       --title "$TAG" \
-                      --notes "Release $TAG"
+                      --notes-file docs/factory/faber-radix-tool-split/release-notes-v0.34.md
 
     build:
         needs: create-release
@@ -39,9 +39,11 @@ jobs:
             - uses: actions/checkout@v5
             - name: Install Rust
               run: rustup toolchain install stable --profile minimal --target "${{ matrix.target }}"
-            - name: Build faber
-              run: cargo +stable build --release --manifest-path radix/Cargo.toml -p radix --target "${{ matrix.target }}"
-            - name: Package asset
+            - name: Build faber and radix
+              run: |
+                  cargo +stable build --release -p faber --target "${{ matrix.target }}"
+                  cargo +stable build --release -p radix --bin radix --target "${{ matrix.target }}"
+            - name: Package assets
               shell: bash
               env:
                   TAG: ${{ github.ref_name }}
@@ -49,16 +51,18 @@ jobs:
               run: |
                   set -euo pipefail
                   mkdir -p dist
-                  asset="faber-${TAG}-${TARGET}"
-                  mkdir -p "dist/$asset"
-                  cp "radix/target/${TARGET}/release/faber" "dist/$asset/faber"
-                  (cd dist && tar -czf "$asset.tar.gz" "$asset")
-                  if command -v shasum >/dev/null 2>&1; then
-                      (cd dist && shasum -a 256 "$asset.tar.gz" > "$asset.tar.gz.sha256")
-                  else
-                      (cd dist && sha256sum "$asset.tar.gz" > "$asset.tar.gz.sha256")
-                  fi
-            - name: Upload release asset
+                  for tool in faber radix; do
+                      asset="${tool}-${TAG}-${TARGET}"
+                      mkdir -p "dist/$asset"
+                      cp "target/${TARGET}/release/${tool}" "dist/$asset/${tool}"
+                      (cd dist && tar -czf "$asset.tar.gz" "$asset")
+                      if command -v shasum >/dev/null 2>&1; then
+                          (cd dist && shasum -a 256 "$asset.tar.gz" > "$asset.tar.gz.sha256")
+                      else
+                          (cd dist && sha256sum "$asset.tar.gz" > "$asset.tar.gz.sha256")
+                      fi
+                  done
+            - name: Upload release assets
               env:
                   GH_TOKEN: ${{ github.token }}
                   TAG: ${{ github.ref_name }}

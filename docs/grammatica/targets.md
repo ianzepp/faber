@@ -2,7 +2,7 @@
 
 This page describes the current target contract of the active `radix-rs` compiler.
 
-Treat `cargo run --manifest-path radix/Cargo.toml -p radix -- targets` as the live source of truth for the target list and high-level capability notes. Archived bootstrap compilers and planned future targets are not part of the active main-repo target contract.
+Treat `cargo run --manifest-path Cargo.toml -p faber -- targets` as the live source of truth for the target list and high-level capability notes. Archived bootstrap compilers and planned future targets are not part of the active main-repo target contract.
 
 ## Current `radix-rs` Target Surface
 
@@ -26,7 +26,7 @@ faber check=yes build=yes run=no package=no note=canonical pretty-print target; 
 
 ## Primary Surface Versus Secondary Surfaces
 
-[`radix/crates/radix`](../../radix/crates/radix) is the active delivery compiler.
+[`crates/radix`](../../crates/radix) is the active delivery compiler.
 
 - Rust is the strongest target today and the primary package-compilation path.
 - Go and TypeScript are real `radix-rs` file-emission targets, but package support is still intentionally absent.
@@ -65,9 +65,9 @@ Package compilation is a target capability, not a generic promise.
 This matters for command selection:
 
 ```bash
-cargo run --manifest-path radix/Cargo.toml -p radix -- build examples/exempla/salve-munde.fab
-cargo run --manifest-path radix/Cargo.toml -p radix -- build --package examples/exempla/cli/main.fab
-cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t go examples/exempla/salve-munde.fab
+cargo run --manifest-path Cargo.toml -p faber -- build examples/exempla/salve-munde.fab
+cargo run --manifest-path Cargo.toml -p faber -- build --package examples/exempla/cli/main.fab
+cargo run -p radix --bin radix -- emit -t go examples/exempla/salve-munde.fab
 ```
 
 Use `build --package` only when the target actually supports package compilation.

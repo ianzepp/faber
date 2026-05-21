@@ -1,0 +1,25 @@
+[package]
+name = "radix"
+version = "0.34.0"
+edition = "2021"
+description = "Recursive descent compiler for Faber → Rust/Faber"
+license = "MIT"
+
+[[bin]]
+name = "radix"
+path = "src/bin/radix.rs"
+
+[dependencies]
+ariadne = "0.4"
+thiserror = "2"
+rustc-hash = "2"
+unicode-ident = "1"
+unicode-normalization = "0.1"
+clap = { version = "4.5", features = ["derive"] }
+
+[dev-dependencies]
+insta = "1"
+pretty_assertions = "1"
+
+[features]
+default = []

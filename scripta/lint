@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Lint the active Rust workspace.
+# Run clippy for the Faber workspace.
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-
-cargo clippy --manifest-path radix/Cargo.toml --all-targets --all-features -- -D warnings
+cargo clippy --all-targets --all-features -- -D warnings "$@"

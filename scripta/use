@@ -4,12 +4,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if [[ ! -f radix/target/release/faber ]]; then
-    echo "Error: radix/target/release/faber not found. Run 'bun run build:radix' first."
+if [[ ! -f target/release/faber ]]; then
+    echo "Error: target/release/faber not found. Run 'cargo build --release -p faber' first."
     exit 1
 fi
 
 mkdir -p ~/.local/bin
 rm -f ~/.local/bin/faber
-ln -s "$(pwd)/radix/target/release/faber" ~/.local/bin/faber
-echo "Installed: ~/.local/bin/faber -> $(pwd)/radix/target/release/faber"
+ln -s "$(pwd)/target/release/faber" ~/.local/bin/faber
+echo "Installed: ~/.local/bin/faber -> $(pwd)/target/release/faber"
