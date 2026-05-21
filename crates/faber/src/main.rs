@@ -126,11 +126,11 @@ struct TestArgs {
     #[arg(long, value_name = "N")]
     test_threads: Option<usize>,
 
-    /// Only run ignored tests (maps to `omitte` / `futurum` cases today)
+    /// Only run Rust-ignored tests, including `omitte` / `futurum` and selection-ignored cases
     #[arg(long, conflicts_with = "include_ignored")]
     ignored: bool,
 
-    /// Run normal tests and ignored tests
+    /// Run normal tests and Rust-ignored tests
     #[arg(long, conflicts_with = "ignored")]
     include_ignored: bool,
 }

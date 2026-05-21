@@ -33,6 +33,14 @@ probandum "math suite" {
 }
 ```
 
+Setup and teardown blocks use:
+
+- `praepara` for before-each setup,
+- `praeparabit` for async before-each setup,
+- `postpara` for after-each teardown,
+- `postparabit` for async after-each teardown,
+- `omnia` when the setup or teardown applies to all cases in the suite.
+
 ## Test Modifiers
 
 The current testing surface recognizes these `proba` modifiers:
@@ -77,6 +85,10 @@ Behavior:
 - Because selection is implemented with generated Rust ignore reasons, `--ignored` and `--include-ignored` also affect selection-ignored tests.
 
 Cargo test still prints the generated Rust test names, so current output may show `proba_...` identifiers even though selection is expressed in Faber terms.
+
+## Coverage
+
+Faber line coverage is not implemented yet. Coverage reported against generated Rust under `target/faber/` is not the same as Faber source coverage; future coverage work needs Faber source mapping or Faber-native instrumentation.
 
 ## Fixtures
 
