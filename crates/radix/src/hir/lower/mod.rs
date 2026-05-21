@@ -60,7 +60,9 @@ mod pattern;
 mod stmt;
 mod types;
 
-use super::{HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirProgram, HirStmt, HirStmtKind};
+use super::{
+    HirBlock, HirExpr, HirExprKind, HirId, HirItem, HirProgram, HirStmt, HirStmtKind, HirTestMetadata, HirTestModifier,
+};
 use crate::cli::{CliProgram, CliType};
 use crate::lexer::{Interner, Span, Symbol};
 use crate::semantic::{Primitive, Resolver, Type, TypeId, TypeTable};
@@ -325,10 +327,10 @@ impl<'a> Lowerer<'a> {
             StmtKind::Interface(decl) => self.lower_pactum(stmt, decl).into_iter().collect(),
             StmtKind::TypeAlias(decl) => self.lower_typus(stmt, decl).into_iter().collect(),
             StmtKind::Import(decl) => self.lower_importa(stmt, decl).into_iter().collect(),
-            StmtKind::Proba(case) => vec![self.lower_proba_item(case, &[])],
+            StmtKind::Proba(case) => vec![self.lower_proba_item(case, &[], &[])],
             StmtKind::Probandum(suite) => {
                 let mut items = Vec::new();
-                self.lower_probandum_items(suite, &[], &mut items);
+                self.lower_probandum_items(suite, &[], &[], &mut items);
                 items
             }
             _ => Vec::new(),
@@ -339,6 +341,7 @@ impl<'a> Lowerer<'a> {
         &mut self,
         suite: &ProbandumDecl,
         inherited_setup: &[&PraeparaBlock],
+        suite_path: &[Symbol],
         out: &mut Vec<HirItem>,
     ) {
         let mut combined_setup = inherited_setup.to_vec();
@@ -348,16 +351,24 @@ impl<'a> Lowerer<'a> {
             }
         }
 
+        let mut combined_suite_path = suite_path.to_vec();
+        combined_suite_path.push(suite.name);
+
         for case in &suite.body.tests {
-            out.push(self.lower_proba_item(case, &combined_setup));
+            out.push(self.lower_proba_item(case, &combined_setup, &combined_suite_path));
         }
 
         for nested in &suite.body.nested {
-            self.lower_probandum_items(nested, &combined_setup, out);
+            self.lower_probandum_items(nested, &combined_setup, &combined_suite_path, out);
         }
     }
 
-    fn lower_proba_item(&mut self, case: &ProbaCase, inherited_setup: &[&PraeparaBlock]) -> HirItem {
+    fn lower_proba_item(
+        &mut self,
+        case: &ProbaCase,
+        inherited_setup: &[&PraeparaBlock],
+        suite_path: &[Symbol],
+    ) -> HirItem {
         let def_id = self.next_def_id();
         self.push_scope();
 
@@ -376,10 +387,6 @@ impl<'a> Lowerer<'a> {
 
         self.pop_scope();
 
-        let ignored = case
-            .modifiers
-            .iter()
-            .any(|modifier| matches!(modifier, ProbaModifier::Omitte(_) | ProbaModifier::Futurum(_)));
         HirItem {
             id: self.next_hir_id(),
             def_id,
@@ -391,10 +398,34 @@ impl<'a> Lowerer<'a> {
                 ret_ty: Some(self.types.primitive(crate::semantic::Primitive::Vacuum)),
                 body: Some(HirBlock { stmts, expr: None, span: case.span }),
                 is_async: false,
-                // Reused for test metadata on synthetic proba functions.
-                is_generator: ignored,
+                is_generator: false,
+                test: Some(HirTestMetadata {
+                    name: case.name,
+                    suite_path: suite_path.to_vec(),
+                    modifiers: Self::lower_test_modifiers(&case.modifiers),
+                    span: case.span,
+                }),
             }),
             span: case.span,
+        }
+    }
+
+    fn lower_test_modifiers(modifiers: &[ProbaModifier]) -> Vec<HirTestModifier> {
+        modifiers.iter().map(Self::lower_test_modifier).collect()
+    }
+
+    fn lower_test_modifier(modifier: &ProbaModifier) -> HirTestModifier {
+        match modifier {
+            ProbaModifier::Omitte(reason) => HirTestModifier::Omitte(*reason),
+            ProbaModifier::Futurum(reason) => HirTestModifier::Futurum(*reason),
+            ProbaModifier::Solum => HirTestModifier::Solum,
+            ProbaModifier::Tag(tag) => HirTestModifier::Tag(*tag),
+            ProbaModifier::Temporis(n) => HirTestModifier::Temporis(*n),
+            ProbaModifier::Metior => HirTestModifier::Metior,
+            ProbaModifier::Repete(n) => HirTestModifier::Repete(*n),
+            ProbaModifier::Fragilis(n) => HirTestModifier::Fragilis(*n),
+            ProbaModifier::Requirit(req) => HirTestModifier::Requirit(*req),
+            ProbaModifier::SolumIn(env) => HirTestModifier::SolumIn(*env),
         }
     }
 
@@ -498,3 +529,7 @@ pub fn lower_with_cli(
     let errors = lowerer.take_errors();
     (hir, errors)
 }
+
+#[cfg(test)]
+#[path = "mod_test.rs"]
+mod tests;

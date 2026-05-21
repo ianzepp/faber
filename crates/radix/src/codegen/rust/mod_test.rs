@@ -2,7 +2,8 @@ use crate::codegen::{self, Target};
 use crate::hir::{
     DefId, HirArrayElement, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId,
     HirImport, HirImportItem, HirInterface, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirParam, HirParamMode,
-    HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct, HirTypeAlias, HirVariant, HirVariantField,
+    HirPattern, HirProgram, HirStmt, HirStmtKind, HirStruct, HirTestMetadata, HirTestModifier, HirTypeAlias,
+    HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
@@ -53,6 +54,7 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
                 }),
                 is_async: false,
                 is_generator: false,
+                test: None,
             }),
             span: span(),
         }],
@@ -66,6 +68,71 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
 
     assert!(rust.code.contains("fn f(x: i64) -> i64"));
     assert!(rust.code.contains("fn main() {"));
+}
+
+#[test]
+fn emits_metadata_driven_test_attributes() {
+    let mut interner = Interner::new();
+    let case_name = interner.intern("one plus one equals two");
+    let blocked = interner.intern("blocked by maintenance");
+    let suite = interner.intern("arithmetic suite");
+    let types = TypeTable::new();
+    let vacuum = types.primitive(Primitive::Vacuum);
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: HirId(10),
+            def_id: DefId(1_000_000),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name: case_name,
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(vacuum),
+                body: Some(HirBlock {
+                    stmts: vec![HirStmt {
+                        id: HirId(11),
+                        kind: HirStmtKind::Expr(HirExpr {
+                            id: HirId(12),
+                            kind: HirExprKind::Adfirma(
+                                Box::new(HirExpr {
+                                    id: HirId(13),
+                                    kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                                    ty: Some(types.primitive(Primitive::Bivalens)),
+                                    span: span(),
+                                }),
+                                None,
+                            ),
+                            ty: Some(vacuum),
+                            span: span(),
+                        }),
+                        span: span(),
+                    }],
+                    expr: None,
+                    span: span(),
+                }),
+                is_async: false,
+                is_generator: false,
+                test: Some(HirTestMetadata {
+                    name: case_name,
+                    suite_path: vec![suite],
+                    modifiers: vec![HirTestModifier::Futurum(blocked)],
+                    span: span(),
+                }),
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let output = codegen::generate(Target::Rust, &program, &types, &interner).expect("rust codegen");
+    let crate::Output::Rust(rust) = output else {
+        panic!("expected rust output");
+    };
+
+    assert!(rust.code.contains("#[test]"));
+    assert!(rust.code.contains("#[ignore]"));
+    assert!(rust.code.contains("fn proba_1000000"));
 }
 
 #[test]
@@ -259,6 +326,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
                     }),
                     is_async: false,
                     is_generator: false,
+                    test: None,
                 }),
                 span: span(),
             },
@@ -352,6 +420,7 @@ fn resolves_type_names_for_named_defs() {
                     body: None,
                     is_async: false,
                     is_generator: false,
+                    test: None,
                 }),
                 span: span(),
             },
@@ -395,6 +464,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                     body: None,
                     is_async: false,
                     is_generator: false,
+                    test: None,
                 }),
                 span: span(),
             },
@@ -1208,6 +1278,7 @@ fn emits_result_and_err_for_direct_iace() {
                 }),
                 is_async: false,
                 is_generator: false,
+                test: None,
             }),
             span: span(),
         }],
@@ -1267,6 +1338,7 @@ fn propagates_failable_calls_with_question_mark() {
                     }),
                     is_async: false,
                     is_generator: false,
+                    test: None,
                 }),
                 span: span(),
             },
@@ -1303,6 +1375,7 @@ fn propagates_failable_calls_with_question_mark() {
                     }),
                     is_async: false,
                     is_generator: false,
+                    test: None,
                 }),
                 span: span(),
             },

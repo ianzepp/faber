@@ -110,6 +110,30 @@ pub struct HirFunction {
     pub is_async: bool,
     /// Whether function is a generator (not yet supported)
     pub is_generator: bool,
+    /// Structured metadata for lowered Faber test cases.
+    pub test: Option<HirTestMetadata>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HirTestMetadata {
+    pub name: Symbol,
+    pub suite_path: Vec<Symbol>,
+    pub modifiers: Vec<HirTestModifier>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HirTestModifier {
+    Omitte(Symbol),
+    Futurum(Symbol),
+    Solum,
+    Tag(Symbol),
+    Temporis(i64),
+    Metior,
+    Repete(i64),
+    Fragilis(i64),
+    Requirit(Symbol),
+    SolumIn(Symbol),
 }
 
 #[derive(Debug)]

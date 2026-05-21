@@ -1,7 +1,8 @@
 use super::{Codegen, DefId, FaberCodegen, Interner, Primitive, Type, TypeTable};
 use crate::hir::{
     HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirObjectField,
-    HirObjectKey, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind,
+    HirObjectKey, HirParam, HirParamMode, HirPattern, HirProgram, HirStmt, HirStmtKind, HirTestMetadata,
+    HirTestModifier,
 };
 use crate::lexer::Span;
 use crate::semantic::InferVar;
@@ -49,6 +50,7 @@ fn emits_basic_function_and_entry() {
         }),
         is_async: false,
         is_generator: false,
+        test: None,
     };
 
     let program = HirProgram {
@@ -167,6 +169,7 @@ fn emits_parameter_references_with_original_names() {
         }),
         is_async: false,
         is_generator: false,
+        test: None,
     };
 
     let program = HirProgram {
@@ -283,6 +286,7 @@ fn emits_si_sin_secus_chain_with_reddit_shorthand() {
         }),
         is_async: false,
         is_generator: false,
+        test: None,
     };
 
     let program = HirProgram {
@@ -307,6 +311,8 @@ fn emits_si_sin_secus_chain_with_reddit_shorthand() {
 fn emits_synthetic_proba_functions_as_proba_cases() {
     let mut interner = Interner::new();
     let name = interner.intern("one plus one equals two");
+    let blocked = interner.intern("blocked by maintenance");
+    let suite = interner.intern("arithmetic suite");
 
     let types = TypeTable::new();
     let vacuum = types.primitive(Primitive::Vacuum);
@@ -341,6 +347,12 @@ fn emits_synthetic_proba_functions_as_proba_cases() {
         }),
         is_async: false,
         is_generator: false,
+        test: Some(HirTestMetadata {
+            name,
+            suite_path: vec![suite],
+            modifiers: vec![HirTestModifier::Omitte(blocked)],
+            span: span(),
+        }),
     };
 
     let program = HirProgram {
@@ -355,7 +367,9 @@ fn emits_synthetic_proba_functions_as_proba_cases() {
 
     let gen = FaberCodegen::new();
     let output = gen.generate(&program, &types, &interner).expect("codegen");
-    assert!(output.code.contains("proba \"one plus one equals two\""));
+    assert!(output
+        .code
+        .contains("proba omitte \"blocked by maintenance\" \"one plus one equals two\""));
     assert!(!output.code.contains("functio one plus one equals two"));
 }
 

@@ -1,29 +1,17 @@
 use super::{CodeWriter, CodegenError};
-use crate::hir::{DefId, HirEnum, HirFunction, HirInterface, HirItem, HirItemKind, HirStruct};
+use crate::hir::{DefId, HirEnum, HirFunction, HirInterface, HirItem, HirItemKind, HirStruct, HirTestModifier};
 use crate::lexer::{Interner, Symbol};
-use crate::semantic::{Primitive, Type, TypeTable};
+use crate::semantic::TypeTable;
 use rustc_hash::FxHashMap;
 
 impl super::FaberCodegen {
     pub(super) fn is_synthetic_proba_function(
         &self,
         func: &HirFunction,
-        types: &TypeTable,
-        interner: &Interner,
+        _types: &TypeTable,
+        _interner: &Interner,
     ) -> bool {
-        if !func.params.is_empty() {
-            return false;
-        }
-
-        let Some(ret_ty) = func.ret_ty else {
-            return false;
-        };
-
-        if !matches!(types.get(ret_ty), Type::Primitive(Primitive::Vacuum)) {
-            return false;
-        }
-
-        interner.resolve(func.name).chars().any(char::is_whitespace)
+        func.test.is_some()
     }
     pub(super) fn generate_item(
         &self,
@@ -174,12 +162,15 @@ impl super::FaberCodegen {
         w: &mut CodeWriter,
     ) {
         w.write("proba ");
-        if func.is_generator {
-            w.write("omitte ");
-            self.write_quoted_text("ignored", w);
-            w.write(" ");
+        if let Some(test) = &func.test {
+            for modifier in &test.modifiers {
+                self.write_test_modifier(modifier, interner, w);
+                w.write(" ");
+            }
+            self.write_quoted_text(interner.resolve(test.name), w);
+        } else {
+            self.write_quoted_text(interner.resolve(func.name), w);
         }
-        self.write_quoted_text(interner.resolve(func.name), w);
 
         if let Some(body) = &func.body {
             w.writeln(" {");
@@ -256,6 +247,49 @@ impl super::FaberCodegen {
         w.writeln("}");
 
         Ok(())
+    }
+
+    fn write_test_modifier(&self, modifier: &HirTestModifier, interner: &Interner, w: &mut CodeWriter) {
+        match modifier {
+            HirTestModifier::Omitte(reason) => {
+                w.write("omitte ");
+                self.write_quoted_text(interner.resolve(*reason), w);
+            }
+            HirTestModifier::Futurum(reason) => {
+                w.write("futurum ");
+                self.write_quoted_text(interner.resolve(*reason), w);
+            }
+            HirTestModifier::Solum => {
+                w.write("solum");
+            }
+            HirTestModifier::Tag(tag) => {
+                w.write("tag ");
+                self.write_quoted_text(interner.resolve(*tag), w);
+            }
+            HirTestModifier::Temporis(n) => {
+                w.write("temporis ");
+                w.write(&n.to_string());
+            }
+            HirTestModifier::Metior => {
+                w.write("metior");
+            }
+            HirTestModifier::Repete(n) => {
+                w.write("repete ");
+                w.write(&n.to_string());
+            }
+            HirTestModifier::Fragilis(n) => {
+                w.write("fragilis ");
+                w.write(&n.to_string());
+            }
+            HirTestModifier::Requirit(req) => {
+                w.write("requirit ");
+                self.write_quoted_text(interner.resolve(*req), w);
+            }
+            HirTestModifier::SolumIn(env) => {
+                w.write("solum_in ");
+                self.write_quoted_text(interner.resolve(*env), w);
+            }
+        }
     }
 
     pub(super) fn generate_enum(

@@ -52,11 +52,15 @@ pub fn generate_function_with_cli_args_type(
     cli_args_type: Option<&str>,
 ) -> Result<(), CodegenError> {
     let is_failable = codegen.is_failable_def(def_id);
-    let is_proba = def_id.0 >= 1_000_000;
+    let is_test = func.test.is_some();
 
-    if is_proba {
+    if is_test {
         w.writeln("#[test]");
-        if func.is_generator {
+        if func.test.as_ref().is_some_and(|test| {
+            test.modifiers
+                .iter()
+                .any(|modifier| matches!(modifier, HirTestModifier::Omitte(_) | HirTestModifier::Futurum(_)))
+        }) {
             w.writeln("#[ignore]");
         }
     }
@@ -70,7 +74,7 @@ pub fn generate_function_with_cli_args_type(
         w.write("pub(crate) ");
     }
     w.write("fn ");
-    if is_proba {
+    if is_test {
         w.write(&format!("proba_{}", def_id.0));
     } else {
         w.write(codegen.resolve_symbol(func.name));

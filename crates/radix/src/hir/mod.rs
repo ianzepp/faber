@@ -39,5 +39,6 @@ pub use nodes::{
     HirField, HirFunction, HirId, HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem, HirItemKind,
     HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
     HirParam, HirParamMode, HirPattern, HirProgram, HirRangeKind, HirReceiver, HirRefKind, HirStmt, HirStmtKind,
-    HirStruct, HirTransformKind, HirTypeAlias, HirTypeParam, HirUnOp, HirVariant, HirVariantField,
+    HirStruct, HirTestMetadata, HirTestModifier, HirTransformKind, HirTypeAlias, HirTypeParam, HirUnOp, HirVariant,
+    HirVariantField,
 };

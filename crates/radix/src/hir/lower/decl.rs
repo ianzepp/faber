@@ -179,6 +179,7 @@ impl<'a> Lowerer<'a> {
             body,
             is_async: false,
             is_generator: false,
+            test: None,
         };
 
         Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Function(func), span: stmt.span })
@@ -278,6 +279,7 @@ impl<'a> Lowerer<'a> {
                         body,
                         is_async: false,
                         is_generator: false,
+                        test: None,
                     };
 
                     methods.push(HirMethod {
