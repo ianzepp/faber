@@ -5,6 +5,8 @@
 **Started**: 2026-05-21 (from plan creation)
 **Current Phase**: 0 (Baseline)
 
+> **Scope note (user directive)**: Only Phases 0, 1, and 2 were executed in this pass. Phases 3–9 (codegen bridge, import resolution, Cargo dependency injection, end-to-end JSON/TOML reimplementation, fixtures, and full validation) are deliberately deferred.
+
 ## Phase 0 Baseline Record (2026-05-21)
 
 ### Git State
