@@ -26,10 +26,10 @@ Possible wrapper dimensions include:
 
 - Imperative / base forms (`-a`, `-e`, `-i`): synchronous
 - Future indicative forms (`-et`, `-ebit`, `-abit`): asynchronous (`promissum<T>`)
-- A streaming/generator form: `cursor<T>`
-- A composed async-streaming form: async plus `cursor<T>`
+- Future plural forms: async generators (`cursor<T>`)
+- Present participles (`-ans`, `-ens`): possible sync/lazy generator forms, still to be reconciled with `morphologia.md`
 
-The exact spelling for generator and async-generator forms is the main unresolved policy question in this review. Existing docs currently point in two directions: this HAL draft uses `-ent` in a few async-generator cases, while `docs/grammatica/morphologia.md` describes present participles (`-ans`, `-ens`) as the generator form.
+Resolved policy: async generators use the real future plural form of the declared root. Existing docs still need reconciliation where they describe present participles (`-ans`, `-ens`) as the general generator form.
 
 Compiler caveat: the active `radix-rs` compiler can parse these stdlib interface files, but future root-form declaration lowering and morphology-based wrapper synthesis are not implemented yet. This review is about freezing the intended user-facing call forms before the runtime/API surface hardens.
 
@@ -71,7 +71,7 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 ### Weaknesses / Open Policy
 
-- The generator spelling is not yet canonicalized across docs. `arca` still uses a future plural-looking async-generator form, while `morphologia.md` points to present participles (`-ans`, `-ens`) for generator semantics.
+- Async-generator spelling is now resolved as real future plural, but `morphologia.md` still needs reconciliation for present participles and sync/lazy generator semantics.
 - Several modules only define one side of what should eventually be a pair.
 - Some verb choices feel strained when trying to force conjugation to carry too much meaning (especially around streaming vs single-value results).
 - A few roots need explicit policy decisions before they become public API.
@@ -132,9 +132,9 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 ---
 
-### 4. `arca.fab` + `Transactio` (Database) — Root Policy Needed
+### 4. `arca.fab` + `Transactio` (Database) — Query Stream Resolved
 
-This is the key test case for migration-safe conjugation. The root `quaer-` should probably remain shared if `quaeret` and the streaming form are the same database query operation with different wrapper semantics.
+This is the key test case for migration-safe conjugation. The root `quaer-` remains shared because `quaeret` and `quaerent` are the same database query operation with different wrapper semantics.
 
 **Current**:
 - `quaerent` (`@ cursor`) — stream rows
@@ -146,21 +146,21 @@ This is the key test case for migration-safe conjugation. The root `quaer-` shou
 
 **Problems**:
 - `quaerent` / `quaeret` are visually similar, but that is not by itself a reason to split roots. Compiler morphology validation should catch invalid forms.
-- The real unresolved issue is whether `-ent` is the final async-generator spelling. `morphologia.md` currently points to present participles (`-ans`, `-ens`) for generator semantics.
+- `quaerent` is correct under the resolved policy that async generators use the real future plural form.
 - `capiet` uses a different root for "return first row." That may be correct: first-row consumption is a different operation from query-all vs query-stream wrapper selection.
 
 **Recommendations**:
 
 | Current      | Recommendation | Rationale |
 |--------------|----------------|-----------|
-| `quaerent`   | Keep the `quaer-` root; decide whether the final form is `quaerent` or a present-participle form. | Query streaming and query collection should survive as conjugations of the same operation. |
+| `quaerent`   | Keep. | Real future plural async-generator form of `quaerere`; query streaming and query collection remain conjugations of the same operation. |
 | `quaeret`    | Keep. | Good future-form call site for async query returning collected rows. |
 | `capiet`     | Tentatively keep as a separate root. | "Take/fetch first row" is a different consumption policy, not just a wrapper over the query root. |
 | `exsequetur` | Keep. | Mutation execution is separate from query result production. |
 | `inseret`    | Keep. | Insert returning ID is a distinct database operation. |
 
-**Decision to make**:
-If async generators use `-ent`, `quaerent` is acceptable. If generators use present participles and async is composed separately, `quaerent` should be renamed before implementation. Do not solve this by switching to an unrelated root.
+**Resolved**:
+`quaerent` is the correct async-generator form for the query root. Do not solve visual similarity by switching to an unrelated root.
 
 ---
 
@@ -201,14 +201,13 @@ All client/server operations are async-only, so only future forms are defined (`
 
 ### 1. Standardize Generator/Streaming Signaling
 
-Current docs do not agree on generator spelling. The HAL drafts use `-ent` for some async generators; `morphologia.md` describes generator methods as present participles (`-ans`, `-ens`).
+Resolved policy: async generators use the real future plural form of the declared root.
 
-**Policy to decide before implementation**:
-- Whether async generators are spelled with a plural/future-looking form such as `-ent`.
-- Whether generators are spelled as present participles (`-ans`, `-ens`) and async is represented separately or compositionally.
-- Whether the compiler should treat a root-backed generator as the primitive operation and synthesize collect/async wrappers from the conjugated call form.
+Examples:
+- `quaerere` -> `quaerent` for async query stream.
+- `nuntiare` -> `nuntiabunt` for async message stream.
 
-Do not use a dedicated streaming root merely to avoid this policy decision. If the operation is the same, the root should stay the same.
+Open follow-up: reconcile `morphologia.md`, which currently describes present participles (`-ans`, `-ens`) as generator methods. Those may still be useful for sync/lazy streams, but they are not the async-generator form.
 
 ### 2. Prefer Distinct Roots for Large Semantic Differences
 
@@ -226,7 +225,7 @@ Rationale:
 - Forms such as `videbit` should stay. Invented regularizations such as `videet` should be avoided.
 
 Implications:
-- `quaerent` is acceptable if the async-stream form is the real future plural of `quaerere`.
+- `quaerent` is correct because the intended root is `quaerere`.
 - `nuntient` became `nuntiabunt` because the intended root is `nuntiare`.
 
 ### 4. Document the Conjugation Contract Explicitly
@@ -241,15 +240,15 @@ Create (or expand) a document that defines the expected conjugation patterns for
 
 | Module     | Current Method     | Suggested Change                  | Priority | Rationale |
 |------------|--------------------|-----------------------------------|----------|---------|
-| Cross-cutting | Generator form policy | Decide real conjugation shape for stream and async-stream forms | High | This decision controls whether current `quaerent` and similar stream forms are stable call-site forms |
-| `arca`     | `quaerent`         | Keep `quaer-`; rename only if generator policy rejects `-ent` | High | Same query operation should remain one root |
+| Cross-cutting | Generator form policy | Use real future plural for async generators | Done | Stabilizes async stream call-site forms |
+| `arca`     | `quaerent`         | Keep | Done | Real future plural for `quaerere`; same query operation remains one root |
 | `arca`     | `capiet`           | Decide whether first-row retrieval is a separate root | Medium | Likely separate operation, but should be explicit before runtime implementation |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
 ### Medium Priority
 
 - Audit all remaining future forms across `caelum`, `nuncius`, `pressura` for real conjugation.
-- Decide on a canonical streaming conjugation and document how async composes with it.
+- Reconcile present participle generator language in `morphologia.md` with the resolved future-plural async-generator policy.
 - Ensure data-format modules (`json`/`toml`/`yaml`) have placeholder future forms documented even if not yet implemented.
 
 ### Low Priority / Future
