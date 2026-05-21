@@ -28,7 +28,7 @@ enum Command {
     Check(radix::tool::CheckArgs),
     /// Create a new Faber package (planned)
     Init(InitArgs),
-    /// Run a compiled package (planned)
+    /// Build (if needed) and run a compiled package
     Run(RunArgs),
     /// Run package tests (planned)
     Test(TestArgs),

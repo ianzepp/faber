@@ -60,6 +60,40 @@ kind = "bin"
 - `kind` defaults to `"bin"`.
 - Rust binary package compilation is the only supported package build mode today.
 
+## Package Build Layout
+
+When you run `faber build` (or `faber run`) on a package, Faber produces two kinds of output under the package root:
+
+```
+<package>/
+├── faber.toml
+├── src/
+│   └── main.fab
+└── target/
+    ├── faber/                 # generated Rust crate (source of truth for the backend)
+    │   ├── Cargo.toml
+    │   └── src/
+    │       └── main.rs
+    ├── debug/                 # Rust debug artifacts (the actual executable)
+    │   └── <package-name>
+    └── release/               # Rust release artifacts
+        └── <package-name>
+```
+
+- `target/faber/` contains the Rust crate that the compiler emits. It is **generated source**.
+- `target/debug/` and `target/release/` are the real build artifacts produced by invoking Cargo against the generated crate (using `--target-dir target`).
+- These three directories are **siblings**. You will never see `target/faber/target/...`.
+- All `target/` contents are build artifacts and should be ignored by version control (the default `.gitignore` covers them).
+
+The exact Cargo invocation used is equivalent to:
+
+```bash
+cargo build --manifest-path target/faber/Cargo.toml --target-dir target
+# or with --release for release builds
+```
+
+`faber emit -t rust --package` is the inspection path if you only want to see the generated Rust on stdout without writing the crate tree.
+
 ## Current Limits
 
 - Dependency declarations are not implemented yet.
@@ -73,6 +107,8 @@ kind = "bin"
 faber init hello
 faber check hello
 faber build hello
+faber run hello
+faber build --release hello
 faber emit -t rust --package hello/faber.toml
 ```
 

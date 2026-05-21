@@ -7,9 +7,9 @@
 **Created**: 2026-05-21
 
 ## Current Phase
-(complete)
+(complete – all phases 0–7 delivered and aligned)
 
-**All Phases Delivered**
+**Phase 6 (docs/help/capability) is the last remaining gap from the Codex review and is now closed.**
 
 ## Completed Phases
 0 - Preflight and baseline capture (ledger + captures)
@@ -226,3 +226,35 @@ Proceed to Phase 1: Build pipeline model (add path structs, testable layout).
 **Checkpoint**: PASS per plan ("`faber build <package>` creates <package>/target/debug/<package-name> . No <package>/target/faber/target/ ").
 
 **Commit**: "Complete Phase 3: Cargo backend invocation"
+
+---
+
+## Phase 6: Docs and Manifest Updates – Completion Record (final alignment)
+
+**Gaps identified by post-implementation review**:
+- README.md still listed `faber run` as a stub.
+- `faber run --help` still said “(planned)”.
+- `docs/grammatica/targets.md` and live `faber targets` still reported `run=no` for Rust.
+- Generated crate layout (`target/faber/` + sibling `target/debug|release/`, no nested `target/faber/target`) was not documented in `docs/grammatica/manifest.md`.
+
+**Fixes applied**:
+- Updated doc comment on `Run` variant → accurate `--help` text.
+- Changed `run: false → true` for Rust in `target_capabilities` (and improved the note).
+- Updated table + example output in `docs/grammatica/targets.md`.
+- Removed stub claim from README.md.
+- Added new “Package Build Layout” section + generated-artifact policy + updated command examples in `docs/grammatica/manifest.md`.
+
+**Verification**:
+- `faber run --help` now reads “Build (if needed) and run a compiled package”.
+- `faber targets` now shows `rust ... run=yes ... via \`faber\``.
+- Layout contract is explicitly documented with the exact directory shape the plan requires.
+- `cargo fmt --check`, relevant tests, and clippy still clean.
+
+**Checkpoint**: Now PASS for Phase 6.
+- No doc claims `faber run` is a stub.
+- Generated layout + sibling artifact policy is described.
+- Capability surface (help, `targets`, grammar docs, README) matches the implemented behavior.
+
+**Commit**: “Complete Phase 6: Docs and manifest updates (help text, targets, README, manifest layout)”
+
+**Factory status**: All seven phases of the plan are now complete and aligned. The Codex review gaps are closed.

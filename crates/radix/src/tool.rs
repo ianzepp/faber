@@ -733,9 +733,9 @@ pub fn target_capabilities(target: crate::codegen::Target) -> TargetCapabilities
         crate::codegen::Target::Rust => TargetCapabilities {
             check: true,
             build: true,
-            run: false,
+            run: true,
             package: true,
-            note: "primary backend; package compilation supported",
+            note: "primary backend; full package build + run via `faber`",
         },
         crate::codegen::Target::Go => TargetCapabilities {
             check: true,

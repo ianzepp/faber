@@ -10,7 +10,7 @@ As of the current `radix-rs` CLI, the supported targets are:
 
 | Target  | `check` | `build` | `package` | Notes                                                                |
 | ------- | ------- | ------- | --------- | -------------------------------------------------------------------- |
-| `rust`  | yes     | yes     | yes       | Primary backend; package compilation supported                       |
+| `rust`  | yes     | yes     | yes       | Primary backend; full package build + run via `faber`                |
 | `go`    | yes     | yes     | no        | File emission supported; package compilation not yet supported       |
 | `ts`    | yes     | yes     | no        | File emission supported; package compilation not yet supported       |
 | `faber` | yes     | yes     | no        | Canonical pretty-print target; package compilation not yet supported |
@@ -18,7 +18,7 @@ As of the current `radix-rs` CLI, the supported targets are:
 The current `targets` command prints these same notes directly:
 
 ```text
-rust check=yes build=yes run=no package=yes note=primary backend; package compilation supported
+rust check=yes build=yes run=yes package=yes note=primary backend; full package build + run via `faber`
 go check=yes build=yes run=no package=no note=file emission supported; package compilation not yet supported
 ts check=yes build=yes run=no package=no note=file emission supported; package compilation not yet supported
 faber check=yes build=yes run=no package=no note=canonical pretty-print target; package compilation not yet supported

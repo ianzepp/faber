@@ -68,7 +68,7 @@ Run `cargo run -p faber -- init hello` to create a starter package. See
 
 - `faber check`, `faber build`, `faber targets`
 - `faber init`
-- `faber run`, `faber test` (stubs in v0.34)
+- `faber run`; `faber test` (planned)
 - Compatibility aliases: `faber lex`, `faber parse`, `faber hir`, `faber emit`, `faber cli-ir`
 
 **Radix** is the compiler-developer tool:
