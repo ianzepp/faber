@@ -10,6 +10,7 @@ Phase 04 extends the Phase 03 Rust single-command path. It should not redesign C
 
 - Use Rust as the first runnable subcommand target.
 - Extend the self-contained generated Rust parser from Phase 03.
+- Add `argumenta <ident>` as a function modifier in the parser, AST, HIR lowering, and semantic binding paths.
 - Build nested command paths from `@ imperium` values.
 - Support command aliases.
 - Parse command-local options and operands.
@@ -44,6 +45,7 @@ Phase 04 extends the Phase 03 Rust single-command path. It should not redesign C
 - Command `--help` lists globals plus command-local options and operands.
 - If no command is provided, print root help and exit with code `2`.
 - If an unknown command is provided, print an error and exit with code `2`.
+- In Phase 04, subcommand CLIs must use an empty root `incipit` body. A non-empty root body should produce a diagnostic instead of being silently ignored or treated as setup code.
 
 ## Out Of Scope
 
@@ -71,6 +73,7 @@ Phase 04 extends the Phase 03 Rust single-command path. It should not redesign C
 - Nested command paths dispatch correctly.
 - Root help and command help are stable enough for tests.
 - Missing and unknown commands produce clear errors and exit code `2`.
+- Non-empty root `incipit` bodies in subcommand CLIs are rejected with a clear diagnostic.
 - Rust subcommand CLIs compile and run in tests.
 - Non-Rust subcommand CLI codegen remains explicitly gated.
 - Module-mounted commands remain explicitly gated for Phase 05.
