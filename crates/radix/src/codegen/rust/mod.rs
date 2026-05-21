@@ -33,7 +33,7 @@ mod stmt;
 mod types;
 
 use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
-use crate::hir::{DefId, HirItem, HirItemKind, HirProgram};
+use crate::hir::{DefId, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier};
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::TypeTable;
 use crate::RustOutput;
@@ -48,6 +48,19 @@ use std::collections::BTreeSet;
 // analysis during construction, then uses this information during generation.
 // This two-phase approach simplifies code generation logic.
 
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct TestSelection {
+    pub name: Option<String>,
+    pub suite: Option<String>,
+    pub tag: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct TestSelectionState {
+    query: TestSelection,
+    has_solum_tests: bool,
+}
+
 /// Rust code generator.
 ///
 /// WHY: Holds pre-analyzed state (names, failable functions) to enable correct
@@ -58,12 +71,31 @@ pub struct RustCodegen<'a> {
 
     /// Set of DefIds for functions that can throw (return Result)
     failable_defs: FxHashSet<DefId>,
+
+    /// Optional Faber test selection used to emit ignore reasons.
+    test_selection: Option<TestSelectionState>,
 }
 
 impl<'a> RustCodegen<'a> {
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
-        let mut codegen = Self { names: NameCatalog::new(hir, interner), failable_defs: FxHashSet::default() };
+        Self::new_with_test_selection(hir, interner, None)
+    }
+
+    pub fn new_with_test_selection(
+        hir: &HirProgram,
+        interner: &'a Interner,
+        test_selection: Option<TestSelection>,
+    ) -> Self {
+        let mut codegen =
+            Self { names: NameCatalog::new(hir, interner), failable_defs: FxHashSet::default(), test_selection: None };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
+        codegen.test_selection = Some(TestSelectionState {
+            query: test_selection.unwrap_or_default(),
+            has_solum_tests: hir
+                .items
+                .iter()
+                .any(|item| matches!(&item.kind, HirItemKind::Function(func) if func.test.as_ref().is_some_and(|test| test.modifiers.iter().any(|modifier| matches!(modifier, HirTestModifier::Solum))))),
+        });
         codegen
     }
 
@@ -102,6 +134,79 @@ impl<'a> RustCodegen<'a> {
         self.names
             .iter()
             .any(|(def_id, name)| *name == method && self.failable_defs.contains(def_id))
+    }
+
+    pub(super) fn test_ignore_reason(&self, func: &HirFunction) -> Option<String> {
+        let test = func.test.as_ref()?;
+        let state = self.test_selection.as_ref()?;
+        if let Some(reason) = self.selection_ignore_reason(test, &state.query, state.has_solum_tests) {
+            return Some(reason);
+        }
+        self.source_ignore_reason(test)
+    }
+
+    fn selection_ignore_reason(
+        &self,
+        test: &HirTestMetadata,
+        query: &TestSelection,
+        has_solum_tests: bool,
+    ) -> Option<String> {
+        if has_solum_tests && !self.test_has_modifier(test, |modifier| matches!(modifier, HirTestModifier::Solum)) {
+            return Some("faber: not selected by solum".to_owned());
+        }
+
+        if let Some(name) = query.name.as_deref() {
+            if self.resolve_symbol(test.name) != name {
+                return Some(format!("faber: not selected by name {}", name));
+            }
+        }
+
+        if let Some(suite) = query.suite.as_deref() {
+            if self.test_suite_path(test) != suite {
+                return Some(format!("faber: not selected by suite {}", suite));
+            }
+        }
+
+        if let Some(tag) = query.tag.as_deref() {
+            if !self.test_has_tag(test, tag) {
+                return Some(format!("faber: not selected by tag {}", tag));
+            }
+        }
+
+        None
+    }
+
+    fn source_ignore_reason(&self, test: &HirTestMetadata) -> Option<String> {
+        for modifier in &test.modifiers {
+            match modifier {
+                HirTestModifier::Omitte(reason) => {
+                    return Some(format!("faber: omitte - {}", self.resolve_symbol(*reason)));
+                }
+                HirTestModifier::Futurum(reason) => {
+                    return Some(format!("faber: futurum - {}", self.resolve_symbol(*reason)));
+                }
+                _ => {}
+            }
+        }
+        None
+    }
+
+    fn test_suite_path(&self, test: &HirTestMetadata) -> String {
+        test.suite_path
+            .iter()
+            .map(|sym| self.resolve_symbol(*sym))
+            .collect::<Vec<_>>()
+            .join("/")
+    }
+
+    fn test_has_tag(&self, test: &HirTestMetadata, tag: &str) -> bool {
+        test.modifiers
+            .iter()
+            .any(|modifier| matches!(modifier, HirTestModifier::Tag(value) if self.resolve_symbol(*value) == tag))
+    }
+
+    fn test_has_modifier(&self, test: &HirTestMetadata, predicate: impl Fn(&HirTestModifier) -> bool) -> bool {
+        test.modifiers.iter().any(predicate)
     }
 
     fn generate_item(
@@ -345,8 +450,17 @@ impl RustCodegen<'_> {
 }
 
 pub fn generate_module(hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<RustOutput, CodegenError> {
+    generate_module_with_test_selection(hir, types, interner, None)
+}
+
+pub fn generate_module_with_test_selection(
+    hir: &HirProgram,
+    types: &TypeTable,
+    interner: &Interner,
+    test_selection: Option<TestSelection>,
+) -> Result<RustOutput, CodegenError> {
     super::reject_hir_errors(hir)?;
-    RustCodegen::new(hir, interner).generate_output(hir, types, true, None)
+    RustCodegen::new_with_test_selection(hir, interner, test_selection).generate_output(hir, types, true, None)
 }
 
 pub fn generate_module_with_cli(
@@ -355,8 +469,23 @@ pub fn generate_module_with_cli(
     interner: &Interner,
     cli_program: &crate::cli::CliProgram,
 ) -> Result<RustOutput, CodegenError> {
+    generate_module_with_cli_and_test_selection(hir, types, interner, cli_program, None)
+}
+
+pub fn generate_module_with_cli_and_test_selection(
+    hir: &HirProgram,
+    types: &TypeTable,
+    interner: &Interner,
+    cli_program: &crate::cli::CliProgram,
+    test_selection: Option<TestSelection>,
+) -> Result<RustOutput, CodegenError> {
     super::reject_hir_errors(hir)?;
-    RustCodegen::new(hir, interner).generate_output(hir, types, true, Some(cli_program))
+    RustCodegen::new_with_test_selection(hir, interner, test_selection).generate_output(
+        hir,
+        types,
+        true,
+        Some(cli_program),
+    )
 }
 
 fn is_cli_args_local(stmt: &crate::hir::HirStmt, entry_args: &str, codegen: &RustCodegen<'_>) -> bool {

@@ -1,0 +1,21 @@
+proba "name match" {
+    adfirma verum
+}
+
+proba tag "smoke" "tag match" {
+    adfirma verum
+}
+
+probandum "outer suite" {
+    proba "suite match" {
+        adfirma verum
+    }
+
+    probandum "inner suite" {
+        proba tag "focus" "combined match" {
+            adfirma verum
+        }
+    }
+}
+
+incipit {}

@@ -1433,7 +1433,12 @@ incipit {}"#;
     let Some(crate::Output::Rust(output)) = result.output else {
         panic!("expected Rust output");
     };
-    assert!(output.code.contains("#[ignore]"));
+    assert!(output
+        .code
+        .contains("#[ignore = \"faber: omitte - blocked\"]"));
+    assert!(output
+        .code
+        .contains("#[ignore = \"faber: futurum - todo\"]"));
 }
 
 #[test]

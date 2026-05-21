@@ -1,0 +1,9 @@
+proba "selected case" {
+    adfirma verum
+}
+
+proba "broken case" {
+    fixum broken ← missing_value
+}
+
+incipit {}

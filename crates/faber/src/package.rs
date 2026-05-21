@@ -1,4 +1,5 @@
-use radix::codegen::{self, Target};
+use radix::codegen::rust::TestSelection as RustTestSelection;
+use radix::codegen::Target;
 use radix::diagnostics::Diagnostic;
 use radix::driver::{analyze_source_with_cli_program, Config, Session};
 use radix::lexer::{Interner, Span, TokenKind};
@@ -207,6 +208,22 @@ struct PackageFile {
 type PackageDiscoveryResult = Result<PackageSpec, Box<Diagnostic>>;
 
 pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
+    compile_package_internal(config, input, None)
+}
+
+pub fn compile_package_with_test_selection(
+    config: &Config,
+    input: &Path,
+    test_selection: Option<&RustTestSelection>,
+) -> CompileResult {
+    compile_package_internal(config, input, test_selection)
+}
+
+fn compile_package_internal(
+    config: &Config,
+    input: &Path,
+    test_selection: Option<&RustTestSelection>,
+) -> CompileResult {
     if config.target != Target::Rust {
         return CompileResult {
             output: None,
@@ -276,60 +293,14 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
             }
         }
 
-        let rust = if is_entry {
-            let generated = if let Some(cli_program) = analysis.cli_program.as_ref() {
-                codegen::generate_rust_cli(
-                    &analysis.hir,
-                    &analysis.types,
-                    &analysis.interner,
-                    cli_program,
-                )
-                .map(Output::Rust)
-            } else {
-                codegen::generate(
-                    Target::Rust,
-                    &analysis.hir,
-                    &analysis.types,
-                    &analysis.interner,
-                )
-            };
-            match generated {
-                Ok(Output::Rust(output)) => output.code,
-                Ok(_) => {
-                    diagnostics.push(
-                        Diagnostic::error("Rust target emitted unexpected non-Rust output variant")
-                            .with_file(file.path.display().to_string()),
-                    );
-                    continue;
-                }
-                Err(err) => {
-                    diagnostics.push(
-                        Diagnostic::codegen_error(&err.message)
-                            .with_file(file.path.display().to_string()),
-                    );
-                    continue;
-                }
-            }
-        } else {
-            let generated = if let Some(cli_program) = analysis.cli_program.as_ref() {
-                codegen::rust::generate_module_with_cli(
-                    &analysis.hir,
-                    &analysis.types,
-                    &analysis.interner,
-                    cli_program,
-                )
-            } else {
-                codegen::rust::generate_module(&analysis.hir, &analysis.types, &analysis.interner)
-            };
-            match generated {
-                Ok(output) => output.code,
-                Err(err) => {
-                    diagnostics.push(
-                        Diagnostic::codegen_error(&err.message)
-                            .with_file(file.path.display().to_string()),
-                    );
-                    continue;
-                }
+        let rust = match generate_rust_code_for_analysis(&analysis, is_entry, test_selection) {
+            Ok(output) => output,
+            Err(err) => {
+                diagnostics.push(
+                    Diagnostic::codegen_error(&err.message)
+                        .with_file(file.path.display().to_string()),
+                );
+                continue;
             }
         };
 
@@ -372,6 +343,57 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
         output: Some(Output::Rust(RustOutput { code: crate_code })),
         diagnostics,
     }
+}
+
+fn generate_rust_code_for_analysis(
+    analysis: &radix::driver::AnalyzedUnit,
+    is_entry: bool,
+    test_selection: Option<&RustTestSelection>,
+) -> Result<String, radix::codegen::CodegenError> {
+    if is_entry {
+        if let Some(cli_program) = analysis.cli_program.as_ref() {
+            let codegen = radix::codegen::rust::RustCodegen::new_with_test_selection(
+                &analysis.hir,
+                &analysis.interner,
+                test_selection.cloned(),
+            );
+            return codegen
+                .generate_cli(&analysis.hir, &analysis.types, cli_program)
+                .map(|output| output.code);
+        }
+
+        let codegen = radix::codegen::rust::RustCodegen::new_with_test_selection(
+            &analysis.hir,
+            &analysis.interner,
+            test_selection.cloned(),
+        );
+        return radix::codegen::Codegen::generate(
+            &codegen,
+            &analysis.hir,
+            &analysis.types,
+            &analysis.interner,
+        )
+        .map(|output| output.code);
+    }
+
+    if let Some(cli_program) = analysis.cli_program.as_ref() {
+        return radix::codegen::rust::generate_module_with_cli_and_test_selection(
+            &analysis.hir,
+            &analysis.types,
+            &analysis.interner,
+            cli_program,
+            test_selection.cloned(),
+        )
+        .map(|output| output.code);
+    }
+
+    radix::codegen::rust::generate_module_with_test_selection(
+        &analysis.hir,
+        &analysis.types,
+        &analysis.interner,
+        test_selection.cloned(),
+    )
+    .map(|output| output.code)
 }
 
 pub fn check_package(config: &Config, input: &Path) -> Vec<Diagnostic> {

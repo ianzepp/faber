@@ -1,0 +1,9 @@
+proba solum "focused case" {
+    adfirma verum
+}
+
+proba "ordinary case" {
+    adfirma verum
+}
+
+incipit {}

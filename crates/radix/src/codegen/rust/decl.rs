@@ -56,12 +56,8 @@ pub fn generate_function_with_cli_args_type(
 
     if is_test {
         w.writeln("#[test]");
-        if func.test.as_ref().is_some_and(|test| {
-            test.modifiers
-                .iter()
-                .any(|modifier| matches!(modifier, HirTestModifier::Omitte(_) | HirTestModifier::Futurum(_)))
-        }) {
-            w.writeln("#[ignore]");
+        if let Some(reason) = codegen.test_ignore_reason(func) {
+            w.writeln(&format!("#[ignore = \"{}\"]", escape_ignore_reason(&reason)));
         }
     }
 
@@ -137,6 +133,10 @@ pub fn generate_function_with_cli_args_type(
 
     w.newline();
     Ok(())
+}
+
+fn escape_ignore_reason(reason: &str) -> String {
+    reason.replace('\\', r"\\").replace('"', "\\\"")
 }
 
 /// Generate a Rust struct declaration.

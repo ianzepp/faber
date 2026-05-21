@@ -102,6 +102,18 @@ struct TestArgs {
     #[arg(value_name = "FILTER")]
     filter: Option<String>,
 
+    /// Select tests by source-level proba name
+    #[arg(long)]
+    name: Option<String>,
+
+    /// Select tests by source-level probandum suite path, joined with `/`
+    #[arg(long)]
+    suite: Option<String>,
+
+    /// Select tests by source-level tag modifier
+    #[arg(long)]
+    tag: Option<String>,
+
     /// Run only tests whose name exactly matches the filter
     #[arg(long)]
     exact: bool,
@@ -385,10 +397,24 @@ fn cmd_test(args: TestArgs) {
     use std::path::PathBuf;
 
     let input_path = PathBuf::from(&args.path);
+    let test_selection = radix::codegen::rust::TestSelection {
+        name: args.name.clone(),
+        suite: args.suite.clone(),
+        tag: args.tag.clone(),
+    };
+    let test_selection = if test_selection.name.is_some()
+        || test_selection.suite.is_some()
+        || test_selection.tag.is_some()
+    {
+        Some(test_selection)
+    } else {
+        None
+    };
 
     // Treat as package (test is a package-level operation; mirrors cmd_run).
     let config = radix::driver::Config::default().with_target(radix::codegen::Target::Rust);
-    let result = package::compile_package(&config, &input_path);
+    let result =
+        package::compile_package_with_test_selection(&config, &input_path, test_selection.as_ref());
 
     for diag in &result.diagnostics {
         if diag.is_error() {

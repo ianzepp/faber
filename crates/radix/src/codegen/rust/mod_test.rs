@@ -1,3 +1,4 @@
+use crate::codegen::rust::TestSelection;
 use crate::codegen::{self, Target};
 use crate::hir::{
     DefId, HirArrayElement, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId,
@@ -11,6 +12,57 @@ use crate::syntax::Visibility;
 
 fn span() -> Span {
     Span::default()
+}
+
+fn test_body(vacuum: crate::semantic::TypeId, bivalens: crate::semantic::TypeId) -> HirBlock {
+    HirBlock {
+        stmts: vec![HirStmt {
+            id: crate::hir::HirId(2),
+            kind: HirStmtKind::Expr(HirExpr {
+                id: crate::hir::HirId(3),
+                kind: HirExprKind::Adfirma(
+                    Box::new(HirExpr {
+                        id: crate::hir::HirId(4),
+                        kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                        ty: Some(bivalens),
+                        span: span(),
+                    }),
+                    None,
+                ),
+                ty: Some(vacuum),
+                span: span(),
+            }),
+            span: span(),
+        }],
+        expr: None,
+        span: span(),
+    }
+}
+
+fn test_item(
+    def_id: u32,
+    name: crate::lexer::Symbol,
+    vacuum: crate::semantic::TypeId,
+    bivalens: crate::semantic::TypeId,
+    suite_path: Vec<crate::lexer::Symbol>,
+    modifiers: Vec<HirTestModifier>,
+) -> HirItem {
+    HirItem {
+        id: crate::hir::HirId(def_id + 1),
+        def_id: DefId(def_id),
+        kind: HirItemKind::Function(HirFunction {
+            cli_args: None,
+            name,
+            type_params: Vec::new(),
+            params: Vec::new(),
+            ret_ty: Some(vacuum),
+            body: Some(test_body(vacuum, bivalens)),
+            is_async: false,
+            is_generator: false,
+            test: Some(HirTestMetadata { name, suite_path, modifiers, span: span() }),
+        }),
+        span: span(),
+    }
 }
 
 #[test]
@@ -131,8 +183,152 @@ fn emits_metadata_driven_test_attributes() {
     };
 
     assert!(rust.code.contains("#[test]"));
-    assert!(rust.code.contains("#[ignore]"));
+    assert!(rust
+        .code
+        .contains("#[ignore = \"faber: futurum - blocked by maintenance\"]"));
     assert!(rust.code.contains("fn proba_1000000"));
+}
+
+#[test]
+fn emits_solum_default_ignores_non_solum_tests() {
+    let mut interner = Interner::new();
+    let focused = interner.intern("focused case");
+    let other = interner.intern("other case");
+    let types = TypeTable::new();
+    let vacuum = types.primitive(Primitive::Vacuum);
+    let bivalens = types.primitive(Primitive::Bivalens);
+
+    let program = HirProgram {
+        items: vec![
+            test_item(20, focused, vacuum, bivalens, Vec::new(), vec![HirTestModifier::Solum]),
+            test_item(21, other, vacuum, bivalens, Vec::new(), Vec::new()),
+        ],
+        entry: None,
+    };
+
+    let output = crate::codegen::rust::generate_module_with_test_selection(&program, &types, &interner, None)
+        .expect("rust codegen");
+    let rust = output;
+
+    assert!(rust
+        .code
+        .contains("#[ignore = \"faber: not selected by solum\"]"));
+    assert!(rust.code.contains("fn proba_20"));
+    assert!(rust.code.contains("fn proba_21"));
+}
+
+#[test]
+fn emits_explicit_selector_ignores_for_name_suite_and_tag() {
+    let mut interner = Interner::new();
+    let selected = interner.intern("selected case");
+    let wrong_name = interner.intern("wrong name");
+    let outer = interner.intern("outer suite");
+    let inner = interner.intern("inner suite");
+    let smoke = interner.intern("smoke");
+    let slow = interner.intern("slow");
+    let types = TypeTable::new();
+    let vacuum = types.primitive(Primitive::Vacuum);
+    let bivalens = types.primitive(Primitive::Bivalens);
+
+    let program = HirProgram {
+        items: vec![
+            test_item(
+                30,
+                selected,
+                vacuum,
+                bivalens,
+                vec![outer, inner],
+                vec![HirTestModifier::Tag(smoke)],
+            ),
+            test_item(
+                31,
+                wrong_name,
+                vacuum,
+                bivalens,
+                vec![outer, inner],
+                vec![HirTestModifier::Tag(smoke)],
+            ),
+            test_item(32, selected, vacuum, bivalens, vec![outer], vec![HirTestModifier::Tag(smoke)]),
+            test_item(
+                33,
+                selected,
+                vacuum,
+                bivalens,
+                vec![outer, inner],
+                vec![HirTestModifier::Tag(slow)],
+            ),
+        ],
+        entry: None,
+    };
+
+    let selection = TestSelection {
+        name: Some("selected case".to_owned()),
+        suite: Some("outer suite/inner suite".to_owned()),
+        tag: Some("smoke".to_owned()),
+    };
+    let output =
+        crate::codegen::rust::generate_module_with_test_selection(&program, &types, &interner, Some(selection))
+            .expect("rust codegen");
+    let rust = output;
+
+    assert!(rust.code.contains("fn proba_30"));
+    assert!(rust
+        .code
+        .contains("#[ignore = \"faber: not selected by name selected case\"]"));
+    assert!(rust
+        .code
+        .contains("#[ignore = \"faber: not selected by suite outer suite/inner suite\"]"));
+    assert!(rust
+        .code
+        .contains("#[ignore = \"faber: not selected by tag smoke\"]"));
+}
+
+#[test]
+fn emits_source_ignore_reason_for_selected_test() {
+    let mut interner = Interner::new();
+    let name = interner.intern("selected ignored case");
+    let reason = interner.intern("blocked by service");
+    let types = TypeTable::new();
+    let vacuum = types.primitive(Primitive::Vacuum);
+    let bivalens = types.primitive(Primitive::Bivalens);
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: HirId(30),
+            def_id: DefId(30),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name,
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(vacuum),
+                body: Some(test_body(vacuum, bivalens)),
+                is_async: false,
+                is_generator: false,
+                test: Some(HirTestMetadata {
+                    name,
+                    suite_path: Vec::new(),
+                    modifiers: vec![HirTestModifier::Omitte(reason)],
+                    span: span(),
+                }),
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let selection = TestSelection { name: Some("selected ignored case".to_owned()), suite: None, tag: None };
+    let output =
+        crate::codegen::rust::generate_module_with_test_selection(&program, &types, &interner, Some(selection))
+            .expect("rust codegen");
+    let rust = output;
+
+    assert!(rust
+        .code
+        .contains("#[ignore = \"faber: omitte - blocked by service\"]"));
+    assert!(!rust
+        .code
+        .contains("not selected by name selected ignored case"));
 }
 
 #[test]

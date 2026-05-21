@@ -157,3 +157,54 @@ No changes to HIR/metadata (Phase 4+) or docs (Phase 6) in this slice.
 - `faber test` is now a fully functional Cargo-backed runner with the ergonomics and ignored-test controls specified in the updated plan.
 - Remaining work (Phase 4 HIR metadata cleanup, 5 selection, 6 docs, 7 full release validation) is explicitly out of scope for this slice per the original plan guidance.
 - Ledger and fixtures are the source of truth for repeatable verification.
+
+---
+
+## Phase 4: Structured Test Metadata
+
+**Date**: 2026-05-21
+
+### Implementation
+- Added explicit HIR test metadata for `proba` functions instead of overloading `is_generator`.
+- Preserved source test names, suite paths, and modifiers in `HirTestMetadata`.
+- Lowering now records the metadata directly; Rust and Faber codegen consume it without reverse-engineering synthetic function state.
+
+### Validation
+- `cargo test --all`
+- `cargo clippy --all-targets --all-features -- -D warnings`
+
+## Phase 5: Faber-Specific Selection
+
+**Date**: 2026-05-21
+
+### Implementation
+- Added Faber-level selector flags to `faber test`: `--name`, `--suite`, and `--tag`.
+- Added generated Rust ignore reasons for deselected tests, including `solum` default selection and explicit selector AND semantics.
+- Kept compilation honest: all tests are still generated and compiled even when execution is narrowed.
+- Added fixture packages for:
+  - `examples/exempla/proba/packages/solum/`
+  - `examples/exempla/proba/packages/selectors/`
+  - `examples/exempla/proba/packages/selection-failure/`
+
+### Validation
+- `cargo test --all`
+- `cargo fmt --all`
+- `cargo clippy --all-targets --all-features -- -D warnings`
+- `cargo run -p faber -- test --help`
+- `cargo run -p faber -- test examples/exempla/proba/packages/passing`
+- `cargo run -p faber -- test examples/exempla/proba/packages/ignored`
+- `cargo run -p faber -- test examples/exempla/proba/packages/ignored --ignored`
+- `cargo run -p faber -- test examples/exempla/proba/packages/ignored --include-ignored`
+- `cargo run -p faber -- test examples/exempla/proba/packages/suite`
+- `cargo run -p faber -- test examples/exempla/proba/packages/solum`
+- `cargo run -p faber -- test examples/exempla/proba/packages/selectors --name "name match"`
+- `cargo run -p faber -- test examples/exempla/proba/packages/selectors --suite "outer suite/inner suite"`
+- `cargo run -p faber -- test examples/exempla/proba/packages/selectors --tag smoke`
+- `cargo run -p faber -- test examples/exempla/proba/packages/selectors --name "combined match" --suite "outer suite/inner suite" --tag focus`
+- `cargo run -p faber -- test examples/exempla/proba/packages/selection-failure --name "selected case"`
+
+## Current Overall Status
+- Phases 0–5 are now delivered in this repository, with phases 0–3 committed earlier and phases 4–5 implemented in the current slice.
+- `faber test` now has structured test metadata and source-level selection behavior.
+- Remaining work is Phase 6 documentation/reporting polish and Phase 7 release validation.
+- The plan remains open until those later phases land and the plan status is updated truthfully.
