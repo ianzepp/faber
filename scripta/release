@@ -56,8 +56,12 @@ echo "=== Bumping version: $CURRENT → $VERSION ==="
 jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp
 mv package.json.tmp package.json
 
+# Update the Cargo package version that drives `faber --version`.
+perl -0pi -e 's/(name = "radix"\nversion = ")[^"]+/${1}'"$VERSION"'/' radix/crates/radix/Cargo.toml
+cargo update --manifest-path radix/Cargo.toml -p radix
+
 # Commit and tag
-git add package.json
+git add package.json radix/crates/radix/Cargo.toml radix/Cargo.lock
 git commit -m "Release v${VERSION}"
 git tag "v${VERSION}"
 
@@ -66,6 +70,6 @@ git push -u origin main
 git push --tags
 
 echo "=== Creating GitHub release ==="
-gh release create "v${VERSION}" radix/target/release/radix --title "v${VERSION}" --notes "Release v${VERSION}"
+gh release create "v${VERSION}" radix/target/release/faber --title "v${VERSION}" --notes "Release v${VERSION}"
 
 echo "=== Released v${VERSION} ==="

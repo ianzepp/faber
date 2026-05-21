@@ -189,6 +189,7 @@ fn cli_parses_build_flags() {
 fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
     let help = Cli::command().render_help().to_string();
 
+    assert!(help.contains("Usage: faber <COMMAND>"));
     assert!(help.contains("build"));
     assert!(help.contains("targets"));
     assert!(help.contains("check"));

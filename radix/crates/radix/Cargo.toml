@@ -1,9 +1,13 @@
 [package]
 name = "radix"
-version = "0.1.0"
+version = "0.33.0"
 edition = "2021"
 description = "Recursive descent compiler for Faber → Rust/Faber"
 license = "MIT"
+
+[[bin]]
+name = "faber"
+path = "src/main.rs"
 
 [dependencies]
 ariadne = "0.4"

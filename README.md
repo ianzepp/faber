@@ -9,7 +9,7 @@ The current repository is intentionally narrow: the active compiler, Rust runtim
 | Path | Purpose |
 | ---- | ------- |
 | [`radix/Cargo.toml`](radix/Cargo.toml) | Canonical Cargo workspace manifest |
-| [`radix/crates/radix`](radix/crates/radix) | Active Faber compiler crate and CLI binary |
+| [`radix/crates/radix`](radix/crates/radix) | Active compiler crate that builds the `faber` CLI binary |
 | [`radix/crates/norma`](radix/crates/norma) | Rust runtime support crate for standard library and HAL features |
 | [`radix/stdlib/norma`](radix/stdlib/norma) | Faber standard library definitions with `@ verte` translation metadata |
 | [`examples/exempla`](examples/exempla) | Example Faber programs |
@@ -41,7 +41,7 @@ cargo test --manifest-path radix/Cargo.toml
 
 ## Compiler Surface
 
-The active CLI is the `radix` binary from `radix/crates/radix`.
+The active CLI is the `faber` binary from `radix/crates/radix`.
 
 Product-facing commands:
 

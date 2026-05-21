@@ -62,7 +62,7 @@ fn main() {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "faber", about = "Faber compiler", version)]
+#[command(name = "faber", bin_name = "faber", about = "Faber compiler", version)]
 struct Cli {
     #[command(subcommand)]
     command: Command,

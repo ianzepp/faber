@@ -1,6 +1,6 @@
 {
     "name": "faber",
-    "version": "0.7.0",
+    "version": "0.33.0",
     "description": "A Latin programming language compiler - The Roman Craftsman",
     "module": "index.ts",
     "type": "module",
