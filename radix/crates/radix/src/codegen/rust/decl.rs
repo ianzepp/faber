@@ -66,6 +66,9 @@ pub fn generate_function_with_cli_args_type(
         w.write("async ");
     }
 
+    if cli_args_type.is_some() {
+        w.write("pub(crate) ");
+    }
     w.write("fn ");
     if is_proba {
         w.write(&format!("proba_{}", def_id.0));

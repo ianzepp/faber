@@ -183,18 +183,17 @@ functio run() {}
 }
 
 #[test]
-fn rejects_module_mounted_commands_until_phase_05() {
+fn root_cli_analysis_keeps_module_mounts_for_package_compilation() {
     let analysis = analyze_source(
         r#"
-@ cli "bad"
+@ cli "tool"
 @ imperia "jobs" ex jobs
 incipit argumenta args {}
 "#,
     );
 
-    assert!(messages(&analysis)
-        .iter()
-        .any(|message| message.contains("Phase 05")));
+    assert!(analysis.errors.is_empty(), "{:?}", messages(&analysis));
+    assert_eq!(analysis.program.expect("cli").commands.len(), 0);
 }
 
 #[test]
@@ -216,6 +215,24 @@ functio two() {}
     assert!(messages(&analysis)
         .iter()
         .any(|message| message.contains("command alias 'two' collides with a command path")));
+}
+
+#[test]
+fn rejects_root_command_alias_paths() {
+    let analysis = analyze_source(
+        r#"
+@ cli "bad"
+incipit argumenta args {}
+
+@ imperium "one"
+@ alias "nested/path"
+functio one() {}
+"#,
+    );
+
+    assert!(messages(&analysis)
+        .iter()
+        .any(|message| message.contains("invalid command alias 'nested/path'")));
 }
 
 #[test]

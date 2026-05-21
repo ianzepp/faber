@@ -48,6 +48,7 @@ pub enum CliExit {
 #[derive(Debug, Clone)]
 pub struct CliCommand {
     pub path: Vec<String>,
+    pub module_path: Option<Vec<String>>,
     pub function: String,
     pub function_symbol: crate::lexer::Symbol,
     pub args_binding: Option<String>,
@@ -111,6 +112,11 @@ pub fn analyze(program: &Program, interner: &Interner) -> CliAnalysis {
     builder.analyze(program)
 }
 
+pub fn analyze_mounted_module(program: &Program, interner: &Interner, mount_prefix: &[String]) -> CliAnalysis {
+    let mut builder = CliBuilder { interner, errors: Vec::new() };
+    builder.analyze_mounted_module(program, mount_prefix)
+}
+
 struct CliBuilder<'a> {
     interner: &'a Interner,
     errors: Vec<SemanticError>,
@@ -142,7 +148,6 @@ impl CliBuilder<'_> {
         let mut globals = CliSurface::default();
         let mut single = CliSurface::default();
         self.collect_surface(&entry_stmt.annotations, SurfacePlacement::TopLevel, &mut globals, &mut single);
-        self.reject_module_mounts(program);
 
         let commands = self.collect_commands(program);
         let mode = if commands.is_empty() {
@@ -168,7 +173,7 @@ impl CliBuilder<'_> {
         if mode == CliMode::SingleCommand {
             self.validate_global_surface_collisions("single-command", &single, &globals);
         }
-        self.validate_commands(&commands, &globals);
+        self.validate_commands(&commands, &globals, false);
 
         let cli_program = CliProgram {
             name: self.resolve(cli_name),
@@ -185,6 +190,67 @@ impl CliBuilder<'_> {
         };
 
         CliAnalysis { mode, program: Some(cli_program), errors: std::mem::take(&mut self.errors) }
+    }
+
+    fn analyze_mounted_module(&mut self, program: &Program, mount_prefix: &[String]) -> CliAnalysis {
+        if let Some((stmt, _)) = self.find_cli_stmt(program) {
+            self.error(
+                stmt.span,
+                "mounted CLI command modules must not declare their own @ cli entry point",
+            );
+        }
+        self.reject_nested_module_mounts(program);
+
+        let mut commands = self.collect_commands(program);
+        self.validate_commands(&commands, &CliSurface::default(), false);
+        for command in &mut commands {
+            let local_path = std::mem::take(&mut command.path);
+            command.path = mount_prefix.iter().cloned().chain(local_path).collect();
+            command.aliases = command
+                .aliases
+                .iter()
+                .map(|alias| {
+                    mount_prefix
+                        .iter()
+                        .cloned()
+                        .chain(
+                            alias
+                                .split('/')
+                                .filter(|part| !part.is_empty())
+                                .map(str::to_owned),
+                        )
+                        .collect::<Vec<_>>()
+                        .join("/")
+                })
+                .collect();
+        }
+
+        self.validate_commands(&commands, &CliSurface::default(), true);
+
+        let mode = if commands.is_empty() {
+            CliMode::NotCli
+        } else {
+            CliMode::Subcommand
+        };
+        let program = if commands.is_empty() {
+            None
+        } else {
+            Some(CliProgram {
+                name: String::new(),
+                entry_args: String::new(),
+                mode: CliMode::Subcommand,
+                version: None,
+                description: None,
+                global_options: Vec::new(),
+                global_operands: Vec::new(),
+                options: Vec::new(),
+                operands: Vec::new(),
+                commands,
+                exit: None,
+            })
+        };
+
+        CliAnalysis { mode, program, errors: std::mem::take(&mut self.errors) }
     }
 
     fn find_cli_stmt<'a>(&mut self, program: &'a Program) -> Option<(&'a Stmt, crate::lexer::Symbol)> {
@@ -227,6 +293,7 @@ impl CliBuilder<'_> {
             let path = self.command_path(command_name, stmt.span);
             let command = CliCommand {
                 path,
+                module_path: None,
                 function: self.ident(&func.name),
                 function_symbol: func.name.name,
                 args_binding: command_argument_binding(&func.modifiers).map(|ident| self.ident(ident)),
@@ -262,14 +329,14 @@ impl CliBuilder<'_> {
         }
     }
 
-    fn reject_module_mounts(&mut self, program: &Program) {
+    fn reject_nested_module_mounts(&mut self, program: &Program) {
         for stmt in &program.stmts {
             for annotation in &stmt.annotations {
                 if let AnnotationKind::Statement(annotation_stmt) = &annotation.kind {
                     if self.interner.resolve(annotation_stmt.name.name) == "imperia" {
                         self.error(
                             annotation.span,
-                            "@ imperia module-mounted commands are gated until CLI framework Phase 05",
+                            "@ imperia module mounts may only be declared on the root CLI entry point",
                         );
                     }
                 }
@@ -488,7 +555,7 @@ impl CliBuilder<'_> {
         }
     }
 
-    fn validate_commands(&mut self, commands: &[CliCommand], globals: &CliSurface) {
+    fn validate_commands(&mut self, commands: &[CliCommand], globals: &CliSurface, allow_alias_paths: bool) {
         let mut paths = FxHashSet::default();
         for command in commands {
             let path = command.path.join("/");
@@ -501,7 +568,7 @@ impl CliBuilder<'_> {
         for command in commands {
             let path = command.path.join("/");
             for alias in &command.aliases {
-                if alias.is_empty() || alias.contains('/') {
+                if alias_path(alias).is_empty() || (!allow_alias_paths && alias.contains('/')) {
                     self.error(command.span, format!("invalid command alias '{alias}'"));
                 }
                 if !aliases.insert(alias.clone()) {
@@ -580,6 +647,14 @@ impl CliBuilder<'_> {
         self.errors
             .push(SemanticError::new(SemanticErrorKind::CliValidation, message, span));
     }
+}
+
+fn alias_path(alias: &str) -> Vec<String> {
+    alias
+        .split('/')
+        .filter(|part| !part.is_empty())
+        .map(str::to_owned)
+        .collect()
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

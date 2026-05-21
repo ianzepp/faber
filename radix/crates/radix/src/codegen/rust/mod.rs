@@ -110,6 +110,7 @@ impl<'a> RustCodegen<'a> {
         types: &TypeTable,
         w: &mut CodeWriter,
         cli_program: Option<&crate::cli::CliProgram>,
+        cli_args_type_prefix: &str,
     ) -> Result<(), CodegenError> {
         match &item.kind {
             HirItemKind::Function(func) => {
@@ -119,7 +120,7 @@ impl<'a> RustCodegen<'a> {
                         .iter()
                         .find(|command| command.function_symbol == func.name)
                 }) {
-                    let args_type = cli::command_args_struct_name(command);
+                    let args_type = format!("{cli_args_type_prefix}{}", cli::command_args_struct_name(command));
                     decl::generate_function_with_cli_args_type(self, item.def_id, func, types, w, Some(&args_type))?;
                 } else {
                     decl::generate_function(self, item.def_id, func, types, w)?;
@@ -225,6 +226,9 @@ fn collect_hir_imports(codegen: &RustCodegen<'_>, hir: &HirProgram) -> BTreeSet<
             if let Some(alias) = import_item.alias {
                 let alias_name = codegen.resolve_symbol(alias);
                 if alias_name == name {
+                    if path == format!("crate::{alias_name}") {
+                        continue;
+                    }
                     imports.insert(format!("{path} as {alias_name}"));
                 } else {
                     imports.insert(format!("{path}::{name} as {alias_name}"));
@@ -265,11 +269,12 @@ impl RustCodegen<'_> {
         let mut body = CodeWriter::new();
 
         for item in &hir.items {
-            self.generate_item(item, types, &mut body, cli_program)?;
+            let cli_args_type_prefix = if module_mode { "crate::" } else { "" };
+            self.generate_item(item, types, &mut body, cli_program, cli_args_type_prefix)?;
             body.newline();
         }
 
-        if let Some(cli_program) = cli_program {
+        if let Some(cli_program) = cli_program.filter(|_| !module_mode) {
             cli::generate_cli_support(cli_program, &mut body);
             body.newline();
         }
@@ -342,6 +347,16 @@ impl RustCodegen<'_> {
 pub fn generate_module(hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<RustOutput, CodegenError> {
     super::reject_hir_errors(hir)?;
     RustCodegen::new(hir, interner).generate_output(hir, types, true, None)
+}
+
+pub fn generate_module_with_cli(
+    hir: &HirProgram,
+    types: &TypeTable,
+    interner: &Interner,
+    cli_program: &crate::cli::CliProgram,
+) -> Result<RustOutput, CodegenError> {
+    super::reject_hir_errors(hir)?;
+    RustCodegen::new(hir, interner).generate_output(hir, types, true, Some(cli_program))
 }
 
 fn is_cli_args_local(stmt: &crate::hir::HirStmt, entry_args: &str, codegen: &RustCodegen<'_>) -> bool {

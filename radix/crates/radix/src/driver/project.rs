@@ -1,8 +1,9 @@
-use super::{analyze_source, Config, Session};
+use super::{analyze_source_with_cli_program, Config, Session};
 use crate::codegen::{self, Target};
 use crate::diagnostics::Diagnostic;
+use crate::lexer::{Interner, Span, TokenKind};
 use crate::parser;
-use crate::syntax::{DirectiveArg, ImportDecl, ImportKind, Program, StmtKind};
+use crate::syntax::{AnnotationKind, DirectiveArg, ImportDecl, ImportKind, Program, StmtKind};
 use crate::{CompileResult, Output, RustOutput};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::fs;
@@ -17,7 +18,8 @@ struct PackageFile {
     path: PathBuf,
     module_segments: Vec<String>,
     source: String,
-    _program: Program,
+    program: Program,
+    interner: Interner,
 }
 
 type PackageDiscoveryResult = Result<PackageSpec, Box<Diagnostic>>;
@@ -44,26 +46,43 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
     };
 
     let session = Session::new(config.clone());
+    let mount_plan = match build_mount_plan(&spec, &files) {
+        Ok(plan) => plan,
+        Err(diagnostics) => return CompileResult { output: None, diagnostics },
+    };
     let mut entry_code = None;
     let mut module_tree = ModuleNode::default();
     let mut diagnostics = Vec::new();
 
     for file in files {
-        let mut analysis = match analyze_source(&session, &file.path.display().to_string(), &file.source) {
-            Ok(analysis) => analysis,
-            Err(file_diagnostics) => {
-                diagnostics.extend(file_diagnostics);
-                continue;
-            }
-        };
+        let file_cli = mount_plan.module_cli.get(&file.path).cloned();
+        let mut analysis =
+            match analyze_source_with_cli_program(&session, &file.path.display().to_string(), &file.source, file_cli) {
+                Ok(analysis) => analysis,
+                Err(file_diagnostics) => {
+                    diagnostics.extend(file_diagnostics);
+                    continue;
+                }
+            };
 
         let is_entry = file.path == spec.entry;
         if !is_entry {
             analysis.hir.entry = None;
         }
+        if is_entry {
+            if let Some(root_cli) = mount_plan.root_cli.clone() {
+                analysis.cli_program = Some(root_cli);
+            }
+        }
 
         let rust = if is_entry {
-            match codegen::generate(Target::Rust, &analysis.hir, &analysis.types, &analysis.interner) {
+            let generated = if let Some(cli_program) = analysis.cli_program.as_ref() {
+                codegen::generate_rust_cli(&analysis.hir, &analysis.types, &analysis.interner, cli_program)
+                    .map(Output::Rust)
+            } else {
+                codegen::generate(Target::Rust, &analysis.hir, &analysis.types, &analysis.interner)
+            };
+            match generated {
                 Ok(Output::Rust(output)) => output.code,
                 Ok(_) => {
                     diagnostics.push(
@@ -79,7 +98,12 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
                 }
             }
         } else {
-            match codegen::rust::generate_module(&analysis.hir, &analysis.types, &analysis.interner) {
+            let generated = if let Some(cli_program) = analysis.cli_program.as_ref() {
+                codegen::rust::generate_module_with_cli(&analysis.hir, &analysis.types, &analysis.interner, cli_program)
+            } else {
+                codegen::rust::generate_module(&analysis.hir, &analysis.types, &analysis.interner)
+            };
+            match generated {
                 Ok(output) => output.code,
                 Err(err) => {
                     diagnostics
@@ -219,7 +243,8 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
             continue;
         }
 
-        let Some(program) = parse.program else {
+        let crate::parser::ParseResult { program, interner, .. } = parse;
+        let Some(program) = program else {
             diagnostics.push(
                 Diagnostic::error("successful package parse result missing program")
                     .with_file(canonical.display().to_string()),
@@ -231,7 +256,7 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
             let StmtKind::Import(decl) = &stmt.kind else {
                 continue;
             };
-            let import_path = parse.interner.resolve(decl.path);
+            let import_path = interner.resolve(decl.path);
             match resolve_local_import(spec, &canonical, import_path) {
                 Some(target) => queue.push_back(target),
                 None => diagnostics.push(import_unsupported_diagnostic(&canonical, decl, import_path)),
@@ -242,7 +267,8 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
             module_segments: module_segments(&spec.source_root, &canonical),
             path: canonical,
             source,
-            _program: program,
+            program,
+            interner,
         });
     }
 
@@ -250,8 +276,337 @@ fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>>
         Err(diagnostics)
     } else {
         files.sort_by(|a, b| a.path.cmp(&b.path));
+        diagnostics.extend(detect_import_cycles(spec, &files));
+        if diagnostics.iter().any(|diag| diag.is_error()) {
+            return Err(diagnostics);
+        }
         Ok(files)
     }
+}
+
+#[derive(Default)]
+struct MountPlan {
+    root_cli: Option<crate::cli::CliProgram>,
+    module_cli: BTreeMap<PathBuf, crate::cli::CliProgram>,
+}
+
+struct MountSpec {
+    prefix: Vec<String>,
+    alias: String,
+    span: Span,
+}
+
+fn build_mount_plan(spec: &PackageSpec, files: &[PackageFile]) -> Result<MountPlan, Vec<Diagnostic>> {
+    let Some(entry_file) = files.iter().find(|file| file.path == spec.entry) else {
+        return Ok(MountPlan::default());
+    };
+
+    let root_analysis = crate::cli::analyze(&entry_file.program, &entry_file.interner);
+    let mut diagnostics = root_analysis
+        .errors
+        .iter()
+        .map(|err| Diagnostic::from_semantic_error(&entry_file.path.display().to_string(), &entry_file.source, err))
+        .collect::<Vec<_>>();
+    let Some(mut root_cli) = root_analysis.program else {
+        if diagnostics.iter().any(Diagnostic::is_error) {
+            return Err(diagnostics);
+        }
+        return Ok(MountPlan::default());
+    };
+
+    let imports = import_aliases(spec, entry_file);
+    let mounts = collect_root_mounts(entry_file, &mut diagnostics);
+    let files_by_path = files
+        .iter()
+        .map(|file| (file.path.clone(), file))
+        .collect::<BTreeMap<_, _>>();
+    let mut module_cli = BTreeMap::<PathBuf, crate::cli::CliProgram>::new();
+    let mut command_origins = root_cli
+        .commands
+        .iter()
+        .map(|command| (command.clone(), entry_file.path.clone()))
+        .collect::<Vec<_>>();
+
+    for mount in mounts {
+        if imports.named_aliases.contains(&mount.alias) {
+            diagnostics.push(
+                Diagnostic::error(format!(
+                    "@ imperia target '{}' must be a wildcard import alias, not a named import",
+                    mount.alias
+                ))
+                .with_file(entry_file.path.display().to_string())
+                .with_span(mount.span),
+            );
+            continue;
+        }
+
+        let Some(module_path) = imports.wildcard_aliases.get(&mount.alias) else {
+            diagnostics.push(
+                Diagnostic::error(format!(
+                    "@ imperia target '{}' does not name a package-local wildcard import alias",
+                    mount.alias
+                ))
+                .with_file(entry_file.path.display().to_string())
+                .with_span(mount.span),
+            );
+            continue;
+        };
+        let Some(module_file) = files_by_path.get(module_path) else {
+            diagnostics.push(
+                Diagnostic::error(format!(
+                    "@ imperia target '{}' resolved to a module that was not loaded",
+                    mount.alias
+                ))
+                .with_file(entry_file.path.display().to_string())
+                .with_span(mount.span),
+            );
+            continue;
+        };
+
+        let module_analysis =
+            crate::cli::analyze_mounted_module(&module_file.program, &module_file.interner, &mount.prefix);
+        diagnostics.extend(module_analysis.errors.iter().map(|err| {
+            Diagnostic::from_semantic_error(&module_file.path.display().to_string(), &module_file.source, err)
+        }));
+        let Some(mut mounted_cli) = module_analysis.program else {
+            continue;
+        };
+
+        for command in &mut mounted_cli.commands {
+            let mut root_command = command.clone();
+            root_command.module_path = Some(module_file.module_segments.clone());
+            root_cli.commands.push(root_command.clone());
+            command_origins.push((root_command, module_file.path.clone()));
+        }
+        module_cli.insert(module_file.path.clone(), mounted_cli);
+    }
+
+    diagnostics.extend(validate_mounted_command_collisions(&command_origins));
+    if !root_cli.commands.is_empty() {
+        root_cli.mode = crate::cli::CliMode::Subcommand;
+    }
+    if diagnostics.iter().any(Diagnostic::is_error) {
+        Err(diagnostics)
+    } else {
+        Ok(MountPlan { root_cli: Some(root_cli), module_cli })
+    }
+}
+
+#[derive(Default)]
+struct ImportAliases {
+    wildcard_aliases: BTreeMap<String, PathBuf>,
+    named_aliases: BTreeSet<String>,
+}
+
+fn import_aliases(spec: &PackageSpec, file: &PackageFile) -> ImportAliases {
+    let mut aliases = ImportAliases::default();
+    for stmt in &file.program.stmts {
+        let StmtKind::Import(decl) = &stmt.kind else {
+            continue;
+        };
+        let import_path = file.interner.resolve(decl.path);
+        let Some(target) = resolve_local_import(spec, &file.path, import_path) else {
+            continue;
+        };
+        match &decl.kind {
+            ImportKind::Wildcard { alias } => {
+                aliases
+                    .wildcard_aliases
+                    .insert(file.interner.resolve(alias.name).to_owned(), normalize_path(&target));
+            }
+            ImportKind::Named { name, alias } => {
+                let visible = alias.as_ref().unwrap_or(name);
+                aliases
+                    .named_aliases
+                    .insert(file.interner.resolve(visible.name).to_owned());
+            }
+        }
+    }
+    aliases
+}
+
+fn collect_root_mounts(file: &PackageFile, diagnostics: &mut Vec<Diagnostic>) -> Vec<MountSpec> {
+    let mut mounts = Vec::new();
+    for stmt in &file.program.stmts {
+        let is_cli_entry = stmt
+            .annotations
+            .iter()
+            .any(|annotation| matches!(annotation.kind, AnnotationKind::Cli(_)));
+        for annotation in &stmt.annotations {
+            let AnnotationKind::Statement(annotation_stmt) = &annotation.kind else {
+                continue;
+            };
+            if file.interner.resolve(annotation_stmt.name.name) != "imperia" {
+                continue;
+            }
+            if !is_cli_entry {
+                diagnostics.push(
+                    Diagnostic::error("@ imperia module mounts must annotate the root @ cli entry point")
+                        .with_file(file.path.display().to_string())
+                        .with_span(annotation.span),
+                );
+                continue;
+            }
+            match parse_mount_annotation(file, annotation_stmt, annotation.span) {
+                Some(mount) => mounts.push(mount),
+                None => diagnostics.push(
+                    Diagnostic::error("@ imperia must use '@ imperia \"path\" ex <wildcard_alias>'")
+                        .with_file(file.path.display().to_string())
+                        .with_span(annotation.span),
+                ),
+            }
+        }
+    }
+    mounts
+}
+
+fn parse_mount_annotation(
+    file: &PackageFile,
+    annotation: &crate::syntax::AnnotationStmt,
+    span: Span,
+) -> Option<MountSpec> {
+    if annotation.args.len() != 3 {
+        return None;
+    }
+    let TokenKind::String(path) = annotation.args[0].kind else {
+        return None;
+    };
+    match annotation.args[1].kind {
+        TokenKind::Ex => {}
+        TokenKind::Ident(sym) if file.interner.resolve(sym) == "ex" => {}
+        _ => return None,
+    }
+    let TokenKind::Ident(alias) = annotation.args[2].kind else {
+        return None;
+    };
+    let raw_path = file.interner.resolve(path);
+    let prefix = raw_path
+        .split('/')
+        .filter(|part| !part.is_empty())
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    if prefix.is_empty() || raw_path.starts_with('/') || raw_path.ends_with('/') || raw_path.contains("//") {
+        return None;
+    }
+    Some(MountSpec { prefix, alias: file.interner.resolve(alias).to_owned(), span })
+}
+
+fn validate_mounted_command_collisions(commands: &[(crate::cli::CliCommand, PathBuf)]) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let mut paths = BTreeMap::<String, Span>::new();
+    let mut aliases = BTreeMap::<String, Span>::new();
+
+    for (command, file) in commands {
+        let path = command.path.join("/");
+        if paths.insert(path.clone(), command.span).is_some() {
+            diagnostics.push(
+                Diagnostic::error(format!("duplicate command path '{path}'"))
+                    .with_file(file.display().to_string())
+                    .with_span(command.span),
+            );
+        }
+    }
+
+    for (command, file) in commands {
+        for alias in &command.aliases {
+            if aliases.insert(alias.clone(), command.span).is_some() {
+                diagnostics.push(
+                    Diagnostic::error(format!("duplicate command alias '{alias}'"))
+                        .with_file(file.display().to_string())
+                        .with_span(command.span),
+                );
+            }
+            if paths.contains_key(alias) {
+                diagnostics.push(
+                    Diagnostic::error(format!("command alias '{alias}' collides with a command path"))
+                        .with_file(file.display().to_string())
+                        .with_span(command.span),
+                );
+            }
+        }
+    }
+
+    diagnostics
+}
+
+fn detect_import_cycles(spec: &PackageSpec, files: &[PackageFile]) -> Vec<Diagnostic> {
+    let by_path = files
+        .iter()
+        .map(|file| (file.path.clone(), file))
+        .collect::<BTreeMap<_, _>>();
+    let mut graph = BTreeMap::<PathBuf, Vec<(PathBuf, Span)>>::new();
+    for file in files {
+        let mut edges = Vec::new();
+        for stmt in &file.program.stmts {
+            let StmtKind::Import(decl) = &stmt.kind else {
+                continue;
+            };
+            let import_path = file.interner.resolve(decl.path);
+            if let Some(target) = resolve_local_import(spec, &file.path, import_path) {
+                edges.push((normalize_path(&target), decl.span));
+            }
+        }
+        graph.insert(file.path.clone(), edges);
+    }
+
+    let mut diagnostics = Vec::new();
+    let mut visiting = BTreeSet::new();
+    let mut visited = BTreeSet::new();
+    let mut stack = Vec::<PathBuf>::new();
+    for file in files {
+        detect_import_cycles_from(
+            &file.path,
+            &graph,
+            &by_path,
+            &mut visiting,
+            &mut visited,
+            &mut stack,
+            &mut diagnostics,
+        );
+    }
+    diagnostics
+}
+
+fn detect_import_cycles_from(
+    path: &PathBuf,
+    graph: &BTreeMap<PathBuf, Vec<(PathBuf, Span)>>,
+    by_path: &BTreeMap<PathBuf, &PackageFile>,
+    visiting: &mut BTreeSet<PathBuf>,
+    visited: &mut BTreeSet<PathBuf>,
+    stack: &mut Vec<PathBuf>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if visited.contains(path) {
+        return;
+    }
+    if !visiting.insert(path.clone()) {
+        return;
+    }
+    stack.push(path.clone());
+
+    for (next, span) in graph.get(path).into_iter().flatten() {
+        if visiting.contains(next) {
+            let cycle_start = stack.iter().position(|item| item == next).unwrap_or(0);
+            let mut cycle = stack[cycle_start..]
+                .iter()
+                .map(|item| item.display().to_string())
+                .collect::<Vec<_>>();
+            cycle.push(next.display().to_string());
+            diagnostics.push(
+                Diagnostic::error(format!("import cycle detected: {}", cycle.join(" -> ")))
+                    .with_file(path.display().to_string())
+                    .with_span(*span),
+            );
+            continue;
+        }
+        if by_path.contains_key(next) {
+            detect_import_cycles_from(next, graph, by_path, visiting, visited, stack, diagnostics);
+        }
+    }
+
+    stack.pop();
+    visiting.remove(path);
+    visited.insert(path.clone());
 }
 
 fn resolve_local_import(spec: &PackageSpec, from_file: &Path, import_path: &str) -> Option<PathBuf> {

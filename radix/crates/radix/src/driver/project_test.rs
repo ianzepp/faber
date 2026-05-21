@@ -40,3 +40,245 @@ fn compile_package_resolves_relative_input_from_current_working_directory() {
 
     assert!(result.success(), "expected relative package compile success");
 }
+
+#[test]
+fn compile_package_mounts_wildcard_imported_cli_commands() {
+    let dir = temp_dir("cli-mount");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        r#"
+@ imperium "config/set"
+@ alias "set"
+@ operandus textus name
+functio set_config() argumenta args {
+  scribe args.name
+}
+"#,
+    )
+    .expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(
+        result.success(),
+        "expected mounted package compile success, got {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+    let Some(Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+
+    assert!(output.code.contains("struct CliArgsJobsConfigSet"));
+    assert!(output
+        .code
+        .contains("pub(crate) fn set_config(args: crate::CliArgsJobsConfigSet)"));
+    assert!(output.code.contains("jobs::set_config(args);"));
+    assert!(output.code.contains("Usage: tool jobs config set"));
+    assert!(output
+        .code
+        .contains("command_parts[0] == \"jobs\" && command_parts[1] == \"set\""));
+}
+
+#[test]
+fn compile_package_rejects_named_import_mount_targets() {
+    let dir = temp_dir("cli-mount-named");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata set_config ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(dir.join("jobs.fab"), "@ imperium \"run\"\nfunctio set_config() {}").expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("must be a wildcard import alias")));
+}
+
+#[test]
+fn compile_package_rejects_mounted_global_options() {
+    let dir = temp_dir("cli-mount-global");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        "@ imperium \"run\"\n@ optio verbose longum \"verbose\" ubique\nfunctio run() {}",
+    )
+    .expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("'ubique' options")));
+}
+
+#[test]
+fn compile_package_rejects_mounted_command_path_collisions() {
+    let dir = temp_dir("cli-mount-collision");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+
+@ imperium "jobs/run"
+functio root_run() {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(dir.join("jobs.fab"), "@ imperium \"run\"\nfunctio run() {}").expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("duplicate command path 'jobs/run'")));
+}
+
+#[test]
+fn compile_package_rejects_mounted_alias_collisions() {
+    let dir = temp_dir("cli-mount-alias-collision");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        r#"
+@ imperium "one"
+@ alias "same"
+functio one() {}
+
+@ imperium "two"
+@ alias "same"
+functio two() {}
+"#,
+    )
+    .expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("duplicate command alias 'jobs/same'")));
+}
+
+#[test]
+fn compile_package_does_not_expose_unmounted_imported_cli_modules() {
+    let dir = temp_dir("cli-unmounted");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(dir.join("jobs.fab"), "@ imperium \"run\"\nfunctio run() {}").expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.success(), "expected package compile success");
+    let Some(Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+
+    assert!(!output.code.contains("jobs::run"));
+    assert!(output.code.contains("Usage: tool"));
+    assert!(!output.code.contains("<COMMAND>"));
+}
+
+#[test]
+fn compile_package_rejects_import_cycles() {
+    let dir = temp_dir("import-cycle");
+    fs::write(dir.join("main.fab"), "importa ex \"./jobs\" privata * ut jobs\nincipit {}").expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        "importa ex \"./main\" privata * ut main\nfunctio run() {}",
+    )
+    .expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diag| diag.message.contains("import cycle detected")));
+}
+
+#[test]
+fn compile_package_rejects_nested_module_mounts() {
+    let dir = temp_dir("mount-cycle");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        r#"
+@ imperia "again" ex jobs
+@ imperium "run"
+functio run() {}
+"#,
+    )
+    .expect("write jobs");
+
+    let result = compile_package(&Config::default(), &dir);
+    assert!(result.output.is_none());
+    assert!(result.diagnostics.iter().any(|diag| diag
+        .message
+        .contains("@ imperia module mounts may only be declared on the root CLI")));
+}

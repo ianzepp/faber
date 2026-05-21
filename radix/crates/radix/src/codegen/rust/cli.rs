@@ -549,10 +549,21 @@ fn generate_alias_dispatch_arm(
     alias: &str,
     w: &mut CodeWriter,
 ) {
-    w.write("if command_parts[0] == ");
-    write_rust_string_literal(alias, w);
+    let parts = alias_path(alias);
+    w.write("if command_parts.len() >= ");
+    w.write(&parts.len().to_string());
+    w.write(" && ");
+    for (index, part) in parts.iter().enumerate() {
+        if index > 0 {
+            w.write(" && ");
+        }
+        w.write("command_parts[");
+        w.write(&index.to_string());
+        w.write("] == ");
+        write_rust_string_literal(part, w);
+    }
     w.writeln(" {");
-    w.indented(|w| generate_dispatch_call(program, command, 1, w));
+    w.indented(|w| generate_dispatch_call(program, command, parts.len(), w));
     w.writeln("}");
 }
 
@@ -568,13 +579,27 @@ fn generate_dispatch_call(program: &CliProgram, command: &crate::cli::CliCommand
     }
     w.writeln(");");
     if command.args_binding.is_some() {
-        w.write(&command.function);
+        write_command_function(command, w);
         w.writeln("(args);");
     } else {
-        w.write(&command.function);
+        write_command_function(command, w);
         w.writeln("();");
     }
     w.writeln("std::process::exit(0);");
+}
+
+fn write_command_function(command: &crate::cli::CliCommand, w: &mut CodeWriter) {
+    if let Some(module_path) = &command.module_path {
+        for segment in module_path {
+            w.write(segment);
+            w.write("::");
+        }
+    }
+    w.write(&command.function);
+}
+
+fn alias_path(alias: &str) -> Vec<&str> {
+    alias.split('/').filter(|part| !part.is_empty()).collect()
 }
 
 fn generate_long_option_parser(options: &[&CliOption], w: &mut CodeWriter) {

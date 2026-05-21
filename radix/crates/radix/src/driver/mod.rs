@@ -198,6 +198,15 @@ pub(crate) struct AnalyzedUnit {
 }
 
 pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Result<AnalyzedUnit, Vec<Diagnostic>> {
+    analyze_source_with_cli_program(session, name, source, None)
+}
+
+pub(crate) fn analyze_source_with_cli_program(
+    session: &Session,
+    name: &str,
+    source: &str,
+    cli_program_override: Option<crate::cli::CliProgram>,
+) -> Result<AnalyzedUnit, Vec<Diagnostic>> {
     let mut diagnostics = Vec::new();
 
     let lex_result = lexer::lex(source);
@@ -235,17 +244,23 @@ pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Res
         return Err(diagnostics);
     }
 
-    let cli_analysis = crate::cli::analyze(&program, &interner);
-    for err in &cli_analysis.errors {
-        diagnostics.push(Diagnostic::from_semantic_error(name, source, err));
-    }
+    let cli_program = if let Some(cli_program) = cli_program_override {
+        Some(cli_program)
+    } else {
+        let cli_analysis = crate::cli::analyze(&program, &interner);
+        for err in &cli_analysis.errors {
+            diagnostics.push(Diagnostic::from_semantic_error(name, source, err));
+        }
+
+        cli_analysis.program
+    };
 
     if diagnostics.iter().any(Diagnostic::is_error) {
         return Err(diagnostics);
     }
 
     let pass_config = PassConfig::for_target(session.config.target);
-    let semantic_result = semantic::analyze_with_cli(&program, &pass_config, &interner, cli_analysis.program.as_ref());
+    let semantic_result = semantic::analyze_with_cli(&program, &pass_config, &interner, cli_program.as_ref());
 
     for err in &semantic_result.errors {
         diagnostics.push(Diagnostic::from_semantic_error(name, source, err));
@@ -258,7 +273,7 @@ pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Res
     Ok(AnalyzedUnit {
         interner,
         types: semantic_result.types,
-        cli_program: cli_analysis.program,
+        cli_program,
         hir: match semantic_result.hir {
             Some(hir) => hir,
             None => {
