@@ -311,12 +311,34 @@ That metadata carrier is a local implementation detail and should not be expande
 | ----- | ---- | ---- | ---------- |
 | 0 | Preflight and baseline capture | Record current `faber test` stub behavior and existing proba/probandum lowering. | Ledger created; no behavior changed. |
 | 1 | Minimal Cargo-backed `faber test` | Reuse generated crate emission and invoke Cargo test with package `target/` as target dir. | `faber test <pkg>` runs Rust-lowered Faber tests. |
-| 2 | Test command ergonomics | Add filter/pass-through flags that map cleanly to Cargo's harness. | Common workflows work without invoking Cargo manually. |
+| 2 | Test command ergonomics | Add a curated filter and common harness flags that map cleanly to Cargo's harness. | Common workflows work without invoking Cargo manually. |
 | 3 | Ignored and future tests | Expose ignored-test execution for `omitte` and `futurum` cases. | Users can list/run ignored tests deliberately. |
 | 4 | Faber test metadata model | Stop overloading generic HIR fields for test metadata; preserve source-level test names and modifiers. | Rust codegen and Faber tooling can inspect structured test metadata. |
 | 5 | Faber-specific selection | Honor `solum`, `tag`, `requirit`, and `solum_in` at the Faber tool layer. | Faber selection semantics work before Cargo is invoked or via generated harness config. |
 | 6 | Reporting and docs | Document test syntax, command behavior, and current limits; improve output where feasible. | README/grammar/docs match live command behavior. |
 | 7 | Validation and release readiness | Run full Rust validation and smoke tests for passing/failing/ignored cases. | fmt/test/clippy/build and Faber test smoke pass. |
+
+## Implementation Pipeline Contract
+
+Every implementation phase must be executed through the full `delivery` skill pipeline before code changes begin. Each phase should create or update a phase-local delivery artifact that records:
+
+1. `Intake And Interpret`
+2. `Normalize Spec`
+3. `Resolve Against Repo Context`
+4. `Lower To Stage Graph`
+5. `Assign Parallel Workstreams`
+6. `Define Checkpoints And Gates`
+
+The phase implementer should then use that delivery artifact as the execution contract for the phase. This prevents a future session from treating the phase bullets as a loose checklist and skipping baseline capture, repo-aware constraints, workstream boundaries, or gate design.
+
+Minimum per-phase delivery outputs:
+
+- confirmed command surface and non-goals,
+- affected files and modules,
+- test fixtures or smoke commands required for the phase,
+- gate commands,
+- commit boundary,
+- any decisions intentionally deferred to later phases.
 
 ## Phase Details
 
@@ -371,39 +393,111 @@ Checkpoint:
 
 ### Phase 2: Test Command Ergonomics
 
+Goal:
+
+Make the Cargo-backed Phase 1 runner usable for the common day-to-day cases without exposing arbitrary Cargo internals as the Faber interface.
+
+Command shape:
+
+```bash
+faber test [path] [filter]
+faber test [path] [filter] --exact
+faber test [path] [filter] --nocapture
+faber test [path] [filter] --test-threads <n>
+```
+
+Rules:
+
+- The optional `filter` is passed to Cargo test as the Rust harness filter.
+- `--exact`, `--nocapture`, and `--test-threads <n>` are passed after Cargo's `--` separator.
+- Do not implement raw trailing pass-through in Phase 2. Raw pass-through is too easy to turn into an undocumented second CLI.
+- Do not implement Faber-specific filtering yet. Filtering is by generated Rust test names for now, which usually means `proba_...`.
+- Keep `path` defaulting to `.`.
+- Reject invalid flag combinations through Clap or a clear manual error.
+- Preserve Phase 1 behavior when no filter or flags are provided.
+
 Steps:
 
-- Add a narrow set of Cargo-compatible flags:
-  - optional test name filter,
+- Extend `TestArgs` with:
+  - optional positional `filter`,
   - `--exact`,
   - `--nocapture`,
-  - possibly `--test-threads <n>`.
-- Decide whether trailing args after `--` are passed directly to the Rust test harness.
-- Keep the Faber CLI documented as a wrapper over generated Rust tests for now.
+  - `--test-threads <n>`.
+- Extend the Cargo test adapter so it can pass:
+  - pre-harness test filter before `--`,
+  - harness flags after `--`.
+- Update `faber test --help` so the supported shape is visible.
+- Add unit tests for command construction if the adapter can be made testable without spawning Cargo; otherwise rely on fixture smoke plus code review.
 
 Checkpoint:
 
 - `faber test <path> <filter>` works.
-- `faber test <path> -- --nocapture` or the chosen explicit flag shape works.
-- Unsupported harness flags produce clear errors or are deliberately passed through.
+- `faber test <path> <filter> --exact` works.
+- `faber test <path> --nocapture` shows test stdout when a fixture prints.
+- `faber test <path> --test-threads 1` passes the flag to the harness.
+- Unsupported harness flags fail clearly instead of being silently ignored.
+- No `target/faber/target` directory is created.
+
+Phase 2 completion metrics:
+
+- Help output documents every supported flag.
+- Passing fixture still exits `0` with no flags.
+- A known generated test filter runs a subset of the passing fixture.
+- `--nocapture` visibly changes output for a fixture with test stdout, or a dedicated fixture is added to prove it.
+- `--exact` is forwarded and does not break ordinary runs.
+- `--test-threads 1` is forwarded and exits `0` on passing fixtures.
+- Failing fixture still propagates nonzero status.
+- No raw `-- <args>` pass-through is added in this phase.
 
 ### Phase 3: Ignored and Future Tests
 
+Goal:
+
+Expose ignored-test execution deliberately while keeping `omitte` and `futurum` semantics honest about their current implementation.
+
+Command shape:
+
+```bash
+faber test [path] --ignored
+faber test [path] --include-ignored
+```
+
+Rules:
+
+- `--ignored` maps to Cargo/Rust harness `--ignored` and runs only ignored tests.
+- `--include-ignored` maps to Cargo/Rust harness `--include-ignored` and runs both normal and ignored tests.
+- `--ignored` and `--include-ignored` are mutually exclusive.
+- `omitte` and `futurum` both remain Rust `#[ignore]` for this phase.
+- Do not introduce expected-failure/todo semantics for `futurum` in this phase.
+- Do not add Faber-specific `omitte`/`futurum` reports beyond what the Rust harness prints.
+
 Steps:
 
-- Add command support for ignored tests:
-  - likely `faber test --ignored`,
-  - possibly `faber test --include-ignored`.
-- Document current mapping:
-  - `omitte` -> ignored,
-  - `futurum` -> ignored until a better todo/expected-failure model exists.
-- Decide whether `futurum` should remain ignored or become an expected-fail/todo status in a later custom runner.
+- Extend `TestArgs` with `--ignored` and `--include-ignored`.
+- Pass the selected harness flag after Cargo's `--`.
+- Add conflict validation for `--ignored` plus `--include-ignored`.
+- Update help text.
+- Update docs to say:
+  - `omitte` is skipped by default,
+  - `futurum` is currently skipped by default,
+  - both can be run through ignored-test flags until a later Faber-native reporter exists.
 
 Checkpoint:
 
 - `faber test` skips ignored tests by default.
 - `faber test --ignored` runs ignored tests.
+- `faber test --include-ignored` runs normal and ignored tests.
+- Conflicting ignored flags fail clearly.
 - Docs explain the temporary `futurum` behavior.
+
+Phase 3 completion metrics:
+
+- Ignored fixture default run exits `0` and reports two ignored tests.
+- Ignored fixture with `--ignored` exits nonzero because the ignored failing tests are actually executed.
+- Ignored fixture with `--include-ignored` exits nonzero for the same reason while also running normal tests.
+- Help output shows both flags and their distinction.
+- `--ignored --include-ignored` is rejected before invoking Cargo.
+- No `target/faber/target` directory is created.
 
 ### Phase 4: Faber Test Metadata Model
 
@@ -577,7 +671,8 @@ Later phases should be committed independently:
 
 ## Companion Skill Plan
 
-- Use `factory` for implementation execution.
+- Use the full `delivery` skill pipeline at the start of every implementation phase.
+- Use `factory` for implementation execution after the phase delivery artifact is written or refreshed.
 - Use `poker-face` after Phase 1 because the minimal runner is intentionally narrow and easy to overclaim.
 - Use `zombie-docs` after Phase 6 to catch drift in keyword and command docs.
 - Use `carmack-linus` before a custom test runner or custom harness is introduced.
@@ -603,10 +698,27 @@ Additional smoke for Phase 1:
 - ignored fixture output shows ignored tests.
 - no `target/faber/target` is created.
 
+Additional smoke for Phase 2:
+
+- `faber test examples/exempla/proba/packages/passing` still exits `0`.
+- `faber test examples/exempla/proba/packages/passing <known-generated-test-name>` runs a subset of the passing fixture.
+- `faber test examples/exempla/proba/packages/passing <known-generated-test-name> --exact` exits `0`.
+- `faber test examples/exempla/proba/packages/passing --nocapture` shows captured stdout when the fixture includes a printed test.
+- `faber test examples/exempla/proba/packages/passing --test-threads 1` exits `0`.
+- an unsupported harness flag fails at the Faber CLI boundary with a clear error.
+- raw `-- <args>` pass-through is not accepted in this phase.
+- no `target/faber/target` is created.
+
+Additional smoke for Phase 3:
+
+- `faber test examples/exempla/proba/packages/ignored` exits `0` and reports ignored tests.
+- `faber test examples/exempla/proba/packages/ignored --ignored` runs only ignored tests and exits nonzero when ignored failing tests execute.
+- `faber test examples/exempla/proba/packages/ignored --include-ignored` runs normal and ignored tests and exits nonzero when ignored failing tests execute.
+- `faber test examples/exempla/proba/packages/ignored --ignored --include-ignored` is rejected before invoking Cargo.
+- no `target/faber/target` is created.
+
 ## Open Questions
 
-- Should `faber test <filter>` use positional filtering, or should Faber require an explicit `--filter` flag?
-- Should `faber test -- <args>` pass raw args to the Rust test harness, or should Faber expose only curated flags?
 - Should `futurum` eventually mean expected failure, todo, ignored, or a separate report status?
 - Should `solum` be honored by filtering before codegen or by generated Rust harness behavior?
 - Should Faber eventually generate a custom test harness to preserve suite names, tags, and source locations?
