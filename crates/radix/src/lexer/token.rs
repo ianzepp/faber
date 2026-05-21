@@ -289,7 +289,7 @@ pub enum TokenKind {
     Colon,     // :
     Semicolon, // ;
     Dot,       // .
-    Arrow,     // ->
+    Arrow,     // →
     At,        // @ (annotation marker)
     Section,   // § (section marker)
 
@@ -309,14 +309,14 @@ pub enum TokenKind {
     // === Comparison ===
     Eq,       // =
     Assign,   // ←
-    EqEq,     // ==
-    EqEqEq,   // === (strict equality)
-    BangEq,   // !=
-    BangEqEq, // !== (strict inequality)
+    EqEq,     // ≡
+    EqEqEq,   // (reserved for future / internal; no source form)
+    BangEq,   // ≠
+    BangEqEq, // (reserved for future / internal; no source form)
     Lt,       // <
     Gt,       // >
-    LtEq,     // <=
-    GtEq,     // >=
+    LtEq,     // ≤
+    GtEq,     // ≥
 
     // === Compound assignment ===
     PlusEq,  // ⊕

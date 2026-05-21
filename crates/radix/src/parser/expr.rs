@@ -23,8 +23,8 @@
 //! 2. Ternary (? :, sic secus)
 //! 3. Logical OR (aut, vel)
 //! 4. Logical AND (et)
-//! 5. Equality (==, !=, est, non est)
-//! 6. Comparison (<, >, <=, >=, intra, inter)
+//! 5. Equality (≡, ≠, est, non est)
+//! 6. Comparison (<, >, ≤, ≥, intra, inter)
 //! 7. Bitwise OR (∨)
 //! 8. Bitwise XOR (⊻)
 //! 9. Bitwise AND (∧)
@@ -708,7 +708,7 @@ impl Parser {
     ///   array := '[' (expr | 'sparge' expr) (',' (expr | 'sparge' expr))* ']'
     ///   object := '{' field (',' field)* '}'
     ///   paren := '(' expr ')'
-    ///   closure := 'clausura' params ['->' type] ('{' block '}' | ':' expr)
+    ///   closure := 'clausura' params ['→' type] ('{' block '}' | ':' expr)
     ///
     /// WHY: Primary expressions are the atoms of expression parsing. They can
     /// stand alone or be composed via operators and postfix operations.
@@ -866,7 +866,7 @@ impl Parser {
         // Parse parameters: type name, type name, ...
         let mut params = Vec::new();
         loop {
-            // Check for end of params (-> or :)
+            // Check for end of params (→ or :)
             if self.check(&TokenKind::Arrow) || self.check(&TokenKind::Colon) {
                 break;
             }

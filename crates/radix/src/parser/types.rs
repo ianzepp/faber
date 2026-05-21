@@ -15,7 +15,7 @@
 //! - Type-first syntax: Types appear before names in all declarations
 //! - Modifier prefixes: Nullable (si), ownership (de/in) modify base types
 //! - Generic type parameters: Angle-bracket syntax like TypeScript/Rust
-//! - Function types: First-class function type syntax (A, B) -> C
+//! - Function types: First-class function type syntax (A, B) → C
 //! - Array postfix: Array brackets [] applied postfix to base type
 //!
 //! GRAMMAR COVERAGE
@@ -23,7 +23,7 @@
 //! - Nullable: si Type (Option<Type> semantics)
 //! - Ownership modes: de Type (borrow), in Type (mutable borrow)
 //! - Named types: Ident or Ident<Type, Type>
-//! - Function types: (Type, Type) -> Type
+//! - Function types: (Type, Type) → Type
 //! - Array types: Type[] or Type[][]
 //! - Nil type: nihil (void/unit type)
 //!
@@ -66,7 +66,7 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   type := ['si'] ['de'|'in'] (func-type | named-type) ('[]')*
-    ///   func-type := '(' type-list ')' '->' type
+    ///   func-type := '(' type-list ')' '→' type
     ///   named-type := ident ['<' type-list '>']
     ///
     /// WHY: Type expressions combine optional prefix modifiers (nullable, ownership),
@@ -140,10 +140,10 @@ impl Parser {
         Ok(TypeExpr { nullable, mode, kind, span })
     }
 
-    /// Parse function type: (A, B) -> C
+    /// Parse function type: (A, B) → C
     ///
     /// GRAMMAR:
-    ///   func-type := '(' [type (',' type)*] ')' '->' type
+    ///   func-type := '(' [type (',' type)*] ')' '→' type
     ///
     /// WHY: First-class function types for callbacks, higher-order functions, and
     /// interface method signatures. Parameter types separated by commas, return
@@ -160,7 +160,7 @@ impl Parser {
         }
 
         self.expect(&TokenKind::RParen, "expected ')'")?;
-        self.expect(&TokenKind::Arrow, "expected '->'")?;
+        self.expect(&TokenKind::Arrow, "expected '→'")?;
 
         let ret = Box::new(self.parse_type()?);
 

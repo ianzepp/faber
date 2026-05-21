@@ -234,7 +234,7 @@ impl Parser {
     /// Parse function declaration.
     ///
     /// GRAMMAR:
-    ///   func-decl := 'functio' ident '(' params ')' modifiers ['->' type] [block]
+    ///   func-decl := 'functio' ident '(' params ')' modifiers ['→' type] [block]
     ///   params    := type-param* regular-param*
     ///   type-param := 'prae' 'typus' ident
     ///
@@ -495,7 +495,7 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   interface-decl := 'pactum' ident ['<' type-params '>'] '{' method-sig* '}'
-    ///   method-sig := 'functio' ident '(' params ')' modifiers ['->' type]
+    ///   method-sig := 'functio' ident '(' params ')' modifiers ['→' type]
     ///
     /// WHY: Interfaces define method contracts without implementations.
     fn parse_interface_decl(&mut self) -> Result<StmtKind, ParseError> {

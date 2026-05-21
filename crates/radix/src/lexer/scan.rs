@@ -188,30 +188,10 @@ impl<'a> Lexer<'a> {
             '⊚' => TokenKind::PipeEq,
             '⇢' => TokenKind::Verte,
             '⇒' => TokenKind::Conversio,
-            '+' => {
-                if self.cursor.eat('=') {
-                    TokenKind::PlusEq
-                } else {
-                    TokenKind::Plus
-                }
-            }
-            '*' => {
-                if self.cursor.eat('=') {
-                    TokenKind::StarEq
-                } else {
-                    TokenKind::Star
-                }
-            }
+            '+' => TokenKind::Plus,
+            '*' => TokenKind::Star,
             '%' => TokenKind::Percent,
-            '-' => {
-                if self.cursor.eat('>') {
-                    TokenKind::Arrow
-                } else if self.cursor.eat('=') {
-                    TokenKind::MinusEq
-                } else {
-                    TokenKind::Minus
-                }
-            }
+            '-' => TokenKind::Minus,
             '/' => {
                 if self.cursor.eat('/') {
                     self.scan_line_comment(start);
@@ -219,31 +199,13 @@ impl<'a> Lexer<'a> {
                 } else if self.cursor.eat('*') {
                     self.scan_block_comment(start);
                     return None;
-                } else if self.cursor.eat('=') {
-                    TokenKind::SlashEq
                 } else {
                     TokenKind::Slash
                 }
             }
-            '=' => {
-                if self.cursor.eat('=') {
-                    if self.cursor.eat('=') {
-                        TokenKind::EqEqEq
-                    } else {
-                        TokenKind::EqEq
-                    }
-                } else {
-                    TokenKind::Eq
-                }
-            }
+            '=' => TokenKind::Eq,
             '!' => {
-                if self.cursor.eat('=') {
-                    if self.cursor.eat('=') {
-                        TokenKind::BangEqEq
-                    } else {
-                        TokenKind::BangEq
-                    }
-                } else if self.cursor.eat('.') {
+                if self.cursor.eat('.') {
                     TokenKind::BangDot
                 } else if self.cursor.eat('[') {
                     TokenKind::BangBracket
@@ -253,20 +215,8 @@ impl<'a> Lexer<'a> {
                     TokenKind::Bang
                 }
             }
-            '<' => {
-                if self.cursor.eat('=') {
-                    TokenKind::LtEq
-                } else {
-                    TokenKind::Lt
-                }
-            }
-            '>' => {
-                if self.cursor.eat('=') {
-                    TokenKind::GtEq
-                } else {
-                    TokenKind::Gt
-                }
-            }
+            '<' => TokenKind::Lt,
+            '>' => TokenKind::Gt,
             '←' => TokenKind::Assign,
             '≡' => TokenKind::EqEq,
             '≠' => TokenKind::BangEq,

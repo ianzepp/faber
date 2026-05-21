@@ -599,7 +599,7 @@ impl Parser {
     /// Parse HTTP endpoint declaration.
     ///
     /// GRAMMAR:
-    ///   ad-stmt := 'ad' string '(' args ')' ['->' [type] 'pro' ident ['ut' ident]] [block] ['cape' ident block]
+    ///   ad-stmt := 'ad' string '(' args ')' ['→' [type] 'pro' ident ['ut' ident]] [block] ['cape' ident block]
     ///
     /// WHY: Declares HTTP endpoints for web services. Path string supports templates,
     /// args bind to request parameters, optional binding captures response.
