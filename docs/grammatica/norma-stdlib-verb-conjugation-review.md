@@ -141,7 +141,7 @@ This is the key test case for migration-safe conjugation. The root `quaer-` rema
 **Current**:
 - `quaerent` (`@ cursor`) — stream rows
 - `quaeret` — return list
-- `capiet` — return first or nihil
+- `capiet` — return first or nihil, on both connection and transaction
 - `exsequetur` — mutation
 - `inseret` — insert returning ID
 - `incipiet`, `committet`, `revertet`

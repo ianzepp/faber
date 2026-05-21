@@ -97,6 +97,11 @@ pactum Transactio {
     @ externa
     functio quaeret(textus sql, lista<quidlibet> params) -> lista<series>
 
+    # Return first row or nihil within transaction
+    @ futura
+    @ externa
+    functio capiet(textus sql, lista<quidlibet> params) -> series?
+
     # Execute mutation within transaction
     @ futura
     @ externa
