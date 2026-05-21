@@ -94,6 +94,43 @@ functio set_config() argumenta args {
 }
 
 #[test]
+fn check_package_validates_mounted_cli_commands_without_emitting() {
+    let dir = temp_dir("check-cli-mount");
+    fs::write(
+        dir.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("jobs.fab"),
+        r#"
+@ imperium "run"
+functio run() argumenta args {
+  scribe "running"
+}
+"#,
+    )
+    .expect("write jobs");
+
+    let diagnostics = check_package(&Config::default(), &dir);
+
+    assert!(
+        !diagnostics.iter().any(Diagnostic::is_error),
+        "expected package check success, got {:?}",
+        diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn compile_package_mounted_handlers_can_access_root_globals() {
     let dir = temp_dir("cli-mount-root-global");
     fs::write(

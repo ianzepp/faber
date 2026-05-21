@@ -41,7 +41,7 @@ Implement a compiling CLI skeleton with commands for:
 
 Acceptance:
 
-- Package checks with `cargo run --manifest-path radix/Cargo.toml -p radix -- check examples/automation/main.fab`.
+- Package checks with `cargo run --manifest-path radix/Cargo.toml -p radix -- check --package examples/automation/main.fab`.
 - Rust can be emitted with `cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab`.
 - README documents current limitations.
 

@@ -163,6 +163,11 @@ impl Compiler {
         driver::compile_package(&self.session.config, path)
     }
 
+    /// Check a local multi-file package without emitting target code.
+    pub fn check_package(&self, path: &Path) -> Vec<Diagnostic> {
+        driver::check_package(&self.session.config, path)
+    }
+
     /// Compile source code from a string.
     ///
     /// WHY: Core compilation path. File-based compilation delegates to this

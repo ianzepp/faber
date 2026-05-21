@@ -20,7 +20,7 @@ The current command bodies print placeholder output. The fixture files under `fi
 From the repository root:
 
 ```bash
-cargo run --manifest-path radix/Cargo.toml -p radix -- check examples/automation/main.fab
+cargo run --manifest-path radix/Cargo.toml -p radix -- check --package examples/automation/main.fab
 cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab
 ```
 

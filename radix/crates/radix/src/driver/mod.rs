@@ -34,7 +34,7 @@ mod project;
 mod session;
 mod source;
 
-pub use project::compile_package;
+pub use project::{check_package, compile_package};
 pub use session::{Config, Session};
 pub use source::SourceFile;
 

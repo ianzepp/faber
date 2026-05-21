@@ -54,7 +54,9 @@ fn main() {
         Command::Parse(args) => cmd_parse(&args.input),
         Command::Hir(args) => cmd_hir(&args.input),
         Command::CliIr(args) => cmd_cli_ir(&args.input),
-        Command::Check(args) => cmd_check(CheckCommand { input: args.input, permissive: args.permissive }),
+        Command::Check(args) => {
+            cmd_check(CheckCommand { input: args.input, package: args.package, permissive: args.permissive })
+        }
         Command::Emit(args) => {
             cmd_emit(EmitCommand { input: args.input, package: args.package, target: args.target.into() })
         }
@@ -100,7 +102,11 @@ struct CheckArgs {
     #[arg(long)]
     permissive: bool,
 
-    /// Input file path, or '-' / omitted for stdin
+    /// Force package checking mode
+    #[arg(long)]
+    package: bool,
+
+    /// Input file or package path, or '-' / omitted for stdin
     input: Vec<String>,
 }
 
@@ -139,6 +145,7 @@ struct BuildArgs {
 #[derive(Debug)]
 struct CheckCommand {
     input: Vec<String>,
+    package: bool,
     permissive: bool,
 }
 
@@ -473,6 +480,11 @@ fn cmd_cli_ir(args: &[String]) {
 /// WHY: --permissive mode allows checking files with unresolved imports,
 /// useful for partial compilation or library development.
 fn cmd_check(command: CheckCommand) {
+    if command.package {
+        cmd_check_package(command);
+        return;
+    }
+
     let (name, source) = read_source(&command.input);
     let source_file = source_file_from_input(name, source);
 
@@ -544,6 +556,63 @@ fn cmd_check(command: CheckCommand) {
     } else {
         std::process::exit(1);
     }
+}
+
+fn cmd_check_package(command: CheckCommand) {
+    if command.input.is_empty() || command.input[0] == "-" {
+        eprintln!("error: package checking requires a path input");
+        std::process::exit(1);
+    }
+
+    let input_path = PathBuf::from(&command.input[0]);
+    let config = radix::driver::Config::default().with_target(radix::codegen::Target::Rust);
+    let compiler = radix::Compiler::new(config);
+    let diagnostics = compiler.check_package(&input_path);
+
+    let mut fatal_errors = 0usize;
+    let mut downgraded = 0usize;
+    for diag in &diagnostics {
+        let downgraded_error = command.permissive && diag.is_error() && is_permissive_check_code(diag.code);
+        let prefix = if diag.is_error() && !downgraded_error {
+            "error"
+        } else {
+            "warning"
+        };
+        eprintln!("{}: {}", prefix, diagnostic_summary(diag));
+        if diag.is_error() {
+            if downgraded_error {
+                downgraded += 1;
+            } else {
+                fatal_errors += 1;
+            }
+        }
+    }
+
+    if command.permissive && downgraded > 0 {
+        eprintln!(
+            "warning:{}: downgraded {} unresolved/import-driven semantic error(s) in permissive mode",
+            input_path.display(),
+            downgraded
+        );
+    }
+
+    if fatal_errors == 0 {
+        eprintln!("ok: {}", input_path.display());
+    } else {
+        std::process::exit(1);
+    }
+}
+
+fn diagnostic_summary(diag: &radix::diagnostics::Diagnostic) -> String {
+    if diag.file.is_empty() {
+        diag.message.clone()
+    } else {
+        format!("{}: {}", diag.file, diag.message)
+    }
+}
+
+fn is_permissive_check_code(code: Option<&'static str>) -> bool {
+    matches!(code, Some("SEM001" | "SEM002" | "SEM003" | "SEM004" | "SEM006"))
 }
 
 /// Compile to target language.

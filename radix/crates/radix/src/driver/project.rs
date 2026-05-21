@@ -146,6 +146,41 @@ pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
     CompileResult { output: Some(Output::Rust(RustOutput { code: crate_code })), diagnostics }
 }
 
+pub fn check_package(config: &Config, input: &Path) -> Vec<Diagnostic> {
+    let spec = match discover_package(input) {
+        Ok(spec) => spec,
+        Err(diag) => return vec![*diag],
+    };
+
+    let files = match load_package(&spec) {
+        Ok(files) => files,
+        Err(diagnostics) => return diagnostics,
+    };
+
+    let mount_plan = match build_mount_plan(&spec, &files) {
+        Ok(plan) => plan,
+        Err(diagnostics) => return diagnostics,
+    };
+
+    let session = Session::new(config.clone());
+    let mut diagnostics = Vec::new();
+
+    for file in &files {
+        let file_cli = if file.path == spec.entry {
+            mount_plan.root_cli.clone()
+        } else {
+            mount_plan.module_cli.get(&file.path).cloned()
+        };
+
+        match analyze_source_with_cli_program(&session, &file.path.display().to_string(), &file.source, file_cli) {
+            Ok(analysis) => diagnostics.extend(analysis.diagnostics),
+            Err(file_diagnostics) => diagnostics.extend(file_diagnostics),
+        }
+    }
+
+    diagnostics
+}
+
 fn discover_package(input: &Path) -> PackageDiscoveryResult {
     let input = absolutize_path(input);
     if !input.exists() {

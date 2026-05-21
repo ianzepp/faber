@@ -6,24 +6,23 @@ The point is not to hide shortcomings. The point is to name them clearly enough 
 
 ## 1. Package-Aware Checking
 
-Current observation:
+Resolved:
 
-- `cargo run --manifest-path radix/Cargo.toml -p radix -- check examples/automation/main.fab` checks the root file.
-- `cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab` is the meaningful gate for mounted command modules.
+- `cargo run --manifest-path radix/Cargo.toml -p radix -- check --package examples/automation/main.fab` checks the package graph.
+- `cargo run --manifest-path radix/Cargo.toml -p radix -- emit -t rust --package examples/automation/main.fab` remains the Rust emission gate for mounted command modules.
 
-Gap:
+Original gap:
 
-The `check` command does not currently provide the same obvious package-level confidence as Rust package emit.
+The `check` command did not provide the same obvious package-level confidence as Rust package emit.
 
-Possible directions:
+Implemented direction:
 
 - Add `check --package <entry.fab>`.
 - Make `check` follow package-local imports when the input is a package entry point.
-- Keep package validation documented as `emit -t rust --package` until a proper package check exists.
 
-Near-term recommendation:
+Current recommendation:
 
-Keep using Rust package emit as the package gate for this example, then decide whether `check --package` belongs in the compiler CLI.
+Use `check --package` as the package validation gate, and keep Rust package emit as the backend generation gate.
 
 ## 2. Front Matter Extraction
 

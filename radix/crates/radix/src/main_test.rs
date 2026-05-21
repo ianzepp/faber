@@ -63,7 +63,7 @@ fn cmd_lex_parse_hir_check_emit_succeed_on_valid_file() {
     cmd_lex(&args);
     cmd_parse(&args);
     cmd_hir(&args);
-    cmd_check(CheckCommand { input: args.clone(), permissive: false });
+    cmd_check(CheckCommand { input: args.clone(), package: false, permissive: false });
     cmd_emit(EmitCommand { input: args, package: false, target: radix::codegen::Target::Rust });
 }
 
@@ -98,6 +98,26 @@ fn cmd_emit_supports_package_input() {
         package: true,
         target: radix::codegen::Target::Rust,
     });
+}
+
+#[test]
+fn cmd_check_supports_package_input() {
+    let package = temp_dir_path("check-package");
+    std::fs::create_dir_all(&package).expect("create package");
+    std::fs::write(
+        package.join("main.fab"),
+        r#"
+importa ex "./jobs" privata * ut jobs
+
+@ cli "tool"
+@ imperia "jobs" ex jobs
+incipit argumenta args {}
+"#,
+    )
+    .expect("write package entry");
+    std::fs::write(package.join("jobs.fab"), "@ imperium \"run\"\nfunctio run() {}").expect("write package module");
+
+    cmd_check(CheckCommand { input: vec![package.to_string_lossy().to_string()], package: true, permissive: false });
 }
 
 #[test]
@@ -139,7 +159,20 @@ fn cli_parses_check_permissive_flag() {
     match cli.command {
         Command::Check(args) => {
             assert!(args.permissive);
+            assert!(!args.package);
             assert_eq!(args.input, vec!["main.fab"]);
+        }
+        other => panic!("expected check, got {:?}", other),
+    }
+}
+
+#[test]
+fn cli_parses_check_package_flag() {
+    let cli = Cli::try_parse_from(["radix", "check", "--package", "pkg/main.fab"]).expect("cli parse");
+    match cli.command {
+        Command::Check(args) => {
+            assert!(args.package);
+            assert_eq!(args.input, vec!["pkg/main.fab"]);
         }
         other => panic!("expected check, got {:?}", other),
     }
