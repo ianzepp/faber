@@ -117,7 +117,7 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 ---
 
-### 3. `processus.fab` — Mostly Good
+### 3. `processus.fab` — Execution Forms Resolved
 
 **Current**:
 - `exsequi` / `exsequetur` (shell execution)
@@ -128,7 +128,9 @@ This document reviews the current interfaces and proposes targeted renames **bef
 
 **Recommendations**:
 - `exsequi` / `exsequetur` is solid.
-- Consider adding a generator/streaming variant for process output in the future. Prefer the same root if it is the same execution operation with streaming output; use a distinct root only if the lifecycle or ownership model changes.
+- Keep `exsequi` even though it is deponent; `exsequetur` is real Latin and precise for command execution.
+- In a future root-based stdlib, declare only the allowed collected-output forms for now: sync `exsequi` and async `exsequetur`.
+- Do not add a streaming form now. If streaming process output is needed later, decide then whether it is an additional allowed form of `exsequi` or belongs on `Subprocessus`.
 
 ---
 
@@ -243,6 +245,7 @@ Create (or expand) a document that defines the expected conjugation patterns for
 | Cross-cutting | Generator form policy | Use real present plural for sync generators and real future plural for async generators | Done | Stabilizes stream call-site forms |
 | `arca`     | `quaerent`         | Keep | Done | Real future plural for `quaerere`; same query operation remains one root |
 | `arca`     | `capiet`           | Keep as separate root | Done | Single-row retrieval has distinct result shape and wrapper possibilities |
+| `processus`| `exsequetur`       | Keep deponent execution root | Done | Root declarations can allow only sync/async collected-output forms |
 | `solum`    | `carpiet`          | Keep as async line collection | Done | Streaming should add `carpunt` / `carpent`, not rename collected-list forms |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
