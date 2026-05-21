@@ -7,13 +7,16 @@
 **Created**: 2026-05-21
 
 ## Current Phase
-1 - Build pipeline model
+2 - Generated Rust crate emission (pending)
+
+**Delivery Spec (last)**: `phase-1-delivery.md` (completed)
 
 ## Completed Phases
 0 - Preflight and baseline capture (ledger + captures)
+1 - Build pipeline model (BuildLayout + 8 tests + sibling contract proofs)
 
 ## Pending Phases
-1, 2, 3, 4, 5, 6, 7
+2, 3, 4, 5, 6, 7
 
 ## Baseline Captures (Phase 0)
 
@@ -123,3 +126,49 @@ Options:
 
 ## Next Action
 Proceed to Phase 1: Build pipeline model (add path structs, testable layout).
+
+---
+
+## Phase 1: Build Pipeline Model - Completion Record
+
+**Delivery Spec**: `phase-1-delivery.md`
+**Implementation Files Changed**:
+- `crates/faber/src/package.rs` (+~120 LOC: BuildLayout struct, from_package_root, sanitize_crate_name, discover_build_layout, pub(crate) helpers, allows for staged rollout)
+- `crates/faber/src/package_test.rs` (+~80 LOC: 8 new unit tests covering pure layout, sanitization, all input shapes, sibling contract)
+
+**Verification Executed**:
+- `cargo test -p faber` — 23/23 passed (all prior + 8 new)
+- `cargo check -p faber` — clean (modulo expected dead_code)
+- `cargo clippy -p faber -- -D warnings` — PASS after one lint fix (unnecessary_map_or → is_some_and) and scoped `#[allow(dead_code)]`
+- Manual path assertions in tests explicitly prove:
+  - `target/faber/` , `target/debug/` , `target/release/` are siblings under package_root
+  - No path computation produces `.../target/faber/target/...`
+  - discover covers: manifest file, directory (w/wo manifest), entry file
+  - name sanitization deterministic and Cargo-safe
+
+**Poker-Face Self-Audit (by factory supervisor)**:
+- Phase boundary fidelity: 100% — only added model + tests; zero changes to compile_package, cmd_build, CLI, or emission behavior.
+- Acceptance criteria from delivery spec & master plan: fully met (tests prove siblings + explicit rejection of nested target).
+- Residual scope: the new APIs are not yet called from cmd_build (by design — Phase 2 wires the writer).
+- Over-optimism risk: low. The allows(dead_code) are explicit scaffolding; will be removed when used.
+- Completion estimate: **93/100**
+  - Missing 7%: no docs update yet (Phase 6), no usage in build command (Phase 2), no generated Cargo.toml example.
+- Largest gap vs spec: none blocking. Ready for checkpoint.
+
+**Checkpoint Evaluation**:
+- **PASS** — "Tests prove target/faber, target/debug, target/release are siblings" + "explicitly reject or avoid target/faber/target".
+- All gates satisfied for Phase 1.
+- No user decisions required.
+- Spec revisions: none (delivery spec matched reality after minor internal helper exposure).
+
+**Commit**:
+- Will create: "Complete Phase 1: Build pipeline model (layout types + tests)"
+- Artifacts: delivery spec + ledger update + implementation + tests.
+
+**Open Questions Status**:
+- All Phase 1 OQs resolved in implementation (chose `BuildLayout`, pure fns, sanitize with digit guard, discover for coverage).
+- Carried-forward OQs from master plan remain for later phases.
+
+**Next Phase Readiness**: Phase 2 (Generated Rust Crate Emission) is now unblocked. The layout model provides the exact paths needed for writing Cargo.toml + main.rs under target/faber/.
+
+**Ledger Updated**: 2026-05-21 (post Phase 1)

@@ -17,6 +17,105 @@ struct PackageSpec {
     entry: PathBuf,
 }
 
+/// Layout for a package build: generated Rust crate under `target/faber/`,
+/// Cargo artifacts under sibling `target/debug/` and `target/release/`.
+///
+/// This model is pure (path calculations only) and is the single source of truth
+/// for the Non-Negotiable Directory Contract.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
+pub struct BuildLayout {
+    /// Directory containing faber.toml (or the package root for legacy dir input)
+    pub package_root: PathBuf,
+    /// `<package_root>/faber.toml` (may not exist for legacy direct-file cases)
+    pub manifest_path: PathBuf,
+    /// `<package_root>/target/faber` — the generated Rust crate root
+    pub generated_crate_root: PathBuf,
+    /// `<package_root>/target/faber/Cargo.toml`
+    pub generated_cargo_manifest: PathBuf,
+    /// `<package_root>/target/faber/src/main.rs`
+    pub generated_rust_entry: PathBuf,
+    /// `<package_root>/target` — passed as --target-dir to Cargo
+    pub cargo_target_dir: PathBuf,
+    /// `<package_root>/target/debug/<binary-name>`
+    pub debug_binary: PathBuf,
+    /// `<package_root>/target/release/<binary-name>`
+    pub release_binary: PathBuf,
+}
+
+impl BuildLayout {
+    /// Build a layout from an explicit package root directory and the package name
+    /// declared in its faber.toml (or a provided name for legacy cases).
+    ///
+    /// The supplied `package_name` is sanitized for use as a Rust crate/binary name.
+    #[allow(dead_code)]
+    pub fn from_package_root(root: impl AsRef<Path>, package_name: &str) -> Self {
+        let package_root = normalize_path(root.as_ref());
+        let manifest_path = package_root.join(MANIFEST_FILE);
+        let target_base = package_root.join("target");
+        let generated_root = target_base.join("faber");
+        let binary = sanitize_crate_name(package_name);
+
+        let debug_binary = target_base.join("debug").join(&binary);
+        let release_binary = target_base.join("release").join(&binary);
+
+        Self {
+            package_root,
+            manifest_path,
+            generated_crate_root: generated_root.clone(),
+            generated_cargo_manifest: generated_root.join("Cargo.toml"),
+            generated_rust_entry: generated_root.join("src").join("main.rs"),
+            cargo_target_dir: target_base,
+            debug_binary,
+            release_binary,
+        }
+    }
+
+    /// Returns the sanitized name used for the generated binary and crate.
+    #[allow(dead_code)]
+    pub fn binary_name(&self) -> &str {
+        // Extract from debug path (always present and normalized)
+        self.debug_binary
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("package")
+    }
+}
+
+/// Sanitize a Faber package name into a valid Rust/Cargo crate and binary name.
+///
+/// Rules (conservative, Cargo-compatible):
+/// - lowercase ASCII letters and digits
+/// - keep `-` and `_`
+/// - other characters become `-`
+/// - trim leading/trailing separators
+/// - if result empty, fallback to "package"
+/// - if starts with a digit, prefix "p-" (Cargo prefers letter or _ start for some contexts)
+#[allow(dead_code)]
+pub fn sanitize_crate_name(name: &str) -> String {
+    if name.trim().is_empty() {
+        return "package".to_owned();
+    }
+    let mut out = String::with_capacity(name.len());
+    for c in name.chars() {
+        if c.is_ascii_alphanumeric() {
+            out.push(c.to_ascii_lowercase());
+        } else if c == '-' || c == '_' {
+            out.push(c);
+        } else {
+            out.push('-');
+        }
+    }
+    let mut s = out.trim_matches(|c: char| c == '-' || c == '_').to_owned();
+    if s.is_empty() {
+        s = "package".to_owned();
+    }
+    if s.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+        s = format!("p-{}", s);
+    }
+    s
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FaberManifest {
@@ -434,6 +533,72 @@ fn validate_manifest(manifest: &FaberManifest, path: &Path) -> Result<(), Box<Di
     }
 
     Ok(())
+}
+
+/// Discover a `BuildLayout` for the given input (directory, manifest file, or entry file).
+///
+/// Mirrors the resolution rules of `discover_package` but additionally reads the package
+/// name from `faber.toml` when present (required for correct binary naming) and falls back
+/// to the directory name for legacy non-manifest cases.
+///
+/// This is the entry point tests and future build commands will use for the full layout.
+#[allow(dead_code)]
+pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic>> {
+    let input = absolutize_path(input);
+    if !input.exists() {
+        return Err(Box::new(Diagnostic::io_error(
+            &input,
+            std::io::Error::from(std::io::ErrorKind::NotFound),
+        )));
+    }
+
+    // Case 1: explicit manifest file
+    if input.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE) {
+        let manifest = read_manifest(&input)?;
+        let root = normalize_path(
+            input
+                .parent()
+                .unwrap_or_else(|| Path::new(".")),
+        );
+        let name = manifest.package.name.clone();
+        return Ok(BuildLayout::from_package_root(root, &name));
+    }
+
+    // Case 2: directory
+    if input.is_dir() {
+        let root = normalize_path(&input);
+        let manifest = root.join(MANIFEST_FILE);
+        if manifest.exists() {
+            let m = read_manifest(&manifest)?;
+            return Ok(BuildLayout::from_package_root(root, &m.package.name));
+        }
+        // Legacy: no manifest, use directory name as package name
+        let name = root
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("package")
+            .to_owned();
+        return Ok(BuildLayout::from_package_root(root, &name));
+    }
+
+    // Case 3: entry file (main.fab or similar)
+    let entry = normalize_path(&input);
+    let root = entry
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .to_path_buf();
+    let manifest = root.join(MANIFEST_FILE);
+    if manifest.exists() {
+        let m = read_manifest(&manifest)?;
+        return Ok(BuildLayout::from_package_root(root, &m.package.name));
+    }
+    // Legacy fallback
+    let name = root
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("package")
+        .to_owned();
+    Ok(BuildLayout::from_package_root(root, &name))
 }
 
 fn load_package(spec: &PackageSpec) -> Result<Vec<PackageFile>, Vec<Diagnostic>> {
@@ -983,7 +1148,7 @@ fn module_segments(source_root: &Path, file: &Path) -> Vec<String> {
     parts
 }
 
-fn normalize_path(path: &Path) -> PathBuf {
+pub(crate) fn normalize_path(path: &Path) -> PathBuf {
     let mut normalized = PathBuf::new();
     for component in path.components() {
         match component {
@@ -997,7 +1162,7 @@ fn normalize_path(path: &Path) -> PathBuf {
     normalized
 }
 
-fn absolutize_path(path: &Path) -> PathBuf {
+pub(crate) fn absolutize_path(path: &Path) -> PathBuf {
     if path.is_absolute() {
         return normalize_path(path);
     }

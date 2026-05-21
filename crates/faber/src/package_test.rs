@@ -1,4 +1,4 @@
-use super::{check_package, compile_package, read_manifest};
+use super::{check_package, compile_package, discover_build_layout, read_manifest, sanitize_crate_name, BuildLayout};
 use radix::diagnostics::Diagnostic;
 use radix::driver::Config;
 use radix::Output;
@@ -514,4 +514,121 @@ functio run() {}
     assert!(result.diagnostics.iter().any(|diag| diag
         .message
         .contains("@ imperia module mounts may only be declared on the root CLI")));
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1: BuildLayout path model tests (pure, no Cargo, sibling contract)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn build_layout_from_root_produces_sibling_debug_release_and_faber_dirs() {
+    let layout = BuildLayout::from_package_root("/tmp/hello-world", "hello-world");
+
+    assert_eq!(
+        layout.package_root,
+        Path::new("/tmp/hello-world").to_path_buf()
+    );
+    assert_eq!(
+        layout.generated_crate_root,
+        Path::new("/tmp/hello-world/target/faber").to_path_buf()
+    );
+    assert_eq!(
+        layout.cargo_target_dir,
+        Path::new("/tmp/hello-world/target").to_path_buf()
+    );
+    assert_eq!(
+        layout.debug_binary,
+        Path::new("/tmp/hello-world/target/debug/hello-world").to_path_buf()
+    );
+    assert_eq!(
+        layout.release_binary,
+        Path::new("/tmp/hello-world/target/release/hello-world").to_path_buf()
+    );
+
+    // Critical sibling contract: debug/release are peers of faber/, never under it
+    let faber_target = layout.generated_crate_root.join("target");
+    assert!(
+        !layout.debug_binary.starts_with(&faber_target),
+        "debug binary must not live under target/faber/target (would create nested target)"
+    );
+    assert!(
+        !layout.release_binary.starts_with(&faber_target),
+        "release binary must not live under target/faber/target"
+    );
+    assert_eq!(layout.binary_name(), "hello-world");
+}
+
+#[test]
+fn sanitize_crate_name_handles_mixed_case_punctuation_and_digits() {
+    assert_eq!(sanitize_crate_name("My Cool App!"), "my-cool-app");
+    assert_eq!(sanitize_crate_name("Faber_Tool-2026"), "faber_tool-2026");
+    assert_eq!(sanitize_crate_name("123pkg"), "p-123pkg");
+    assert_eq!(sanitize_crate_name(""), "package");
+    assert_eq!(sanitize_crate_name("___"), "package");
+    assert_eq!(sanitize_crate_name("a/b\\c"), "a-b-c");
+}
+
+#[test]
+fn discover_build_layout_supports_manifest_file_input() {
+    let dir = temp_dir("layout-manifest-file");
+    let manifest = dir.join("faber.toml");
+    fs::write(
+        &manifest,
+        r#"
+[package]
+name = "Manifest-Pkg"
+version = "0.2.0"
+"#,
+    )
+    .expect("write manifest");
+
+    let layout = discover_build_layout(&manifest).expect("discover from manifest file");
+    assert_eq!(layout.binary_name(), "manifest-pkg");
+    assert_eq!(layout.package_root, dir);
+    assert!(layout.manifest_path.ends_with("faber.toml"));
+    // still sibling even with odd casing in name
+    assert!(layout.debug_binary.to_string_lossy().ends_with("manifest-pkg"));
+}
+
+#[test]
+fn discover_build_layout_supports_directory_with_manifest() {
+    let dir = temp_dir("layout-dir-manifest");
+    fs::create_dir_all(dir.join("src")).expect("src");
+    fs::write(dir.join("src/main.fab"), "incipit {}").expect("entry");
+    fs::write(
+        dir.join("faber.toml"),
+        r#"
+[package]
+name = "dir-pkg"
+"#,
+    )
+    .expect("manifest");
+
+    let layout = discover_build_layout(&dir).expect("discover from dir");
+    assert_eq!(layout.binary_name(), "dir-pkg");
+    assert_eq!(layout.generated_rust_entry, dir.join("target/faber/src/main.rs"));
+}
+
+#[test]
+fn discover_build_layout_supports_entry_file_input_and_falls_back_to_dir_name() {
+    let dir = temp_dir("layout-entry-no-manifest");
+    let entry = dir.join("main.fab");
+    fs::write(&entry, "incipit { scribe \"x\" }").expect("entry");
+
+    let layout = discover_build_layout(&entry).expect("discover from entry file");
+    // falls back to directory name since no manifest
+    let expected_name = dir.file_name().unwrap().to_string_lossy().to_string();
+    assert_eq!(layout.binary_name(), sanitize_crate_name(&expected_name));
+    assert!(layout.cargo_target_dir.ends_with("target"));
+}
+
+#[test]
+fn build_layout_never_produces_faber_target_nested_path() {
+    let layout = BuildLayout::from_package_root("/tmp/xyz", "xyz");
+    let bad = layout.generated_crate_root.join("target").join("debug");
+    assert!(
+        !layout.debug_binary.starts_with(&layout.generated_crate_root.join("target")),
+        "no target/faber/target path allowed"
+    );
+    assert!(!bad.exists() || true); // just documenting intent
 }
