@@ -209,11 +209,22 @@ Low-level socket APIs can reasonably expose both sync and async forms:
 
 ---
 
-### 8. Other Modules (Brief)
+### 8. `nuncius.fab` — Receive Forms Resolved
+
+Message ports should follow the settled receive-one vs receive-stream split:
+
+- `recipiet()` stays async receive-one.
+- If receive streams are added later, use plural forms of `recipere`: `recipiunt()` for sync generator and `recipient()` for async generator.
+
+This is an application of the existing shape, not a new policy decision.
+
+---
+
+### 9. Other Modules (Brief)
 
 - **`tempus.fab`**: `dormiet` for sleep is fine.
 - **`crypta.fab`**: Async hash functions are intentionally slow — future forms are correct.
-- **`nuncius.fab`**, **`pressura.fab`**: Messaging/compression surfaces still need review for real Latin conjugation of each root rather than suffix uniformity.
+- **`pressura.fab`**: Compression surfaces still need conformance audit for real Latin conjugation of each root rather than suffix uniformity.
 - Data format modules (`json`, `toml`, `yaml`): Currently only define base forms. When async versions are added, they should use the real future form for each root rather than forcing an artificial `-et` pattern.
 
 ---
@@ -267,12 +278,13 @@ Create (or expand) a document that defines the expected conjugation patterns for
 | `processus`| `exsequetur`       | Keep deponent execution root | Done | Root declarations can allow only sync/async collected-output forms |
 | `http`     | async client/server forms | Keep async-only | Done | Sync HTTP forms do not belong in the stdlib surface |
 | `caelum`   | socket sync/async pairs | Keep; add chunk streams later | Done | Low-level sockets can support sync/async and future chunk generators |
+| `nuncius`  | `recipiet`         | Keep as receive-one | Done | Receive streams should add `recipiunt` / `recipient`, not rename receive-one |
 | `solum`    | `carpiet`          | Keep as async line collection | Done | Streaming should add `carpunt` / `carpent`, not rename collected-list forms |
 | `thesaurus`| `nuntient`         | Rename to `nuntiabunt` | Done | Real future plural for `nuntiare`; keeps subscribe/listen separate from delivered messages |
 
 ### Medium Priority
 
-- Audit all remaining future forms across `caelum`, `nuncius`, `pressura` for real conjugation.
+- Audit remaining stdlib surfaces for conformance to the resolved root/conjugation shape.
 - Keep `morphologia.md` aligned with the resolved present-plural generator and future-plural async-generator policy.
 - Ensure data-format modules (`json`/`toml`/`yaml`) have placeholder future forms documented even if not yet implemented.
 
