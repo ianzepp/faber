@@ -1588,3 +1588,21 @@ fn propagates_failable_calls_with_question_mark() {
     assert!(rust.code.contains("fn caller() -> Result<i64, String>"));
     assert!(rust.code.contains("return Ok(callee()?);"));
 }
+
+#[test]
+fn valor_type_renders_to_norma_datum_valor_and_supports_si_valor() {
+    let mut interner = Interner::new();
+    let prog = HirProgram { items: vec![], entry: None };
+    let codegen = super::RustCodegen::new(&prog, &interner);
+
+    let mut types = TypeTable::new();
+    let valor = types.primitive(Primitive::Valor);
+    let option_valor = types.intern(Type::Option(valor));
+
+    assert_eq!(super::types::type_to_rust(&codegen, valor, &types), "norma::datum::Valor");
+    assert_eq!(super::types::type_to_rust(&codegen, option_valor, &types), "Option<norma::datum::Valor>");
+
+    // Explicitly prove we do not fall back to Box<dyn Any> for the data-format type
+    let rendered = super::types::type_to_rust(&codegen, valor, &types);
+    assert!(!rendered.contains("Any"), "valor must not render as Box<dyn Any>: {rendered}");
+}

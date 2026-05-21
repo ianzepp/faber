@@ -23,7 +23,7 @@ pactum toml {
     # Serialize table to TOML string
     # TOML is inherently readable, so no indentation option needed
     @ externa
-    functio pange(quidlibet valor) → textus
+    functio pange(valor valor) → textus
 
     # =========================================================================
     # PARSING
@@ -32,13 +32,13 @@ pactum toml {
 
     # Parse TOML string to table (throws on error)
     @ externa
-    functio solve(textus toml) → quidlibet
+    functio solve(textus toml) → valor
 
     # Verb: tempta from "temptare" (to try, attempt)
 
     # Attempt to parse TOML string (returns null on error)
     @ externa
-    functio tempta(textus toml) → si quidlibet
+    functio tempta(textus toml) → si valor
 
     # =========================================================================
     # TYPE CHECKING
@@ -46,41 +46,41 @@ pactum toml {
     # TOML has more specific numeric types than JSON
 
     @ externa
-    functio estNihil(quidlibet valor) → bivalens
+    functio estNihil(valor valor) → bivalens
 
     @ externa
-    functio estBivalens(quidlibet valor) → bivalens
+    functio estBivalens(valor valor) → bivalens
 
     @ externa
-    functio estTextus(quidlibet valor) → bivalens
+    functio estTextus(valor valor) → bivalens
 
     @ externa
-    functio estInteger(quidlibet valor) → bivalens
+    functio estInteger(valor valor) → bivalens
 
     @ externa
-    functio estFractus(quidlibet valor) → bivalens
+    functio estFractus(valor valor) → bivalens
 
     @ externa
-    functio estTempus(quidlibet valor) → bivalens
+    functio estTempus(valor valor) → bivalens
 
     @ externa
-    functio estLista(quidlibet valor) → bivalens
+    functio estLista(valor valor) → bivalens
 
     @ externa
-    functio estTabula(quidlibet valor) → bivalens
+    functio estTabula(valor valor) → bivalens
 
     # =========================================================================
     # VALUE EXTRACTION
     # =========================================================================
 
     @ externa
-    functio utTextus(quidlibet valor, textus defVal) → textus
+    functio utTextus(valor valor, textus defVal) → textus
 
     @ externa
-    functio utNumerus(quidlibet valor, numerus defVal) → numerus
+    functio utNumerus(valor valor, numerus defVal) → numerus
 
     @ externa
-    functio utBivalens(quidlibet valor, bivalens defVal) → bivalens
+    functio utBivalens(valor valor, bivalens defVal) → bivalens
 
     # =========================================================================
     # VALUE ACCESS
@@ -89,15 +89,15 @@ pactum toml {
     # Verb: cape from "capere" (to take, seize)
     # Get value by key (returns null if missing)
     @ externa
-    functio cape(quidlibet valor, textus clavis) → quidlibet
+    functio cape(valor valor, textus clavis) → valor
 
     # Verb: carpe from "carpere" (to pluck)
     # Pluck value by array index (returns null if out of bounds)
     @ externa
-    functio carpe(quidlibet valor, numerus index) → quidlibet
+    functio carpe(valor valor, numerus index) → valor
 
     # Verb: inveni from "invenire" (to find)
     # Find value by dotted path (returns null if not found)
     @ externa
-    functio inveni(quidlibet valor, textus via) → quidlibet
+    functio inveni(valor valor, textus via) → valor
 }

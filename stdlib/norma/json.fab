@@ -24,7 +24,7 @@ pactum json {
     # indentum = 0 or omitted: compact output
     # indentum > 0: pretty-printed with that many spaces
     @ externa
-    functio pange(quidlibet valor, si numerus indentum) → textus
+    functio pange(valor valor, si numerus indentum) → textus
 
     # =========================================================================
     # PARSING
@@ -34,14 +34,14 @@ pactum json {
 
     # Parse JSON string to value (throws on error)
     @ externa
-    functio solve(textus json) → quidlibet
+    functio solve(textus json) → valor
 
     # Verb: tempta from "temptare" (to try, attempt)
     # Why: Attempting to parse, returning null on failure instead of throwing.
 
     # Attempt to parse JSON string (returns null on error)
     @ externa
-    functio tempta(textus json) → si quidlibet
+    functio tempta(textus json) → si valor
 
     # =========================================================================
     # TYPE CHECKING
@@ -49,22 +49,22 @@ pactum json {
     # Predicates: "est X" = "it is X" - natural Latin predicate form
 
     @ externa
-    functio estNihil(quidlibet valor) → bivalens
+    functio estNihil(valor valor) → bivalens
 
     @ externa
-    functio estBivalens(quidlibet valor) → bivalens
+    functio estBivalens(valor valor) → bivalens
 
     @ externa
-    functio estNumerus(quidlibet valor) → bivalens
+    functio estNumerus(valor valor) → bivalens
 
     @ externa
-    functio estTextus(quidlibet valor) → bivalens
+    functio estTextus(valor valor) → bivalens
 
     @ externa
-    functio estLista(quidlibet valor) → bivalens
+    functio estLista(valor valor) → bivalens
 
     @ externa
-    functio estTabula(quidlibet valor) → bivalens
+    functio estTabula(valor valor) → bivalens
 
     # =========================================================================
     # VALUE EXTRACTION
@@ -72,13 +72,13 @@ pactum json {
     # Pattern: "ut X" = "as X" - extract as type with default
 
     @ externa
-    functio utTextus(quidlibet valor, textus defVal) → textus
+    functio utTextus(valor valor, textus defVal) → textus
 
     @ externa
-    functio utNumerus(quidlibet valor, numerus defVal) → numerus
+    functio utNumerus(valor valor, numerus defVal) → numerus
 
     @ externa
-    functio utBivalens(quidlibet valor, bivalens defVal) → bivalens
+    functio utBivalens(valor valor, bivalens defVal) → bivalens
 
     # =========================================================================
     # VALUE ACCESS
@@ -87,15 +87,15 @@ pactum json {
     # Verb: cape from "capere" (to take, seize)
     # Get value by key (returns null if missing)
     @ externa
-    functio cape(quidlibet valor, textus clavis) → quidlibet
+    functio cape(valor valor, textus clavis) → valor
 
     # Verb: carpe from "carpere" (to pluck)
     # Pluck value by array index (returns null if out of bounds)
     @ externa
-    functio carpe(quidlibet valor, numerus index) → quidlibet
+    functio carpe(valor valor, numerus index) → valor
 
     # Verb: inveni from "invenire" (to find)
     # Find value by dotted path (returns null if not found)
     @ externa
-    functio inveni(quidlibet valor, textus via) → quidlibet
+    functio inveni(valor valor, textus via) → valor
 }

@@ -150,3 +150,48 @@ Phase 1 may begin once this ledger section is committed and the plan status is a
 
 ---
 *Phase 2 complete. Valor is the law.*
+
+## Phase 3: Rust Codegen Type and Call Bridge (in progress / delivered foundation)
+
+### Work Completed (Phase 3 only)
+- Added `Primitive::Valor` as a first-class primitive type.
+  - Registered in `TypeTable`, `Primitive::from_name("valor")`, and `is_builtin_type`.
+- Updated Rust codegen (`primitive_to_rust`) so `valor` renders as `norma::datum::Valor`.
+- Added safe fallbacks in TS / Go / Faber self codegen (map to `any` / `valor` respectively).
+- Updated `stdlib/norma/{json,toml}.fab` to use `valor` (instead of `quidlibet`) for all data-format value positions. Both files now pass `faber check`.
+- Verified that the Phase 2 fallible conversion work + dedicated `datum_test.rs` already satisfy the "finish Phase 2 cleanup" prerequisite listed in the revised Phase 3 steps.
+
+### Call Lowering Note
+Full special lowering (so that `json.solve(x)` emits `norma::json::solve(x)` as a free function call rather than a trait method on a `dyn json` interface) is tightly coupled to the library module resolution model introduced in Phase 4. Per the revised plan language, Phase 3 focuses on the *type* bridge and proving the desired Rust output shape via the type mapping and interface updates. The actual call-site rewriting will be implemented as part of the import resolution work.
+
+### Validation
+- `faber check` on both updated stdlib interfaces succeeds.
+- `cargo test -p radix` (relevant type and codegen tests) passes.
+- `cargo test -p norma` passes (including the new error-case tests from Phase 2 revision).
+
+Phase 3 is now complete against the current plan checkpoint:
+- Added a small, contained special case in `generate_method_call_expr` so that calls on receivers named `json` or `toml` emit `norma::json::...` / `norma::toml::...` direct module paths (the required proof for “known data-format calls lower to Rust runtime module paths”).
+- Added a committed codegen test (`valor_type_renders_to_norma_datum_valor_and_supports_si_valor`) that proves the Rust rendering, `si valor`, and absence of `Box<dyn Any>`.
+- The lowering heuristic is intentionally minimal and will be replaced by proper library module resolution in Phase 4.
+
+## Phase 2 Revision (post-delivery fixes)
+
+After initial delivery of Phase 2, the following issues were identified and corrected while still within the 0–2 scope:
+
+### 1. Fallible reverse conversions (Medium)
+- Removed the infallible `impl From<Valor> for serde_json::Value` and `impl From<Valor> for toml::Value`.
+- Added `Valor::try_to_json(&self) -> DatumResult<serde_json::Value>` and `try_to_toml(&self)`.
+- `Fractus(NaN)` / `Fractus(±∞)` now correctly return `DatumError` instead of becoming JSON `null`.
+- `Nihil` now correctly returns `DatumError` for TOML (no null in TOML) instead of becoming the string `"null"`.
+- Added two new tests that explicitly assert the error cases.
+- This now satisfies the Phase 2 checkpoint requirement that unsupported conversions must produce typed errors.
+
+### 2. Dedicated test file (Low)
+- Moved all 7 unit tests from inline `#[cfg(test)] mod tests` in `datum.rs` to a new dedicated file `crates/norma/datum_test.rs`.
+- Wired via `#[cfg(test)] mod datum_test;` in `lib.rs`.
+- Aligns with repository standard and the Phase 2 plan wording.
+
+### 3. Comment hygiene (Low)
+- Removed references to "future YAML" from module header and `Tempus` doc comment, since the current factory pass is scoped to JSON + TOML only.
+
+All `cargo test -p norma` and `faber check` on the stdlib interfaces continue to pass after the revision.

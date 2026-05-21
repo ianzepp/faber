@@ -955,6 +955,7 @@ fn is_builtin_type(name: &str) -> bool {
             | "lista"
             | "tabula"
             | "copia"
+            | "valor"
     )
 }
 

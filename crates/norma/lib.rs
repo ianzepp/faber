@@ -7,3 +7,6 @@ pub mod hal;
 pub mod json;
 pub mod toml;
 pub mod yaml;
+
+#[cfg(test)]
+mod datum_test;

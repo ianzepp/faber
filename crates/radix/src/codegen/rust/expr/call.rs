@@ -39,6 +39,32 @@ pub(super) fn generate_method_call_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // Phase 3 targeted bridge for built-in data-format library modules.
+    // When the receiver is a simple path named "json" or "toml", emit a direct
+    // call to the norma runtime module instead of a trait method call.
+    // This will be replaced by proper library module resolution in Phase 4.
+    if let HirExprKind::Path(def_id) = &receiver.kind {
+        let recv_name = codegen.resolve_def(*def_id);
+        if recv_name == "json" || recv_name == "toml" {
+            w.write("norma::");
+            w.write(&recv_name);
+            w.write("::");
+            w.write(codegen.resolve_symbol(method));
+            w.write("(");
+            for (i, arg) in args.iter().enumerate() {
+                if i > 0 {
+                    w.write(", ");
+                }
+                generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            }
+            w.write(")");
+            if codegen.is_failable_method_name(method) && in_failable_fn && !in_entry && !suppress_error_propagation {
+                w.write("?");
+            }
+            return Ok(());
+        }
+    }
+
     let is_failable_call = codegen.is_failable_method_name(method);
     generate_expr(
         codegen,

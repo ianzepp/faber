@@ -135,6 +135,7 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
 ///   Vacuum   -> ()
 ///   Numquam  -> ! (never type)
 ///   Ignotum  -> Box<dyn Any>
+///   Valor    -> norma::datum::Valor
 ///   Octeti   -> Vec<u8>
 ///
 /// TARGET: Rust primitive and standard library types.
@@ -150,6 +151,7 @@ fn primitive_to_rust(prim: Primitive) -> String {
         Primitive::Ignotum => "Box<dyn std::any::Any>",
         Primitive::Octeti => "Vec<u8>",
         Primitive::Regex => "regex::Regex",
+        Primitive::Valor => "norma::datum::Valor",
     }
     .to_owned()
 }

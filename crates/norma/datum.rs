@@ -2,9 +2,10 @@
 //!
 //! ARCHITECTURE:
 //! - Single stable type `Valor` is the ABI between Faber codegen and the Rust
-//!   runtime for JSON/TOML (and future YAML, DB rows, etc.).
-//! - Backends (serde_json::Value, toml::Value) convert through `TryFrom` / `From`
-//!   adapters; the public pactum functions will accept/return `Valor` (Phase 3+).
+//!   runtime for JSON and TOML data formats.
+//! - Backends (serde_json::Value, toml::Value) convert through `TryFrom` and
+//!   fallible `try_to_*` helpers; the public pactum functions will accept/return
+//!   `Valor` (Phase 3+).
 //! - No leakage of crate-specific dynamic values into generated code or Faber `quidlibet`.
 //!
 //! VALUE SPACE (per plan):
@@ -43,7 +44,7 @@ pub enum Valor {
     Textus(String),
     Lista(Vec<Valor>),
     Tabula(BTreeMap<String, Valor>),
-    /// TOML (and future) datetime values, stored as their canonical text form.
+    /// TOML datetime values, stored as their canonical text form (RFC3339-ish).
     Tempus(String),
 }
 
@@ -110,28 +111,86 @@ impl TryFrom<serde_json::Value> for Valor {
     }
 }
 
-impl From<Valor> for serde_json::Value {
-    fn from(val: Valor) -> Self {
-        match val {
-            Valor::Nihil => serde_json::Value::Null,
-            Valor::Bivalens(b) => serde_json::Value::Bool(b),
-            Valor::Numerus(n) => serde_json::Value::Number(n.into()),
+// =============================================================================
+// REVERSE CONVERSIONS (Valor → backend values)
+// =============================================================================
+//
+// These are intentionally fallible. We do not provide `From<Valor>` impls
+// because several shapes have no lossless representation in the target format
+// (e.g. Nihil in TOML, NaN/∞ in JSON numbers). Callers must handle the error.
+
+impl Valor {
+    /// Convert to a `serde_json::Value`, returning an error for values that
+    /// cannot be represented without loss or invention (e.g. `Fractus(NaN)`,
+    /// `Fractus(±∞)`).
+    pub fn try_to_json(&self) -> DatumResult<serde_json::Value> {
+        match self {
+            Valor::Nihil => Ok(serde_json::Value::Null),
+            Valor::Bivalens(b) => Ok(serde_json::Value::Bool(*b)),
+            Valor::Numerus(n) => Ok(serde_json::Value::Number((*n).into())),
             Valor::Fractus(f) => {
-                // JSON numbers are IEEE doubles; use Number::from_f64 when possible.
-                serde_json::Number::from_f64(f)
-                    .map(serde_json::Value::Number)
-                    .unwrap_or(serde_json::Value::Null)
+                if f.is_finite() {
+                    match serde_json::Number::from_f64(*f) {
+                        Some(num) => Ok(serde_json::Value::Number(num)),
+                        None => Err(DatumError::UnsupportedValue(format!(
+                            "fractus {f} cannot be represented as a JSON number"
+                        ))),
+                    }
+                } else {
+                    Err(DatumError::UnsupportedValue(format!(
+                        "fractus value is NaN or infinite: {f}"
+                    )))
+                }
             }
-            Valor::Textus(s) => serde_json::Value::String(s),
+            Valor::Textus(s) => Ok(serde_json::Value::String(s.clone())),
             Valor::Lista(xs) => {
-                serde_json::Value::Array(xs.into_iter().map(serde_json::Value::from).collect())
+                let mut out = Vec::with_capacity(xs.len());
+                for v in xs {
+                    out.push(v.try_to_json()?);
+                }
+                Ok(serde_json::Value::Array(out))
             }
-            Valor::Tabula(m) => serde_json::Value::Object(
-                m.into_iter()
-                    .map(|(k, v)| (k, serde_json::Value::from(v)))
-                    .collect(),
-            ),
-            Valor::Tempus(t) => serde_json::Value::String(t), // degrade datetime to text for JSON
+            Valor::Tabula(m) => {
+                let mut out = serde_json::Map::new();
+                for (k, v) in m {
+                    out.insert(k.clone(), v.try_to_json()?);
+                }
+                Ok(serde_json::Value::Object(out))
+            }
+            Valor::Tempus(t) => Ok(serde_json::Value::String(t.clone())),
+        }
+    }
+
+    /// Convert to a `toml::Value`, returning an error for values that have no
+    /// representation in TOML (currently `Nihil`).
+    pub fn try_to_toml(&self) -> DatumResult<toml::Value> {
+        match self {
+            Valor::Nihil => Err(DatumError::UnsupportedValue(
+                "Nihil (null) has no representation in TOML".to_string(),
+            )),
+            Valor::Bivalens(b) => Ok(toml::Value::Boolean(*b)),
+            Valor::Numerus(n) => Ok(toml::Value::Integer(*n)),
+            Valor::Fractus(f) => Ok(toml::Value::Float(*f)),
+            Valor::Textus(s) => Ok(toml::Value::String(s.clone())),
+            Valor::Lista(xs) => {
+                let mut out = Vec::with_capacity(xs.len());
+                for v in xs {
+                    out.push(v.try_to_toml()?);
+                }
+                Ok(toml::Value::Array(out))
+            }
+            Valor::Tabula(m) => {
+                let mut out = toml::Table::new();
+                for (k, v) in m {
+                    out.insert(k.clone(), v.try_to_toml()?);
+                }
+                Ok(toml::Value::Table(out))
+            }
+            Valor::Tempus(t) => {
+                // Store as string; callers that want a native TOML datetime can
+                // attempt to parse the text form.
+                Ok(toml::Value::String(t.clone()))
+            }
         }
     }
 }
@@ -171,111 +230,3 @@ impl TryFrom<toml::Value> for Valor {
     }
 }
 
-impl From<Valor> for toml::Value {
-    fn from(val: Valor) -> Self {
-        match val {
-            Valor::Nihil => {
-                // TOML has no null; represent as "null" string sentinel (documented).
-                // Consumers using the toml pactum should prefer the safe paths or
-                // avoid sending nihil through TOML serialization.
-                toml::Value::String("null".to_owned())
-            }
-            Valor::Bivalens(b) => toml::Value::Boolean(b),
-            Valor::Numerus(n) => toml::Value::Integer(n),
-            Valor::Fractus(f) => toml::Value::Float(f),
-            Valor::Textus(s) => toml::Value::String(s),
-            Valor::Lista(xs) => {
-                toml::Value::Array(xs.into_iter().map(toml::Value::from).collect())
-            }
-            Valor::Tabula(m) => toml::Value::Table(
-                m.into_iter()
-                    .map(|(k, v)| (k, toml::Value::from(v)))
-                    .collect(),
-            ),
-            Valor::Tempus(t) => {
-                // Best effort: if it parses back as datetime, keep it; else string.
-                // For simplicity we always emit as string here; the toml::to_string
-                // path will quote it. Dedicated tempus helpers can upgrade.
-                toml::Value::String(t)
-            }
-        }
-    }
-}
-
-// =============================================================================
-// TESTS (inline per current crate convention; dedicated _test.rs can be split later)
-// =============================================================================
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn json_roundtrip_basic_shapes() {
-        let original = serde_json::json!({
-            "null": null,
-            "bool": true,
-            "int": 42,
-            "float": 3.14,
-            "str": "hello",
-            "arr": [1, "x", false],
-            "obj": {"nested": {"k": 1}}
-        });
-
-        let valor = Valor::try_from(original.clone()).expect("json -> valor");
-        let back: serde_json::Value = valor.into();
-        assert_eq!(back, original);
-    }
-
-    #[test]
-    fn toml_roundtrip_basic_shapes() {
-        let original = toml::from_str::<toml::Value>(
-            r#"
-            str = "hi"
-            int = 7
-            float = 2.5
-            bool = false
-            arr = [1, 2]
-            [tbl]
-            inner = "x"
-            "#,
-        )
-        .unwrap();
-
-        let valor = Valor::try_from(original.clone()).expect("toml -> valor");
-        let back: toml::Value = valor.into();
-        // Note: table key order may differ (BTreeMap), but values equal.
-        assert_eq!(back, original);
-    }
-
-    #[test]
-    fn toml_datetime_becomes_tempus() {
-        let v = toml::from_str::<toml::Value>(r#"dt = 1979-05-27T07:32:00Z"#).unwrap();
-        let valor = Valor::try_from(v).expect("datetime conversion");
-        // The table contains a Tempus entry.
-        if let Valor::Tabula(m) = valor {
-            match m.get("dt") {
-                Some(Valor::Tempus(_)) => {}
-                other => panic!("expected Tempus, got {:?}", other),
-            }
-        } else {
-            panic!("expected tabula");
-        }
-    }
-
-    #[test]
-    fn large_json_numbers_convert_via_fractus() {
-        // All JSON numbers are accepted: exact i64 -> Numerus, else Fractus (f64 path).
-        // True "unsupported" only for exotic future values; current policy never panics.
-        let big = serde_json::json!(1u64 << 60); // fits in f64 exactly for this test
-        let _v: Valor = Valor::try_from(big).expect("large int becomes fractus or numerus");
-    }
-
-    #[test]
-    fn nihil_and_collections_preserve() {
-        let v = Valor::Lista(vec![Valor::Nihil, Valor::Bivalens(true)]);
-        let j: serde_json::Value = v.clone().into();
-        let back: Valor = j.try_into().unwrap();
-        assert_eq!(back, v);
-    }
-}

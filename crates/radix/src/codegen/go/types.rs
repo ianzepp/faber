@@ -73,6 +73,7 @@ fn primitive_to_go(prim: Primitive) -> String {
         Primitive::Ignotum => "any",
         Primitive::Octeti => "[]byte",
         Primitive::Regex => "*regexp.Regexp",
+        Primitive::Valor => "any", // TODO: proper valor type when Go runtime support exists
     }
     .to_owned()
 }

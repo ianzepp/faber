@@ -37,6 +37,7 @@ impl super::FaberCodegen {
                 Primitive::Vacuum => "vacuum",
                 Primitive::Numquam => "numquam",
                 Primitive::Ignotum => "ignotum",
+                Primitive::Valor => "valor",
                 Primitive::Octeti => "octeti",
                 Primitive::Regex => "regex",
             }

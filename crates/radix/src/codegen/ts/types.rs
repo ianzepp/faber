@@ -71,6 +71,7 @@ fn primitive_to_ts(prim: Primitive) -> String {
         Primitive::Ignotum => "unknown",
         Primitive::Octeti => "Uint8Array",
         Primitive::Regex => "RegExp",
+        Primitive::Valor => "any", // TODO: proper valor type when TS runtime support exists
     }
     .to_owned()
 }

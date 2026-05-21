@@ -73,6 +73,7 @@ impl TypeTable {
             Primitive::Ignotum,
             Primitive::Octeti,
             Primitive::Regex,
+            Primitive::Valor,
         ] {
             let id = table.intern(Type::Primitive(prim));
             table.primitives.insert(prim, id);
@@ -304,6 +305,7 @@ pub enum Primitive {
     Ignotum,  // unknown
     Octeti,   // bytes
     Regex,    // regex literal
+    Valor,    // canonical dynamic data value for data formats (maps to norma::datum::Valor)
 }
 
 impl Primitive {
@@ -320,6 +322,7 @@ impl Primitive {
             "octeti" => Some(Self::Octeti),
             "regex" => Some(Self::Regex),
             "objectum" | "quidlibet" | "curator" => Some(Self::Ignotum),
+            "valor" => Some(Self::Valor),
             _ => None,
         }
     }
