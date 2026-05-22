@@ -794,7 +794,7 @@ Validation:
 
 ## Phase 9.5 Planning Baseline
 
-Status: planned.
+Status: superseded by closeout.
 
 Planning decision:
 
@@ -807,3 +807,59 @@ Planning decision:
 Delivery document:
 
 - `docs/factory/mir-layer/phase-9.5-delivery.md`
+
+## Phase 9.5 Closeout
+
+Status: complete after verification.
+
+Review coverage:
+
+- Reviewed the MIR data model, HIR-to-MIR lowering, validation, dump rendering, CLI inspection, Rust probe, MIR-focused tests, and MIR factory documentation.
+- Used focused independent review passes for MIR invariants and factory-document drift.
+- Confirmed `radix mir` remains the compiler-developer MIR inspection surface.
+- Confirmed normal Rust output still uses the existing HIR-to-Rust backend through target codegen dispatch.
+- Confirmed the MIR Rust probe remains a temporary boundary proof under `crates/radix/src/mir/rust_probe.rs`, not a permanent Rust backend surface.
+
+Hardening applied:
+
+- MIR function signatures now carry parameter types for validation.
+- Ordinary calls and `try_call` terminators validate argument count and argument type compatibility.
+- Ordinary calls to failable callees are rejected; failable edges must use `try_call`.
+- `try_call` now requires a known failable callee signature instead of accepting unknown or indirect callees as implicitly valid.
+- `MirOperand::Value` references are validated as same-block earlier values; cross-block state must travel through locals, temps, or places until a dominance-aware value model exists.
+- Aggregate validation is type-directed for arrays, sets, maps, structs, named fields, duplicate fields, missing fields, and field value types where semantic metadata is available.
+- Runtime intrinsic validation now checks bounded arity and collection argument contracts for the current MIR subset.
+- Rust probe unsupported-runtime fixtures were adjusted so probe fail-closed tests operate on MIR that passes validation first.
+
+Known future validation limits:
+
+- Optional-chain field/result validation remains shallow beyond operand and callable-argument checks.
+- Enum variant ownership and ordered variant payload arity/type validation need parent-variant metadata beyond the current validation context.
+- MIR still does not perform dominance, reachability, definite assignment, ownership, lifetime/drop, ABI/layout, backend-specific legality, or optimization checks.
+
+Future lower-target prerequisites:
+
+- Exported-function and `incipit` model.
+- Primitive value ABI.
+- String and memory representation.
+- Option, struct, enum, array, and map layout.
+- Runtime intrinsic import contract.
+- Provider call boundary.
+- Host-side diagnostic capture.
+- Wasmtime or equivalent validation harness.
+- Package/build artifact shape.
+- Source-map or diagnostic-location story.
+
+Deferred roadmap state:
+
+- Phase 10 remains deferred; Rust backend migration is not part of this MIR closeout.
+- Phase 11 remains deferred; WASM/lower-target work needs a separate backend project with ABI, layout, runtime, package, and validation decisions.
+- Phase 12 remains deferred; native planning depends on hardened MIR plus future lower-target evidence.
+- No standalone Phase 10-12 delivery docs were added because these are explicitly deferred future projects, not pending steps in the completed MIR-layer effort.
+
+Validation:
+
+- `cargo fmt --all --check` passed.
+- `cargo test -p radix mir` passed: 76 tests passed.
+- `cargo test -p radix` passed: 405 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.

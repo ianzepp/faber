@@ -1,6 +1,6 @@
 # Phase 9.5 Delivery: MIR Hardening and Closeout
 
-**Status**: planned.
+**Status**: complete after verification.
 
 ## Interpreted Problem
 

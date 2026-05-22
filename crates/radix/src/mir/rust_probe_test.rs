@@ -1,7 +1,7 @@
 use super::*;
 use crate::codegen::{self, Target};
 use crate::driver::{Config, Session};
-use crate::lexer::{Interner, Span};
+use crate::lexer::{Interner, Span, Symbol};
 use crate::semantic::{Primitive, TypeTable};
 use crate::Output;
 use std::process::Command;
@@ -525,7 +525,7 @@ fn unsupported_runtime_call_program() -> (MirProgram, &'static str) {
                             destination: None,
                             call: MirRuntimeCall {
                                 intrinsic: MirIntrinsic::Diagnostic(MirDiagnosticKind::Nota),
-                                args: Vec::new(),
+                                args: vec![MirOperand::Constant(MirConstant::String(Symbol(1)))],
                                 return_ty: vacuum,
                             },
                         },

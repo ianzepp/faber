@@ -16,8 +16,9 @@ impl MirValidationError {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MirFunctionSignature {
+    pub params: Vec<MirType>,
     pub return_ty: MirType,
     pub error_ty: Option<MirType>,
 }
@@ -66,6 +67,14 @@ struct FunctionScope<'a> {
     temps: FxHashMap<MirTempId, MirType>,
     blocks: FxHashSet<MirBlockId>,
     values: FxHashMap<MirValueId, MirType>,
+}
+
+fn signature_from_function(function: &MirFunction) -> MirFunctionSignature {
+    MirFunctionSignature {
+        params: function.params.iter().map(|param| param.ty).collect(),
+        return_ty: function.return_ty,
+        error_ty: function.error_ty,
+    }
 }
 
 impl Validator<'_, '_> {
@@ -145,6 +154,7 @@ impl Validator<'_, '_> {
     }
 
     fn validate_block(&mut self, scope: &mut FunctionScope<'_>, block: &MirBlock) {
+        scope.values.clear();
         for stmt in &block.statements {
             self.validate_stmt(scope, stmt);
         }
@@ -168,13 +178,16 @@ impl Validator<'_, '_> {
             }
             MirStmtKind::Call { destination, callee, args } => {
                 let sig = self.validate_callee(scope, callee, stmt.span);
-                for arg in args {
-                    self.validate_operand(scope, arg, stmt.span);
+                if let Some(sig) = &sig {
+                    if sig.error_ty.is_some() {
+                        self.error(stmt.span, "ordinary call callee is failable; use try_call");
+                    }
                 }
+                self.validate_call_args(scope, sig.as_ref(), args, stmt.span);
                 self.validate_optional_destination(
                     scope,
                     destination.as_ref(),
-                    sig.map(|sig| sig.return_ty),
+                    sig.as_ref().map(|sig| sig.return_ty),
                     stmt.span,
                 );
             }
@@ -227,17 +240,18 @@ impl Validator<'_, '_> {
                 self.require_block(scope, *ok_block, terminator.span);
                 self.require_block(scope, *error_block, terminator.span);
                 let sig = self.validate_callee(scope, callee, terminator.span);
-                for arg in args {
-                    self.validate_operand(scope, arg, terminator.span);
-                }
+                self.validate_call_args(scope, sig.as_ref(), args, terminator.span);
                 self.validate_optional_destination(
                     scope,
                     destination.as_ref(),
-                    sig.map(|sig| sig.return_ty),
+                    sig.as_ref().map(|sig| sig.return_ty),
                     terminator.span,
                 );
                 let error_place_ty = self.validate_place(scope, error_place, terminator.span);
-                match (sig.and_then(|sig| sig.error_ty), error_place_ty) {
+                if sig.is_none() {
+                    self.error(terminator.span, "try_call callee does not have a known failable signature");
+                }
+                match (sig.as_ref().and_then(|sig| sig.error_ty), error_place_ty) {
                     (Some(error_ty), Some(place_ty)) => {
                         self.require_assignable(
                             error_ty,
@@ -408,10 +422,8 @@ impl Validator<'_, '_> {
                 self.validate_operand(scope, index, span);
             }
             MirOptionChainLink::Call { callee, args } => {
-                self.validate_callee(scope, callee, span);
-                for arg in args {
-                    self.validate_operand(scope, arg, span);
-                }
+                let sig = self.validate_callee(scope, callee, span);
+                self.validate_call_args(scope, sig.as_ref(), args, span);
             }
         }
     }
@@ -434,6 +446,7 @@ impl Validator<'_, '_> {
     fn validate_intrinsic(&mut self, scope: &FunctionScope<'_>, call: &MirRuntimeCall, span: Span) {
         match &call.intrinsic {
             MirIntrinsic::Diagnostic(_) => {
+                self.require_arg_count(call.args.len(), 1, span, "diagnostic runtime call");
                 self.require_exact(
                     call.return_ty,
                     self.primitive(Primitive::Vacuum),
@@ -450,6 +463,7 @@ impl Validator<'_, '_> {
                 );
             }
             MirIntrinsic::Convert(conversion) => {
+                self.require_arg_count(call.args.len(), 1, span, "conversion runtime call");
                 self.validate_mir_type(conversion.target_ty, span);
                 self.require_assignable(conversion.target_ty, call.return_ty, span, "conversion return type mismatch");
                 if let Some(fallback) = &conversion.fallback {
@@ -463,8 +477,9 @@ impl Validator<'_, '_> {
                     }
                 }
             }
-            MirIntrinsic::Collection(op) => self.validate_collection_call(*op, call, span),
+            MirIntrinsic::Collection(op) => self.validate_collection_call(scope, *op, call, span),
             MirIntrinsic::Panic => {
+                self.require_arg_count(call.args.len(), 1, span, "panic runtime call");
                 self.require_exact(
                     call.return_ty,
                     self.primitive(Primitive::Numquam),
@@ -480,7 +495,13 @@ impl Validator<'_, '_> {
         }
     }
 
-    fn validate_collection_call(&mut self, op: MirCollectionOp, call: &MirRuntimeCall, span: Span) {
+    fn validate_collection_call(
+        &mut self,
+        scope: &FunctionScope<'_>,
+        op: MirCollectionOp,
+        call: &MirRuntimeCall,
+        span: Span,
+    ) {
         let expected_args = match op {
             MirCollectionOp::Length => 1,
             MirCollectionOp::Append
@@ -491,6 +512,10 @@ impl Validator<'_, '_> {
         if call.args.len() != expected_args {
             self.error(span, format!("collection {:?} expects {expected_args} MIR arguments", op));
         }
+        let first_arg_ty = call
+            .args
+            .first()
+            .and_then(|arg| self.validate_operand(scope, arg, span));
         match op {
             MirCollectionOp::Length => {
                 self.require_exact(
@@ -508,17 +533,48 @@ impl Validator<'_, '_> {
                     "collection contains result is not bivalens",
                 );
             }
-            MirCollectionOp::Append | MirCollectionOp::AppendImmutable | MirCollectionOp::Index => {}
+            MirCollectionOp::Append | MirCollectionOp::AppendImmutable => {
+                if let (Some(collection_ty), Some(value)) = (first_arg_ty, call.args.get(1)) {
+                    let value_ty = self.validate_operand(scope, value, span);
+                    if let (Some(element_ty), Some(value_ty)) = (self.collection_element_ty(collection_ty), value_ty) {
+                        self.require_assignable(value_ty, element_ty, span, "collection append value type mismatch");
+                    }
+                }
+            }
+            MirCollectionOp::Index => {
+                if let (Some(collection_ty), Some(index)) = (first_arg_ty, call.args.get(1)) {
+                    let index_ty = self.validate_operand(scope, index, span);
+                    let result_ty = self.project_index(collection_ty, index_ty, span);
+                    if let Some(result_ty) = result_ty {
+                        self.require_assignable(
+                            result_ty,
+                            call.return_ty,
+                            span,
+                            "collection index result type mismatch",
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    fn require_arg_count(&mut self, actual: usize, expected: usize, span: Span, label: &'static str) {
+        if actual != expected {
+            self.error(span, format!("{label} expects {expected} MIR arguments"));
+        }
+    }
+
+    fn collection_element_ty(&mut self, collection_ty: MirType) -> Option<MirType> {
+        match self.type_kind(collection_ty) {
+            Type::Array(inner) | Type::Set(inner) => Some(MirType::semantic(*inner)),
+            _ => None,
         }
     }
 
     fn validate_aggregate(&mut self, scope: &FunctionScope<'_>, aggregate: &MirAggregate, span: Span) {
         self.validate_mir_type(aggregate.ty, span);
         match (&aggregate.kind, &aggregate.fields) {
-            (
-                MirAggregateKind::Tuple | MirAggregateKind::Array | MirAggregateKind::Set,
-                MirAggregateFields::Ordered(items),
-            ) => {
+            (MirAggregateKind::Tuple, MirAggregateFields::Ordered(items)) => {
                 for item in items {
                     match item {
                         MirAggregateItem::Operand(value) | MirAggregateItem::Spread(value) => {
@@ -527,17 +583,63 @@ impl Validator<'_, '_> {
                     }
                 }
             }
-            (MirAggregateKind::Map, MirAggregateFields::Keyed(items)) => {
+            (MirAggregateKind::Array | MirAggregateKind::Set, MirAggregateFields::Ordered(items)) => {
+                let element_ty = match self.type_kind(aggregate.ty) {
+                    Type::Array(inner) | Type::Set(inner) => Some(MirType::semantic(*inner)),
+                    _ => {
+                        self.error(span, "ordered collection aggregate type is not array or set");
+                        None
+                    }
+                };
                 for item in items {
-                    self.validate_operand(scope, &item.key, span);
-                    self.validate_operand(scope, &item.value, span);
+                    match item {
+                        MirAggregateItem::Operand(value) => {
+                            let value_ty = self.validate_operand(scope, value, span);
+                            if let (Some(value_ty), Some(element_ty)) = (value_ty, element_ty) {
+                                self.require_assignable(value_ty, element_ty, span, "aggregate element type mismatch");
+                            }
+                        }
+                        MirAggregateItem::Spread(value) => {
+                            let value_ty = self.validate_operand(scope, value, span);
+                            if let Some(value_ty) = value_ty {
+                                self.require_assignable(value_ty, aggregate.ty, span, "aggregate spread type mismatch");
+                            }
+                        }
+                    }
                 }
             }
-            (MirAggregateKind::Struct(_), MirAggregateFields::Named(items))
-            | (MirAggregateKind::EnumVariant(_), MirAggregateFields::Named(items)) => {
+            (MirAggregateKind::Map, MirAggregateFields::Keyed(items)) => {
+                let (key_ty, value_ty) = match self.type_kind(aggregate.ty) {
+                    Type::Map(key, value) => (Some(MirType::semantic(*key)), Some(MirType::semantic(*value))),
+                    _ => {
+                        self.error(span, "map aggregate type is not map");
+                        (None, None)
+                    }
+                };
                 for item in items {
-                    self.validate_operand(scope, &item.value, span);
+                    let actual_key_ty = self.validate_operand(scope, &item.key, span);
+                    let actual_value_ty = self.validate_operand(scope, &item.value, span);
+                    if let (Some(actual_key_ty), Some(key_ty)) = (actual_key_ty, key_ty) {
+                        self.require_assignable(actual_key_ty, key_ty, span, "map aggregate key type mismatch");
+                    }
+                    if let (Some(actual_value_ty), Some(value_ty)) = (actual_value_ty, value_ty) {
+                        self.require_assignable(actual_value_ty, value_ty, span, "map aggregate value type mismatch");
+                    }
                 }
+            }
+            (MirAggregateKind::Struct(def_id), MirAggregateFields::Named(items)) => {
+                match self.type_kind(aggregate.ty) {
+                    Type::Struct(type_def) if type_def == def_id => {}
+                    Type::Struct(_) => self.error(span, "struct aggregate DefId does not match aggregate type"),
+                    _ => self.error(span, "struct aggregate type is not struct"),
+                }
+                self.validate_named_aggregate_fields(scope, *def_id, items, true, span);
+            }
+            (MirAggregateKind::EnumVariant(def_id), MirAggregateFields::Named(items)) => {
+                if !matches!(self.type_kind(aggregate.ty), Type::Enum(_)) {
+                    self.error(span, "enum variant aggregate type is not enum");
+                }
+                self.validate_named_aggregate_fields(scope, *def_id, items, false, span);
             }
             (MirAggregateKind::EnumVariant(_), MirAggregateFields::Ordered(items)) => {
                 for item in items {
@@ -549,6 +651,50 @@ impl Validator<'_, '_> {
                 }
             }
             _ => self.error(span, "aggregate payload shape does not match aggregate kind"),
+        }
+    }
+
+    fn validate_named_aggregate_fields(
+        &mut self,
+        scope: &FunctionScope<'_>,
+        def_id: DefId,
+        items: &[MirNamedOperand],
+        is_struct: bool,
+        span: Span,
+    ) {
+        let fields = if is_struct {
+            self.context.struct_fields.get(&def_id)
+        } else {
+            self.context.variant_fields.get(&def_id)
+        };
+
+        let mut seen = FxHashSet::default();
+        for item in items {
+            let value_ty = self.validate_operand(scope, &item.value, span);
+            if !seen.insert(item.name) {
+                self.error(span, "named aggregate field is duplicated");
+            }
+
+            let Some(fields) = fields else {
+                continue;
+            };
+            let Some(expected_ty) = fields.get(&item.name).copied() else {
+                self.error(span, "named aggregate references unknown field");
+                continue;
+            };
+            if let Some(value_ty) = value_ty {
+                self.require_assignable(value_ty, expected_ty, span, "named aggregate field type mismatch");
+            }
+        }
+
+        let Some(fields) = fields else {
+            self.error(span, "named aggregate is missing field metadata");
+            return;
+        };
+        for field in fields.keys() {
+            if !seen.contains(field) {
+                self.error(span, "named aggregate is missing required field");
+            }
         }
     }
 
@@ -589,13 +735,13 @@ impl Validator<'_, '_> {
                     self.error(span, format!("callee function f{} does not exist", id.0));
                     return None;
                 };
-                Some(MirFunctionSignature { return_ty: function.return_ty, error_ty: function.error_ty })
+                Some(signature_from_function(function))
             }
             MirCallee::Definition(def_id) => self
                 .context
                 .functions
                 .get(def_id)
-                .copied()
+                .cloned()
                 .or_else(|| self.function_signature_from_program_def(scope, *def_id)),
             MirCallee::Value(value) => {
                 self.validate_operand(scope, value, span);
@@ -613,7 +759,43 @@ impl Validator<'_, '_> {
             .functions_by_id
             .values()
             .find(|function| function.source == Some(def_id))
-            .map(|function| MirFunctionSignature { return_ty: function.return_ty, error_ty: function.error_ty })
+            .map(|function| signature_from_function(function))
+    }
+
+    fn validate_call_args(
+        &mut self,
+        scope: &FunctionScope<'_>,
+        sig: Option<&MirFunctionSignature>,
+        args: &[MirOperand],
+        span: Span,
+    ) {
+        let Some(sig) = sig else {
+            for arg in args {
+                self.validate_operand(scope, arg, span);
+            }
+            return;
+        };
+
+        if args.len() != sig.params.len() {
+            self.error(
+                span,
+                format!(
+                    "call argument count mismatch: expected {}, got {}",
+                    sig.params.len(),
+                    args.len()
+                ),
+            );
+        }
+
+        for (index, arg) in args.iter().enumerate() {
+            let arg_ty = self.validate_operand(scope, arg, span);
+            let Some(expected_ty) = sig.params.get(index).copied() else {
+                continue;
+            };
+            if let Some(arg_ty) = arg_ty {
+                self.require_assignable(arg_ty, expected_ty, span, "call argument type mismatch");
+            }
+        }
     }
 
     fn validate_operand(&mut self, scope: &FunctionScope<'_>, operand: &MirOperand, span: Span) -> Option<MirType> {

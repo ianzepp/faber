@@ -223,6 +223,11 @@ impl MirLowerer<'_> {
                         context.functions.insert(
                             item.def_id,
                             MirFunctionSignature {
+                                params: function
+                                    .params
+                                    .iter()
+                                    .map(|param| MirType::semantic(param.ty))
+                                    .collect(),
                                 return_ty: MirType::semantic(return_ty),
                                 error_ty: function.err_ty.map(MirType::semantic),
                             },

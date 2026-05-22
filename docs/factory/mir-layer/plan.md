@@ -1,6 +1,6 @@
 # MIR Layer Factory Plan
 
-**Status**: in-progress (Phases 0–9 complete; 9.5 pending; 10–12 deferred)
+**Status**: complete through Phase 9.5 (Phases 10–12 deferred)
 **Created**: 2026-05-22
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/mir-layer/`
@@ -479,6 +479,19 @@ Reason:
 - WASM output is a larger backend project, not a MIR closeout task.
 - A real WASM effort needs its own decisions for ABI, memory/string layout, option and aggregate representation, host imports, runtime intrinsics, packaging, and Wasmtime or equivalent verification.
 - Phase 9.5 should document these prerequisites without trying to implement bytecode.
+
+Future lower-target prerequisites:
+
+- Exported-function and `incipit` model.
+- Primitive value ABI.
+- String and memory representation.
+- Option, struct, enum, array, and map layout.
+- Runtime intrinsic import contract.
+- Provider call boundary.
+- Host-side diagnostic capture.
+- Wasmtime or equivalent validation harness.
+- Package/build artifact shape.
+- Source-map or diagnostic-location story.
 
 Checkpoint:
 

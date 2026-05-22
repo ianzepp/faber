@@ -43,6 +43,8 @@ cargo run -p radix --bin radix -- mir examples/exempla/salve-munde.fab
 
 MIR is an execution-shaped internal representation below typed HIR and above future lower-target backends. It is not a public package target, and normal Rust output still uses the stable HIR-to-Rust backend. The current MIR-to-Rust probe exists only to prove that validated MIR can feed an executable output path.
 
+Future WASM or lower-target work should start from the MIR factory plan and ledger rather than treating `radix mir` or the temporary probe as a public backend contract.
+
 If you need current repo status at a glance, see [`project.yaml`](../../project.yaml) and the root [`README.md`](../../README.md).
 
 ## Current Syntax Reminder
