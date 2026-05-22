@@ -249,29 +249,177 @@ pub(super) fn generate_struct_expr(
             if struct_result.is_err() {
                 return;
             }
-            if codegen.struct_field_is_sponte(def_id, *name) {
-                // sponte fields are Option<T> in the target struct; wrap provided values in Some.
-                w.write("Some(");
-                struct_result =
-                    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
-                w.write(")");
-            } else {
-                struct_result =
-                    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
-            }
+            struct_result = generate_struct_field_value(
+                codegen,
+                def_id,
+                *name,
+                value,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
             w.writeln(",");
         }
-        // Emit None for sponte fields omitted from this literal (Rust requires complete struct literals).
-        for sname in codegen.sorted_struct_sponte_field_names(def_id) {
-            if !provided.contains(&sname) {
-                w.write(codegen.resolve_symbol(sname));
-                w.writeln(": None,");
-            }
+        if struct_result.is_err() {
+            return;
         }
+        struct_result = generate_omitted_struct_fields(
+            codegen,
+            def_id,
+            &provided,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
     });
     struct_result?;
     w.write("}");
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_struct_field_value(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    name: Symbol,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if codegen.struct_field_stores_option(def_id, name, types) && expr_requires_some_wrapper(value, types) {
+        w.write("Some(");
+        generate_struct_value_expr(
+            codegen,
+            def_id,
+            name,
+            value,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
+        w.write(")");
+        return Ok(());
+    }
+
+    generate_struct_value_expr(
+        codegen,
+        def_id,
+        name,
+        value,
+        types,
+        w,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_omitted_struct_fields(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    provided: &FxHashSet<Symbol>,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    for field in codegen.sorted_struct_omittable_fields(def_id) {
+        if provided.contains(&field.name) {
+            continue;
+        }
+        w.write(codegen.resolve_symbol(field.name));
+        w.write(": ");
+        if let Some(init) = field.init {
+            generate_struct_field_value(
+                codegen,
+                def_id,
+                field.name,
+                init,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+        } else {
+            w.write("None");
+        }
+        w.writeln(",");
+    }
+    Ok(())
+}
+
+fn expr_requires_some_wrapper(expr: &HirExpr, types: &TypeTable) -> bool {
+    if matches!(expr.kind, HirExprKind::Literal(HirLiteral::Nil)) {
+        return false;
+    }
+
+    match expr.ty {
+        Some(ty) => !type_is_option_or_nihil(ty, types),
+        None => true,
+    }
+}
+
+fn type_is_option_or_nihil(type_id: TypeId, types: &TypeTable) -> bool {
+    match types.get(type_id) {
+        Type::Option(_) | Type::Primitive(Primitive::Nihil) => true,
+        Type::Alias(_, resolved) => type_is_option_or_nihil(*resolved, types),
+        _ => false,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_struct_value_expr(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    name: Symbol,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if matches!(value.kind, HirExprKind::Literal(HirLiteral::String(_)))
+        && value.ty.is_none()
+        && struct_field_value_is_textus(codegen, def_id, name, types)
+    {
+        w.write(".to_string()");
+    }
+    Ok(())
+}
+
+fn struct_field_value_is_textus(codegen: &RustCodegen<'_>, def_id: DefId, name: Symbol, types: &TypeTable) -> bool {
+    let Some(field) = codegen.struct_field_info(def_id, name) else {
+        return false;
+    };
+
+    let value_type = match types.get(field.ty) {
+        Type::Option(inner) => *inner,
+        Type::Alias(_, resolved) => option_inner_or_self(*resolved, types),
+        _ => field.ty,
+    };
+    matches!(types.get(value_type), Type::Primitive(Primitive::Textus))
+}
+
+fn option_inner_or_self(type_id: TypeId, types: &TypeTable) -> TypeId {
+    match types.get(type_id) {
+        Type::Option(inner) => *inner,
+        Type::Alias(_, resolved) => option_inner_or_self(*resolved, types),
+        _ => type_id,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

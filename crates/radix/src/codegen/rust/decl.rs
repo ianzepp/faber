@@ -23,7 +23,7 @@ use super::super::CodeWriter;
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
-use crate::semantic::TypeTable;
+use crate::semantic::{Type, TypeId, TypeTable};
 
 /// Generate a Rust function declaration.
 ///
@@ -174,7 +174,7 @@ pub fn generate_struct(
                 w.write(codegen.resolve_symbol(field.name));
                 w.write(": ");
                 let ty_str = type_to_rust(codegen, field.ty, types);
-                if field.sponte {
+                if field.sponte && !type_is_option(field.ty, types) {
                     // sponte (voluntary declaration) represented as Option<T> in Rust for
                     // partial construction support; fixus has no target immutability effect here.
                     w.write(&format!("Option<{}>", ty_str));
@@ -207,6 +207,14 @@ pub fn generate_struct(
     }
 
     Ok(())
+}
+
+fn type_is_option(type_id: TypeId, types: &TypeTable) -> bool {
+    match types.get(type_id) {
+        Type::Option(_) => true,
+        Type::Alias(_, resolved) => type_is_option(*resolved, types),
+        _ => false,
+    }
 }
 
 /// Generate a Rust enum declaration.

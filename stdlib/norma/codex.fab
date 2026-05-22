@@ -26,7 +26,7 @@ pactum codex {
 
     # Attempt to decode base64 (returns nihil on invalid input)
     @ externa
-    functio temptaBase64(textus data) → si octeti
+    functio temptaBase64(textus data) → octeti ∪ nihil
 
     # =========================================================================
     # HEX
@@ -42,7 +42,7 @@ pactum codex {
 
     # Attempt to decode hex (returns nihil on invalid input)
     @ externa
-    functio temptaHex(textus data) → si octeti
+    functio temptaHex(textus data) → octeti ∪ nihil
 
     # =========================================================================
     # URL ENCODING (percent-encoding)

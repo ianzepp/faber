@@ -255,7 +255,7 @@ pub enum Type {
     /// Set type: copia<T>
     Set(TypeId),
 
-    /// Optional type: si T
+    /// Optional type: T ∪ nihil
     Option(TypeId),
 
     /// Reference type: de T / in T

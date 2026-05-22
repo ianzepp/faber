@@ -30,7 +30,7 @@ use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
 ///   tabula<K, V>      -> HashMap<K, V>
 ///   de T              -> &T
 ///   in T              -> &mut T
-///   si T              -> Option<T>
+///   T ∪ nihil        -> Option<T>
 ///   futura functio    -> impl Future<Output = T>
 ///
 /// TARGET: Rust-specific type mappings; ignotum -> Box<dyn Any>.

@@ -104,23 +104,32 @@ fn generate_verte_struct_expr(
                 if struct_result.is_err() {
                     return;
                 }
-                if codegen.struct_field_is_sponte(def_id, *name) {
-                    w.write("Some(");
-                    struct_result =
-                        generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
-                    w.write(")");
-                } else {
-                    struct_result =
-                        generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
-                }
+                struct_result = generate_struct_field_value(
+                    codegen,
+                    def_id,
+                    *name,
+                    value,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                );
                 w.writeln(",");
             }
-            for sname in codegen.sorted_struct_sponte_field_names(def_id) {
-                if !provided.contains(&sname) {
-                    w.write(codegen.resolve_symbol(sname));
-                    w.writeln(": None,");
-                }
+            if struct_result.is_err() {
+                return;
             }
+            struct_result = generate_omitted_struct_fields(
+                codegen,
+                def_id,
+                &provided,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
         });
         struct_result?;
         w.write("}");

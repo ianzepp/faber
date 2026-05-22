@@ -38,7 +38,7 @@ pactum toml {
 
     # Attempt to parse TOML string (returns null on error)
     @ externa
-    functio tempta(textus toml) → si valor
+    functio tempta(textus toml) → valor ∪ nihil
 
     # =========================================================================
     # TYPE CHECKING

@@ -33,9 +33,9 @@ mod stmt;
 mod types;
 
 use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
-use crate::hir::{DefId, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier};
+use crate::hir::{DefId, HirExpr, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier};
 use crate::lexer::{Interner, Symbol};
-use crate::semantic::TypeTable;
+use crate::semantic::{Type, TypeId, TypeTable};
 use crate::RustOutput;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
@@ -61,6 +61,14 @@ struct TestSelectionState {
     has_solum_tests: bool,
 }
 
+#[derive(Clone, Copy)]
+pub(super) struct StructFieldInfo<'a> {
+    pub(super) name: Symbol,
+    pub(super) ty: TypeId,
+    sponte: bool,
+    pub(super) init: Option<&'a HirExpr>,
+}
+
 /// Rust code generator.
 ///
 /// WHY: Holds pre-analyzed state (names, failable functions) to enable correct
@@ -75,19 +83,20 @@ pub struct RustCodegen<'a> {
     /// Optional Faber test selection used to emit ignore reasons.
     test_selection: Option<TestSelectionState>,
 
-    /// DefId -> set of sponte (voluntary) field names for that struct.
-    /// Enables Rust struct literals to emit complete initializers (filling omitted sponte fields with None)
-    /// and decls to use Option<T> storage for sponte fields.
-    struct_sponte_fields: FxHashMap<DefId, FxHashSet<Symbol>>,
+    /// DefId -> field metadata for struct construction.
+    ///
+    /// Enables Rust struct literals to emit complete initializers for omitted `sponte` fields
+    /// and fields with genus defaults, while preserving nullable storage as `Option<T>`.
+    struct_fields: FxHashMap<DefId, Vec<StructFieldInfo<'a>>>,
 }
 
 impl<'a> RustCodegen<'a> {
-    pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
+    pub fn new(hir: &'a HirProgram, interner: &'a Interner) -> Self {
         Self::new_with_test_selection(hir, interner, None)
     }
 
     pub fn new_with_test_selection(
-        hir: &HirProgram,
+        hir: &'a HirProgram,
         interner: &'a Interner,
         test_selection: Option<TestSelection>,
     ) -> Self {
@@ -95,7 +104,7 @@ impl<'a> RustCodegen<'a> {
             names: NameCatalog::new(hir, interner),
             failable_defs: FxHashSet::default(),
             test_selection: None,
-            struct_sponte_fields: FxHashMap::default(),
+            struct_fields: FxHashMap::default(),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen.test_selection = Some(TestSelectionState {
@@ -105,7 +114,7 @@ impl<'a> RustCodegen<'a> {
                 .iter()
                 .any(|item| matches!(&item.kind, HirItemKind::Function(func) if func.test.as_ref().is_some_and(|test| test.modifiers.iter().any(|modifier| matches!(modifier, HirTestModifier::Solum))))),
         });
-        codegen.struct_sponte_fields = codegen.collect_struct_sponte_fields(hir);
+        codegen.struct_fields = codegen.collect_struct_fields(hir);
         codegen
     }
 
@@ -274,48 +283,70 @@ impl<'a> RustCodegen<'a> {
         failable::collect_failable_functions(self, hir)
     }
 
-    /// Precompute which struct fields carry the `sponte` marker (voluntary/optional declaration).
+    /// Precompute struct field metadata needed by Rust declaration and literal emission.
     ///
-    /// WHY: Rust struct literals require all fields; sponte fields are stored as Option<T> and
-    /// omitted ones in source literals must be filled with `None` at codegen time.
+    /// WHY: Rust struct literals require all fields. Faber fields with `sponte` or genus
+    /// defaults may be omitted at construction, so codegen must fill them explicitly.
     /// `fixus` is recorded in HIR but produces no target-level immutability in this phase.
-    fn collect_struct_sponte_fields(&self, hir: &HirProgram) -> FxHashMap<DefId, FxHashSet<Symbol>> {
-        let mut sponte = FxHashMap::default();
+    fn collect_struct_fields(&self, hir: &'a HirProgram) -> FxHashMap<DefId, Vec<StructFieldInfo<'a>>> {
+        let mut fields = FxHashMap::default();
         for item in &hir.items {
             if let HirItemKind::Struct(strukt) = &item.kind {
-                let mut set = FxHashSet::default();
-                for field in &strukt.fields {
-                    if field.sponte {
-                        set.insert(field.name);
-                    }
-                }
-                if !set.is_empty() {
-                    sponte.insert(item.def_id, set);
-                }
+                fields.insert(
+                    item.def_id,
+                    strukt
+                        .fields
+                        .iter()
+                        .filter(|field| !field.is_static)
+                        .map(|field| StructFieldInfo {
+                            name: field.name,
+                            ty: field.ty,
+                            sponte: field.sponte,
+                            init: field.init.as_ref(),
+                        })
+                        .collect(),
+                );
             }
         }
-        sponte
+        fields
     }
 
-    /// Returns true if the named field on the given struct def was declared `... name sponte`.
-    pub(super) fn struct_field_is_sponte(&self, def_id: DefId, field: Symbol) -> bool {
-        self.struct_sponte_fields
+    pub(super) fn struct_field_info(&self, def_id: DefId, field: Symbol) -> Option<StructFieldInfo<'a>> {
+        self.struct_fields
+            .get(&def_id)?
+            .iter()
+            .copied()
+            .find(|info| info.name == field)
+    }
+
+    /// Returns true when the Rust storage type for this field is `Option<_>`.
+    pub(super) fn struct_field_stores_option(&self, def_id: DefId, field: Symbol, types: &TypeTable) -> bool {
+        self.struct_field_info(def_id, field)
+            .is_some_and(|info| info.sponte || type_id_is_option(info.ty, types))
+    }
+
+    pub(super) fn sorted_struct_omittable_fields(&self, def_id: DefId) -> Vec<StructFieldInfo<'a>> {
+        let mut fields = self
+            .struct_fields
             .get(&def_id)
-            .map_or(false, |set| set.contains(&field))
-    }
-
-    /// Returns the set of sponte field names for a struct (for filling omitted fields in literals).
-    pub(super) fn struct_sponte_field_names(&self, def_id: DefId) -> Option<&FxHashSet<Symbol>> {
-        self.struct_sponte_fields.get(&def_id)
-    }
-
-    pub(super) fn sorted_struct_sponte_field_names(&self, def_id: DefId) -> Vec<Symbol> {
-        let mut names = self
-            .struct_sponte_field_names(def_id)
-            .map(|set| set.iter().copied().collect::<Vec<_>>())
+            .map(|fields| {
+                fields
+                    .iter()
+                    .copied()
+                    .filter(|field| field.sponte || field.init.is_some())
+                    .collect::<Vec<_>>()
+            })
             .unwrap_or_default();
-        names.sort_by(|a, b| self.resolve_symbol(*a).cmp(self.resolve_symbol(*b)));
-        names
+        fields.sort_by(|a, b| self.resolve_symbol(a.name).cmp(self.resolve_symbol(b.name)));
+        fields
+    }
+}
+
+fn type_id_is_option(type_id: TypeId, types: &TypeTable) -> bool {
+    match types.get(type_id) {
+        Type::Option(_) => true,
+        Type::Alias(_, resolved) => type_id_is_option(*resolved, types),
+        _ => false,
     }
 }
 

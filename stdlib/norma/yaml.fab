@@ -44,7 +44,7 @@ pactum yaml {
 
     # Attempt to parse YAML string (returns null on error)
     @ externa
-    functio tempta(textus yaml) → si quidlibet
+    functio tempta(textus yaml) → quidlibet ∪ nihil
 
     # Verb: collige from "colligere" (to collect, gather)
     # Why: Gathering all documents from a multi-doc YAML stream.

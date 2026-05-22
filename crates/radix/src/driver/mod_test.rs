@@ -1957,6 +1957,39 @@ incipit {
 }
 
 #[test]
+fn rust_output_applies_nullable_field_defaults_in_verte_struct_literals() {
+    let session = session(Target::Rust);
+    let source = r#"genus User {
+  textus name
+  textus nickname : "Anonymous"
+  textus ∪ nihil email : "Anonymous"
+}
+
+incipit {
+  fixum a ← { name: "Ada" } ⇢ User
+  fixum b ← { name: "Lin", email: nihil } ⇢ User
+  fixum c ← { name: "Ken", email: "ken@example.com" } ⇢ User
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("nickname: \"Anonymous\".to_string(),"));
+    assert!(output.code.contains("pub email: Option<String>,"));
+    assert!(output
+        .code
+        .contains("email: Some(\"Anonymous\".to_string()),"));
+    assert!(output.code.contains("email: None,"));
+    assert!(output
+        .code
+        .contains("email: Some(\"ken@example.com\".to_string()),"));
+    assert!(!output.code.contains(".to_string().to_string()"));
+    compile_rust_source_with_rustc(&output.code, "nullable-field-default");
+}
+
+#[test]
 fn ignotum_callee_no_longer_reports_not_callable() {
     let session = session(Target::Rust);
     let source = r#"functio invoke(ignotum callee) → ignotum {
