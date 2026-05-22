@@ -1,6 +1,6 @@
 # MIR Layer Factory Plan
 
-**Status**: in-progress (Phases 0–4 complete; 5–12 pending)
+**Status**: in-progress (Phases 0–4 complete; 5A–12 pending)
 **Created**: 2026-05-22
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/mir-layer/`
@@ -164,8 +164,9 @@ drop value
 | 1 | MIR data model | Add MIR node types, IDs, type references, block structure, and debug formatting. | `cargo test -p radix mir` or equivalent focused tests compile the model without lowering behavior. |
 | 2 | MIR inspection surface | Add an internal dump path for MIR from a single source file. | A simple program can be parsed, checked, lowered to placeholder/subset MIR, and printed deterministically. |
 | 3 | Primitive expression lowering | Lower literals, locals, arithmetic, assignment, simple calls, and returns. | MIR tests prove primitives and function bodies lower without target codegen. |
-| 4 | Control-flow normalization | Lower blocks, `si`, `dum`, `itera`, `rumpe`, `perge`, and expression returns into explicit blocks and terminators. | MIR has no expression-valued control flow for the supported subset. |
-| 5 | Failure flow | Lower `iace`, `tempta`, panic/mori, and failable function exits into explicit success/error paths. | MIR distinguishes normal return from recoverable error return without Rust `Result` syntax. |
+| 4 | Control-flow normalization | Lower blocks, `si`, `dum`, `rumpe`, `perge`, and expression returns into explicit blocks and terminators; keep `itera` deferred. | MIR has no expression-valued control flow for the supported subset. |
+| 5A | Alternate-exit surface | Add the typed alternate-exit glyph contract with `→ Success ⇥ Error` through lexing, parsing, HIR, and semantic signatures. | `radix check` accepts explicit failable signatures and rejects `iace` where no alternate exit is declared. |
+| 5B | Alternate-exit MIR lowering | Lower `iace` and `mori` through the new function contract into explicit MIR exits. | MIR distinguishes normal `return` from recoverable `return_error` without Rust `Result` syntax. |
 | 6 | Aggregate and option contract | Represent structs, enums, tuples, arrays, maps, option/null, optional chain, and non-null assertion. | MIR uses explicit construction/projection/runtime operations; no high-level optional-chain nodes remain. |
 | 7 | Runtime intrinsic boundary | Define target-neutral intrinsics for printing, string formatting, collection operations, conversions, and stdlib-backed calls. | MIR references runtime/provider operations without Rust module paths or Cargo details. |
 | 8 | MIR validation | Add validation for block termination, type presence, operand compatibility, def-use sanity, and unresolved placeholders. | Invalid MIR is rejected before any backend sees it; diagnostics point back to source spans where possible. |
@@ -269,23 +270,44 @@ Checkpoint:
 - MIR for supported constructs has explicit blocks and terminators.
 - There are no nested Faber `si` / `dum` expression-control nodes in MIR for the supported subset.
 
-### Phase 5: Failure Flow
+### Phase 5A: Alternate-Exit Surface
 
 Steps:
 
-- Decide MIR representation for recoverable failure:
-  - explicit `return_error`,
-  - result-like internal value,
-  - or function-level dual exit contract.
-- Lower `iace` to the chosen form.
-- Lower `tempta` / `cape` into explicit success and error paths.
+- Add the alternate-exit glyph token for `⇥`.
+- Extend function declarations from `→ Success` to `→ Success ⇥ Error`.
+- Extend function types from `(A) → B` to `(A) → B ⇥ E`.
+- Carry the optional error type through AST, HIR, semantic function signatures, and developer inspection surfaces.
+- Typecheck `iace expr` against the current function's declared alternate-exit type.
+- Reject `iace` in functions without `⇥ Error`, except where a later local handler explicitly consumes it.
+- Reject failable calls in ordinary expression position until caller-side propagation/handling syntax is defined.
+- Keep existing target codegen behavior unchanged for existing programs; new failable signatures may be accepted by `check` but should fail clearly if emitted by a backend that does not support them yet.
+
+Checkpoint:
+
+- `radix check` accepts a function shaped like `functio divide(...) → numerus ⇥ textus`.
+- `radix check` rejects `iace` in non-failable functions.
+- Semantic function types preserve both normal and alternate-exit types.
+- No MIR lowering behavior depends on the new surface yet.
+
+### Phase 5B: Alternate-Exit MIR Lowering
+
+Steps:
+
+- Add `error_ty: Option<MirType>` to `MirFunction`.
+- Render the alternate-exit type deterministically in MIR dumps.
+- Lower `iace expr` to `MirTerminatorKind::ReturnError`.
+- Type-preserve the `iace` operand the same way `redde` operands are type-preserved.
+- Lower `mori expr` to a target-neutral fatal operation followed by `Unreachable`.
+- Keep `tempta`, `cape`, `demum`, and failable-call propagation deferred until caller-side syntax and cleanup semantics are locked.
 - Preserve enough source span information for useful diagnostics.
 
 Checkpoint:
 
-- Failable function behavior is represented without Rust-specific `Result<T, String>` syntax.
-- MIR uses explicit error exits or error edges for recoverable failure.
-- Existing Rust behavior remains unchanged unless explicitly using the experimental MIR backend.
+- MIR for failable functions distinguishes normal `return` from recoverable `return_error`.
+- `iace` requires a declared alternate-exit type and emits a typed `return_error` operand.
+- `mori` is fatal and not catchable.
+- Existing Rust behavior remains unchanged unless explicitly using a later experimental MIR backend.
 
 ### Phase 6: Aggregate and Option Contract
 
