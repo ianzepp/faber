@@ -116,7 +116,11 @@ fixum Person ∪ nihil maybe ← nihil
 - Parameter defaults use `vel`: `textus nickname sponte fixus vel "Anonymous"`.
 - `sponte fixus` with a default means the provider may omit the slot; if omitted, the default is used; after construction/defaulting the slot is fixed regardless of where the initial value came from.
 - Pure type positions do not use `sponte`; they use `T ∪ nihil` when the value may be `nihil`.
-- `T ∪ nihil` may lower to the existing option representation (`Option<T>`) rather than a generic ad-hoc union when exactly one non-`nihil` member is present.
+- Any inline union containing `nihil` lowers by removing `nihil` from the member set and wrapping the remaining type in the existing option representation.
+- `T ∪ nihil` and `nihil ∪ T` lower to `Option<T>`.
+- `A ∪ B ∪ nihil` lowers to `Option<Union<A, B>>`.
+- Duplicate union members are canonicalized before option wrapping: `T ∪ T ∪ nihil` lowers to `Option<T>`.
+- Degenerate absence-only unions such as `nihil ∪ nihil` are invalid and should produce a clear diagnostic.
 - `de` and `in` continue to appear before the type.
 
 ## Stage Graph
@@ -126,7 +130,7 @@ fixum Person ∪ nihil maybe ← nihil
 | 0     | Design & Planning           | Produce this plan and confirm scope and word choice                  | Plan approved |
 | 1     | Inventory                   | Locate every use of `si` as a declaration optional marker or nullable type marker | Full classified inventory (ledger) |
 | 2     | Grammar & Front-end         | Update parser, AST (`TypeExpr`), declaration parsing, union glyph lexing, and keyword handling | `sponte` and `fixus` parse in declarations; `T ∪ nihil` parses in type positions; `si` no longer accepted for optionality/nullability |
-| 3     | Semantic & Lowering         | Ensure `sponte`, `fixus`, and `T ∪ nihil` produce the intended obligation/lifecycle/option/union semantics | Declaration optionality, fixed-after-initialization slots, and nullable value types typecheck and lower correctly |
+| 3     | Semantic & Lowering         | Ensure `sponte`, `fixus`, and `T ∪ nihil` produce the intended obligation/lifecycle/option/union semantics | Declaration optionality, fixed-after-initialization slots, and nullable value types typecheck and lower correctly; `A ∪ B ∪ nihil` canonicalizes to `Option<Union<A, B>>` |
 | 4     | Codegen & Runtime           | Verify all targets correctly emit optional/nullable types and any supported non-null unions | All backends produce correct output or documented fallback output |
 | 5     | Migration & Examples        | Update examples, stdlib, and internal tests                          | No remaining `si` used for optionality in source |
 | 6     | Documentation & Teaching    | Update EBNF, grammatica docs, AGENTS.md, and explain entries         | Docs teach `sponte` for declaration optionality, `fixus` for post-initialization fixed slots, and `T ∪ nihil` for nullable value types |
@@ -134,8 +138,8 @@ fixum Person ∪ nihil maybe ← nihil
 
 ## Open Questions
 
-- Should `∪` initially support all inline union type expressions (`A ∪ B ∪ C`), or should implementation begin with the narrow nullable form (`T ∪ nihil`) and leave broader unions for a follow-up?
-- Should `T ∪ nihil` canonicalize to `Option<T>` at semantic lowering time, while other unions lower to `Type::Union(...)`?
+- Should `∪` initially support all inline union type expressions (`A ∪ B ∪ C`), or should implementation begin with the narrow nullable form (`T ∪ nihil`) and leave broader unions for a follow-up? **Decision after Phase 2**: support general inline unions syntactically; Phase 3 gives them semantic lowering.
+- How should non-null inline unions emit on backends that lack first-class unions? This remains a Phase 4 codegen decision.
 - How should diagnostics distinguish the concepts: "voluntary" / "optional" for declaration obligation, "fixed" for post-initialization lifecycle, and "nullable" / "may be nihil" for value type domain?
 - Should `sponte` and `fixus` be contextual keywords only in declaration-marker position, allowing ordinary identifiers with those names elsewhere?
 - Should reversed marker order (`textus email fixus sponte`) be rejected rather than normalized to preserve one canonical style?
@@ -150,7 +154,7 @@ fixum Person ∪ nihil maybe ← nihil
 - New negative tests reject `si` when used for declaration optionality or nullable value types.
 - New parser tests cover `textus email sponte`, `textus email sponte fixus`, `functio find() → textus ∪ nihil`, and `typus MaybeText = textus ∪ nihil`.
 - New semantic tests cover `textus id fixus`, `textus email sponte fixus`, field default `textus nickname sponte fixus : "Anonymous"`, and parameter default `textus nickname sponte fixus vel "Anonymous"` so defaults are applied before fixed-state enforcement.
-- New lowering/typecheck tests prove `T ∪ nihil` can accept both `T` and `nihil`, and that the supported nullable representation emits correctly for each backend.
+- New lowering/typecheck tests prove `T ∪ nihil` can accept both `T` and `nihil`, `A ∪ B ∪ nihil` canonicalizes to `Option<Union<A, B>>`, duplicate members canonicalize, degenerate `nihil ∪ nihil` is rejected, and the supported nullable representation emits correctly for each backend.
 - Real `genus` and signature examples show improved readability.
 
 ---

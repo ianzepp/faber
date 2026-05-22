@@ -122,6 +122,8 @@ All enumerated edits completed.
 Open for later phases:
 - Remove the nullable bridge shim.
 - Teach resolve / codegen about Field.sponte / Param.sponte / fixus semantics.
+- Phase 3 union canonicalization rule is now locked: remove `nihil`, canonicalize duplicate members, then wrap the remaining type in `Option`. Thus `T ∪ nihil` becomes `Option<T>`, and `A ∪ B ∪ nihil` becomes `Option<Union<A, B>>`.
+- Phase 3 must reject degenerate absence-only unions such as `nihil ∪ nihil`.
 - Full registry + explain for sponte/fixus (we added minimal KeywordSpec).
 - EBNF / docs / examples migration.
 
