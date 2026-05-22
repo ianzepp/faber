@@ -20,6 +20,18 @@ The active surface is intentionally narrow: the compiler library, two CLI binari
 
 ## Quick Start
 
+Install the current released CLI with Homebrew:
+
+```bash
+brew install ianzepp/tap/faber
+faber --version
+```
+
+The `faber` crate name on crates.io is not this project; use the Homebrew tap
+or build from this repository.
+
+From a checkout:
+
 ```bash
 ./scripta/ci
 
@@ -28,7 +40,7 @@ cargo run -p faber -- explain ≡
 cargo run -p faber -- explain --search equality
 cargo run -p faber -- explain --json proba
 cargo run -p faber -- check examples/exempla/salve-munde.fab
-cargo run -p faber -- build examples/exempla/salve-munde.fab
+cargo run -p faber -- build -o /tmp/faber-out examples/exempla/salve-munde.fab
 cargo run -p faber -- test examples/exempla/proba/packages/passing
 cargo run -p faber -- emit -t rust examples/exempla/salve-munde.fab
 
@@ -36,11 +48,13 @@ cargo run -p radix --bin radix -- targets
 cargo run -p radix --bin radix -- emit -t rust examples/exempla/salve-munde.fab
 ```
 
-Equivalent raw Cargo commands:
+The CI wrapper expands to:
 
 ```bash
 cargo fmt --all -- --check
 cargo test --all
+./scripta/check-markers
+cargo clippy --all-targets --all-features -- -D warnings
 cargo build --release -p faber
 cargo build --release -p radix --bin radix
 ```
