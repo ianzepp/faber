@@ -135,7 +135,7 @@ fixum Person ∪ nihil maybe ← nihil
 | 2     | Grammar & Front-end         | Update parser, AST (`TypeExpr`), declaration parsing, union glyph lexing, and keyword handling | `sponte` and `fixus` parse in declarations; `T ∪ nihil` parses in type positions; `si` no longer accepted for optionality/nullability |
 | 3     | Semantic & Lowering         | Ensure `sponte` and `T ∪ nihil` produce the intended obligation/option/union semantics while preserving `fixus` metadata | Declaration optionality and nullable value types typecheck and lower correctly; `fixus` is represented but not deeply enforced; `A ∪ B ∪ nihil` canonicalizes to `Option<Union<A, B>>` |
 | 4     | Rust Codegen                | Verify Rust emits canonical optional/nullable types and supported union fallbacks | Rust backend output is correct for `sponte` and nullable unions; `fixus` emits no false target-level immutability guarantee |
-| 5     | Migration & Examples        | Update examples, stdlib, and internal tests                          | No remaining `si` used for optionality in source |
+| 5     | Migration & Examples        | After Phase 4 settles Rust behavior, migrate examples, stdlib, fixtures, and internal snippets to `sponte` / `T ∪ nihil` | No remaining `si` used for optionality in source outside intentional negative tests |
 | 6     | Documentation & Teaching    | Update EBNF, grammatica docs, AGENTS.md, and explain entries         | Docs teach `sponte` for declaration optionality, `fixus` for post-initialization fixed slots, and `T ∪ nihil` for nullable value types |
 | 7     | Guardrails & Validation     | Add tests and searches that protect the new rule                     | Clean CI + residue search passes |
 
