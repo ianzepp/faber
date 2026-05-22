@@ -14,6 +14,7 @@ The active surface is intentionally narrow: the compiler library, two CLI binari
 | [`crates/norma`](crates/norma) | Rust runtime support crate for stdlib and HAL features |
 | [`explain`](explain) | Embedded explanation corpus for `faber explain` |
 | [`stdlib/norma`](stdlib/norma) | Faber standard library definitions with `@ verte` translation metadata |
+| [`hosts/macos-arm64`](hosts/macos-arm64) | Placeholder host runtime for future Faber-produced Wasm components on macOS arm64 |
 | [`examples/exempla`](examples/exempla) | Example Faber programs |
 | [`docs/grammatica`](docs/grammatica) | Language documentation |
 | [`scripta`](scripta) | Shell helper scripts |

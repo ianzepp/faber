@@ -3,5 +3,6 @@ members = [
     "crates/faber",
     "crates/radix",
     "crates/norma",
+    "hosts/macos-arm64",
 ]
 resolver = "2"

@@ -1,0 +1,9 @@
+[package]
+name = "faber-host-macos-arm64"
+version = "0.1.0"
+edition = "2021"
+description = "Placeholder macOS arm64 host runtime for Faber Wasm components"
+license = "MIT"
+publish = false
+
+[dependencies]
