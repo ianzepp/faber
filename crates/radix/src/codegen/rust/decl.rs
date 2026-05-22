@@ -173,7 +173,14 @@ pub fn generate_struct(
                 w.write("pub ");
                 w.write(codegen.resolve_symbol(field.name));
                 w.write(": ");
-                w.write(&type_to_rust(codegen, field.ty, types));
+                let ty_str = type_to_rust(codegen, field.ty, types);
+                if field.sponte {
+                    // sponte (voluntary declaration) represented as Option<T> in Rust for
+                    // partial construction support; fixus has no target immutability effect here.
+                    w.write(&format!("Option<{}>", ty_str));
+                } else {
+                    w.write(&ty_str);
+                }
                 w.writeln(",");
             }
         }

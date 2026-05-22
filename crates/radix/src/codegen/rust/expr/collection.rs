@@ -1,4 +1,5 @@
 use super::*;
+use rustc_hash::FxHashSet;
 
 #[allow(clippy::too_many_arguments)]
 pub(super) fn generate_ab_expr(
@@ -240,6 +241,7 @@ pub(super) fn generate_struct_expr(
     w.write(codegen.resolve_def(def_id));
     w.writeln(" {");
     let mut struct_result = Ok(());
+    let provided: FxHashSet<Symbol> = fields.iter().map(|(n, _)| *n).collect();
     w.indented(|w| {
         for (name, value) in fields {
             w.write(codegen.resolve_symbol(*name));
@@ -247,9 +249,26 @@ pub(super) fn generate_struct_expr(
             if struct_result.is_err() {
                 return;
             }
-            struct_result =
-                generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+            if codegen.struct_field_is_sponte(def_id, *name) {
+                // sponte fields are Option<T> in the target struct; wrap provided values in Some.
+                w.write("Some(");
+                struct_result =
+                    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                w.write(")");
+            } else {
+                struct_result =
+                    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+            }
             w.writeln(",");
+        }
+        // Emit None for sponte fields omitted from this literal (Rust requires complete struct literals).
+        if let Some(sponte_names) = codegen.struct_sponte_field_names(def_id) {
+            for &sname in sponte_names {
+                if !provided.contains(&sname) {
+                    w.write(codegen.resolve_symbol(sname));
+                    w.writeln(": None,");
+                }
+            }
         }
     });
     struct_result?;

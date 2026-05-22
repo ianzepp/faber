@@ -682,7 +682,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                         name: field,
                         ty: numerus,
                         is_static: false,
-                        sponte: false,
+                        sponte: true,
                         fixus: false,
                         init: None,
                         span: span(),
