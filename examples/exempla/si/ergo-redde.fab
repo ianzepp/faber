@@ -14,7 +14,7 @@ functio classify(numerus x) → textus {
 }
 
 # Guard clause pattern
-functio divide(numerus a, numerus b) → si numerus {
+functio divide(numerus a, numerus b) → numerus ∪ nihil {
     si b ≡ 0 ergo redde nihil
     redde a / b
 }
@@ -29,7 +29,7 @@ functio grade(numerus score) → textus {
 }
 
 # Find first in list (early return from loop)
-functio findFirst(lista<numerus> items, numerus target) → si numerus {
+functio findFirst(lista<numerus> items, numerus target) → numerus ∪ nihil {
     itera ex items fixum item {
         si item ≡ target ergo redde item
     }

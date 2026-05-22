@@ -8,12 +8,12 @@
 
 genus Address {
     textus city
-    si textus state
+    textus state sponte
 }
 
 genus User {
     textus name
-    si Address address
+    Address address sponte
 }
 
 incipit {

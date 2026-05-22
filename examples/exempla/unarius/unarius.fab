@@ -20,11 +20,11 @@ incipit {
     nota negativum b   # verum
 
     # Null checks
-    fixum si textus maybe ← nihil
+    fixum textus ∪ nihil maybe ← nihil
     nota nulla maybe      # verum (is null)
     nota nonnulla maybe   # falsum (is not null)
 
-    fixum si textus present ← "salve"
+    fixum textus ∪ nihil present ← "salve"
     nota nulla present    # falsum
     nota nonnulla present # verum
 }

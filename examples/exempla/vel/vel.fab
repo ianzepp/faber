@@ -9,12 +9,12 @@
 
 incipit {
     # Basic nullish coalescing
-    fixum si textus name ← nihil
+    fixum textus ∪ nihil name ← nihil
     fixum display ← name vel "Anonymous"
     nota display  # "Anonymous"
 
     # With non-null value
-    fixum si textus actualName ← "Marcus"
+    fixum textus ∪ nihil actualName ← "Marcus"
     fixum displayName ← actualName vel "Anonymous"
     nota displayName  # "Marcus"
 
@@ -33,9 +33,9 @@ incipit {
     nota result2
 
     # Chaining
-    fixum si textus a ← nihil
-    fixum si textus b ← nihil
-    fixum si textus c ← "found"
+    fixum textus ∪ nihil a ← nihil
+    fixum textus ∪ nihil b ← nihil
+    fixum textus ∪ nihil c ← "found"
     fixum first ← a vel b vel c vel "none"
     nota first  # "found"
 

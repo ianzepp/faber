@@ -2,7 +2,7 @@
 
 **Parent Plan**: `docs/factory/sponte-fixus-declaration-markers/plan.md`
 **Phase**: 5 - Migration & Examples
-**Status**: planned
+**Status**: implemented
 **Created**: 2026-05-22
 
 ## Interpreted Phase Problem
@@ -112,4 +112,47 @@ Phase 5 is complete when:
 - `cargo test -p radix` passes.
 - Targeted Rust checks for migrated examples pass according to Phase 4's supported backend behavior.
 - The delivery note records the final residue search and any deliberate exceptions.
+
+## Changes Made
+
+1. **stdlib/norma/innatum/*.fab**
+   - lista.fab: 10 return signatures `→ si T` → `→ T ∪ nihil` (remove, decapita, primus, ultimus, accipe, inveni, minimus, maximus, *Per variants).
+   - tabula.fab: `accipe(...) → si V` → `→ V ∪ nihil`.
+
+2. **stdlib/norma/hal/*.fab**
+   - thesaurus, http, pressura, caelum, processus, json: migrated all param optionals (`si T name` → `T name sponte`, with `vel` preserved after) and return nullables (`→ si T` → `→ T ∪ nihil`).
+   - ~20 sites across pactum method signatures.
+
+3. **examples/exempla/**/*.fab** (11 files)
+   - optinalis/optionalis.fab: genus fields `si T name` → `T name sponte` (motivating visual case).
+   - functio/optionalis.fab: all optional params + header comment updated for accuracy.
+   - vel/, binarius/, unarius/, est/, qua/, ternarius/, typus/: local `fixum si T x ← nihil` → `fixum T ∪ nihil x ← nihil`; cast sites `⇢ si T` → `⇢ (T ∪ nihil)`.
+   - si/ergo-redde.fab: two nullable return sigs migrated (control-flow `si` untouched).
+
+4. **crates/radix/src/**/*test.rs**
+   - One remaining positive-test snippet in driver/mod_test.rs updated (`si User`, `si (fn type)` → union form). All other test sources already used new syntax.
+
+5. No changes to docs/ (deferred to Phase 6), no new negative tests added (Phase 7), no Rust codegen or semantic changes.
+
+## Verification
+
+- `cargo check -p radix` — clean.
+- `cargo test -p radix` — **291 passed, 0 failed** (including driver, hir/lower, codegen, parser, semantic, and e2e).
+- `cargo run -p radix --bin radix -- check examples/exempla/optionalis/optionalis.fab` → ok.
+- `cargo run -p radix --bin radix -- check examples/exempla/functio/optionalis.fab` → ok (with pre-existing warnings).
+- Fresh residue searches (`rg 'si <type>'` on examples/stdlib/crates) confirm zero old declaration/nullable `si` usages remain outside control-flow `si` statements and docs.
+- All migrated sites now use `sponte` for voluntary declaration slots and `T ∪ nihil` (or parenthesized) for nullable value positions.
+- `fixus` examples in tests continue to parse (no breakage).
+- Rust emission for sponte-bearing examples (e.g. partial struct literals in optinalis) now exercised via prior Phase 4 paths.
+
+## Final Residue Note
+
+- Control-flow `si` (the conditional keyword) is untouched and ubiquitous; searches filtered for `si <type-keyword>` or `si <Type>` patterns.
+- No intentional negative tests using legacy `si T` syntax were present in source strings at migration time (rejection is enforced at parser level and covered by union/grammar tests).
+- Historical mentions in docs/grammatica/*.md and EBNF.md remain for Phase 6 rewrite.
+- Stdlib check on bare .fab files reports pre-existing "T not in scope" issues (unrelated to syntax change; the signatures are valid within norma loading context).
+
+**Phase 5 complete.** Ready for Phase 6 (docs) and Phase 7 (guardrails).
+
+*Opus phase-5 perfectum est. Exempla et norma renovata sunt.*
 

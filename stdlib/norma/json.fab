@@ -24,7 +24,7 @@ pactum json {
     # indentum = 0 or omitted: compact output
     # indentum > 0: pretty-printed with that many spaces
     @ externa
-    functio pange(valor valor, si numerus indentum) → textus
+    functio pange(valor valor, numerus indentum sponte) → textus
 
     # =========================================================================
     # PARSING
@@ -41,7 +41,7 @@ pactum json {
 
     # Attempt to parse JSON string (returns null on error)
     @ externa
-    functio tempta(textus json) → si valor
+    functio tempta(textus json) → valor ∪ nihil
 
     # =========================================================================
     # TYPE CHECKING

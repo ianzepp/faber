@@ -1719,10 +1719,10 @@ functio id(textus x) → textus {
 }
 
 incipit {
-  fixum si User maybeUser ← nihil
+  fixum User ∪ nihil maybeUser ← nihil
   fixum a ← maybeUser?.name
   fixum b ← maybeUser?.nums?[0]
-  fixum si (textus) → textus maybeFn ← id
+  fixum (textus) → textus ∪ nihil maybeFn ← id
   fixum c ← maybeFn?("x")
   nota a, b, c
 }"#;

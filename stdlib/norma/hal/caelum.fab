@@ -22,11 +22,11 @@ pactum caelum {
 
     # Create TCP listener (TLS when cert/key provided)
     @ externa
-    functio ausculta(numerus portus, si textus cert, si textus key) → Auscultator
+    functio ausculta(numerus portus, textus cert sponte, textus key sponte) → Auscultator
 
     @ futura
     @ externa
-    functio auscultabit(numerus portus, si textus cert, si textus key) → Auscultator
+    functio auscultabit(numerus portus, textus cert sponte, textus key sponte) → Auscultator
 
     # =========================================================================
     # TCP CLIENT
@@ -34,11 +34,11 @@ pactum caelum {
 
     # Connect to TCP server (TLS when tute=verum)
     @ externa
-    functio connecte(textus hospes, numerus portus, si bivalens tute vel falsum) → Connexus
+    functio connecte(textus hospes, numerus portus, bivalens tute sponte vel falsum) → Connexus
 
     @ futura
     @ externa
-    functio connectet(textus hospes, numerus portus, si bivalens tute vel falsum) → Connexus
+    functio connectet(textus hospes, numerus portus, bivalens tute sponte vel falsum) → Connexus
 }
 
 # TCP Listener
@@ -64,11 +64,11 @@ pactum Auscultator {
 pactum Connexus {
     # Draw bytes (up to n if provided, otherwise whatever is available)
     @ externa
-    functio hauri(si numerus n) → octeti
+    functio hauri(numerus n sponte) → octeti
 
     @ futura
     @ externa
-    functio hauriet(si numerus n) → octeti
+    functio hauriet(numerus n sponte) → octeti
 
     # Pour bytes
     @ externa

@@ -31,7 +31,7 @@ functio pone(K clavis, V valor) → vacuum
 @ verte cpp (ego, k) → "§0.at(§1)"
 @ verte zig (ego, k) → "§0.accipe(§1)"
 @ externa
-functio accipe(K clavis) → si V
+functio accipe(K clavis) → V ∪ nihil
 
 # Get value or return default
 @ verte ts (ego, k, def) → "(§0.get(§1) ?? §2)"

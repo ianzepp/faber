@@ -42,8 +42,8 @@ pactum processus {
     @ externa
     functio genera(
         lista<textus> argumenta,
-        si textus directorium,
-        si tabula<textus, textus> ambitus
+        textus directorium sponte,
+        tabula<textus, textus> ambitus sponte
     ) → Subprocessus
 
     # =========================================================================
@@ -59,8 +59,8 @@ pactum processus {
     @ externa
     functio dimitte(
         lista<textus> argumenta,
-        si textus directorium,
-        si tabula<textus, textus> ambitus
+        textus directorium sponte,
+        tabula<textus, textus> ambitus sponte
     ) → numerus
 
     # =========================================================================
@@ -90,7 +90,7 @@ pactum processus {
 
     # Read environment variable (returns nihil if not set)
     @ externa
-    functio lege(textus nomen) → si textus
+    functio lege(textus nomen) → textus ∪ nihil
 
     # =========================================================================
     # ENVIRONMENT - Write

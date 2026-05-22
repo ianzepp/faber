@@ -6,7 +6,7 @@
 
 incipit {
     # Null checking with est
-    fixum si numerus maybeValue ← nihil
+    fixum numerus ∪ nihil maybeValue ← nihil
     fixum isNull ← maybeValue est nihil
     nota isNull
 
@@ -21,7 +21,7 @@ incipit {
     nota isFalse
 
     # Chained with logical operators
-    fixum si textus name ← nihil
+    fixum textus ∪ nihil name ← nihil
     fixum needsDefault ← name est nihil et verum enabled
     nota needsDefault
 
