@@ -40,6 +40,8 @@ function f0 -> ty#1 ⇥ ty#0 {
 
 `return_error` is recoverable failure flow. It is not fatal, and it is not Rust syntax.
 
+`return_error` is also not an exception throw. It exits the current MIR function through that function's declared alternate-exit type. If the caller wants to propagate that failure, a later caller-side phase must lower an explicit propagation construct into its own `return_error`.
+
 Fatal failure should use the existing target-neutral runtime-call shape:
 
 ```text

@@ -280,6 +280,7 @@ Steps:
 - Carry the optional error type through AST, HIR, semantic function signatures, and developer inspection surfaces.
 - Typecheck `iace expr` against the current function's declared alternate-exit type.
 - Reject `iace` in functions without `⇥ Error`, except where a later local handler explicitly consumes it.
+- Do not trace `iace` up the dynamic call stack; failure propagation must be explicit at call sites.
 - Reject failable calls in ordinary expression position until caller-side propagation/handling syntax is defined.
 - Keep existing target codegen behavior unchanged for existing programs; new failable signatures may be accepted by `check` but should fail clearly if emitted by a backend that does not support them yet.
 

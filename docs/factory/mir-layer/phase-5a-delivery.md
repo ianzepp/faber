@@ -25,6 +25,16 @@ functio divide(numerus a, numerus b) → numerus ⇥ textus
 - Keep `redde` tied to the `→` path and `iace` tied to the `⇥` path.
 - Keep `mori` outside the typed recoverable path; it remains fatal and not catchable.
 
+## Non-Propagation Contract
+
+`iace` does not search up the dynamic call stack for the nearest function with a `⇥` exit. That would make recoverable failure an ambient exception mechanism.
+
+Instead:
+
+- `iace` in a function with `⇥ Error` exits through that function's own alternate-exit path.
+- `iace` in a function without `⇥ Error` is a compiler error unless a later local handler construct explicitly consumes it inside the same function.
+- Calling a failable function does not silently infect the caller; the caller must handle, propagate, or fatally convert the alternate path through syntax defined by a later phase.
+
 ## Surface Contract
 
 Valid:
