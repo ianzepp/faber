@@ -1,6 +1,6 @@
 use super::*;
-use crate::mir::dump_program;
 use crate::lexer::Span;
+use crate::mir::dump_program;
 use crate::semantic::{Primitive, TypeTable};
 
 fn span() -> Span {

@@ -82,6 +82,7 @@ Verification:
 
 - `cargo test -p radix mir` passed.
 - `cargo test -p radix` passed: 318 unit tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- Verification audit on 2026-05-22 reran `cargo test -p radix mir`, `cargo test -p radix`, and `./scripta/ci`; all passed after applying `cargo fmt --all`.
 
 Behavior boundary:
 

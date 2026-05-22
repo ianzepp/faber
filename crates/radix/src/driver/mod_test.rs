@@ -667,10 +667,9 @@ fn triple_quote_string_is_not_faber_syntax() {
     let result = compile(&session, "test.fab", source);
 
     assert!(!result.success());
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|d| d.message.contains("triple-quote string literals are not supported")));
+    assert!(result.diagnostics.iter().any(|d| d
+        .message
+        .contains("triple-quote string literals are not supported")));
 }
 
 #[test]
