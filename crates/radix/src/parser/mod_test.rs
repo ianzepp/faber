@@ -902,3 +902,39 @@ ex source varia nomen ut name, ceteri reliqua
         "reliqua"
     );
 }
+
+#[test]
+fn legacy_si_declaration_and_type_forms_are_rejected() {
+    // Legacy declaration optionality (si as prefix in params, with/without ownership modes)
+    assert_parse_error_contains(r#"functio f(si textus name) → vacuum {}"#, "expected identifier");
+    assert_parse_error_contains(r#"functio f(de si textus handle) → vacuum {}"#, "expected identifier");
+    assert_parse_error_contains(r#"functio f(si de textus handle) → vacuum {}"#, "expected identifier");
+
+    // Legacy si in genus field position
+    assert_parse_error_contains(r#"genus User { si textus email }"#, "expected identifier");
+
+    // Legacy nullable type syntax in returns, typus aliases, and local var decls
+    assert_parse_error_contains(r#"functio find() → si textus { redde nihil }"#, "expected identifier");
+    assert_parse_error_contains(r#"typus MaybeText = si textus"#, "expected identifier");
+    assert_parse_error_contains(r#"fixum si textus maybe ← nihil"#, "expected identifier");
+    assert_parse_error_contains(r#"varia si numerus maybe ← nihil"#, "expected identifier");
+}
+
+#[test]
+fn legacy_suffix_nullable_and_reversed_markers_are_rejected() {
+    // Legacy T? suffix form ( ? is only for optional chaining, not type nullability)
+    assert_parse_error_contains(r#"fixum textus? maybe ← nihil"#, "expected identifier");
+    assert_parse_error_contains(r#"functio find() → textus? { redde nihil }"#, "expected expression");
+    assert_parse_error_contains(r#"typus MaybeText = textus?"#, "expected expression");
+
+    // Reversed declaration marker order (fixus before sponte) must be rejected
+    // (canonical order is <type> <name> [sponte] [fixus] ...)
+    assert_parse_error_contains(
+        r#"functio f(textus name fixus sponte) → vacuum {}"#,
+        "unexpected 'sponte' after 'fixus'",
+    );
+    assert_parse_error_contains(
+        r#"genus User { textus email fixus sponte }"#,
+        "unexpected 'sponte' after 'fixus'",
+    );
+}

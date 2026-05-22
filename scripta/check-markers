@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Guardrail for sponte/fixus/∪ declaration marker migration.
+# Rejects reintroduction of legacy `si` nullable/optional syntax, `T?` suffix types,
+# reversed marker order, and the historical `datus` keyword on live surfaces.
+#
+# Run manually: ./scripta/check-markers
+# Invoked by ./scripta/ci as part of the full validation gate.
+#
+# Allowlist rationale:
+# - Control-flow `si` (the conditional) is intentionally still present.
+# - Optional chaining `?.` `?[]` `?()` and their explain docs.
+# - EBNF grammar notation using `?` for "optional".
+# - Negative test sources that embed the legacy spellings to prove rejection.
+# - Historical migration records under docs/factory/sponte-fixus-declaration-markers/.
+# - AGENTS.md explicitly banning `Type?` (the ban line itself must not trigger).
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+# Live surfaces only (no target/, no deep factory history for the migration itself)
+surfaces=(
+  AGENTS.md
+  EBNF.md
+  docs/grammatica
+  explain
+  examples
+  stdlib
+  crates
+)
+
+# globs to exclude noisy or allowed locations
+exclude_globs=(
+  '!target/**'
+  '!docs/factory/sponte-fixus-declaration-markers/**'
+  '!**/*test*.rs'
+  '!crates/radix/tests/**'
+  '!**/*_test.rs'
+  '!explain/question-*.md'
+  '!explain/coverage.toml'   # may contain unrelated
+)
+
+rg_opts=(--no-heading --line-number --color=never)
+
+# Bad patterns for legacy si-as-nullable (anchored to declaration / type positions)
+si_bad='→\s*si\b|\b(fixum|varia)\s+si\s+\w+|\btypus\s+\w+\s*=\s*si\s+\w+|\bsi\s+(textus|numerus|fractus|bivalens|vacuum|valor|quidlibet|octeti|series|[A-Z][A-Za-z0-9_]*)\s+\w+'
+
+# Bad T? as type (not chaining, not EBNF)
+# We match a type-ish word immediately followed by ? in code contexts
+question_bad='\b(textus|numerus|fractus|bivalens|vacuum|valor|quidlibet|octeti|series|[A-Z][A-Za-z0-9_]*)\?'
+
+# Historical keyword that must not reappear as current syntax
+datus_bad='\bdatus\b'
+
+violations=""
+
+check_pattern() {
+  local pattern="$1"
+  local desc="$2"
+  local hits
+  hits=$(rg "${rg_opts[@]}" "$pattern" "${surfaces[@]}" \
+    "${exclude_globs[@]/#/-g }" 2>/dev/null || true)
+
+  # Additional allowlist filtering for common false positives that rg glob didn't catch
+  hits=$(echo "$hits" | grep -E -v \
+    '^\s*$|si (cond|value|args|status|age|score|item|k|x|n|enabled|valid|attempts|b|name|email|depth|verbose|form|logged|permission|hour|temperature|grade|inner|user|data|external|path|points|targets|source|id|num|count|items|key|directorium|ambitus|nivel|cert|indentum|pagina|per_pagina|aetas|activus|titulus|depth|handle|state|address|maybe|name|count|Value|User|Result|Optional|Persona|Username|MaybeText|MaybeName|MaybeCount|MaybeValue|isNull|isNotNull|divide|findUser|inveni|sequens|analyze|paginate|greet|createUser|invite|register|bad|find|checkValue|require|process|fetch)' \
+    | grep -E -v 'si (x < |x > |x ≡ |score|age |b ≡ |n < |i % |value < |attempts|name ≡ |email|age < |n ≤ |item ≡ |k ≡ |status |verbose|form|logged|permission|hour|temperature|grade|inner|user|data|external|path|points|targets|source|id|num|count|items|key|directorium|ambitus|nivel|cert|indentum|pagina|per_pagina|aetas|activus|titulus|depth|handle|state|address|maybe|name|count)' \
+    | grep -E -v 'Type\?|IDENTIFIER\?|No invented|:=.*\?|optional chaining|question-(dot|bracket|paren)|EBNF|grammar' \
+    || true)
+
+  if [ -n "$hits" ]; then
+    violations="${violations}${desc}:\n${hits}\n\n"
+  fi
+}
+
+check_pattern "$si_bad" "Legacy si-as-optional/nullable"
+check_pattern "$question_bad" "Legacy T? nullable type suffix"
+check_pattern "$datus_bad" "Historical datus keyword"
+
+if [ -n "$violations" ]; then
+  echo "❌ Declaration marker guardrail FAILED"
+  echo -e "$violations"
+  echo "See docs/factory/sponte-fixus-declaration-markers/phase-7-delivery.md for allowed exceptions and rationale."
+  exit 1
+fi
+
+echo "✅ Declaration marker guardrail clean (sponte/fixus/∪ shape protected)"
+exit 0

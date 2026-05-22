@@ -2,7 +2,7 @@
 
 **Parent Plan**: `docs/factory/sponte-fixus-declaration-markers/plan.md`
 **Phase**: 7 - Guardrails & Validation
-**Status**: planned
+**Status**: implemented
 **Created**: 2026-05-22
 
 ## Interpreted Phase Problem
@@ -181,4 +181,43 @@ Phase 7 is complete when:
 ## Open Implementation Choice
 
 Prefer a Rust hygiene test if the project already treats hygiene as test-owned policy. Prefer a `scripta/` shell guardrail if it should be easy for agents and humans to run directly during migrations. Either is acceptable, but Phase 7 should choose one canonical path and wire it into normal validation rather than leaving a one-off command in the delivery note.
+
+## Implementation Results
+
+**Negative parser tests added** (in `crates/radix/src/parser/mod_test.rs`):
+- `legacy_si_declaration_and_type_forms_are_rejected` — covers `si <type>` in param, field, return, typus, and local var positions (with and without `de`/`in`).
+- `legacy_suffix_nullable_and_reversed_markers_are_rejected` — covers `T?` (three contexts) and reversed `fixus sponte` order on both functions and genus fields. The order error uses the exact parser message ("unexpected 'sponte' after 'fixus'") as the guard condition.
+- Pre-existing `degenerate_nihil_only_union_is_rejected` in `driver/mod_test.rs` was left in place and continues to protect `nihil ∪ nihil`.
+
+All three tests pass and fail for the documented reasons ("expected identifier" / "expected expression" for legacy spellings, specific canonical-order message for reversal).
+
+**Residue guardrail**:
+- Created executable `scripta/check-markers` (chosen as a `scripta/` shell guardrail per the "easy for agents and humans" guidance).
+- Scans the surfaces listed in the spec.
+- Uses anchored regexes for the three bad classes (`si` in type/decl positions, `T?` as type, `datus`).
+- Post-filter allowlist explicitly excludes:
+  - Control-flow `si` (by context of following token + common var names).
+  - Optional chaining explain entries and operators (`?.`, `?[]`, `?()` and their docs).
+  - EBNF grammar `?` (IDENTIFIER?, production?).
+  - The AGENTS.md ban line itself ("No `Type?`").
+  - All `**/*test*.rs` (the new negative tests intentionally embed the legacy spellings).
+  - The entire `docs/factory/sponte-fixus-declaration-markers/` historical tree.
+- Wired into `scripta/ci` (after `cargo test --all`, before clippy/builds) so `./scripta/ci` now enforces it.
+- Manual run: `./scripta/check-markers` → "✅ ... clean".
+
+**Validation runs performed**:
+- `cargo test -p radix legacy` (and the two new fns individually) — 3/3 relevant tests green.
+- `./scripta/check-markers` — clean on current tree.
+- Targeted `cargo fmt --check && cargo test -p radix -p faber -- --quiet && ./scripta/check-markers` — full gate slice green.
+- `cargo test -p faber -- explain` remains green (no impact).
+
+**Files changed for Phase 7**:
+- `crates/radix/src/parser/mod_test.rs` (new tests)
+- `scripta/check-markers` (new guardrail)
+- `scripta/ci` (integration of guardrail)
+- `docs/factory/sponte-fixus-declaration-markers/phase-7-delivery.md` (this update)
+
+All checkpoints satisfied. The boundary is now mechanically protected; any future drift will fail either a unit test or the ci guardrail.
+
+(The `si` parse errors are currently generic ("expected identifier"); a future polish pass could emit a dedicated "legacy 'si' nullable syntax is no longer accepted — use `name sponte` or `T ∪ nihil`" diagnostic. That is out of scope for this phase.)
 

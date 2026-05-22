@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 
 cargo fmt --all -- --check
 cargo test --all
+./scripta/check-markers
 cargo clippy --all-targets --all-features -- -D warnings
 cargo build --release -p faber
 cargo build --release -p radix --bin radix
