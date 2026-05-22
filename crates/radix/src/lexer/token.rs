@@ -116,7 +116,6 @@ pub enum TokenKind {
     Integer(i64),
     Float(f64),
     String(Symbol),
-    TemplateString(Symbol),
 
     // === Keywords: Declarations ===
     Fixum,     // const

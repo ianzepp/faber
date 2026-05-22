@@ -464,9 +464,7 @@ impl CliBuilder<'_> {
 
     fn default(&self, expr: &Expr) -> CliDefault {
         match &expr.kind {
-            ExprKind::Literal(Literal::String(sym)) | ExprKind::Literal(Literal::TemplateString(sym)) => {
-                CliDefault::Text(self.resolve(*sym))
-            }
+            ExprKind::Literal(Literal::String(sym)) => CliDefault::Text(self.resolve(*sym)),
             ExprKind::Literal(Literal::Integer(value)) => CliDefault::Integer(*value),
             ExprKind::Literal(Literal::Float(value)) => CliDefault::Float(*value),
             ExprKind::Literal(Literal::Bool(value)) => CliDefault::Bool(*value),

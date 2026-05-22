@@ -312,7 +312,6 @@ impl<'a> Lexer<'a> {
             }
             '#' => return self.scan_hash_comment(start),
             '"' | '\'' => return self.scan_string(start, c),
-            '`' => return self.scan_template(start),
             '0'..='9' => return self.scan_number(start, c),
             c if is_ident_start(c) => return self.scan_identifier(start),
             c => {
@@ -456,56 +455,6 @@ impl<'a> Lexer<'a> {
             self.extract_and_intern(start, 1, 1)
         };
         self.emit_token(TokenKind::String(sym), start);
-    }
-
-    /// Scan a template literal with embedded expressions.
-    ///
-    /// WHY: Template strings like `result: ${x + y}` are parsed as a single
-    /// token here, with interpolation handling deferred to the parser. This
-    /// keeps the lexer simple and avoids tokenizing embedded code twice.
-    fn scan_template(&mut self, start: u32) {
-        let mut terminated = false;
-
-        loop {
-            match self.cursor.peek() {
-                None => {
-                    self.emit_error(LexErrorKind::UnterminatedString, start, "unterminated template literal");
-                    break;
-                }
-                Some('\\') => {
-                    self.cursor.advance();
-                    self.cursor.advance();
-                }
-                Some('$') if self.cursor.peek_next() == Some('{') => {
-                    self.cursor.advance();
-                    self.cursor.advance();
-                    // WHY: Track brace depth to find matching `}`
-                    let mut depth = 1;
-                    while depth > 0 && !self.cursor.is_eof() {
-                        match self.cursor.advance() {
-                            Some('{') => depth += 1,
-                            Some('}') => depth -= 1,
-                            _ => {}
-                        }
-                    }
-                }
-                Some('`') => {
-                    self.cursor.advance();
-                    terminated = true;
-                    break;
-                }
-                _ => {
-                    self.cursor.advance();
-                }
-            }
-        }
-
-        let sym = if terminated {
-            self.extract_and_intern(start, 1, 1)
-        } else {
-            self.extract_and_intern(start, 1, 0)
-        };
-        self.emit_token(TokenKind::TemplateString(sym), start);
     }
 
     // =========================================================================

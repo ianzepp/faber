@@ -412,7 +412,7 @@ Text slices accept the full range form, including `per`.
 ### Primary Expressions
 
 ```ebnf
-primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
+primary := IDENTIFIER | NUMBER | STRING
          | 'ego' | 'verum' | 'falsum' | 'nihil'
          | arrayLiteral | objectLiteral
          | '(' expression ')'

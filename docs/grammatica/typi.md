@@ -17,11 +17,11 @@ fixum textus greeting ← "Salve, Munde"
 fixum textus empty ← ""
 ```
 
-String literals use double or single quotes. Template literals use backticks with `${...}` interpolation, just as in JavaScript:
+String literals use double or single quotes. Formatted strings use template application with `§` placeholders:
 
 ```fab
 fixum name = "Marcus"
-fixum message = `Hello, ${name}`
+fixum message = "Hello, §"(name)
 ```
 
 ### numerus (Integer)

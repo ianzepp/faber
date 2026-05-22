@@ -612,7 +612,7 @@ fn compile_accepts_textus_concatenation_and_compound_add() {
 }
 
 #[test]
-fn template_string_literal_no_longer_reports_unsupported_literal() {
+fn backtick_template_string_is_not_faber_syntax() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum name ← "Mundus"
@@ -621,10 +621,11 @@ fn template_string_literal_no_longer_reports_unsupported_literal() {
 }"#;
     let result = compile(&session, "test.fab", source);
 
+    assert!(!result.success());
     assert!(result
         .diagnostics
         .iter()
-        .all(|d| !d.message.contains("unsupported literal in lowering")));
+        .any(|d| d.message.contains("unexpected character: '`'")));
 }
 
 #[test]

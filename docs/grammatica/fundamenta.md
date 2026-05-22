@@ -127,11 +127,11 @@ fixum greeting = "hello"
 fixum single = 'single quotes'
 ```
 
-Template literals use backticks with `${...}` interpolation, following the familiar JavaScript pattern:
+Formatted strings use template application with `§` placeholders:
 
 ```fab
 fixum name = "Mundus"
-fixum message = `Hello ${name}`
+fixum message = "Hello §"(name)
 ```
 
 ### Booleans: verum and falsum

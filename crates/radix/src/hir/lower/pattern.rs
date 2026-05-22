@@ -131,10 +131,6 @@ pub fn lower_literal(lowerer: &mut Lowerer, lit: &Literal, span: Span) -> HirPat
         Literal::String(value) => HirLiteral::String(*value),
         Literal::Bool(value) => HirLiteral::Bool(*value),
         Literal::Nil => HirLiteral::Nil,
-        _ => {
-            lowerer.error("unsupported literal pattern");
-            return HirPattern::Wildcard;
-        }
     };
 
     HirPattern::Literal(literal)

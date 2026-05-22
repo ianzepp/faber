@@ -17,9 +17,9 @@ incipit {
     # Null
     fixum nothing ← nihil
 
-    # Template literals
+    # Template application
     fixum name ← "Mundus"
-    fixum message ← `Hello ${name}`
+    fixum message ← "Hello §"(name)
 
     nota integer
     nota decimal

@@ -182,11 +182,6 @@ impl Parser {
                 self.advance();
                 Some(Pattern::Literal(Literal::String(sym), span))
             }
-            TokenKind::TemplateString(sym) => {
-                let span = self.peek().span;
-                self.advance();
-                Some(Pattern::Literal(Literal::TemplateString(sym), span))
-            }
             TokenKind::Verum => {
                 let span = self.peek().span;
                 self.advance();

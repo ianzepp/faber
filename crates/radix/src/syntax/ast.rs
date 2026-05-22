@@ -744,7 +744,6 @@ pub enum Literal {
     Integer(i64),
     Float(f64),
     String(Symbol),
-    TemplateString(Symbol),
     Bool(bool),
     Nil,
 }

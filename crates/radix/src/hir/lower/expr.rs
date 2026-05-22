@@ -87,7 +87,7 @@ fn lower_literal(_lowerer: &mut Lowerer, lit: &Literal) -> HirExprKind {
     let hir_lit = match lit {
         Literal::Integer(n) => HirLiteral::Int(*n),
         Literal::Float(n) => HirLiteral::Float(*n),
-        Literal::String(s) | Literal::TemplateString(s) => HirLiteral::String(*s),
+        Literal::String(s) => HirLiteral::String(*s),
         Literal::Bool(b) => HirLiteral::Bool(*b),
         Literal::Nil => HirLiteral::Nil,
     };
@@ -188,7 +188,7 @@ impl<'a> Lowerer<'a> {
             .collect();
 
         match &call.callee.kind {
-            ExprKind::Literal(Literal::String(template) | Literal::TemplateString(template)) => {
+            ExprKind::Literal(Literal::String(template)) => {
                 HirExprKind::Scriptum(*template, args)
             }
             ExprKind::Member(member) => {
@@ -401,8 +401,7 @@ impl<'a> Lowerer<'a> {
             crate::syntax::ExprKind::Literal(crate::syntax::Literal::Float(_)) => {
                 self.types.primitive(Primitive::Fractus)
             }
-            crate::syntax::ExprKind::Literal(crate::syntax::Literal::String(_))
-            | crate::syntax::ExprKind::Literal(crate::syntax::Literal::TemplateString(_)) => {
+            crate::syntax::ExprKind::Literal(crate::syntax::Literal::String(_)) => {
                 self.types.primitive(Primitive::Textus)
             }
             crate::syntax::ExprKind::Literal(crate::syntax::Literal::Bool(_)) => {

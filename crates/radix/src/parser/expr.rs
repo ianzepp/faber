@@ -518,7 +518,6 @@ impl Parser {
                 | TokenKind::Integer(_)
                 | TokenKind::Float(_)
                 | TokenKind::String(_)
-                | TokenKind::TemplateString(_)
                 | TokenKind::Verum
                 | TokenKind::Falsum
                 | TokenKind::Nihil
@@ -674,7 +673,7 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   primary := literal | ident | array | object | paren | closure | collection-dsl
-    ///   literal := integer | float | string | template-string | bool | nil
+    ///   literal := integer | float | string | bool | nil
     ///   array := '[' (expr | 'sparge' expr) (',' (expr | 'sparge' expr))* ']'
     ///   object := '{' field (',' field)* '}'
     ///   paren := '(' expr ')'
@@ -699,10 +698,6 @@ impl Parser {
             TokenKind::String(s) => {
                 self.advance();
                 ExprKind::Literal(Literal::String(s))
-            }
-            TokenKind::TemplateString(s) => {
-                self.advance();
-                ExprKind::Literal(Literal::TemplateString(s))
             }
             TokenKind::Verum => {
                 self.advance();
@@ -1046,7 +1041,7 @@ impl Parser {
         self.expect_keyword(TokenKind::Scriptum, "expected 'scriptum'")?;
         self.expect(&TokenKind::LParen, "expected '(' after 'scriptum'")?;
 
-        // First arg is the template string
+        // First arg is the format string
         let template = self.parse_string()?;
 
         // Remaining args
