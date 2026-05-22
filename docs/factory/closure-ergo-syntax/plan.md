@@ -22,7 +22,7 @@ The redesign should make short closures short while preserving Faber's larger gr
 - type-first syntax remains canonical,
 - `→` and `⇥` continue to describe callable result and error channels,
 - single-statement expression bodies use a compact marker,
-- multi-line bodies require braces,
+- multi-statement closure bodies use an explicit `fac { ... }` block,
 - no new closure-only body marker is introduced if an existing language concept can carry the meaning.
 
 ## Current Reality
@@ -87,16 +87,16 @@ _ user ∴
     non user.activus
 ```
 
-Once a body needs vertical space, it must use braces:
+Once a closure body needs multiple statements, it must use an explicit `fac` block:
 
 ```fab
-User user {
+User user ∴ fac {
     nota user.nomen
     redde non user.activus
 }
 ```
 
-Formatters should prefer keeping short `∴` tails on one line. If the tail is complex enough to read poorly, they should convert or preserve a braced block form.
+Formatters should prefer keeping short `∴` tails on one line. If the tail is complex enough to read poorly, they should convert or preserve a `fac` block form.
 
 ### Closure Forms
 
@@ -121,33 +121,61 @@ numeri.compone((_ a, _ b) ∴ a + b)
 numeri.compone((numerus a, numerus b) ∴ a + b)
 ```
 
+Block closures use `∴ fac { ... }` rather than a bare braced body:
+
+```fab
+users.filtrata(_ user ∴ fac {
+    nota user.nomen
+    redde non user.activus
+})
+
+users.filtrata(User user ∴ fac {
+    nota user.nomen
+    redde non user.activus
+})
+
+numeri.compone((_ a, _ b) ∴ fac {
+    redde a + b
+})
+
+users.filtrata(_ user → bivalens ∴ fac {
+    redde parseFlag(user.nomen)
+} cape err {
+    redde falsum
+})
+```
+
+Closure-body `fac` may use `cape` for local recovery, matching the existing `fac { ... } cape err { ... }` statement shape. Closure-body `fac ... dum` is rejected for now; do-while closure bodies are too surprising to admit as part of the compact syntax pass.
+
 Bare identifiers are not closure parameters. An inferred closure parameter must still
 have an explicit type slot, written `_`, so the parser can recognize parameter
 syntax without reinterpreting an arbitrary expression before `∴`.
 
-Explicit callable signatures should use the existing result and error arrows, with a braced body:
+Explicit closure signatures are part of this redesign. They reuse the existing result and error-channel arrows, but they are a closure-expression form rather than the existing callable type syntax because they include parameter names.
 
 ```fab
-users.filtrata((User user) → bivalens {
+users.filtrata(User user → bivalens ∴ fac {
     redde non user.activus
 })
 
-texts.mappata((textus s) → numerus ⇥ ParseError {
+texts.mappata(textus s → numerus ⇥ ParseError ∴ fac {
     redde parse(s)
 })
 ```
 
 This keeps the meaning of `→` and `⇥` stable: they describe callable result and error channels, not the body boundary.
 
-### Error Handling
+### Error Handling Follow-Up
 
-Closures handle errors through the same callable type shape as named functions:
+Closure syntax should leave room for closures to handle errors through the same callable type shape as named functions:
 
 ```fab
 (textus) → numerus ⇥ ParseError
 ```
 
-An expression closure may be accepted where the expected type is fallible if the body expression can produce that error channel:
+Full closure error-channel support is a late implementation phase. The initial syntax work should not require adding closure `⇥` support beyond parsing enough structure to avoid grammar churn.
+
+Eventually, an expression closure may be accepted where the expected type is fallible if the body expression can produce that error channel:
 
 ```fab
 texts.mappata(_ s ∴ parse(s))
@@ -155,10 +183,10 @@ texts.mappata(_ s ∴ parse(s))
 
 When there is no expected fallible callable type, the closure body's error behavior should be inferred from the body and then checked normally against the call site.
 
-Explicit fallible closures should prefer braced signatures over crowded expression forms:
+Explicit fallible closures should prefer `fac` block signatures over crowded expression forms:
 
 ```fab
-(textus s) → numerus ⇥ ParseError {
+textus s → numerus ⇥ ParseError ∴ fac {
     redde parse(s)
 }
 ```
@@ -172,9 +200,10 @@ Do not introduce a separate closure-specific error syntax.
 - Add `∴` as a symbolic alias or canonical spelling for `ergo`.
 - Add compact closure expression syntax without the `clausura` keyword.
 - Preserve `→` and `⇥` as callable result and error type markers.
-- Require braces for multi-line closure bodies.
+- Add explicit closure signature syntax with parameter names before `∴`.
+- Require `∴ fac { ... }` for multi-statement closure bodies.
 - Support typed and context-inferred closure parameters, with `_ name` as the minimum inferred-parameter spelling.
-- Improve expected-type propagation so `lista<User>.filtrata(_ user ∴ ...)` can infer `user: User`.
+- Audit expected-type propagation and fill gaps so contextual `_` closure parameters continue to work in method-call and callable-argument positions.
 - Update docs, examples, Faber pretty-printing, and tests.
 
 ### Out of Scope
@@ -182,6 +211,7 @@ Do not introduce a separate closure-specific error syntax.
 - Changing function declaration syntax.
 - Changing callable type syntax.
 - Inventing a new error-channel operator.
+- Completing closure error-channel semantics before the syntax phases are stable.
 - Removing `ergo` text spelling.
 - Deciding broader keyword contextualization beyond syntax required here.
 - Reworking stdlib method names or signatures except tests/examples that exercise closures.
@@ -225,7 +255,7 @@ clausura User user {
 to:
 
 ```fab
-User user {
+User user ∴ fac {
     redde non user.activus
 }
 ```
@@ -239,11 +269,11 @@ If `clausura` remains as a compatibility spelling, generated Faber output should
 | 0 | Design review | Confirm `∴`/`ergo`, single-statement tails, closure forms, and compatibility stance. | Plan approved or revised before implementation. |
 | 1 | Grammar inventory | Inspect parser sites for `ergo`, closure parsing, and closure codegen. | Ledger records exact edit sites and ambiguity risks. |
 | 2 | Ergo symbol | Lex and parse `∴` anywhere `ergo` is accepted today, with matching single-statement behavior. | Existing `ergo` tests pass; new `∴` tests cover valid symbolic tails. |
-| 3 | Compact closure parser | Parse inferred, typed, multi-param, and signature-braced closure forms. | Parser tests prove the new forms and preserve old compatibility forms. |
-| 4 | Contextual closure typing | Push expected callable signatures into closure checking, including method-call arguments. | `users.filtrata(_ user ∴ non user.activus)` typechecks as `lista<User>`. |
-| 5 | Error-channel closures | Validate fallible closure signatures and expected fallible callable contexts. | Positive and negative tests cover `→ ... ⇥ ...` closure signatures. |
-| 6 | Codegen and printer | Update target codegen as needed and make Faber output prefer the new syntax. | Rust/TS/Go/Faber closure tests pass for expression and block forms. |
-| 7 | Docs and examples | Update EBNF, grammatica docs, stdlib examples, and migration notes. | Docs no longer teach `clausura ... : ...` as preferred inline syntax. |
+| 3 | Compact closure parser | Parse inferred, typed, multi-param, explicit-signature, and `∴ fac { ... }` block closure forms. | Parser tests prove the new forms and preserve old compatibility forms. |
+| 4 | Contextual closure typing audit | Verify expected callable signatures still flow into closure checking, especially method-call arguments. | Existing `_` closure inference remains green; any discovered gaps are fixed or recorded. |
+| 5 | Codegen and printer | Update target codegen as needed and make Faber output prefer the new syntax. | Rust/TS/Go/Faber closure tests pass for expression and `fac` block forms. |
+| 6 | Docs and examples | Update EBNF, grammatica docs, stdlib examples, and migration notes. | Docs no longer teach `clausura ... : ...` as preferred inline syntax. |
+| 7 | Error-channel closure follow-up | Validate fallible closure signatures and expected fallible callable contexts after syntax is stable. | Positive and negative tests cover `→ ... ⇥ ...` closure signatures, or a follow-up plan records remaining semantic work. |
 | 8 | Validation | Run full repository checks. | `./scripta/ci` passes. |
 
 ## Review Questions
@@ -251,8 +281,6 @@ If `clausura` remains as a compatibility spelling, generated Faber output should
 - Should `∴` be an exact alias for `ergo`, or should generated Faber prefer `∴` as canonical?
 - Should old `clausura` syntax remain indefinitely, warn, or be removed after a migration window?
 - Are unparenthesized typed closures with multiple parameters ever allowed, or should multi-param closures always require parentheses?
-- Should braced closure bodies without explicit result type be allowed for typed single-parameter closures?
-- Should `_ user { ... }` be allowed for inferred block closures, or should block closures require either an exact type or a parenthesized parameter list to avoid object/block ambiguity?
 - Does `si cond ∴ redde x` become preferred over `si cond ergo redde x`, or is `∴` mainly for closure-heavy code?
 
 ## Validation Targets
@@ -266,10 +294,10 @@ fixum _ sum ← nums.compone((_ a, _ b) ∴ a + b)
 fixum _ sum ← nums.compone((numerus a, numerus b) ∴ a + b)
 ```
 
-Positive braced closure:
+Positive block closure:
 
 ```fab
-fixum _ inactive ← users.filtrata((User user) → bivalens {
+fixum _ inactive ← users.filtrata(User user ∴ fac {
     redde non user.activus
 })
 ```
@@ -277,7 +305,7 @@ fixum _ inactive ← users.filtrata((User user) → bivalens {
 Positive fallible closure:
 
 ```fab
-fixum _ parsed ← texts.mappata((textus s) → numerus ⇥ ParseError {
+fixum _ parsed ← texts.mappata(textus s → numerus ⇥ ParseError ∴ fac {
     redde parse(s)
 })
 ```
@@ -291,6 +319,14 @@ fixum _ inactive ← users.filtrata(_ user ∴ {
 ```
 
 This keeps the invariant that `∴` is a single-statement tail marker, not a block introducer.
+
+```fab
+fixum _ inactive ← users.filtrata(_ user ∴ fac {
+    redde non user.activus
+} dum user.activus)
+```
+
+This keeps `fac ... dum` out of closure bodies unless a later design review explicitly admits do-while closure bodies.
 
 ---
 
