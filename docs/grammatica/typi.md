@@ -467,7 +467,7 @@ Casts are explicit acknowledgments of risk. When you write `⇢`, you are tellin
 ```fab
 # Cast to nullable type
 fixum num = 10
-fixum maybe = num ⇢ numerus?
+fixum maybe = num ⇢ numerus ∪ nihil
 
 # Cast with member access
 fixum response = getResponse()
