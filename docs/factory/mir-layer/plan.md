@@ -223,6 +223,9 @@ Checkpoint:
 Steps:
 
 - Add an internal lowering entry point from `AnalyzedUnit`.
+- Lower top-level Faber functions into `MirFunction` shells.
+- Treat MIR as a library-friendly collection of functions; do not require or privilege a `main` entry point.
+- If a source file has an executable entry block, lower it as an ordinary synthetic `MirFunction` rather than a special MIR root.
 - Add `radix mir` as the compiler-developer inspection command.
 - Add test helpers for deterministic MIR dump output.
 - Keep output deterministic and low-noise.
@@ -230,7 +233,8 @@ Steps:
 
 Checkpoint:
 
-- A simple `.fab` file can produce MIR inspection output.
+- A simple function-only `.fab` file can produce MIR inspection output.
+- A simple entry-block `.fab` file can produce MIR inspection output without introducing a special `main` concept.
 - Unsupported constructs fail clearly rather than silently lowering incorrectly.
 
 ### Phase 3: Primitive Expression Lowering
