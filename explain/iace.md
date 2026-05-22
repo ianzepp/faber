@@ -6,11 +6,15 @@ canonical = true
 summary = "Throws a recoverable error."
 syntax = "iace <expression>"
 aliases = ["throw"]
-related = ["tempta", "cape"]
+related = ["⇥", "cape", "mori", "redde"]
 +++
 
-Throws a recoverable error.
+Throws a recoverable error through the enclosing `⇥` alternate-exit path, or through a local `cape` handler attached to a structured statement.
 
 ```fab
-iace "err"
+functio fail() → numerus ⇥ textus {
+    iace "err"
+}
 ```
+
+`iace` is not fatal; `mori` is the fatal path. Without a local handler or an enclosing function with a `⇥` type, `iace` is rejected.

@@ -1,0 +1,15 @@
+# Recoverable alternate-exit contract with ⇥.
+
+functio divide(numerus a, numerus b) → numerus ⇥ textus {
+    si b ≡ 0 ergo iace "division by zero"
+    redde a / b
+}
+
+functio safe_divide(numerus a, numerus b) → numerus {
+    fac {
+        redde divide(a, b)
+    } cape err {
+        mone err
+        redde 0
+    }
+}

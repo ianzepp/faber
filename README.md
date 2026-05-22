@@ -38,6 +38,7 @@ From a checkout:
 
 cargo run -p faber -- targets
 cargo run -p faber -- explain ≡
+cargo run -p faber -- explain ⇥
 cargo run -p faber -- explain --search equality
 cargo run -p faber -- explain --json proba
 cargo run -p faber -- check examples/exempla/salve-munde.fab
@@ -46,6 +47,7 @@ cargo run -p faber -- test examples/exempla/proba/packages/passing
 cargo run -p faber -- emit -t rust examples/exempla/salve-munde.fab
 
 cargo run -p radix --bin radix -- targets
+cargo run -p radix --bin radix -- mir examples/exempla/salve-munde.fab
 cargo run -p radix --bin radix -- emit -t rust examples/exempla/salve-munde.fab
 ```
 
@@ -96,8 +98,18 @@ Run `cargo run -p faber -- init hello` to create a starter package. See
 
 **Radix** is the compiler-developer tool:
 
-- `radix lex`, `radix parse`, `radix hir`, `radix emit`, `radix check`, `radix targets`, `radix cli-ir`
+- `radix lex`, `radix parse`, `radix hir`, `radix mir`, `radix emit`, `radix check`, `radix targets`, `radix cli-ir`
 - Package policy lives in Faber; use `faber check --package` and `faber build` for local packages.
+
+The active compiler has a validated MIR inspection branch:
+
+```text
+Lex -> Parse -> Collect -> Resolve -> Lower -> Typecheck -> Analysis
+  -> typed HIR -> default target codegen
+  -> validated MIR -> inspection / internal executable probe
+```
+
+`radix mir` prints the validated middle IR for compiler-development inspection. Normal Rust output still uses the stable HIR-to-Rust backend; the MIR Rust probe is an internal boundary test, not the user-facing Rust backend.
 
 v0.33 shipped a single `faber` binary that combined both layers. v0.34 splits the binaries while keeping Faber compatibility aliases for compiler inspection commands.
 

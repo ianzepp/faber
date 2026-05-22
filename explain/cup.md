@@ -28,10 +28,10 @@ fixum numerus ∪ nihil maybeValue ← nihil
 **Canonicalization rules** (applied during lowering):
 
 - `T ∪ nihil` (or `nihil ∪ T`) lowers to the internal `Option<T>` representation.
-- `A ∪ B ∪ nihil` lowers to `Option<Union<A, B>>`.
+- `A ∪ B ∪ nihil` lowers to an optional union representation.
 - Duplicate members are removed: `T ∪ T ∪ nihil` → `Option<T>`.
 - `nihil ∪ nihil` is invalid and produces a diagnostic (degenerate absence-only union).
-- Non-null unions (`A ∪ B` where neither is nihil) currently lower to a fallback representation in Rust (e.g., `Box<dyn Any>` or enum shim depending on backend).
+- Non-null unions (`A ∪ B` where neither is nihil) lower to a backend-specific fallback today. The Rust target renders them as `Box<dyn std::any::Any>`.
 
 **Distinction from `discretio`**:
 

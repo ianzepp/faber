@@ -16,6 +16,8 @@ functio divide(numerus a, numerus b) → numerus ⇥ textus {
 ```
 
 Without a local handler or a declared function-level `⇥`, `iace` is a compile-time error.
+See [`examples/exempla/functio/exitus.fab`](../../examples/exempla/functio/exitus.fab)
+for a compact example that declares and handles a recoverable alternate exit.
 
 ## Structured Cape
 

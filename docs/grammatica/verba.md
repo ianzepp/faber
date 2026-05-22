@@ -278,8 +278,10 @@ Latin prepositions used in various syntactic contexts:
 | `ex`   | from       | Value iteration (`itera ex`); module import (`importa ex`)    |
 | `ad`   | to         | Target/destination (planned)                                  |
 | `per`  | through    | Iteration step in ranges                                      |
-| `⇢`    | as (type)  | Type cast / construction: `x ⇢ textus` (Latin aliases removed)     |
-| `ut`   | as (alias) | Rename in import/destructure: `nomen ut n`                    |
+| `→`    | returns    | Normal function, method, closure, or function-type return path      |
+| `⇥`    | may exit   | Recoverable alternate-exit type after a normal `→` return type      |
+| `⇢`    | as (type)  | Type cast / construction: `x ⇢ textus` (Latin aliases removed)      |
+| `ut`   | as (alias) | Rename in import/destructure: `nomen ut n`                         |
 
 ---
 

@@ -28,14 +28,18 @@ must match that type.
 
 ```fab
 functio divide(numerus a, numerus b) → numerus ⇥ textus {
-    si b = 0 ergo iace "division by zero"
+    si b ≡ 0 ergo iace "division by zero"
     redde a / b
 }
 ```
 
 `mori` remains fatal and is not part of the typed recoverable path. Calling a
-function with a `⇥` contract requires explicit handling or propagation syntax;
-until that syntax is defined, failable calls cannot be used as ordinary values.
+function with a `⇥` contract requires explicit handling or propagation syntax.
+Today, `fac { ... } cape err { ... }` is the canonical local handler form; broader
+propagation syntax remains deferred.
+
+See [`examples/exempla/functio/exitus.fab`](../../examples/exempla/functio/exitus.fab)
+for a small recoverable-exit example.
 
 ### Parameters
 

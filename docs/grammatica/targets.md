@@ -33,6 +33,16 @@ faber check=yes build=yes run=no package=no note=canonical pretty-print target; 
 - Faber output is useful as a canonical pretty-printer and inspection target.
 - Python is not part of the current `radix-rs targets` contract.
 
+## MIR Inspection
+
+Radix also exposes the compiler's validated middle IR for compiler-development inspection:
+
+```bash
+cargo run -p radix --bin radix -- mir examples/exempla/salve-munde.fab
+```
+
+MIR is an execution-shaped internal representation below typed HIR and above future lower-target backends. It is not a public package target, and normal Rust output still uses the stable HIR-to-Rust backend. The current MIR-to-Rust probe exists only to prove that validated MIR can feed an executable output path.
+
 If you need current repo status at a glance, see [`project.yaml`](../../project.yaml) and the root [`README.md`](../../README.md).
 
 ## Current Syntax Reminder

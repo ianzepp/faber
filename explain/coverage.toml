@@ -10,6 +10,7 @@ canonical_terms = [
   "arena",
   "argumenta",
   "→",
+  "⇥",
   "←",
   "@",
   "aut",
