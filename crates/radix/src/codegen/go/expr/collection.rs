@@ -16,7 +16,11 @@ pub(super) fn generate_struct_expr(
         w.write(&capitalize(codegen.resolve_symbol(*name)));
         w.write(": ");
         if let Some(field_ty) = codegen.struct_field_type(def_id, *name) {
-            generate_expr_for_go_type(codegen, value, field_ty, types, w)?;
+            if codegen.struct_field_is_sponte(def_id, *name) {
+                generate_option_wrapped_expr(codegen, value, field_ty, types, w)?;
+            } else {
+                generate_expr_for_go_type(codegen, value, field_ty, types, w)?;
+            }
         } else {
             generate_expr(codegen, value, types, w)?;
         }

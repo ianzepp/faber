@@ -2016,6 +2016,68 @@ incipit ergo cura arena fixum alloc {
 }
 
 #[test]
+fn nullable_union_type_forms_are_canonicalized() {
+    let session = session(Target::Rust);
+    let source = r#"typus MaybeValue = textus ∪ numerus ∪ nihil
+typus EitherValue = textus ∪ numerus
+
+functio nullable_alias() → MaybeValue {
+  redde 1
+}
+
+functio plain_alias() → EitherValue {
+  redde "ok"
+}
+
+functio duplicate_nullable() → textus ∪ textus ∪ nihil {
+  redde "ok"
+}
+
+functio nullable_direct() → textus ∪ nihil {
+  redde nihil
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(
+        result.success(),
+        "expected canonical union forms to compile: {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.clone())
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn plain_union_does_not_accept_nihil_without_nullable_member() {
+    let session = session(Target::Rust);
+    let source = r#"functio badplain() → textus ∪ numerus {
+  redde nihil
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|diag| diag
+        .message
+        .contains("return type does not match function signature")));
+}
+
+#[test]
+fn degenerate_nihil_only_union_is_rejected() {
+    let session = session(Target::Rust);
+    let source = r#"functio bad() → nihil ∪ nihil {
+  redde nihil
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|diag| diag
+        .message
+        .contains("union type cannot consist only of 'nihil'")));
+}
+
+#[test]
 fn conversio_glyph_form_compiles_to_parse() {
     let session = session(Target::Rust);
     let source = r#"incipit {

@@ -116,13 +116,17 @@ pub(super) fn generate_verte_expr(
                         HirObjectKey::Computed(_) | HirObjectKey::Spread(_) => continue,
                     }
                     w.write(": ");
-                    if let Some(field_ty) = match &field.key {
-                        HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
-                            codegen.struct_field_type(*def_id, *name)
-                        }
+                    if let Some((field_name, field_ty)) = match &field.key {
+                        HirObjectKey::Ident(name) | HirObjectKey::String(name) => codegen
+                            .struct_field_type(*def_id, *name)
+                            .map(|ty| (*name, ty)),
                         HirObjectKey::Computed(_) | HirObjectKey::Spread(_) => None,
                     } {
-                        generate_expr_for_go_type(codegen, value, field_ty, types, w)?;
+                        if codegen.struct_field_is_sponte(*def_id, field_name) {
+                            generate_option_wrapped_expr(codegen, value, field_ty, types, w)?;
+                        } else {
+                            generate_expr_for_go_type(codegen, value, field_ty, types, w)?;
+                        }
                     } else {
                         generate_expr(codegen, value, types, w)?;
                     }

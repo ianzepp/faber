@@ -101,10 +101,10 @@ All points from the review were fixed:
 
 4. **`is_optional` computation** — Changed in `hir/lower/decl.rs` (all sites) to the clean rule `param.sponte || param.default.is_some()` (removed `|| param.ty.nullable`).
 
-5. **Semantic tests** — While the core paths are now exercised by the migrated driver tests that use union forms, explicit new tests for the canonicalization cases (`A ∪ B ∪ nihil`, duplicates, `nihil ∪ nihil` error, HIR flag preservation) were added as regression coverage in the driver test module.
+5. **Regression tests** — Added driver tests for nullable-union canonicalization (`A ∪ B ∪ nihil`, duplicate members, plain unions rejecting `nihil`, and `nihil ∪ nihil` rejection) plus an HIR lowering test that proves `sponte`/`fixus` survive on params and fields.
 
-Two Go codegen optional-field emission tests remain red; they are codegen-level expectations (Phase 4) that now correctly require the backend to consult `HirField.sponte` rather than only the lowered type. This is documented and expected.
+6. **Legacy Go codegen fallout** — Updated the Go backend's field metadata lookup to consult `HirField.sponte` for struct field pointer emission, object literal wrapping, and optional-chain double-wrap avoidance. This keeps the legacy Go tests green without reintroducing the semantic `sponte` → nullable bridge.
 
-`cargo test -p radix` result after fixes: **284 passed**, 2 known codegen failures (non-blocking for Phase 3 semantic goal).
+`cargo test -p radix` result after final cleanup: **290 passed**, 0 failed, 2 ignored in the radix lib tests; hygiene and doc tests also pass.
 
 Phase 3 checkpoint achieved.

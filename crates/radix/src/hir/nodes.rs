@@ -149,7 +149,14 @@ pub struct HirParam {
     pub name: Symbol,
     pub ty: TypeId,
     pub mode: HirParamMode,
+    /// Voluntary / optional at call site (sourced from `sponte` in source).
+    /// Kept for compatibility with existing call-checking and test mocks.
     pub optional: bool,
+    /// Post-name declaration marker: the slot is voluntary (not required from provider).
+    pub sponte: bool,
+    /// Post-name declaration marker: the slot becomes immutable after its first value
+    /// (from argument, default, or initializer).
+    pub fixus: bool,
     pub span: Span,
 }
 
@@ -178,6 +185,11 @@ pub struct HirField {
     pub name: Symbol,
     pub ty: TypeId,
     pub is_static: bool,
+    /// Post-name declaration marker: the field is voluntary in object literals / construction.
+    pub sponte: bool,
+    /// Post-name declaration marker: the field is fixed after its initial value
+    /// (from literal, default via `:`, or later assignment).
+    pub fixus: bool,
     pub init: Option<HirExpr>,
     pub span: Span,
 }

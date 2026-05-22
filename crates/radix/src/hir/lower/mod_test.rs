@@ -1,5 +1,5 @@
 use super::lower;
-use crate::hir::{HirFunction, HirItemKind, HirTestMetadata, HirTestModifier};
+use crate::hir::{HirFunction, HirItemKind, HirStruct, HirTestMetadata, HirTestModifier};
 use crate::lexer::Interner;
 use crate::semantic::{passes, Resolver, TypeTable};
 
@@ -158,4 +158,31 @@ fn lowers_suite_modifiers_into_nested_test_metadata() {
         rendered,
         vec!["tag(parser)".to_owned(), "solum".to_owned(), "tag(unit)".to_owned()]
     );
+}
+
+#[test]
+fn preserves_sponte_and_fixus_markers_on_hir_declarations() {
+    let source = r#"functio invite(textus email sponte fixus vel "anon") → vacuum {}
+
+genus User {
+  textus nickname sponte fixus : "Anonymous"
+}"#;
+
+    let (hir, interner) = lower_source(source);
+
+    let HirItemKind::Function(HirFunction { params, .. }) = &hir.items[0].kind else {
+        panic!("expected lowered function");
+    };
+    assert_eq!(interner.resolve(params[0].name), "email");
+    assert!(params[0].optional);
+    assert!(params[0].sponte);
+    assert!(params[0].fixus);
+
+    let HirItemKind::Struct(HirStruct { fields, .. }) = &hir.items[1].kind else {
+        panic!("expected lowered struct");
+    };
+    assert_eq!(interner.resolve(fields[0].name), "nickname");
+    assert!(fields[0].sponte);
+    assert!(fields[0].fixus);
+    assert!(fields[0].init.is_some());
 }

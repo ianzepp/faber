@@ -508,6 +508,8 @@ impl<'a> Lowerer<'a> {
                 ty: self.lower_type(&param.ty),
                 mode: crate::hir::HirParamMode::Owned,
                 optional: false,
+                sponte: false,
+                fixus: false,
                 span: param.span,
             });
             self.bind_local(param.name.name, def_id);

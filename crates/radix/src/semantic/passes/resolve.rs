@@ -1106,9 +1106,7 @@ fn lower_type_expr(
             }
 
             if cleaned.is_empty() {
-                return Err(TypeLowerError::Error(
-                    "union type cannot consist only of 'nihil'".to_string(),
-                ));
+                return Err(TypeLowerError::Error("union type cannot consist only of 'nihil'".to_string()));
             }
 
             let base = if cleaned.len() == 1 {

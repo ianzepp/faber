@@ -334,14 +334,6 @@ impl Parser {
                 ));
             }
 
-            // Phase 2 bridge: set legacy nullable flag so that HIR lowering, codegen, and
-            // optional-chain tests that have not yet been taught about Field/Param.sponte
-            // continue to see Option<T> for voluntary slots. Removed in Phase 3.
-            let mut ty = ty;
-            if sponte {
-                ty.nullable = true;
-            }
-
             // Alias: ut NAME
             let alias = if self.eat_keyword(TokenKind::Ut) {
                 Some(self.parse_ident()?)
@@ -498,12 +490,6 @@ impl Parser {
                     ParseErrorKind::InvalidParameter,
                     "unexpected 'sponte' after 'fixus'; use 'type name sponte fixus' order",
                 ));
-            }
-
-            // Phase 2 bridge (see param site)
-            let mut ty = ty;
-            if sponte {
-                ty.nullable = true;
             }
 
             let init = if self.eat(&TokenKind::Colon) {

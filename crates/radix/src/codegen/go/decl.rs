@@ -49,6 +49,9 @@ pub fn generate_struct(
             // WHY: Go exports fields via uppercase. We capitalize the first letter.
             w.write(&capitalize(codegen.resolve_symbol(field.name)));
             w.write(" ");
+            if field.sponte {
+                w.write("*");
+            }
             w.writeln(&type_to_go(codegen, field.ty, types));
         }
     });

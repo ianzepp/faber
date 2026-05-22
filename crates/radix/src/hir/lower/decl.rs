@@ -407,7 +407,7 @@ impl<'a> Lowerer<'a> {
                         name: param.name.name,
                         ty: self.lower_type(&param.ty),
                         mode: lower_param_mode(param.mode),
-                        optional: param.sponte || param.ty.nullable || param.default.is_some(),
+                        optional: param.sponte || param.default.is_some(),
                         sponte: param.sponte,
                         fixus: param.fixus,
                         span: param.span,

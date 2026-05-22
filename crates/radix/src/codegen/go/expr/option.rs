@@ -76,9 +76,14 @@ pub(super) fn field_type_is_option(
     types: &TypeTable,
 ) -> bool {
     match normalize_receiver_type(types.get(object_ty), types) {
-        Type::Struct(def_id) => codegen
-            .struct_field_type(*def_id, field)
-            .is_some_and(|field_ty| matches!(normalize_receiver_type(types.get(field_ty), types), Type::Option(_))),
+        Type::Struct(def_id) => {
+            codegen.struct_field_is_sponte(*def_id, field)
+                || codegen
+                    .struct_field_type(*def_id, field)
+                    .is_some_and(|field_ty| {
+                        matches!(normalize_receiver_type(types.get(field_ty), types), Type::Option(_))
+                    })
+        }
         _ => false,
     }
 }

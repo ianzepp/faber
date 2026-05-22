@@ -46,6 +46,7 @@ pub struct GoCodegen<'a> {
     use_counts: FxHashMap<DefId, usize>,
     variant_fields: FxHashMap<DefId, Vec<Symbol>>,
     struct_fields: FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>,
+    struct_sponte_fields: FxHashMap<DefId, FxHashMap<Symbol, bool>>,
 }
 
 impl<'a> GoCodegen<'a> {
@@ -55,10 +56,13 @@ impl<'a> GoCodegen<'a> {
             use_counts: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
             struct_fields: FxHashMap::default(),
+            struct_sponte_fields: FxHashMap::default(),
         };
         codegen.use_counts = codegen.collect_use_counts(hir);
         codegen.variant_fields = codegen.collect_variant_fields(hir);
-        codegen.struct_fields = codegen.collect_struct_fields(hir);
+        let (struct_fields, struct_sponte_fields) = codegen.collect_struct_fields(hir);
+        codegen.struct_fields = struct_fields;
+        codegen.struct_sponte_fields = struct_sponte_fields;
         codegen
     }
 
@@ -92,6 +96,13 @@ impl<'a> GoCodegen<'a> {
             .and_then(|fields| fields.get(&field).copied())
     }
 
+    pub(super) fn struct_field_is_sponte(&self, def_id: DefId, field: Symbol) -> bool {
+        self.struct_sponte_fields
+            .get(&def_id)
+            .and_then(|fields| fields.get(&field).copied())
+            .unwrap_or(false)
+    }
+
     fn collect_use_counts(&self, hir: &HirProgram) -> FxHashMap<DefId, usize> {
         let mut counts = FxHashMap::default();
         for item in &hir.items {
@@ -115,18 +126,28 @@ impl<'a> GoCodegen<'a> {
         fields
     }
 
-    fn collect_struct_fields(&self, hir: &HirProgram) -> FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>> {
+    fn collect_struct_fields(
+        &self,
+        hir: &HirProgram,
+    ) -> (
+        FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>,
+        FxHashMap<DefId, FxHashMap<Symbol, bool>>,
+    ) {
         let mut fields = FxHashMap::default();
+        let mut sponte_fields = FxHashMap::default();
         for item in &hir.items {
             if let HirItemKind::Struct(strukt) = &item.kind {
                 let mut field_map = FxHashMap::default();
+                let mut sponte_map = FxHashMap::default();
                 for field in &strukt.fields {
                     field_map.insert(field.name, field.ty);
+                    sponte_map.insert(field.name, field.sponte);
                 }
                 fields.insert(item.def_id, field_map);
+                sponte_fields.insert(item.def_id, sponte_map);
             }
         }
-        fields
+        (fields, sponte_fields)
     }
 
     fn collect_item_use_counts(&self, counts: &mut FxHashMap<DefId, usize>, item: &HirItem) {
