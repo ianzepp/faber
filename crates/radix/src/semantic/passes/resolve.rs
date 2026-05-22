@@ -45,7 +45,7 @@ use crate::hir::DefId;
 use crate::lexer::Interner;
 use crate::semantic::{
     CollectionKind, FuncSig, Mutability, ParamMode, ParamType, Primitive, Resolver, ScopeKind, SemanticError,
-    SemanticErrorKind, Symbol, SymbolKind, TypeId, TypeTable,
+    SemanticErrorKind, Symbol, SymbolKind, Type, TypeId, TypeTable,
 };
 use crate::syntax::{
     BindingPattern, BlockStmt, ClausuraBody, ConversioTarget, DiscerneStmt, Expr, ExprKind, IfBody, Pattern,
@@ -1087,14 +1087,40 @@ fn lower_type_expr(
             if members.is_empty() {
                 return Err(TypeLowerError::Error("empty union type".to_string()));
             }
-            // Bridge for T ∪ nihil → option (see hir/lower/types.rs for identical logic)
-            let has_nihil = members.iter().any(|m| matches!(&m.kind, TypeExprKind::Named(n, _) if interner.resolve(n.name) == "nihil"));
-            if has_nihil {
-                let non = members.iter().find(|m| !matches!(&m.kind, TypeExprKind::Named(n, _) if interner.resolve(n.name) == "nihil")).unwrap_or(&members[0]);
-                let base = lower_type_expr(non, resolver, interner, types)?;
-                return Ok(types.option(base));
+
+            // Proper Phase 3 canonicalization (mirrors hir/lower/types.rs)
+            let mut seen = std::collections::HashSet::new();
+            let mut cleaned: Vec<TypeId> = Vec::new();
+            let mut had_nihil = false;
+
+            for m in members {
+                let lowered = lower_type_expr(m, resolver, interner, types)?;
+                // Check for nihil after lowering
+                if let Type::Primitive(Primitive::Nihil) = types.get(lowered) {
+                    had_nihil = true;
+                    continue;
+                }
+                if seen.insert(lowered) {
+                    cleaned.push(lowered);
+                }
             }
-            lower_type_expr(&members[0], resolver, interner, types)?
+
+            if cleaned.is_empty() {
+                return Err(TypeLowerError::Error(
+                    "union type cannot consist only of 'nihil'".to_string(),
+                ));
+            }
+
+            let base = if cleaned.len() == 1 {
+                cleaned[0]
+            } else {
+                types.intern(Type::Union(cleaned))
+            };
+            if had_nihil {
+                types.option(base)
+            } else {
+                base
+            }
         }
     };
 

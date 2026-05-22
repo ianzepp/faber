@@ -59,15 +59,49 @@ impl<'a> Lowerer<'a> {
             }
             TypeExprKind::Union(members) => {
                 if members.is_empty() {
+                    self.error("empty union type");
                     self.types.intern(Type::Error)
-                } else if members.iter().any(|m| matches!(&m.kind, TypeExprKind::Named(n, _) if self.interner.resolve(n.name) == "nihil")) {
-                    // Narrow nullable form: T ∪ nihil  →  Option<T>  (bridge for Phase 2 tests)
-                    let non_nihil = members.iter().find(|m| !matches!(&m.kind, TypeExprKind::Named(n, _) if self.interner.resolve(n.name) == "nihil")).unwrap_or(&members[0]);
-                    let base = self.lower_type(non_nihil);
-                    self.types.option(base)
                 } else {
-                    // General union: lower first member as placeholder (proper union types in Phase 3)
-                    self.lower_type(&members[0])
+                    // Phase 3 canonicalization per plan:
+                    // - Strip nihil members
+                    // - Deduplicate
+                    // - If nothing left → degenerate error (nihil ∪ nihil)
+                    // - 1 left → Option<T>
+                    // - >1 left → Option<Union<...>>
+                    let mut seen = std::collections::HashSet::new();
+                    let mut cleaned: Vec<TypeId> = Vec::new();
+                    let mut had_nihil = false;
+
+                    for m in members {
+                        let lowered = self.lower_type(m);
+                        if let Type::Primitive(Primitive::Nihil) = self.types.get(lowered) {
+                            had_nihil = true;
+                            continue;
+                        }
+                        if seen.insert(lowered) {
+                            cleaned.push(lowered);
+                        }
+                    }
+
+                    if cleaned.is_empty() {
+                        self.error("union type cannot consist only of 'nihil' (use the literal 'nihil' directly)");
+                        self.types.intern(Type::Error)
+                    } else if had_nihil {
+                        // Only wrap in Option when nihil was actually present
+                        if cleaned.len() == 1 {
+                            self.types.option(cleaned[0])
+                        } else {
+                            let union_ty = self.types.intern(Type::Union(cleaned));
+                            self.types.option(union_ty)
+                        }
+                    } else {
+                        // Plain union with no nihil
+                        if cleaned.len() == 1 {
+                            cleaned[0]
+                        } else {
+                            self.types.intern(Type::Union(cleaned))
+                        }
+                    }
                 }
             }
         };

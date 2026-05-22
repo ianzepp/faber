@@ -112,13 +112,15 @@ impl<'a> Lowerer<'a> {
         for param in &decl.params {
             let param_def_id = self.next_def_id();
             let binding_name = param.alias.as_ref().unwrap_or(&param.name);
-            let is_optional = param.sponte || param.ty.nullable || param.default.is_some();
+            let is_optional = param.sponte || param.default.is_some();
             params.push(HirParam {
                 def_id: param_def_id,
                 name: binding_name.name,
                 ty: self.lower_type(&param.ty),
                 mode: lower_param_mode(param.mode),
                 optional: is_optional,
+                sponte: param.sponte,
+                fixus: param.fixus,
                 span: param.span,
             });
         }
@@ -130,6 +132,8 @@ impl<'a> Lowerer<'a> {
                 ty: self.command_args_type(decl.name.name),
                 mode: HirParamMode::Owned,
                 optional: false,
+                sponte: false,
+                fixus: false,
                 span: ident.span,
             }
         });
@@ -207,6 +211,8 @@ impl<'a> Lowerer<'a> {
                         name: field.name.name,
                         ty: self.lower_type(&field.ty),
                         is_static: field.is_static,
+                        sponte: field.sponte,
+                        fixus: field.fixus,
                         init,
                         span: member.span,
                     });
@@ -216,13 +222,15 @@ impl<'a> Lowerer<'a> {
                     for param in &method.params {
                         let param_def_id = self.next_def_id();
                         let binding_name = param.alias.as_ref().unwrap_or(&param.name);
-                        let is_optional = param.sponte || param.ty.nullable || param.default.is_some();
+                        let is_optional = param.sponte || param.default.is_some();
                         params.push(HirParam {
                             def_id: param_def_id,
                             name: binding_name.name,
                             ty: self.lower_type(&param.ty),
                             mode: lower_param_mode(param.mode),
                             optional: is_optional,
+                            sponte: param.sponte,
+                            fixus: param.fixus,
                             span: param.span,
                         });
                     }
@@ -400,6 +408,8 @@ impl<'a> Lowerer<'a> {
                         ty: self.lower_type(&param.ty),
                         mode: lower_param_mode(param.mode),
                         optional: param.sponte || param.ty.nullable || param.default.is_some(),
+                        sponte: param.sponte,
+                        fixus: param.fixus,
                         span: param.span,
                     })
                     .collect(),
