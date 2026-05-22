@@ -17,7 +17,7 @@
 //! - NFC normalization: All interned strings are Unicode NFC-normalized to
 //!   ensure `résumé` and `re\u0301sume\u0301` are the same symbol
 //! - Error resilience: Invalid characters become Error tokens, scanning continues
-//! - Nested comments: Block comments nest like /* /* */ */ for robustness
+//! - Hash comments: `#` comments extend to the end of the line
 
 use super::cursor::Cursor;
 use super::token::{Span, Symbol, Token, TokenKind};
@@ -169,7 +169,7 @@ impl<'a> Lexer<'a> {
             .push(LexError { kind, span: Span::new(start, self.cursor.pos()), message: message.into() });
     }
 
-    fn scan_operator(&mut self, start: u32, c: char) -> Option<TokenKind> {
+    fn scan_operator(&mut self, _start: u32, c: char) -> Option<TokenKind> {
         let kind = match c {
             '.' => TokenKind::Dot,
             '‥' => TokenKind::DotDot,
@@ -193,17 +193,7 @@ impl<'a> Lexer<'a> {
             '*' => TokenKind::Star,
             '%' => TokenKind::Percent,
             '-' => TokenKind::Minus,
-            '/' => {
-                if self.cursor.eat('/') {
-                    self.scan_line_comment(start);
-                    return None;
-                } else if self.cursor.eat('*') {
-                    self.scan_block_comment(start);
-                    return None;
-                } else {
-                    TokenKind::Slash
-                }
-            }
+            '/' => TokenKind::Slash,
             '=' => TokenKind::Eq,
             '!' => {
                 if self.cursor.eat('.') {
@@ -336,33 +326,9 @@ impl<'a> Lexer<'a> {
     // COMMENT SCANNERS
     // =========================================================================
 
-    /// Scan a line comment starting with `//`.
-    ///
-    /// WHY: Doc comments (`///`) are preserved for documentation generation.
-    /// Regular comments are kept in the token stream for formatting tools.
-    fn scan_line_comment(&mut self, start: u32) {
-        // Check for doc comment (///)
-        let is_doc = self.cursor.eat('/');
-
-        self.cursor.eat_while(|c| c != '\n');
-
-        let content_start = if is_doc { start + 3 } else { start + 2 };
-        let text = self.cursor.slice(content_start, self.cursor.pos());
-        let sym = self.interner.intern(text.trim());
-
-        let kind = if is_doc {
-            TokenKind::DocComment(sym)
-        } else {
-            TokenKind::LineComment(sym)
-        };
-
-        self.emit_token(kind, start);
-    }
-
     /// Scan a hash comment starting with `#`.
     ///
-    /// WHY: Supports shebang lines (`#!/usr/bin/env faber`) and Python-style
-    /// comments for familiarity.
+    /// WHY: `#` is the only Faber source comment form.
     fn scan_hash_comment(&mut self, start: u32) {
         self.cursor.eat_while(|c| c != '\n');
 
@@ -370,30 +336,6 @@ impl<'a> Lexer<'a> {
         let sym = self.interner.intern(text.trim());
 
         self.emit_token(TokenKind::LineComment(sym), start);
-    }
-
-    /// Scan a block comment with nesting support.
-    ///
-    /// WHY: Nested comments allow commenting out code that already contains
-    /// comments without breaking. Unlike C, `/* /* */ */` is valid.
-    fn scan_block_comment(&mut self, start: u32) {
-        let mut depth = 1;
-
-        while depth > 0 && !self.cursor.is_eof() {
-            match self.cursor.advance() {
-                Some('/') if self.cursor.eat('*') => depth += 1, // WHY: Nested comment opens
-                Some('*') if self.cursor.eat('/') => depth -= 1, // WHY: Comment closes
-                _ => {}
-            }
-        }
-
-        if depth > 0 {
-            // WHY: Emit error but still create a token for recovery
-            self.emit_error(LexErrorKind::UnterminatedComment, start, "unterminated block comment");
-        }
-
-        let sym = self.extract_and_intern(start, 2, 2);
-        self.emit_token(TokenKind::BlockComment(sym), start);
     }
 
     // =========================================================================

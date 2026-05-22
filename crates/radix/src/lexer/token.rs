@@ -338,9 +338,7 @@ pub enum TokenKind {
     Ellipsis, // … (inclusive range)
 
     // === Comments ===
-    LineComment(Symbol),  // // or #
-    BlockComment(Symbol), // /* */
-    DocComment(Symbol),   // ///
+    LineComment(Symbol), // #
 
     // === Special ===
     Eof,   // End of file marker
@@ -469,9 +467,6 @@ impl TokenKind {
     /// WHY: Parsers typically skip comments, but formatters need to preserve
     /// them. This helper makes the distinction explicit.
     pub fn is_comment(&self) -> bool {
-        matches!(
-            self,
-            TokenKind::LineComment(_) | TokenKind::BlockComment(_) | TokenKind::DocComment(_)
-        )
+        matches!(self, TokenKind::LineComment(_))
     }
 }

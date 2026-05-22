@@ -39,26 +39,22 @@ pub struct DiagnosticSpec {
 ///
 /// ERROR CODES:
 ///   LEX001 - UnterminatedString
-///   LEX002 - UnterminatedComment
-///   LEX003 - InvalidNumber
-///   LEX004 - InvalidEscape
-///   LEX005 - UnexpectedCharacter
+///   LEX002 - InvalidNumber
+///   LEX003 - InvalidEscape
+///   LEX004 - UnexpectedCharacter
 pub fn lex_spec(kind: LexErrorKind) -> DiagnosticSpec {
     match kind {
         LexErrorKind::UnterminatedString => {
             DiagnosticSpec { code: "LEX001", help: Some("close the string literal before the end of the line or file") }
         }
-        LexErrorKind::UnterminatedComment => {
-            DiagnosticSpec { code: "LEX002", help: Some("close the block comment with '*/'") }
-        }
         LexErrorKind::InvalidNumber => {
-            DiagnosticSpec { code: "LEX003", help: Some("check numeric separators and base prefixes") }
+            DiagnosticSpec { code: "LEX002", help: Some("check numeric separators and base prefixes") }
         }
         LexErrorKind::InvalidEscape => {
-            DiagnosticSpec { code: "LEX004", help: Some("use a supported escape sequence or escape the backslash") }
+            DiagnosticSpec { code: "LEX003", help: Some("use a supported escape sequence or escape the backslash") }
         }
         LexErrorKind::UnexpectedCharacter => {
-            DiagnosticSpec { code: "LEX005", help: Some("remove the character or escape it if it should be literal") }
+            DiagnosticSpec { code: "LEX004", help: Some("remove the character or escape it if it should be literal") }
         }
     }
 }

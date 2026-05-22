@@ -88,8 +88,6 @@ pub struct LexError {
 pub enum LexErrorKind {
     /// String literal missing closing quote
     UnterminatedString,
-    /// Block comment missing closing `*/`
-    UnterminatedComment,
     /// Malformed numeric literal (e.g., `0x`, `1e`)
     InvalidNumber,
     /// Invalid escape sequence in string

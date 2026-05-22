@@ -668,6 +668,32 @@ fn triple_quote_string_is_not_faber_syntax() {
 }
 
 #[test]
+fn slash_line_comment_is_not_faber_syntax() {
+    let session = session(Target::Rust);
+    let source = "incipit {\n  // old comment\n  nota \"ok\"\n}";
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("expected expression")));
+}
+
+#[test]
+fn slash_block_comment_is_not_faber_syntax() {
+    let session = session(Target::Rust);
+    let source = "incipit {\n  /* old comment */\n  nota \"ok\"\n}";
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("expected expression")));
+}
+
+#[test]
 fn compile_accepts_finge_variant_construction() {
     let session = session(Target::Rust);
     let source = r#"discretio Event {
