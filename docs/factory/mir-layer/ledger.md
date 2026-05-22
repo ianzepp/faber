@@ -489,3 +489,22 @@ Behavior boundary:
 - General propagation syntax remains out of scope.
 - `demum` cleanup/finally semantics remain deferred.
 - Target backends still do not consume MIR. Structured `cape` codegen remains out of scope except for existing target rejection/fallback behavior.
+
+## Phase 6 Split Planning Update
+
+Status: planned.
+
+Decision captured:
+
+- Former Phase 6 is split into Phase 6A and Phase 6B.
+- Phase 6A owns the shared MIR contract for aggregate payloads, projections, option/null operations, runtime intrinsics, and provider identity.
+- Phase 6B owns aggregate and option lowering after the Phase 6A contract is in place.
+- Phase 7 remains the runtime intrinsic boundary, but now consumes the Phase 6A contract rather than inventing its own runtime/provider shapes.
+- Phase 7 does not need to wait for full Phase 6B completion if Phase 6A has stabilized the shared contract.
+
+Planning artifacts:
+
+- `docs/factory/mir-layer/phase-6a-delivery.md` added for the shared MIR contract.
+- `docs/factory/mir-layer/phase-6b-delivery.md` added for aggregate/option lowering.
+- `docs/factory/mir-layer/phase-7-delivery.md` added for runtime intrinsic/provider lowering after the contract.
+- `docs/factory/mir-layer/plan.md` updated to replace Phase 6 with Phase 6A and Phase 6B and to clarify Phase 7's dependency on Phase 6A.

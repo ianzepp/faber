@@ -1,6 +1,6 @@
 # MIR Layer Factory Plan
 
-**Status**: in-progress (Phases 0–5C complete; 6–12 pending)
+**Status**: in-progress (Phases 0–5C complete; 6A–12 pending)
 **Created**: 2026-05-22
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/mir-layer/`
@@ -168,8 +168,9 @@ drop value
 | 5A | Alternate-exit surface | Add the typed alternate-exit glyph contract with `→ Success ⇥ Error` through lexing, parsing, HIR, and semantic signatures. | `radix check` accepts explicit failable signatures and rejects `iace` where no alternate exit is declared. |
 | 5B | Alternate-exit MIR lowering | Lower `iace` and `mori` through the new function contract into explicit MIR exits. | MIR distinguishes normal `return` from recoverable `return_error` without Rust `Result` syntax. |
 | 5C | Structured `cape` handling surface | Replace `tempta` as the canonical local handler model by attaching `cape` to structured statements and conditional arms. | `fac`, `dum`, `si`, `sin`, and `secus` can consume local `iace` and failable-call alternate exits without dynamic exception search. |
-| 6 | Aggregate and option contract | Represent structs, enums, tuples, arrays, maps, option/null, optional chain, and non-null assertion. | MIR uses explicit construction/projection/runtime operations; no high-level optional-chain nodes remain. |
-| 7 | Runtime intrinsic boundary | Define target-neutral intrinsics for printing, string formatting, collection operations, conversions, and stdlib-backed calls. | MIR references runtime/provider operations without Rust module paths or Cargo details. |
+| 6A | Aggregate, option, and runtime MIR contract | Define the shared MIR node vocabulary for aggregate payloads, projections, option/null operations, runtime intrinsics, and provider identity. | Phase 6B and Phase 7 can implement against one stable target-neutral MIR contract. |
+| 6B | Aggregate and option lowering | Represent structs, enums, tuples, arrays, maps, option/null, optional chain, and non-null assertion using the Phase 6A contract. | MIR uses explicit construction/projection/runtime operations; no high-level optional-chain nodes remain for the supported subset. |
+| 7 | Runtime intrinsic boundary | Define and lower target-neutral intrinsics for printing, string formatting, collection operations, conversions, and stdlib-backed calls using the Phase 6A contract. | MIR references runtime/provider operations without Rust module paths or Cargo details. |
 | 8 | MIR validation | Add validation for block termination, type presence, operand compatibility, def-use sanity, and unresolved placeholders. | Invalid MIR is rejected before any backend sees it; diagnostics point back to source spans where possible. |
 | 9 | Rust backend vertical slice | Add a MIR-to-Rust backend behind an explicit experimental path for the supported subset. | Selected examples generate Rust from MIR and compile/run through Cargo with behavior matching the existing backend. |
 | 10 | Rust backend migration | Move stable lowering responsibilities from HIR-to-Rust into MIR where proven. | Existing Rust backend tests pass with MIR enabled for selected constructs; fallback remains for unported constructs. |
@@ -341,26 +342,51 @@ Checkpoint:
 - `tempta` is no longer treated as the canonical local handler surface.
 - MIR makes local handler flow explicit without dynamic stack search.
 
-### Phase 6: Aggregate and Option Contract
+### Phase 6A: Aggregate, Option, and Runtime MIR Contract
 
 Steps:
 
-- Lower struct construction and field access.
-- Represent enum variants and pattern-match inputs.
-- Represent `T ∪ nihil` with an explicit option operation model.
+- Define aggregate construction payloads that preserve tuple/list/set order, struct field names, map keys, and enum variant identity.
+- Tighten projection/index representation so Phase 6B can lower field and index access without fabricating unstable value IDs.
+- Define option/null MIR operations or control-flow forms for nil wrapping, nil tests, unwrap/assertion, optional chain, and `vel`.
+- Define structured runtime intrinsic payloads for diagnostics, string formatting, conversions, collection operations, and provider calls.
+- Keep provider identity separate from target linkage and `@ verte` target translation strings.
+- Update deterministic MIR dump formatting for each new contract shape.
+- Add MIR node/dump tests for aggregate payloads, projections, option operations, runtime intrinsics, and provider identity.
+- Keep broad HIR lowering fail-closed.
+
+Checkpoint:
+
+- MIR has one shared target-neutral contract that Phase 6B and Phase 7 can both consume.
+- The contract can represent named struct fields, keyed map entries, operand-friendly index access, nullable operations, and structured runtime/provider identity.
+- No backend consumes the new MIR shapes.
+
+### Phase 6B: Aggregate and Option Lowering
+
+Steps:
+
+- Lower struct construction and field access using the Phase 6A aggregate/projection contract.
+- Represent enum variants and pattern-match inputs where Phase 6A supports their payload shape.
+- Lower tuple, list, map, and set literals using explicit aggregate payloads or Phase 6A-approved runtime operations.
+- Represent `T ∪ nihil` with the Phase 6A option operation model.
 - Lower optional chain and non-null assertion.
-- Define list/map/set construction as MIR aggregate or runtime intrinsic operations.
+- Lower `vel` / coalesce according to Faber nullable semantics, not target truthiness.
+- Extend assignment lowering for supported field/index places.
+- Keep runtime-backed collection methods and stdlib/provider calls deferred to Phase 7.
+- Reject unsupported aggregate shapes with clear MIR-lowering diagnostics.
 
 Checkpoint:
 
 - MIR expresses aggregate and optional behavior explicitly.
-- Unsupported aggregate shapes produce clear MIR-lowering diagnostics.
+- Unsupported aggregate/option shapes produce clear MIR-lowering diagnostics.
+- No high-level optional-chain nodes remain for the supported subset.
 
 ### Phase 7: Runtime Intrinsic Boundary
 
 Steps:
 
-- Define a target-neutral intrinsic enum for operations such as:
+- Consume the Phase 6A runtime/provider MIR contract.
+- Lower HIR runtime-backed operations into target-neutral intrinsic/provider calls such as:
   - `nota`,
   - string formatting,
   - numeric/text conversions,
@@ -368,6 +394,7 @@ Steps:
   - stdlib provider calls.
 - Keep provider identity separate from target linkage.
 - Avoid Rust module paths, Cargo dependency specs, WASM imports, and native object names in MIR.
+- Keep aggregate/option construction semantics owned by Phase 6B except where an operation is explicitly runtime-backed.
 
 Checkpoint:
 
