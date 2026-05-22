@@ -49,7 +49,7 @@ runtime_call panic(...)
 unreachable
 ```
 
-If `MirIntrinsic::Panic` is not sufficiently expressive for typed operands, Phase 5B may tighten the runtime-call payload only as narrowly as needed for `mori`.
+The panic runtime call should use `numquam` as its `return_ty` when available, then seal the block with `Unreachable`. If `MirIntrinsic::Panic` is not sufficiently expressive for typed operands, Phase 5B may tighten the runtime-call payload only as narrowly as needed for `mori`.
 
 ## Repo-Aware Baseline
 
@@ -58,7 +58,20 @@ If `MirIntrinsic::Panic` is not sufficiently expressive for typed operands, Phas
 - `MirStmtKind::RuntimeCall` already exists.
 - `dump.rs` already renders `return_error`.
 - `mir::lower` currently rejects `HirExprKind::Throw` and `HirExprKind::Panic` as unsupported.
+- Phase 5A added `HirFunction::err_ty` and semantic `FuncSig::err`.
+- Phase 5A already rejects ordinary source-level failable calls until caller-side handling or propagation syntax exists.
+- Phase 5A allows `iace` inside a local `tempta` / `cape` handler by typechecking the handled body with a local unknown error sink.
 - No backend consumes MIR.
+
+## Interaction With Phase 5A
+
+Phase 5B should assume only semantically accepted source reaches `radix mir`, but MIR unit tests may still construct malformed HIR defensively.
+
+- A normal source-level `iace` without `⇥ Error` should already fail in Phase 5A semantic analysis.
+- MIR lowering should still reject fabricated HIR where `HirExprKind::Throw` appears in a function with no `err_ty`.
+- A failable source-level call in ordinary expression position should already fail in Phase 5A semantic analysis.
+- Phase 5B should not add a `TryCall` / success-error edge form yet.
+- `HirExprKind::Tempta` must remain fail-closed as a whole. Do not descend into its body to lower inner `iace` statements during Phase 5B.
 
 ## Stage Graph
 
@@ -71,9 +84,9 @@ If `MirIntrinsic::Panic` is not sufficiently expressive for typed operands, Phas
 7. Seal the current block with `ReturnError`.
 8. Lower `HirExprKind::Panic` through a `mori` helper.
 9. Emit a target-neutral panic runtime call and seal with `Unreachable`.
-10. Add negative tests for `iace` without an alternate-exit type.
+10. Add defensive unit tests for fabricated HIR with `iace` but no alternate-exit type.
 11. Keep `Tempta` fail-closed with an explicit local-handler diagnostic.
-12. Keep failable direct calls fail-closed until caller propagation syntax is defined.
+12. Keep failable direct calls out of MIR lowering until caller propagation syntax is defined; Phase 5A should reject them before MIR.
 
 ## Checkpoints
 
@@ -82,7 +95,8 @@ If `MirIntrinsic::Panic` is not sufficiently expressive for typed operands, Phas
 - `iace` in a non-failable function fails clearly.
 - `mori` emits fatal unreachable flow and does not require `⇥`.
 - `tempta` / `cape` / `demum` remain unsupported with explicit diagnostics.
-- Failable calls remain unsupported unless and until a later caller-side phase defines propagation or local handling.
+- Source-level failable calls remain rejected before MIR unless and until a later caller-side phase defines propagation or local handling.
+- No `TryCall` or failable-call control-flow terminator is introduced in Phase 5B.
 - Existing Phase 3 and Phase 4 MIR tests continue to pass.
 - No target backend consumes MIR.
 
@@ -134,7 +148,8 @@ functio handled() → numerus ⇥ textus {
 - Focused MIR tests for `error_ty` dump formatting.
 - Focused MIR tests for `iace` to `return_error`.
 - Focused MIR tests for `mori` to panic plus `unreachable`.
-- Negative MIR tests for deferred `tempta` and failable calls.
+- Negative MIR tests for deferred `tempta`.
+- Defensive MIR unit tests for fabricated undeclared `iace`.
 - `cargo test -p radix mir`.
 - `cargo test -p radix`.
 - `./scripta/ci` before marking Phase 5B complete.
