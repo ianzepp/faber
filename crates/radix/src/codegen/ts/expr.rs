@@ -183,9 +183,7 @@ pub fn generate_expr(
             w.write(")");
         }
         HirExprKind::Scriptum(template, args) => {
-            w.write("`");
-            w.write(&render_scriptum_template(codegen.resolve_symbol(*template), args.len()));
-            w.write("`");
+            generate_scriptum_expr(codegen, codegen.resolve_symbol(*template), args, types, w)?;
         }
         HirExprKind::Panic(value) | HirExprKind::Throw(value) => {
             w.write("(() => { throw new Error(String(");
@@ -779,19 +777,60 @@ fn assign_op_to_ts(op: HirBinOp) -> &'static str {
     }
 }
 
-fn render_scriptum_template(template: &str, arg_count: usize) -> String {
-    let mut rendered = template.to_owned();
-    for idx in (1..=arg_count).rev() {
-        rendered = rendered.replace(&format!("§{}", idx), &format!("${{{}}}", idx - 1));
-    }
-
+fn generate_scriptum_expr(
+    codegen: &TsCodegen<'_>,
+    template: &str,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
     let mut auto_index = 0usize;
-    while let Some(pos) = rendered.find('§') {
-        rendered.replace_range(pos..=pos, &format!("${{{}}}", auto_index));
-        auto_index += 1;
-    }
+    let mut literal = String::new();
+    let mut chars = template.chars().peekable();
 
-    rendered
+    w.write("`");
+    while let Some(ch) = chars.next() {
+        if ch != '§' {
+            push_ts_template_char(&mut literal, ch);
+            continue;
+        }
+
+        w.write(&literal);
+        literal.clear();
+
+        let mut index = String::new();
+        while chars.peek().is_some_and(|next| next.is_ascii_digit()) {
+            index.push(chars.next().expect("peeked digit"));
+        }
+
+        let arg_index = if index.is_empty() {
+            let current = auto_index;
+            auto_index += 1;
+            current
+        } else {
+            index.parse::<usize>().unwrap_or(usize::MAX)
+        };
+
+        w.write("${");
+        if let Some(arg) = args.get(arg_index) {
+            generate_expr(codegen, arg, types, w)?;
+        } else {
+            w.write("undefined");
+        }
+        w.write("}");
+    }
+    w.write(&literal);
+    w.write("`");
+    Ok(())
+}
+
+fn push_ts_template_char(out: &mut String, ch: char) {
+    match ch {
+        '`' => out.push_str("\\`"),
+        '\\' => out.push_str("\\\\"),
+        '$' => out.push_str("\\$"),
+        _ => out.push(ch),
+    }
 }
 
 pub fn contains_await_in_block(block: &HirBlock) -> bool {

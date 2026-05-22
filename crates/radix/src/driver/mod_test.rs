@@ -992,6 +992,23 @@ fn rust_output_uses_format_macro_for_scriptum() {
 }
 
 #[test]
+fn rust_output_uses_zero_based_numbered_scriptum_placeholders() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum first ← "prima"
+  fixum second ← "secunda"
+  nota scriptum("ordo: §1, §0", first, second)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("format!(\"ordo: {1}, {0}\""));
+}
+
+#[test]
 fn rust_output_converts_textus_literals_to_owned_strings() {
     let session = session(Target::Rust);
     let source = r#"functio pick(bivalens flag) → textus {

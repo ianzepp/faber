@@ -1,13 +1,27 @@
 use super::*;
 use crate::hir::HirScribeKind;
-pub(super) fn render_scriptum_template(template: &str, arg_count: usize) -> String {
-    let mut rendered = template.to_owned();
-    // Replace §N placeholders with Go's %v format verbs
-    for idx in (1..=arg_count).rev() {
-        rendered = rendered.replace(&format!("§{}", idx), "%v");
+pub(super) fn render_scriptum_template(template: &str, _arg_count: usize) -> String {
+    let mut rendered = String::with_capacity(template.len());
+    let mut chars = template.chars().peekable();
+    while let Some(ch) = chars.next() {
+        match ch {
+            '%' => rendered.push_str("%%"),
+            '§' => {
+                let mut index = String::new();
+                while chars.peek().is_some_and(|next| next.is_ascii_digit()) {
+                    index.push(chars.next().expect("peeked digit"));
+                }
+                if index.is_empty() {
+                    rendered.push_str("%v");
+                } else if let Ok(index) = index.parse::<usize>() {
+                    rendered.push_str(&format!("%[{}]v", index + 1));
+                } else {
+                    rendered.push_str("%!v(BADINDEX)");
+                }
+            }
+            _ => rendered.push(ch),
+        }
     }
-    // Replace bare § with %v
-    rendered = rendered.replace('§', "%v");
     rendered
 }
 pub(super) fn generate_scribe_expr(

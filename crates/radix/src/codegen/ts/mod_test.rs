@@ -554,7 +554,7 @@ fn emits_optional_chain_closure_template_and_await() {
     let obj = interner.intern("obj");
     let field = interner.intern("nomen");
     let arg = interner.intern("x");
-    let tmpl = interner.intern("salve §1");
+    let tmpl = interner.intern("salve §0");
     let mut types = TypeTable::new();
     let textus = types.primitive(Primitive::Textus);
     let numerus = types.primitive(Primitive::Numerus);
@@ -700,7 +700,7 @@ fn emits_optional_chain_closure_template_and_await() {
     let code = render_ts(&program, &types, &interner);
     assert!(code.contains("obj?.nomen"));
     assert!(code.contains("(x: number): number => x"));
-    assert!(code.contains("`salve ${0}`"));
+    assert!(code.contains("`salve ${\"x\"}`"));
     assert!(code.contains("(async () => {"));
     assert!(code.contains("await "));
 }

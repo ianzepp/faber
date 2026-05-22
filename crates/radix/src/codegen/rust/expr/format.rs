@@ -1,11 +1,24 @@
 use super::*;
 pub(super) fn rust_format_template(template: &str) -> String {
     let mut out = String::with_capacity(template.len());
-    for ch in template.chars() {
+    let mut chars = template.chars().peekable();
+    while let Some(ch) = chars.next() {
         match ch {
             '{' => out.push_str("{{"),
             '}' => out.push_str("}}"),
-            '§' => out.push_str("{}"),
+            '§' => {
+                let mut index = String::new();
+                while chars.peek().is_some_and(|next| next.is_ascii_digit()) {
+                    index.push(chars.next().expect("peeked digit"));
+                }
+                if index.is_empty() {
+                    out.push_str("{}");
+                } else {
+                    out.push('{');
+                    out.push_str(&index);
+                    out.push('}');
+                }
+            }
             _ => out.push(ch),
         }
     }
