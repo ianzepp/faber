@@ -85,6 +85,10 @@ impl Validator<'_, '_> {
     }
 
     fn validate_function(&mut self, function: &MirFunction, functions_by_id: FxHashMap<MirFunctionId, &MirFunction>) {
+        self.validate_mir_type(function.return_ty, function.span);
+        if let Some(error_ty) = function.error_ty {
+            self.validate_mir_type(error_ty, function.span);
+        }
         let locals = self.collect_locals(function);
         let temps = self.collect_temps(function);
         let blocks = self.collect_blocks(function);
@@ -99,11 +103,13 @@ impl Validator<'_, '_> {
     fn collect_locals(&mut self, function: &MirFunction) -> FxHashMap<MirLocalId, MirType> {
         let mut locals = FxHashMap::default();
         for param in &function.params {
+            self.validate_mir_type(param.ty, param.span);
             if locals.insert(param.local, param.ty).is_some() {
                 self.error(param.span, format!("duplicate MIR local id _{}", param.local.0));
             }
         }
         for local in &function.locals {
+            self.validate_mir_type(local.ty, local.span);
             match locals.insert(local.id, local.ty) {
                 Some(existing) if existing.semantic_id() != local.ty.semantic_id() => {
                     self.error(
@@ -120,6 +126,7 @@ impl Validator<'_, '_> {
     fn collect_temps(&mut self, function: &MirFunction) -> FxHashMap<MirTempId, MirType> {
         let mut temps = FxHashMap::default();
         for temp in &function.temps {
+            self.validate_mir_type(temp.ty, temp.span);
             if temps.insert(temp.id, temp.ty).is_some() {
                 self.error(temp.span, format!("duplicate MIR temp id %{}", temp.id.0));
             }
@@ -270,6 +277,7 @@ impl Validator<'_, '_> {
     }
 
     fn validate_value(&mut self, scope: &FunctionScope<'_>, value: &MirValue) {
+        self.validate_mir_type(value.ty, value.span);
         match &value.kind {
             MirValueKind::Operand(operand) => {
                 self.validate_operand(scope, operand, value.span);
@@ -415,6 +423,7 @@ impl Validator<'_, '_> {
         call: &MirRuntimeCall,
         span: Span,
     ) {
+        self.validate_mir_type(call.return_ty, span);
         for arg in &call.args {
             self.validate_operand(scope, arg, span);
         }
@@ -441,6 +450,7 @@ impl Validator<'_, '_> {
                 );
             }
             MirIntrinsic::Convert(conversion) => {
+                self.validate_mir_type(conversion.target_ty, span);
                 self.require_assignable(conversion.target_ty, call.return_ty, span, "conversion return type mismatch");
                 if let Some(fallback) = &conversion.fallback {
                     if let Some(fallback_ty) = self.validate_operand(scope, fallback, span) {
@@ -503,6 +513,7 @@ impl Validator<'_, '_> {
     }
 
     fn validate_aggregate(&mut self, scope: &FunctionScope<'_>, aggregate: &MirAggregate, span: Span) {
+        self.validate_mir_type(aggregate.ty, span);
         match (&aggregate.kind, &aggregate.fields) {
             (
                 MirAggregateKind::Tuple | MirAggregateKind::Array | MirAggregateKind::Set,
@@ -524,9 +535,6 @@ impl Validator<'_, '_> {
             }
             (MirAggregateKind::Struct(_), MirAggregateFields::Named(items))
             | (MirAggregateKind::EnumVariant(_), MirAggregateFields::Named(items)) => {
-                if items.is_empty() {
-                    self.error(span, "named aggregate payload is empty");
-                }
                 for item in items {
                     self.validate_operand(scope, &item.value, span);
                 }
@@ -740,6 +748,62 @@ impl Validator<'_, '_> {
     fn require_block(&mut self, scope: &FunctionScope<'_>, block: MirBlockId, span: Span) {
         if !scope.blocks.contains(&block) {
             self.error(span, format!("block bb{} does not exist", block.0));
+        }
+    }
+
+    fn validate_mir_type(&mut self, ty: MirType, span: Span) {
+        let mut seen = FxHashSet::default();
+        self.validate_type_id(ty.semantic_id(), span, &mut seen);
+    }
+
+    fn validate_type_id(
+        &mut self,
+        ty: crate::semantic::TypeId,
+        span: Span,
+        seen: &mut FxHashSet<crate::semantic::TypeId>,
+    ) {
+        if !seen.insert(ty) {
+            return;
+        }
+
+        match self.context.types.get(ty).clone() {
+            Type::Infer(_) => self.error(span, "MIR type is unresolved inference variable"),
+            Type::Error => self.error(span, "MIR type is semantic error recovery type"),
+            Type::Array(inner)
+            | Type::Set(inner)
+            | Type::Option(inner)
+            | Type::Ref(_, inner)
+            | Type::Alias(_, inner) => self.validate_type_id(inner, span, seen),
+            Type::Map(key, value) => {
+                self.validate_type_id(key, span, seen);
+                self.validate_type_id(value, span, seen);
+            }
+            Type::Record(fields) => {
+                for field_ty in fields.values() {
+                    self.validate_type_id(*field_ty, span, seen);
+                }
+            }
+            Type::Func(sig) => {
+                for param in &sig.params {
+                    self.validate_type_id(param.ty, span, seen);
+                }
+                self.validate_type_id(sig.ret, span, seen);
+                if let Some(error_ty) = sig.err {
+                    self.validate_type_id(error_ty, span, seen);
+                }
+            }
+            Type::Applied(base, args) => {
+                self.validate_type_id(base, span, seen);
+                for arg in args {
+                    self.validate_type_id(arg, span, seen);
+                }
+            }
+            Type::Union(members) => {
+                for member in members {
+                    self.validate_type_id(member, span, seen);
+                }
+            }
+            Type::Primitive(_) | Type::Struct(_) | Type::Enum(_) | Type::Interface(_) | Type::Param(_) => {}
         }
     }
 

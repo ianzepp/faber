@@ -3,7 +3,7 @@ use crate::codegen::Target;
 use crate::driver::{Config, Session};
 use crate::lexer::{Span, Symbol};
 use crate::mir::lower_analyzed_unit;
-use crate::semantic::{Primitive, TypeTable};
+use crate::semantic::{InferVar, Primitive, Type, TypeTable};
 
 fn span() -> Span {
     Span::new(0, 0)
@@ -97,6 +97,33 @@ fn rejects_return_type_mismatch() {
     program.functions[0].return_ty = ty(&types, Primitive::Textus);
 
     expect_validation_error(&program, &types, "return type mismatch");
+}
+
+#[test]
+fn rejects_unresolved_infer_types() {
+    let mut types = TypeTable::new();
+    let infer = MirType::semantic(types.intern(Type::Infer(InferVar(0))));
+    let program = MirProgram {
+        functions: vec![MirFunction {
+            id: MirFunctionId(0),
+            source: None,
+            name: None,
+            params: Vec::new(),
+            locals: Vec::new(),
+            temps: Vec::new(),
+            blocks: vec![MirBlock {
+                id: MirBlockId(0),
+                statements: Vec::new(),
+                terminator: MirTerminator { kind: MirTerminatorKind::Return(None), span: span() },
+                span: span(),
+            }],
+            return_ty: infer,
+            error_ty: None,
+            span: span(),
+        }],
+    };
+
+    expect_validation_error(&program, &types, "unresolved inference variable");
 }
 
 #[test]
@@ -295,6 +322,8 @@ fn representative_lowered_phase_3_to_7_mir_validates() {
         r#"functio choose(bivalens ready) → numerus { si ready { redde 1 } secus { redde 2 } }"#,
         r#"functio maybe(textus ∪ nihil name) → textus { redde name vel "ignotus" }"#,
         r#"genus Persona { textus nomen numerus aetas: 0 } functio age() → numerus { fixum Persona p ← { nomen: "Ada" } ⇢ Persona redde p.aetas }"#,
+        r#"genus VacuumStruct {} functio empty_struct() → VacuumStruct { redde {} ⇢ VacuumStruct }"#,
+        r#"discretio Status { Active } functio active() → Status { redde finge Active ⇢ Status }"#,
         r#"functio count(lista<numerus> xs) → numerus { redde xs.longitudo() }"#,
         r#"functio parse(textus raw) → numerus { redde raw ⇒ numerus<i32, Hex> vel 0 }"#,
         r#"functio log(textus name) → vacuum { nota "salve" vide name mone "cave" }"#,

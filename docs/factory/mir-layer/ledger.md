@@ -704,7 +704,30 @@ Deferred checks:
 
 Validation:
 
-- `cargo test -p radix mir` passed: 61 tests passed.
-- `cargo test -p radix` passed: 390 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `cargo test -p radix mir` passed: 62 tests passed.
+- `cargo test -p radix` passed: 391 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `cargo fmt --all --check` passed.
+- `./scripta/ci` passed.
+
+## Phase 8 Verification Audit
+
+Status: complete after verification.
+
+Verification audit on 2026-05-22 confirmed:
+
+- Successful MIR lowering runs through validation before returning from `lower_analyzed_unit`.
+- Direct invalid-MIR tests cover invalid block targets, local/temp/value references, return mismatches, `return_error` misuse, branch condition type mismatch, malformed `try_call` edges, runtime destination mismatch, aggregate payload shape mismatch, and unresolved inference types.
+- Representative Phase 3-7 MIR fixtures still validate and dump deterministically.
+- Target backends still do not consume MIR.
+
+Verification found and fixed two Stage 8 gaps:
+
+- Empty named aggregate payloads are valid for empty structs and unit enum variants; validation now accepts them.
+- Unresolved semantic `Type::Infer` and semantic recovery `Type::Error` are now rejected recursively anywhere they appear inside MIR types.
+
+Validation rerun after the fixes:
+
+- `cargo test -p radix mir` passed: 62 tests passed.
+- `cargo test -p radix` passed: 391 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
 - `cargo fmt --all --check` passed.
 - `./scripta/ci` passed.
