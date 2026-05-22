@@ -3,7 +3,7 @@ use super::types;
 use super::{CodeWriter, CodegenError, TsCodegen};
 use crate::hir::{
     HirArrayElement, HirBinOp, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirIteraMode, HirLiteral,
-    HirObjectKey, HirOptionalChainKind, HirStmtKind, HirTransformKind, HirUnOp,
+    HirObjectKey, HirOptionalChainKind, HirRangeKind, HirStmtKind, HirTransformKind, HirUnOp,
 };
 use crate::semantic::{Primitive, Type, TypeTable};
 
@@ -62,6 +62,10 @@ pub fn generate_expr(
             w.write(codegen.resolve_symbol(*field));
         }
         HirExprKind::Index(object, index) => {
+            if matches!(object.ty.map(|ty| types.get(ty)), Some(Type::Primitive(Primitive::Textus))) {
+                generate_textus_index_expr(codegen, object, index, types, w)?;
+                return Ok(());
+            }
             generate_expr(codegen, object, types, w)?;
             w.write("[");
             generate_expr(codegen, index, types, w)?;
@@ -821,6 +825,47 @@ fn generate_scriptum_expr(
     }
     w.write(&literal);
     w.write("`");
+    Ok(())
+}
+
+fn generate_textus_index_expr(
+    codegen: &TsCodegen<'_>,
+    object: &HirExpr,
+    index: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    match &index.kind {
+        HirExprKind::Intervallum { start, end, step, kind } => {
+            w.write("Array.from(");
+            generate_expr(codegen, object, types, w)?;
+            w.write(").slice(");
+            generate_expr(codegen, start, types, w)?;
+            w.write(", ");
+            match kind {
+                HirRangeKind::Exclusive => generate_expr(codegen, end, types, w)?,
+                HirRangeKind::Inclusive => {
+                    w.write("(");
+                    generate_expr(codegen, end, types, w)?;
+                    w.write(") + 1");
+                }
+            }
+            w.write(")");
+            if let Some(step) = step {
+                w.write(".filter((_, __faber_i) => __faber_i % Math.max(1, ");
+                generate_expr(codegen, step, types, w)?;
+                w.write(") === 0)");
+            }
+            w.write(".join(\"\")");
+        }
+        _ => {
+            w.write("(Array.from(");
+            generate_expr(codegen, object, types, w)?;
+            w.write(")[");
+            generate_expr(codegen, index, types, w)?;
+            w.write("] ?? \"\")");
+        }
+    }
     Ok(())
 }
 

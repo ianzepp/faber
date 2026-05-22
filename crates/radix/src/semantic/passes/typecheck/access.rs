@@ -48,6 +48,16 @@ impl<'a> TypeChecker<'a> {
     ) -> TypeId {
         let resolved = self.resolve_type(object_ty);
         let resolved_kind = self.types.get(resolved).clone();
+        if matches!(resolved_kind, Type::Primitive(Primitive::Textus)) {
+            if !self.is_textus_index_type(idx_ty) {
+                self.error(
+                    SemanticErrorKind::InvalidOperandTypes,
+                    "textus index must be numerus or range",
+                    index_span,
+                );
+            }
+            return self.types.primitive(Primitive::Textus);
+        }
         let kind = match resolved_kind {
             Type::Array(elem) => Some((Some(elem), None, None)),
             Type::Map(key, value) => Some((None, Some(key), Some(value))),
@@ -80,6 +90,16 @@ impl<'a> TypeChecker<'a> {
                 );
                 self.error_type
             }
+        }
+    }
+    fn is_textus_index_type(&mut self, idx_ty: TypeId) -> bool {
+        if self.is_integer(idx_ty) {
+            return true;
+        }
+
+        match self.types.get(self.resolve_type(idx_ty)).clone() {
+            Type::Union(types) => types.into_iter().all(|ty| self.is_integer(ty)),
+            _ => false,
         }
     }
     pub(super) fn check_field_from_type(

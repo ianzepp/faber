@@ -398,6 +398,17 @@ String literal call syntax is the canonical source form for format-template appl
 
 This lowers to the compiler's `scriptum("...", args...)` form. Use the string-template form in ordinary source; reserve `scriptum(...)` for explicit desugaring examples and compiler-facing documentation.
 
+For `textus`, bracket indexing is Unicode-scalar based:
+
+```fab
+"Salve, §!"[7]            # "§"
+"hello world"[0‥5]        # "hello"
+"hello world"[0 usque 10] # "hello world"
+"abcdef"[0‥6 per 2]      # "ace"
+```
+
+Text slices accept the full range form, including `per`.
+
 ### Primary Expressions
 
 ```ebnf

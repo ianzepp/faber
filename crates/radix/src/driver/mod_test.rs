@@ -1042,6 +1042,69 @@ fn rust_output_uses_numbered_string_literal_format_application() {
 }
 
 #[test]
+fn rust_output_supports_unicode_textus_index_and_range_slice() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum ch ← "Salve, §!"[7]
+  fixum prefix ← "hello world"[0‥5]
+  fixum whole ← "hello world"[0 usque 10]
+  fixum stepped ← "abcdef"[0‥6 per 2]
+  nota ch, prefix, whole, stepped
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".chars().nth("));
+    assert!(output.code.contains(".step_by("));
+    assert!(output.code.contains("collect::<String>()"));
+}
+
+#[test]
+fn typescript_output_supports_unicode_textus_index_and_range_slice() {
+    let session = session(Target::TypeScript);
+    let source = r#"incipit {
+  fixum ch ← "Salve, §!"[7]
+  fixum prefix ← "hello world"[0‥5]
+  fixum whole ← "hello world"[0 usque 10]
+  fixum stepped ← "abcdef"[0‥6 per 2]
+  nota ch, prefix, whole, stepped
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::TypeScript(output)) = result.output else {
+        panic!("expected TypeScript output");
+    };
+    assert!(output.code.contains("Array.from("));
+    assert!(output.code.contains(".filter((_, __faber_i)"));
+    assert!(output.code.contains(".join(\"\")"));
+}
+
+#[test]
+fn go_output_supports_unicode_textus_index_and_range_slice() {
+    let session = session(Target::Go);
+    let source = r#"incipit {
+  fixum ch ← "Salve, §!"[7]
+  fixum prefix ← "hello world"[0‥5]
+  fixum whole ← "hello world"[0 usque 10]
+  fixum stepped ← "abcdef"[0‥6 per 2]
+  nota ch, prefix, whole, stepped
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Go(output)) = result.output else {
+        panic!("expected Go output");
+    };
+    assert!(output.code.contains("[]rune("));
+    assert!(output.code.contains("__faber_step"));
+    assert!(output.code.contains("return string(__faber_out)"));
+}
+
+#[test]
 fn rust_output_converts_textus_literals_to_owned_strings() {
     let session = session(Target::Rust);
     let source = r#"functio pick(bivalens flag) → textus {
