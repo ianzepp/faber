@@ -199,6 +199,38 @@ function f0 -> ty#5 {
 }
 
 #[test]
+fn mir_output_for_control_flow_source_returns_deterministic_text() {
+    let output = mir_output_for_source(
+        "main.fab",
+        "functio signum(numerus n) → numerus { si n > 0 ergo redde n redde 0 }",
+    )
+    .expect("MIR output");
+
+    assert_eq!(
+        output,
+        "\
+function f0 -> ty#1 {
+  params:
+    _0: ty#1
+  locals:
+    let _0: ty#1
+  temps:
+    %0: ty#3
+    %1: ty#1
+  bb0:
+    %0 = _0 > const int 0: ty#3
+    branch %0 bb1 bb2
+  bb1:
+    return _0
+  bb2:
+    %1 = const int 0: ty#1
+    return %1
+}
+"
+    );
+}
+
+#[test]
 fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
     let help = RadixCli::command().render_help().to_string();
 

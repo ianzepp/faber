@@ -20,7 +20,7 @@ pub struct MirError {
 
 impl MirError {
     fn unsupported(span: Span, what: impl Into<String>) -> Self {
-        Self { message: format!("unsupported MIR lowering in phase 3: {}", what.into()), span }
+        Self { message: format!("unsupported MIR lowering in phase 4: {}", what.into()), span }
     }
 
     fn missing_type(span: Span, what: impl Into<String>) -> Self {
@@ -143,14 +143,28 @@ struct LocalBinding {
     ty: MirType,
 }
 
+struct OpenBlock {
+    id: MirBlockId,
+    statements: Vec<MirStmt>,
+    terminator: Option<MirTerminator>,
+    span: Span,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct LoopContext {
+    perge_target: MirBlockId,
+    rumpe_target: MirBlockId,
+}
+
 struct FunctionBuilder<'a> {
     types: &'a TypeTable,
     bindings: FxHashMap<DefId, LocalBinding>,
     params: Vec<MirParam>,
     locals: Vec<MirLocalDecl>,
     temps: Vec<MirTemp>,
-    statements: Vec<MirStmt>,
-    terminator: Option<MirTerminator>,
+    blocks: Vec<OpenBlock>,
+    current: Option<MirBlockId>,
+    loops: Vec<LoopContext>,
     errors: Vec<MirError>,
     next_value: u32,
 }
@@ -163,8 +177,9 @@ impl<'a> FunctionBuilder<'a> {
             params: Vec::new(),
             locals: Vec::new(),
             temps: Vec::new(),
-            statements: Vec::new(),
-            terminator: None,
+            blocks: Vec::new(),
+            current: None,
+            loops: Vec::new(),
             errors: Vec::new(),
             next_value: 0,
         }
@@ -182,34 +197,17 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_body(&mut self, body: &HirBlock) -> Vec<MirBlock> {
-        for stmt in &body.stmts {
-            self.lower_stmt(stmt);
-        }
-
-        if let Some(expr) = &body.expr {
-            self.errors.push(MirError::unsupported(
-                expr.span,
-                "block tail expressions before expression-result MIR lowering",
-            ));
-        }
-
-        let terminator = self
-            .terminator
-            .take()
-            .unwrap_or(MirTerminator { kind: MirTerminatorKind::Return(None), span: body.span });
-
-        vec![MirBlock {
-            id: MirBlockId(0),
-            statements: std::mem::take(&mut self.statements),
-            terminator,
-            span: body.span,
-        }]
+        let entry = self.fresh_block(body.span);
+        self.switch_to(entry);
+        self.lower_block_statement(body);
+        self.terminate_open_current(MirTerminatorKind::Return(None), body.span);
+        self.finish_blocks()
     }
 
     fn lower_stmt(&mut self, stmt: &HirStmt) {
-        if self.terminator.is_some() {
+        if !self.current_is_open() {
             self.errors
-                .push(MirError::unsupported(stmt.span, "statements after a MIR terminator"));
+                .push(MirError::unsupported(stmt.span, "statement after a MIR terminator"));
             return;
         }
 
@@ -224,23 +222,18 @@ impl<'a> FunctionBuilder<'a> {
             }
             HirStmtKind::Redde(Some(expr)) => {
                 if let Some(value) = self.lower_return_expr(expr) {
-                    self.terminator =
-                        Some(MirTerminator { kind: MirTerminatorKind::Return(Some(value)), span: stmt.span });
+                    self.terminate_current(MirTerminatorKind::Return(Some(value)), stmt.span);
                 }
             }
             HirStmtKind::Redde(None) => {
-                self.terminator = Some(MirTerminator { kind: MirTerminatorKind::Return(None), span: stmt.span });
+                self.terminate_current(MirTerminatorKind::Return(None), stmt.span);
             }
             HirStmtKind::Ad(_) => self.errors.push(MirError::unsupported(
                 stmt.span,
                 "ad provider blocks before effectful MIR lowering",
             )),
-            HirStmtKind::Rumpe => self
-                .errors
-                .push(MirError::unsupported(stmt.span, "rumpe before control-flow MIR lowering")),
-            HirStmtKind::Perge => self
-                .errors
-                .push(MirError::unsupported(stmt.span, "perge before control-flow MIR lowering")),
+            HirStmtKind::Rumpe => self.lower_rumpe(stmt.span),
+            HirStmtKind::Perge => self.lower_perge(stmt.span),
             HirStmtKind::Tacet => self
                 .errors
                 .push(MirError::unsupported(stmt.span, "tacet before statement-level MIR lowering")),
@@ -269,10 +262,7 @@ impl<'a> FunctionBuilder<'a> {
             return;
         };
 
-        let Some(init_operand) = self.lower_expr(init) else {
-            return;
-        };
-        self.assign(MirPlace::local(id), init_operand, mir_ty, span);
+        self.lower_expr_to_destination(init, MirPlace::local(id), mir_ty);
     }
 
     fn lower_assignment_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
@@ -281,9 +271,7 @@ impl<'a> FunctionBuilder<'a> {
         };
 
         let (place, ty) = self.lower_assignment_place(lhs)?;
-        let value = self.lower_expr(rhs)?;
-
-        self.assign(place.clone(), value, ty, expr.span);
+        self.lower_expr_to_destination(rhs, place.clone(), ty)?;
         Some(MirOperand::Place(place))
     }
 
@@ -312,6 +300,9 @@ impl<'a> FunctionBuilder<'a> {
             HirExprKind::Unary(op, operand) => self.lower_unary(*op, operand, expr),
             HirExprKind::Binary(op, lhs, rhs) => self.lower_binary(*op, lhs, rhs, expr),
             HirExprKind::Call(callee, args) => self.lower_call(callee, args, expr),
+            HirExprKind::Block(block) => self.lower_block_expr(block, expr),
+            HirExprKind::Si(cond, then_block, else_block) => self.lower_si_expr(cond, then_block, else_block, expr),
+            HirExprKind::Dum(cond, block) => self.lower_dum_expr(cond, block, expr),
             HirExprKind::Assign(_, _) => self.lower_assignment_expr(expr),
             HirExprKind::AssignOp(_, _, _) => {
                 self.errors.push(MirError::unsupported(
@@ -337,6 +328,62 @@ impl<'a> FunctionBuilder<'a> {
             }
             MirOperand::Place(_) | MirOperand::Temp(_) => Some(operand),
         }
+    }
+
+    fn lower_expr_to_destination(&mut self, expr: &HirExpr, destination: MirPlace, ty: MirType) -> Option<()> {
+        match &expr.kind {
+            HirExprKind::Block(block) => self.lower_block_to_destination(block, destination, ty, expr.span),
+            HirExprKind::Si(cond, then_block, else_block) => {
+                self.lower_si_to_destination(cond, then_block, else_block.as_ref(), destination, ty, expr.span)
+            }
+            _ => {
+                let value = self.lower_expr(expr)?;
+                self.assign(destination, value, ty, expr.span);
+                Some(())
+            }
+        }
+    }
+
+    fn lower_block_expr(&mut self, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {
+        let ty = self.expr_ty(expr)?;
+        if self.is_vacuum(ty) {
+            self.lower_block_statement(block);
+            return Some(MirOperand::Constant(MirConstant::Unit));
+        }
+
+        let temp = self.push_temp(ty, expr.span);
+        self.lower_block_to_destination(block, MirPlace::temp(temp), ty, expr.span)?;
+        Some(MirOperand::Temp(temp))
+    }
+
+    fn lower_si_expr(
+        &mut self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        else_block: &Option<HirBlock>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let ty = self.expr_ty(expr)?;
+        if self.is_vacuum(ty) {
+            self.lower_si_statement(cond, then_block, else_block.as_ref(), expr.span);
+            return Some(MirOperand::Constant(MirConstant::Unit));
+        }
+
+        let temp = self.push_temp(ty, expr.span);
+        self.lower_si_to_destination(cond, then_block, else_block.as_ref(), MirPlace::temp(temp), ty, expr.span)?;
+        Some(MirOperand::Temp(temp))
+    }
+
+    fn lower_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {
+        let ty = self.expr_ty(expr)?;
+        if !self.is_vacuum(ty) {
+            self.errors
+                .push(MirError::unsupported(expr.span, "dum expression with non-vacuum result"));
+            return None;
+        }
+
+        self.lower_dum(cond, block, expr.span);
+        Some(MirOperand::Constant(MirConstant::Unit))
     }
 
     fn lower_path(&mut self, def_id: DefId, span: Span) -> Option<MirOperand> {
@@ -368,10 +415,8 @@ impl<'a> FunctionBuilder<'a> {
 
     fn lower_unary(&mut self, op: HirUnOp, operand: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
         let Some(op) = mir_un_op(op) else {
-            self.errors.push(MirError::unsupported(
-                expr.span,
-                "unary operator without a phase 3 MIR primitive",
-            ));
+            self.errors
+                .push(MirError::unsupported(expr.span, "unary operator without a MIR primitive"));
             return None;
         };
         let operand = self.lower_expr(operand)?;
@@ -382,10 +427,8 @@ impl<'a> FunctionBuilder<'a> {
 
     fn lower_binary(&mut self, op: HirBinOp, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
         let Some(op) = mir_bin_op(op) else {
-            self.errors.push(MirError::unsupported(
-                expr.span,
-                "binary operator without a phase 3 MIR primitive",
-            ));
+            self.errors
+                .push(MirError::unsupported(expr.span, "binary operator without a MIR primitive"));
             return None;
         };
         let lhs = self.lower_expr(lhs)?;
@@ -413,7 +456,7 @@ impl<'a> FunctionBuilder<'a> {
         let ty = self.expr_ty(expr)?;
 
         if self.is_vacuum(ty) {
-            self.statements.push(MirStmt {
+            self.append_stmt(MirStmt {
                 kind: MirStmtKind::Call {
                     destination: None,
                     callee: MirCallee::Definition(*def_id),
@@ -425,7 +468,7 @@ impl<'a> FunctionBuilder<'a> {
         }
 
         let destination = self.push_temp(ty, expr.span);
-        self.statements.push(MirStmt {
+        self.append_stmt(MirStmt {
             kind: MirStmtKind::Call {
                 destination: Some(MirPlace::temp(destination)),
                 callee: MirCallee::Definition(*def_id),
@@ -436,17 +479,187 @@ impl<'a> FunctionBuilder<'a> {
         Some(MirOperand::Temp(destination))
     }
 
+    fn lower_block_statement(&mut self, block: &HirBlock) {
+        for stmt in &block.stmts {
+            self.lower_stmt(stmt);
+        }
+
+        if let Some(expr) = &block.expr {
+            if self.current_is_open() {
+                let _ = self.lower_expr(expr);
+            }
+        }
+    }
+
+    fn lower_block_to_destination(
+        &mut self,
+        block: &HirBlock,
+        destination: MirPlace,
+        ty: MirType,
+        span: Span,
+    ) -> Option<()> {
+        for stmt in &block.stmts {
+            self.lower_stmt(stmt);
+        }
+
+        if !self.current_is_open() {
+            return Some(());
+        }
+
+        let Some(expr) = &block.expr else {
+            if self.is_vacuum(ty) {
+                self.assign(destination, MirOperand::Constant(MirConstant::Unit), ty, span);
+                return Some(());
+            }
+            self.errors.push(MirError::unsupported(
+                block.span,
+                "expression-valued block without a tail expression",
+            ));
+            return None;
+        };
+
+        self.lower_expr_to_destination(expr, destination, ty)
+    }
+
+    fn lower_si_statement(&mut self, cond: &HirExpr, then_block: &HirBlock, else_block: Option<&HirBlock>, span: Span) {
+        let Some(condition) = self.lower_expr(cond) else {
+            return;
+        };
+
+        let then_id = self.fresh_block(then_block.span);
+        let (else_id, join_id) = match else_block {
+            Some(block) => {
+                let else_id = self.fresh_block(block.span);
+                let join_id = self.fresh_block(span);
+                (else_id, join_id)
+            }
+            None => {
+                let join_id = self.fresh_block(span);
+                (join_id, join_id)
+            }
+        };
+
+        self.terminate_current(
+            MirTerminatorKind::Branch { condition, then_block: then_id, else_block: else_id },
+            span,
+        );
+
+        self.switch_to(then_id);
+        self.lower_block_statement(then_block);
+        let then_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+
+        let else_reaches = if let Some(block) = else_block {
+            self.switch_to(else_id);
+            self.lower_block_statement(block);
+            self.terminate_open_current(MirTerminatorKind::Goto(join_id), span)
+        } else {
+            true
+        };
+
+        if then_reaches || else_reaches {
+            self.switch_to(join_id);
+        } else {
+            self.seal_unreachable(join_id, span);
+        }
+    }
+
+    fn lower_si_to_destination(
+        &mut self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        else_block: Option<&HirBlock>,
+        destination: MirPlace,
+        ty: MirType,
+        span: Span,
+    ) -> Option<()> {
+        let Some(else_block) = else_block else {
+            self.errors
+                .push(MirError::unsupported(span, "expression-valued si without secus destination"));
+            return None;
+        };
+
+        let condition = self.lower_expr(cond)?;
+        let then_id = self.fresh_block(then_block.span);
+        let else_id = self.fresh_block(else_block.span);
+        let join_id = self.fresh_block(span);
+
+        self.terminate_current(
+            MirTerminatorKind::Branch { condition, then_block: then_id, else_block: else_id },
+            span,
+        );
+
+        self.switch_to(then_id);
+        self.lower_block_to_destination(then_block, destination.clone(), ty, then_block.span)?;
+        let then_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+
+        self.switch_to(else_id);
+        self.lower_block_to_destination(else_block, destination, ty, else_block.span)?;
+        let else_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+
+        if then_reaches || else_reaches {
+            self.switch_to(join_id);
+        } else {
+            self.seal_unreachable(join_id, span);
+        }
+
+        Some(())
+    }
+
+    fn lower_dum(&mut self, cond: &HirExpr, body: &HirBlock, span: Span) {
+        let cond_id = self.fresh_block(cond.span);
+        let body_id = self.fresh_block(body.span);
+        let after_id = self.fresh_block(span);
+
+        self.terminate_current(MirTerminatorKind::Goto(cond_id), span);
+
+        self.switch_to(cond_id);
+        let Some(condition) = self.lower_expr(cond) else {
+            self.seal_unreachable(cond_id, cond.span);
+            self.switch_to(after_id);
+            return;
+        };
+        self.terminate_current(
+            MirTerminatorKind::Branch { condition, then_block: body_id, else_block: after_id },
+            cond.span,
+        );
+
+        self.loops
+            .push(LoopContext { perge_target: cond_id, rumpe_target: after_id });
+        self.switch_to(body_id);
+        self.lower_block_statement(body);
+        self.loops.pop();
+        self.terminate_open_current(MirTerminatorKind::Goto(cond_id), span);
+
+        self.switch_to(after_id);
+    }
+
+    fn lower_rumpe(&mut self, span: Span) {
+        let Some(context) = self.loops.last().copied() else {
+            self.errors
+                .push(MirError::unsupported(span, "rumpe without an active dum loop"));
+            return;
+        };
+        self.terminate_current(MirTerminatorKind::Goto(context.rumpe_target), span);
+    }
+
+    fn lower_perge(&mut self, span: Span) {
+        let Some(context) = self.loops.last().copied() else {
+            self.errors
+                .push(MirError::unsupported(span, "perge without an active dum loop"));
+            return;
+        };
+        self.terminate_current(MirTerminatorKind::Goto(context.perge_target), span);
+    }
+
     fn assign(&mut self, place: MirPlace, operand: MirOperand, ty: MirType, span: Span) {
         let value = self.new_value(MirValueKind::Operand(operand), ty, span);
-        self.statements
-            .push(MirStmt { kind: MirStmtKind::Assign { place, value }, span });
+        self.append_stmt(MirStmt { kind: MirStmtKind::Assign { place, value }, span });
     }
 
     fn assign_temp(&mut self, kind: MirValueKind, ty: MirType, span: Span) -> MirOperand {
         let temp = self.push_temp(ty, span);
         let value = self.new_value(kind, ty, span);
-        self.statements
-            .push(MirStmt { kind: MirStmtKind::Assign { place: MirPlace::temp(temp), value }, span });
+        self.append_stmt(MirStmt { kind: MirStmtKind::Assign { place: MirPlace::temp(temp), value }, span });
         MirOperand::Temp(temp)
     }
 
@@ -460,6 +673,112 @@ impl<'a> FunctionBuilder<'a> {
         let id = MirTempId(self.temps.len() as u32);
         self.temps.push(MirTemp { id, ty, span });
         id
+    }
+
+    fn fresh_block(&mut self, span: Span) -> MirBlockId {
+        let id = MirBlockId(self.blocks.len() as u32);
+        self.blocks
+            .push(OpenBlock { id, statements: Vec::new(), terminator: None, span });
+        id
+    }
+
+    fn switch_to(&mut self, block: MirBlockId) {
+        if self.block(block).terminator.is_some() {
+            self.current = None;
+            return;
+        }
+        self.current = Some(block);
+    }
+
+    fn current_is_open(&self) -> bool {
+        self.current
+            .map(|id| self.block(id).terminator.is_none())
+            .unwrap_or(false)
+    }
+
+    fn append_stmt(&mut self, stmt: MirStmt) {
+        let Some(current) = self.current else {
+            self.errors
+                .push(MirError::unsupported(stmt.span, "statement after a MIR terminator"));
+            return;
+        };
+
+        let block = self.block_mut(current);
+        if block.terminator.is_some() {
+            self.errors
+                .push(MirError::unsupported(stmt.span, "statement after a MIR terminator"));
+            self.current = None;
+            return;
+        }
+        block.statements.push(stmt);
+    }
+
+    fn terminate_current(&mut self, kind: MirTerminatorKind, span: Span) -> bool {
+        let Some(current) = self.current else {
+            self.errors.push(MirError::unsupported(
+                span,
+                "terminator emitted after current MIR block was sealed",
+            ));
+            return false;
+        };
+
+        let block = self.block_mut(current);
+        if block.terminator.is_some() {
+            self.errors
+                .push(MirError::unsupported(span, "duplicate MIR block terminator"));
+            self.current = None;
+            return false;
+        }
+
+        block.terminator = Some(MirTerminator { kind, span });
+        self.current = None;
+        true
+    }
+
+    fn terminate_open_current(&mut self, kind: MirTerminatorKind, span: Span) -> bool {
+        if !self.current_is_open() {
+            return false;
+        }
+        self.terminate_current(kind, span)
+    }
+
+    fn seal_unreachable(&mut self, block: MirBlockId, span: Span) {
+        let open = self.block(block).terminator.is_none();
+        if open {
+            self.block_mut(block).terminator = Some(MirTerminator { kind: MirTerminatorKind::Unreachable, span });
+        }
+        if self.current == Some(block) {
+            self.current = None;
+        }
+    }
+
+    fn finish_blocks(&mut self) -> Vec<MirBlock> {
+        for index in 0..self.blocks.len() {
+            if self.blocks[index].terminator.is_none() {
+                let span = self.blocks[index].span;
+                self.blocks[index].terminator = Some(MirTerminator { kind: MirTerminatorKind::Unreachable, span });
+            }
+        }
+
+        self.blocks
+            .drain(..)
+            .map(|block| MirBlock {
+                id: block.id,
+                statements: block.statements,
+                terminator: block
+                    .terminator
+                    .expect("MIR block finalized with terminator"),
+                span: block.span,
+            })
+            .collect()
+    }
+
+    fn block(&self, id: MirBlockId) -> &OpenBlock {
+        &self.blocks[id.0 as usize]
+    }
+
+    fn block_mut(&mut self, id: MirBlockId) -> &mut OpenBlock {
+        &mut self.blocks[id.0 as usize]
     }
 
     fn next_local_id(&self) -> MirLocalId {

@@ -239,3 +239,100 @@ Behavior boundary:
 - Existing HIR-to-codegen behavior remains unchanged.
 - No target backend consumes MIR.
 - Control-flow normalization remains deferred to phase 4.
+
+## Phase 4 Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- `crates/radix/src/mir/lower.rs`
+- `crates/radix/src/mir/lower_test.rs`
+- `crates/radix/src/tool_test.rs`
+
+Lowering subset:
+
+- MIR lowering now uses an internal open-block builder with explicit current-block tracking.
+- Finished MIR still emits only complete `MirBlock` values with explicit terminators.
+- Statement-shaped `si` lowers to `Branch` terminators plus then/else/join blocks.
+- Expression-valued `si` lowers by destination-passing into a shared local or temporary before joining.
+- `dum` lowers to start-to-condition, condition/body/after block cycles.
+- `rumpe` lowers to the active loop exit block.
+- `perge` lowers to the active loop condition/repeat block.
+- `redde` inside nested `si` and `dum` bodies seals the current block with `Return`.
+- Branch arms closed by `redde`, `rumpe`, or `perge` do not emit spurious `goto` edges to joins.
+- Nested blocks lower inline for the supported Phase 4 subset.
+
+Unsupported diagnostics:
+
+- `itera` fails with an explicit iterator MIR-lowering diagnostic.
+- `discerne` fails with an explicit switch MIR-lowering diagnostic.
+- `tempta` fails with an explicit error-flow MIR-lowering diagnostic.
+- Diagnostic verbs and other out-of-scope constructs remain fail-closed through explicit unsupported-MIR diagnostics.
+
+Manual checkpoint output:
+
+```text
+$ printf 'functio signum(numerus n) → numerus { si n > 0 ergo redde n redde 0 }\n' | cargo run -q -p radix --bin radix -- mir -
+function f0 -> ty#1 {
+  params:
+    _0: ty#1
+  locals:
+    let _0: ty#1
+  temps:
+    %0: ty#3
+    %1: ty#1
+  bb0:
+    %0 = _0 > const int 0: ty#3
+    branch %0 bb1 bb2
+  bb1:
+    return _0
+  bb2:
+    %1 = const int 0: ty#1
+    return %1
+}
+```
+
+```text
+$ printf 'functio primus(numerus n) → numerus { varia numerus i ← 0 dum i < n { i ← i + 1 si i < 3 ergo perge rumpe } redde i }\n' | cargo run -q -p radix --bin radix -- mir -
+function f0 -> ty#1 {
+  params:
+    _0: ty#1
+  locals:
+    let _0: ty#1
+    var _1: ty#1
+  temps:
+    %0: ty#3
+    %1: ty#1
+    %2: ty#3
+  bb0:
+    _1 = const int 0: ty#1
+    goto bb1
+  bb1:
+    %0 = _1 < _0: ty#3
+    branch %0 bb2 bb3
+  bb2:
+    %1 = _1 + const int 1: ty#1
+    _1 = %1: ty#1
+    %2 = _1 < const int 3: ty#3
+    branch %2 bb4 bb5
+  bb3:
+    return _1
+  bb4:
+    goto bb1
+  bb5:
+    goto bb3
+}
+```
+
+Verification:
+
+- `cargo test -p radix mir` passed: 28 tests passed.
+- `cargo test -p radix` passed: 343 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.
+
+Behavior boundary:
+
+- Existing HIR-to-codegen behavior remains unchanged.
+- No target backend consumes MIR.
+- Failure-flow lowering remains deferred to phase 5.
