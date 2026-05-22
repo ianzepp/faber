@@ -1,0 +1,422 @@
+# MIR Layer Factory Plan
+
+**Status**: planned
+**Created**: 2026-05-22
+**Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
+**Factory Artifact Dir**: `docs/factory/mir-layer/`
+**Depends On**: typed HIR, `TypeTable`, Rust backend, package build layout, `norma` runtime boundary
+**Commit Policy**: Commit after each completed phase and validation gate pass
+
+## Interpreted Problem
+
+Faber currently compiles from parsed source through semantic analysis into typed HIR, then each backend lowers HIR directly into target source. That is still workable for source-oriented targets, but it makes every backend re-solve the same hard language-lowering problems:
+
+- expression-valued control flow,
+- option/null behavior,
+- `tempta` / `iace` failure flow,
+- string formatting,
+- method and stdlib call lowering,
+- pattern matching,
+- collection literals and transforms,
+- runtime-backed primitives,
+- entrypoint and package shape.
+
+The missing layer is a Faber-owned middle IR below HIR and above target emitters. This MIR should be execution-shaped rather than source-shaped. It should normalize Faber semantics once, validate the normalized form, and give Rust, WASM, and eventual native backends a smaller contract to implement.
+
+The goal is not to replace the Rust backend in one jump. The goal is to create a stable backend layer that first improves inspection and Rust codegen, then becomes the launch point for WASM and native experiments.
+
+## Proposed Design
+
+Introduce a typed, non-SSA MIR:
+
+```text
+AST
+  -> HIR
+  -> typed HIR
+  -> MIR
+  -> backend-specific output
+       -> Rust source
+       -> future WASM
+       -> future Cranelift/native
+```
+
+The first MIR should be intentionally modest:
+
+- explicit functions,
+- explicit locals and temporaries,
+- explicit basic blocks,
+- explicit terminators,
+- explicit call forms,
+- explicit runtime intrinsics,
+- explicit aggregate construction,
+- explicit return/error exits,
+- enough type information to validate every operand and produced value.
+
+It should not start as full SSA. SSA can be a later lowering from MIR once there is a real optimizer or native backend that earns it.
+
+## Non-Negotiable Design Rules
+
+- HIR remains the source of Faber language meaning.
+- MIR commits to execution mechanics.
+- MIR must be target-neutral; it must not contain Rust syntax, Cargo metadata, WASM imports, native linker flags, or Cranelift concepts.
+- Runtime and stdlib operations should appear as target-neutral intrinsics or resolved provider calls.
+- Missing type information at MIR lowering time is an upstream compiler bug, not a reason to guess in MIR or codegen.
+- The existing Rust backend remains the primary correctness gate until a MIR-backed Rust path can prove equivalent behavior.
+- MIR adoption must be incremental and inspectable; do not flip all codegen to MIR in one phase.
+
+## Initial MIR Shape
+
+Candidate module:
+
+```text
+crates/radix/src/mir/
+├── mod.rs
+├── nodes.rs
+├── lower.rs
+├── validate.rs
+├── dump.rs
+└── tests...
+```
+
+Core concepts:
+
+```text
+MirProgram
+MirFunction
+MirBlock
+MirStmt
+MirTerminator
+MirValue
+MirPlace
+MirType
+MirIntrinsic
+MirRuntimeCall
+```
+
+Representative terminators:
+
+```text
+return value
+return_error value
+goto block
+branch condition then_block else_block
+switch value cases default
+unreachable
+```
+
+Representative statements:
+
+```text
+local place: type
+assign place value
+call dest = callee(args)
+runtime_call dest = intrinsic(args)
+construct dest = aggregate(args)
+drop value
+```
+
+## Break Boundary
+
+### In Scope
+
+- Add a MIR module and data model.
+- Lower selected typed HIR into MIR.
+- Add MIR validation.
+- Add MIR dump/inspection support for compiler development.
+- Add tests proving lowered MIR shape for selected language constructs.
+- Add a MIR-backed Rust codegen path only after MIR can represent a meaningful subset.
+- Preserve the existing HIR-to-Rust path until the MIR path is proven.
+
+### Out of Scope
+
+- Direct native binary generation.
+- LLVM or Cranelift integration.
+- Full SSA.
+- MIR optimization passes beyond simple validation and cleanup.
+- Replacing all existing codegen targets in one phase.
+- Changing Faber syntax to make MIR easier.
+- Reworking package management except where needed to expose MIR inspection commands.
+
+## Current Evidence
+
+- The driver already creates an `AnalyzedUnit` containing `HirProgram`, `TypeTable`, and `Interner`.
+- Semantic analysis already runs collection, resolution, HIR lowering, typecheck, borrow analysis for Rust, exhaustiveness, and linting.
+- HIR nodes already carry `HirId`, `DefId`, spans, and optional resolved types on expressions.
+- The current `Codegen` trait consumes HIR directly.
+- Package builds currently emit a generated Rust crate under `target/faber/` and invoke Cargo.
+- Target-neutral library/provider metadata is already identified as important by the standard-library data-format plan.
+
+## Stage Graph
+
+| Phase | Name | Goal | Checkpoint |
+| ----- | ---- | ---- | ---------- |
+| 0 | Baseline and invariants | Record current HIR/codegen behavior and MIR design constraints. | Ledger captures representative examples, known backend quirks, and the first MIR subset. |
+| 1 | MIR data model | Add MIR node types, IDs, type references, block structure, and debug formatting. | `cargo test -p radix mir` or equivalent focused tests compile the model without lowering behavior. |
+| 2 | MIR inspection surface | Add an internal dump path for MIR from a single source file. | A simple program can be parsed, checked, lowered to placeholder/subset MIR, and printed deterministically. |
+| 3 | Primitive expression lowering | Lower literals, locals, arithmetic, assignment, simple calls, and returns. | MIR tests prove primitives and function bodies lower without target codegen. |
+| 4 | Control-flow normalization | Lower blocks, `si`, `dum`, `itera`, `rumpe`, `perge`, and expression returns into explicit blocks and terminators. | MIR has no expression-valued control flow for the supported subset. |
+| 5 | Failure flow | Lower `iace`, `tempta`, panic/mori, and failable function exits into explicit success/error paths. | MIR distinguishes normal return from recoverable error return without Rust `Result` syntax. |
+| 6 | Aggregate and option contract | Represent structs, enums, tuples, arrays, maps, option/null, optional chain, and non-null assertion. | MIR uses explicit construction/projection/runtime operations; no high-level optional-chain nodes remain. |
+| 7 | Runtime intrinsic boundary | Define target-neutral intrinsics for printing, string formatting, collection operations, conversions, and stdlib-backed calls. | MIR references runtime/provider operations without Rust module paths or Cargo details. |
+| 8 | MIR validation | Add validation for block termination, type presence, operand compatibility, def-use sanity, and unresolved placeholders. | Invalid MIR is rejected before any backend sees it; diagnostics point back to source spans where possible. |
+| 9 | Rust backend vertical slice | Add a MIR-to-Rust backend behind an explicit experimental path for the supported subset. | Selected examples generate Rust from MIR and compile/run through Cargo with behavior matching the existing backend. |
+| 10 | Rust backend migration | Move stable lowering responsibilities from HIR-to-Rust into MIR where proven. | Existing Rust backend tests pass with MIR enabled for selected constructs; fallback remains for unported constructs. |
+| 11 | WASM readiness slice | Use MIR to scope a minimal WASM backend or WASM text/object experiment. | A primitive `incipit` program can lower from MIR to WASM-oriented output without changing HIR semantics. |
+| 12 | Native readiness review | Decide whether Cranelift/native is justified based on MIR completeness, runtime ABI, and WASM evidence. | Review produces a separate factory plan for Cranelift/native or explicitly defers it. |
+
+## Phase Details
+
+### Phase 0: Baseline and Invariants
+
+Steps:
+
+- Inspect `git status --short`.
+- Capture representative HIR and Rust output for:
+  - primitive arithmetic,
+  - function call,
+  - `si` expression,
+  - loop,
+  - option/null,
+  - string formatting,
+  - simple struct construction,
+  - `iace` / `tempta`,
+  - `nota`.
+- Identify Rust backend behaviors that are semantic lowering rather than Rust emission.
+- Decide the first MIR subset and explicitly defer the rest.
+- Create `docs/factory/mir-layer/ledger.md` when implementation starts.
+
+Checkpoint:
+
+- The implementation has a factual baseline.
+- First subset is small enough for a vertical slice.
+- No source behavior changed.
+
+### Phase 1: MIR Data Model
+
+Steps:
+
+- Add `crates/radix/src/mir`.
+- Define IDs for MIR functions, blocks, locals, temporaries, and values.
+- Represent MIR types by referencing `TypeId` at first, with room for a later `MirType` layer if layout decisions require it.
+- Define block and terminator structures.
+- Add deterministic debug rendering for test snapshots.
+
+Checkpoint:
+
+- The MIR model compiles.
+- Unit tests prove stable formatting and basic construction.
+- No lowering or target behavior changes.
+
+### Phase 2: MIR Inspection Surface
+
+Steps:
+
+- Add an internal lowering entry point from `AnalyzedUnit`.
+- Add a developer command or test helper for MIR dump output.
+- Keep output deterministic and low-noise.
+- Reject unsupported HIR nodes with explicit unsupported-MIR diagnostics.
+
+Checkpoint:
+
+- A simple `.fab` file can produce MIR inspection output.
+- Unsupported constructs fail clearly rather than silently lowering incorrectly.
+
+### Phase 3: Primitive Expression Lowering
+
+Steps:
+
+- Lower literals into MIR constants.
+- Lower paths into MIR value/place references.
+- Lower local declarations and assignments.
+- Lower primitive unary and binary operations.
+- Lower direct function calls where the callee is a resolved `DefId`.
+- Lower explicit returns.
+
+Checkpoint:
+
+- Focused MIR tests cover primitive functions.
+- Every lowered expression has an available type.
+- No backend consumes MIR yet.
+
+### Phase 4: Control-Flow Normalization
+
+Steps:
+
+- Lower `si` into branch terminators and join blocks.
+- Lower block expressions into explicit temporaries.
+- Lower loops into block cycles.
+- Lower `rumpe` and `perge` with loop target tracking.
+- Lower supported `itera` shapes into explicit iteration operations or runtime intrinsics.
+
+Checkpoint:
+
+- MIR for supported constructs has explicit blocks and terminators.
+- There are no nested expression-control nodes in MIR for the supported subset.
+
+### Phase 5: Failure Flow
+
+Steps:
+
+- Decide MIR representation for recoverable failure:
+  - explicit `return_error`,
+  - result-like internal value,
+  - or function-level dual exit contract.
+- Lower `iace` to the chosen form.
+- Lower `tempta` / `cape` into explicit success and error paths.
+- Preserve enough source span information for useful diagnostics.
+
+Checkpoint:
+
+- Failable function behavior is represented without Rust-specific `Result<T, String>` syntax.
+- Existing Rust behavior remains unchanged unless explicitly using the experimental MIR backend.
+
+### Phase 6: Aggregate and Option Contract
+
+Steps:
+
+- Lower struct construction and field access.
+- Represent enum variants and pattern-match inputs.
+- Represent `T ∪ nihil` with an explicit option operation model.
+- Lower optional chain and non-null assertion.
+- Define list/map/set construction as MIR aggregate or runtime intrinsic operations.
+
+Checkpoint:
+
+- MIR expresses aggregate and optional behavior explicitly.
+- Unsupported aggregate shapes produce clear MIR-lowering diagnostics.
+
+### Phase 7: Runtime Intrinsic Boundary
+
+Steps:
+
+- Define a target-neutral intrinsic enum for operations such as:
+  - `nota`,
+  - string formatting,
+  - numeric/text conversions,
+  - collection append/index/length,
+  - stdlib provider calls.
+- Keep provider identity separate from target linkage.
+- Avoid Rust module paths, Cargo dependency specs, WASM imports, and native object names in MIR.
+
+Checkpoint:
+
+- MIR can represent runtime-backed operations without target-specific strings.
+- Rust/WASM/native linkage decisions remain backend-owned.
+
+### Phase 8: MIR Validation
+
+Steps:
+
+- Validate every block has one terminator.
+- Validate used values have definitions.
+- Validate required types exist.
+- Validate operand types match operation contracts.
+- Validate unsupported placeholders do not reach backend lowering.
+- Add tests for deliberately invalid MIR.
+
+Checkpoint:
+
+- MIR validation fails closed.
+- Backends can assume validated MIR invariants.
+
+### Phase 9: Rust Backend Vertical Slice
+
+Steps:
+
+- Add an experimental MIR-to-Rust emitter.
+- Start with the primitive subset from Phases 3 and 4.
+- Compile generated Rust through existing package or test helpers.
+- Compare behavior against the current HIR-to-Rust backend.
+
+Checkpoint:
+
+- Selected examples compile and run through MIR-backed Rust.
+- Existing HIR-to-Rust remains available and is still the default unless explicitly changed.
+
+### Phase 10: Rust Backend Migration
+
+Steps:
+
+- Move proven semantic lowering out of Rust codegen and into MIR.
+- Keep Rust codegen focused on Rust syntax, imports, and target conventions.
+- Port constructs one coherent group at a time.
+- Delete old duplicated lowering only after tests prove parity.
+
+Checkpoint:
+
+- Existing Rust backend tests pass.
+- MIR-backed constructs do not regress package builds.
+- Remaining HIR-direct paths are documented as unported.
+
+### Phase 11: WASM Readiness Slice
+
+Steps:
+
+- Choose a minimal WASM output strategy:
+  - WAT text for inspection,
+  - `wasm-encoder`,
+  - or another small Rust-native library.
+- Lower a tiny primitive MIR subset to WASM-oriented output.
+- Stub or define imports for runtime operations such as `nota`.
+
+Checkpoint:
+
+- WASM work consumes MIR, not HIR.
+- Any missing runtime ABI decisions are recorded as blockers.
+
+### Phase 12: Native Readiness Review
+
+Steps:
+
+- Evaluate MIR coverage against native needs:
+  - data layout,
+  - calling convention,
+  - memory management,
+  - runtime ABI,
+  - linking,
+  - debug/diagnostic story.
+- Decide whether Cranelift is the right first native backend.
+- Produce a separate native factory plan if justified.
+
+Checkpoint:
+
+- Native work either has a grounded plan or is explicitly deferred.
+- The MIR layer remains useful even if native waits.
+
+## Validation Strategy
+
+Use layered validation rather than waiting for final executable output:
+
+- MIR unit tests for construction and validation.
+- MIR lowering tests for selected HIR constructs.
+- Snapshot-style tests for deterministic MIR dump output.
+- Existing Rust codegen tests for behavior parity.
+- Package-level Cargo tests only after the MIR-to-Rust vertical slice exists.
+- `./scripta/ci` before marking a phase complete.
+
+## Open Questions
+
+- Should MIR reference `TypeId` directly forever, or should it introduce a distinct `MirType` once runtime layout matters?
+- Should recoverable failure be represented as dual function exits or as explicit result-like values?
+- How much borrow/ownership information should MIR preserve from Rust-target borrow analysis?
+- Should `drop`/retain/free operations appear in early MIR, or wait until runtime memory semantics become concrete?
+- Should MIR dumps be exposed through `radix mir`, `faber hir --mir`, or a hidden developer-only command first?
+- Should MIR lowering be target-independent, or should a small `MirConfig` allow target-specific unsupported-feature gates?
+
+## Deferred Native Questions
+
+Direct native codegen must wait until MIR can answer or expose:
+
+- concrete layout for strings, lists, maps, options, structs, and enums,
+- calling convention for Faber functions and runtime functions,
+- memory ownership and destruction rules,
+- runtime library artifact shape,
+- linker invocation strategy,
+- platform-specific packaging,
+- debug and source-map equivalent story.
+
+These are not MIR Phase 1 problems, but MIR should avoid choices that make them impossible.
+
+---
+
+*This plan treats MIR as the next backend layer, not as a synonym for native codegen. Bene currit when Rust remains the correctness gate while MIR becomes the shared execution contract.*
