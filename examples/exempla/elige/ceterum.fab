@@ -5,7 +5,7 @@
 #     ceterum { <default> }
 # }
 
-incipit ergo cura arena {
+incipit {
     # ceterum handles unmatched cases
     fixum _ day ← "wednesday"
 

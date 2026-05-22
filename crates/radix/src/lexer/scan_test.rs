@@ -1,5 +1,5 @@
 use super::Interner;
-use crate::lexer::{keyword_specs, lex, lookup_keyword_spec, KeywordOwner, KeywordScope, LexErrorKind, TokenKind};
+use crate::lexer::{keyword_specs, lex, lookup_keyword_spec, KeywordScope, LexErrorKind, TokenKind};
 
 #[test]
 fn lexes_unicode_identifiers() {
@@ -49,19 +49,17 @@ fn keyword_registry_specs_lex_to_current_tokens() {
 }
 
 #[test]
-fn keyword_registry_includes_contextual_cura_page() {
-    let spec = lookup_keyword_spec("page").expect("page should be registered as contextual cura vocabulary");
-    assert!(
-        spec.token_kind.is_none(),
-        "page currently lexes as an identifier, not a keyword token"
-    );
+fn allocator_kind_names_are_not_keywords() {
+    assert!(lookup_keyword_spec("arena").is_none());
+    assert!(lookup_keyword_spec("page").is_none());
 
-    match spec.scope {
-        KeywordScope::Contextual(owners) => {
-            assert!(owners.contains(&KeywordOwner::CuraKind), "page must belong to CuraKind");
-        }
-        other => panic!("page should be contextual, got {other:?}"),
-    }
+    let result = lex("fixum _ arena ← page");
+    let idents = result
+        .tokens
+        .iter()
+        .filter(|token| matches!(token.kind, TokenKind::Ident(_)))
+        .count();
+    assert_eq!(idents, 2);
 }
 
 #[test]

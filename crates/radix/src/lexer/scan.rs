@@ -649,7 +649,6 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "incipiet" => TokenKind::Incipiet,
         "argumenta" => TokenKind::Argumenta,
         "cura" => TokenKind::Cura,
-        "arena" => TokenKind::Arena,
         "ad" => TokenKind::Ad,
 
         // Misc keywords

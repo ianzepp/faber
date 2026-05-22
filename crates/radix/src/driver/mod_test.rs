@@ -562,25 +562,31 @@ fn sed_regex_literals_no_longer_report_unsupported_lowering_error() {
 #[test]
 fn rust_target_reports_cura_arena_noop_warning() {
     let session = session(Target::Rust);
-    let source = "incipit {\n  cura arena fixum mem {\n  }\n}";
+    let source = r#"incipit {
+  cura "arena" fixum _ mem {
+  }
+}"#;
     let result = compile(&session, "test.fab", source);
 
     assert!(result.diagnostics.iter().any(|d| {
         !d.is_error()
             && d.message
-                .contains("cura arena has no effect for Rust targets")
+                .contains("cura \"arena\" has no effect for Rust targets")
     }));
 }
 
 #[test]
 fn typescript_target_skips_rust_specific_cura_arena_warning() {
     let session = session(Target::TypeScript);
-    let source = "incipit {\n  cura arena fixum mem {\n  }\n}";
+    let source = r#"incipit {
+  cura "arena" fixum _ mem {
+  }
+}"#;
     let result = compile(&session, "test.fab", source);
 
     assert!(result.diagnostics.iter().all(|d| {
         !d.message
-            .contains("cura arena has no effect for Rust targets")
+            .contains("cura \"arena\" has no effect for Rust targets")
     }));
 }
 
@@ -1560,10 +1566,12 @@ fn deferred_local_assignment_can_drive_inference() {
 }
 
 #[test]
-fn cura_arena_anonymous_scope_no_longer_reports_infer_variable_error() {
+fn cura_allocator_scope_no_longer_reports_infer_variable_error() {
     let session = session(Target::Rust);
-    let source = r#"incipit ergo cura arena {
-  nota "ok"
+    let source = r#"incipit {
+  cura "arena" fixum _ alloc {
+    nota "ok"
+  }
 }"#;
     let result = compile(&session, "test.fab", source);
 
@@ -1572,6 +1580,25 @@ fn cura_arena_anonymous_scope_no_longer_reports_infer_variable_error() {
         .diagnostics
         .iter()
         .all(|d| !d.message.contains("cannot infer variable type")));
+}
+
+#[test]
+fn curata_alias_binding_is_visible_in_function_body() {
+    let session = session(Target::Rust);
+    let source = r#"functio useAllocator() curata alloc ut a {
+  nota a
+}
+
+incipit {
+  useAllocator()
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .all(|d| !d.message.contains("unknown identifier")));
 }
 
 #[test]
@@ -2097,7 +2124,7 @@ incipit {
 }
 
 #[test]
-fn curator_param_type_no_longer_reports_unknown_type() {
+fn curator_param_type_is_not_the_allocator_contract() {
     let session = session(Target::Rust);
     let source = r#"functio createUser(textus name, curator alloc) → textus {
   redde name
@@ -2111,7 +2138,7 @@ incipit {
     assert!(result
         .diagnostics
         .iter()
-        .all(|d| !d.message.contains("unknown type")));
+        .any(|d| d.message.contains("unknown type")));
 }
 
 #[test]
@@ -2308,7 +2335,7 @@ fn ordo_exemplum_no_longer_reports_elige_literal_error() {
 #[test]
 fn optional_params_no_longer_require_all_arguments() {
     let session = session(Target::Rust);
-    let source = r#"functio greet(textus nomen, textus titulus sponte) curata alloc → textus {
+    let source = r#"functio greet(textus nomen, textus titulus sponte) → textus {
   si titulus est nihil {
     redde nomen
   }
@@ -2326,7 +2353,7 @@ functio analyze(textus source, de numerus depth sponte) → numerus {
   redde depth
 }
 
-incipit ergo cura arena fixum alloc {
+incipit {
   nota greet("Marcus")
   nota greet("Marcus", "Dominus")
   nota paginate()

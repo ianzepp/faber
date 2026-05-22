@@ -41,7 +41,7 @@ funcDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClaus
 paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? ('ut' IDENTIFIER)? ('vel' expression)?
-funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
+funcModifier := 'curata' IDENTIFIER ('ut' IDENTIFIER)? | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
 returnClause := '→' typeAnnotation
 clausuraExpr   := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
 clausuraParams := clausuraParam (',' clausuraParam)*
@@ -52,7 +52,7 @@ clausuraParam  := typeAnnotation IDENTIFIER
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - Post-name markers: `sponte` (voluntary/optional provision), `fixus` (fixed after first assignment); canonical order `sponte fixus`
 - `ceteri` marks rest parameter
-- `curata NAME` declares allocator requirement; NAME is auto-injected at call sites within `cura` blocks
+- `curata NAME ('ut' LOCAL)?` declares a Zig allocator requirement; `LOCAL` is the function-body alias
 
 ### Classes
 
@@ -298,8 +298,7 @@ guardClause := 'si' expression (blockStmt | 'ergo' statement)
 ### Resource Management
 
 ```ebnf
-curaStmt    := 'cura' curatorKind? expression? ('fixum' | 'varia') typeAnnotation? IDENTIFIER blockStmt catchClause?
-curatorKind := 'arena' | 'page'
+curaStmt    := 'cura' STRING ('fixum' | 'varia') typeAnnotation IDENTIFIER blockStmt catchClause?
 ```
 
 ### Destructuring Extraction
@@ -460,8 +459,8 @@ outputStmt := ('nota' | 'vide' | 'mone' | 'scribe') expression (',' expression)*
 ## Entry Points
 
 ```ebnf
-incipitStmt  := 'incipit' (blockStmt | 'ergo' statement)
-incipietStmt := 'incipiet' (blockStmt | 'ergo' statement)
+incipitStmt  := 'incipit' blockStmt
+incipietStmt := 'incipiet' blockStmt
 ```
 
 - `incipit` = sync entry, `incipiet` = async entry
@@ -575,8 +574,8 @@ Not all Faber features are supported across all compilation targets. Some featur
 
 ### Planned Manual-Memory Features
 
-- `curata` allocator binding (for manual memory management)
-- Arena and page allocators (`cura arena`, `cura pagina`)
+- `curata` Zig allocator binding (for manual memory management)
+- Arena and page allocators (`cura "arena"`, `cura "page"`)
 
 ### Cross-Target Features
 

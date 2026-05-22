@@ -31,7 +31,7 @@ Outside those lexer modes, contextualization is ad hoc:
 - `parse_member_ident()` allows a hard-coded subset of keyword tokens as member names.
 - `parse_annotation_name()` has its own hard-coded keyword exceptions.
 - annotation modifier parsing uses string checks such as `eat_annotation_ident("vel")`.
-- `cura page` is already contextual by accident: `arena` is a real global keyword, while `page` is matched as an identifier string.
+- `cura "page"` is already contextual by accident: `arena` is a real global keyword, while `page` is matched as an identifier string.
 - `parse_ident()` has a small special case for `tag`.
 
 This plan turns that ad hoc behavior into an explicit keyword-scope model and then migrates low-risk keyword families out of the global keyword table.
@@ -148,7 +148,7 @@ parse_contextual_ident(KeywordOwner::MemberIdentifier, &["cape", "inter", "nota"
 
 Use two related but separate helper families:
 
-- contextual grammar helpers consume grammar words such as `arena` in `cura arena`,
+- contextual grammar helpers consume grammar words such as `arena` in `cura "arena"`,
 - contextual identifier helpers parse identifier positions that intentionally allow old reserved words, such as member names.
 
 Those jobs should not collapse into one helper. One consumes a local grammar terminal; the other returns an `Ident`.
@@ -225,7 +225,7 @@ Those are not part of this implementation factory. They are a follow-up language
 | 0 | Baseline inventory | Classify active non-test keywords by scope and parser ownership. | Ledger lists each keyword as global, contextual, alias, backlog candidate, or test-owned. |
 | 1 | Metadata registry | Add `KeywordSpec` / `KeywordScope` metadata without behavior changes. | Registry agrees with current lexer table and contextual vocabulary; validation prevents unclassified active spellings. |
 | 2 | Contextual parser helpers | Add shared grammar-word and contextual-identifier helpers. | Existing parser behavior unchanged; helper tests cover ident and old-token migration forms. |
-| 3 | First migration: `cura` kind | Move `arena` out of global keyword handling and parse it contextually with `page`. | `cura arena ...` and `cura page ...` still parse; `fixum _ arena ← 1` is legal. |
+| 3 | First migration: `cura` kind | Move `arena` out of global keyword handling and parse it contextually with `page`. | `cura "arena" ...` and `cura "page" ...` still parse; `fixum _ arena ← 1` is legal. |
 | 4 | Function and entry modifiers | Contextualize `argumenta`, `exitus`, `curata`, `errata`, `optiones`, `immutata`, `iacit`. | Modifier syntax still parses; those words become legal identifiers outside modifier positions. |
 | 5 | Genus/member modifiers | Contextualize `generis`, `nexum`, `sub`, `implet`, and possibly `abstractus`. | Genus syntax still parses; those words become legal identifiers outside genus contexts. |
 | 6 | Rest/spread/context operators | Contextualize `ceteri` and `sparge` where feasible. | Rest/spread syntax still parses; non-context usage is identifier-safe. |
@@ -257,7 +257,7 @@ Steps:
   - `parse_member_ident`,
   - `parse_annotation_name`,
   - annotation modifier string checks,
-  - `cura page` identifier check.
+  - `cura "page"` identifier check.
 
 Deliverable:
 
@@ -300,7 +300,7 @@ Steps:
 - Add parser helpers for contextual grammar matching.
 - Add separate parser helpers for identifier positions that allow registered contextual words or current keyword-token words.
 - Make helpers accept both `Ident("word")` and current `TokenKind::Word` forms during migration.
-- Replace local string checks where obvious, starting with `cura page`.
+- Replace local string checks where obvious, starting with `cura "page"`.
 - Do not remove any keyword from the lexer table yet.
 - Wire helper validation to `KeywordOwner` so a word registered for one owner cannot be silently accepted in another owner.
 - Add or preserve recovery behavior at the owning parser site before removing any globally reserved token kind.
@@ -321,11 +321,11 @@ Steps:
 
 - Remove `"arena" => TokenKind::Arena` from normal lexer keyword mapping.
 - Keep `TokenKind::Arena` only if needed temporarily for compatibility tests; otherwise delete it.
-- Parse `cura arena` and `cura page` via contextual helper.
+- Parse `cura "arena"` and `cura "page"` via contextual helper.
 - Add negative/identifier tests:
   - `fixum _ arena ← 1` parses as a variable declaration,
   - `fixum _ page ← 1` continues to parse,
-  - `cura page source fixum textus page {}` still distinguishes the `page` kind word from later type/binding identifiers,
+  - `cura "page" source fixum textus page {}` still distinguishes the `page` kind word from later type/binding identifiers,
   - `cura bogus {}` produces a curator-kind diagnostic.
 - Update docs and explain entries to say `arena` is contextual under `cura`.
 - Document the ambiguity rule: in the immediate `cura` kind slot, `arena` and `page` are consumed as kind words. Outside that slot they are ordinary identifiers.
@@ -460,7 +460,7 @@ rg -n "<removed-keyword>" . -g '!target' -g '!Cargo.lock'
 
 Do not migrate broad families first.
 
-Start with `cura arena/page` because it already exposes the problem cleanly:
+Start with `cura "arena"/page` because it already exposes the problem cleanly:
 
 - `arena` is global,
 - `page` is contextual,

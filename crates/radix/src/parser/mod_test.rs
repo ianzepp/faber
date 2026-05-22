@@ -628,6 +628,11 @@ fn bare_inferred_variable_declaration_requires_marker() {
 }
 
 #[test]
+fn cura_rejects_unknown_allocator_kind() {
+    assert_parse_error_contains(r#"cura "general" fixum _ alloc {}"#, "expected allocator kind");
+}
+
+#[test]
 fn parses_class_interface_and_test_keywords() {
     let result = parse_ok(
         r#"
@@ -892,7 +897,7 @@ fn rejects_non_ergo_tacet_branch_forms() {
     assert_parse_error_contains("si verum ergo tacet secus tacet", "expected block or 'ergo'");
     assert_parse_error_contains("elige value { casu 1 tacet }", "expected block or 'ergo'");
     assert_parse_error_contains("dum verum tacet", "expected block or 'ergo'");
-    assert_parse_error_contains("incipit tacet", "expected block or 'ergo'");
+    assert_parse_error_contains("incipit tacet", "expected '{'");
 }
 
 #[test]
@@ -900,9 +905,9 @@ fn parses_entry_resource_endpoint_and_extract_keywords() {
     let result = parse_ok(
         r#"
 incipit argumenta args exitus 1 {}
-incipiet argumenta argv ergo redde argv
-cura arena {}
-cura page source fixum textus page {}
+incipiet argumenta argv {}
+cura "arena" fixum _ alloc {}
+cura "page" fixum _ page {}
 ad "/salve" (request, sparge extra) → textus pro res ut alias {} cape err {}
 ex source varia nomen ut name, ceteri reliqua
 "#,
@@ -926,19 +931,17 @@ ex source varia nomen ut name, ceteri reliqua
         panic!("expected incipiet statement");
     };
     assert!(async_main.is_async);
-    assert!(matches!(async_main.body, IfBody::Ergo(_)));
+    assert!(matches!(async_main.body, IfBody::Block(_)));
 
     let StmtKind::Cura(arena_stmt) = &program.stmts[2].kind else {
-        panic!("expected anonymous arena cura");
+        panic!("expected arena cura");
     };
-    assert!(matches!(arena_stmt.kind, Some(CuraKind::Arena)));
-    assert!(arena_stmt.init.is_none());
+    assert!(matches!(arena_stmt.kind, CuraKind::Arena));
 
     let StmtKind::Cura(page_stmt) = &program.stmts[3].kind else {
         panic!("expected bound page cura");
     };
-    assert!(matches!(page_stmt.kind, Some(CuraKind::Page)));
-    assert!(page_stmt.init.is_some());
+    assert!(matches!(page_stmt.kind, CuraKind::Page));
     assert!(matches!(page_stmt.mutability, Mutability::Immutable));
 
     let StmtKind::Ad(endpoint) = &program.stmts[4].kind else {
@@ -966,6 +969,20 @@ ex source varia nomen ut name, ceteri reliqua
         symbol_name(&result, extract.rest.as_ref().expect("rest binding").name),
         "reliqua"
     );
+}
+
+#[test]
+fn parses_curata_allocator_alias() {
+    let result = parse_ok(r#"functio greet(textus name) curata alloc ut a → textus { redde name }"#);
+    let program = result.program.as_ref().expect("program");
+    let StmtKind::Func(func) = &program.stmts[0].kind else {
+        panic!("expected function declaration");
+    };
+    let crate::syntax::FuncModifier::Curata { required, alias: Some(alias) } = &func.modifiers[0] else {
+        panic!("expected curata alias modifier");
+    };
+    assert_eq!(symbol_name(&result, required.name), "alloc");
+    assert_eq!(symbol_name(&result, alias.name), "a");
 }
 
 #[test]

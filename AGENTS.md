@@ -115,7 +115,7 @@ functio greet(name: textus): textus
 ```text
 itera ex # itera ex items fixum item { }
 itera de # itera de obj fixum key { }
-cura # cura expr fixum h { }
+cura # cura "arena" fixum _ alloc { }
 tempta...cape # tempta { } cape err { }
 dum # dum cond { }
 si # si cond { }

@@ -321,7 +321,7 @@ impl Primitive {
             "ignotum" => Some(Self::Ignotum),
             "octeti" => Some(Self::Octeti),
             "regex" => Some(Self::Regex),
-            "objectum" | "quidlibet" | "curator" => Some(Self::Ignotum),
+            "objectum" | "quidlibet" => Some(Self::Ignotum),
             "valor" => Some(Self::Valor),
             _ => None,
         }

@@ -19,7 +19,7 @@
 //!   compilation succeeds (to report warnings).
 //!
 //! - Target-aware warnings: Some constructs are no-ops in certain targets
-//!   (e.g., `cura arena` in Rust). The driver scans for these after parsing
+//!   (e.g., `cura "arena"` in Rust). The driver scans for these after parsing
 //!   and emits warnings before semantic analysis.
 //!
 //! PIPELINE PHASES
@@ -543,9 +543,6 @@ fn scan_stmt_for_go_unsupported_errors(
             scan_if_body_for_go_unsupported_errors(&entry.body, file, dynamic_externa, diagnostics);
         }
         StmtKind::Cura(resource) => {
-            if let Some(init) = &resource.init {
-                scan_expr_for_go_unsupported_errors(init, file, dynamic_externa, diagnostics);
-            }
             scan_block_for_go_unsupported_errors(&resource.body, file, dynamic_externa, diagnostics);
             if let Some(catch) = &resource.catch {
                 scan_block_for_go_unsupported_errors(&catch.body, file, dynamic_externa, diagnostics);
@@ -1032,9 +1029,6 @@ fn scan_stmt_for_rust_unsupported_errors(stmt: &Stmt, file: &str, diagnostics: &
             scan_if_body_for_rust_unsupported_errors(&entry.body, file, diagnostics);
         }
         StmtKind::Cura(resource) => {
-            if let Some(init) = &resource.init {
-                scan_expr_for_rust_unsupported_errors(init, file, diagnostics);
-            }
             scan_block_for_rust_unsupported_errors(&resource.body, file, diagnostics);
             if let Some(catch) = &resource.catch {
                 diagnostics.push(rust_target_exception_diagnostic(
@@ -1268,9 +1262,8 @@ fn rust_target_exception_diagnostic(file: &str, span: crate::lexer::Span, messag
 
 /// Collect warnings for Rust-specific no-ops.
 ///
-/// WHY: Some Faber constructs are meaningful in GC'd targets (e.g., JavaScript,
-/// Python) but no-ops in Rust (e.g., `cura arena`). We warn users to avoid
-/// confusion about why arena scoping has no effect.
+/// WHY: Zig allocator scopes are no-ops in Rust. We warn users to avoid
+/// confusion about why allocator scoping has no effect.
 fn collect_rust_noop_warnings(program: &Program, file: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     for stmt in &program.stmts {
@@ -1363,12 +1356,11 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
             scan_if_body_for_rust_warnings(&entry.body, file, diagnostics);
         }
         StmtKind::Cura(resource) => {
-            // WHY: Arena resource management is a no-op in Rust (RAII handles it)
-            if matches!(resource.kind, Some(CuraKind::Arena)) {
+            if matches!(resource.kind, CuraKind::Arena) {
                 let spec = crate::diagnostics::semantic_spec(crate::semantic::SemanticErrorKind::Warning(
                     crate::semantic::WarningKind::TargetNoop,
                 ));
-                let mut diag = Diagnostic::warning("cura arena has no effect for Rust targets")
+                let mut diag = Diagnostic::warning("cura \"arena\" has no effect for Rust targets")
                     .with_code(spec.code)
                     .with_file(file)
                     .with_span(stmt.span);

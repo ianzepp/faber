@@ -21,7 +21,7 @@ functio processAge(numerus age) → textus {
     }
 }
 
-functio createUser(textus name, textus email, numerus age) curata alloc → textus {
+functio createUser(textus name, textus email, numerus age) → textus {
     custodi {
         si nihil name aut name ≡ "" {
             redde "Error: name required"
@@ -51,7 +51,7 @@ functio sqrt(numerus n) → numerus {
     redde n
 }
 
-incipit ergo cura arena {
+incipit {
     nota processAge(-5)
     nota processAge(200)
     nota processAge(25)

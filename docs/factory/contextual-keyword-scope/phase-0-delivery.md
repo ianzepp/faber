@@ -61,7 +61,7 @@ Current ad hoc contextual behavior:
 Checkpoint:
 
 - no compiler behavior changed
-- inventory names `cura arena/page` as the first migration family
+- inventory names `cura "arena"/page` as the first migration family
 - every planned migration has owner, parser call site, and recovery note
 
 Verification:

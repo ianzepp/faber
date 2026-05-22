@@ -420,12 +420,7 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
             resolver.exit_scope();
         }
         StmtKind::Cura(stmt) => {
-            if let Some(init) = &stmt.init {
-                resolve_expr(resolver, interner, init, errors);
-            }
-            if let Some(ty) = &stmt.ty {
-                resolve_type(resolver, interner, ty, errors);
-            }
+            resolve_type(resolver, interner, &stmt.ty, errors);
             resolver.enter_scope(ScopeKind::Block);
             define_symbol(
                 resolver,
@@ -944,7 +939,6 @@ fn is_builtin_type(name: &str) -> bool {
             | "regex"
             | "objectum"
             | "quidlibet"
-            | "curator"
             | "lista"
             | "tabula"
             | "copia"
@@ -1202,9 +1196,9 @@ fn modifier_bindings(modifiers: &[crate::syntax::FuncModifier]) -> Vec<&crate::s
     for modifier in modifiers {
         match modifier {
             crate::syntax::FuncModifier::Argumenta(ident)
-            | crate::syntax::FuncModifier::Curata(ident)
             | crate::syntax::FuncModifier::Errata(ident)
             | crate::syntax::FuncModifier::Optiones(ident) => out.push(ident),
+            crate::syntax::FuncModifier::Curata { required, alias } => out.push(alias.as_ref().unwrap_or(required)),
             crate::syntax::FuncModifier::Exitus(crate::syntax::ExitusValue::Name(ident)) => out.push(ident),
             _ => {}
         }

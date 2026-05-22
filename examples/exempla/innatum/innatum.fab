@@ -7,7 +7,7 @@
 #   {} ⇢ tabula<K, V>  → new Map() in TS, HashMap in Rust, etc.
 #   [] ⇢ lista<T>      → proper array/vector initialization
 
-incipit ergo cura arena fixum alloc {
+incipit {
     # Empty tabula (Map)
     varia _ cache ← {} ⇢ tabula<textus, numerus>
     cache["foo"] ← 42

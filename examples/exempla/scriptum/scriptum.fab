@@ -1,6 +1,6 @@
 # Format string expressions using template application
 
-incipit ergo cura arena {
+incipit {
     fixum _ name ← "Marcus"
     fixum _ age ← 30
 

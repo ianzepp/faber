@@ -7,7 +7,7 @@
 #   parameter :← (preposition)? type name sponte? ('ut' alias)? ('vel' default)?
 
 # Optional parameter without default (receives nihil if omitted)
-functio greet(textus nomen, textus titulus sponte) curata alloc → textus {
+functio greet(textus nomen, textus titulus sponte) → textus {
     si titulus est nihil {
         redde "Salve, §!"(nomen)
     }
@@ -15,7 +15,7 @@ functio greet(textus nomen, textus titulus sponte) curata alloc → textus {
 }
 
 # Optional parameter with default value
-functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) curata alloc → textus {
+functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) → textus {
     redde "Page § with § items"(pagina, per_pagina)
 }
 
@@ -28,11 +28,11 @@ functio analyze(textus source, de numerus depth sponte) → numerus {
 }
 
 # Mixed required and optional parameters
-functio createUser(textus nomen, numerus aetas sponte vel 0, bivalens activus sponte vel verum) curata alloc → textus {
+functio createUser(textus nomen, numerus aetas sponte vel 0, bivalens activus sponte vel verum) → textus {
     redde "User: §, age: §, active: §"(nomen, aetas, activus)
 }
 
-incipit ergo cura arena fixum alloc {
+incipit {
     # Without optional arg
     nota greet("Marcus")
 

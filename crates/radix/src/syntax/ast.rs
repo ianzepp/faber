@@ -205,7 +205,7 @@ pub enum ParamMode {
 #[derive(Debug)]
 pub enum FuncModifier {
     Argumenta(Ident),
-    Curata(Ident),
+    Curata { required: Ident, alias: Option<Ident> },
     Errata(Ident),
     Exitus(ExitusValue),
     Immutata,
@@ -626,10 +626,9 @@ pub struct ExField {
 
 #[derive(Debug)]
 pub struct CuraStmt {
-    pub kind: Option<CuraKind>,
-    pub init: Option<Box<Expr>>,
+    pub kind: CuraKind,
     pub mutability: Mutability,
-    pub ty: Option<TypeExpr>,
+    pub ty: TypeExpr,
     pub binding: Ident,
     pub body: BlockStmt,
     pub catch: Option<CapeClause>,

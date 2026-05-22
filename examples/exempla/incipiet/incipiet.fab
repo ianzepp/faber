@@ -5,8 +5,6 @@
 #
 # Syntax:
 #   incipiet { <async body> }
-#   incipiet ergo <statement>
-#   incipiet ergo redde <expression>
 
 # Helper async function
 @ futura

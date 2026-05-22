@@ -141,7 +141,7 @@ pub enum TokenKind {
     Ceteri,     // variadic rest
     Immutata,   // pure function
     Iacit,      // throws
-    Curata,     // custom curata type
+    Curata,     // Zig allocator requirement
     Errata,     // custom error type
     Exitus,     // exit code
     Optiones,   // options struct
@@ -217,8 +217,7 @@ pub enum TokenKind {
     Incipit,   // main (sync)
     Incipiet,  // main (async)
     Argumenta, // command-line args
-    Cura,      // resource management
-    Arena,     // arena allocator
+    Cura,      // Zig allocator scope
     Ad,        // HTTP endpoint
 
     // === Keywords: Misc ===
@@ -428,7 +427,6 @@ impl TokenKind {
                 | Incipiet
                 | Argumenta
                 | Cura
-                | Arena
                 | Ad
                 | Ex
                 | De

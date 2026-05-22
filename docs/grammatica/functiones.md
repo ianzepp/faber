@@ -377,24 +377,26 @@ fixum _ sum = numbers.reduce(0, clausura acc, x: acc + x)
 The `curata` modifier (Latin "cared for," from _curare_ "to care for") declares that a function requires an allocator. This is essential for Zig targets where memory allocation is explicit:
 
 ```fab
-functio greet(textus name) curata alloc → textus {
+functio greet(textus name) curata alloc ut a → textus {
     redde "Hello, §!"(name)
 }
 ```
 
-The allocator name following `curata` becomes available within the function body for operations requiring allocation (string formatting, collection creation, etc.).
+The allocator name following `curata` declares the required allocator key. Use `ut` to give it a local body name; without `ut`, the local name is the same as the required name.
 
 At call sites, the allocator is automatically injected when calling from within a `cura` block:
 
 ```fab
-incipit ergo cura arena fixum alloc {
-    nota greet("World")  # alloc auto-injected
+incipit {
+    cura "arena" fixum _ alloc {
+        nota greet("World")  # alloc auto-injected for Zig targets
+    }
 }
 ```
 
-The `curata` modifier keeps the function signature clean—the allocator is a resource concern, not a semantic parameter. Callers within a `cura` block don't need to pass it explicitly; the compiler threads it through.
+The `curata` modifier keeps the function signature clean: the allocator is a Zig codegen concern, not a semantic parameter. Callers within a `cura` block don't pass it explicitly; Zig lowering can thread it through.
 
-For TypeScript targets, `curata` has no effect since JavaScript handles memory automatically.
+For non-Zig targets, `curata` and `cura` allocator scopes have no runtime effect.
 
 ## Ownership Prepositions in Parameters
 

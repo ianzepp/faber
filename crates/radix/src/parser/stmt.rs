@@ -33,7 +33,7 @@
 //! - Destructuring: ex (extract/destructure)
 
 use super::{ParseError, ParseErrorKind, Parser};
-use crate::lexer::{Span, Symbol, TokenKind};
+use crate::lexer::TokenKind;
 use crate::syntax::*;
 
 // =============================================================================
@@ -478,7 +478,7 @@ impl Parser {
     /// Parse entry point declaration.
     ///
     /// GRAMMAR:
-    ///   incipit-stmt := ('incipit'|'incipiet') ['argumenta' ident] ['exitus' expr] if-body
+    ///   incipit-stmt := ('incipit'|'incipiet') ['argumenta' ident] ['exitus' expr] block
     ///
     /// WHY: Program entry points. 'incipit' for sync main, 'incipiet' for async main.
     /// Optional 'argumenta' binds command-line args, 'exitus' sets exit code.
@@ -503,55 +503,34 @@ impl Parser {
             None
         };
 
-        let body = self.parse_ergo_body()?;
+        let body = IfBody::Block(self.parse_block()?);
 
         Ok(StmtKind::Incipit(IncipitStmt { is_async, body, args, exitus }))
     }
 
-    /// Parse resource management statement.
+    /// Parse Zig allocator scope statement.
     ///
     /// GRAMMAR:
-    ///   cura-stmt := 'cura' ['arena'] [expr] ('fixum'|'varia') [type] ident block ['cape' ident block]
+    ///   cura-stmt := 'cura' STRING ('fixum'|'varia') type ident block ['cape' ident block]
     ///
-    /// WHY: Resource management with automatic cleanup (like Rust's Drop or C++'s RAII).
-    /// 'arena' creates arena allocator for block scope. Resource bound to identifier,
-    /// cleanup happens when block exits.
-    ///
-    /// EDGE: Anonymous scopes allowed: `cura arena { ... }` without binding.
+    /// WHY: This is intentionally scoped to Zig allocator setup. The allocator kind is
+    /// a validated string so allocator strategy names do not become grammar words.
     pub(super) fn parse_cura_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Cura, "expected 'cura'")?;
 
-        let kind = if self.eat_keyword(TokenKind::Arena) {
-            Some(CuraKind::Arena)
-        } else if matches!(self.peek().kind, TokenKind::Ident(sym) if self.interner.resolve(sym) == "page") {
-            self.advance();
-            Some(CuraKind::Page)
-        } else {
-            None
-        };
-
-        // Check for anonymous scope: cura arena { } without binding
-        if self.check(&TokenKind::LBrace) {
-            let body = self.parse_block()?;
-            let catch = self.try_parse_cape_stmt()?;
-            return Ok(StmtKind::Cura(CuraStmt {
-                kind,
-                init: None,
-                mutability: Mutability::Immutable,
-                ty: None,
-                binding: Ident {
-                    name: Symbol(0), // anonymous
-                    span: Span::default(),
-                },
-                body,
-                catch,
-            }));
-        }
-
-        let init = if !self.check_keyword(TokenKind::Fixum) && !self.check_keyword(TokenKind::Varia) {
-            Some(Box::new(self.parse_expression()?))
-        } else {
-            None
+        let kind_span = self.current_span();
+        let kind_symbol = self.parse_string()?;
+        let kind_text = self.interner.resolve(kind_symbol);
+        let kind = match kind_text {
+            "arena" => CuraKind::Arena,
+            "page" => CuraKind::Page,
+            _ => {
+                return Err(ParseError {
+                    kind: ParseErrorKind::Expected,
+                    message: "expected allocator kind \"arena\" or \"page\"".to_owned(),
+                    span: kind_span,
+                });
+            }
         };
 
         let mutability = if self.eat_keyword(TokenKind::Fixum) {
@@ -562,19 +541,12 @@ impl Parser {
             return Err(self.error(ParseErrorKind::Expected, "expected 'fixum' or 'varia'"));
         };
 
-        // Check: is this "name {" (no type) or "type name {" (with type)?
-        let ty = if matches!(self.peek().kind, TokenKind::Ident(_)) && matches!(self.peek_at(1).kind, TokenKind::LBrace)
-        {
-            None
-        } else {
-            Some(self.parse_type()?)
-        };
-
+        let ty = self.parse_type()?;
         let binding = self.parse_ident()?;
         let body = self.parse_block()?;
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Cura(CuraStmt { kind, init, mutability, ty, binding, body, catch }))
+        Ok(StmtKind::Cura(CuraStmt { kind, mutability, ty, binding, body, catch }))
     }
 
     /// Parse HTTP endpoint declaration.

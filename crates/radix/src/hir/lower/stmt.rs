@@ -383,36 +383,26 @@ impl<'a> Lowerer<'a> {
 
     fn lower_cura(&mut self, stmt: &crate::syntax::CuraStmt) -> HirStmtKind {
         let mut stmts = Vec::new();
-        let has_binding = stmt.binding.name.0 != 0;
-        let mut def_id = None;
-        if has_binding {
-            let local_def = self.next_def_id();
-            let init = stmt.init.as_ref().map(|expr| self.lower_expr(expr));
-            let ty = stmt.ty.as_ref().map(|ty| self.lower_type(ty)).or_else(|| {
-                if stmt.kind.is_some() {
-                    Some(self.types.primitive(crate::semantic::Primitive::Ignotum))
-                } else {
-                    None
-                }
-            });
-            stmts.push(HirStmt {
-                id: self.next_hir_id(),
-                kind: HirStmtKind::Local(crate::hir::HirLocal {
-                    def_id: local_def,
-                    name: stmt.binding.name,
-                    ty,
-                    init,
-                    mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
-                }),
-                span: self.current_span,
-            });
-            def_id = Some(local_def);
-        }
+        let local_def = self.next_def_id();
+        let ty = if matches!(stmt.ty.kind, crate::syntax::TypeExprKind::Infer) {
+            self.types.primitive(crate::semantic::Primitive::Ignotum)
+        } else {
+            self.lower_type(&stmt.ty)
+        };
+        stmts.push(HirStmt {
+            id: self.next_hir_id(),
+            kind: HirStmtKind::Local(crate::hir::HirLocal {
+                def_id: local_def,
+                name: stmt.binding.name,
+                ty: Some(ty),
+                init: None,
+                mutable: stmt.mutability == crate::syntax::Mutability::Mutable,
+            }),
+            span: self.current_span,
+        });
 
         self.push_scope();
-        if let Some(local_def) = def_id {
-            self.bind_local(stmt.binding.name, local_def);
-        }
+        self.bind_local(stmt.binding.name, local_def);
         for lowered in self.lower_block(&stmt.body).stmts {
             stmts.push(lowered);
         }

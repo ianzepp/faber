@@ -1,21 +1,6 @@
-# Arena allocator scope
-#
-# cura arena <identifier> { <body> }
-#
-# Arena allocators provide fast allocation with bulk deallocation.
-# All memory is freed when the scope exits.
-# On GC targets (TS, Python), allocator blocks are ignored.
+# Zig allocator scope syntax is covered by parser and driver tests.
+# Active examples avoid allocator scopes because Zig codegen is not currently supported.
 
 incipit {
-    cura arena fixum mem {
-        # All allocations in this block use the arena
-        varia textus[] items ← ["hello", "world"]
-        nota items
-    }
-    # Arena freed, all allocations released
-
-    # Page allocator variant
-    cura page fixum pageMem {
-        nota "Using page allocator"
-    }
+    nota "cura allocator syntax is Zig-only"
 }

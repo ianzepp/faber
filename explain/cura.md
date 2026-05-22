@@ -3,15 +3,15 @@ term = "cura"
 kind = "keyword"
 category = "resource"
 canonical = true
-summary = "Starts a scoped resource-management block."
-syntax = "cura [arena|page] [<type>] <binding> <block>"
+summary = "Starts a Zig allocator scope."
+syntax = 'cura "<allocator-kind>" fixum _ <alloc> <block>'
 related = ["arena"]
 +++
 
-Starts a scoped resource-management block.
+Starts a Zig allocator scope. Active examples avoid allocator scopes while Zig codegen is unsupported; parser and driver tests cover the syntax.
 
 ```fab
-cura arena {
+cura "arena" fixum _ alloc {
 scribe "managed"
 }
 ```

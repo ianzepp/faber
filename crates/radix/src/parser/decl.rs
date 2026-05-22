@@ -365,8 +365,13 @@ impl Parser {
                 let name = self.parse_ident()?;
                 modifiers.push(FuncModifier::Argumenta(name));
             } else if self.eat_keyword(TokenKind::Curata) {
-                let name = self.parse_ident()?;
-                modifiers.push(FuncModifier::Curata(name));
+                let required = self.parse_ident()?;
+                let alias = if self.eat_keyword(TokenKind::Ut) {
+                    Some(self.parse_ident()?)
+                } else {
+                    None
+                };
+                modifiers.push(FuncModifier::Curata { required, alias });
             } else if self.eat_keyword(TokenKind::Errata) {
                 let name = self.parse_ident()?;
                 modifiers.push(FuncModifier::Errata(name));

@@ -83,15 +83,15 @@ Keywords for managing errors and cleanup:
 
 ## Resource Management
 
-Keywords for scoped resource and allocator management:
+Keywords for Zig allocator-scope syntax:
 
 | Verbum  | Meaning | Usage                      |
 | ------- | ------- | -------------------------- |
-| `cura`  | care    | Scoped resource management |
-| `arena` | arena   | Arena allocator kind       |
-| `page`  | page    | Page allocator kind        |
+| `cura`  | care    | Zig allocator scope        |
+| `arena` | arena   | Allocator kind string      |
+| `page`  | page    | Allocator kind string      |
 
-See `cura.md` in `consilia/completa/` for full details on resource management.
+Use allocator kinds as strings, for example `cura "arena" fixum _ alloc { }`.
 
 ---
 
@@ -155,7 +155,7 @@ Keywords that modify declarations, members, or execution behavior:
 | ----------- | -------------- | ------------------------------------------------------------- |
 | `futura`    | async          | Async function annotation (`@ futura`)                        |
 | `cursor`    | generator      | Generator function annotation (`@ cursor`)                    |
-| `curata`    | managed        | Post-parameter modifier: allocator binding (`curata NAME`)    |
+| `curata`    | managed        | Post-parameter modifier: Zig allocator binding (`curata NAME [ut LOCAL]`) |
 | `errata`    | errored        | Post-parameter modifier: error binding (`errata NAME`)        |
 | `immutata`  | unchanged      | Post-parameter modifier: const/non-mutating qualifier         |
 | `iacit`     | throws         | Post-parameter modifier: throws declaration (target-specific) |

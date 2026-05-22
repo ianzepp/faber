@@ -18,7 +18,6 @@ pub enum KeywordScope {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeywordOwner {
-    CuraKind,
     EntryModifier,
     FunctionModifier,
     GenusHeader,
@@ -89,7 +88,6 @@ const ENTRY_OR_FUNCTION_MODIFIER: &[KeywordOwner] = &[KeywordOwner::EntryModifie
 const PARAMETER_MODE: &[KeywordOwner] = &[KeywordOwner::ParameterMode, KeywordOwner::IterationMode];
 const ALIAS_MARKER: &[KeywordOwner] = &[KeywordOwner::AliasMarker];
 const ITERATION_MODE: &[KeywordOwner] = &[KeywordOwner::IterationMode, KeywordOwner::EndpointBinding];
-const CURA_KIND: &[KeywordOwner] = &[KeywordOwner::CuraKind];
 const SPREAD_EXPRESSION: &[KeywordOwner] = &[KeywordOwner::SpreadExpression];
 const COLLECTION_QUERY: &[KeywordOwner] = &[KeywordOwner::CollectionQuery];
 const PREDICATE_OPERATOR: &[KeywordOwner] = &[KeywordOwner::PredicateOperator];
@@ -529,12 +527,6 @@ pub static KEYWORD_SPECS: &[KeywordSpec] = &[
         category: KeywordCategory::Resource,
     },
     KeywordSpec {
-        text: "arena",
-        token_kind: Some(TokenKind::Arena),
-        scope: KeywordScope::Contextual(CURA_KIND),
-        category: KeywordCategory::Resource,
-    },
-    KeywordSpec {
         text: "ad",
         token_kind: Some(TokenKind::Ad),
         scope: KeywordScope::Global,
@@ -785,12 +777,6 @@ pub static KEYWORD_SPECS: &[KeywordSpec] = &[
         token_kind: Some(TokenKind::Positivum),
         scope: KeywordScope::Contextual(PREDICATE_OPERATOR),
         category: KeywordCategory::Nullability,
-    },
-    KeywordSpec {
-        text: "page",
-        token_kind: None,
-        scope: KeywordScope::Contextual(CURA_KIND),
-        category: KeywordCategory::Resource,
     },
     KeywordSpec {
         text: "futura",

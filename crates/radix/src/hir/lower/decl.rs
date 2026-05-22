@@ -473,9 +473,12 @@ fn modifier_bindings(modifiers: &[crate::syntax::FuncModifier]) -> Vec<&crate::s
     let mut out = Vec::new();
     for modifier in modifiers {
         match modifier {
-            crate::syntax::FuncModifier::Curata(ident)
-            | crate::syntax::FuncModifier::Errata(ident)
-            | crate::syntax::FuncModifier::Optiones(ident) => out.push(ident),
+            crate::syntax::FuncModifier::Curata { required, alias } => {
+                out.push(alias.as_ref().unwrap_or(required));
+            }
+            crate::syntax::FuncModifier::Errata(ident) | crate::syntax::FuncModifier::Optiones(ident) => {
+                out.push(ident);
+            }
             crate::syntax::FuncModifier::Exitus(crate::syntax::ExitusValue::Name(ident)) => out.push(ident),
             _ => {}
         }
