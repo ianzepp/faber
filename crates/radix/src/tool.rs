@@ -17,6 +17,7 @@
 //! - `lex`: Tokenize source and emit JSON
 //! - `parse`: Parse source and emit AST as JSON
 //! - `hir`: Lower AST to HIR and emit JSON
+//! - `mir`: Lower checked HIR to MIR and emit a deterministic text dump
 //! - `emit`: Compile to target for stdout-oriented and debug workflows
 //!
 //! DESIGN PHILOSOPHY
@@ -81,6 +82,8 @@ pub enum RadixCommand {
     Parse(InputArgs),
     /// Lower AST to HIR and output as JSON
     Hir(InputArgs),
+    /// Lower checked HIR to MIR and output a deterministic text dump
+    Mir(InputArgs),
     /// Validate and output normalized CLI IR as JSON
     CliIr(InputArgs),
     /// Run semantic analysis
@@ -231,6 +234,11 @@ fn source_file_from_input(name: String, source: String) -> crate::driver::Source
 pub fn format_location(source_file: &crate::driver::SourceFile, offset: u32) -> String {
     let (line, column) = source_file.offset_to_line_col(offset);
     format!("{}:{}:{}", source_file.name.as_str(), line, column)
+}
+
+fn format_optional_location(source_file: &crate::driver::SourceFile, span: Option<crate::lexer::Span>) -> String {
+    span.map(|span| format_location(source_file, span.start))
+        .unwrap_or_else(|| source_file.name.clone())
 }
 
 /// Tokenize source and emit JSON.
@@ -442,6 +450,39 @@ pub fn cmd_hir(args: &[String]) {
 
     if !errors.is_empty() {
         std::process::exit(1);
+    }
+}
+
+pub fn cmd_mir(args: &[String]) {
+    let (name, source) = read_source(args);
+    let source_file = source_file_from_input(name, source);
+    let session =
+        crate::driver::Session::new(crate::driver::Config::default().with_target(crate::codegen::Target::Faber));
+
+    let analysis = match crate::driver::analyze_source(&session, &source_file.name, &source_file.content) {
+        Ok(analysis) => analysis,
+        Err(diagnostics) => {
+            for diagnostic in diagnostics {
+                let prefix = if diagnostic.is_error() { "error" } else { "warning" };
+                eprintln!(
+                    "{}: {}: {}",
+                    prefix,
+                    format_optional_location(&source_file, diagnostic.span),
+                    diagnostic.message
+                );
+            }
+            std::process::exit(1);
+        }
+    };
+
+    match crate::mir::dump_analyzed_unit(&analysis) {
+        Ok(output) => print!("{output}"),
+        Err(errors) => {
+            for err in errors {
+                eprintln!("error: {}: {}", format_location(&source_file, err.span.start), err.message);
+            }
+            std::process::exit(1);
+        }
     }
 }
 

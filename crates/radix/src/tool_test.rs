@@ -63,6 +63,7 @@ fn cmd_lex_parse_hir_check_emit_succeed_on_valid_file() {
     cmd_lex(&args);
     cmd_parse(&args);
     cmd_hir(&args);
+    cmd_mir(&args);
     cmd_check(CheckCommand { input: args.clone(), package: false, permissive: false });
     cmd_emit(EmitCommand { input: args, package: false, target: crate::codegen::Target::Rust });
 }
@@ -172,6 +173,17 @@ fn cli_parses_emit_package_flag() {
 }
 
 #[test]
+fn cli_parses_mir_command() {
+    let cli = RadixCli::try_parse_from(["radix", "mir", "main.fab"]).expect("cli parse");
+    match cli.command {
+        RadixCommand::Mir(args) => {
+            assert_eq!(args.input, vec!["main.fab"]);
+        }
+        other => panic!("expected mir, got {:?}", other),
+    }
+}
+
+#[test]
 fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
     let help = RadixCli::command().render_help().to_string();
 
@@ -180,6 +192,7 @@ fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
     assert!(help.contains("targets"));
     assert!(help.contains("check"));
     assert!(help.contains("emit"));
+    assert!(help.contains("mir"));
     assert!(!help.contains("emit-package"));
 }
 

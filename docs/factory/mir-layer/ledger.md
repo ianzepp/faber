@@ -90,3 +90,65 @@ Behavior boundary:
 - No CLI command was added.
 - No codegen backend consumes MIR.
 - Existing target behavior remains on the HIR-to-codegen path.
+
+## Phase 2 Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- `crates/radix/src/mir/lower.rs`
+- `crates/radix/src/mir/lower_test.rs`
+- `radix mir` command dispatch in `crates/radix/src/bin/radix.rs`
+- `cmd_mir` command implementation in `crates/radix/src/tool.rs`
+
+Lowering subset:
+
+- Top-level Faber `functio` items lower into `MirFunction` shells.
+- Function parameters lower into MIR parameters with deterministic local IDs.
+- Empty concrete function bodies lower as one `bb0` with `return`.
+- Empty executable entry blocks lower as ordinary synthetic `MirFunction` values with `source: None`; MIR still has no special root, `main`, or `MirEntry` node.
+- Function-only source files can produce MIR output.
+
+Unsupported diagnostics:
+
+- Non-empty function bodies fail with `unsupported MIR lowering in phase 2`.
+- Non-empty entry blocks fail with `unsupported MIR lowering in phase 2`.
+- Unsupported top-level HIR items, including structs, fail explicitly.
+- CLI program-specific MIR lowering is rejected for this phase.
+
+Manual checkpoint output:
+
+```text
+$ printf 'functio saluta() {}\n' | cargo run -q -p radix --bin radix -- mir -
+function f0 -> ty#5 {
+  bb0:
+    return
+}
+```
+
+```text
+$ printf 'incipit {}\n' | cargo run -q -p radix --bin radix -- mir -
+function f0 -> ty#5 {
+  bb0:
+    return
+}
+```
+
+```text
+$ printf 'incipit { nota "salve" }\n' | cargo run -q -p radix --bin radix -- mir -
+error: <stdin>:1:9: unsupported MIR lowering in phase 2: non-empty entry blocks before primitive expression lowering
+```
+
+Verification:
+
+- `cargo test -p radix mir` passed.
+- `cargo test -p radix tool` passed.
+- `cargo test -p radix` passed: 324 unit tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.
+
+Behavior boundary:
+
+- Existing HIR-to-codegen behavior remains unchanged.
+- No target backend consumes MIR.
+- Primitive expression lowering remains deferred to phase 3.

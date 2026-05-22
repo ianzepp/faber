@@ -11,6 +11,7 @@ fn main() {
         RadixCommand::Lex(args) => tool::cmd_lex(&args.input),
         RadixCommand::Parse(args) => tool::cmd_parse(&args.input),
         RadixCommand::Hir(args) => tool::cmd_hir(&args.input),
+        RadixCommand::Mir(args) => tool::cmd_mir(&args.input),
         RadixCommand::CliIr(args) => tool::cmd_cli_ir(&args.input),
         RadixCommand::Check(args) => {
             tool::cmd_check(CheckCommand { input: args.input, package: args.package, permissive: args.permissive })
