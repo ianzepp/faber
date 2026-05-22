@@ -1,7 +1,9 @@
 use crate::mir::{
-    MirAggregate, MirAggregateKind, MirBinOp, MirBlockId, MirCallee, MirConstant, MirFunctionId, MirIntrinsic,
-    MirLocalId, MirOperand, MirPlace, MirPlaceBase, MirProgram, MirProjection, MirRuntimeCall, MirStmtKind, MirTempId,
-    MirTerminatorKind, MirType, MirUnOp, MirValue, MirValueId, MirValueKind,
+    MirAggregate, MirAggregateFields, MirAggregateKind, MirBinOp, MirBlockId, MirCallee, MirCollectionOp, MirConstant,
+    MirConversion, MirConversionFlavor, MirDiagnosticKind, MirFunctionId, MirIntrinsic, MirKeyValueOperand, MirLocalId,
+    MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirPlace, MirPlaceBase,
+    MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmtKind, MirTempId, MirTerminatorKind, MirType,
+    MirUnOp, MirValue, MirValueId, MirValueKind,
 };
 
 pub fn dump_program(program: &MirProgram) -> String {
@@ -72,13 +74,8 @@ fn stmt_kind(kind: &MirStmtKind) -> String {
                 .unwrap_or_default();
             format!("{lhs}runtime {}", runtime_call(call))
         }
-        MirStmtKind::Construct { destination, aggregate, fields } => {
-            format!(
-                "{} = construct {}({})",
-                place_fmt(destination),
-                aggregate_fmt(aggregate),
-                operands(fields)
-            )
+        MirStmtKind::Construct { destination, aggregate } => {
+            format!("{} = construct {}", place_fmt(destination), aggregate_fmt(aggregate))
         }
     }
 }
@@ -132,6 +129,7 @@ fn value_fmt(value: &MirValue) -> String {
         MirValueKind::Binary { op, lhs, rhs } => {
             format!("{} {} {}: {}", operand(lhs), binop(*op), operand(rhs), ty(value.ty))
         }
+        MirValueKind::Option(op) => format!("option {}: {}", option_op(op), ty(value.ty)),
     }
 }
 
@@ -153,7 +151,37 @@ fn aggregate_fmt(aggregate: &MirAggregate) -> String {
         MirAggregateKind::Struct(def_id) => format!("struct def#{}", def_id.0),
         MirAggregateKind::EnumVariant(def_id) => format!("variant def#{}", def_id.0),
     };
-    format!("{kind}: {}", ty(aggregate.ty))
+    format!("{kind}: {} {}", ty(aggregate.ty), aggregate_fields(&aggregate.fields))
+}
+
+fn aggregate_fields(fields: &MirAggregateFields) -> String {
+    match fields {
+        MirAggregateFields::Ordered(items) => format!("[{}]", operands(items)),
+        MirAggregateFields::Named(items) => {
+            let rendered = items
+                .iter()
+                .map(named_operand)
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("{{{rendered}}}")
+        }
+        MirAggregateFields::Keyed(items) => {
+            let rendered = items
+                .iter()
+                .map(key_value_operand)
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("{{{rendered}}}")
+        }
+    }
+}
+
+fn named_operand(field: &MirNamedOperand) -> String {
+    format!("sym#{}: {}", field.name.0, operand(&field.value))
+}
+
+fn key_value_operand(entry: &MirKeyValueOperand) -> String {
+    format!("{} => {}", operand(&entry.key), operand(&entry.value))
 }
 
 fn callee_fmt(callee: &MirCallee) -> String {
@@ -188,7 +216,7 @@ fn place_fmt(place: &MirPlace) -> String {
             MirProjection::VariantField { variant, field } => {
                 out.push_str(&format!(".def#{}.sym#{}", variant.0, field.0));
             }
-            MirProjection::Index(index) => out.push_str(&format!("[{}]", value_id(*index))),
+            MirProjection::Index(index) => out.push_str(&format!("[{}]", operand(index))),
         }
     }
     out
@@ -207,12 +235,104 @@ fn constant(value: &MirConstant) -> String {
 
 fn intrinsic(value: &MirIntrinsic) -> String {
     match value {
-        MirIntrinsic::Print => "print".to_owned(),
-        MirIntrinsic::FormatString => "format_string".to_owned(),
-        MirIntrinsic::CollectionPush => "collection_push".to_owned(),
-        MirIntrinsic::Convert => "convert".to_owned(),
+        MirIntrinsic::Diagnostic(kind) => format!("diagnostic {}", diagnostic_kind(*kind)),
+        MirIntrinsic::FormatString { template } => format!("format_string template sym#{}", template.0),
+        MirIntrinsic::Convert(conversion) => conversion_intrinsic(conversion),
+        MirIntrinsic::Collection(op) => format!("collection {}", collection_op(*op)),
         MirIntrinsic::Panic => "panic".to_owned(),
-        MirIntrinsic::Provider(symbol) => format!("provider sym#{}", symbol.0),
+        MirIntrinsic::Provider(provider) => provider_intrinsic(provider),
+    }
+}
+
+fn option_op(op: &MirOptionOp) -> String {
+    match op {
+        MirOptionOp::None => "none".to_owned(),
+        MirOptionOp::Some(value) => format!("some({})", operand(value)),
+        MirOptionOp::IsNil(value) => format!("is_nil({})", operand(value)),
+        MirOptionOp::IsNonNil(value) => format!("is_non_nil({})", operand(value)),
+        MirOptionOp::Unwrap { value, mode } => {
+            format!("unwrap_{}({})", option_unwrap_mode(*mode), operand(value))
+        }
+        MirOptionOp::Coalesce { value, fallback } => {
+            format!("coalesce({}, {})", operand(value), operand(fallback))
+        }
+        MirOptionOp::Chain { base, link } => {
+            format!("chain({}, {})", operand(base), option_chain_link(link))
+        }
+    }
+}
+
+fn option_unwrap_mode(mode: MirOptionUnwrapMode) -> &'static str {
+    match mode {
+        MirOptionUnwrapMode::Assert => "assert",
+        MirOptionUnwrapMode::Assume => "assume",
+    }
+}
+
+fn option_chain_link(link: &MirOptionChainLink) -> String {
+    match link {
+        MirOptionChainLink::Field(field) => format!(".sym#{}", field.0),
+        MirOptionChainLink::VariantField { variant, field } => {
+            format!(".def#{}.sym#{}", variant.0, field.0)
+        }
+        MirOptionChainLink::Index(index) => format!("[{}]", operand(index)),
+        MirOptionChainLink::Call { callee, args } => {
+            format!("call {}({})", callee_fmt(callee), operands(args))
+        }
+    }
+}
+
+fn diagnostic_kind(kind: MirDiagnosticKind) -> &'static str {
+    match kind {
+        MirDiagnosticKind::Nota => "nota",
+        MirDiagnosticKind::Vide => "vide",
+        MirDiagnosticKind::Mone => "mone",
+        MirDiagnosticKind::Scribe => "scribe",
+    }
+}
+
+fn conversion_intrinsic(conversion: &MirConversion) -> String {
+    let fallback = conversion
+        .fallback
+        .as_ref()
+        .map(|value| format!(" fallback {}", operand(value)))
+        .unwrap_or_default();
+    format!(
+        "convert {} -> {}{}",
+        conversion_flavor(conversion.flavor),
+        ty(conversion.target_ty),
+        fallback
+    )
+}
+
+fn conversion_flavor(flavor: MirConversionFlavor) -> &'static str {
+    match flavor {
+        MirConversionFlavor::Cast => "cast",
+        MirConversionFlavor::Runtime => "runtime",
+    }
+}
+
+fn collection_op(op: MirCollectionOp) -> &'static str {
+    match op {
+        MirCollectionOp::Append => "append",
+        MirCollectionOp::AppendImmutable => "append_immutable",
+        MirCollectionOp::Index => "index",
+        MirCollectionOp::Length => "length",
+        MirCollectionOp::Contains => "contains",
+    }
+}
+
+fn provider_intrinsic(provider: &MirProvider) -> String {
+    let module = provider
+        .module
+        .iter()
+        .map(|symbol| format!("sym#{}", symbol.0))
+        .collect::<Vec<_>>()
+        .join("/");
+    if module.is_empty() {
+        format!("provider sym#{}", provider.name.0)
+    } else {
+        format!("provider {module}::sym#{}", provider.name.0)
     }
 }
 

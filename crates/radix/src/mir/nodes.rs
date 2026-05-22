@@ -131,7 +131,6 @@ pub enum MirStmtKind {
     Construct {
         destination: MirPlace,
         aggregate: MirAggregate,
-        fields: Vec<MirOperand>,
     },
 }
 
@@ -193,6 +192,7 @@ pub enum MirValueKind {
         lhs: MirOperand,
         rhs: MirOperand,
     },
+    Option(MirOptionOp),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -229,7 +229,7 @@ pub enum MirPlaceBase {
 pub enum MirProjection {
     Field(Symbol),
     VariantField { variant: DefId, field: Symbol },
-    Index(MirValueId),
+    Index(MirOperand),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -290,18 +290,55 @@ pub struct MirRuntimeCall {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MirIntrinsic {
-    Print,
-    FormatString,
-    CollectionPush,
-    Convert,
+    Diagnostic(MirDiagnosticKind),
+    FormatString { template: Symbol },
+    Convert(MirConversion),
+    Collection(MirCollectionOp),
     Panic,
-    Provider(Symbol),
+    Provider(MirProvider),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MirDiagnosticKind {
+    Nota,
+    Vide,
+    Mone,
+    Scribe,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MirConversion {
+    pub flavor: MirConversionFlavor,
+    pub target_ty: MirType,
+    pub fallback: Option<MirOperand>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MirConversionFlavor {
+    Cast,
+    Runtime,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MirCollectionOp {
+    Append,
+    AppendImmutable,
+    Index,
+    Length,
+    Contains,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MirProvider {
+    pub module: Vec<Symbol>,
+    pub name: Symbol,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MirAggregate {
     pub kind: MirAggregateKind,
     pub ty: MirType,
+    pub fields: MirAggregateFields,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -312,6 +349,59 @@ pub enum MirAggregateKind {
     Set,
     Struct(DefId),
     EnumVariant(DefId),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MirAggregateFields {
+    Ordered(Vec<MirOperand>),
+    Named(Vec<MirNamedOperand>),
+    Keyed(Vec<MirKeyValueOperand>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MirNamedOperand {
+    pub name: Symbol,
+    pub value: MirOperand,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MirKeyValueOperand {
+    pub key: MirOperand,
+    pub value: MirOperand,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MirOptionOp {
+    None,
+    Some(MirOperand),
+    IsNil(MirOperand),
+    IsNonNil(MirOperand),
+    Unwrap {
+        value: MirOperand,
+        mode: MirOptionUnwrapMode,
+    },
+    Coalesce {
+        value: MirOperand,
+        fallback: MirOperand,
+    },
+    Chain {
+        base: MirOperand,
+        link: MirOptionChainLink,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MirOptionUnwrapMode {
+    Assert,
+    Assume,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MirOptionChainLink {
+    Field(Symbol),
+    VariantField { variant: DefId, field: Symbol },
+    Index(MirOperand),
+    Call { callee: MirCallee, args: Vec<MirOperand> },
 }
 
 #[cfg(test)]

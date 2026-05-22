@@ -508,3 +508,55 @@ Planning artifacts:
 - `docs/factory/mir-layer/phase-6b-delivery.md` added for aggregate/option lowering.
 - `docs/factory/mir-layer/phase-7-delivery.md` added for runtime intrinsic/provider lowering after the contract.
 - `docs/factory/mir-layer/plan.md` updated to replace Phase 6 with Phase 6A and Phase 6B and to clarify Phase 7's dependency on Phase 6A.
+
+## Phase 6A Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- `MirStmtKind::Construct` now carries a single `MirAggregate` payload instead of a positional field list.
+- `MirAggregate` now includes ordered, named, or keyed payload fields.
+- Struct construction can preserve `Symbol -> operand` field names.
+- Map construction can preserve key/value operand pairs.
+- `MirProjection::Index` now carries `MirOperand` instead of `MirValueId`, so index projections can use the operand shape Phase 6B lowering will naturally have.
+- `MirValueKind::Option` and `MirOptionOp` define explicit option/null operations for none/some wrapping, nil checks, unwrap, coalesce, and optional chain links.
+- `MirIntrinsic` now carries structured target-neutral identity for diagnostics, string formatting, conversions, collection operations, panic, and provider calls.
+- Provider identity is represented as Faber/stdlib symbols, separate from target linkage or `@ verte` translation strings.
+- Existing `mori` lowering now emits the structured panic runtime intrinsic through the updated runtime-call contract.
+- Broad aggregate, option, diagnostic, formatting, conversion, collection, and provider HIR lowering remains fail-closed for Phase 6B/7.
+
+Representative MIR dump shapes:
+
+```text
+_0 = construct struct def#7: ty#0 {sym#11: const string sym#12, sym#13: const int 36}
+_1 = construct map: ty#1 {const string sym#14 => const int 1}
+return _1[const string sym#14]
+```
+
+```text
+_0 = option some(const string sym#9): ty#0
+_1 = option chain(_0, .sym#10): ty#0
+_2 = option coalesce(_1, const string sym#11): ty#0
+```
+
+```text
+runtime diagnostic mone(const string sym#20) -> ty#5
+_0 = runtime format_string template sym#21(const string sym#22) -> ty#0
+_1 = runtime convert runtime -> ty#1 fallback const int 0(_0) -> ty#1
+_1 = runtime collection length(_0) -> ty#1
+_0 = runtime provider sym#30/sym#31::sym#32() -> ty#0
+```
+
+Validation:
+
+- `cargo test -p radix mir` passed: 40 tests passed.
+- `cargo test -p radix` passed: 369 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.
+
+Behavior boundary:
+
+- Phase 6A is contract-only and does not lower broad aggregate, option, or runtime-backed HIR constructs.
+- No target backend consumes MIR.
+- Aggregate/option lowering remains Phase 6B.
+- Runtime/provider lowering remains Phase 7.

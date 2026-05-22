@@ -1,5 +1,7 @@
 # Phase 6A Delivery: Aggregate, Option, And Runtime MIR Contract
 
+**Status**: complete.
+
 ## Interpreted Problem
 
 Phase 6 and Phase 7 both need the same MIR surface. Aggregate and option lowering need named construction, projection, optional-flow, and collection shapes. Runtime intrinsic lowering needs target-neutral operation identity for printing, string formatting, conversions, collection methods, and provider-backed stdlib calls.
