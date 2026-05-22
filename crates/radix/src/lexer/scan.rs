@@ -311,7 +311,8 @@ impl<'a> Lexer<'a> {
                 TokenKind::Section
             }
             '#' => return self.scan_hash_comment(start),
-            '"' | '\'' => return self.scan_string(start, c),
+            '"' => return self.scan_string(start),
+            '❝' => return self.scan_block_string(start),
             '0'..='9' => return self.scan_number(start, c),
             c if is_ident_start(c) => return self.scan_identifier(start),
             c => {
@@ -399,17 +400,18 @@ impl<'a> Lexer<'a> {
     // STRING SCANNERS
     // =========================================================================
 
-    /// Scan a string literal (single, double, or triple-quoted).
-    ///
-    /// WHY: Triple-quoted strings allow multi-line literals without escapes.
-    /// Only double quotes support triple-quoting to avoid ambiguity with
-    /// single-character literals in other languages.
-    fn scan_string(&mut self, start: u32, quote: char) {
-        // Check for triple-quoted string (only for double quotes)
-        let is_triple = quote == '"' && self.cursor.peek() == Some('"') && self.cursor.peek_next() == Some('"');
-        if is_triple {
+    /// Scan a short string literal delimited by double quotes.
+    fn scan_string(&mut self, start: u32) {
+        if self.cursor.peek() == Some('"') && self.cursor.peek_next() == Some('"') {
             self.cursor.advance();
             self.cursor.advance();
+            self.emit_error(
+                LexErrorKind::UnexpectedCharacter,
+                start,
+                "triple-quote string literals are not supported; use ❝...❞ block strings",
+            );
+            self.emit_token(TokenKind::Error, start);
+            return;
         }
 
         loop {
@@ -418,7 +420,7 @@ impl<'a> Lexer<'a> {
                     self.emit_error(LexErrorKind::UnterminatedString, start, "unterminated string literal");
                     break;
                 }
-                Some('\n') if !is_triple => {
+                Some('\n') => {
                     // WHY: Single-line strings can't contain newlines
                     self.emit_error(
                         LexErrorKind::UnterminatedString,
@@ -432,16 +434,9 @@ impl<'a> Lexer<'a> {
                     self.cursor.advance();
                     self.cursor.advance();
                 }
-                Some(c) if c == quote => {
+                Some('"') => {
                     self.cursor.advance();
-                    if is_triple {
-                        // WHY: Need three consecutive quotes to close
-                        if self.cursor.eat('"') && self.cursor.eat('"') {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
+                    break;
                 }
                 _ => {
                     self.cursor.advance();
@@ -449,11 +444,37 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let sym = if is_triple {
-            self.extract_and_intern(start, 3, 3)
-        } else {
-            self.extract_and_intern(start, 1, 1)
-        };
+        let sym = self.extract_and_intern(start, 1, 1);
+        self.emit_token(TokenKind::String(sym), start);
+    }
+
+    /// Scan a block string literal delimited by ❝ and ❞.
+    fn scan_block_string(&mut self, start: u32) {
+        let mut terminated = false;
+
+        loop {
+            match self.cursor.peek() {
+                None => {
+                    self.emit_error(LexErrorKind::UnterminatedString, start, "unterminated block string literal");
+                    break;
+                }
+                Some('❞') => {
+                    self.cursor.advance();
+                    terminated = true;
+                    break;
+                }
+                Some('\n') => {
+                    self.current_line += 1;
+                    self.cursor.advance();
+                }
+                _ => {
+                    self.cursor.advance();
+                }
+            }
+        }
+
+        let suffix_len = if terminated { '❞'.len_utf8() as u32 } else { 0 };
+        let sym = self.extract_and_intern(start, '❝'.len_utf8() as u32, suffix_len);
         self.emit_token(TokenKind::String(sym), start);
     }
 

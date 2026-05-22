@@ -629,6 +629,45 @@ fn backtick_template_string_is_not_faber_syntax() {
 }
 
 #[test]
+fn block_string_literal_uses_quote_glyphs() {
+    let session = session(Target::Rust);
+    let source = "incipit {\n  fixum quote ← ❝he said \"salve\"❞\n  nota quote\n}";
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("he said \\\"salve\\\""));
+}
+
+#[test]
+fn single_quote_string_is_not_faber_syntax() {
+    let session = session(Target::Rust);
+    let source = "incipit {\n  fixum value ← 'hello'\n  nota value\n}";
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("unexpected character")));
+}
+
+#[test]
+fn triple_quote_string_is_not_faber_syntax() {
+    let session = session(Target::Rust);
+    let source = "incipit {\n  fixum value ← \"\"\"hello\"\"\"\n  nota value\n}";
+    let result = compile(&session, "test.fab", source);
+
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("triple-quote string literals are not supported")));
+}
+
+#[test]
 fn compile_accepts_finge_variant_construction() {
     let session = session(Target::Rust);
     let source = r#"discretio Event {

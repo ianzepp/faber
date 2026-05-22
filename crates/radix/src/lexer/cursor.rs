@@ -66,8 +66,7 @@ impl<'a> Cursor<'a> {
 
     /// Peek at the character after next.
     ///
-    /// WHY: Required for disambiguating triple-quoted strings (""") and
-    /// checking `.` followed by a digit in number parsing.
+    /// WHY: Required for checking `.` followed by a digit in number parsing.
     pub fn peek_next(&self) -> Option<char> {
         let mut iter = self.chars.clone();
         iter.next();

@@ -418,6 +418,8 @@ primary := IDENTIFIER | NUMBER | STRING
          | '(' expression ')'
 ```
 
+`STRING` includes short strings delimited by `"` and block strings delimited by `❝` and `❞`.
+
 ### Special Expressions
 
 ```ebnf

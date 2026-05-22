@@ -17,11 +17,12 @@ fixum textus greeting ← "Salve, Munde"
 fixum textus empty ← ""
 ```
 
-String literals use double or single quotes. Formatted strings use template application with `§` placeholders:
+String literals use double quotes. Block strings use `❝` and `❞`. Formatted strings use template application with `§` placeholders:
 
 ```fab
 fixum name = "Marcus"
 fixum message = "Hello, §"(name)
+fixum quote = ❝he said "salve"❞
 ```
 
 ### numerus (Integer)

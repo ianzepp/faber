@@ -124,6 +124,8 @@ canonical_terms = [
   "rumpe",
   "scribe",
   "scriptum",
+  "string",
+  "block-string",
   "§",
   "secus",
   "sed",

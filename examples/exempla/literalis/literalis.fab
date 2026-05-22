@@ -8,7 +8,7 @@ incipit {
 
     # Strings
     fixum greeting ← "hello"
-    fixum single ← 'single quotes'
+    fixum block ← ❝block "quotes"❞
 
     # Booleans
     fixum yes ← verum
@@ -23,6 +23,7 @@ incipit {
 
     nota integer
     nota decimal
+    nota block
     nota negative
     nota greeting
     nota single

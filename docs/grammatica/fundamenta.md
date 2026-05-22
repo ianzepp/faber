@@ -120,11 +120,16 @@ fixum fractus rate = 0.05
 
 ### Strings
 
-Strings can use either double or single quotes:
+Strings use double quotes:
 
 ```fab
 fixum greeting = "hello"
-fixum single = 'single quotes'
+```
+
+Block strings use `❝` and `❞`, may span lines, and preserve their content:
+
+```fab
+fixum quote = ❝he said "salve"❞
 ```
 
 Formatted strings use template application with `§` placeholders:
