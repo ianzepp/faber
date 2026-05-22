@@ -1,9 +1,9 @@
 use crate::mir::{
-    MirAggregate, MirAggregateFields, MirAggregateKind, MirBinOp, MirBlockId, MirCallee, MirCollectionOp, MirConstant,
-    MirConversion, MirConversionFlavor, MirDiagnosticKind, MirFunctionId, MirIntrinsic, MirKeyValueOperand, MirLocalId,
-    MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirPlace, MirPlaceBase,
-    MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmtKind, MirTempId, MirTerminatorKind, MirType,
-    MirUnOp, MirValue, MirValueId, MirValueKind,
+    MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp, MirBlockId, MirCallee,
+    MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor, MirDiagnosticKind, MirFunctionId, MirIntrinsic,
+    MirKeyValueOperand, MirLocalId, MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode,
+    MirPlace, MirPlaceBase, MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmtKind, MirTempId,
+    MirTerminatorKind, MirType, MirUnOp, MirValue, MirValueId, MirValueKind,
 };
 
 pub fn dump_program(program: &MirProgram) -> String {
@@ -156,7 +156,14 @@ fn aggregate_fmt(aggregate: &MirAggregate) -> String {
 
 fn aggregate_fields(fields: &MirAggregateFields) -> String {
     match fields {
-        MirAggregateFields::Ordered(items) => format!("[{}]", operands(items)),
+        MirAggregateFields::Ordered(items) => {
+            let rendered = items
+                .iter()
+                .map(aggregate_item)
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("[{rendered}]")
+        }
         MirAggregateFields::Named(items) => {
             let rendered = items
                 .iter()
@@ -173,6 +180,13 @@ fn aggregate_fields(fields: &MirAggregateFields) -> String {
                 .join(", ");
             format!("{{{rendered}}}")
         }
+    }
+}
+
+fn aggregate_item(item: &MirAggregateItem) -> String {
+    match item {
+        MirAggregateItem::Operand(value) => operand(value),
+        MirAggregateItem::Spread(value) => format!("...{}", operand(value)),
     }
 }
 

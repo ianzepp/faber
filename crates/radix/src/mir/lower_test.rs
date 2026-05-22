@@ -330,12 +330,13 @@ fn rejects_non_empty_entry_blocks_with_explicit_unsupported_error() {
 }
 
 #[test]
-fn rejects_unsupported_top_level_items_explicitly() {
-    let unit = analyze("genus Persona { textus nomen }");
-    let errors = lower_analyzed_unit(&unit).expect_err("structs are unsupported in phase 5C");
+fn ignores_top_level_type_metadata_items() {
+    let program = lower_analyzed_unit(&analyze(
+        "genus Persona { textus nomen } discretio Eventus { Bonum { textus nuntius } } functio salve() {}",
+    ))
+    .expect("type metadata should not block MIR lowering");
 
-    assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message, "unsupported MIR lowering in phase 5C: top-level struct");
+    assert_eq!(program.functions.len(), 1);
 }
 
 #[test]
@@ -624,6 +625,167 @@ fn lowers_si_arm_cape_iace_to_arm_handler() {
 }
 
 #[test]
+fn lowers_struct_construction_and_field_read() {
+    let dump = dump_source(
+        r#"
+genus Persona { textus nomen numerus aetas }
+functio nomen() → textus {
+    fixum Persona p ← { nomen: "Ada", aetas: 36 } ⇢ Persona
+    redde p.nomen
+}
+"#,
+    );
+
+    assert!(dump.contains("construct struct def#"));
+    assert!(dump.contains("sym#"));
+    assert!(dump.contains("const string sym#"));
+    assert!(dump.contains("const int 36"));
+    assert!(dump.contains("return _0.sym#"));
+}
+
+#[test]
+fn lowers_struct_construction_field_defaults() {
+    let dump = dump_source(
+        r#"
+genus Persona { textus nomen numerus aetas: 0 }
+functio aetas() → numerus {
+    fixum Persona p ← { nomen: "Ada" } ⇢ Persona
+    redde p.aetas
+}
+"#,
+    );
+
+    assert!(dump.contains("construct struct def#"));
+    assert!(dump.contains("const string sym#"));
+    assert!(dump.contains("const int 0"));
+    assert!(dump.contains("return _0.sym#"));
+}
+
+#[test]
+fn lowers_array_spread_and_index_read() {
+    let dump = dump_source(
+        r#"
+functio primus() → numerus {
+    fixum lista<numerus> xs ← [1, 2]
+    fixum lista<numerus> ys ← [0, sparge xs]
+    redde ys[0]
+}
+"#,
+    );
+
+    assert!(dump.contains("construct array"));
+    assert!(dump.contains("[const int 0, ..._0]"));
+    assert!(dump.contains("return _1[const int 0]"));
+}
+
+#[test]
+fn lowers_map_and_set_construction() {
+    let map_dump = dump_source(
+        r#"
+functio lectio() → numerus {
+    fixum tabula<textus, numerus> xs ← { a: 1, b: 2 }
+    redde xs["a"]
+}
+"#,
+    );
+    assert!(map_dump.contains("construct map"));
+    assert!(map_dump.contains("=> const int 1"));
+    assert!(map_dump.contains("return _0[const string sym#"));
+
+    let set_dump = dump_source("functio setum() → copia<numerus> { redde [1, 2] ⇢ copia<numerus> }");
+    assert!(set_dump.contains("construct set"));
+    assert!(set_dump.contains("[const int 1, const int 2]"));
+}
+
+#[test]
+fn lowers_field_and_index_assignment_places() {
+    let field_dump = dump_source(
+        r#"
+genus Persona { textus nomen numerus aetas }
+functio muta() → numerus {
+    varia Persona p ← { nomen: "Ada", aetas: 36 } ⇢ Persona
+    p.aetas ← 37
+    redde p.aetas
+}
+"#,
+    );
+    assert!(field_dump.contains("_0.sym#"));
+    assert!(field_dump.contains("= const int 37"));
+
+    let index_dump = dump_source(
+        r#"
+functio muta() → numerus {
+    varia lista<numerus> xs ← [1, 2]
+    xs[0] ← 5
+    redde xs[0]
+}
+"#,
+    );
+    assert!(index_dump.contains("_0[const int 0] = const int 5"));
+    assert!(index_dump.contains("return _0[const int 0]"));
+}
+
+#[test]
+fn lowers_optional_chain_non_null_and_coalesce() {
+    let chain_dump = dump_source(
+        r#"
+genus Persona { textus nomen }
+functio maybe(Persona ∪ nihil p) → textus ∪ nihil {
+    redde p?.nomen
+}
+"#,
+    );
+    assert!(chain_dump.contains("option chain(_0, .sym#"));
+
+    let non_null_dump = dump_source(
+        r#"
+genus Persona { textus nomen }
+functio certum(Persona ∪ nihil p) → textus {
+    redde p!.nomen
+}
+"#,
+    );
+    assert!(non_null_dump.contains("option unwrap_assert(_0)"));
+    assert!(non_null_dump.contains("return %0.sym#"));
+
+    let coalesce_dump = dump_source(r#"functio maybe(textus ∪ nihil name) → textus { redde name vel "ignotus" }"#);
+    assert!(coalesce_dump.contains("option coalesce(_0, const string sym#"));
+}
+
+#[test]
+fn lowers_enum_variant_construction() {
+    let dump = dump_source(
+        r#"
+discretio Eventus { Bonum { textus nuntius } }
+functio crea() → Eventus {
+    redde finge Bonum { nuntius: "ok" } ⇢ Eventus
+}
+"#,
+    );
+
+    assert!(dump.contains("construct variant def#"));
+    assert!(dump.contains("{sym#"));
+    assert!(dump.contains("const string sym#"));
+}
+
+#[test]
+fn rejects_unsupported_map_spread_shape() {
+    let unit = analyze(
+        r#"
+functio malum() → tabula<textus, numerus> {
+    fixum tabula<textus, numerus> base ← { a: 1 }
+    redde { sparge base, b: 2 }
+}
+"#,
+    );
+    let errors = lower_analyzed_unit(&unit).expect_err("map spread remains unsupported in MIR");
+
+    assert!(errors.iter().any(|err| err
+        .message
+        .contains("map spread before aggregate MIR lowering")));
+}
+
+#[test]
 fn rejects_diagnostic_verbs_with_construct_specific_diagnostics() {
     let unit = analyze(r#"functio malum() { nota "salve" }"#);
     let errors = lower_analyzed_unit(&unit).expect_err("nota is not phase 5C MIR");
@@ -665,5 +827,5 @@ fn rejects_assignment_targets_that_are_not_places() {
     assert_eq!(builder.errors.len(), 1);
     assert!(builder.errors[0]
         .message
-        .contains("assignment target that is not a local place"));
+        .contains("assignment target that is not an addressable place"));
 }

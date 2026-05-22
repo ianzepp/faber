@@ -500,7 +500,7 @@ Decision captured:
 - Phase 6A owns the shared MIR contract for aggregate payloads, projections, option/null operations, runtime intrinsics, and provider identity.
 - Phase 6B owns aggregate and option lowering after the Phase 6A contract is in place.
 - Phase 7 remains the runtime intrinsic boundary, but now consumes the Phase 6A contract rather than inventing its own runtime/provider shapes.
-- Phase 7 does not need to wait for full Phase 6B completion if Phase 6A has stabilized the shared contract.
+- Current delivery sequencing starts Phase 7 only after Phase 6B completion, so runtime intrinsic lowering consumes both the Phase 6A contract and the Phase 6B aggregate/option lowering baseline.
 
 Planning artifacts:
 
@@ -560,3 +560,63 @@ Behavior boundary:
 - No target backend consumes MIR.
 - Aggregate/option lowering remains Phase 6B.
 - Runtime/provider lowering remains Phase 7.
+
+## Phase 6B Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- Ordered aggregate payloads now distinguish ordinary operands from spread operands.
+- `radix mir` lowers list/array literals, including `sparge` spread elements, to ordered aggregate construction.
+- `radix mir` lowers object-to-struct construction to named aggregate fields, including omitted fields with HIR-backed defaults.
+- `radix mir` lowers object-to-map construction to keyed aggregate entries.
+- `radix mir` lowers set construction from array-like `⇢ copia<T>` sources to ordered set aggregates.
+- `radix mir` lowers enum variant construction through `finge ... ⇢ Enum` to enum-variant aggregate construction.
+- Top-level type metadata items (`genus`, `discretio`, `pactum`, aliases, imports) no longer block MIR lowering.
+- Field reads and index reads lower to MIR place projections.
+- Field and index assignments lower for addressable local-backed places.
+- Optional chain lowers to `MirOptionOp::Chain`.
+- Non-null member/index assertion syntax (`!.`, `![`) now parses and lowers through `MirOptionOp::Unwrap { mode: Assert }` plus projection.
+- `vel` / coalesce lowers to `MirOptionOp::Coalesce`.
+- Map spread remains fail-closed with an explicit MIR diagnostic.
+- Runtime-backed collection methods, diagnostics, string formatting, conversions, and provider calls remain deferred to Phase 7.
+
+Representative MIR dump shapes:
+
+```text
+%0 = construct struct def#0: ty#12 {sym#2: const string sym#6, sym#4: const int 36}
+_0 = %0: ty#11
+return _0.sym#2
+```
+
+```text
+%1 = construct array: ty#20 [const int 0, ..._0]
+return _1[const int 0]
+```
+
+```text
+%0 = construct map: ty#13 {const string sym#5 => const int 1, const string sym#6 => const int 2}
+%0 = construct set: ty#12 [const int 1, const int 2]
+%0 = construct variant def#1: ty#12 {sym#3: const string sym#5}
+```
+
+```text
+%0 = option chain(_0, .sym#2): ty#16
+%0 = option unwrap_assert(_0): ty#11
+%0 = option coalesce(_0, const string sym#3): ty#0
+```
+
+Validation:
+
+- `cargo test -p radix mir` passed: 48 tests passed.
+- `cargo test -p radix` passed: 377 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.
+
+Behavior boundary:
+
+- Phase 6B supports the aggregate and option/null subset covered by the focused MIR fixtures.
+- Struct field defaults with HIR initializers are expanded into struct aggregate fields when omitted at construction; semantic analysis still owns required/default checks.
+- Map/object spread remains unsupported in MIR and fails clearly.
+- Runtime/provider lowering remains Phase 7.
+- No target backend consumes MIR.

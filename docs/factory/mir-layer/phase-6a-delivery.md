@@ -32,7 +32,7 @@ Phase 6A should define one of these equivalent target-neutral shapes:
 
 Required data:
 
-- tuple/list/set elements in stable order,
+- tuple/list/set elements in stable order, including explicit spread items where later lowering needs them,
 - struct fields as `Symbol -> MirOperand` or ordered named fields,
 - map entries as key/value operand pairs,
 - enum variants as variant `DefId` plus named or positional payloads.

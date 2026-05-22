@@ -632,6 +632,41 @@ impl Parser {
                     }),
                     span,
                 };
+            } else if self.check(&TokenKind::BangDot) {
+                // Non-null assertion member
+                self.advance();
+                let member = self.parse_member_ident()?;
+                let span = start.merge(self.previous_span());
+                let id = self.next_id();
+                expr = Expr {
+                    id,
+                    kind: ExprKind::NonNull(NonNullExpr { object: Box::new(expr), chain: NonNullKind::Member(member) }),
+                    span,
+                };
+            } else if self.check(&TokenKind::BangBracket) {
+                // Non-null assertion index
+                self.advance();
+                let index = Box::new(self.parse_expression()?);
+                self.expect(&TokenKind::RBracket, "expected ']'")?;
+                let span = start.merge(self.previous_span());
+                let id = self.next_id();
+                expr = Expr {
+                    id,
+                    kind: ExprKind::NonNull(NonNullExpr { object: Box::new(expr), chain: NonNullKind::Index(index) }),
+                    span,
+                };
+            } else if self.check(&TokenKind::BangParen) {
+                // Non-null assertion call
+                self.advance();
+                let args = self.parse_argument_list()?;
+                self.expect(&TokenKind::RParen, "expected ')'")?;
+                let span = start.merge(self.previous_span());
+                let id = self.next_id();
+                expr = Expr {
+                    id,
+                    kind: ExprKind::NonNull(NonNullExpr { object: Box::new(expr), chain: NonNullKind::Call(args) }),
+                    span,
+                };
             } else if self.check_keyword(TokenKind::Verte) {
                 // Unified type conversion via ⇢ (only accepted spelling post clean-break)
                 self.advance();

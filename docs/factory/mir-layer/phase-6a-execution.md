@@ -16,7 +16,7 @@ Implement `docs/factory/mir-layer/phase-6a-delivery.md`: define the shared targe
 
 - Move aggregate construction payloads into `MirAggregate`.
 - Represent aggregate payloads as:
-  - ordered operands for tuples, lists, sets, and positional variants,
+  - ordered items for tuples, lists, sets, and positional variants, including spread items when needed,
   - named operands for structs and named variants,
   - keyed operands for maps.
 - Change index projections to carry `MirOperand` so Phase 6B can lower index reads and assignable index places without fabricating value IDs.

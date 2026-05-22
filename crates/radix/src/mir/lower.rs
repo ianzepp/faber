@@ -1,16 +1,19 @@
 use crate::driver::AnalyzedUnit;
 use crate::hir::{
-    DefId, HirBinOp, HirBlock, HirCape, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirLocal,
+    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirExpr, HirExprKind, HirField, HirFunction, HirItem,
+    HirItemKind, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
     HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
 };
 use crate::lexer::Span;
 use crate::mir::{
-    dump_program, MirBinOp, MirBlock, MirBlockId, MirCallee, MirConstant, MirFunction, MirFunctionId,
-    MirLocal as MirLocalDecl, MirLocalId, MirOperand, MirParam, MirPlace, MirProgram, MirStmt, MirStmtKind, MirTemp,
-    MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp, MirValue, MirValueId, MirValueKind,
+    dump_program, MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp, MirBlock, MirBlockId,
+    MirCallee, MirConstant, MirFunction, MirFunctionId, MirKeyValueOperand, MirLocal as MirLocalDecl, MirLocalId,
+    MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirParam, MirPlace, MirProgram,
+    MirProjection, MirStmt, MirStmtKind, MirTemp, MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp,
+    MirValue, MirValueId, MirValueKind,
 };
-use crate::semantic::{Primitive, TypeId, TypeTable};
-use rustc_hash::FxHashMap;
+use crate::semantic::{Primitive, Type, TypeId, TypeTable};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MirError {
@@ -75,6 +78,11 @@ impl MirLowerer<'_> {
     fn lower_item(&mut self, item: &HirItem) {
         match &item.kind {
             HirItemKind::Function(function) => self.lower_function(item, function),
+            HirItemKind::Struct(_)
+            | HirItemKind::Enum(_)
+            | HirItemKind::Interface(_)
+            | HirItemKind::TypeAlias(_)
+            | HirItemKind::Import(_) => {}
             other => self.errors.push(MirError::unsupported(
                 item.span,
                 format!("top-level {}", hir_item_kind_name(other)),
@@ -90,24 +98,38 @@ impl MirLowerer<'_> {
         };
 
         let error_ty = function.err_ty.map(MirType::semantic);
-        let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, self.function_error_map());
-        for param in &function.params {
-            builder.add_param(param.def_id, param.name, param.ty, param.span);
-        }
+        let function_errors = self.function_error_map();
+        let structs = self.struct_field_map();
+        let variant_parents = self.variant_parent_map();
+        let variant_fields = self.variant_field_map();
+        let (params, locals, temps, blocks, errors) = {
+            let mut builder = FunctionBuilder::for_function(
+                &self.unit.types,
+                error_ty,
+                function_errors,
+                structs,
+                variant_parents,
+                variant_fields,
+            );
+            for param in &function.params {
+                builder.add_param(param.def_id, param.name, param.ty, param.span);
+            }
 
-        let blocks = match &function.body {
-            Some(body) => builder.lower_body(body),
-            None => Vec::new(),
+            let blocks = match &function.body {
+                Some(body) => builder.lower_body(body),
+                None => Vec::new(),
+            };
+            (builder.params, builder.locals, builder.temps, blocks, builder.errors)
         };
-        self.errors.extend(builder.errors);
+        self.errors.extend(errors);
 
         self.functions.push(MirFunction {
             id: MirFunctionId(self.functions.len() as u32),
             source: Some(item.def_id),
             name: Some(function.name),
-            params: builder.params,
-            locals: builder.locals,
-            temps: builder.temps,
+            params,
+            locals,
+            temps,
             blocks,
             return_ty: MirType::semantic(return_ty),
             error_ty,
@@ -126,6 +148,43 @@ impl MirLowerer<'_> {
             }
         }
         errors
+    }
+
+    fn struct_field_map(&self) -> FxHashMap<DefId, Vec<&HirField>> {
+        let mut structs = FxHashMap::default();
+        for item in &self.unit.hir.items {
+            let HirItemKind::Struct(strukt) = &item.kind else {
+                continue;
+            };
+            structs.insert(item.def_id, strukt.fields.iter().collect());
+        }
+        structs
+    }
+
+    fn variant_parent_map(&self) -> FxHashMap<DefId, DefId> {
+        let mut parents = FxHashMap::default();
+        for item in &self.unit.hir.items {
+            let HirItemKind::Enum(enum_item) = &item.kind else {
+                continue;
+            };
+            for variant in &enum_item.variants {
+                parents.insert(variant.def_id, item.def_id);
+            }
+        }
+        parents
+    }
+
+    fn variant_field_map(&self) -> FxHashMap<DefId, Vec<crate::lexer::Symbol>> {
+        let mut fields = FxHashMap::default();
+        for item in &self.unit.hir.items {
+            let HirItemKind::Enum(enum_item) = &item.kind else {
+                continue;
+            };
+            for variant in &enum_item.variants {
+                fields.insert(variant.def_id, variant.fields.iter().map(|field| field.name).collect());
+            }
+        }
+        fields
     }
 
     fn lower_entry(&mut self, entry: &HirBlock) {
@@ -182,6 +241,9 @@ struct FunctionBuilder<'a> {
     types: &'a TypeTable,
     error_ty: Option<MirType>,
     function_errors: FxHashMap<DefId, MirType>,
+    structs: FxHashMap<DefId, Vec<&'a HirField>>,
+    variant_parents: FxHashMap<DefId, DefId>,
+    variant_fields: FxHashMap<DefId, Vec<crate::lexer::Symbol>>,
     bindings: FxHashMap<DefId, LocalBinding>,
     params: Vec<MirParam>,
     locals: Vec<MirLocalDecl>,
@@ -197,18 +259,31 @@ struct FunctionBuilder<'a> {
 impl<'a> FunctionBuilder<'a> {
     #[cfg(test)]
     fn new(types: &'a TypeTable) -> Self {
-        Self::for_function(types, None, FxHashMap::default())
+        Self::for_function(
+            types,
+            None,
+            FxHashMap::default(),
+            FxHashMap::default(),
+            FxHashMap::default(),
+            FxHashMap::default(),
+        )
     }
 
     fn for_function(
         types: &'a TypeTable,
         error_ty: Option<MirType>,
         function_errors: FxHashMap<DefId, MirType>,
+        structs: FxHashMap<DefId, Vec<&'a HirField>>,
+        variant_parents: FxHashMap<DefId, DefId>,
+        variant_fields: FxHashMap<DefId, Vec<crate::lexer::Symbol>>,
     ) -> Self {
         Self {
             types,
             error_ty,
             function_errors,
+            structs,
+            variant_parents,
+            variant_fields,
             bindings: FxHashMap::default(),
             params: Vec::new(),
             locals: Vec::new(),
@@ -307,27 +382,50 @@ impl<'a> FunctionBuilder<'a> {
             return self.lower_expr(expr);
         };
 
-        let (place, ty) = self.lower_assignment_place(lhs)?;
+        let fallback_ty = self.expr_ty(rhs)?;
+        let (place, ty) = self.lower_assignment_place_with_fallback(lhs, fallback_ty)?;
         self.lower_expr_to_destination(rhs, place.clone(), ty)?;
         Some(MirOperand::Place(place))
     }
 
-    fn lower_assignment_place(&mut self, expr: &HirExpr) -> Option<(MirPlace, MirType)> {
-        let HirExprKind::Path(def_id) = &expr.kind else {
-            self.errors
-                .push(MirError::unsupported(expr.span, "assignment target that is not a local place"));
-            return None;
-        };
+    fn lower_assignment_place_with_fallback(
+        &mut self,
+        expr: &HirExpr,
+        fallback_ty: MirType,
+    ) -> Option<(MirPlace, MirType)> {
+        match &expr.kind {
+            HirExprKind::Path(def_id) => {
+                let Some(binding) = self.bindings.get(def_id).copied() else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "assignment target that does not resolve to a local",
+                    ));
+                    return None;
+                };
 
-        let Some(binding) = self.bindings.get(def_id).copied() else {
-            self.errors.push(MirError::unsupported(
-                expr.span,
-                "assignment target that does not resolve to a local",
-            ));
-            return None;
-        };
-
-        Some((MirPlace::local(binding.local), binding.ty))
+                Some((MirPlace::local(binding.local), binding.ty))
+            }
+            HirExprKind::Field(object, name) => {
+                let (mut place, _) = self.lower_assignment_place_with_fallback(object, fallback_ty)?;
+                place.projections.push(MirProjection::Field(*name));
+                let ty = expr.ty.map(MirType::semantic).unwrap_or(fallback_ty);
+                Some((place, ty))
+            }
+            HirExprKind::Index(object, index) => {
+                let (mut place, _) = self.lower_assignment_place_with_fallback(object, fallback_ty)?;
+                let index = self.lower_expr(index)?;
+                place.projections.push(MirProjection::Index(index));
+                let ty = expr.ty.map(MirType::semantic).unwrap_or(fallback_ty);
+                Some((place, ty))
+            }
+            _ => {
+                self.errors.push(MirError::unsupported(
+                    expr.span,
+                    "assignment target that is not an addressable place",
+                ));
+                None
+            }
+        }
     }
 
     fn lower_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
@@ -335,8 +433,17 @@ impl<'a> FunctionBuilder<'a> {
             HirExprKind::Path(def_id) => self.lower_path(*def_id, expr.span),
             HirExprKind::Literal(literal) => self.lower_literal(literal, expr.span),
             HirExprKind::Unary(op, operand) => self.lower_unary(*op, operand, expr),
+            HirExprKind::Binary(HirBinOp::Coalesce, lhs, rhs) => self.lower_coalesce(lhs, rhs, expr),
             HirExprKind::Binary(op, lhs, rhs) => self.lower_binary(*op, lhs, rhs, expr),
             HirExprKind::Call(callee, args) => self.lower_call(callee, args, expr),
+            HirExprKind::Field(object, name) => self.lower_field(object, *name, expr),
+            HirExprKind::Index(object, index) => self.lower_index(object, index, expr),
+            HirExprKind::OptionalChain(object, chain) => self.lower_optional_chain(object, chain, expr),
+            HirExprKind::NonNull(object, chain) => self.lower_non_null(object, chain, expr),
+            HirExprKind::Array(elements) => self.lower_array(elements, expr, MirAggregateKind::Array),
+            HirExprKind::Struct(def_id, fields) => self.lower_struct_literal(*def_id, fields, expr),
+            HirExprKind::Tuple(items) => self.lower_tuple(items, expr),
+            HirExprKind::Verte { source, target, entries } => self.lower_verte(source, *target, entries.as_ref(), expr),
             HirExprKind::Block(block) => self.lower_block_expr(block, expr),
             HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.lower_si_expr(cond, then_block, then_catch.as_deref(), else_block, expr)
@@ -590,6 +697,375 @@ impl<'a> FunctionBuilder<'a> {
         Some(self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, expr.span))
     }
 
+    fn lower_coalesce(&mut self, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
+        let value = self.lower_expr(lhs)?;
+        let fallback = self.lower_expr(rhs)?;
+        let ty = self.expr_ty(expr)?;
+        Some(self.assign_temp(MirValueKind::Option(MirOptionOp::Coalesce { value, fallback }), ty, expr.span))
+    }
+
+    fn lower_tuple(&mut self, items: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
+        let mut fields = Vec::with_capacity(items.len());
+        for item in items {
+            fields.push(MirAggregateItem::Operand(self.lower_expr(item)?));
+        }
+        let ty = self.expr_ty(expr)?;
+        Some(self.construct_temp(MirAggregateKind::Tuple, MirAggregateFields::Ordered(fields), ty, expr.span))
+    }
+
+    fn lower_array(
+        &mut self,
+        elements: &[HirArrayElement],
+        expr: &HirExpr,
+        kind: MirAggregateKind,
+    ) -> Option<MirOperand> {
+        let fields = self.lower_array_items(elements)?;
+        let ty = self.expr_ty(expr)?;
+        Some(self.construct_temp(kind, MirAggregateFields::Ordered(fields), ty, expr.span))
+    }
+
+    fn lower_array_items(&mut self, elements: &[HirArrayElement]) -> Option<Vec<MirAggregateItem>> {
+        let mut fields = Vec::with_capacity(elements.len());
+        for element in elements {
+            match element {
+                HirArrayElement::Expr(expr) => {
+                    fields.push(MirAggregateItem::Operand(self.lower_expr(expr)?));
+                }
+                HirArrayElement::Spread(expr) => {
+                    fields.push(MirAggregateItem::Spread(self.lower_expr(expr)?));
+                }
+            }
+        }
+        Some(fields)
+    }
+
+    fn lower_struct_literal(
+        &mut self,
+        def_id: DefId,
+        fields: &[(crate::lexer::Symbol, HirExpr)],
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let mut named = Vec::with_capacity(fields.len());
+        for (name, value) in fields {
+            named.push(MirNamedOperand { name: *name, value: self.lower_expr(value)? });
+        }
+        let ty = self.expr_ty(expr)?;
+        Some(self.construct_temp(
+            MirAggregateKind::Struct(def_id),
+            MirAggregateFields::Named(named),
+            ty,
+            expr.span,
+        ))
+    }
+
+    fn lower_verte(
+        &mut self,
+        source: &HirExpr,
+        target: TypeId,
+        entries: Option<&Vec<HirObjectField>>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        match self.types.get(target) {
+            Type::Struct(def_id) => {
+                let Some(entries) = entries else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "struct construction without object entries before aggregate MIR lowering",
+                    ));
+                    return None;
+                };
+                let fields = self.lower_struct_object_fields(*def_id, entries, expr.span)?;
+                let ty = MirType::semantic(target);
+                Some(self.construct_temp(
+                    MirAggregateKind::Struct(*def_id),
+                    MirAggregateFields::Named(fields),
+                    ty,
+                    expr.span,
+                ))
+            }
+            Type::Map(_, _) => {
+                let Some(entries) = entries else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "map construction without object entries before aggregate MIR lowering",
+                    ));
+                    return None;
+                };
+                let fields = self.lower_map_object_fields(entries, expr.span)?;
+                let ty = MirType::semantic(target);
+                Some(self.construct_temp(MirAggregateKind::Map, MirAggregateFields::Keyed(fields), ty, expr.span))
+            }
+            Type::Array(_) => {
+                let HirExprKind::Array(elements) = &source.kind else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "array construction from non-array source before aggregate MIR lowering",
+                    ));
+                    return None;
+                };
+                let fields = self.lower_array_items(elements)?;
+                let ty = MirType::semantic(target);
+                Some(self.construct_temp(MirAggregateKind::Array, MirAggregateFields::Ordered(fields), ty, expr.span))
+            }
+            Type::Set(_) => {
+                let HirExprKind::Array(elements) = &source.kind else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "set construction from non-array source before aggregate MIR lowering",
+                    ));
+                    return None;
+                };
+                let fields = self.lower_array_items(elements)?;
+                let ty = MirType::semantic(target);
+                Some(self.construct_temp(MirAggregateKind::Set, MirAggregateFields::Ordered(fields), ty, expr.span))
+            }
+            Type::Enum(_) => {
+                let HirExprKind::Call(callee, args) = &source.kind else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "enum construction from non-variant source before aggregate MIR lowering",
+                    ));
+                    return None;
+                };
+                let HirExprKind::Path(def_id) = &callee.kind else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "enum construction from indirect variant before aggregate MIR lowering",
+                    ));
+                    return None;
+                };
+                if !self.variant_parents.contains_key(def_id) {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "enum construction from non-variant call before aggregate MIR lowering",
+                    ));
+                    return None;
+                }
+                let mut lowered_args = Vec::with_capacity(args.len());
+                for arg in args {
+                    lowered_args.push(self.lower_expr(arg)?);
+                }
+                let fields = self.variant_payload(*def_id, lowered_args);
+                Some(self.construct_temp(
+                    MirAggregateKind::EnumVariant(*def_id),
+                    fields,
+                    MirType::semantic(target),
+                    expr.span,
+                ))
+            }
+            _ => {
+                self.errors
+                    .push(MirError::unsupported(expr.span, "verte cast before aggregate MIR lowering"));
+                None
+            }
+        }
+    }
+
+    fn lower_struct_object_fields(
+        &mut self,
+        def_id: DefId,
+        entries: &[HirObjectField],
+        span: Span,
+    ) -> Option<Vec<MirNamedOperand>> {
+        let mut supplied = FxHashSet::default();
+        let mut fields = Vec::new();
+        for entry in entries {
+            let name = match &entry.key {
+                HirObjectKey::Ident(name) | HirObjectKey::String(name) => *name,
+                HirObjectKey::Computed(expr) => {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "computed struct keys before aggregate MIR lowering",
+                    ));
+                    return None;
+                }
+                HirObjectKey::Spread(expr) => {
+                    self.errors
+                        .push(MirError::unsupported(expr.span, "struct spread before aggregate MIR lowering"));
+                    return None;
+                }
+            };
+            let Some(value) = &entry.value else {
+                self.errors.push(MirError::unsupported(
+                    span,
+                    "struct field without value before aggregate MIR lowering",
+                ));
+                return None;
+            };
+            supplied.insert(name);
+            fields.push(MirNamedOperand { name, value: self.lower_expr(value)? });
+        }
+
+        if let Some(defaults) = self.structs.get(&def_id).cloned() {
+            for field in defaults {
+                if supplied.contains(&field.name) {
+                    continue;
+                }
+                if let Some(init) = &field.init {
+                    fields.push(MirNamedOperand { name: field.name, value: self.lower_expr(init)? });
+                }
+            }
+        }
+
+        Some(fields)
+    }
+
+    fn lower_map_object_fields(&mut self, entries: &[HirObjectField], span: Span) -> Option<Vec<MirKeyValueOperand>> {
+        let mut fields = Vec::with_capacity(entries.len());
+        for entry in entries {
+            let key = match &entry.key {
+                HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
+                    MirOperand::Constant(MirConstant::String(*name))
+                }
+                HirObjectKey::Computed(expr) => self.lower_expr(expr)?,
+                HirObjectKey::Spread(expr) => {
+                    self.errors
+                        .push(MirError::unsupported(expr.span, "map spread before aggregate MIR lowering"));
+                    return None;
+                }
+            };
+            let Some(value) = &entry.value else {
+                self.errors.push(MirError::unsupported(
+                    span,
+                    "map field without value before aggregate MIR lowering",
+                ));
+                return None;
+            };
+            fields.push(MirKeyValueOperand { key, value: self.lower_expr(value)? });
+        }
+        Some(fields)
+    }
+
+    fn lower_field(&mut self, object: &HirExpr, name: crate::lexer::Symbol, _expr: &HirExpr) -> Option<MirOperand> {
+        let mut place = self.lower_projectable_place(object)?;
+        place.projections.push(MirProjection::Field(name));
+        Some(MirOperand::Place(place))
+    }
+
+    fn lower_index(&mut self, object: &HirExpr, index: &HirExpr, _expr: &HirExpr) -> Option<MirOperand> {
+        let mut place = self.lower_projectable_place(object)?;
+        let index = self.lower_expr(index)?;
+        place.projections.push(MirProjection::Index(index));
+        Some(MirOperand::Place(place))
+    }
+
+    fn lower_projectable_place(&mut self, expr: &HirExpr) -> Option<MirPlace> {
+        match &expr.kind {
+            HirExprKind::Path(def_id) => {
+                let Some(binding) = self.bindings.get(def_id).copied() else {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "projection base that does not resolve to a local value",
+                    ));
+                    return None;
+                };
+                Some(MirPlace::local(binding.local))
+            }
+            HirExprKind::Field(object, name) => {
+                let mut place = self.lower_projectable_place(object)?;
+                place.projections.push(MirProjection::Field(*name));
+                Some(place)
+            }
+            HirExprKind::Index(object, index) => {
+                let mut place = self.lower_projectable_place(object)?;
+                let index = self.lower_expr(index)?;
+                place.projections.push(MirProjection::Index(index));
+                Some(place)
+            }
+            _ => {
+                let ty = self.expr_ty(expr)?;
+                let operand = self.lower_expr(expr)?;
+                match operand {
+                    MirOperand::Place(place) => Some(place),
+                    MirOperand::Temp(temp) => Some(MirPlace::temp(temp)),
+                    MirOperand::Constant(_) | MirOperand::Value(_) => {
+                        let temp = self.assign_temp(MirValueKind::Operand(operand), ty, expr.span);
+                        match temp {
+                            MirOperand::Temp(temp) => Some(MirPlace::temp(temp)),
+                            _ => unreachable!("assign_temp always returns a temp operand"),
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn lower_optional_chain(
+        &mut self,
+        object: &HirExpr,
+        chain: &HirOptionalChainKind,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let base = self.lower_expr(object)?;
+        let link = self.lower_optional_chain_link(base.clone(), chain)?;
+        let ty = self.expr_ty(expr)?;
+        Some(self.assign_temp(MirValueKind::Option(MirOptionOp::Chain { base, link }), ty, expr.span))
+    }
+
+    fn lower_optional_chain_link(
+        &mut self,
+        base: MirOperand,
+        chain: &HirOptionalChainKind,
+    ) -> Option<MirOptionChainLink> {
+        match chain {
+            HirOptionalChainKind::Member(name) => Some(MirOptionChainLink::Field(*name)),
+            HirOptionalChainKind::Index(index) => Some(MirOptionChainLink::Index(self.lower_expr(index)?)),
+            HirOptionalChainKind::Call(args) => {
+                let mut lowered_args = Vec::with_capacity(args.len());
+                for arg in args {
+                    lowered_args.push(self.lower_expr(arg)?);
+                }
+                Some(MirOptionChainLink::Call { callee: MirCallee::Value(base), args: lowered_args })
+            }
+        }
+    }
+
+    fn lower_non_null(&mut self, object: &HirExpr, chain: &HirNonNullKind, expr: &HirExpr) -> Option<MirOperand> {
+        let mut place = self.lower_non_null_base(object)?;
+        match chain {
+            HirNonNullKind::Member(name) => {
+                place.projections.push(MirProjection::Field(*name));
+                Some(MirOperand::Place(place))
+            }
+            HirNonNullKind::Index(index) => {
+                let index = self.lower_expr(index)?;
+                place.projections.push(MirProjection::Index(index));
+                Some(MirOperand::Place(place))
+            }
+            HirNonNullKind::Call(_) => {
+                self.errors.push(MirError::unsupported(
+                    expr.span,
+                    "non-null calls before callable-value MIR lowering",
+                ));
+                None
+            }
+        }
+    }
+
+    fn lower_non_null_base(&mut self, object: &HirExpr) -> Option<MirPlace> {
+        let value = self.lower_expr(object)?;
+        let inner_ty = self
+            .option_inner_ty(object)
+            .unwrap_or(self.expr_ty(object)?);
+        let temp = self.assign_temp(
+            MirValueKind::Option(MirOptionOp::Unwrap { value, mode: MirOptionUnwrapMode::Assert }),
+            inner_ty,
+            object.span,
+        );
+        match temp {
+            MirOperand::Temp(temp) => Some(MirPlace::temp(temp)),
+            _ => unreachable!("assign_temp always returns a temp operand"),
+        }
+    }
+
+    fn option_inner_ty(&mut self, expr: &HirExpr) -> Option<MirType> {
+        let ty = expr.ty?;
+        match self.types.get(ty) {
+            Type::Option(inner) => Some(MirType::semantic(*inner)),
+            _ => None,
+        }
+    }
+
     fn lower_call(&mut self, callee: &HirExpr, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let HirExprKind::Path(def_id) = &callee.kind else {
             self.errors.push(MirError::unsupported(
@@ -606,6 +1082,11 @@ impl<'a> FunctionBuilder<'a> {
         }
 
         let ty = self.expr_ty(expr)?;
+
+        if self.variant_parents.contains_key(def_id) {
+            let fields = self.variant_payload(*def_id, lowered_args);
+            return Some(self.construct_temp(MirAggregateKind::EnumVariant(*def_id), fields, ty, expr.span));
+        }
 
         if let Some(_err_ty) = self.function_errors.get(def_id).copied() {
             let Some(handler) = self.handlers.last().cloned() else {
@@ -950,6 +1431,41 @@ impl<'a> FunctionBuilder<'a> {
         let value = self.new_value(kind, ty, span);
         self.append_stmt(MirStmt { kind: MirStmtKind::Assign { place: MirPlace::temp(temp), value }, span });
         MirOperand::Temp(temp)
+    }
+
+    fn construct_temp(
+        &mut self,
+        kind: MirAggregateKind,
+        fields: MirAggregateFields,
+        ty: MirType,
+        span: Span,
+    ) -> MirOperand {
+        let temp = self.push_temp(ty, span);
+        self.append_stmt(MirStmt {
+            kind: MirStmtKind::Construct {
+                destination: MirPlace::temp(temp),
+                aggregate: MirAggregate { kind, ty, fields },
+            },
+            span,
+        });
+        MirOperand::Temp(temp)
+    }
+
+    fn variant_payload(&self, variant: DefId, args: Vec<MirOperand>) -> MirAggregateFields {
+        let Some(field_names) = self.variant_fields.get(&variant) else {
+            return MirAggregateFields::Ordered(args.into_iter().map(MirAggregateItem::Operand).collect());
+        };
+        if field_names.len() != args.len() {
+            return MirAggregateFields::Ordered(args.into_iter().map(MirAggregateItem::Operand).collect());
+        }
+        MirAggregateFields::Named(
+            field_names
+                .iter()
+                .copied()
+                .zip(args)
+                .map(|(name, value)| MirNamedOperand { name, value })
+                .collect(),
+        )
     }
 
     fn new_value(&mut self, kind: MirValueKind, ty: MirType, span: Span) -> MirValue {

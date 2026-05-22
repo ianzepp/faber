@@ -1,5 +1,7 @@
 # Phase 6B Delivery: Aggregate And Option Lowering
 
+**Status**: complete.
+
 ## Interpreted Problem
 
 After Phase 6A defines the shared MIR contract, Phase 6B should lower Faber aggregate and option/null semantics into that contract. This phase should make MIR represent user-defined data, collection literals, projections, optional chain, non-null assertion, and `vel` without falling back to Rust syntax or target-specific runtime behavior.

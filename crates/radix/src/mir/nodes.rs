@@ -353,9 +353,15 @@ pub enum MirAggregateKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MirAggregateFields {
-    Ordered(Vec<MirOperand>),
+    Ordered(Vec<MirAggregateItem>),
     Named(Vec<MirNamedOperand>),
     Keyed(Vec<MirKeyValueOperand>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MirAggregateItem {
+    Operand(MirOperand),
+    Spread(MirOperand),
 }
 
 #[derive(Debug, Clone, PartialEq)]
