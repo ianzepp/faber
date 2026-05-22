@@ -188,6 +188,9 @@ impl<'a> Lowerer<'a> {
             .collect();
 
         match &call.callee.kind {
+            ExprKind::Literal(Literal::String(template) | Literal::TemplateString(template)) => {
+                HirExprKind::Scriptum(*template, args)
+            }
             ExprKind::Member(member) => {
                 let recv = lower_expr(self, &member.object);
                 let name = member.member.name;

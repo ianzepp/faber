@@ -389,6 +389,15 @@ argumentList  := (argument (',' argument)*)?
 argument      := 'sparge'? expression
 ```
 
+When the callee is a string literal, call syntax is format-template application:
+
+```fab
+"status: § (§)"(sample_status(), "ok")
+"status: §1 (§0)"("ok", sample_status())
+```
+
+This is sugar for `scriptum("...", args...)`.
+
 ### Primary Expressions
 
 ```ebnf
@@ -405,6 +414,7 @@ primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
 fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('⇢' IDENTIFIER)?
 praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
 scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'  # § placeholders filled positionally
+formatStringExpr := STRING '(' argumentList ')'                # sugar for scriptum(STRING, args...)
 legeExpr      := 'lege' 'lineam'?
 regexLiteral  := 'sed' STRING IDENTIFIER?
 ```
