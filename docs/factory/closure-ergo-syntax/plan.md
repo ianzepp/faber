@@ -73,7 +73,7 @@ The symbolic form is not a block opener.
 Valid:
 
 ```fab
-user ⇒ non user.activus
+_ user ⇒ non user.activus
 si user.activus ⇒ redde user
 dum i < 10 ⇒ i ← i + 1
 ```
@@ -81,7 +81,7 @@ dum i < 10 ⇒ i ← i + 1
 Invalid:
 
 ```fab
-user ⇒
+_ user ⇒
     non user.activus
 ```
 
@@ -103,7 +103,7 @@ Short closures should not need the `clausura` keyword.
 Inferred parameter type:
 
 ```fab
-users.filtrata(user ⇒ non user.activus)
+users.filtrata(_ user ⇒ non user.activus)
 ```
 
 Explicit parameter type:
@@ -115,8 +115,13 @@ users.filtrata(User user ⇒ non user.activus)
 Multiple parameters should use parentheses to avoid ambiguity:
 
 ```fab
+numeri.compone((_ a, _ b) ⇒ a + b)
 numeri.compone((numerus a, numerus b) ⇒ a + b)
 ```
+
+Bare identifiers are not closure parameters. An inferred closure parameter must still
+have an explicit type slot, written `_`, so the parser can recognize parameter
+syntax without reinterpreting an arbitrary expression before `⇒`.
 
 Explicit callable signatures should use the existing result and error arrows, with a braced body:
 
@@ -143,7 +148,7 @@ Closures handle errors through the same callable type shape as named functions:
 An expression closure may be accepted where the expected type is fallible if the body expression can produce that error channel:
 
 ```fab
-texts.mappata(s ⇒ parse(s))
+texts.mappata(_ s ⇒ parse(s))
 ```
 
 When there is no expected fallible callable type, the closure body's error behavior should be inferred from the body and then checked normally against the call site.
@@ -167,8 +172,8 @@ Do not introduce a separate closure-specific error syntax.
 - Add compact closure expression syntax without the `clausura` keyword.
 - Preserve `→` and `⇥` as callable result and error type markers.
 - Require braces for multi-line closure bodies.
-- Support typed and context-inferred closure parameters.
-- Improve expected-type propagation so `lista<User>.filtrata(user ⇒ ...)` can infer `user: User`.
+- Support typed and context-inferred closure parameters, with `_ name` as the minimum inferred-parameter spelling.
+- Improve expected-type propagation so `lista<User>.filtrata(_ user ⇒ ...)` can infer `user: User`.
 - Update docs, examples, Faber pretty-printing, and tests.
 
 ### Out of Scope
@@ -194,6 +199,18 @@ to:
 
 ```fab
 User user ⇒ non user.activus
+```
+
+and inferred parameters migrate as:
+
+```fab
+clausura _ user: non user.activus
+```
+
+to:
+
+```fab
+_ user ⇒ non user.activus
 ```
 
 and:
@@ -222,7 +239,7 @@ If `clausura` remains as a compatibility spelling, generated Faber output should
 | 1 | Grammar inventory | Inspect parser sites for `ergo`, closure parsing, newlines, and closure codegen. | Ledger records exact edit sites and ambiguity risks. |
 | 2 | Ergo symbol | Lex and parse `⇒` anywhere `ergo` is accepted today, with same-line enforcement. | Existing `ergo` tests pass; new `⇒` tests cover valid and invalid line breaks. |
 | 3 | Compact closure parser | Parse inferred, typed, multi-param, and signature-braced closure forms. | Parser tests prove the new forms and preserve old compatibility forms. |
-| 4 | Contextual closure typing | Push expected callable signatures into closure checking, including method-call arguments. | `users.filtrata(user ⇒ non user.activus)` typechecks as `lista<User>`. |
+| 4 | Contextual closure typing | Push expected callable signatures into closure checking, including method-call arguments. | `users.filtrata(_ user ⇒ non user.activus)` typechecks as `lista<User>`. |
 | 5 | Error-channel closures | Validate fallible closure signatures and expected fallible callable contexts. | Positive and negative tests cover `→ ... ⇥ ...` closure signatures. |
 | 6 | Codegen and printer | Update target codegen as needed and make Faber output prefer the new syntax. | Rust/TS/Go/Faber closure tests pass for expression and block forms. |
 | 7 | Docs and examples | Update EBNF, grammatica docs, stdlib examples, and migration notes. | Docs no longer teach `clausura ... : ...` as preferred inline syntax. |
@@ -235,7 +252,7 @@ If `clausura` remains as a compatibility spelling, generated Faber output should
 - Are unparenthesized typed closures with multiple parameters ever allowed, or should multi-param closures always require parentheses?
 - Should braced closure bodies without explicit result type be allowed for typed single-parameter closures?
 - What exact diagnostic should fire when a newline appears immediately after `⇒`?
-- Should `user { ... }` be allowed for inferred block closures, or should block closures require either a type or a parenthesized parameter list to avoid object/block ambiguity?
+- Should `_ user { ... }` be allowed for inferred block closures, or should block closures require either an exact type or a parenthesized parameter list to avoid object/block ambiguity?
 - Does `si cond ⇒ redde x` become preferred over `si cond ergo redde x`, or is `⇒` mainly for closure-heavy code?
 
 ## Validation Targets
@@ -243,8 +260,9 @@ If `clausura` remains as a compatibility spelling, generated Faber output should
 Positive syntax and typing:
 
 ```fab
-fixum _ inactive ← users.filtrata(user ⇒ non user.activus)
+fixum _ inactive ← users.filtrata(_ user ⇒ non user.activus)
 fixum _ inactive2 ← users.filtrata(User user ⇒ non user.activus)
+fixum _ sum ← nums.compone((_ a, _ b) ⇒ a + b)
 fixum _ sum ← nums.compone((numerus a, numerus b) ⇒ a + b)
 ```
 
@@ -267,12 +285,12 @@ fixum _ parsed ← texts.mappata((textus s) → numerus ⇥ ParseError {
 Negative:
 
 ```fab
-fixum _ inactive ← users.filtrata(user ⇒
+fixum _ inactive ← users.filtrata(_ user ⇒
     non user.activus)
 ```
 
 ```fab
-fixum _ inactive ← users.filtrata(user ⇒ {
+fixum _ inactive ← users.filtrata(_ user ⇒ {
     redde non user.activus
 })
 ```
