@@ -4,12 +4,14 @@ kind = "keyword"
 category = "format"
 canonical = true
 summary = "Creates a formatted string with `§` placeholders."
-syntax = "scriptum(<template>, <args>...)"
+syntax = "\"<template>\"(<args>...)"
 related = ["lege", "lineam"]
 +++
 
-Creates a formatted string with `§` placeholders.
+Creates a formatted string with `§` placeholders. The canonical source form is string-template application:
 
 ```fab
-fixum greeting = scriptum("Salve, §!", name)
+fixum greeting = "Salve, §!"(name)
 ```
+
+The explicit desugared form remains available as `scriptum("<template>", args...)`.

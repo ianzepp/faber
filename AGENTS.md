@@ -138,10 +138,10 @@ functio stream() → datum
 
 ### String Formatting
 
-Use `scriptum()` for formatted strings:
+Use string-template application for formatted strings:
 
 ```fab
-fixum greeting = scriptum("Hello, §!", name)
+fixum greeting = "Hello, §!"(name)
 ```
 
 ## Primitive Types

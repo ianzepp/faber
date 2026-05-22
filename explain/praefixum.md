@@ -5,7 +5,7 @@ category = "comptime"
 canonical = true
 summary = "Forces compile-time evaluation of an expression."
 syntax = "praefixum(<expression>)"
-related = ["scriptum"]
+related = []
 +++
 
 Forces compile-time evaluation of an expression.

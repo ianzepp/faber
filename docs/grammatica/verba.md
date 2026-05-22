@@ -107,7 +107,7 @@ Keywords for input, diagnostic operations, and formatting:
 | `scribe`   | note        | Legacy alias for `nota`      |
 | `lege`     | read        | Read input                   |
 | `lineam`   | line        | With `lege`: read one line   |
-| `scriptum` | format      | Create formatted string      |
+| `scriptum` | format      | Explicit/desugared formatted string form |
 | `cede`     | await/yield | Await promise or yield value |
 
 ---
