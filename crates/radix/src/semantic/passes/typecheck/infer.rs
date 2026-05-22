@@ -11,7 +11,9 @@ impl<'a> TypeChecker<'a> {
             Type::Set(inner) => self.occurs_in(var, *inner),
             Type::Map(key, value) => self.occurs_in(var, *key) || self.occurs_in(var, *value),
             Type::Func(sig) => {
-                sig.params.iter().any(|param| self.occurs_in(var, param.ty)) || self.occurs_in(var, sig.ret)
+                sig.params.iter().any(|param| self.occurs_in(var, param.ty))
+                    || self.occurs_in(var, sig.ret)
+                    || sig.err.is_some_and(|err| self.occurs_in(var, err))
             }
             Type::Applied(base, args) => self.occurs_in(var, *base) || args.iter().any(|arg| self.occurs_in(var, *arg)),
             Type::Union(types) => types.iter().any(|inner| self.occurs_in(var, *inner)),
@@ -85,9 +87,18 @@ impl<'a> TypeChecker<'a> {
                     self.unify(param_a.ty, param_b.ty, span, message);
                 }
                 let ret = self.unify(sig_a.ret, sig_b.ret, span, message);
+                let err = match (sig_a.err, sig_b.err) {
+                    (Some(a_err), Some(b_err)) => Some(self.unify(a_err, b_err, span, message)),
+                    (None, None) => None,
+                    _ => {
+                        self.error(SemanticErrorKind::TypeMismatch, message, span);
+                        return self.error_type;
+                    }
+                };
                 return self.types.function(FuncSig {
                     params: sig_a.params.clone(),
                     ret,
+                    err,
                     is_async: sig_a.is_async || sig_b.is_async,
                     is_generator: sig_a.is_generator || sig_b.is_generator,
                 });

@@ -36,6 +36,7 @@ fn emits_basic_function_and_entry() {
             span: span(),
         }],
         ret_ty: Some(textus),
+        err_ty: None,
         body: Some(HirBlock {
             stmts: vec![HirStmt {
                 id: crate::hir::HirId(2),
@@ -70,6 +71,41 @@ fn emits_basic_function_and_entry() {
     assert!(output.code.contains("functio greet"));
     assert!(output.code.contains("incipit"));
     assert!(output.code.contains("redde \"salve\""));
+}
+
+#[test]
+fn emits_alternate_exit_signature() {
+    let mut interner = Interner::new();
+    let name = interner.intern("divide");
+
+    let types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name,
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(numerus),
+                err_ty: Some(textus),
+                body: None,
+                is_async: false,
+                is_generator: false,
+                test: None,
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let gen = FaberCodegen::new();
+    let output = gen.generate(&program, &types, &interner).expect("codegen");
+    assert!(output.code.contains("functio divide() → numerus ⇥ textus"));
 }
 
 #[test]
@@ -157,6 +193,7 @@ fn emits_parameter_references_with_original_names() {
             span: span(),
         }],
         ret_ty: Some(numerus),
+        err_ty: None,
         body: Some(HirBlock {
             stmts: vec![HirStmt {
                 id: crate::hir::HirId(2),
@@ -283,6 +320,7 @@ fn emits_si_sin_secus_chain_with_ergo_redde() {
         type_params: Vec::new(),
         params: Vec::new(),
         ret_ty: Some(textus),
+        err_ty: None,
         body: Some(HirBlock {
             stmts: vec![HirStmt { id: crate::hir::HirId(20), kind: HirStmtKind::Expr(expr), span: span() }],
             expr: None,
@@ -327,6 +365,7 @@ fn emits_synthetic_proba_functions_as_proba_cases() {
         type_params: Vec::new(),
         params: Vec::new(),
         ret_ty: Some(vacuum),
+        err_ty: None,
         body: Some(HirBlock {
             stmts: vec![HirStmt {
                 id: crate::hir::HirId(1),

@@ -442,7 +442,7 @@ fn incipit_argumenta_compiles_for_faber_target() {
 #[test]
 fn tempta_iace_fac_custodi_compile_for_faber_target() {
     let session = session(Target::Faber);
-    let source = r#"functio probe(numerus n) → vacuum {
+    let source = r#"functio probe(numerus n) → vacuum ⇥ textus {
   custodi {
     si n < 0 {
       iace "neg"
@@ -458,10 +458,6 @@ fn tempta_iace_fac_custodi_compile_for_faber_target() {
   } cape capta {
     nota capta
   }
-}
-
-incipit {
-  probe(1)
 }"#;
     let result = compile(&session, "test.fab", source);
 
@@ -475,15 +471,11 @@ incipit {
 #[test]
 fn ergo_iace_mori_and_tacet_compile_for_faber_target() {
     let session = session(Target::Faber);
-    let source = r#"functio probe(bivalens ok) → vacuum {
+    let source = r#"functio probe(bivalens ok) → vacuum ⇥ textus {
   si ok ergo iace "boom"
   secus ergo mori "bad"
 
   si ok ergo tacet
-}
-
-incipit {
-  probe(verum)
 }"#;
     let result = compile(&session, "test.fab", source);
 

@@ -84,7 +84,12 @@ impl super::FaberCodegen {
                     .map(|p| self.type_to_faber(p.ty, types, names, interner))
                     .collect();
                 let ret = self.type_to_faber(sig.ret, types, names, interner);
-                format!("({}) → {}", params.join(", "), ret)
+                if let Some(err) = sig.err {
+                    let err = self.type_to_faber(err, types, names, interner);
+                    format!("({}) → {} ⇥ {}", params.join(", "), ret, err)
+                } else {
+                    format!("({}) → {}", params.join(", "), ret)
+                }
             }
 
             Type::Param(sym) => self.symbol_to_string(*sym, interner),

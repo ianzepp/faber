@@ -128,11 +128,27 @@ impl<'a> TypeChecker<'a> {
                 self.vacuum_type()
             }
             HirExprKind::Throw(value) => {
-                self.check_expr(value);
+                let value_ty = self.check_expr(value);
+                if let Some(err_ty) = self.current_error {
+                    self.unify(value_ty, err_ty, value.span, "alternate exit value type mismatch");
+                } else {
+                    self.error(
+                        SemanticErrorKind::TypeMismatch,
+                        "iace requires an enclosing function with a '⇥' alternate-exit type",
+                        expr.span,
+                    );
+                }
                 self.vacuum_type()
             }
             HirExprKind::Tempta { body, catch, finally } => {
-                self.check_block(body, None);
+                if catch.is_some() {
+                    let prev_error = self.current_error;
+                    self.current_error = Some(self.types.primitive(Primitive::Ignotum));
+                    self.check_block(body, None);
+                    self.current_error = prev_error;
+                } else {
+                    self.check_block(body, None);
+                }
                 if let Some(catch) = catch {
                     self.check_block(catch, None);
                 }

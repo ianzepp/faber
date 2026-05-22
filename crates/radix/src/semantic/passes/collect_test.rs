@@ -107,6 +107,7 @@ fn collects_function_definitions() {
             kind: TypeExprKind::Named(ident(&mut interner, "vacuum"), Vec::new()),
             span: Span::default(),
         }),
+        err: None,
         body: Some(BlockStmt { stmts: Vec::new(), span: Span::default() }),
         annotations: Vec::new(),
     };

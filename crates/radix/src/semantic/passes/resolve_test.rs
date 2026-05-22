@@ -108,6 +108,7 @@ fn reports_non_variant_pattern() {
         params: Vec::new(),
         modifiers: Vec::new(),
         ret: None,
+        err: None,
         body: Some(BlockStmt { stmts: Vec::new(), span: Span::default() }),
         annotations: Vec::new(),
     };

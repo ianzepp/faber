@@ -22,6 +22,21 @@ functio nomen() → textus {
 }
 ```
 
+Functions may also declare a recoverable alternate-exit type after `⇥`. `redde`
+still exits through the normal `→` path; `iace` exits through the `⇥` path and
+must match that type.
+
+```fab
+functio divide(numerus a, numerus b) → numerus ⇥ textus {
+    si b = 0 ergo iace "division by zero"
+    redde a / b
+}
+```
+
+`mori` remains fatal and is not part of the typed recoverable path. Calling a
+function with a `⇥` contract requires explicit handling or propagation syntax;
+until that syntax is defined, failable calls cannot be used as ordinary values.
+
 ### Parameters
 
 Faber uses type-first syntax for parameters, placing the type before the parameter name. This mirrors natural language order ("a string called name") and aligns with languages like Go, Rust, and Zig:

@@ -89,6 +89,7 @@ fn maps_function_and_generic_application_types() {
             ParamType { ty: textus, mode: ParamMode::Owned, optional: true },
         ],
         ret: numerus,
+        err: None,
         is_async: false,
         is_generator: false,
     });
@@ -172,6 +173,7 @@ fn ts_codegen_collects_function_param_names() {
                     span: span(),
                 }],
                 ret_ty: Some(numerus),
+                err_ty: None,
                 body: None,
                 is_async: false,
                 is_generator: false,
@@ -211,6 +213,7 @@ fn emits_function_and_entry_iife() {
                     span: span(),
                 }],
                 ret_ty: Some(numerus),
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt {
                         id: HirId(3),
@@ -285,6 +288,7 @@ fn emits_class_interface_import_and_variable_statements() {
                             span: span(),
                         }],
                         ret_ty: Some(textus),
+                        err_ty: None,
                         span: span(),
                     }],
                 }),
@@ -323,6 +327,7 @@ fn emits_class_interface_import_and_variable_statements() {
                                 span: span(),
                             }],
                             ret_ty: Some(textus),
+                            err_ty: None,
                             body: Some(HirBlock {
                                 stmts: Vec::new(),
                                 expr: Some(Box::new(HirExpr {
@@ -570,6 +575,7 @@ fn emits_optional_chain_closure_template_and_await() {
                 type_params: Vec::new(),
                 params: Vec::new(),
                 ret_ty: Some(textus),
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: Vec::new(),
                     expr: Some(Box::new(HirExpr {

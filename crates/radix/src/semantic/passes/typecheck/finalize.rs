@@ -46,6 +46,18 @@ impl<'a> TypeChecker<'a> {
             }
             func.ret_ty = Some(resolved);
         }
+        if let Some(err) = func.err_ty {
+            let resolved = self.resolve_type(err);
+            if self.is_infer(resolved) {
+                let span = func.body.as_ref().map(|body| body.span).unwrap_or_default();
+                self.error(
+                    SemanticErrorKind::MissingTypeAnnotation,
+                    "cannot infer alternate-exit type",
+                    span,
+                );
+            }
+            func.err_ty = Some(resolved);
+        }
 
         if let Some(body) = &mut func.body {
             self.finalize_block(body);

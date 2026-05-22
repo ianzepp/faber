@@ -17,6 +17,7 @@ fn reports_use_after_move() {
     let func_ty = types.function(FuncSig {
         params: vec![ParamType { ty: numerus, mode: ParamMode::Move, optional: false }],
         ret: numerus,
+        err: None,
         is_async: false,
         is_generator: false,
     });
@@ -55,6 +56,7 @@ fn reports_use_after_move() {
                     span: span(),
                 }],
                 ret_ty: None,
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![
                         HirStmt { id: crate::hir::HirId(1), kind: HirStmtKind::Expr(call), span: span() },
@@ -131,6 +133,7 @@ fn reports_mutable_borrow_conflict() {
                     span: span(),
                 }],
                 ret_ty: None,
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![
                         HirStmt { id: crate::hir::HirId(5), kind: HirStmtKind::Expr(shared), span: span() },
@@ -199,6 +202,7 @@ fn reports_assign_to_de_parameter() {
                     span: span(),
                 }],
                 ret_ty: None,
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt { id: crate::hir::HirId(4), kind: HirStmtKind::Expr(assign), span: span() }],
                     expr: None,
@@ -228,6 +232,7 @@ fn reports_de_passed_to_in_position() {
     let callee_ty = types.function(FuncSig {
         params: vec![ParamType { ty: numerus, mode: ParamMode::MutRef, optional: false }],
         ret: numerus,
+        err: None,
         is_async: false,
         is_generator: false,
     });
@@ -270,6 +275,7 @@ fn reports_de_passed_to_in_position() {
                     span: span(),
                 }],
                 ret_ty: None,
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt { id: crate::hir::HirId(4), kind: HirStmtKind::Expr(call), span: span() }],
                     expr: None,
@@ -317,6 +323,7 @@ fn warns_when_in_parameter_is_never_mutated() {
                     span: span(),
                 }],
                 ret_ty: None,
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt { id: crate::hir::HirId(2), kind: HirStmtKind::Expr(read), span: span() }],
                     expr: None,
@@ -364,6 +371,7 @@ fn warns_when_ex_parameter_is_never_consumed() {
                     span: span(),
                 }],
                 ret_ty: None,
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt { id: crate::hir::HirId(2), kind: HirStmtKind::Expr(read), span: span() }],
                     expr: None,

@@ -110,6 +110,7 @@ impl<'a> TypeChecker<'a> {
                 })
                 .collect(),
             ret: ret_ty,
+            err: None,
             is_async: false,
             is_generator: false,
         };

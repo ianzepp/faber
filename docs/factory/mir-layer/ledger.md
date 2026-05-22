@@ -336,3 +336,41 @@ Behavior boundary:
 - Existing HIR-to-codegen behavior remains unchanged.
 - No target backend consumes MIR.
 - Failure-flow lowering remains deferred to phase 5.
+
+## Phase 5A Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- `TokenKind::ExitArrow` and lexer support for `⇥`.
+- AST function declarations, pactum methods, and function type expressions now carry optional alternate-exit types.
+- HIR functions, interface methods, and semantic `FuncSig` now preserve optional alternate-exit `TypeId`s.
+- Typechecking tracks the current function alternate-exit type and checks `iace` values against it.
+- Unhandled `iace` is rejected when no `⇥` contract or local `tempta`/`cape` handler is present.
+- Failable calls are rejected in ordinary expression position until explicit caller handling or propagation syntax exists.
+- Faber inspection/codegen output renders `→ Success ⇥ Error` signatures.
+
+Surface examples:
+
+```fab
+functio divide(numerus a, numerus b) → numerus ⇥ textus {
+    si b = 0 ergo iace "division by zero"
+    redde a / b
+}
+```
+
+```fab
+typus Op = (numerus) → numerus ⇥ textus
+```
+
+Verification:
+
+- `cargo test -p radix` passed: 352 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed after `cargo fmt`.
+
+Behavior boundary:
+
+- MIR lowering of `iace` and alternate-exit function signatures remains deferred to Phase 5B.
+- Caller-side propagation and explicit handler syntax remain deferred.
+- Existing backend lowering paths do not consume MIR and were not converted to typed recoverable failure lowering in this phase.

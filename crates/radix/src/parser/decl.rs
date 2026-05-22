@@ -254,6 +254,11 @@ impl Parser {
         } else {
             None
         };
+        let err = if self.eat(&TokenKind::ExitArrow) {
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
 
         let body = if self.check(&TokenKind::LBrace) {
             Some(self.parse_block()?)
@@ -267,6 +272,7 @@ impl Parser {
             params,
             modifiers,
             ret,
+            err,
             body,
             annotations: Vec::new(),
         }))
@@ -551,9 +557,14 @@ impl Parser {
             } else {
                 None
             };
+            let err = if self.eat(&TokenKind::ExitArrow) {
+                Some(self.parse_type()?)
+            } else {
+                None
+            };
 
             let span = start.merge(self.previous_span());
-            methods.push(InterfaceMethod { name: method_name, params, modifiers, ret, span });
+            methods.push(InterfaceMethod { name: method_name, params, modifiers, ret, err, span });
         }
 
         self.expect(&TokenKind::RBrace, "expected '}'")?;
@@ -1110,6 +1121,7 @@ impl Parser {
                 | TokenKind::LParen
                 | TokenKind::RParen
                 | TokenKind::Arrow
+                | TokenKind::ExitArrow
                 | TokenKind::Lt
                 | TokenKind::Gt
                 | TokenKind::Colon

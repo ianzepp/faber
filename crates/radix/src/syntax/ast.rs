@@ -170,6 +170,7 @@ pub struct FuncDecl {
     pub params: Vec<Param>,
     pub modifiers: Vec<FuncModifier>,
     pub ret: Option<TypeExpr>,
+    pub err: Option<TypeExpr>,
     pub body: Option<BlockStmt>,
     pub annotations: Vec<Annotation>,
 }
@@ -266,6 +267,7 @@ pub struct InterfaceMethod {
     pub params: Vec<Param>,
     pub modifiers: Vec<FuncModifier>,
     pub ret: Option<TypeExpr>,
+    pub err: Option<TypeExpr>,
     pub span: Span,
 }
 
@@ -1099,6 +1101,7 @@ pub enum TypeExprKind {
 pub struct FuncTypeExpr {
     pub params: Vec<TypeExpr>,
     pub ret: Box<TypeExpr>,
+    pub err: Option<Box<TypeExpr>>,
 }
 
 // =============================================================================

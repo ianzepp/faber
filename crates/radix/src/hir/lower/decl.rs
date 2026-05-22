@@ -180,6 +180,7 @@ impl<'a> Lowerer<'a> {
             params,
             cli_args,
             ret_ty,
+            err_ty: decl.err.as_ref().map(|ty| self.lower_type(ty)),
             body,
             is_async: false,
             is_generator: false,
@@ -284,6 +285,7 @@ impl<'a> Lowerer<'a> {
                         params,
                         cli_args: None,
                         ret_ty: method.ret.as_ref().map(|ty| self.lower_type(ty)),
+                        err_ty: method.err.as_ref().map(|ty| self.lower_type(ty)),
                         body,
                         is_async: false,
                         is_generator: false,
@@ -414,6 +416,7 @@ impl<'a> Lowerer<'a> {
                     })
                     .collect(),
                 ret_ty: method.ret.as_ref().map(|ty| self.lower_type(ty)),
+                err_ty: method.err.as_ref().map(|ty| self.lower_type(ty)),
                 span: method.span,
             })
             .collect();

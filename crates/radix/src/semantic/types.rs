@@ -167,6 +167,11 @@ impl TypeTable {
                                 && self.equals(a_param.ty, b_param.ty)
                         })
                     && self.equals(a_sig.ret, b_sig.ret)
+                    && match (a_sig.err, b_sig.err) {
+                        (Some(a_err), Some(b_err)) => self.equals(a_err, b_err),
+                        (None, None) => true,
+                        _ => false,
+                    }
                     && a_sig.is_async == b_sig.is_async
                     && a_sig.is_generator == b_sig.is_generator
             }
@@ -382,6 +387,7 @@ pub enum Mutability {
 pub struct FuncSig {
     pub params: Vec<ParamType>,
     pub ret: TypeId,
+    pub err: Option<TypeId>,
     pub is_async: bool,
     pub is_generator: bool,
 }

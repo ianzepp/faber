@@ -56,6 +56,7 @@ fn test_item(
             type_params: Vec::new(),
             params: Vec::new(),
             ret_ty: Some(vacuum),
+            err_ty: None,
             body: Some(test_body(vacuum, bivalens)),
             is_async: false,
             is_generator: false,
@@ -92,6 +93,7 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
                     span: span(),
                 }],
                 ret_ty: Some(numerus),
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt {
                         id: HirId(3),
@@ -143,6 +145,7 @@ fn emits_metadata_driven_test_attributes() {
                 type_params: Vec::new(),
                 params: Vec::new(),
                 ret_ty: Some(vacuum),
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt {
                         id: HirId(11),
@@ -304,6 +307,7 @@ fn emits_source_ignore_reason_for_selected_test() {
                 type_params: Vec::new(),
                 params: Vec::new(),
                 ret_ty: Some(vacuum),
+                err_ty: None,
                 body: Some(test_body(vacuum, bivalens)),
                 is_async: false,
                 is_generator: false,
@@ -503,6 +507,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
                     type_params: Vec::new(),
                     params: Vec::new(),
                     ret_ty: None,
+                    err_ty: None,
                     body: Some(HirBlock {
                         stmts: vec![
                             HirStmt {
@@ -620,6 +625,7 @@ fn resolves_type_names_for_named_defs() {
                     type_params: Vec::new(),
                     params: Vec::new(),
                     ret_ty: Some(iface_ty),
+                    err_ty: None,
                     body: None,
                     is_async: false,
                     is_generator: false,
@@ -664,6 +670,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                     type_params: Vec::new(),
                     params: Vec::new(),
                     ret_ty: None,
+                    err_ty: None,
                     body: None,
                     is_async: false,
                     is_generator: false,
@@ -1374,12 +1381,14 @@ fn type_to_rust_covers_composite_and_special_cases() {
     let sync_fn_ty = types.function(FuncSig {
         params: vec![ParamType { ty: numerus, mode: ParamMode::Owned, optional: false }],
         ret: textus,
+        err: None,
         is_async: false,
         is_generator: false,
     });
     let async_fn_ty = types.function(FuncSig {
         params: vec![ParamType { ty: numerus, mode: ParamMode::Owned, optional: false }],
         ret: textus,
+        err: None,
         is_async: true,
         is_generator: false,
     });
@@ -1467,6 +1476,7 @@ fn emits_result_and_err_for_direct_iace() {
                 type_params: Vec::new(),
                 params: Vec::new(),
                 ret_ty: Some(numerus),
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt {
                         id: HirId(901),
@@ -1527,6 +1537,7 @@ fn propagates_failable_calls_with_question_mark() {
                     type_params: Vec::new(),
                     params: Vec::new(),
                     ret_ty: Some(numerus),
+                    err_ty: None,
                     body: Some(HirBlock {
                         stmts: vec![HirStmt {
                             id: HirId(911),
@@ -1561,6 +1572,7 @@ fn propagates_failable_calls_with_question_mark() {
                     type_params: Vec::new(),
                     params: Vec::new(),
                     ret_ty: Some(numerus),
+                    err_ty: None,
                     body: Some(HirBlock {
                         stmts: vec![HirStmt {
                             id: HirId(921),

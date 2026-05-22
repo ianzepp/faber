@@ -8,7 +8,7 @@ impl<'a> TypeChecker<'a> {
             .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: param.optional })
             .collect();
         let ret = func.ret_ty.unwrap_or_else(|| self.vacuum_type());
-        FuncSig { params, ret, is_async: func.is_async, is_generator: func.is_generator }
+        FuncSig { params, ret, err: func.err_ty, is_async: func.is_async, is_generator: func.is_generator }
     }
     pub(super) fn collect_struct(&mut self, def_id: DefId, struct_item: &HirStruct) {
         let mut fields = FxHashMap::default();
@@ -49,7 +49,10 @@ impl<'a> TypeChecker<'a> {
                             })
                             .collect();
                         let ret = method.ret_ty.unwrap_or_else(|| self.vacuum_type());
-                        methods.insert(method.name, FuncSig { params, ret, is_async: false, is_generator: false });
+                        methods.insert(
+                            method.name,
+                            FuncSig { params, ret, err: method.err_ty, is_async: false, is_generator: false },
+                        );
                     }
                     self.interfaces.insert(item.def_id, methods);
                 }

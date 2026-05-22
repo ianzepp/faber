@@ -141,6 +141,10 @@ impl super::FaberCodegen {
             w.write(" → ");
             w.write(&self.type_to_faber(ret, types, names, interner));
         }
+        if let Some(err) = func.err_ty {
+            w.write(" ⇥ ");
+            w.write(&self.type_to_faber(err, types, names, interner));
+        }
 
         if let Some(body) = &func.body {
             w.writeln(" {");
@@ -378,6 +382,10 @@ impl super::FaberCodegen {
                 if let Some(ret) = method.ret_ty {
                     w.write(" → ");
                     w.write(&self.type_to_faber(ret, types, names, interner));
+                }
+                if let Some(err) = method.err_ty {
+                    w.write(" ⇥ ");
+                    w.write(&self.type_to_faber(err, types, names, interner));
                 }
                 w.newline();
             }

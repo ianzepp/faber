@@ -287,6 +287,7 @@ pub enum TokenKind {
     Semicolon, // ;
     Dot,       // .
     Arrow,     // →
+    ExitArrow, // ⇥
     Cup,       // ∪ (inline union type T ∪ U, T ∪ nihil)
     At,        // @ (annotation marker)
     Section,   // § (section marker)

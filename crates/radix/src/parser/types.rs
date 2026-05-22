@@ -164,10 +164,10 @@ impl Parser {
         })
     }
 
-    /// Parse function type: (A, B) → C
+    /// Parse function type: (A, B) → C ⇥ E
     ///
     /// GRAMMAR:
-    ///   func-type := '(' [type (',' type)*] ')' '→' type
+    ///   func-type := '(' [type (',' type)*] ')' '→' type ['⇥' type]
     ///
     /// WHY: First-class function types for callbacks, higher-order functions, and
     /// interface method signatures. Parameter types separated by commas, return
@@ -187,8 +187,13 @@ impl Parser {
         self.expect(&TokenKind::Arrow, "expected '→'")?;
 
         let ret = Box::new(self.parse_type()?);
+        let err = if self.eat(&TokenKind::ExitArrow) {
+            Some(Box::new(self.parse_type()?))
+        } else {
+            None
+        };
 
-        Ok(FuncTypeExpr { params, ret })
+        Ok(FuncTypeExpr { params, ret, err })
     }
 }
 

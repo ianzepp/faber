@@ -12,8 +12,10 @@ impl<'a> TypeChecker<'a> {
         }
 
         let prev_return = self.current_return;
+        let prev_error = self.current_error;
         let prev_inferred = self.inferred_return;
         self.current_return = func.ret_ty;
+        self.current_error = func.err_ty;
         self.inferred_return = None;
 
         if let Some(body) = &mut func.body {
@@ -30,6 +32,7 @@ impl<'a> TypeChecker<'a> {
         }
 
         self.current_return = prev_return;
+        self.current_error = prev_error;
         self.inferred_return = prev_inferred;
         self.pop_scope();
     }

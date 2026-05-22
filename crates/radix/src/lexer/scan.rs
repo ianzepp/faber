@@ -214,6 +214,7 @@ impl<'a> Lexer<'a> {
             '≤' => TokenKind::LtEq,
             '≥' => TokenKind::GtEq,
             '→' => TokenKind::Arrow,
+            '⇥' => TokenKind::ExitArrow,
             '?' => {
                 if self.cursor.eat('.') {
                     TokenKind::QuestionDot

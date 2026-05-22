@@ -156,7 +156,7 @@ fn lexer_interns_equivalent_unicode_forms_as_one_symbol() {
 fn lexes_operator_tokens_consistently() {
     // Post-clean-break: only canonical glyphs produce compound tokens.
     // Old ASCII multi-char forms (== != <= >= -> += etc) are rejected at lex time.
-    let result = lex("+ ⊕ - ⊖ * ⊛ / ⊘ % ⊻ ≡ ≠ ≤ ≥ → ¬ !. ![ !( < ≤ > ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←");
+    let result = lex("+ ⊕ - ⊖ * ⊛ / ⊘ % ⊻ ≡ ≠ ≤ ≥ → ⇥ ¬ !. ![ !( < ≤ > ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←");
     assert!(result.errors.is_empty());
 
     let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
@@ -176,6 +176,7 @@ fn lexes_operator_tokens_consistently() {
         TokenKind::LtEq,
         TokenKind::GtEq,
         TokenKind::Arrow,
+        TokenKind::ExitArrow,
         TokenKind::Tilde,
         TokenKind::BangDot,
         TokenKind::BangBracket,

@@ -6,7 +6,7 @@ impl<'a> TypeChecker<'a> {
             .iter_mut()
             .map(|arg| ParamType { ty: self.check_expr(arg), mode: ParamMode::Owned, optional: false })
             .collect();
-        FuncSig { params, ret: self.fresh_infer(), is_async: false, is_generator: false }
+        FuncSig { params, ret: self.fresh_infer(), err: None, is_async: false, is_generator: false }
     }
     pub(super) fn function_signature_from_type(&self, ty: TypeId) -> Option<FuncSig> {
         match self.types.get(self.resolve_type(ty)) {
@@ -23,6 +23,9 @@ impl<'a> TypeChecker<'a> {
         let resolved = self.resolve_type(callee_ty);
         if let Some(sig) = self.function_signature_from_type(resolved) {
             self.check_call_args(&sig, args, span);
+            if self.reject_failable_call(&sig, span) {
+                return self.error_type;
+            }
             return self.resolve_type(sig.ret);
         }
 
@@ -87,6 +90,9 @@ impl<'a> TypeChecker<'a> {
         let receiver_ty = self.check_expr(receiver);
         if let Some(sig) = self.lookup_method_signature(receiver_ty, name) {
             self.check_call_args(&sig, args, receiver.span);
+            if self.reject_failable_call(&sig, receiver.span) {
+                return self.error_type;
+            }
             return sig.ret;
         }
 
@@ -157,6 +163,9 @@ impl<'a> TypeChecker<'a> {
         let resolved = self.resolve_type(callee_ty);
         if let Some(sig) = self.function_signature_from_type(resolved) {
             self.check_call_args(&sig, args, callee.span);
+            if self.reject_failable_call(&sig, callee.span) {
+                return self.error_type;
+            }
             return self.resolve_type(sig.ret);
         }
 
@@ -177,5 +186,17 @@ impl<'a> TypeChecker<'a> {
 
         self.error(SemanticErrorKind::NotCallable, "callee is not callable", callee.span);
         self.error_type
+    }
+
+    pub(super) fn reject_failable_call(&mut self, sig: &FuncSig, span: crate::lexer::Span) -> bool {
+        if sig.err.is_none() {
+            return false;
+        }
+        self.error(
+            SemanticErrorKind::InvalidOperandTypes,
+            "failable call requires handling or propagation syntax",
+            span,
+        );
+        true
     }
 }

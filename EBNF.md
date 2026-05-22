@@ -42,13 +42,14 @@ paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? ('ut' IDENTIFIER)? ('vel' expression)?
 funcModifier := 'curata' IDENTIFIER ('ut' IDENTIFIER)? | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
-returnClause := '→' typeAnnotation
+returnClause := '→' typeAnnotation alternateExitClause?
+alternateExitClause := '⇥' typeAnnotation
 clausuraExpr   := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
 clausuraParams := clausuraParam (',' clausuraParam)*
 clausuraParam  := typeAnnotation IDENTIFIER
 ```
 
-- Return syntax: `→` (arrow) with optional `@ futura`/`@ cursor` annotations for async/generator
+- Return syntax: `→` (normal arrow) with optional `⇥` recoverable alternate-exit type
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - Post-name markers: `sponte` (voluntary/optional provision), `fixus` (fixed after first assignment); canonical order `sponte fixus`
 - `ceteri` marks rest parameter
@@ -197,7 +198,7 @@ importa ex "./types" publica User               # re-export
 ```ebnf
 typeAnnotation := ('de' | 'in')? baseType ( '∪' typeAnnotation )*
 baseType       := '_' arrayBrackets* | functionType | IDENTIFIER typeParams? arrayBrackets* | '(' typeAnnotation ')'
-functionType   := '(' typeList? ')' '→' typeAnnotation
+functionType   := '(' typeList? ')' '→' typeAnnotation alternateExitClause?
 typeList       := typeAnnotation (',' typeAnnotation)*
 typeParams     := '<' typeParameter (',' typeParameter)* '>'
 typeParameter  := typeAnnotation | NUMBER | MODIFIER
@@ -214,6 +215,7 @@ Function types enable higher-order function signatures:
 ```fab
 functio filtrata((T) → bivalens pred) → lista<T>
 functio compose((A) → B f, (B) → C g) → (A) → C
+functio apply((numerus) → numerus ⇥ textus op, numerus n) → numerus ⇥ textus
 ```
 
 ### Primitive Types

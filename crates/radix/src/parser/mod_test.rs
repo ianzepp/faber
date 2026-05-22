@@ -986,6 +986,57 @@ fn parses_curata_allocator_alias() {
 }
 
 #[test]
+fn parses_function_alternate_exit_type() {
+    let result = parse_ok(r#"functio divide(numerus a, numerus b) → numerus ⇥ textus { redde a }"#);
+    let program = result.program.as_ref().expect("program");
+    let StmtKind::Func(func) = &program.stmts[0].kind else {
+        panic!("expected function declaration");
+    };
+    assert!(matches!(func.ret.as_ref().map(|ty| &ty.kind), Some(TypeExprKind::Named(_, _))));
+    assert!(matches!(func.err.as_ref().map(|ty| &ty.kind), Some(TypeExprKind::Named(_, _))));
+    let Some(err) = &func.err else {
+        panic!("expected alternate-exit type");
+    };
+    let TypeExprKind::Named(name, params) = &err.kind else {
+        panic!("expected named alternate-exit type");
+    };
+    assert!(params.is_empty());
+    assert_eq!(symbol_name(&result, name.name), "textus");
+}
+
+#[test]
+fn parses_pactum_method_alternate_exit_type() {
+    let result = parse_ok(
+        r#"
+pactum Divisor {
+  functio divide(numerus a, numerus b) → numerus ⇥ textus
+}
+"#,
+    );
+    let program = result.program.as_ref().expect("program");
+    let StmtKind::Interface(interface) = &program.stmts[0].kind else {
+        panic!("expected pactum declaration");
+    };
+    assert_eq!(interface.methods.len(), 1);
+    assert!(interface.methods[0].ret.is_some());
+    assert!(interface.methods[0].err.is_some());
+}
+
+#[test]
+fn parses_failable_function_type() {
+    let result = parse_ok(r#"typus Op = (numerus) → numerus ⇥ textus"#);
+    let program = result.program.as_ref().expect("program");
+    let StmtKind::TypeAlias(alias) = &program.stmts[0].kind else {
+        panic!("expected type alias");
+    };
+    let TypeExprKind::Func(func) = &alias.ty.kind else {
+        panic!("expected function type");
+    };
+    assert_eq!(func.params.len(), 1);
+    assert!(func.err.is_some());
+}
+
+#[test]
 fn legacy_si_declaration_and_type_forms_are_rejected() {
     // Legacy declaration optionality (si as prefix in params, with/without ownership modes)
     assert_parse_error_contains(r#"functio f(si textus name) → vacuum {}"#, "expected identifier");

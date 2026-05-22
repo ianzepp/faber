@@ -58,8 +58,9 @@ impl<'a> Lowerer<'a> {
                     .map(|param| ParamType { ty: self.lower_type(param), mode: ParamMode::Owned, optional: false })
                     .collect();
                 let ret = self.lower_type(&func.ret);
+                let err = func.err.as_ref().map(|err| self.lower_type(err));
                 self.types
-                    .function(FuncSig { params, ret, is_async: false, is_generator: false })
+                    .function(FuncSig { params, ret, err, is_async: false, is_generator: false })
             }
             TypeExprKind::Union(members) => {
                 if members.is_empty() {

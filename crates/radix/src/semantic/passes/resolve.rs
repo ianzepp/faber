@@ -1077,7 +1077,12 @@ fn lower_type_expr(
                 })
                 .collect::<Result<Vec<_>, _>>()?;
             let ret = lower_type_expr(&func.ret, resolver, interner, types)?;
-            types.function(FuncSig { params, ret, is_async: false, is_generator: false })
+            let err = func
+                .err
+                .as_ref()
+                .map(|err| lower_type_expr(err, resolver, interner, types))
+                .transpose()?;
+            types.function(FuncSig { params, ret, err, is_async: false, is_generator: false })
         }
         TypeExprKind::Union(members) => {
             if members.is_empty() {

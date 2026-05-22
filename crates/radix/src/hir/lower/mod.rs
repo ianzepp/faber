@@ -404,6 +404,7 @@ impl<'a> Lowerer<'a> {
                 params: Vec::new(),
                 cli_args: None,
                 ret_ty: Some(self.types.primitive(crate::semantic::Primitive::Vacuum)),
+                err_ty: None,
                 body: Some(HirBlock { stmts, expr: None, span: case.span }),
                 is_async: false,
                 is_generator: false,

@@ -13,6 +13,15 @@ fn literal_int(id: u32, value: i64) -> HirExpr {
     HirExpr { id: crate::hir::HirId(id), kind: HirExprKind::Literal(HirLiteral::Int(value)), ty: None, span: span() }
 }
 
+fn literal_string(id: u32) -> HirExpr {
+    HirExpr {
+        id: crate::hir::HirId(id),
+        kind: HirExprKind::Literal(HirLiteral::String(crate::lexer::Symbol(99))),
+        ty: None,
+        span: span(),
+    }
+}
+
 #[test]
 fn infers_function_return_type() {
     let mut types = TypeTable::new();
@@ -26,6 +35,7 @@ fn infers_function_return_type() {
                 type_params: Vec::new(),
                 params: Vec::new(),
                 ret_ty: None,
+                err_ty: None,
                 body: Some(HirBlock {
                     stmts: vec![HirStmt {
                         id: crate::hir::HirId(1),
@@ -88,6 +98,263 @@ fn reports_initializer_type_mismatch() {
 }
 
 #[test]
+fn typechecks_iace_against_declared_alternate_exit() {
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+    let mut program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name: crate::lexer::Symbol(1),
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(numerus),
+                err_ty: Some(textus),
+                body: Some(HirBlock {
+                    stmts: vec![
+                        HirStmt {
+                            id: crate::hir::HirId(1),
+                            kind: HirStmtKind::Expr(HirExpr {
+                                id: crate::hir::HirId(2),
+                                kind: HirExprKind::Throw(Box::new(literal_string(3))),
+                                ty: None,
+                                span: span(),
+                            }),
+                            span: span(),
+                        },
+                        HirStmt {
+                            id: crate::hir::HirId(4),
+                            kind: HirStmtKind::Redde(Some(literal_int(5, 1))),
+                            span: span(),
+                        },
+                    ],
+                    expr: None,
+                    span: span(),
+                }),
+                is_async: false,
+                is_generator: false,
+                test: None,
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let result = typecheck(&mut program, &Resolver::new(), &mut types);
+    assert!(result.is_ok(), "expected declared alternate exit to accept iace: {result:?}");
+}
+
+#[test]
+fn rejects_iace_without_declared_alternate_exit() {
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let mut program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name: crate::lexer::Symbol(1),
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(numerus),
+                err_ty: None,
+                body: Some(HirBlock {
+                    stmts: vec![HirStmt {
+                        id: crate::hir::HirId(1),
+                        kind: HirStmtKind::Expr(HirExpr {
+                            id: crate::hir::HirId(2),
+                            kind: HirExprKind::Throw(Box::new(literal_string(3))),
+                            ty: None,
+                            span: span(),
+                        }),
+                        span: span(),
+                    }],
+                    expr: None,
+                    span: span(),
+                }),
+                is_async: false,
+                is_generator: false,
+                test: None,
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let result = typecheck(&mut program, &Resolver::new(), &mut types);
+    assert!(result.is_err());
+    assert!(result
+        .unwrap_err()
+        .iter()
+        .any(|err| err.message.contains("iace requires an enclosing function")));
+}
+
+#[test]
+fn rejects_iace_value_that_mismatches_alternate_exit() {
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let mut program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name: crate::lexer::Symbol(1),
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(numerus),
+                err_ty: Some(numerus),
+                body: Some(HirBlock {
+                    stmts: vec![HirStmt {
+                        id: crate::hir::HirId(1),
+                        kind: HirStmtKind::Expr(HirExpr {
+                            id: crate::hir::HirId(2),
+                            kind: HirExprKind::Throw(Box::new(literal_string(3))),
+                            ty: None,
+                            span: span(),
+                        }),
+                        span: span(),
+                    }],
+                    expr: None,
+                    span: span(),
+                }),
+                is_async: false,
+                is_generator: false,
+                test: None,
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let result = typecheck(&mut program, &Resolver::new(), &mut types);
+    assert!(result.is_err());
+    assert!(result
+        .unwrap_err()
+        .iter()
+        .any(|err| err.message.contains("alternate exit value type mismatch")));
+}
+
+#[test]
+fn redde_still_checks_against_normal_return_type() {
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+    let mut program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name: crate::lexer::Symbol(1),
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: Some(numerus),
+                err_ty: Some(textus),
+                body: Some(HirBlock {
+                    stmts: vec![HirStmt {
+                        id: crate::hir::HirId(1),
+                        kind: HirStmtKind::Redde(Some(literal_string(2))),
+                        span: span(),
+                    }],
+                    expr: None,
+                    span: span(),
+                }),
+                is_async: false,
+                is_generator: false,
+                test: None,
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let result = typecheck(&mut program, &Resolver::new(), &mut types);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().iter().any(|err| err
+        .message
+        .contains("return type does not match function signature")));
+}
+
+#[test]
+fn rejects_failable_call_in_ordinary_expression_position() {
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+    let mut program = HirProgram {
+        items: vec![
+            HirItem {
+                id: crate::hir::HirId(0),
+                def_id: DefId(1),
+                kind: HirItemKind::Function(HirFunction {
+                    cli_args: None,
+                    name: crate::lexer::Symbol(1),
+                    type_params: Vec::new(),
+                    params: Vec::new(),
+                    ret_ty: Some(numerus),
+                    err_ty: Some(textus),
+                    body: None,
+                    is_async: false,
+                    is_generator: false,
+                    test: None,
+                }),
+                span: span(),
+            },
+            HirItem {
+                id: crate::hir::HirId(10),
+                def_id: DefId(2),
+                kind: HirItemKind::Function(HirFunction {
+                    cli_args: None,
+                    name: crate::lexer::Symbol(2),
+                    type_params: Vec::new(),
+                    params: Vec::new(),
+                    ret_ty: Some(numerus),
+                    err_ty: Some(textus),
+                    body: Some(HirBlock {
+                        stmts: vec![HirStmt {
+                            id: crate::hir::HirId(11),
+                            kind: HirStmtKind::Redde(Some(HirExpr {
+                                id: crate::hir::HirId(12),
+                                kind: HirExprKind::Call(
+                                    Box::new(HirExpr {
+                                        id: crate::hir::HirId(13),
+                                        kind: HirExprKind::Path(DefId(1)),
+                                        ty: None,
+                                        span: span(),
+                                    }),
+                                    Vec::new(),
+                                ),
+                                ty: None,
+                                span: span(),
+                            })),
+                            span: span(),
+                        }],
+                        expr: None,
+                        span: span(),
+                    }),
+                    is_async: false,
+                    is_generator: false,
+                    test: None,
+                }),
+                span: span(),
+            },
+        ],
+        entry: None,
+    };
+
+    let result = typecheck(&mut program, &Resolver::new(), &mut types);
+    assert!(result.is_err());
+    assert!(result
+        .unwrap_err()
+        .iter()
+        .any(|err| err.message.contains("failable call requires handling")));
+}
+
+#[test]
 fn resolves_method_call_type() {
     let mut types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);
@@ -112,6 +379,7 @@ fn resolves_method_call_type() {
                         type_params: Vec::new(),
                         params: Vec::new(),
                         ret_ty: Some(numerus),
+                        err_ty: None,
                         body: None,
                         is_async: false,
                         is_generator: false,

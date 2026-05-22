@@ -104,6 +104,8 @@ pub struct HirFunction {
     pub cli_args: Option<HirParam>,
     /// Return type; None until type checker infers it
     pub ret_ty: Option<TypeId>,
+    /// Recoverable alternate-exit type declared with `⇥`.
+    pub err_ty: Option<TypeId>,
     /// Function body; None for interface methods
     pub body: Option<HirBlock>,
     /// Whether function is async (futura)
@@ -246,6 +248,7 @@ pub struct HirInterfaceMethod {
     pub name: Symbol,
     pub params: Vec<HirParam>,
     pub ret_ty: Option<TypeId>,
+    pub err_ty: Option<TypeId>,
     pub span: Span,
 }
 
