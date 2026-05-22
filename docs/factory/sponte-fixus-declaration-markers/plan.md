@@ -34,7 +34,7 @@ After exploration, the chosen direction is:
 - Nullable value types are expressed as a union with `nihil`: `T ∪ nihil`.
 - Ownership and borrowing modes (`de`, `in`) remain **prefixes**, as they are prepositional/relational in nature and read more naturally in that position.
 
-This creates a principled split rather than forcing all optionality through one syntax. `sponte` marks obligation: the field, parameter, option, or other declared data slot is voluntary, accepted when provided but not required from the caller/provider. `fixus` marks lifecycle: once the declared slot receives its initial value, either from the provider or from a `vel` default, it cannot be changed. `T ∪ nihil` marks value domain: the value may be either `T` or `nihil`.
+This creates a principled split rather than forcing all optionality through one syntax. `sponte` marks obligation: the field, parameter, option, or other declared data slot is voluntary, accepted when provided but not required from the caller/provider. `fixus` marks lifecycle: once the declared slot receives its initial value, either from the provider or from a default, it cannot be changed. `T ∪ nihil` marks value domain: the value may be either `T` or `nihil`.
 
 **Word choice**: `sponte` (Latin "of one's own accord") expresses that the slot is not demanded; it is supplied voluntarily. `fixus` mirrors the existing `fixum` immutability vocabulary while making the one-time-set field/property rule visible at the declaration site.
 
@@ -85,9 +85,9 @@ in numerus mutableField sponte
 textus id fixus
 textus email sponte fixus
 
-# With default value
-textus name sponte vel "Anonymous"
-textus nickname sponte fixus vel "Anonymous"
+# With field default value
+textus name sponte : "Anonymous"
+textus nickname sponte fixus : "Anonymous"
 ```
 
 In parameters:
@@ -108,11 +108,13 @@ fixum Person ∪ nihil maybe ← nihil
 - Absence of `sponte` in a declaration → the declared slot is required from the caller/provider unless a default is supplied.
 - Presence of `sponte` in a declaration → the declared slot is voluntary; it is accepted when provided but not required.
 - `sponte` follows the declared name, not the type.
-- `sponte` may be combined with `vel` for default values.
+- `sponte` may be combined with the declaration's existing default syntax.
 - `sponte` is for declaration contexts with a name slot: fields, parameters, and similar data/input declarations.
-- `fixus` follows the declared name after any presence marker. Canonical order is `<type> <name> [sponte] [fixus] [vel default]`.
+- `fixus` follows the declared name after any presence marker. Canonical order is `<type> <name> [sponte] [fixus] [default]`.
 - `fixus` may appear without `sponte`: `textus id fixus` means a required slot that becomes immutable after initialization.
-- `sponte fixus vel "Anonymous"` means the provider may omit the slot; if omitted, the default is used; after construction/defaulting the slot is fixed regardless of where the initial value came from.
+- Genus field defaults use `:`: `textus nickname sponte fixus : "Anonymous"`.
+- Parameter defaults use `vel`: `textus nickname sponte fixus vel "Anonymous"`.
+- `sponte fixus` with a default means the provider may omit the slot; if omitted, the default is used; after construction/defaulting the slot is fixed regardless of where the initial value came from.
 - Pure type positions do not use `sponte`; they use `T ∪ nihil` when the value may be `nihil`.
 - `T ∪ nihil` may lower to the existing option representation (`Option<T>`) rather than a generic ad-hoc union when exactly one non-`nihil` member is present.
 - `de` and `in` continue to appear before the type.
@@ -147,7 +149,7 @@ fixum Person ∪ nihil maybe ← nihil
 - Residue search for old `si` usage in type positions is clean (outside of `si` as the conditional keyword).
 - New negative tests reject `si` when used for declaration optionality or nullable value types.
 - New parser tests cover `textus email sponte`, `textus email sponte fixus`, `functio find() → textus ∪ nihil`, and `typus MaybeText = textus ∪ nihil`.
-- New semantic tests cover `textus id fixus`, `textus email sponte fixus`, and `textus nickname sponte fixus vel "Anonymous"` so defaults are applied before fixed-state enforcement.
+- New semantic tests cover `textus id fixus`, `textus email sponte fixus`, field default `textus nickname sponte fixus : "Anonymous"`, and parameter default `textus nickname sponte fixus vel "Anonymous"` so defaults are applied before fixed-state enforcement.
 - New lowering/typecheck tests prove `T ∪ nihil` can accept both `T` and `nihil`, and that the supported nullable representation emits correctly for each backend.
 - Real `genus` and signature examples show improved readability.
 

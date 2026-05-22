@@ -35,7 +35,8 @@ Decisions recorded here become constraints for Phase 1 (inventory) and Phase 2 (
 1. **Problem Diagnosis**: Valid. `si` overload (control-flow vs modifier) + visual misalignment in `genus` blocks + ordering ambiguity with `de`/`in` are real UX and diagnostic liabilities. Replacing declaration optionality with dedicated `sponte` (Latin "voluntarily") and introducing `fixus` for post-init immutability cleanly separates concerns.
 
 2. **Syntax Split**:
-   - Declaration slots (params, genus fields, similar): `<type> <name> [sponte] [fixus] [vel default]`
+   - Declaration slots (params, genus fields, similar): `<type> <name> [sponte] [fixus] [default]`
+   - Genus field defaults use `:`; parameter defaults use `vel`.
    - Pure type positions (returns, typus aliases, var type annos, casts, expr positions): `T ∪ nihil` (and later general unions)
    - Ownership prefixes (`de`, `in`) remain prefix on type; unchanged.
 
@@ -52,7 +53,7 @@ Decisions recorded here become constraints for Phase 1 (inventory) and Phase 2 (
 - Parser: 
   - `parse_type()`: remove `Si` eat, add support for `type ∪ type` (general enough for `T ∪ nihil`, `A ∪ B ∪ C`).
   - `parse_param_list()`: remove `Si` eat for optional; after name parse `sponte`? `fixus`?, keep `vel` default.
-  - `parse_class_member()` (fields): after name, parse optional `sponte`/`fixus`, and support `vel` or retain `:` for init (decision: allow both or standardize on `vel` for optional-with-default; for Phase 2 we'll support `sponte`/`fixus` after name and keep current `:` init for compatibility during migration).
+  - `parse_class_member()` (fields): after name, parse optional `sponte`/`fixus`, and retain `:` for field initialization/defaults.
   - Update `try_parse_type`, grammar docs in comments, `is_simple_var_decl` if needed, any other decl sites.
 - Var decls: `fixum T name sponte?` or more commonly `fixum (T ∪ nihil) name` for nullable locals; `sponte` on pure var decls is low-value so parser will accept it syntactically if present after name (harmless).
 - Ensure `si` as statement starter continues to work (parse_statement still sees TokenKind::Si).
@@ -74,7 +75,7 @@ Decisions recorded here become constraints for Phase 1 (inventory) and Phase 2 (
 - **Keyword registration**: Add `"sponte" => TokenKind::Sponte`, `"fixus" => TokenKind::Fixus` in `scan.rs::keyword_or_ident`. They will be reserved identifiers everywhere. (If later we want `let sponte = 1;` we can relax via contextual registry; current precedent for `fixum` etc. is full reservation.)
 - **Union parsing**: Extend `parse_type` after the named/func/array base to optionally consume `Cup` and additional types, building `TypeExprKind::Union(vec![left, right, ...])`. Left-associative or flat list. `nihil` remains a valid type name in unions.
 - **Nullable flag**: We will remove `nullable: bool` from `TypeExpr` in Phase 2 (or set it to false always). Union syntax replaces it. Downstream code that reads `.nullable` will be updated only where it affects Phase 2 parse paths; full audit in Phase 3.
-- **Field init syntax**: Keep `:` for now in genus fields (`textus email sponte : "foo"` or with `vel`?); parser will accept `sponte`/`fixus` after name, before optional init. For params the `vel` stays. Unify in a later polish if desired.
+- **Field init syntax**: Keep `:` in genus fields (`textus email sponte : "foo"`). Parser accepts `sponte`/`fixus` after name, before optional init. Parameter defaults continue to use `vel`.
 - **Error messages**: When `si` appears before a type in a decl context, produce a clear diagnostic suggesting `sponte` after name or `∪ nihil` for the type. (Minimal for Phase 2: the eat will simply fail to consume, leading to "expected type" or similar; improved messages are nice-to-have.)
 - **Test surface**: Parser tests in `parser/mod_test.rs` and `driver/mod_test.rs` will be updated in Phase 2 only for the new positive forms; bulk replacement of old `si` forms deferred to Phase 5 to keep Phase 2 focused on grammar.
 
