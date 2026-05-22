@@ -50,7 +50,7 @@ Downstream semantic (Phase 3) will give full meaning; codegen and full migration
 - HIR node shapes (HirParam.optional stays; lowering maps sponte → optional).
 - Full semantic option/union representation.
 - Examples/, stdlib/, docs/, EBNF (Phase 5/6).
-- Codegen backends (Phase 4).
+- Rust codegen (Phase 4). TypeScript and Go are legacy surfaces for this effort.
 
 **Verification surface for this phase**:
 - `cargo check -p radix`
@@ -121,9 +121,10 @@ All enumerated edits completed.
 
 Open for later phases:
 - Remove the nullable bridge shim.
-- Teach resolve / codegen about Field.sponte / Param.sponte / fixus semantics.
+- Teach resolve/lowering about `Field.sponte` and `Param.sponte`; preserve `fixus` as metadata without claiming deep enforcement in this plan.
 - Phase 3 union canonicalization rule is now locked: remove `nihil`, canonicalize duplicate members, then wrap the remaining type in `Option`. Thus `T ∪ nihil` becomes `Option<T>`, and `A ∪ B ∪ nihil` becomes `Option<Union<A, B>>`.
 - Phase 3 must reject degenerate absence-only unions such as `nihil ∪ nihil`.
+- Phase 4 is Rust-focused. TypeScript and Go codegen are legacy surfaces for this effort and should not drive the design.
 - Full registry + explain for sponte/fixus (we added minimal KeywordSpec).
 - EBNF / docs / examples migration.
 

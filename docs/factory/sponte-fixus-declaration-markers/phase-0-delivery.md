@@ -62,7 +62,7 @@ Decisions recorded here become constraints for Phase 1 (inventory) and Phase 2 (
 **Out of Scope (for 0-2)**:
 - Full migration of all sources (Phase 5).
 - Semantic lowering of new forms (Phase 3).
-- Codegen for unions (Phase 4).
+- Rust codegen for unions (Phase 4). TypeScript and Go are legacy surfaces for this effort.
 - Docs, EBNF, explain updates (Phase 6).
 - Guardrail tests (Phase 7).
 - Making `sponte`/`fixus` purely contextual (we will add as keywords; contextual relaxation left for later or guardrails if user demand appears).

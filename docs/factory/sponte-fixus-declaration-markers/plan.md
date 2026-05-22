@@ -34,7 +34,7 @@ After exploration, the chosen direction is:
 - Nullable value types are expressed as a union with `nihil`: `T ∪ nihil`.
 - Ownership and borrowing modes (`de`, `in`) remain **prefixes**, as they are prepositional/relational in nature and read more naturally in that position.
 
-This creates a principled split rather than forcing all optionality through one syntax. `sponte` marks obligation: the field, parameter, option, or other declared data slot is voluntary, accepted when provided but not required from the caller/provider. `fixus` marks lifecycle: once the declared slot receives its initial value, either from the provider or from a default, it cannot be changed. `T ∪ nihil` marks value domain: the value may be either `T` or `nihil`.
+This creates a principled split rather than forcing all optionality through one syntax. `sponte` marks obligation: the field, parameter, option, or other declared data slot is voluntary, accepted when provided but not required from the caller/provider. `fixus` marks lifecycle intent: once the declared slot receives its initial value, either from the provider or from a default, it should be treated as fixed. Full `fixus` enforcement is intentionally deferred to dedicated fixed-field / late-initialization work; this plan records the marker and keeps its syntax coherent. `T ∪ nihil` marks value domain: the value may be either `T` or `nihil`.
 
 **Word choice**: `sponte` (Latin "of one's own accord") expresses that the slot is not demanded; it is supplied voluntarily. `fixus` mirrors the existing `fixum` immutability vocabulary while making the one-time-set field/property rule visible at the declaration site.
 
@@ -42,7 +42,7 @@ This creates a principled split rather than forcing all optionality through one 
 
 ### In Scope
 - Replacement of `si` as a declaration-level optional marker with `sponte` after the declared name.
-- Introduction of `fixus` after the declared name as a post-initialization immutability marker.
+- Introduction of `fixus` after the declared name as recorded post-initialization immutability metadata.
 - Replacement of `si T` nullable value types with `T ∪ nihil` in return clauses, type aliases, variable type annotations, casts/conversions, and other pure type positions.
 - Grammar updates for `typeAnnotation`, field declarations, parameter declarations, return clauses, and inline union type expressions.
 - Updates to the parser, declaration AST/HIR metadata, `TypeExpr`, semantic types (`Option<T>` / `Union` lowering), and downstream phases (HIR, type checking, lowering, codegen).
@@ -54,7 +54,9 @@ This creates a principled split rather than forcing all optionality through one 
 - Moving `de` or `in` to postfix position.
 - Changes to `ignotum` (the top-level unknown type).
 - Introduction of a dedicated "required" keyword (the absence of `sponte` remains the signal).
-- Broader changes to how optionality is handled in the runtime or target languages.
+- Deep `fixus` enforcement for field mutation, object privacy/accessors, or late-initialized locals. That work belongs to `docs/factory/fixus-late-init-bindings/` or a related fixed-field enforcement plan.
+- TypeScript and Go parity beyond preserving existing legacy codegen behavior. Current implementation focus is the Rust backend.
+- Broader changes to how optionality is handled in the runtime or non-Rust target languages.
 
 ## Current Evidence
 
@@ -112,6 +114,7 @@ fixum Person ∪ nihil maybe ← nihil
 - `sponte` is for declaration contexts with a name slot: fields, parameters, and similar data/input declarations.
 - `fixus` follows the declared name after any presence marker. Canonical order is `<type> <name> [sponte] [fixus] [default]`.
 - `fixus` may appear without `sponte`: `textus id fixus` means a required slot that becomes immutable after initialization.
+- In this plan, `fixus` must be parsed and preserved as declaration metadata. Source-level enforcement of fixed-field mutation is deferred to dedicated `fixus` work.
 - Genus field defaults use `:`: `textus nickname sponte fixus : "Anonymous"`.
 - Parameter defaults use `vel`: `textus nickname sponte fixus vel "Anonymous"`.
 - `sponte fixus` with a default means the provider may omit the slot; if omitted, the default is used; after construction/defaulting the slot is fixed regardless of where the initial value came from.
@@ -130,8 +133,8 @@ fixum Person ∪ nihil maybe ← nihil
 | 0     | Design & Planning           | Produce this plan and confirm scope and word choice                  | Plan approved |
 | 1     | Inventory                   | Locate every use of `si` as a declaration optional marker or nullable type marker | Full classified inventory (ledger) |
 | 2     | Grammar & Front-end         | Update parser, AST (`TypeExpr`), declaration parsing, union glyph lexing, and keyword handling | `sponte` and `fixus` parse in declarations; `T ∪ nihil` parses in type positions; `si` no longer accepted for optionality/nullability |
-| 3     | Semantic & Lowering         | Ensure `sponte`, `fixus`, and `T ∪ nihil` produce the intended obligation/lifecycle/option/union semantics | Declaration optionality, fixed-after-initialization slots, and nullable value types typecheck and lower correctly; `A ∪ B ∪ nihil` canonicalizes to `Option<Union<A, B>>` |
-| 4     | Codegen & Runtime           | Verify all targets correctly emit optional/nullable types and any supported non-null unions | All backends produce correct output or documented fallback output |
+| 3     | Semantic & Lowering         | Ensure `sponte` and `T ∪ nihil` produce the intended obligation/option/union semantics while preserving `fixus` metadata | Declaration optionality and nullable value types typecheck and lower correctly; `fixus` is represented but not deeply enforced; `A ∪ B ∪ nihil` canonicalizes to `Option<Union<A, B>>` |
+| 4     | Rust Codegen                | Verify Rust emits canonical optional/nullable types and supported union fallbacks | Rust backend output is correct for `sponte` and nullable unions; `fixus` emits no false target-level immutability guarantee |
 | 5     | Migration & Examples        | Update examples, stdlib, and internal tests                          | No remaining `si` used for optionality in source |
 | 6     | Documentation & Teaching    | Update EBNF, grammatica docs, AGENTS.md, and explain entries         | Docs teach `sponte` for declaration optionality, `fixus` for post-initialization fixed slots, and `T ∪ nihil` for nullable value types |
 | 7     | Guardrails & Validation     | Add tests and searches that protect the new rule                     | Clean CI + residue search passes |
@@ -139,7 +142,7 @@ fixum Person ∪ nihil maybe ← nihil
 ## Open Questions
 
 - Should `∪` initially support all inline union type expressions (`A ∪ B ∪ C`), or should implementation begin with the narrow nullable form (`T ∪ nihil`) and leave broader unions for a follow-up? **Decision after Phase 2**: support general inline unions syntactically; Phase 3 gives them semantic lowering.
-- How should non-null inline unions emit on backends that lack first-class unions? This remains a Phase 4 codegen decision.
+- How should non-null inline unions emit in Rust when there is no first-class ad-hoc union? This remains a Phase 4 Rust codegen decision.
 - How should diagnostics distinguish the concepts: "voluntary" / "optional" for declaration obligation, "fixed" for post-initialization lifecycle, and "nullable" / "may be nihil" for value type domain?
 - Should `sponte` and `fixus` be contextual keywords only in declaration-marker position, allowing ordinary identifiers with those names elsewhere?
 - Should reversed marker order (`textus email fixus sponte`) be rejected rather than normalized to preserve one canonical style?
@@ -153,8 +156,8 @@ fixum Person ∪ nihil maybe ← nihil
 - Residue search for old `si` usage in type positions is clean (outside of `si` as the conditional keyword).
 - New negative tests reject `si` when used for declaration optionality or nullable value types.
 - New parser tests cover `textus email sponte`, `textus email sponte fixus`, `functio find() → textus ∪ nihil`, and `typus MaybeText = textus ∪ nihil`.
-- New semantic tests cover `textus id fixus`, `textus email sponte fixus`, field default `textus nickname sponte fixus : "Anonymous"`, and parameter default `textus nickname sponte fixus vel "Anonymous"` so defaults are applied before fixed-state enforcement.
-- New lowering/typecheck tests prove `T ∪ nihil` can accept both `T` and `nihil`, `A ∪ B ∪ nihil` canonicalizes to `Option<Union<A, B>>`, duplicate members canonicalize, degenerate `nihil ∪ nihil` is rejected, and the supported nullable representation emits correctly for each backend.
+- New semantic tests cover `textus id fixus`, `textus email sponte fixus`, field default `textus nickname sponte fixus : "Anonymous"`, and parameter default `textus nickname sponte fixus vel "Anonymous"` so `fixus` metadata survives lowering and defaults are represented before later fixed-state enforcement.
+- New lowering/typecheck tests prove `T ∪ nihil` can accept both `T` and `nihil`, `A ∪ B ∪ nihil` canonicalizes to `Option<Union<A, B>>`, duplicate members canonicalize, degenerate `nihil ∪ nihil` is rejected, and the supported nullable representation emits correctly for the Rust backend.
 - Real `genus` and signature examples show improved readability.
 
 ---
