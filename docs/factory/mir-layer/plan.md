@@ -64,6 +64,16 @@ It should not start as full SSA. SSA can be a later lowering from MIR once there
 - The existing Rust backend remains the primary correctness gate until a MIR-backed Rust path can prove equivalent behavior.
 - MIR adoption must be incremental and inspectable; do not flip all codegen to MIR in one phase.
 
+## Locked Phase 1 Decisions
+
+- MIR starts as a typed, non-SSA, control-flow/block IR.
+- MIR should reference semantic types through a MIR-owned wrapper instead of exposing raw `TypeId` everywhere.
+- Recoverable failure is represented as control flow, not as a baked-in Rust-like `Result<T, E>` value.
+- The first developer inspection surface should be `radix mir`.
+- MIR lowering should be canonical and target-neutral.
+- Any initial `MirConfig` should be limited to lowering/debug policy, not target-specific semantics.
+- Real memory-management operations such as `drop`, `retain`, `release`, and `free` are deferred until Faber has a concrete runtime memory model.
+
 ## Initial MIR Shape
 
 Candidate module:
@@ -197,7 +207,8 @@ Steps:
 
 - Add `crates/radix/src/mir`.
 - Define IDs for MIR functions, blocks, locals, temporaries, and values.
-- Represent MIR types by referencing `TypeId` at first, with room for a later `MirType` layer if layout decisions require it.
+- Represent MIR types with a small MIR-owned wrapper around semantic `TypeId`.
+- Leave room in that wrapper for later ABI/layout information without deciding runtime representation in Phase 1.
 - Define block and terminator structures.
 - Add deterministic debug rendering for test snapshots.
 
@@ -212,7 +223,8 @@ Checkpoint:
 Steps:
 
 - Add an internal lowering entry point from `AnalyzedUnit`.
-- Add a developer command or test helper for MIR dump output.
+- Add `radix mir` as the compiler-developer inspection command.
+- Add test helpers for deterministic MIR dump output.
 - Keep output deterministic and low-noise.
 - Reject unsupported HIR nodes with explicit unsupported-MIR diagnostics.
 
@@ -268,6 +280,7 @@ Steps:
 Checkpoint:
 
 - Failable function behavior is represented without Rust-specific `Result<T, String>` syntax.
+- MIR uses explicit error exits or error edges for recoverable failure.
 - Existing Rust behavior remains unchanged unless explicitly using the experimental MIR backend.
 
 ### Phase 6: Aggregate and Option Contract
@@ -394,14 +407,23 @@ Use layered validation rather than waiting for final executable output:
 - Package-level Cargo tests only after the MIR-to-Rust vertical slice exists.
 - `./scripta/ci` before marking a phase complete.
 
-## Open Questions
+## Resolved Design Questions
 
-- Should MIR reference `TypeId` directly forever, or should it introduce a distinct `MirType` once runtime layout matters?
-- Should recoverable failure be represented as dual function exits or as explicit result-like values?
-- How much borrow/ownership information should MIR preserve from Rust-target borrow analysis?
-- Should `drop`/retain/free operations appear in early MIR, or wait until runtime memory semantics become concrete?
-- Should MIR dumps be exposed through `radix mir`, `faber hir --mir`, or a hidden developer-only command first?
-- Should MIR lowering be target-independent, or should a small `MirConfig` allow target-specific unsupported-feature gates?
+- MIR will use a MIR-owned type wrapper around semantic `TypeId` in the first implementation. A richer `MirType` / representation layer is deferred until runtime layout decisions are concrete.
+- Recoverable failure will be represented as control flow through explicit error exits or error edges. Rust `Result<T, String>` remains a Rust backend rendering choice, not a MIR semantic primitive.
+- MIR will preserve Faber-level ownership and mutability facts such as parameter mode, receiver mode, local mutability, assignability, and addressable places. It will not carry Rust lifetimes or Rust borrow-checker internals.
+- Early MIR will not include meaningful `drop`, `retain`, `release`, or `free` operations. Storage lifetime markers may be added later, but only when they serve a concrete validation or backend need.
+- MIR inspection will start as `radix mir`, matching the existing compiler-developer command surface.
+- MIR lowering will be target-neutral. If `MirConfig` exists early, it should only control lowering/debug policy such as unsupported-node handling, not target-specific language semantics.
+
+## Deferred Questions
+
+- Exact ABI/layout representation for strings, lists, maps, options, structs, enums, closures, and runtime values.
+- Whether MIR needs a distinct layout-aware `MirType` after the first semantic-type wrapper.
+- Whether and when MIR should lower to SSA.
+- Whether storage lifetime markers should become mandatory before WASM or native work.
+- Whether MIR validation should grow a formal ownership/borrow layer independent of Rust borrow analysis.
+- Whether future backend profiles such as `Portable`, `RustBridge`, or `WasmSubset` are useful after canonical MIR exists.
 
 ## Deferred Native Questions
 
