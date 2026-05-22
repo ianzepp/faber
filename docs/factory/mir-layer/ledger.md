@@ -153,3 +153,89 @@ Behavior boundary:
 - Existing HIR-to-codegen behavior remains unchanged.
 - No target backend consumes MIR.
 - Primitive expression lowering remains deferred to phase 3.
+
+## Phase 3 Baseline
+
+Status: complete.
+
+Implemented commit:
+
+- `8a3104ef` - `Implement MIR primitive expression lowering`
+
+Implemented artifacts:
+
+- `crates/radix/src/mir/lower.rs`
+- `crates/radix/src/mir/lower_test.rs`
+
+Lowering subset:
+
+- Straight-line `functio` bodies lower into typed MIR statements and terminators.
+- Primitive literals lower into MIR constants for `numerus`, `fractus`, `textus`, `bivalens`, and `nihil`.
+- Bare constant `redde` operands materialize into typed temporaries so return operands preserve `MirType`.
+- Function parameters lower as MIR parameters plus matching immutable MIR locals.
+- `fixum` and `varia` declarations with initializers create MIR locals before emitting initializer assignments.
+- Parameter and local reads lower to `MirOperand::Place`.
+- Local reassignment emits assignment to an existing `MirPlace`.
+- Primitive unary and binary expressions materialize into fresh typed temporaries.
+- Direct calls whose callee is a resolved path lower through `MirStmtKind::Call` with `MirCallee::Definition(DefId)`.
+- Vacuum direct calls emit calls without destinations.
+- Explicit `redde expr` and no-value `redde` lower to MIR return terminators.
+
+Unsupported diagnostics:
+
+- `si` and `dum` fail with explicit control-flow MIR-lowering diagnostics.
+- Diagnostic verbs such as `nota` fail with explicit runtime-intrinsic MIR-lowering diagnostics.
+- Assignment targets that are not local places fail before lowering an arbitrary expression as a destination.
+- Other out-of-scope constructs remain fail-closed through explicit unsupported-MIR diagnostics.
+
+Manual checkpoint output:
+
+```text
+$ printf 'functio computa() → numerus { varia numerus x ← 1 x ← x + 2 redde x }\n' | cargo run -q -p radix --bin radix -- mir -
+function f0 -> ty#1 {
+  locals:
+    var _0: ty#1
+  temps:
+    %0: ty#1
+  bb0:
+    _0 = const int 1: ty#1
+    %0 = _0 + const int 2: ty#1
+    _0 = %0: ty#1
+    return _0
+}
+```
+
+```text
+$ printf 'functio duplex(numerus n) → numerus { redde n * 2 } functio usa() → numerus { redde duplex(4) }\n' | cargo run -q -p radix --bin radix -- mir -
+function f0 -> ty#1 {
+  params:
+    _0: ty#1
+  locals:
+    let _0: ty#1
+  temps:
+    %0: ty#1
+  bb0:
+    %0 = _0 * const int 2: ty#1
+    return %0
+}
+
+function f1 -> ty#1 {
+  temps:
+    %0: ty#1
+  bb0:
+    %0 = call def#0(const int 4)
+    return %0
+}
+```
+
+Verification:
+
+- `cargo test -p radix mir` passed: 22 tests passed.
+- `cargo test -p radix` passed: 337 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.
+
+Behavior boundary:
+
+- Existing HIR-to-codegen behavior remains unchanged.
+- No target backend consumes MIR.
+- Control-flow normalization remains deferred to phase 4.
