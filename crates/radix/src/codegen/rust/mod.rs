@@ -308,6 +308,15 @@ impl<'a> RustCodegen<'a> {
     pub(super) fn struct_sponte_field_names(&self, def_id: DefId) -> Option<&FxHashSet<Symbol>> {
         self.struct_sponte_fields.get(&def_id)
     }
+
+    pub(super) fn sorted_struct_sponte_field_names(&self, def_id: DefId) -> Vec<Symbol> {
+        let mut names = self
+            .struct_sponte_field_names(def_id)
+            .map(|set| set.iter().copied().collect::<Vec<_>>())
+            .unwrap_or_default();
+        names.sort_by(|a, b| self.resolve_symbol(*a).cmp(self.resolve_symbol(*b)));
+        names
+    }
 }
 
 fn normalize_import_path(path: &str) -> String {

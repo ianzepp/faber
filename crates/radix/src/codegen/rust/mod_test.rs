@@ -1065,8 +1065,8 @@ fn expr_codegen_handles_control_flow_and_operators() {
                         field,
                         HirExpr {
                             id: HirId(337),
-                            kind: HirExprKind::Literal(HirLiteral::Nil),
-                            ty: Some(types.primitive(Primitive::Nihil)),
+                            kind: HirExprKind::Literal(HirLiteral::Int(7)),
+                            ty: Some(numerus),
                             span: span(),
                         },
                     )],

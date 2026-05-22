@@ -262,12 +262,10 @@ pub(super) fn generate_struct_expr(
             w.writeln(",");
         }
         // Emit None for sponte fields omitted from this literal (Rust requires complete struct literals).
-        if let Some(sponte_names) = codegen.struct_sponte_field_names(def_id) {
-            for &sname in sponte_names {
-                if !provided.contains(&sname) {
-                    w.write(codegen.resolve_symbol(sname));
-                    w.writeln(": None,");
-                }
+        for sname in codegen.sorted_struct_sponte_field_names(def_id) {
+            if !provided.contains(&sname) {
+                w.write(codegen.resolve_symbol(sname));
+                w.writeln(": None,");
             }
         }
     });

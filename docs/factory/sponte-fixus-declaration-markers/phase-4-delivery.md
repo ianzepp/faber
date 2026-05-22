@@ -85,3 +85,23 @@ Phase 4 complete:
 Ready for Phase 5 (migration of examples/stdlib) and Phase 6 (docs).
 
 *Opus phase-4 perfectum est.*
+
+## Feedback Round - Source-Level Verte Path (2026-05-22)
+
+The first implementation covered direct `HirExprKind::Struct` emission but missed the normal source path for object construction, which is `HirExprKind::Verte { ... }` from `{ ... } ⇢ User`.
+
+Fixes applied:
+
+- `rust/expr/verte.rs` now mirrors the sponte literal hygiene from `rust/expr/collection.rs`.
+- Provided sponte fields emit as `Some(value)`.
+- Omitted sponte fields emit as deterministic `None` fillers.
+- Sponte filler ordering is now sorted by resolved field name instead of relying on `FxHashSet` iteration order.
+- The synthetic HIR fixture now uses a concrete value for the sponte field so it exercises valid `Some(T)` output instead of `Some(None)`.
+- Added a driver test using normal Faber source syntax to verify `{ ... } ⇢ User` emits `Option<T>` fields, `Some(...)` for provided sponte fields, and `None` for omitted sponte fields.
+
+Final verification:
+
+- `cargo test -p radix` → **291 passed**, 0 failed, 2 ignored in lib tests; hygiene and doc tests pass.
+- Manual source-level smoke: generated Rust for `{ name: "Ada" } ⇢ User` and `{ name: "Lin", email: "lin@example.com" } ⇢ User` compiles with `rustc`.
+
+Phase 4 checkpoint remains achieved after the correction.

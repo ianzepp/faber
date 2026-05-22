@@ -1927,6 +1927,36 @@ fn rust_output_emits_verte_construction_and_coalesce_unwrap() {
 }
 
 #[test]
+fn rust_output_wraps_sponte_fields_in_verte_struct_literals() {
+    let session = session(Target::Rust);
+    let source = r#"genus User {
+  textus name
+  textus email sponte
+  numerus score sponte
+}
+
+incipit {
+  fixum a ← { name: "Ada" } ⇢ User
+  fixum b ← { name: "Lin", email: "lin@example.com" } ⇢ User
+  nota a.name
+  nota b.name
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("pub email: Option<String>,"));
+    assert!(output.code.contains("pub score: Option<i64>,"));
+    assert!(output.code.contains("email: None,"));
+    assert!(output.code.contains("score: None,"));
+    assert!(output
+        .code
+        .contains("email: Some(\"lin@example.com\".to_string()),"));
+}
+
+#[test]
 fn ignotum_callee_no_longer_reports_not_callable() {
     let session = session(Target::Rust);
     let source = r#"functio invoke(ignotum callee) → ignotum {

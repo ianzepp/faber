@@ -86,6 +86,13 @@ fn generate_verte_struct_expr(
         w.write(codegen.resolve_def(def_id));
         w.writeln(" {");
         let mut struct_result = Ok(());
+        let provided = entries
+            .iter()
+            .filter_map(|field| match (&field.key, &field.value) {
+                (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(_)) => Some(*name),
+                _ => None,
+            })
+            .collect::<rustc_hash::FxHashSet<_>>();
         w.indented(|w| {
             for field in entries {
                 let (name, value) = match (&field.key, &field.value) {
@@ -97,9 +104,22 @@ fn generate_verte_struct_expr(
                 if struct_result.is_err() {
                     return;
                 }
-                struct_result =
-                    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                if codegen.struct_field_is_sponte(def_id, *name) {
+                    w.write("Some(");
+                    struct_result =
+                        generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                    w.write(")");
+                } else {
+                    struct_result =
+                        generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                }
                 w.writeln(",");
+            }
+            for sname in codegen.sorted_struct_sponte_field_names(def_id) {
+                if !provided.contains(&sname) {
+                    w.write(codegen.resolve_symbol(sname));
+                    w.writeln(": None,");
+                }
             }
         });
         struct_result?;
