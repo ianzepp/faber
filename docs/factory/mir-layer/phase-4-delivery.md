@@ -206,7 +206,7 @@ Expression-valued `si`:
 
 ```fab
 functio positum(numerus n) → numerus {
-    fixum numerus x ← si n > 0 { 1 } secus { 0 }
+    fixum numerus x ← n > 0 sic 1 secus 0
     redde x
 }
 ```
