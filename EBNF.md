@@ -11,7 +11,7 @@ program     := statement*
 statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pactumDecl
              | typeAliasDecl | enumDecl | discretioDecl
              | ifStmt | whileStmt | iteraStmt
-             | eligeStmt | discerneStmt | guardStmt | curaStmt
+             | eligeStmt | discerneStmt | guardStmt | curaStmt | facBlockStmt
              | returnStmt | breakStmt | continueStmt | noopStmt | throwStmt
              | assertStmt | outputStmt | adStmt | incipitStmt
              | extractStmt

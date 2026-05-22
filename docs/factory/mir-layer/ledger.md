@@ -479,6 +479,9 @@ Validation:
 - `cargo test -p radix mir` passed: 37 tests passed.
 - `cargo test -p radix` passed: 366 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
 - `./scripta/ci` passed.
+- Verification audit on 2026-05-22 reran `cargo test -p radix cape`, `cargo test -p radix mir`, `cargo test -p radix`, and `./scripta/ci`; all passed.
+- Manual CLI probes confirmed `fac { iace ... } cape` lowers without `return_error`, handled failable calls lower to `try_call`, `si`/`sin`/`secus` handlers parse and lower independently, `dum ... cape` exits to the post-loop path after handler fallthrough, bare-block `cape` is rejected, legacy `tempta` is rejected with the migration diagnostic, and unhandled failable calls remain rejected.
+- The verification pass fixed `EBNF.md` so the top-level `statement` production lists `facBlockStmt`, matching the now-canonical `fac { ... } cape` boundary.
 
 Behavior boundary:
 
