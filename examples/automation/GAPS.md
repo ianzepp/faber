@@ -8,8 +8,9 @@ The point is not to hide shortcomings. The point is to name them clearly enough 
 
 Resolved:
 
-- `cargo run --manifest-path Cargo.toml -p faber -- check --package examples/automation/main.fab` checks the package graph.
-- `cargo run -p faber -- emit -t rust --package examples/automation/main.fab` remains the Rust emission gate for mounted command modules.
+- `cargo run -p faber -- check examples/automation` checks the manifest-backed package graph.
+- `cargo run -p faber -- emit -t rust --package examples/automation` remains the Rust emission gate for mounted command modules.
+- `cargo run -p faber -- run examples/automation -- inventory list` builds and executes the generated CLI.
 
 Original gap:
 

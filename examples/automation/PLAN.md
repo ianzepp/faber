@@ -10,7 +10,7 @@ The reference executor scans `*/SKILL.md`, parses TOML-style front matter, check
 
 Create an example package with:
 
-- A Faber CLI entry point under `examples/automation/main.fab`.
+- A manifest-backed Faber package under `examples/automation/`, with `faber.toml` pointing at `main.fab`.
 - Command modules under `examples/automation/commands/`.
 - Fixture automation files under `examples/automation/fixtures/`.
 - Documentation that explains how to check, emit, and evolve the example.
@@ -41,8 +41,9 @@ Implement a compiling CLI skeleton with commands for:
 
 Acceptance:
 
-- Package checks with `cargo run --manifest-path Cargo.toml -p faber -- check --package examples/automation/main.fab`.
-- Rust can be emitted with `cargo run -p faber -- emit -t rust --package examples/automation/main.fab`.
+- Package checks with `cargo run -p faber -- check examples/automation`.
+- Rust can be emitted with `cargo run -p faber -- emit -t rust --package examples/automation`.
+- The generated CLI runs with `cargo run -p faber -- run examples/automation -- inventory list`.
 - README documents current limitations.
 
 ### Stage 2: Real Metadata Parsing
@@ -126,9 +127,10 @@ Acceptance:
 Use these commands as gates while the example evolves:
 
 ```bash
-cargo run --manifest-path Cargo.toml -p faber -- check examples/automation/main.fab
-cargo run -p faber -- emit -t rust --package examples/automation/main.fab
-cargo run -p faber -- check --package examples/automation/main.fab
+cargo run -p faber -- check examples/automation
+cargo run -p faber -- build examples/automation
+cargo run -p faber -- run examples/automation -- inventory list
+cargo run -p faber -- emit -t rust --package examples/automation
 ```
 
 When runtime/compiler behavior changes, add targeted Rust tests under `crates/radix/src`.

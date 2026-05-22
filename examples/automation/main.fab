@@ -1,6 +1,7 @@
 # Automation CLI skeleton.
 #
-# Emit: cargo run -p faber -- emit -t rust --package examples/automation/main.fab
+# Build: cargo run -p faber -- build examples/automation
+# Run: cargo run -p faber -- run examples/automation -- inventory list
 
 importa ex "./commands/inventory" privata * ut inventoryModule
 importa ex "./commands/runner" privata * ut runnerModule
