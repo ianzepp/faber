@@ -195,8 +195,9 @@ All three tests pass and fail for the documented reasons ("expected identifier" 
 - Created executable `scripta/check-markers` (chosen as a `scripta/` shell guardrail per the "easy for agents and humans" guidance).
 - Scans the surfaces listed in the spec.
 - Uses anchored regexes for the three bad classes (`si` in type/decl positions, `T?` as type, `datus`).
+- Follow-up verification tightened the guardrail after a synthetic stale file proved the initial allowlist was too broad; the script now explicitly fails on `functio stale(si textus name) → vacuum {}` and `functio stale() → textus? { ... }`.
 - Post-filter allowlist explicitly excludes:
-  - Control-flow `si` (by context of following token + common var names).
+  - Control-flow `si` by using typed-declaration patterns rather than broad `si` matching.
   - Optional chaining explain entries and operators (`?.`, `?[]`, `?()` and their docs).
   - EBNF grammar `?` (IDENTIFIER?, production?).
   - The AGENTS.md ban line itself ("No `Type?`").
@@ -220,4 +221,3 @@ All three tests pass and fail for the documented reasons ("expected identifier" 
 All checkpoints satisfied. The boundary is now mechanically protected; any future drift will fail either a unit test or the ci guardrail.
 
 (The `si` parse errors are currently generic ("expected identifier"); a future polish pass could emit a dedicated "legacy 'si' nullable syntax is no longer accepted — use `name sponte` or `T ∪ nihil`" diagnostic. That is out of scope for this phase.)
-

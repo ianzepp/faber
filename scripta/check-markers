@@ -41,13 +41,17 @@ exclude_globs=(
 )
 
 rg_opts=(--no-heading --line-number --color=never)
+for glob in "${exclude_globs[@]}"; do
+  rg_opts+=(--glob "$glob")
+done
 
 # Bad patterns for legacy si-as-nullable (anchored to declaration / type positions)
 si_bad='→\s*si\b|\b(fixum|varia)\s+si\s+\w+|\btypus\s+\w+\s*=\s*si\s+\w+|\bsi\s+(textus|numerus|fractus|bivalens|vacuum|valor|quidlibet|octeti|series|[A-Z][A-Za-z0-9_]*)\s+\w+'
 
-# Bad T? as type (not chaining, not EBNF)
-# We match a type-ish word immediately followed by ? in code contexts
-question_bad='\b(textus|numerus|fractus|bivalens|vacuum|valor|quidlibet|octeti|series|[A-Z][A-Za-z0-9_]*)\?'
+# Bad T? as type (not chaining, not EBNF).
+# Keep this to known built-in type spellings; a generic capitalized-word regex catches prose
+# headings such as "Why Both Forms?".
+question_bad='\b(textus|numerus|fractus|bivalens|vacuum|valor|quidlibet|octeti|series)\?'
 
 # Historical keyword that must not reappear as current syntax
 datus_bad='\bdatus\b'
@@ -58,14 +62,14 @@ check_pattern() {
   local pattern="$1"
   local desc="$2"
   local hits
-  hits=$(rg "${rg_opts[@]}" "$pattern" "${surfaces[@]}" \
-    "${exclude_globs[@]/#/-g }" 2>/dev/null || true)
+  hits=$(rg "${rg_opts[@]}" "$pattern" "${surfaces[@]}" 2>/dev/null || true)
 
-  # Additional allowlist filtering for common false positives that rg glob didn't catch
+  # Additional allowlist filtering for common false positives that rg glob did not catch.
+  # Do not filter `si <builtin-type> <name>` here: that is exactly the legacy form this
+  # guardrail exists to catch. Control-flow `si` remains allowed because it does not match
+  # the typed declaration patterns above.
   hits=$(echo "$hits" | grep -E -v \
-    '^\s*$|si (cond|value|args|status|age|score|item|k|x|n|enabled|valid|attempts|b|name|email|depth|verbose|form|logged|permission|hour|temperature|grade|inner|user|data|external|path|points|targets|source|id|num|count|items|key|directorium|ambitus|nivel|cert|indentum|pagina|per_pagina|aetas|activus|titulus|depth|handle|state|address|maybe|name|count|Value|User|Result|Optional|Persona|Username|MaybeText|MaybeName|MaybeCount|MaybeValue|isNull|isNotNull|divide|findUser|inveni|sequens|analyze|paginate|greet|createUser|invite|register|bad|find|checkValue|require|process|fetch)' \
-    | grep -E -v 'si (x < |x > |x ≡ |score|age |b ≡ |n < |i % |value < |attempts|name ≡ |email|age < |n ≤ |item ≡ |k ≡ |status |verbose|form|logged|permission|hour|temperature|grade|inner|user|data|external|path|points|targets|source|id|num|count|items|key|directorium|ambitus|nivel|cert|indentum|pagina|per_pagina|aetas|activus|titulus|depth|handle|state|address|maybe|name|count)' \
-    | grep -E -v 'Type\?|IDENTIFIER\?|No invented|:=.*\?|optional chaining|question-(dot|bracket|paren)|EBNF|grammar' \
+    '^\s*$|Type\?|IDENTIFIER\?|No invented|:=.*\?|optional chaining|question-(dot|bracket|paren)|EBNF|grammar' \
     || true)
 
   if [ -n "$hits" ]; then
