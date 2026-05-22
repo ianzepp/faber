@@ -23,6 +23,7 @@ From the repository root:
 
 ```bash
 cargo run -p faber -- check examples/automation
+cargo run -p faber -- test examples/automation
 cargo run -p faber -- build examples/automation
 cargo run -p faber -- run examples/automation -- inventory list
 cargo run -p faber -- run examples/automation -- runner dry-run sample-automation

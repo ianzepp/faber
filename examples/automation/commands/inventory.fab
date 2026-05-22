@@ -1,5 +1,13 @@
 # Inventory commands for the automation example.
 
+functio sample_record_line() → textus {
+    redde "sample-automation  PAUSED  codex  RRULE:FREQ=HOURLY;INTERVAL=1;BYMINUTE=0"
+}
+
+functio sample_status() → textus {
+    redde "PAUSED"
+}
+
 @ imperium "list"
 @ descriptio "List automation skill records"
 functio list() argumenta args → vacuum {
@@ -7,7 +15,7 @@ functio list() argumenta args → vacuum {
     si args.verbose {
         nota "mode: inventory list"
     }
-    nota "sample-automation  PAUSED  codex  RRULE:FREQ=HOURLY;INTERVAL=1;BYMINUTE=0"
+    nota sample_record_line()
 }
 
 @ imperium "show"
@@ -16,7 +24,7 @@ functio list() argumenta args → vacuum {
 functio show() argumenta args → vacuum {
     nota scriptum("id: §", args.id)
     nota scriptum("root: §", args.root)
-    nota "status: PAUSED"
+    nota scriptum("status: §", sample_status())
     nota "execute: codex"
     nota "model: gpt-5.4-mini"
 }
@@ -30,4 +38,14 @@ functio check() argumenta args → vacuum {
         nota "required fields: id, kind, execute, status, rrule, model, reasoning_effort, cwds"
     }
     nota "ok: fixture metadata shape is valid"
+}
+
+probandum "automation inventory" tag "automation" {
+    proba "sample record line names the paused fixture" {
+        adfirma sample_record_line() ≡ "sample-automation  PAUSED  codex  RRULE:FREQ=HOURLY;INTERVAL=1;BYMINUTE=0"
+    }
+
+    proba "sample status is paused" {
+        adfirma sample_status() ≡ "PAUSED"
+    }
 }

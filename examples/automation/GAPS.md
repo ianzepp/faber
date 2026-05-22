@@ -9,6 +9,7 @@ The point is not to hide shortcomings. The point is to name them clearly enough 
 Resolved:
 
 - `cargo run -p faber -- check examples/automation` checks the manifest-backed package graph.
+- `cargo run -p faber -- test examples/automation` runs package-level `proba` checks through Cargo's Rust test harness.
 - `cargo run -p faber -- emit -t rust --package examples/automation` remains the Rust emission gate for mounted command modules.
 - `cargo run -p faber -- run examples/automation -- inventory list` builds and executes the generated CLI.
 

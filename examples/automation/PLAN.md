@@ -42,6 +42,7 @@ Implement a compiling CLI skeleton with commands for:
 Acceptance:
 
 - Package checks with `cargo run -p faber -- check examples/automation`.
+- Package tests pass with `cargo run -p faber -- test examples/automation`.
 - Rust can be emitted with `cargo run -p faber -- emit -t rust --package examples/automation`.
 - The generated CLI runs with `cargo run -p faber -- run examples/automation -- inventory list`.
 - README documents current limitations.
@@ -128,6 +129,7 @@ Use these commands as gates while the example evolves:
 
 ```bash
 cargo run -p faber -- check examples/automation
+cargo run -p faber -- test examples/automation
 cargo run -p faber -- build examples/automation
 cargo run -p faber -- run examples/automation -- inventory list
 cargo run -p faber -- emit -t rust --package examples/automation
