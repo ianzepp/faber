@@ -374,3 +374,29 @@ Behavior boundary:
 - MIR lowering of `iace` and alternate-exit function signatures remains deferred to Phase 5B.
 - Caller-side propagation and explicit handler syntax remain deferred.
 - Existing backend lowering paths do not consume MIR and were not converted to typed recoverable failure lowering in this phase.
+
+## Phase 5B/5C Planning Update
+
+Status: planned.
+
+Decision captured:
+
+- Phase 5B remains narrowly scoped to function-level alternate-exit MIR lowering.
+- Phase 5B must lower declared `iace` to `return_error` and `mori` to fatal unreachable flow.
+- Phase 5B must not harden `tempta` as the local handling primitive.
+- Phase 5C becomes the structured local handling phase.
+- `cape` attaches to structured statements or conditional arms by grammar production, not to the nearest arbitrary block.
+- `fac { ... } cape err { ... }` is the canonical one-shot local handler boundary.
+- Failable calls inside an active lexical `cape` boundary are locally consumed by that handler; failable calls outside a handler or propagation syntax remain rejected.
+- Handler error binding starts with a conservative single inferred error type for all caught alternate exits.
+- `dum ... cape` is statement-scoped loop handling; handler fallthrough exits the loop rather than resuming it.
+- `si` / `sin` / `secus` handlers are arm-scoped.
+- Bare `{ ... } cape err { ... }` is rejected.
+- `tempta` should be removed from the canonical source surface or rejected with a migration diagnostic to `fac { ... } cape`.
+- `demum` cleanup/finally behavior remains deferred.
+
+Planning artifacts:
+
+- `docs/factory/mir-layer/phase-5b-delivery.md` tightened around the no-`tempta` hardening boundary.
+- `docs/factory/mir-layer/phase-5c-delivery.md` added for structured `cape` handling.
+- `docs/factory/mir-layer/plan.md` updated to include Phase 5C.

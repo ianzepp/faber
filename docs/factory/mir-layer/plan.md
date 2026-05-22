@@ -1,6 +1,6 @@
 # MIR Layer Factory Plan
 
-**Status**: in-progress (Phases 0–5A complete; 5B–12 pending)
+**Status**: in-progress (Phases 0–5A complete; 5B–5C and 6–12 pending)
 **Created**: 2026-05-22
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/mir-layer/`
@@ -167,6 +167,7 @@ drop value
 | 4 | Control-flow normalization | Lower blocks, `si`, `dum`, `rumpe`, `perge`, and expression returns into explicit blocks and terminators; keep `itera` deferred. | MIR has no expression-valued control flow for the supported subset. |
 | 5A | Alternate-exit surface | Add the typed alternate-exit glyph contract with `→ Success ⇥ Error` through lexing, parsing, HIR, and semantic signatures. | `radix check` accepts explicit failable signatures and rejects `iace` where no alternate exit is declared. |
 | 5B | Alternate-exit MIR lowering | Lower `iace` and `mori` through the new function contract into explicit MIR exits. | MIR distinguishes normal `return` from recoverable `return_error` without Rust `Result` syntax. |
+| 5C | Structured `cape` handling surface | Replace `tempta` as the canonical local handler model by attaching `cape` to structured statements and conditional arms. | `fac`, `dum`, `si`, `sin`, and `secus` can consume local `iace` and failable-call alternate exits without dynamic exception search. |
 | 6 | Aggregate and option contract | Represent structs, enums, tuples, arrays, maps, option/null, optional chain, and non-null assertion. | MIR uses explicit construction/projection/runtime operations; no high-level optional-chain nodes remain. |
 | 7 | Runtime intrinsic boundary | Define target-neutral intrinsics for printing, string formatting, collection operations, conversions, and stdlib-backed calls. | MIR references runtime/provider operations without Rust module paths or Cargo details. |
 | 8 | MIR validation | Add validation for block termination, type presence, operand compatibility, def-use sanity, and unresolved placeholders. | Invalid MIR is rejected before any backend sees it; diagnostics point back to source spans where possible. |
@@ -300,7 +301,9 @@ Steps:
 - Lower `iace expr` to `MirTerminatorKind::ReturnError`.
 - Type-preserve the `iace` operand the same way `redde` operands are type-preserved.
 - Lower `mori expr` to a target-neutral fatal operation followed by `Unreachable`.
-- Keep `tempta`, `cape`, `demum`, and failable-call propagation deferred until caller-side syntax and cleanup semantics are locked.
+- Keep `tempta`, `cape`, `demum`, and failable-call propagation deferred.
+- Treat `tempta` as a legacy local-handler surface that Phase 5C will remove or replace.
+- Do not deepen `tempta` support or lower inside `tempta` bodies during Phase 5B.
 - Preserve enough source span information for useful diagnostics.
 
 Checkpoint:
@@ -309,6 +312,34 @@ Checkpoint:
 - `iace` requires a declared alternate-exit type and emits a typed `return_error` operand.
 - `mori` is fatal and not catchable.
 - Existing Rust behavior remains unchanged unless explicitly using a later experimental MIR backend.
+
+### Phase 5C: Structured `cape` Handling Surface
+
+Steps:
+
+- Define `cape` as an optional handler attached to structured statements and conditional arms, not arbitrary bare blocks.
+- Make `fac { ... } cape err { ... }` the canonical one-shot local error boundary.
+- Preserve existing `dum ... cape` and `fac ... cape` grammar intent while tightening semantics.
+- Extend `secus` so `secus { ... } cape err { ... }` is a valid arm-scoped handler.
+- Keep `si` and `sin` handlers arm-scoped.
+- Reject bare `{ ... } cape err { ... }`.
+- Remove `tempta` from the canonical grammar or make it fail with a direct migration diagnostic to `fac { ... } cape`.
+- Keep `demum` cleanup/finally semantics deferred.
+- Lower handled local alternate exits to explicit MIR handler edges or equivalent target-neutral control flow.
+- Allow failable calls inside active lexical `cape` boundaries and lower their alternate exits to the handler edge.
+- Infer a conservative single handler error type from caught alternate exits; defer broad union synthesis if needed.
+- Ensure handler fallthrough rejoins after the handled construct.
+- Ensure `dum ... cape` exits the loop after handler fallthrough rather than resuming the loop.
+- Preserve `mori` as fatal and not catchable.
+
+Checkpoint:
+
+- `fac { iace ... } cape err { ... }` is accepted without requiring the enclosing function to declare `⇥`.
+- `iace` without a local handler and without an enclosing `⇥` remains rejected.
+- Failable calls inside a local handler boundary are consumed locally; failable calls outside a handler or propagation syntax remain rejected.
+- `dum`, `si`, `sin`, and `secus` handlers parse and scope independently.
+- `tempta` is no longer treated as the canonical local handler surface.
+- MIR makes local handler flow explicit without dynamic stack search.
 
 ### Phase 6: Aggregate and Option Contract
 
@@ -438,6 +469,8 @@ Use layered validation rather than waiting for final executable output:
 
 - MIR will use a MIR-owned type wrapper around semantic `TypeId` in the first implementation. A richer `MirType` / representation layer is deferred until runtime layout decisions are concrete.
 - Recoverable failure will be represented as control flow through explicit error exits or error edges. Rust `Result<T, String>` remains a Rust backend rendering choice, not a MIR semantic primitive.
+- Local recoverable-failure handling will use lexical `cape` attachment on structured statements, with `fac { ... } cape` as the canonical one-shot boundary. `tempta` is not the future core handler model.
+- `cape` attaches by grammar production, not to the nearest arbitrary block token.
 - MIR will preserve Faber-level ownership and mutability facts such as parameter mode, receiver mode, local mutability, assignability, and addressable places. It will not carry Rust lifetimes or Rust borrow-checker internals.
 - Early MIR will not include meaningful `drop`, `retain`, `release`, or `free` operations. Storage lifetime markers may be added later, but only when they serve a concrete validation or backend need.
 - MIR inspection will start as `radix mir`, matching the existing compiler-developer command surface.
@@ -451,6 +484,7 @@ Use layered validation rather than waiting for final executable output:
 - Whether storage lifetime markers should become mandatory before WASM or native work.
 - Whether MIR validation should grow a formal ownership/borrow layer independent of Rust borrow analysis.
 - Whether future backend profiles such as `Portable`, `RustBridge`, or `WasmSubset` are useful after canonical MIR exists.
+- Whether a cleanup construct replaces `demum`, and how it interacts with future resource-lifetime rules.
 
 ## Deferred Native Questions
 
