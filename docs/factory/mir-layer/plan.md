@@ -258,16 +258,16 @@ Checkpoint:
 
 Steps:
 
-- Lower `si` into branch terminators and join blocks.
+- Lower Faber `si` into MIR branch terminators and join blocks.
 - Lower block expressions into explicit temporaries.
-- Lower loops into block cycles.
+- Lower `dum` into block cycles.
 - Lower `rumpe` and `perge` with loop target tracking.
-- Lower supported `itera` shapes into explicit iteration operations or runtime intrinsics.
+- Keep `itera` deferred until collection/range/runtime semantics are explicit.
 
 Checkpoint:
 
 - MIR for supported constructs has explicit blocks and terminators.
-- There are no nested expression-control nodes in MIR for the supported subset.
+- There are no nested Faber `si` / `dum` expression-control nodes in MIR for the supported subset.
 
 ### Phase 5: Failure Flow
 
