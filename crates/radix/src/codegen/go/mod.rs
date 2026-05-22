@@ -41,12 +41,15 @@ use crate::GoOutput;
 use rustc_hash::FxHashMap;
 use std::collections::BTreeSet;
 
+type StructFieldTypes = FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>;
+type StructSponteFields = FxHashMap<DefId, FxHashMap<Symbol, bool>>;
+
 pub struct GoCodegen<'a> {
     names: NameCatalog<'a>,
     use_counts: FxHashMap<DefId, usize>,
     variant_fields: FxHashMap<DefId, Vec<Symbol>>,
-    struct_fields: FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>,
-    struct_sponte_fields: FxHashMap<DefId, FxHashMap<Symbol, bool>>,
+    struct_fields: StructFieldTypes,
+    struct_sponte_fields: StructSponteFields,
 }
 
 impl<'a> GoCodegen<'a> {
@@ -126,13 +129,7 @@ impl<'a> GoCodegen<'a> {
         fields
     }
 
-    fn collect_struct_fields(
-        &self,
-        hir: &HirProgram,
-    ) -> (
-        FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>,
-        FxHashMap<DefId, FxHashMap<Symbol, bool>>,
-    ) {
+    fn collect_struct_fields(&self, hir: &HirProgram) -> (StructFieldTypes, StructSponteFields) {
         let mut fields = FxHashMap::default();
         let mut sponte_fields = FxHashMap::default();
         for item in &hir.items {

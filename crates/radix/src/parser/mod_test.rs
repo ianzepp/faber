@@ -602,6 +602,7 @@ abstractus genus Animal<T> sub Vivens implet Canens, Currens {
     generis textus nomen: "leo"
     nexum numerus aetas: 3
 }
+
 pactum Canens<T> {
     @ externa
     functio canta(textus vox) iacit → vacuum
@@ -689,6 +690,35 @@ probandum "suite" tag "parser" {
             .iter()
             .any(|modifier| matches!(modifier, ProbaModifier::SolumIn(_))),
         "expected solumIn modifier"
+    );
+}
+
+#[test]
+fn inline_union_types_parse_flat() {
+    let result = parse_ok("typus Maybe = textus ∪ numerus ∪ nihil");
+    let program = result.program.as_ref().expect("program");
+    let StmtKind::TypeAlias(alias) = &program.stmts[0].kind else {
+        panic!("expected type alias");
+    };
+    let TypeExprKind::Union(members) = &alias.ty.kind else {
+        panic!("expected flat union");
+    };
+    assert_eq!(members.len(), 3);
+}
+
+#[test]
+fn numeric_test_modifiers_require_numbers() {
+    assert_parse_error_contains(
+        r#"probandum "suite" { proba "case" temporis { adfirma verum } }"#,
+        "expected integer after 'temporis'",
+    );
+    assert_parse_error_contains(
+        r#"probandum "suite" { proba "case" repete { adfirma verum } }"#,
+        "expected integer after 'repete'",
+    );
+    assert_parse_error_contains(
+        r#"probandum "suite" { proba "case" fragilis { adfirma verum } }"#,
+        "expected integer after 'fragilis'",
     );
 }
 

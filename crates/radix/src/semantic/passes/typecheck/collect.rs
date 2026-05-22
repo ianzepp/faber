@@ -15,7 +15,10 @@ impl<'a> TypeChecker<'a> {
         let mut methods = FxHashMap::default();
 
         for field in &struct_item.fields {
-            fields.insert(field.name, field.ty);
+            fields.insert(
+                field.name,
+                StructFieldInfo { ty: field.ty, required: !field.sponte && field.init.is_none(), span: field.span },
+            );
         }
 
         for method in &struct_item.methods {

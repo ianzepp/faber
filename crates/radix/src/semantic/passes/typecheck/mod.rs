@@ -80,8 +80,15 @@ struct BindingInfo {
 }
 
 struct StructInfo {
-    fields: FxHashMap<Symbol, TypeId>,
+    fields: FxHashMap<Symbol, StructFieldInfo>,
     methods: FxHashMap<Symbol, FuncSig>,
+}
+
+#[derive(Clone, Copy)]
+struct StructFieldInfo {
+    ty: TypeId,
+    required: bool,
+    span: crate::lexer::Span,
 }
 
 struct TypeChecker<'a> {

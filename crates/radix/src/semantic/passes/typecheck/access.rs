@@ -90,8 +90,8 @@ impl<'a> TypeChecker<'a> {
     ) -> TypeId {
         if let Some(struct_def) = self.struct_def_from_type(object_ty) {
             if let Some(info) = self.structs.get(&struct_def) {
-                if let Some(field_ty) = info.fields.get(&name).copied() {
-                    return field_ty;
+                if let Some(field) = info.fields.get(&name).copied() {
+                    return field.ty;
                 }
             }
         }

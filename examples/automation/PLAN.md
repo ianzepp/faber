@@ -42,7 +42,7 @@ Implement a compiling CLI skeleton with commands for:
 Acceptance:
 
 - Package checks with `cargo run --manifest-path Cargo.toml -p faber -- check --package examples/automation/main.fab`.
-- Rust can be emitted with `cargo run -p radix --bin radix -- emit -t rust --package examples/automation/main.fab`.
+- Rust can be emitted with `cargo run -p faber -- emit -t rust --package examples/automation/main.fab`.
 - README documents current limitations.
 
 ### Stage 2: Real Metadata Parsing
@@ -127,7 +127,7 @@ Use these commands as gates while the example evolves:
 
 ```bash
 cargo run --manifest-path Cargo.toml -p faber -- check examples/automation/main.fab
-cargo run -p radix --bin radix -- emit -t rust --package examples/automation/main.fab
+cargo run -p faber -- emit -t rust --package examples/automation/main.fab
 cargo run -p faber -- check --package examples/automation/main.fab
 ```
 

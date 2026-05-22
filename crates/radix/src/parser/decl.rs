@@ -862,22 +862,16 @@ impl Parser {
                 let tag = self.parse_string()?;
                 modifiers.push(ProbaModifier::Tag(tag));
             } else if self.eat_keyword(TokenKind::Temporis) {
-                if let TokenKind::Integer(n) = self.peek().kind {
-                    self.advance();
-                    modifiers.push(ProbaModifier::Temporis(n));
-                }
+                let n = self.parse_test_modifier_integer("expected integer after 'temporis'")?;
+                modifiers.push(ProbaModifier::Temporis(n));
             } else if self.eat_keyword(TokenKind::Metior) {
                 modifiers.push(ProbaModifier::Metior);
             } else if self.eat_keyword(TokenKind::Repete) {
-                if let TokenKind::Integer(n) = self.peek().kind {
-                    self.advance();
-                    modifiers.push(ProbaModifier::Repete(n));
-                }
+                let n = self.parse_test_modifier_integer("expected integer after 'repete'")?;
+                modifiers.push(ProbaModifier::Repete(n));
             } else if self.eat_keyword(TokenKind::Fragilis) {
-                if let TokenKind::Integer(n) = self.peek().kind {
-                    self.advance();
-                    modifiers.push(ProbaModifier::Fragilis(n));
-                }
+                let n = self.parse_test_modifier_integer("expected integer after 'fragilis'")?;
+                modifiers.push(ProbaModifier::Fragilis(n));
             } else if self.eat_keyword(TokenKind::Requirit) {
                 let req = self.parse_string()?;
                 modifiers.push(ProbaModifier::Requirit(req));
@@ -889,6 +883,16 @@ impl Parser {
             }
         }
         Ok(modifiers)
+    }
+
+    fn parse_test_modifier_integer(&mut self, msg: &str) -> Result<i64, ParseError> {
+        match self.peek().kind {
+            TokenKind::Integer(n) => {
+                self.advance();
+                Ok(n)
+            }
+            _ => Err(self.error(ParseErrorKind::Expected, msg)),
+        }
     }
 
     /// Parse annotations

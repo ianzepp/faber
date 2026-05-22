@@ -1760,9 +1760,63 @@ incipit {
     assert!(output
         .code
         .contains(".as_ref().map(|__faber_opt| __faber_opt."));
+    assert!(output.code.contains("__faber_opt.name.clone()"));
     assert!(output
         .code
         .contains(".and_then(|__faber_opt| Some(__faber_opt("));
+}
+
+#[test]
+fn rust_output_translates_stdlib_lista_methods() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  varia xs ← [1, 2]
+  xs.appende(3)
+  fixum n ← xs.longitudo()
+  nota n
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success());
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains(".push(3)"));
+    assert!(output.code.contains(".len() as i64"));
+    compile_rust_source_with_rustc(&output.code, "stdlib-lista-methods");
+}
+
+#[test]
+fn struct_construction_requires_fields_and_checks_defaults() {
+    let session = session(Target::Rust);
+    let missing = r#"genus User {
+  textus name
+  textus email sponte
+}
+
+incipit {
+  fixum u ← { email: "a@example.com" } ⇢ User
+}"#;
+    let missing_result = compile(&session, "missing.fab", missing);
+    assert!(!missing_result.success());
+    assert!(missing_result
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("missing required struct field")));
+
+    let bad_default = r#"genus User {
+  numerus score : "bad"
+}
+
+incipit {
+  fixum u ← { } ⇢ User
+}"#;
+    let default_result = compile(&session, "default.fab", bad_default);
+    assert!(!default_result.success());
+    assert!(default_result
+        .diagnostics
+        .iter()
+        .any(|d| d.message.contains("field default type mismatch")));
 }
 
 #[test]
@@ -2332,7 +2386,7 @@ fn rejects_old_verte_aliases_as_postfix_operators() {
             result
                 .diagnostics
                 .iter()
-                .any(|d| d.is_error() && d.span.map_or(false, |s| s.start > 10 && s.start < 30)),
+                .any(|d| d.is_error() && d.span.is_some_and(|s| s.start > 10 && s.start < 30)),
             "error should be reported near the alias token for '{}'",
             alias
         );

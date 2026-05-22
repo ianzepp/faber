@@ -155,6 +155,7 @@ fn local_init_requires_some_wrapper(
     !matches!(
         &init.kind,
         HirExprKind::Literal(HirLiteral::Nil)
+            | HirExprKind::OptionalChain(_, _)
             | HirExprKind::Path(_)
             | HirExprKind::Call(_, _)
             | HirExprKind::MethodCall(_, _, _)

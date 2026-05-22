@@ -1,6 +1,6 @@
 # Faber Language Specification
 
-Formal grammar for the Faber programming language. This is the authoritative specification that both faber (TypeScript) and rivus (Faber) compilers implement.
+Formal grammar for the Faber programming language. The active implementation is the root Rust workspace: `crates/faber` for package/project tooling and `crates/radix` for the compiler pipeline.
 
 ---
 
@@ -549,7 +549,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 - Collection DSL transforms (`prima`, `ultima`, `summa`, `ordina`, etc.)
 - Some runtime stdlib functions
 
-### Zig-Only Features
+### Planned Manual-Memory Features
 
 - `curata` allocator binding (for manual memory management)
 - Arena and page allocators (`cura arena`, `cura pagina`)

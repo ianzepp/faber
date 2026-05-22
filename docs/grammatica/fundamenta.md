@@ -52,10 +52,10 @@ Faber distinguishes between mutable and immutable bindings with distinct keyword
 The keyword `fixum` declares an immutable binding. It is the perfect passive participle of _figere_ (to fix, fasten): "that which has been fixed." Once bound, a `fixum` value cannot be reassigned.
 
 ```fab
-fixum greeting = "Salve, Mundus!"
-fixum x = 10
-fixum y = 20
-fixum sum = x + y
+fixum greeting ← "Salve, Mundus!"
+fixum x ← 10
+fixum y ← 20
+fixum sum ← x + y
 ```
 
 Immutable bindings are the default choice in Faber. They communicate intent clearly: this value will not change for the remainder of its scope. Prefer `fixum` unless you have a specific reason for mutability.
@@ -63,19 +63,19 @@ Immutable bindings are the default choice in Faber. They communicate intent clea
 Type annotations are optional when the type can be inferred, but you can be explicit:
 
 ```fab
-fixum numerus age = 30
-fixum textus name = "Marcus"
-fixum bivalens active = verum
+fixum numerus age ← 30
+fixum textus name ← "Marcus"
+fixum bivalens active ← verum
 ```
 
-The pattern is always type-first: `fixum <type> <name> = <value>`. This mirrors Latin's adjective-noun ordering and distinguishes Faber from languages that place types after names.
+The pattern is always type-first: `fixum <type> <name> ← <value>`. This mirrors Latin's adjective-noun ordering and distinguishes Faber from languages that place types after names.
 
 ### Mutable Bindings: varia
 
 The keyword `varia` declares a mutable binding. It comes from _variare_ (to vary): "let it vary." A `varia` binding can be reassigned throughout its scope.
 
 ```fab
-varia counter = 0
+varia counter ← 0
 nota counter       # 0
 
 counter = 1

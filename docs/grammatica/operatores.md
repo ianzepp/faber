@@ -11,11 +11,11 @@ This dual nature is not redundancy. Latin keywords read like natural language, m
 Standard mathematical operators work as expected:
 
 ```fab
-fixum sum = 10 + 5       # addition
-fixum diff = 10 - 5      # subtraction
-fixum prod = 10 * 5      # multiplication
-fixum quot = 10 / 5      # division
-fixum rem = 10 % 3       # modulo (remainder)
+fixum sum ← 10 + 5       # addition
+fixum diff ← 10 - 5      # subtraction
+fixum prod ← 10 * 5      # multiplication
+fixum quot ← 10 / 5      # division
+fixum rem ← 10 % 3       # modulo (remainder)
 ```
 
 The `+` operator also handles string concatenation:

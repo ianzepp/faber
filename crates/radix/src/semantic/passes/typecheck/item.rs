@@ -56,6 +56,12 @@ impl<'a> TypeChecker<'a> {
             HirItemKind::Function(func) => self.check_function(item.def_id, func),
             HirItemKind::Const(const_item) => self.check_const(item.def_id, const_item),
             HirItemKind::Struct(struct_item) => {
+                for field in &mut struct_item.fields {
+                    if let Some(init) = &mut field.init {
+                        let init_ty = self.check_expr(init);
+                        self.unify(init_ty, field.ty, init.span, "field default type mismatch");
+                    }
+                }
                 for method in &mut struct_item.methods {
                     self.check_function(method.def_id, &mut method.func);
                 }

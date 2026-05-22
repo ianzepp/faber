@@ -17,12 +17,12 @@ pub(super) fn generate_optional_chain_expr(
         HirOptionalChainKind::Member(field) => {
             w.write(").as_ref().map(|__faber_opt| __faber_opt.");
             w.write(codegen.resolve_symbol(*field));
-            w.write(")");
+            w.write(".clone())");
         }
         HirOptionalChainKind::Index(index) => {
             w.write(").as_ref().map(|__faber_opt| __faber_opt[");
             generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write("])");
+            w.write("].clone())");
         }
         HirOptionalChainKind::Call(args) => {
             w.write(").and_then(|__faber_opt| Some(__faber_opt(");

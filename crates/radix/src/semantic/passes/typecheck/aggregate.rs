@@ -21,21 +21,23 @@ impl<'a> TypeChecker<'a> {
                 return;
             }
         };
+        let mut supplied = FxHashSet::default();
 
         for field in fields.iter_mut() {
             match &mut field.key {
                 HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
-                    let Some(field_ty) = field_types.get(name).copied() else {
+                    let Some(field_info) = field_types.get(name).copied() else {
                         let error_span = field.value.as_ref().map(|expr| expr.span).unwrap_or(span);
                         self.error(SemanticErrorKind::UndefinedMember, "unknown field", error_span);
                         continue;
                     };
+                    supplied.insert(*name);
                     let Some(value) = &mut field.value else {
                         self.error(SemanticErrorKind::UndefinedMember, "struct field requires value", span);
                         continue;
                     };
                     let value_ty = self.check_expr(value);
-                    self.unify(value_ty, field_ty, value.span, "field initializer type mismatch");
+                    self.unify(value_ty, field_info.ty, value.span, "field initializer type mismatch");
                 }
                 HirObjectKey::Computed(expr) => {
                     self.check_expr(expr);
@@ -53,6 +55,12 @@ impl<'a> TypeChecker<'a> {
                         expr.span,
                     );
                 }
+            }
+        }
+
+        for (name, info) in field_types {
+            if info.required && !supplied.contains(&name) {
+                self.error(SemanticErrorKind::UndefinedMember, "missing required struct field", info.span);
             }
         }
     }
@@ -133,13 +141,21 @@ impl<'a> TypeChecker<'a> {
             }
         };
 
+        let mut supplied = FxHashSet::default();
         for (name, value) in fields.iter_mut() {
-            let Some(field_ty) = field_types.get(name).copied() else {
+            let Some(field_info) = field_types.get(name).copied() else {
                 self.error(SemanticErrorKind::UndefinedMember, "unknown field", value.span);
                 continue;
             };
+            supplied.insert(*name);
             let value_ty = self.check_expr(value);
-            self.unify(value_ty, field_ty, value.span, "field initializer type mismatch");
+            self.unify(value_ty, field_info.ty, value.span, "field initializer type mismatch");
+        }
+
+        for (name, info) in field_types {
+            if info.required && !supplied.contains(&name) {
+                self.error(SemanticErrorKind::UndefinedMember, "missing required struct field", info.span);
+            }
         }
 
         self.types.intern(Type::Struct(def_id))

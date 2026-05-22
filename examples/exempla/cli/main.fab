@@ -1,7 +1,7 @@
 # CLI Framework Example
 #
 # Demonstrates @ cli, @ imperium, @ optio, and @ imperia.
-# Emit: cargo run -p radix --bin radix -- emit -t rust --package examples/exempla/cli/main.fab
+# Emit: cargo run -p faber -- emit -t rust --package examples/exempla/cli/main.fab
 
 importa ex "./commands/greet" privata * ut greetModule
 

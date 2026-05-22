@@ -9,7 +9,7 @@ The point is not to hide shortcomings. The point is to name them clearly enough 
 Resolved:
 
 - `cargo run --manifest-path Cargo.toml -p faber -- check --package examples/automation/main.fab` checks the package graph.
-- `cargo run -p radix --bin radix -- emit -t rust --package examples/automation/main.fab` remains the Rust emission gate for mounted command modules.
+- `cargo run -p faber -- emit -t rust --package examples/automation/main.fab` remains the Rust emission gate for mounted command modules.
 
 Original gap:
 

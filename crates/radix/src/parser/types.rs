@@ -140,11 +140,13 @@ impl Parser {
         if !self.eat(&TokenKind::Cup) {
             return Ok(first);
         }
-        let mut members = vec![first];
-        // Parse the next member (full type, allowing nested structure)
-        members.push(self.parse_type()?);
+        let mut members = Vec::new();
+        flatten_union_member(first, &mut members);
+        // Parse the next member as a full type, then flatten any nested union
+        // shape produced by the recursive parse.
+        flatten_union_member(self.parse_type()?, &mut members);
         while self.eat(&TokenKind::Cup) {
-            members.push(self.parse_type()?);
+            flatten_union_member(self.parse_type()?, &mut members);
         }
         let span = start.merge(self.previous_span());
         Ok(TypeExpr {
@@ -180,5 +182,22 @@ impl Parser {
         let ret = Box::new(self.parse_type()?);
 
         Ok(FuncTypeExpr { params, ret })
+    }
+}
+
+fn flatten_union_member(member: TypeExpr, members: &mut Vec<TypeExpr>) {
+    if member.nullable || member.mode.is_some() {
+        members.push(member);
+        return;
+    }
+
+    let TypeExpr { nullable, mode, kind, span } = member;
+    match kind {
+        TypeExprKind::Union(nested) => {
+            for nested_member in nested {
+                flatten_union_member(nested_member, members);
+            }
+        }
+        kind => members.push(TypeExpr { nullable, mode, kind, span }),
     }
 }

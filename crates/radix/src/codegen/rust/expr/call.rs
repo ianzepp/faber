@@ -39,6 +39,20 @@ pub(super) fn generate_method_call_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    if try_generate_stdlib_method_call(
+        codegen,
+        receiver,
+        method,
+        args,
+        types,
+        w,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+    )? {
+        return Ok(());
+    }
+
     // Targeted bridge for built-in norma library modules.
     // WHY: Built-in pactum imports typecheck as module-like values in Faber,
     // but Rust links them as functions in the norma runtime crate.
@@ -87,6 +101,333 @@ pub(super) fn generate_method_call_expr(
         w.write("?");
     }
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn try_generate_stdlib_method_call(
+    codegen: &RustCodegen<'_>,
+    receiver: &HirExpr,
+    method: Symbol,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<bool, CodegenError> {
+    let Some(receiver_ty) = receiver.ty.map(|ty| types.get(ty)) else {
+        return Ok(false);
+    };
+    let method_name = codegen.resolve_symbol(method);
+
+    match receiver_ty {
+        Type::Array(_) => generate_lista_method(
+            codegen,
+            receiver,
+            method_name,
+            args,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        ),
+        Type::Map(_, _) => generate_tabula_method(
+            codegen,
+            receiver,
+            method_name,
+            args,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        ),
+        _ => Ok(false),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_lista_method(
+    codegen: &RustCodegen<'_>,
+    receiver: &HirExpr,
+    method_name: &str,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<bool, CodegenError> {
+    match method_name {
+        "appende" if args.len() == 1 => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".push(");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(")");
+        }
+        "longitudo" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".len() as i64");
+        }
+        "vacua" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".is_empty()");
+        }
+        "continet" if args.len() == 1 => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".contains(&");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(")");
+        }
+        "accipe" if args.len() == 1 => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".get(");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(" as usize).cloned()");
+        }
+        "remove" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".pop()");
+        }
+        "decapita" if args.is_empty() => {
+            w.write("if ");
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".is_empty() { None } else { Some(");
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".remove(0)) }");
+        }
+        _ => return Ok(false),
+    }
+    Ok(true)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_tabula_method(
+    codegen: &RustCodegen<'_>,
+    receiver: &HirExpr,
+    method_name: &str,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<bool, CodegenError> {
+    match method_name {
+        "pone" if args.len() == 2 => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".insert(");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(", ");
+            generate_expr_unwrapped(
+                codegen,
+                &args[1],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(")");
+        }
+        "accipe" if args.len() == 1 => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".get(&");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(").cloned()");
+        }
+        "habet" if args.len() == 1 => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".contains_key(&");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(")");
+        }
+        "dele" if args.len() == 1 => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".remove(&");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(").is_some()");
+        }
+        "longitudo" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".len() as i64");
+        }
+        "vacua" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".is_empty()");
+        }
+        _ => return Ok(false),
+    }
+    Ok(true)
 }
 
 fn norma_runtime_module_path(receiver_name: &str) -> Option<&'static str> {

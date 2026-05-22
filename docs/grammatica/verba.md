@@ -4,7 +4,7 @@ Reserved keywords in Faber Romanus. This reference catalogs all Latin keywords u
 
 **Implementation synchronization:** When the compiler recognizes a new keyword, it must appear in:
 
-- `radix/crates/radix/src/lexer/scan.rs` - active lexer keyword table
+- `crates/radix/src/lexer/keywords.rs` and `crates/radix/src/lexer/scan.rs` - active lexer keyword tables
 - parser or semantic surfaces that consume the keyword
 - This document
 
@@ -327,11 +327,11 @@ Current `radix-rs` reality:
 
 When adding a new keyword to the language:
 
-1. **Add to active lexer:** `radix/crates/radix/src/lexer/scan.rs`
-    - Include the keyword in `keyword_or_ident()`
+1. **Add to active lexer:** `crates/radix/src/lexer/keywords.rs` and `crates/radix/src/lexer/scan.rs`
+    - Include the keyword in the keyword registry and scanner dispatch.
 2. **Update parser or semantic handling as needed**
     - Add parse branches, AST nodes, lowering, or diagnostics for the new grammar role.
 3. **Update this document:** Add to appropriate section above
 4. **Update grammatica:** If the keyword affects user-facing syntax, document in relevant `docs/grammatica/*.md` file
 5. **Update EBNF:** If grammar rules change, update `EBNF.md`
-6. **Add tests:** Add focused radix tests under `radix/crates/radix`
+6. **Add tests:** Add focused radix tests under `crates/radix`

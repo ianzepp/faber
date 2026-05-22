@@ -13,8 +13,8 @@ The type system prioritizes explicitness and clarity. Every type name derives fr
 From the Latin _texere_, "to weave." Text is woven words, threads of meaning combined into fabric. The metaphor is ancient: we still speak of "spinning a yarn" and the "thread" of an argument.
 
 ```fab
-fixum textus greeting = "Salve, Munde"
-fixum textus empty = ""
+fixum textus greeting ← "Salve, Munde"
+fixum textus empty ← ""
 ```
 
 String literals use double or single quotes. Template literals use backticks with `${...}` interpolation, just as in JavaScript:

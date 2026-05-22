@@ -110,7 +110,7 @@ The `ceteri` modifier (Latin "the rest, the others") collects remaining argument
 
 ```fab
 functio sum(ceteri numerus[] nums) → numerus {
-    varia total = 0
+    varia total ← 0
     itera ex nums fixum n {
         total ⊕ n
     }
@@ -387,7 +387,7 @@ The allocator name following `curata` becomes available within the function body
 At call sites, the allocator is automatically injected when calling from within a `cura` block:
 
 ```fab
-incipit ergo cura arena fit alloc {
+incipit ergo cura arena fixum alloc {
     nota greet("World")  # alloc auto-injected
 }
 ```
