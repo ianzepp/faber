@@ -2,7 +2,7 @@
 
 # A simple greeting function (needs allocator for string formatting)
 functio greet(textus name) curata alloc → textus {
-    redde scriptum("Hello, §!", name)
+    redde "Hello, §!"(name)
 }
 
 # A constant value

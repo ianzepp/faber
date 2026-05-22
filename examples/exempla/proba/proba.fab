@@ -18,7 +18,7 @@ proba "validates arithmetic" {
 proba "string concatenation works" {
     fixum greeting ← "hello"
     fixum name ← "world"
-    fixum result ← scriptum("§ §", greeting, name)
+    fixum result ← "§ §"(greeting, name)
     adfirma result ≡ "hello world"
 }
 

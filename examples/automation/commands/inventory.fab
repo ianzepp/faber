@@ -11,7 +11,7 @@ functio sample_status() → textus {
 @ imperium "list"
 @ descriptio "List automation skill records"
 functio list() argumenta args → vacuum {
-    nota scriptum("root: §", args.root)
+    nota "root: §"(args.root)
     si args.verbose {
         nota "mode: inventory list"
     }
@@ -22,9 +22,9 @@ functio list() argumenta args → vacuum {
 @ descriptio "Show one automation record"
 @ operandus textus id descriptio "Automation id"
 functio show() argumenta args → vacuum {
-    nota scriptum("id: §", args.id)
-    nota scriptum("root: §", args.root)
-    nota scriptum("status: §", sample_status())
+    nota "id: §"(args.id)
+    nota "root: §"(args.root)
+    nota "status: §"(sample_status())
     nota "execute: codex"
     nota "model: gpt-5.4-mini"
 }
@@ -33,7 +33,7 @@ functio show() argumenta args → vacuum {
 @ descriptio "Validate one automation record"
 @ operandus textus id descriptio "Automation id"
 functio check() argumenta args → vacuum {
-    nota scriptum("checking: §", args.id)
+    nota "checking: §"(args.id)
     si args.verbose {
         nota "required fields: id, kind, execute, status, rrule, model, reasoning_effort, cwds"
     }

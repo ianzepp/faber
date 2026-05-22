@@ -5,7 +5,7 @@
 incipit {
     # Basic endpoint dispatch with sync handler
     ad "fasciculus:lege" ("hello.txt") → textus pro content {
-        nota scriptum("File contents: §", content)
+        nota "File contents: §"(content)
     }
 
     # Async endpoint dispatch
@@ -25,7 +25,7 @@ incipit {
     #    nota "Connected successfully"
     #    socket.claude()
     #} cape err {
-    #    nota scriptum("Connection failed: §", err.nuntius)
+    #    nota "Connection failed: §"(err.nuntius)
     #}
 
     # Endpoint dispatch without handler (fire-and-forget)

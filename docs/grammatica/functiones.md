@@ -36,7 +36,7 @@ functio adde(numerus a, numerus b) → numerus {
 }
 
 functio describe(textus nomen, numerus aetas) → textus {
-    redde scriptum("§ habet § annos", nomen, aetas)
+    redde "§ habet § annos"(nomen, aetas)
 }
 ```
 
@@ -75,9 +75,9 @@ The `sponte` marker (Latin "of one's own accord") follows the parameter name and
 ```fab
 functio greet(textus nomen, textus titulus sponte) → textus {
     si titulus est nihil {
-        redde scriptum("Salve, §!", nomen)
+        redde "Salve, §!"(nomen)
     }
-    redde scriptum("Salve, § §!", titulus, nomen)
+    redde "Salve, § §!"(titulus, nomen)
 }
 
 greet("Marcus")              # titulus receives nihil
@@ -90,7 +90,7 @@ Default values use `vel` (Latin "or"), consistent with the nullish coalescing op
 
 ```fab
 functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) → textus {
-    redde scriptum("Page § with § items", pagina, per_pagina)
+    redde "Page § with § items"(pagina, per_pagina)
 }
 
 paginate()        # "Page 1 with 10 items"
@@ -378,7 +378,7 @@ The `curata` modifier (Latin "cared for," from _curare_ "to care for") declares 
 
 ```fab
 functio greet(textus name) curata alloc → textus {
-    redde scriptum("Hello, §!", name)
+    redde "Hello, §!"(name)
 }
 ```
 

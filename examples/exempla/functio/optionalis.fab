@@ -9,14 +9,14 @@
 # Optional parameter without default (receives nihil if omitted)
 functio greet(textus nomen, textus titulus sponte) curata alloc → textus {
     si titulus est nihil {
-        redde scriptum("Salve, §!", nomen)
+        redde "Salve, §!"(nomen)
     }
-    redde scriptum("Salve, § §!", titulus, nomen)
+    redde "Salve, § §!"(titulus, nomen)
 }
 
 # Optional parameter with default value
 functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) curata alloc → textus {
-    redde scriptum("Page § with § items", pagina, per_pagina)
+    redde "Page § with § items"(pagina, per_pagina)
 }
 
 # Preposition with optional: de ... sponte (borrowed, optional without default)
@@ -29,7 +29,7 @@ functio analyze(textus source, de numerus depth sponte) → numerus {
 
 # Mixed required and optional parameters
 functio createUser(textus nomen, numerus aetas sponte vel 0, bivalens activus sponte vel verum) curata alloc → textus {
-    redde scriptum("User: §, age: §, active: §", nomen, aetas, activus)
+    redde "User: §, age: §, active: §"(nomen, aetas, activus)
 }
 
 incipit ergo cura arena fixum alloc {

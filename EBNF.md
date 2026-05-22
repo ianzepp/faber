@@ -389,14 +389,14 @@ argumentList  := (argument (',' argument)*)?
 argument      := 'sparge'? expression
 ```
 
-When the callee is a string literal, call syntax is format-template application:
+String literal call syntax is the canonical source form for format-template application:
 
 ```fab
 "status: § (§)"(sample_status(), "ok")
 "status: §1 (§0)"("ok", sample_status())
 ```
 
-This is sugar for `scriptum("...", args...)`.
+This lowers to the compiler's `scriptum("...", args...)` form. Use the string-template form in ordinary source; reserve `scriptum(...)` for explicit desugaring examples and compiler-facing documentation.
 
 ### Primary Expressions
 
@@ -413,8 +413,8 @@ primary := IDENTIFIER | NUMBER | STRING | TEMPLATE_STRING
 // verte (⇢) is postfix — parsed in the cast production above
 fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('⇢' IDENTIFIER)?
 praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
-scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'  # § placeholders filled positionally
-formatStringExpr := STRING '(' argumentList ')'                # sugar for scriptum(STRING, args...)
+formatStringExpr := STRING '(' argumentList ')'                # canonical source form for string formatting
+scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'   # explicit/desugared form
 legeExpr      := 'lege' 'lineam'?
 regexLiteral  := 'sed' STRING IDENTIFIER?
 ```

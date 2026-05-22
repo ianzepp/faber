@@ -14,7 +14,7 @@ functio adde(numerus a, numerus b) → numerus {
 
 # Mixed types with allocator (curata) for string formatting
 functio describe(textus nomen, numerus aetas) curata alloc → textus {
-    redde scriptum("§ habet § annos", nomen, aetas)
+    redde "§ habet § annos"(nomen, aetas)
 }
 
 # Boolean parameter and return

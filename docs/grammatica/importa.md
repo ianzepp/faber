@@ -102,7 +102,7 @@ fixum VERSION = "1.0.0"
 
 @ publica
 functio greet(textus name) → textus {
-    redde scriptum("Salve, §!", name)
+    redde "Salve, §!"(name)
 }
 
 @ publica

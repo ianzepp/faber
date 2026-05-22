@@ -7,9 +7,9 @@
 
 incipit argumenta args {
     si args.loud {
-        nota scriptum("HELLO, §!", args.name)
+        nota "HELLO, §!"(args.name)
     }
     secus {
-        nota scriptum("Hello, §.", args.name)
+        nota "Hello, §."(args.name)
     }
 }

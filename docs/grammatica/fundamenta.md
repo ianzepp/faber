@@ -22,7 +22,7 @@ This is the simplest possible Faber program. The `incipit` block contains the st
 
 ```fab
 functio greet(textus name) → textus {
-    redde scriptum("Salve, §!", name)
+    redde "Salve, §!"(name)
 }
 
 incipit {

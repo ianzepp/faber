@@ -37,7 +37,7 @@ functio createUser(textus name, textus email, numerus age) curata alloc → text
         }
     }
 
-    redde scriptum("User created: §", name)
+    redde "User created: §"(name)
 }
 
 # Guards can throw instead of returning

@@ -134,7 +134,7 @@ The expression following `iace` becomes the error value. Typically this is a str
 
 ```fab
 fixum code = 404
-iace scriptum("Error code: {}", code)
+iace "Error code: {}"(code)
 ```
 
 `iace` throws from the current context and unwinds the stack until a `cape` clause catches it, or propagates to the program's top level.

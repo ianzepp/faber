@@ -292,7 +292,7 @@ To access values, use the key with bracket notation:
 
 ```fab
 itera de persona fixum clavis {
-    nota scriptum("Key: §, Value: §", clavis, persona[clavis])
+    nota "Key: §, Value: §"(clavis, persona[clavis])
 }
 ```
 
@@ -302,7 +302,7 @@ For arrays, `de` iterates indices:
 fixum numeri = [10, 20, 30]
 
 itera de numeri fixum index {
-    nota scriptum("Index §: §", index, numeri[index])
+    nota "Index §: §"(index, numeri[index])
 }
 ```
 
@@ -353,7 +353,7 @@ itera ex 0..3 fixum outer {
         si inner ≡ 2 {
             rumpe  # exits inner loop only
         }
-        nota scriptum("outer=§, inner=§", outer, inner)
+        nota "outer=§, inner=§"(outer, inner)
     }
 }
 ```
@@ -464,10 +464,10 @@ Then match against it:
 functio handle_event(Event e) → nihil {
     discerne e {
         casu Click pro x, y {
-            nota scriptum("Clicked at §, §", x, y)
+            nota "Clicked at §, §"(x, y)
         }
         casu Keypress pro key {
-            nota scriptum("Key: §", key)
+            nota "Key: §"(key)
         }
         casu Quit {
             nota "Goodbye"
@@ -600,7 +600,7 @@ functio createUser(textus name, textus email, numerus age) → textus {
         }
     }
 
-    redde scriptum("User created: §", name)
+    redde "User created: §"(name)
 }
 ```
 

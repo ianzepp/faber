@@ -189,7 +189,7 @@ Mounted module:
 @ alias "hi"
 @ operandus textus name
 functio hello() argumenta args → vacuum {
-    nota scriptum("Hello, §!", args.name)
+    nota "Hello, §!"(args.name)
 }
 ```
 

@@ -171,7 +171,7 @@ functio adde(numerus a, numerus b) → numerus {
 }
 
 functio describe(textus nomen, numerus aetas) → textus {
-    redde scriptum("§ habet § annos", nomen, aetas)
+    redde "§ habet § annos"(nomen, aetas)
 }
 ```
 

@@ -14,7 +14,7 @@ incipit {
     # Throw with formatted message
     fixum code ← 404
     tempta {
-        iace scriptum("Error code: §", code)
+        iace "Error code: §"(code)
     }
     cape err {
         nota "Caught:", err

@@ -210,7 +210,7 @@ genus Circle implet Drawable {
     numerus radius: 10
 
     functio draw() {
-        nota scriptum("Drawing circle with radius §", ego.radius)
+        nota "Drawing circle with radius §"(ego.radius)
     }
 }
 
@@ -218,7 +218,7 @@ genus Square implet Drawable {
     numerus side: 5
 
     functio draw() {
-        nota scriptum("Drawing square with side §", ego.side)
+        nota "Drawing square with side §"(ego.side)
     }
 }
 ```

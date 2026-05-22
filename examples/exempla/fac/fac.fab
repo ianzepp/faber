@@ -29,7 +29,7 @@ incipit {
     varia counter ← 0
     fac {
         counter ← counter + 1
-        nota scriptum("Iteration §", counter)
+        nota "Iteration §"(counter)
     } dum counter < 3
 
     # Fac with error handling
@@ -38,18 +38,18 @@ incipit {
         # iace "Test error"
         nota "Block executed successfully"
     } cape err {
-        nota scriptum("Caught error: §", err.nuntius)
+        nota "Caught error: §"(err.nuntius)
     }
 
     # Fac with both do-while and error handling
     varia attempts ← 0
     fac {
         attempts ← attempts + 1
-        nota scriptum("Attempt §", attempts)
+        nota "Attempt §"(attempts)
         si attempts ≡ 2 {
             iace "Simulated failure"
         }
     } cape err {
-        nota scriptum("Failed on attempt §: §", attempts, err.nuntius)
+        nota "Failed on attempt §: §"(attempts, err.nuntius)
     } dum attempts < 5
 }
