@@ -1,6 +1,6 @@
 # MIR Layer Factory Plan
 
-**Status**: in-progress (Phases 0–8 complete; 9–12 pending)
+**Status**: in-progress (Phases 0–9 complete; 9.5 pending; 10–12 deferred)
 **Created**: 2026-05-22
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/mir-layer/`
@@ -23,7 +23,7 @@ Faber currently compiles from parsed source through semantic analysis into typed
 
 The missing layer is a Faber-owned middle IR below HIR and above target emitters. This MIR should be execution-shaped rather than source-shaped. It should normalize Faber semantics once, validate the normalized form, and give Rust, WASM, and eventual native backends a smaller contract to implement.
 
-The goal is not to replace the Rust backend in one jump. The goal is to create a stable backend layer that first improves inspection and Rust codegen, then becomes the launch point for WASM and native experiments.
+The goal is not to replace the Rust backend. The goal is to create a stable backend layer that improves compiler inspection, proves a validated execution-shaped contract, and can become the launch point for future WASM or native experiments.
 
 ## Proposed Design
 
@@ -61,7 +61,7 @@ It should not start as full SSA. SSA can be a later lowering from MIR once there
 - MIR must be target-neutral; it must not contain Rust syntax, Cargo metadata, WASM imports, native linker flags, or Cranelift concepts.
 - Runtime and stdlib operations should appear as target-neutral intrinsics or resolved provider calls.
 - Missing type information at MIR lowering time is an upstream compiler bug, not a reason to guess in MIR or codegen.
-- The existing Rust backend remains the primary correctness gate until a MIR-backed Rust path can prove equivalent behavior.
+- The existing HIR-to-Rust backend remains the primary correctness gate and does not need to migrate to MIR merely because MIR exists.
 - MIR adoption must be incremental and inspectable; do not flip all codegen to MIR in one phase.
 
 ## Locked Phase 1 Decisions
@@ -134,8 +134,8 @@ drop value
 - Add MIR validation.
 - Add MIR dump/inspection support for compiler development.
 - Add tests proving lowered MIR shape for selected language constructs.
-- Add a MIR-backed Rust codegen path only after MIR can represent a meaningful subset.
-- Preserve the existing HIR-to-Rust path until the MIR path is proven.
+- Add executable probes only when they clarify MIR correctness or future backend readiness.
+- Preserve the existing HIR-to-Rust path as the stable Rust output surface unless a later project explicitly reopens that decision.
 
 ### Out of Scope
 
@@ -173,9 +173,10 @@ drop value
 | 7 | Runtime intrinsic boundary | Define and lower target-neutral intrinsics for printing, string formatting, collection operations, conversions, and stdlib-backed calls using the Phase 6A contract. | MIR references runtime/provider operations without Rust module paths or Cargo details. |
 | 8 | MIR validation | Add validation for block termination, type presence, operand compatibility, def-use sanity, and unresolved placeholders. | Invalid MIR is rejected before any backend sees it; diagnostics point back to source spans where possible. |
 | 9 | MIR Rust probe | Add a deliberately temporary MIR-to-Rust probe behind an explicit experimental path for the supported subset. | Selected examples generate Rust from validated MIR and compile/run through Cargo without changing the existing default backend. |
-| 10 | Rust backend migration | Move stable lowering responsibilities from HIR-to-Rust into MIR where proven. | Existing Rust backend tests pass with MIR enabled for selected constructs; fallback remains for unported constructs. |
-| 11 | WASM readiness slice | Use MIR to scope a minimal WASM backend or WASM text/object experiment. | A primitive `incipit` program can lower from MIR to WASM-oriented output without changing HIR semantics. |
-| 12 | Native readiness review | Decide whether Cranelift/native is justified based on MIR completeness, runtime ABI, and WASM evidence. | Review produces a separate factory plan for Cranelift/native or explicitly defers it. |
+| 9.5 | MIR hardening and closeout | Review, harden, document, and validate the MIR work completed in phases 0-9. | The MIR layer is left clean, tested, documented, and ready for a future WASM/lower-target project without starting that project here. |
+| 10 | Deferred: Rust backend migration | Deferred because the HIR-to-Rust backend is stable and does not need to migrate as part of this MIR effort. | Reopen only if a later project has a concrete reason to route Rust output through MIR. |
+| 11 | Deferred: WASM readiness slice | Deferred because bytecode/WASM output is a larger backend project with ABI, layout, runtime, packaging, and verification decisions. | Reopen as a separate WASM/lower-target factory after MIR closeout. |
+| 12 | Deferred: Native readiness review | Deferred until MIR hardening and any future WASM/lower-target evidence justify native planning. | Reopen only with a separate native backend objective. |
 
 ## Phase Details
 
@@ -434,55 +435,67 @@ Checkpoint:
 - Existing HIR-to-Rust remains available and is still the default unless explicitly changed.
 - No file path or module layout is blessed as the long-term MIR Rust backend.
 
-### Phase 10: Rust Backend Migration
+### Phase 9.5: MIR Hardening and Closeout
 
 Steps:
 
-- Move proven semantic lowering out of Rust codegen and into MIR.
-- Keep Rust codegen focused on Rust syntax, imports, and target conventions.
-- Port constructs one coherent group at a time.
-- Delete old duplicated lowering only after tests prove parity.
+- Run an end-to-end review of the MIR data model, lowering, validation, dump output, CLI inspection, and Rust probe.
+- Use focused agents or independent review passes where they can materially improve correctness, especially around validation invariants and lowering/probe parity.
+- Reconcile factory documents, phase statuses, ledger entries, and deferred work so future agents do not mistake closeout state for an active backend migration.
+- Tighten MIR validation where direct review finds gaps that can be fixed without broad new semantics.
+- Improve MIR tests for representative phase 0-9 constructs, including primitives, control flow, alternate exits, structured `cape`, aggregates/options, runtime intrinsics, and unsupported-shape failures.
+- Clean up code style, comments, naming, and module boundaries introduced during the MIR effort.
+- Keep comments sparse and useful; add `TARGET:`, `GRAMMAR:`, `WHY:`, `EDGE:`, or `PERF:` notes only where they explain non-obvious MIR invariants.
+- Preserve the Rust probe as temporary executable boundary proof, not as a durable Rust backend architecture.
+- Run the repo's formatting, focused MIR tests, full Radix tests, and CI before marking the phase complete.
 
 Checkpoint:
 
-- Existing Rust backend tests pass.
-- MIR-backed constructs do not regress package builds.
-- Remaining HIR-direct paths are documented as unported.
+- MIR implementation and docs are internally consistent.
+- Phase 0-9 behavior remains green under focused and full validation.
+- Known future WASM/lower-target prerequisites are documented without implementing bytecode in this effort.
+- The worktree can be handed off without requiring immediate phase 10-12 execution.
 
-### Phase 11: WASM Readiness Slice
+### Phase 10: Deferred Rust Backend Migration
 
-Steps:
+Status: deferred.
 
-- Choose a minimal WASM output strategy:
-  - WAT text for inspection,
-  - `wasm-encoder`,
-  - or another small Rust-native library.
-- Lower a tiny primitive MIR subset to WASM-oriented output.
-- Stub or define imports for runtime operations such as `nota`.
+Reason:
 
-Checkpoint:
-
-- WASM work consumes MIR, not HIR.
-- Any missing runtime ABI decisions are recorded as blockers.
-
-### Phase 12: Native Readiness Review
-
-Steps:
-
-- Evaluate MIR coverage against native needs:
-  - data layout,
-  - calling convention,
-  - memory management,
-  - runtime ABI,
-  - linking,
-  - debug/diagnostic story.
-- Decide whether Cranelift is the right first native backend.
-- Produce a separate native factory plan if justified.
+- The existing HIR-to-Rust backend is stable, idiomatic, and remains the Rust output path.
+- The MIR Rust probe already proved the `validated MIR -> target code` boundary without requiring Rust migration.
+- Moving Rust codegen through MIR would consume project capacity without directly serving the lower-target goal.
 
 Checkpoint:
 
-- Native work either has a grounded plan or is explicitly deferred.
-- The MIR layer remains useful even if native waits.
+- Reopen only if a later project has a concrete, tested reason to route Rust output through MIR.
+
+### Phase 11: Deferred WASM Readiness Slice
+
+Status: deferred.
+
+Reason:
+
+- WASM output is a larger backend project, not a MIR closeout task.
+- A real WASM effort needs its own decisions for ABI, memory/string layout, option and aggregate representation, host imports, runtime intrinsics, packaging, and Wasmtime or equivalent verification.
+- Phase 9.5 should document these prerequisites without trying to implement bytecode.
+
+Checkpoint:
+
+- Reopen as a separate WASM/lower-target factory after MIR hardening is complete.
+
+### Phase 12: Deferred Native Readiness Review
+
+Status: deferred.
+
+Reason:
+
+- Native planning depends on hardened MIR plus future lower-target evidence.
+- Cranelift/native work requires layout, ABI, ownership, runtime artifact, linker, packaging, and debug-story decisions that are outside this MIR closeout effort.
+
+Checkpoint:
+
+- Reopen only with a separate native backend objective.
 
 ## Validation Strategy
 

@@ -1,6 +1,6 @@
 # Phase 9 Delivery: MIR Rust Probe
 
-**Status**: planned.
+**Status**: complete after verification.
 
 ## Interpreted Problem
 

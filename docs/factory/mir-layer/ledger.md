@@ -791,3 +791,19 @@ Validation:
 - `cargo test -p radix` passed: 399 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
 - `cargo fmt --all --check` passed.
 - `./scripta/ci` passed.
+
+## Phase 9.5 Planning Baseline
+
+Status: planned.
+
+Planning decision:
+
+- Phase 9.5 is the closeout and hardening phase for the MIR layer effort.
+- It should review and harden phases 0-9 rather than starting Rust migration, WASM bytecode, native codegen, or ABI implementation.
+- The existing HIR-to-Rust backend remains the stable Rust output path.
+- The MIR Rust probe remains temporary boundary proof for `validated MIR -> target code`.
+- Phases 10, 11, and 12 are deferred in the plan. Future Rust-MIR migration, WASM/lower-target work, or native planning should start as separate projects with their own objectives.
+
+Delivery document:
+
+- `docs/factory/mir-layer/phase-9.5-delivery.md`
