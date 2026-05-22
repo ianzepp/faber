@@ -105,8 +105,9 @@ Implemented artifacts:
 Lowering subset:
 
 - Top-level Faber `functio` items lower into `MirFunction` shells.
-- Function parameters lower into MIR parameters with deterministic local IDs.
+- Function parameters lower into MIR parameters and matching MIR local slots with deterministic local IDs.
 - Empty concrete function bodies lower as one `bb0` with `return`.
+- Explicit no-value `redde` in an otherwise trivial function body lowers as one `bb0` with `return`.
 - Empty executable entry blocks lower as ordinary synthetic `MirFunction` values with `source: None`; MIR still has no special root, `main`, or `MirEntry` node.
 - Function-only source files can produce MIR output.
 
@@ -142,9 +143,9 @@ error: <stdin>:1:9: unsupported MIR lowering in phase 2: non-empty entry blocks 
 
 Verification:
 
-- `cargo test -p radix mir` passed.
-- `cargo test -p radix tool` passed.
-- `cargo test -p radix` passed: 324 unit tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `cargo test -p radix mir` passed, including tests for function shells, params as MIR locals, explicit no-value `redde`, empty entry blocks, unsupported top-level items, and unsupported non-empty entry blocks.
+- `cargo test -p radix tool` passed, including a deterministic MIR output assertion for a tiny valid source.
+- `cargo test -p radix` passed: 327 unit tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
 - `./scripta/ci` passed.
 
 Behavior boundary:

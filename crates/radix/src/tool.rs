@@ -456,33 +456,47 @@ pub fn cmd_hir(args: &[String]) {
 pub fn cmd_mir(args: &[String]) {
     let (name, source) = read_source(args);
     let source_file = source_file_from_input(name, source);
+
+    match mir_output_for_source(&source_file.name, &source_file.content) {
+        Ok(output) => print!("{output}"),
+        Err(messages) => {
+            for message in messages {
+                eprintln!("{message}");
+            }
+            std::process::exit(1);
+        }
+    }
+}
+
+pub fn mir_output_for_source(name: &str, source: &str) -> Result<String, Vec<String>> {
+    let source_file = source_file_from_input(name.to_owned(), source.to_owned());
     let session =
         crate::driver::Session::new(crate::driver::Config::default().with_target(crate::codegen::Target::Faber));
 
     let analysis = match crate::driver::analyze_source(&session, &source_file.name, &source_file.content) {
         Ok(analysis) => analysis,
         Err(diagnostics) => {
-            for diagnostic in diagnostics {
-                let prefix = if diagnostic.is_error() { "error" } else { "warning" };
-                eprintln!(
-                    "{}: {}: {}",
-                    prefix,
-                    format_optional_location(&source_file, diagnostic.span),
-                    diagnostic.message
-                );
-            }
-            std::process::exit(1);
+            return Err(diagnostics
+                .into_iter()
+                .map(|diagnostic| {
+                    let prefix = if diagnostic.is_error() { "error" } else { "warning" };
+                    format!(
+                        "{}: {}: {}",
+                        prefix,
+                        format_optional_location(&source_file, diagnostic.span),
+                        diagnostic.message
+                    )
+                })
+                .collect())
         }
     };
 
     match crate::mir::dump_analyzed_unit(&analysis) {
-        Ok(output) => print!("{output}"),
-        Err(errors) => {
-            for err in errors {
-                eprintln!("error: {}: {}", format_location(&source_file, err.span.start), err.message);
-            }
-            std::process::exit(1);
-        }
+        Ok(output) => Ok(output),
+        Err(errors) => Err(errors
+            .into_iter()
+            .map(|err| format!("error: {}: {}", format_location(&source_file, err.span.start), err.message))
+            .collect()),
     }
 }
 

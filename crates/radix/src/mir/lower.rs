@@ -1,9 +1,9 @@
 use crate::driver::AnalyzedUnit;
-use crate::hir::{HirBlock, HirFunction, HirItem, HirItemKind};
+use crate::hir::{HirBlock, HirFunction, HirItem, HirItemKind, HirStmtKind};
 use crate::lexer::Span;
 use crate::mir::{
-    dump_program, MirBlock, MirBlockId, MirFunction, MirFunctionId, MirLocalId, MirParam, MirProgram, MirTerminator,
-    MirTerminatorKind, MirType,
+    dump_program, MirBlock, MirBlockId, MirFunction, MirFunctionId, MirLocal, MirLocalId, MirParam, MirProgram,
+    MirTerminator, MirTerminatorKind, MirType,
 };
 use crate::semantic::Primitive;
 
@@ -85,17 +85,21 @@ impl MirLowerer<'_> {
         };
 
         let mut params = Vec::new();
+        let mut locals = Vec::new();
         for (index, param) in function.params.iter().enumerate() {
-            params.push(MirParam {
-                local: MirLocalId(index as u32),
+            let local = MirLocalId(index as u32);
+            params.push(MirParam { local, name: Some(param.name), ty: MirType::semantic(param.ty), span: param.span });
+            locals.push(MirLocal {
+                id: local,
                 name: Some(param.name),
                 ty: MirType::semantic(param.ty),
+                mutable: false,
                 span: param.span,
             });
         }
 
         let blocks = match &function.body {
-            Some(body) if block_is_empty(body) => vec![empty_return_block(body.span)],
+            Some(body) if body_is_trivial_no_value_return(body) => vec![empty_return_block(body.span)],
             Some(body) => {
                 self.errors.push(MirError::unsupported(
                     body.span,
@@ -111,7 +115,7 @@ impl MirLowerer<'_> {
             source: Some(item.def_id),
             name: Some(function.name),
             params,
-            locals: Vec::new(),
+            locals,
             temps: Vec::new(),
             blocks,
             return_ty: MirType::semantic(return_ty),
@@ -120,7 +124,7 @@ impl MirLowerer<'_> {
     }
 
     fn lower_entry(&mut self, entry: &HirBlock) {
-        if !block_is_empty(entry) {
+        if !entry_is_empty(entry) {
             self.errors.push(MirError::unsupported(
                 entry.span,
                 "non-empty entry blocks before primitive expression lowering",
@@ -143,8 +147,20 @@ impl MirLowerer<'_> {
     }
 }
 
-fn block_is_empty(block: &HirBlock) -> bool {
+fn entry_is_empty(block: &HirBlock) -> bool {
     block.stmts.is_empty() && block.expr.is_none()
+}
+
+fn body_is_trivial_no_value_return(block: &HirBlock) -> bool {
+    if block.expr.is_some() {
+        return false;
+    }
+
+    match block.stmts.as_slice() {
+        [] => true,
+        [stmt] => matches!(stmt.kind, HirStmtKind::Redde(None)),
+        _ => false,
+    }
 }
 
 fn empty_return_block(span: Span) -> MirBlock {

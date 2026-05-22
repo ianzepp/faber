@@ -37,6 +37,38 @@ function f0 -> ty#5 {
   params:
     _0: ty#0
     _1: ty#1
+  locals:
+    let _0: ty#0
+    let _1: ty#1
+  bb0:
+    return
+}
+"
+    );
+}
+
+#[test]
+fn lowers_function_params_as_mir_locals() {
+    let program =
+        lower_analyzed_unit(&analyze("functio saluta(textus nomen, numerus aetas) {}")).expect("MIR lowering succeeds");
+    let function = &program.functions[0];
+
+    assert_eq!(function.params.len(), 2);
+    assert_eq!(function.locals.len(), 2);
+    assert_eq!(function.params[0].local, function.locals[0].id);
+    assert_eq!(function.params[1].local, function.locals[1].id);
+    assert!(!function.locals[0].mutable);
+    assert!(!function.locals[1].mutable);
+}
+
+#[test]
+fn lowers_explicit_no_value_redde_as_trivial_return() {
+    let dump = dump_source("functio saluta() { redde }");
+
+    assert_eq!(
+        dump,
+        "\
+function f0 -> ty#5 {
   bb0:
     return
 }

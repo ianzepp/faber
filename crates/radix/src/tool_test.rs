@@ -184,6 +184,21 @@ fn cli_parses_mir_command() {
 }
 
 #[test]
+fn mir_output_for_source_returns_deterministic_text() {
+    let output = mir_output_for_source("main.fab", "functio saluta() {}").expect("MIR output");
+
+    assert_eq!(
+        output,
+        "\
+function f0 -> ty#5 {
+  bb0:
+    return
+}
+"
+    );
+}
+
+#[test]
 fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
     let help = RadixCli::command().render_help().to_string();
 
