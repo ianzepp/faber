@@ -137,6 +137,58 @@ function f0 -> ty#4 {
 }
 
 #[test]
+fn failable_function_dump_renders_alternate_exit_type() {
+    let dump = dump_source(r#"functio fail() → numerus ⇥ textus { iace "bad" }"#);
+
+    assert!(dump.starts_with("function f0 -> ty#1 ⇥ ty#0 {\n"));
+    assert!(dump.contains("  temps:\n    %0: ty#0\n"));
+    assert!(dump.contains("    %0 = const string sym#"));
+    assert!(dump.contains("    return_error %0\n"));
+}
+
+#[test]
+fn lowers_iace_to_return_error() {
+    let dump = dump_source(
+        r#"functio divide(numerus a, numerus b) → numerus ⇥ textus {
+  si b ≡ 0 ergo iace "division by zero"
+  redde a / b
+}"#,
+    );
+
+    assert!(dump.contains("function f0 -> ty#1 ⇥ ty#0 {\n"));
+    assert!(dump.contains("branch %0 bb1 bb2"));
+    assert!(dump.contains("return_error %1"));
+    assert!(dump.contains("return %2"));
+}
+
+#[test]
+fn source_level_failable_calls_are_rejected_before_mir() {
+    let session = Session::new(Config::default().with_target(Target::Faber));
+    let source = r#"
+functio fail() → numerus ⇥ textus { iace "bad" }
+functio caller() → numerus ⇥ textus { redde fail() }
+"#;
+
+    let errors = match crate::driver::analyze_source(&session, "test.fab", source) {
+        Ok(_) => panic!("ordinary failable calls should not reach MIR lowering"),
+        Err(errors) => errors,
+    };
+    assert!(errors.iter().any(|diagnostic| diagnostic
+        .message
+        .contains("failable call requires handling")));
+}
+
+#[test]
+fn lowers_mori_to_panic_runtime_call_and_unreachable() {
+    let dump = dump_source(r#"functio impossible() → vacuum { mori "impossible state" }"#);
+
+    assert!(dump.contains("function f0 -> ty#5 {\n"));
+    assert!(dump.contains("runtime panic(const string sym#"));
+    assert!(dump.contains(") -> ty#6\n"));
+    assert!(dump.contains("    unreachable\n"));
+}
+
+#[test]
 fn lowers_params_and_local_reads_into_places() {
     let dump = dump_source("functio idem(numerus n) → numerus { redde n }");
 
@@ -269,21 +321,21 @@ function f0 -> ty#5 {
 #[test]
 fn rejects_non_empty_entry_blocks_with_explicit_unsupported_error() {
     let unit = analyze(r#"incipit { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in phase 4");
+    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in phase 5B");
 
     assert_eq!(errors.len(), 1);
     assert!(errors[0]
         .message
-        .contains("unsupported MIR lowering in phase 4: non-empty entry blocks"));
+        .contains("unsupported MIR lowering in phase 5B: non-empty entry blocks"));
 }
 
 #[test]
 fn rejects_unsupported_top_level_items_explicitly() {
     let unit = analyze("genus Persona { textus nomen }");
-    let errors = lower_analyzed_unit(&unit).expect_err("structs are unsupported in phase 4");
+    let errors = lower_analyzed_unit(&unit).expect_err("structs are unsupported in phase 5B");
 
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message, "unsupported MIR lowering in phase 4: top-level struct");
+    assert_eq!(errors[0].message, "unsupported MIR lowering in phase 5B: top-level struct");
 }
 
 #[test]
@@ -485,13 +537,71 @@ fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
     assert_eq!(tempta_errors.len(), 1);
     assert!(tempta_errors[0]
         .message
-        .contains("tempta before error-flow MIR lowering"));
+        .contains("tempta legacy local-handler surface deferred to Phase 5C"));
+}
+
+#[test]
+fn tempta_with_inner_iace_remains_fail_closed_as_a_whole() {
+    let unit = analyze(
+        r#"functio handled() → numerus ⇥ textus {
+  tempta {
+    iace "later"
+  } cape err {
+    redde 0
+  }
+  redde 1
+}"#,
+    );
+    let errors = lower_analyzed_unit(&unit).expect_err("tempta remains deferred even when it contains iace");
+
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0]
+        .message
+        .contains("tempta legacy local-handler surface deferred to Phase 5C"));
+}
+
+#[test]
+fn rejects_fabricated_iace_without_alternate_exit_type() {
+    use crate::hir::{HirExpr, HirExprKind, HirId, HirLiteral, HirStmt, HirStmtKind};
+
+    let mut unit = analyze("functio fail() → numerus { redde 0 }");
+    let textus = unit.types.primitive(crate::semantic::Primitive::Textus);
+    let span = crate::lexer::Span::default();
+    let crate::hir::HirItemKind::Function(function) = &mut unit.hir.items[0].kind else {
+        panic!("expected function");
+    };
+    function.err_ty = None;
+    function.body = Some(crate::hir::HirBlock {
+        stmts: vec![HirStmt {
+            id: HirId(10),
+            kind: HirStmtKind::Expr(HirExpr {
+                id: HirId(11),
+                kind: HirExprKind::Throw(Box::new(HirExpr {
+                    id: HirId(12),
+                    kind: HirExprKind::Literal(HirLiteral::String(crate::lexer::Symbol(99))),
+                    ty: Some(textus),
+                    span,
+                })),
+                ty: Some(unit.types.primitive(crate::semantic::Primitive::Vacuum)),
+                span,
+            }),
+            span,
+        }],
+        expr: None,
+        span,
+    });
+
+    let errors = lower_analyzed_unit(&unit).expect_err("fabricated iace without ⇥ should fail");
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0]
+        .message
+        .contains("iace without a declared alternate-exit type"));
 }
 
 #[test]
 fn rejects_diagnostic_verbs_with_construct_specific_diagnostics() {
     let unit = analyze(r#"functio malum() { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("nota is not phase 4 MIR");
+    let errors = lower_analyzed_unit(&unit).expect_err("nota is not phase 5B MIR");
 
     assert_eq!(errors.len(), 1);
     assert!(errors[0]

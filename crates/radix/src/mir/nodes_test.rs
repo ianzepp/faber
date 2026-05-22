@@ -58,6 +58,7 @@ fn dump_program_renders_basic_blocks_deterministically() {
                 span: span(),
             }],
             return_ty: number,
+            error_ty: None,
             span: span(),
         }],
     };
@@ -130,6 +131,7 @@ fn dump_program_renders_runtime_calls_and_branches() {
                 },
             ],
             return_ty: vacuum,
+            error_ty: None,
             span: span(),
         }],
     };

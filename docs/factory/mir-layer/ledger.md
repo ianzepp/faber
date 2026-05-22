@@ -375,6 +375,45 @@ Behavior boundary:
 - Caller-side propagation and explicit handler syntax remain deferred.
 - Existing backend lowering paths do not consume MIR and were not converted to typed recoverable failure lowering in this phase.
 
+## Phase 5B Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- `MirFunction` now carries `error_ty: Option<MirType>` alongside unchanged `return_ty`.
+- `radix mir` renders failable function headers as `function fN -> ty#S ⇥ ty#E`.
+- HIR function `err_ty` from Phase 5A threads into MIR function lowering.
+- `HirExprKind::Throw` lowers to `MirTerminatorKind::ReturnError`.
+- Constant and value `iace` operands are materialized into typed temporaries using the same transfer-operand discipline as `redde`.
+- Fabricated HIR with `iace` but no function alternate-exit type fails during MIR lowering.
+- `HirExprKind::Panic` lowers to a target-neutral `panic` runtime call with `numquam` return type and seals the block with `Unreachable`.
+- `tempta` remains fail-closed as a deferred legacy local-handler surface; MIR lowering does not descend into its body to recover nested `iace`.
+
+Representative MIR shape:
+
+```text
+function f0 -> ty#1 ⇥ ty#0 {
+  temps:
+    %0: ty#0
+  bb0:
+    %0 = const string sym#N: ty#0
+    return_error %0
+}
+```
+
+Verification:
+
+- `cargo test -p radix mir` passed: 34 tests passed.
+- `cargo test -p radix` passed: 358 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+
+Behavior boundary:
+
+- `tempta`, `cape`, and `demum` lowering remains out of scope.
+- Caller-side propagation and local handling remain deferred to Phase 5C or later.
+- No `TryCall` or failable-call control-flow terminator was introduced.
+- No target backend consumes MIR.
+
 ## Phase 5B/5C Planning Update
 
 Status: planned.

@@ -10,10 +10,15 @@ pub fn dump_program(program: &MirProgram) -> String {
         if index > 0 {
             out.push('\n');
         }
+        let error_ty = function
+            .error_ty
+            .map(|error_ty| format!(" ⇥ {}", ty(error_ty)))
+            .unwrap_or_default();
         out.push_str(&format!(
-            "function {} -> {} {{\n",
+            "function {} -> {}{} {{\n",
             function_id(function.id),
-            ty(function.return_ty)
+            ty(function.return_ty),
+            error_ty
         ));
         if !function.params.is_empty() {
             out.push_str("  params:\n");

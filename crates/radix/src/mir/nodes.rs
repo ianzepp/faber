@@ -71,6 +71,7 @@ pub struct MirFunction {
     pub temps: Vec<MirTemp>,
     pub blocks: Vec<MirBlock>,
     pub return_ty: MirType,
+    pub error_ty: Option<MirType>,
     pub span: Span,
 }
 

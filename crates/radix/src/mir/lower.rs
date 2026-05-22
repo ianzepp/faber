@@ -20,7 +20,7 @@ pub struct MirError {
 
 impl MirError {
     fn unsupported(span: Span, what: impl Into<String>) -> Self {
-        Self { message: format!("unsupported MIR lowering in phase 4: {}", what.into()), span }
+        Self { message: format!("unsupported MIR lowering in phase 5B: {}", what.into()), span }
     }
 
     fn missing_type(span: Span, what: impl Into<String>) -> Self {
@@ -89,7 +89,8 @@ impl MirLowerer<'_> {
             return;
         };
 
-        let mut builder = FunctionBuilder::new(&self.unit.types);
+        let error_ty = function.err_ty.map(MirType::semantic);
+        let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty);
         for param in &function.params {
             builder.add_param(param.def_id, param.name, param.ty, param.span);
         }
@@ -109,6 +110,7 @@ impl MirLowerer<'_> {
             temps: builder.temps,
             blocks,
             return_ty: MirType::semantic(return_ty),
+            error_ty,
             span: item.span,
         });
     }
@@ -132,6 +134,7 @@ impl MirLowerer<'_> {
             temps: Vec::new(),
             blocks: vec![empty_return_block(entry.span)],
             return_ty: MirType::semantic(vacuum),
+            error_ty: None,
             span: entry.span,
         });
     }
@@ -158,6 +161,7 @@ struct LoopContext {
 
 struct FunctionBuilder<'a> {
     types: &'a TypeTable,
+    error_ty: Option<MirType>,
     bindings: FxHashMap<DefId, LocalBinding>,
     params: Vec<MirParam>,
     locals: Vec<MirLocalDecl>,
@@ -170,9 +174,15 @@ struct FunctionBuilder<'a> {
 }
 
 impl<'a> FunctionBuilder<'a> {
+    #[cfg(test)]
     fn new(types: &'a TypeTable) -> Self {
+        Self::for_function(types, None)
+    }
+
+    fn for_function(types: &'a TypeTable, error_ty: Option<MirType>) -> Self {
         Self {
             types,
+            error_ty,
             bindings: FxHashMap::default(),
             params: Vec::new(),
             locals: Vec::new(),
@@ -304,6 +314,8 @@ impl<'a> FunctionBuilder<'a> {
             HirExprKind::Si(cond, then_block, else_block) => self.lower_si_expr(cond, then_block, else_block, expr),
             HirExprKind::Dum(cond, block) => self.lower_dum_expr(cond, block, expr),
             HirExprKind::Assign(_, _) => self.lower_assignment_expr(expr),
+            HirExprKind::Throw(value) => self.lower_iace(value, expr.span),
+            HirExprKind::Panic(value) => self.lower_mori(value, expr.span),
             HirExprKind::AssignOp(_, _, _) => {
                 self.errors.push(MirError::unsupported(
                     expr.span,
@@ -319,7 +331,7 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    fn lower_return_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
+    fn lower_transfer_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
         let operand = self.lower_expr(expr)?;
         match operand {
             MirOperand::Constant(_) | MirOperand::Value(_) => {
@@ -328,6 +340,40 @@ impl<'a> FunctionBuilder<'a> {
             }
             MirOperand::Place(_) | MirOperand::Temp(_) => Some(operand),
         }
+    }
+
+    fn lower_return_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
+        self.lower_transfer_expr(expr)
+    }
+
+    fn lower_iace(&mut self, value: &HirExpr, span: Span) -> Option<MirOperand> {
+        if self.error_ty.is_none() {
+            self.errors
+                .push(MirError::unsupported(span, "iace without a declared alternate-exit type"));
+            return None;
+        }
+
+        let value = self.lower_transfer_expr(value)?;
+        self.terminate_current(MirTerminatorKind::ReturnError(value), span);
+        None
+    }
+
+    fn lower_mori(&mut self, value: &HirExpr, span: Span) -> Option<MirOperand> {
+        let value = self.lower_expr(value)?;
+        let numquam = MirType::semantic(self.types.primitive(Primitive::Numquam));
+        self.append_stmt(MirStmt {
+            kind: MirStmtKind::RuntimeCall {
+                destination: None,
+                call: crate::mir::MirRuntimeCall {
+                    intrinsic: crate::mir::MirIntrinsic::Panic,
+                    args: vec![value],
+                    return_ty: numquam,
+                },
+            },
+            span,
+        });
+        self.terminate_current(MirTerminatorKind::Unreachable, span);
+        None
     }
 
     fn lower_expr_to_destination(&mut self, expr: &HirExpr, destination: MirPlace, ty: MirType) -> Option<()> {
@@ -860,9 +906,9 @@ fn unsupported_expr_kind_name(kind: &HirExprKind) -> &'static str {
         HirExprKind::Scribe(kind, _) => scribe_kind_name(*kind),
         HirExprKind::Scriptum(_, _) => "scriptum templates before format intrinsic MIR lowering",
         HirExprKind::Adfirma(_, _) => "adfirma before assert intrinsic MIR lowering",
-        HirExprKind::Panic(_) => "panic before panic intrinsic MIR lowering",
-        HirExprKind::Throw(_) => "iace before error-flow MIR lowering",
-        HirExprKind::Tempta { .. } => "tempta before error-flow MIR lowering",
+        HirExprKind::Panic(_) => "mori fatal flow",
+        HirExprKind::Throw(_) => "iace error-flow",
+        HirExprKind::Tempta { .. } => "tempta legacy local-handler surface deferred to Phase 5C",
         HirExprKind::Clausura(_, _, _) => "closures before callable-value MIR lowering",
         HirExprKind::Cede(_) => "cede before async MIR lowering",
         HirExprKind::Verte { .. } => "verte before conversion MIR lowering",
