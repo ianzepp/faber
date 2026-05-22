@@ -126,7 +126,7 @@ Phase 5 is complete when:
 3. **examples/exempla/**/*.fab** (11 files)
    - optinalis/optionalis.fab: genus fields `si T name` → `T name sponte` (motivating visual case).
    - functio/optionalis.fab: all optional params + header comment updated for accuracy.
-   - vel/, binarius/, unarius/, est/, qua/, ternarius/, typus/: local `fixum si T x ← nihil` → `fixum T ∪ nihil x ← nihil`; cast sites `⇢ si T` → `⇢ (T ∪ nihil)`.
+   - vel/, binarius/, unarius/, est/, qua/, ternarius/, typus/: local `fixum si T x ← nihil` → `fixum T ∪ nihil x ← nihil`; cast sites `⇢ si T` → `⇢ T ∪ nihil`.
    - si/ergo-redde.fab: two nullable return sigs migrated (control-flow `si` untouched).
 
 4. **crates/radix/src/**/*test.rs**
@@ -137,9 +137,13 @@ Phase 5 is complete when:
 ## Verification
 
 - `cargo check -p radix` — clean.
-- `cargo test -p radix` — **291 passed, 0 failed** (including driver, hir/lower, codegen, parser, semantic, and e2e).
+- `cargo test -p radix` — **291 lib tests, 8 hygiene tests, and 1 doctest passed; 0 failed; 2 slow e2e tests ignored by the default run**.
 - `cargo run -p radix --bin radix -- check examples/exempla/optionalis/optionalis.fab` → ok.
 - `cargo run -p radix --bin radix -- check examples/exempla/functio/optionalis.fab` → ok (with pre-existing warnings).
+- `cargo run -p radix --bin radix -- check examples/exempla/qua/qua.fab` → ok (with pre-existing explicit-`ignotum` warning).
+- `cargo run -p radix --bin radix -- check examples/exempla/ternarius/ternarius.fab` → ok.
+- Full `examples/exempla/**/*.fab` single-file sweep leaves only known non-syntax exceptions: the CLI command module must be checked through `faber check --package examples/exempla/cli/main.fab`, and `proba/packages/selection-failure` intentionally contains an unknown identifier.
+- `cargo run -p faber -- check --package examples/exempla/cli/main.fab` → ok (warnings only).
 - Fresh residue searches (`rg 'si <type>'` on examples/stdlib/crates) confirm zero old declaration/nullable `si` usages remain outside control-flow `si` statements and docs.
 - All migrated sites now use `sponte` for voluntary declaration slots and `T ∪ nihil` (or parenthesized) for nullable value positions.
 - `fixus` examples in tests continue to parse (no breakage).
@@ -155,4 +159,3 @@ Phase 5 is complete when:
 **Phase 5 complete.** Ready for Phase 6 (docs) and Phase 7 (guardrails).
 
 *Opus phase-5 perfectum est. Exempla et norma renovata sunt.*
-
