@@ -321,12 +321,12 @@ function f0 -> ty#5 {
 #[test]
 fn rejects_non_empty_entry_blocks_with_explicit_unsupported_error() {
     let unit = analyze(r#"incipit { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in phase 5C");
+    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in MIR");
 
     assert_eq!(errors.len(), 1);
     assert!(errors[0]
         .message
-        .contains("unsupported MIR lowering in phase 5C: non-empty entry blocks"));
+        .contains("unsupported MIR lowering: non-empty entry blocks"));
 }
 
 #[test]

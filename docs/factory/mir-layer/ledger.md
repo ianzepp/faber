@@ -661,3 +661,22 @@ Behavior boundary:
 - Phase 7 covers the runtime operation classes represented by the focused MIR fixtures.
 - Runtime operation identity is target-neutral; MIR does not encode Rust, Go, TypeScript, WASM, native linkage, Cargo dependency, or `@ verte` target translation strings for these operations.
 - Collection pipelines, closure-backed methods, runtime ABI/linkage, backend consumption, and MIR validation remain deferred.
+
+## Phase 6A/6B/7 Verification Audit
+
+Status: complete after verification.
+
+Verification audit on 2026-05-22 confirmed:
+
+- Phase 6A MIR node contract is present for aggregate payloads, operand-friendly index projections, option/null operations, structured runtime intrinsics, and provider identity.
+- Phase 6B lowers the focused aggregate and option/null subset: struct construction/defaults, tuple/list/spread, map/set construction, enum variant construction, field/index reads, field/index assignments, optional chain, non-null assertion, and `vel` coalesce.
+- Phase 7 lowers the focused runtime subset: diagnostic verbs, string-template formatting, runtime conversion with hints/fallback, selected collection operations, and imported provider calls.
+- Target backends still do not consume MIR; the only non-test consumer remains the `radix mir` inspection command.
+- Manual `radix mir` probes confirmed representative aggregate, option, runtime, provider, selected collection operation, and fail-closed unsupported-method outputs.
+- Verification found and fixed stale unsupported-MIR diagnostics that still said `phase 5C`; unsupported lowering now reports `unsupported MIR lowering: ...` without a stale phase label.
+
+Validation rerun after the diagnostic fix:
+
+- `cargo test -p radix mir` passed: 50 tests passed.
+- `cargo test -p radix` passed: 379 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.

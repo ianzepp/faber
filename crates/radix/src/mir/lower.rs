@@ -24,7 +24,7 @@ pub struct MirError {
 
 impl MirError {
     fn unsupported(span: Span, what: impl Into<String>) -> Self {
-        Self { message: format!("unsupported MIR lowering in phase 5C: {}", what.into()), span }
+        Self { message: format!("unsupported MIR lowering: {}", what.into()), span }
     }
 
     fn missing_type(span: Span, what: impl Into<String>) -> Self {
