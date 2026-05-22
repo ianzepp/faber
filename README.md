@@ -69,7 +69,7 @@ Run `cargo run -p faber -- init hello` to create a starter package. See
 
 [`docs/grammatica/test.md`](docs/grammatica/test.md) covers `proba`, `probandum`, and `faber test`.
 
-## CLI Roles (v0.34)
+## CLI Roles (v0.35)
 
 **Faber** is the user-facing project and package tool:
 

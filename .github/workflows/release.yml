@@ -22,7 +22,7 @@ jobs:
                       --repo "$GITHUB_REPOSITORY" \
                       --verify-tag \
                       --title "$TAG" \
-                      --notes-file docs/factory/faber-radix-tool-split/release-notes-v0.34.md
+                      --notes-file "docs/release/${TAG}.md"
 
     build:
         needs: create-release
