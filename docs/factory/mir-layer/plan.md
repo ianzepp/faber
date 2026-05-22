@@ -1,6 +1,6 @@
 # MIR Layer Factory Plan
 
-**Status**: in-progress (Phases 0–7 complete; 8–12 pending)
+**Status**: in-progress (Phases 0–8 complete; 9–12 pending)
 **Created**: 2026-05-22
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/mir-layer/`

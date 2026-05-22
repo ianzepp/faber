@@ -7,7 +7,9 @@
 mod dump;
 mod lower;
 mod nodes;
+mod validate;
 
 pub use dump::dump_program;
 pub use lower::{dump_analyzed_unit, lower_analyzed_unit, MirError};
 pub use nodes::*;
+pub use validate::{validate_program, MirFunctionSignature, MirValidationContext, MirValidationError};

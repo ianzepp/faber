@@ -1,5 +1,7 @@
 # Phase 8 Delivery: MIR Validation
 
+**Status**: complete.
+
 ## Interpreted Problem
 
 Phases 1 through 7 make MIR inspectable and expressive enough for a meaningful Rust backend vertical slice. MIR now represents primitive computation, explicit control flow, alternate exits, structured `cape` handling, aggregate and option/null operations, runtime intrinsics, collection operations, and provider calls.

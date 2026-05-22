@@ -680,3 +680,31 @@ Validation rerun after the diagnostic fix:
 - `cargo test -p radix mir` passed: 50 tests passed.
 - `cargo test -p radix` passed: 379 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
 - `./scripta/ci` passed.
+
+## Phase 8 Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- `crates/radix/src/mir/validate.rs` defines `MirValidationError`, `MirFunctionSignature`, `MirValidationContext`, and `validate_program`.
+- Successful `lower_analyzed_unit` results now run through MIR validation before returning.
+- Validation context is built from the analyzed unit so the validator can use semantic types, function signatures, struct field metadata, and variant field metadata.
+- Structural validation checks function/block/local/temp/value references, terminator targets, and local/temp declaration coherence.
+- Type validation checks assignment, return, `return_error`, branch, `try_call`, construct, runtime-call destination, option, and runtime intrinsic contracts using `TypeTable::assignable` where appropriate.
+- Operation validation checks aggregate payload shape, option operation shape, runtime intrinsic contracts, selected collection runtime arity/result types, and provider identity presence.
+- `MirOperand::Value` is accepted only when the value id was defined earlier in the current function traversal.
+- Target backends remain unchanged and do not consume MIR.
+
+Deferred checks:
+
+- Validation does not perform data-flow, definite assignment, borrow/ownership, lifetime/drop, ABI/layout, optimization, or backend-specific legality checks.
+- Provider identity is checked structurally; target-linkage and stdlib-registry policy remain future phases.
+- Projection typing depends on available semantic metadata and intentionally fails when metadata needed for a supported projection is absent.
+
+Validation:
+
+- `cargo test -p radix mir` passed: 61 tests passed.
+- `cargo test -p radix` passed: 390 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `cargo fmt --all --check` passed.
+- `./scripta/ci` passed.

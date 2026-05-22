@@ -6,11 +6,12 @@ use crate::hir::{
 };
 use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{
-    dump_program, MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp, MirBlock, MirBlockId,
-    MirCallee, MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor, MirDiagnosticKind, MirFunction,
-    MirFunctionId, MirIntrinsic, MirKeyValueOperand, MirLocal as MirLocalDecl, MirLocalId, MirNamedOperand, MirOperand,
-    MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirParam, MirPlace, MirProgram, MirProjection, MirProvider,
-    MirRuntimeCall, MirStmt, MirStmtKind, MirTemp, MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp,
+    dump_program, validate_program, MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp,
+    MirBlock, MirBlockId, MirCallee, MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor,
+    MirDiagnosticKind, MirFunction, MirFunctionId, MirFunctionSignature, MirIntrinsic, MirKeyValueOperand,
+    MirLocal as MirLocalDecl, MirLocalId, MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp,
+    MirOptionUnwrapMode, MirParam, MirPlace, MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmt,
+    MirStmtKind, MirTemp, MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp, MirValidationContext,
     MirValue, MirValueId, MirValueKind,
 };
 use crate::semantic::{Primitive, Type, TypeId, TypeTable};
@@ -30,16 +31,28 @@ impl MirError {
     fn missing_type(span: Span, what: impl Into<String>) -> Self {
         Self { message: format!("missing type information for MIR lowering: {}", what.into()), span }
     }
+
+    fn validation(span: Span, what: impl Into<String>) -> Self {
+        Self { message: format!("invalid MIR: {}", what.into()), span }
+    }
 }
 
 pub fn lower_analyzed_unit(unit: &AnalyzedUnit) -> Result<MirProgram, Vec<MirError>> {
     let mut lowerer = MirLowerer { unit, errors: Vec::new(), functions: Vec::new() };
     lowerer.lower();
 
-    if lowerer.errors.is_empty() {
-        Ok(MirProgram { functions: lowerer.functions })
-    } else {
+    if !lowerer.errors.is_empty() {
         Err(lowerer.errors)
+    } else {
+        let validation = lowerer.validation_context();
+        let program = MirProgram { functions: lowerer.functions.clone() };
+        validate_program(&program, &validation).map_err(|errors| {
+            errors
+                .into_iter()
+                .map(|error| MirError::validation(error.span, error.message))
+                .collect::<Vec<_>>()
+        })?;
+        Ok(program)
     }
 }
 
@@ -199,6 +212,45 @@ impl MirLowerer<'_> {
             }
         }
         providers
+    }
+
+    fn validation_context(&self) -> MirValidationContext<'_> {
+        let mut context = MirValidationContext::new(&self.unit.types);
+        for item in &self.unit.hir.items {
+            match &item.kind {
+                HirItemKind::Function(function) => {
+                    if let Some(return_ty) = function.ret_ty {
+                        context.functions.insert(
+                            item.def_id,
+                            MirFunctionSignature {
+                                return_ty: MirType::semantic(return_ty),
+                                error_ty: function.err_ty.map(MirType::semantic),
+                            },
+                        );
+                    }
+                }
+                HirItemKind::Struct(strukt) => {
+                    let mut fields = FxHashMap::default();
+                    for field in &strukt.fields {
+                        if !field.is_static {
+                            fields.insert(field.name, MirType::semantic(field.ty));
+                        }
+                    }
+                    context.struct_fields.insert(item.def_id, fields);
+                }
+                HirItemKind::Enum(enum_item) => {
+                    for variant in &enum_item.variants {
+                        let mut fields = FxHashMap::default();
+                        for field in &variant.fields {
+                            fields.insert(field.name, MirType::semantic(field.ty));
+                        }
+                        context.variant_fields.insert(variant.def_id, fields);
+                    }
+                }
+                _ => {}
+            }
+        }
+        context
     }
 
     fn lower_entry(&mut self, entry: &HirBlock) {
