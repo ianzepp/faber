@@ -786,14 +786,57 @@ functio malum() → tabula<textus, numerus> {
 }
 
 #[test]
-fn rejects_diagnostic_verbs_with_construct_specific_diagnostics() {
-    let unit = analyze(r#"functio malum() { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("nota is not phase 5C MIR");
+fn lowers_diagnostic_verbs_to_runtime_intrinsics() {
+    let dump = dump_source(
+        r#"
+functio log(textus name) → vacuum {
+    nota "salve"
+    vide name
+    mone "cave"
+}
+"#,
+    );
 
-    assert_eq!(errors.len(), 1);
-    assert!(errors[0]
+    assert!(dump.contains("runtime diagnostic nota(const string sym#"));
+    assert!(dump.contains("runtime diagnostic vide(_0)"));
+    assert!(dump.contains("runtime diagnostic mone(const string sym#"));
+}
+
+#[test]
+fn lowers_format_conversion_collection_and_provider_runtime_intrinsics() {
+    let format_dump = dump_source(r#"functio greet(textus name) → textus { redde "Salve, §!"(name) }"#);
+    assert!(format_dump.contains("runtime format_string template sym#"));
+    assert!(!format_dump.contains("format!"));
+
+    let conversion_dump = dump_source(r#"functio parse(textus raw) → numerus { redde raw ⇒ numerus<i32, Hex> vel 0 }"#);
+    assert!(conversion_dump.contains("runtime convert runtime -> ty#"));
+    assert!(conversion_dump.contains("hints [sym#"));
+    assert!(conversion_dump.contains("fallback const int 0(_0)"));
+
+    let collection_dump = dump_source(r#"functio count(lista<numerus> xs) → numerus { redde xs.longitudo() }"#);
+    assert!(collection_dump.contains("runtime collection length(_0)"));
+    assert!(!collection_dump.contains(".len"));
+
+    let provider_dump = dump_source(
+        r#"
+importa ex "norma:hal/consolum" privata consolum
+functio read() → ignotum {
+    redde consolum.lege()
+}
+"#,
+    );
+    assert!(provider_dump.contains("runtime provider sym#"));
+    assert!(provider_dump.contains("::sym#"));
+}
+
+#[test]
+fn rejects_unsupported_runtime_method_shapes() {
+    let unit = analyze(r#"functio malum(lista<numerus> xs) → numerus { redde xs.ordina() }"#);
+    let errors = lower_analyzed_unit(&unit).expect_err("unsupported method remains fail-closed");
+
+    assert!(errors.iter().any(|err| err
         .message
-        .contains("nota before print/runtime intrinsic MIR lowering"));
+        .contains("method call before runtime/provider MIR lowering")));
 }
 
 #[test]

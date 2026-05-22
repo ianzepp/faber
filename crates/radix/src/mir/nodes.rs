@@ -310,6 +310,7 @@ pub enum MirDiagnosticKind {
 pub struct MirConversion {
     pub flavor: MirConversionFlavor,
     pub target_ty: MirType,
+    pub params: Vec<Symbol>,
     pub fallback: Option<MirOperand>,
 }
 

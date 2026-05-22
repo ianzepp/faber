@@ -389,6 +389,7 @@ fn dump_program_renders_structured_runtime_intrinsics() {
                                 intrinsic: MirIntrinsic::Convert(MirConversion {
                                     flavor: MirConversionFlavor::Runtime,
                                     target_ty: number,
+                                    params: Vec::new(),
                                     fallback: Some(MirOperand::Constant(MirConstant::Int(0))),
                                 }),
                                 args: vec![MirOperand::Place(MirPlace::local(MirLocalId(0)))],

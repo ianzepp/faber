@@ -1,5 +1,7 @@
 # Phase 7 Delivery: Runtime Intrinsic Boundary
 
+**Status**: complete.
+
 ## Interpreted Problem
 
 After Phase 6A defines the shared MIR contract, Phase 7 should lower runtime-backed Faber operations into target-neutral MIR intrinsics and provider calls. The goal is to move semantic runtime operation identity out of target code generators without importing Rust, Go, TypeScript, WASM, or native linkage details into MIR.

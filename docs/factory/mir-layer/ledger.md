@@ -620,3 +620,44 @@ Behavior boundary:
 - Map/object spread remains unsupported in MIR and fails clearly.
 - Runtime/provider lowering remains Phase 7.
 - No target backend consumes MIR.
+
+## Phase 7 Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- Diagnostic verbs lower to `MirIntrinsic::Diagnostic` runtime calls.
+- String-template application lowers to `MirIntrinsic::FormatString` with template symbol and evaluated arguments.
+- Runtime conversion (`⇒`) lowers to `MirIntrinsic::Convert` with runtime flavor, target type, hint symbols, source value, and optional fallback.
+- Selected collection methods lower to `MirIntrinsic::Collection`: append, immutable append, index/read, length, and contains.
+- Imported provider/module calls lower to `MirIntrinsic::Provider` using source import identity and method/function symbols.
+- Unsupported method shapes remain fail-closed with an explicit MIR diagnostic.
+- Target backends remain unchanged and do not consume MIR.
+
+Representative MIR dump shapes:
+
+```text
+runtime diagnostic nota(const string sym#1) -> ty#5
+runtime diagnostic vide(_0) -> ty#5
+runtime diagnostic mone(const string sym#2) -> ty#5
+```
+
+```text
+%0 = runtime format_string template sym#2(_0) -> ty#0
+%0 = runtime convert runtime -> ty#1 hints [sym#3, sym#4] fallback const int 0(_0) -> ty#1
+%0 = runtime collection length(_0) -> ty#1
+%0 = runtime provider sym#1/sym#2::sym#3() -> ty#7
+```
+
+Validation:
+
+- `cargo test -p radix mir` passed: 50 tests passed.
+- `cargo test -p radix` passed: 379 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.
+
+Behavior boundary:
+
+- Phase 7 covers the runtime operation classes represented by the focused MIR fixtures.
+- Runtime operation identity is target-neutral; MIR does not encode Rust, Go, TypeScript, WASM, native linkage, Cargo dependency, or `@ verte` target translation strings for these operations.
+- Collection pipelines, closure-backed methods, runtime ABI/linkage, backend consumption, and MIR validation remain deferred.

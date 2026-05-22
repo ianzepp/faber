@@ -4,12 +4,13 @@ use crate::hir::{
     HirItemKind, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
     HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
 };
-use crate::lexer::Span;
+use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{
     dump_program, MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp, MirBlock, MirBlockId,
-    MirCallee, MirConstant, MirFunction, MirFunctionId, MirKeyValueOperand, MirLocal as MirLocalDecl, MirLocalId,
-    MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirParam, MirPlace, MirProgram,
-    MirProjection, MirStmt, MirStmtKind, MirTemp, MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp,
+    MirCallee, MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor, MirDiagnosticKind, MirFunction,
+    MirFunctionId, MirIntrinsic, MirKeyValueOperand, MirLocal as MirLocalDecl, MirLocalId, MirNamedOperand, MirOperand,
+    MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirParam, MirPlace, MirProgram, MirProjection, MirProvider,
+    MirRuntimeCall, MirStmt, MirStmtKind, MirTemp, MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp,
     MirValue, MirValueId, MirValueKind,
 };
 use crate::semantic::{Primitive, Type, TypeId, TypeTable};
@@ -98,19 +99,16 @@ impl MirLowerer<'_> {
         };
 
         let error_ty = function.err_ty.map(MirType::semantic);
-        let function_errors = self.function_error_map();
-        let structs = self.struct_field_map();
-        let variant_parents = self.variant_parent_map();
-        let variant_fields = self.variant_field_map();
+        let context = FunctionBuilderContext {
+            interner: Some(&self.unit.interner),
+            function_errors: self.function_error_map(),
+            structs: self.struct_field_map(),
+            variant_parents: self.variant_parent_map(),
+            variant_fields: self.variant_field_map(),
+            provider_imports: self.provider_import_map(),
+        };
         let (params, locals, temps, blocks, errors) = {
-            let mut builder = FunctionBuilder::for_function(
-                &self.unit.types,
-                error_ty,
-                function_errors,
-                structs,
-                variant_parents,
-                variant_fields,
-            );
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context);
             for param in &function.params {
                 builder.add_param(param.def_id, param.name, param.ty, param.span);
             }
@@ -187,6 +185,22 @@ impl MirLowerer<'_> {
         fields
     }
 
+    fn provider_import_map(&self) -> FxHashMap<DefId, ProviderImport> {
+        let mut providers = FxHashMap::default();
+        for item in &self.unit.hir.items {
+            let HirItemKind::Import(import) = &item.kind else {
+                continue;
+            };
+            for import_item in &import.items {
+                providers.insert(
+                    import_item.def_id,
+                    ProviderImport { module: vec![import.path], item: import_item.name },
+                );
+            }
+        }
+        providers
+    }
+
     fn lower_entry(&mut self, entry: &HirBlock) {
         if !entry_is_empty(entry) {
             self.errors.push(MirError::unsupported(
@@ -237,13 +251,39 @@ struct HandlerContext {
     error_block: MirBlockId,
 }
 
-struct FunctionBuilder<'a> {
-    types: &'a TypeTable,
-    error_ty: Option<MirType>,
+#[derive(Debug, Clone)]
+struct ProviderImport {
+    module: Vec<Symbol>,
+    item: Symbol,
+}
+
+struct FunctionBuilderContext<'a> {
+    interner: Option<&'a Interner>,
     function_errors: FxHashMap<DefId, MirType>,
     structs: FxHashMap<DefId, Vec<&'a HirField>>,
     variant_parents: FxHashMap<DefId, DefId>,
     variant_fields: FxHashMap<DefId, Vec<crate::lexer::Symbol>>,
+    provider_imports: FxHashMap<DefId, ProviderImport>,
+}
+
+impl FunctionBuilderContext<'_> {
+    #[cfg(test)]
+    fn empty() -> Self {
+        Self {
+            interner: None,
+            function_errors: FxHashMap::default(),
+            structs: FxHashMap::default(),
+            variant_parents: FxHashMap::default(),
+            variant_fields: FxHashMap::default(),
+            provider_imports: FxHashMap::default(),
+        }
+    }
+}
+
+struct FunctionBuilder<'a> {
+    types: &'a TypeTable,
+    error_ty: Option<MirType>,
+    context: FunctionBuilderContext<'a>,
     bindings: FxHashMap<DefId, LocalBinding>,
     params: Vec<MirParam>,
     locals: Vec<MirLocalDecl>,
@@ -259,31 +299,14 @@ struct FunctionBuilder<'a> {
 impl<'a> FunctionBuilder<'a> {
     #[cfg(test)]
     fn new(types: &'a TypeTable) -> Self {
-        Self::for_function(
-            types,
-            None,
-            FxHashMap::default(),
-            FxHashMap::default(),
-            FxHashMap::default(),
-            FxHashMap::default(),
-        )
+        Self::for_function(types, None, FunctionBuilderContext::empty())
     }
 
-    fn for_function(
-        types: &'a TypeTable,
-        error_ty: Option<MirType>,
-        function_errors: FxHashMap<DefId, MirType>,
-        structs: FxHashMap<DefId, Vec<&'a HirField>>,
-        variant_parents: FxHashMap<DefId, DefId>,
-        variant_fields: FxHashMap<DefId, Vec<crate::lexer::Symbol>>,
-    ) -> Self {
+    fn for_function(types: &'a TypeTable, error_ty: Option<MirType>, context: FunctionBuilderContext<'a>) -> Self {
         Self {
             types,
             error_ty,
-            function_errors,
-            structs,
-            variant_parents,
-            variant_fields,
+            context,
             bindings: FxHashMap::default(),
             params: Vec::new(),
             locals: Vec::new(),
@@ -436,6 +459,7 @@ impl<'a> FunctionBuilder<'a> {
             HirExprKind::Binary(HirBinOp::Coalesce, lhs, rhs) => self.lower_coalesce(lhs, rhs, expr),
             HirExprKind::Binary(op, lhs, rhs) => self.lower_binary(*op, lhs, rhs, expr),
             HirExprKind::Call(callee, args) => self.lower_call(callee, args, expr),
+            HirExprKind::MethodCall(receiver, method, args) => self.lower_method_call(receiver, *method, args, expr),
             HirExprKind::Field(object, name) => self.lower_field(object, *name, expr),
             HirExprKind::Index(object, index) => self.lower_index(object, index, expr),
             HirExprKind::OptionalChain(object, chain) => self.lower_optional_chain(object, chain, expr),
@@ -444,6 +468,11 @@ impl<'a> FunctionBuilder<'a> {
             HirExprKind::Struct(def_id, fields) => self.lower_struct_literal(*def_id, fields, expr),
             HirExprKind::Tuple(items) => self.lower_tuple(items, expr),
             HirExprKind::Verte { source, target, entries } => self.lower_verte(source, *target, entries.as_ref(), expr),
+            HirExprKind::Scribe(kind, args) => self.lower_scribe(*kind, args, expr),
+            HirExprKind::Scriptum(template, args) => self.lower_scriptum(*template, args, expr),
+            HirExprKind::Conversio { source, target, params, fallback } => {
+                self.lower_conversio(source, *target, params, fallback.as_deref(), expr)
+            }
             HirExprKind::Block(block) => self.lower_block_expr(block, expr),
             HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.lower_si_expr(cond, then_block, then_catch.as_deref(), else_block, expr)
@@ -520,6 +549,51 @@ impl<'a> FunctionBuilder<'a> {
         });
         self.terminate_current(MirTerminatorKind::Unreachable, span);
         None
+    }
+
+    fn lower_scribe(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
+        let mut lowered_args = Vec::with_capacity(args.len());
+        for arg in args {
+            lowered_args.push(self.lower_expr(arg)?);
+        }
+        let ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind)), lowered_args, ty, expr.span))
+    }
+
+    fn lower_scriptum(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
+        let mut lowered_args = Vec::with_capacity(args.len());
+        for arg in args {
+            lowered_args.push(self.lower_expr(arg)?);
+        }
+        let ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(MirIntrinsic::FormatString { template }, lowered_args, ty, expr.span))
+    }
+
+    fn lower_conversio(
+        &mut self,
+        source: &HirExpr,
+        target: TypeId,
+        params: &[Symbol],
+        fallback: Option<&HirExpr>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let source = self.lower_expr(source)?;
+        let fallback = match fallback {
+            Some(fallback) => Some(self.lower_expr(fallback)?),
+            None => None,
+        };
+        let ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(
+            MirIntrinsic::Convert(MirConversion {
+                flavor: MirConversionFlavor::Runtime,
+                target_ty: MirType::semantic(target),
+                params: params.to_vec(),
+                fallback,
+            }),
+            vec![source],
+            ty,
+            expr.span,
+        ))
     }
 
     fn lower_handled_expr(&mut self, body: &HirBlock, catch: &HirCape, expr: &HirExpr) -> Option<MirOperand> {
@@ -834,7 +908,7 @@ impl<'a> FunctionBuilder<'a> {
                     ));
                     return None;
                 };
-                if !self.variant_parents.contains_key(def_id) {
+                if !self.context.variant_parents.contains_key(def_id) {
                     self.errors.push(MirError::unsupported(
                         expr.span,
                         "enum construction from non-variant call before aggregate MIR lowering",
@@ -896,7 +970,7 @@ impl<'a> FunctionBuilder<'a> {
             fields.push(MirNamedOperand { name, value: self.lower_expr(value)? });
         }
 
-        if let Some(defaults) = self.structs.get(&def_id).cloned() {
+        if let Some(defaults) = self.context.structs.get(&def_id).cloned() {
             for field in defaults {
                 if supplied.contains(&field.name) {
                     continue;
@@ -1066,6 +1140,48 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
+    fn lower_method_call(
+        &mut self,
+        receiver: &HirExpr,
+        method: Symbol,
+        args: &[HirExpr],
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        if let HirExprKind::Path(def_id) = receiver.kind {
+            if let Some(import) = self.context.provider_imports.get(&def_id).cloned() {
+                let mut lowered_args = Vec::with_capacity(args.len());
+                for arg in args {
+                    lowered_args.push(self.lower_expr(arg)?);
+                }
+                let ty = self.expr_ty(expr)?;
+                let mut module = import.module;
+                module.push(import.item);
+                return Some(self.runtime_call_value(
+                    MirIntrinsic::Provider(MirProvider { module, name: method }),
+                    lowered_args,
+                    ty,
+                    expr.span,
+                ));
+            }
+        }
+
+        let Some(op) = self.collection_method_op(receiver, method, args, expr.span) else {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "method call before runtime/provider MIR lowering",
+            ));
+            return None;
+        };
+
+        let mut lowered_args = Vec::with_capacity(args.len() + 1);
+        lowered_args.push(self.lower_expr(receiver)?);
+        for arg in args {
+            lowered_args.push(self.lower_expr(arg)?);
+        }
+        let ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(MirIntrinsic::Collection(op), lowered_args, ty, expr.span))
+    }
+
     fn lower_call(&mut self, callee: &HirExpr, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let HirExprKind::Path(def_id) = &callee.kind else {
             self.errors.push(MirError::unsupported(
@@ -1083,12 +1199,21 @@ impl<'a> FunctionBuilder<'a> {
 
         let ty = self.expr_ty(expr)?;
 
-        if self.variant_parents.contains_key(def_id) {
+        if let Some(import) = self.context.provider_imports.get(def_id).cloned() {
+            return Some(self.runtime_call_value(
+                MirIntrinsic::Provider(MirProvider { module: import.module, name: import.item }),
+                lowered_args,
+                ty,
+                expr.span,
+            ));
+        }
+
+        if self.context.variant_parents.contains_key(def_id) {
             let fields = self.variant_payload(*def_id, lowered_args);
             return Some(self.construct_temp(MirAggregateKind::EnumVariant(*def_id), fields, ty, expr.span));
         }
 
-        if let Some(_err_ty) = self.function_errors.get(def_id).copied() {
+        if let Some(_err_ty) = self.context.function_errors.get(def_id).copied() {
             let Some(handler) = self.handlers.last().cloned() else {
                 self.errors.push(MirError::unsupported(
                     expr.span,
@@ -1451,8 +1576,37 @@ impl<'a> FunctionBuilder<'a> {
         MirOperand::Temp(temp)
     }
 
+    fn runtime_call_value(
+        &mut self,
+        intrinsic: MirIntrinsic,
+        args: Vec<MirOperand>,
+        return_ty: MirType,
+        span: Span,
+    ) -> MirOperand {
+        if self.is_vacuum(return_ty) {
+            self.append_stmt(MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: None,
+                    call: MirRuntimeCall { intrinsic, args, return_ty },
+                },
+                span,
+            });
+            return MirOperand::Constant(MirConstant::Unit);
+        }
+
+        let temp = self.push_temp(return_ty, span);
+        self.append_stmt(MirStmt {
+            kind: MirStmtKind::RuntimeCall {
+                destination: Some(MirPlace::temp(temp)),
+                call: MirRuntimeCall { intrinsic, args, return_ty },
+            },
+            span,
+        });
+        MirOperand::Temp(temp)
+    }
+
     fn variant_payload(&self, variant: DefId, args: Vec<MirOperand>) -> MirAggregateFields {
-        let Some(field_names) = self.variant_fields.get(&variant) else {
+        let Some(field_names) = self.context.variant_fields.get(&variant) else {
             return MirAggregateFields::Ordered(args.into_iter().map(MirAggregateItem::Operand).collect());
         };
         if field_names.len() != args.len() {
@@ -1590,6 +1744,44 @@ impl<'a> FunctionBuilder<'a> {
         MirLocalId(self.locals.len() as u32)
     }
 
+    fn collection_method_op(
+        &mut self,
+        receiver: &HirExpr,
+        method: Symbol,
+        args: &[HirExpr],
+        span: Span,
+    ) -> Option<MirCollectionOp> {
+        let Some(receiver_ty) = receiver.ty else {
+            self.errors
+                .push(MirError::missing_type(span, "collection method receiver"));
+            return None;
+        };
+        let method_name = self.resolve_method_name(method)?;
+        let receiver_ty = self.normalized_type(receiver_ty);
+        let is_array = matches!(receiver_ty, Type::Array(_));
+        let is_map = matches!(receiver_ty, Type::Map(_, _));
+        let is_set = matches!(receiver_ty, Type::Set(_));
+        let is_text = matches!(receiver_ty, Type::Primitive(Primitive::Textus));
+
+        match method_name {
+            "appende" | "adde" if args.len() == 1 && is_array => Some(MirCollectionOp::Append),
+            "addita" if args.len() == 1 && is_array => Some(MirCollectionOp::AppendImmutable),
+            "accipe" if args.len() == 1 && (is_array || is_map || is_text) => Some(MirCollectionOp::Index),
+            "longitudo" if args.is_empty() && (is_array || is_map || is_set || is_text) => {
+                Some(MirCollectionOp::Length)
+            }
+            "continet" if args.len() == 1 && (is_array || is_set || is_text) => Some(MirCollectionOp::Contains),
+            "habet" if args.len() == 1 && is_map => Some(MirCollectionOp::Contains),
+            _ => None,
+        }
+    }
+
+    fn resolve_method_name(&self, method: Symbol) -> Option<&str> {
+        self.context
+            .interner
+            .map(|interner| interner.resolve(method))
+    }
+
     fn expr_ty(&mut self, expr: &HirExpr) -> Option<MirType> {
         let Some(ty) = expr.ty else {
             self.errors
@@ -1601,6 +1793,15 @@ impl<'a> FunctionBuilder<'a> {
 
     fn is_vacuum(&self, ty: MirType) -> bool {
         ty.semantic_id() == self.types.primitive(Primitive::Vacuum)
+    }
+
+    fn normalized_type(&self, mut ty: TypeId) -> &Type {
+        loop {
+            match self.types.get(ty) {
+                Type::Alias(_, inner) => ty = *inner,
+                other => return other,
+            }
+        }
     }
 }
 
@@ -1692,6 +1893,15 @@ fn scribe_kind_name(kind: HirScribeKind) -> &'static str {
         HirScribeKind::Vide => "vide before print/runtime intrinsic MIR lowering",
         HirScribeKind::Mone => "mone before print/runtime intrinsic MIR lowering",
         HirScribeKind::Scribe => "scribe before print/runtime intrinsic MIR lowering",
+    }
+}
+
+fn mir_diagnostic_kind(kind: HirScribeKind) -> MirDiagnosticKind {
+    match kind {
+        HirScribeKind::Nota => MirDiagnosticKind::Nota,
+        HirScribeKind::Vide => MirDiagnosticKind::Vide,
+        HirScribeKind::Mone => MirDiagnosticKind::Mone,
+        HirScribeKind::Scribe => MirDiagnosticKind::Scribe,
     }
 }
 

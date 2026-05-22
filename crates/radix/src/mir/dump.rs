@@ -306,15 +306,29 @@ fn diagnostic_kind(kind: MirDiagnosticKind) -> &'static str {
 }
 
 fn conversion_intrinsic(conversion: &MirConversion) -> String {
+    let params = if conversion.params.is_empty() {
+        String::new()
+    } else {
+        format!(
+            " hints [{}]",
+            conversion
+                .params
+                .iter()
+                .map(|symbol| format!("sym#{}", symbol.0))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    };
     let fallback = conversion
         .fallback
         .as_ref()
         .map(|value| format!(" fallback {}", operand(value)))
         .unwrap_or_default();
     format!(
-        "convert {} -> {}{}",
+        "convert {} -> {}{}{}",
         conversion_flavor(conversion.flavor),
         ty(conversion.target_ty),
+        params,
         fallback
     )
 }
