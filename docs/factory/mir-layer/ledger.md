@@ -748,3 +748,46 @@ Planning decision:
 Delivery document:
 
 - `docs/factory/mir-layer/phase-9-delivery.md`
+
+## Phase 9 Baseline
+
+Status: complete after verification.
+
+Implemented artifacts:
+
+- `crates/radix/src/mir/rust_probe.rs`
+- `crates/radix/src/mir/rust_probe_test.rs`
+- `docs/factory/mir-layer/phase-9-execution.md`
+
+Probe boundary:
+
+- The probe API is `emit_rust_probe(program, types, interner)`.
+- Tests validate MIR before probe emission, preserving the intended `validated MIR -> target code` boundary.
+- The probe lives under `crates/radix/src/mir/` and no durable `codegen/rust_mir.rs` backend surface was added.
+- Existing HIR-to-Rust target dispatch remains unchanged.
+
+Supported subset:
+
+- Library-style Rust functions with synthetic function names.
+- Primitive Rust type spelling for `textus`, `numerus`, `fractus`, `bivalens`, `vacuum`, and `nihil`.
+- Locals, temps, primitive constants, assignments, primitive unary/binary operations, and direct in-program function calls.
+- `return`, `goto`, `branch`, and `unreachable`.
+- Simple block-state-loop emission for normalized MIR control flow.
+
+Fail-closed coverage:
+
+- `return_error`
+- `try_call`
+- `switch`
+- runtime calls
+- aggregate construction
+- place projections
+- indirect calls
+- unsupported types and option operations
+
+Validation:
+
+- `cargo test -p radix mir` passed: 70 tests passed.
+- `cargo test -p radix` passed: 399 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `cargo fmt --all --check` passed.
+- `./scripta/ci` passed.

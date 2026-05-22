@@ -7,9 +7,11 @@
 mod dump;
 mod lower;
 mod nodes;
+mod rust_probe;
 mod validate;
 
 pub use dump::dump_program;
 pub use lower::{dump_analyzed_unit, lower_analyzed_unit, MirError};
 pub use nodes::*;
+pub use rust_probe::{emit_rust_probe, MirRustProbeError};
 pub use validate::{validate_program, MirFunctionSignature, MirValidationContext, MirValidationError};
