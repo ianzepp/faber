@@ -101,8 +101,13 @@ pub fn generate_expr(
         // WHY: Go is GC'd — ref/deref are no-ops, just emit the inner expression.
         HirExprKind::Ref(_, inner) | HirExprKind::Deref(inner) => generate_expr(codegen, inner, types, w)?,
         HirExprKind::Block(block) => generate_block_expr(codegen, expr, block, types, w)?,
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch: None, else_block } => {
             generate_if_expr(codegen, expr, cond, then_block, else_block.as_ref(), types, w)?;
+        }
+        HirExprKind::Si { then_catch: Some(_), .. } | HirExprKind::Handled { .. } => {
+            return Err(crate::codegen::CodegenError {
+                message: "structured cape handlers are not emitted by Go codegen in Phase 5C".to_owned(),
+            });
         }
         HirExprKind::Discerne(_, _) => {
             // TODO: switch statement codegen

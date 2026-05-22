@@ -207,17 +207,22 @@ pub fn generate_expr(
             in_entry,
             suppress_error_propagation,
         )?,
-        HirExprKind::Si(cond, then, else_) => generate_if_expr(
+        HirExprKind::Si { cond, then_block, then_catch: None, else_block } => generate_if_expr(
             codegen,
             cond,
-            then,
-            else_.as_ref(),
+            then_block,
+            else_block.as_ref(),
             types,
             w,
             in_failable_fn,
             in_entry,
             suppress_error_propagation,
         )?,
+        HirExprKind::Si { then_catch: Some(_), .. } | HirExprKind::Handled { .. } => {
+            return Err(CodegenError {
+                message: "structured cape handlers are not emitted by Rust codegen in Phase 5C".to_owned(),
+            });
+        }
         HirExprKind::Discerne(scrutinees, arms) => generate_match_expr(
             codegen,
             scrutinees,

@@ -270,8 +270,13 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
                 })
             }),
         HirExprKind::Block(block) | HirExprKind::Loop(block) => find_error_expr_in_block(block),
-        HirExprKind::Si(cond, then_block, else_block) => find_error_expr_in_expr(cond)
+        HirExprKind::Si { cond, then_block, then_catch, else_block } => find_error_expr_in_expr(cond)
             .or_else(|| find_error_expr_in_block(then_block))
+            .or_else(|| {
+                then_catch
+                    .as_ref()
+                    .and_then(|catch| find_error_expr_in_block(&catch.body))
+            })
             .or_else(|| else_block.as_ref().and_then(find_error_expr_in_block)),
         HirExprKind::Discerne(scrutinees, arms) => scrutinees
             .iter()
@@ -309,6 +314,9 @@ fn find_error_expr_in_expr(expr: &crate::hir::HirExpr) -> Option<crate::lexer::S
         HirExprKind::Tempta { body, catch, finally } => find_error_expr_in_block(body)
             .or_else(|| catch.as_ref().and_then(find_error_expr_in_block))
             .or_else(|| finally.as_ref().and_then(find_error_expr_in_block)),
+        HirExprKind::Handled { body, catch } => {
+            find_error_expr_in_block(body).or_else(|| find_error_expr_in_block(&catch.body))
+        }
         HirExprKind::Clausura(_, _, body) => find_error_expr_in_expr(body),
         HirExprKind::Verte { source, entries, .. } => find_error_expr_in_expr(source).or_else(|| {
             entries.as_ref().and_then(|entries| {

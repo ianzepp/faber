@@ -69,15 +69,15 @@ Test modifiers follow the case or suite name. `temporis`, `metior`, `repete`, an
 
 ## Error Handling
 
-Keywords for managing errors and cleanup:
+Keywords for recoverable alternate exits and fatal failure:
 
 | Verbum   | Meaning    | Usage                                                         |
 | -------- | ---------- | ------------------------------------------------------------- |
-| `tempta` | try        | Begin error-handling block                                    |
-| `cape`   | catch      | Handle thrown error                                           |
-| `demum`  | finally    | Cleanup block (runs regardless)                               |
-| `iace`   | throw      | Throw recoverable error                                       |
+| `cape`   | catch      | Handle a structured statement or conditional arm alternate exit |
+| `iace`   | throw      | Exit through a recoverable alternate path                     |
 | `mori`   | panic      | Fatal/unrecoverable error                                     |
+
+`tempta` is a rejected legacy try/catch surface. `demum` cleanup semantics are deferred.
 
 ---
 

@@ -441,3 +441,48 @@ Planning artifacts:
 - `docs/factory/mir-layer/phase-5b-delivery.md` tightened around the no-`tempta` hardening boundary.
 - `docs/factory/mir-layer/phase-5c-delivery.md` added for structured `cape` handling.
 - `docs/factory/mir-layer/plan.md` updated to include Phase 5C.
+
+## Phase 5C Baseline
+
+Status: complete.
+
+Implemented artifacts:
+
+- `EBNF.md` and `docs/grammatica/errores.md` now describe structured `cape` attachment and reject `tempta` as legacy syntax.
+- `secus { ... } cape err { ... }` now parses as an arm-scoped handler.
+- Bare `{ ... } cape err { ... }` remains rejected.
+- Parser diagnostics reject `tempta` with a migration note to `fac { ... } cape`.
+- HIR now carries explicit `HirCape` metadata and structured `Handled` expressions instead of lowering `fac ... cape` through `Tempta`.
+- Typechecking distinguishes function alternate-exit sinks from local handler sinks.
+- Local handlers accept `iace` without requiring the enclosing function to declare `⇥`.
+- Local handlers accept failable direct calls and infer the handler binding type from the caught alternate-exit type.
+- Failable calls outside local handlers remain rejected until propagation syntax is designed.
+- MIR lowers handled `iace` by assigning the payload into the handler binding local and jumping to the handler block.
+- MIR lowers handled failable direct calls through an explicit `try_call` terminator with success and error edges.
+- `mori` remains fatal and does not route through local handlers.
+
+Representative MIR shapes:
+
+```text
+%0 = const string sym#N: ty#0
+_0 = %0: ty#0
+goto bb_handler
+```
+
+```text
+%0 = try_call def#0() ok bb_success error _0 -> bb_handler
+```
+
+Validation:
+
+- `cargo test -p radix cape` passed: 11 tests passed.
+- `cargo test -p radix mir` passed: 37 tests passed.
+- `cargo test -p radix` passed: 366 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- `./scripta/ci` passed.
+
+Behavior boundary:
+
+- Handler binding inference remains conservative: one assignable caught error type per handler, with `ignotum` for handlers that catch no typed alternate exit.
+- General propagation syntax remains out of scope.
+- `demum` cleanup/finally semantics remain deferred.
+- Target backends still do not consume MIR. Structured `cape` codegen remains out of scope except for existing target rejection/fallback behavior.

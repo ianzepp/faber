@@ -228,9 +228,12 @@ fn collect_expr_names(names: &mut FxHashMap<crate::hir::DefId, Symbol>, expr: &H
             }
         }
         HirExprKind::Block(block) | HirExprKind::Loop(block) => collect_block_names(names, Some(block)),
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
             collect_expr_names(names, cond);
             collect_block_names(names, Some(then_block));
+            if let Some(catch) = then_catch {
+                collect_block_names(names, Some(&catch.body));
+            }
             collect_block_names(names, else_block.as_ref());
         }
         HirExprKind::Discerne(scrutinees, arms) => {
@@ -296,6 +299,10 @@ fn collect_expr_names(names: &mut FxHashMap<crate::hir::DefId, Symbol>, expr: &H
             collect_block_names(names, Some(body));
             collect_block_names(names, catch.as_ref());
             collect_block_names(names, finally.as_ref());
+        }
+        HirExprKind::Handled { body, catch } => {
+            collect_block_names(names, Some(body));
+            collect_block_names(names, Some(&catch.body));
         }
         HirExprKind::Clausura(params, _, body) => {
             for param in params {

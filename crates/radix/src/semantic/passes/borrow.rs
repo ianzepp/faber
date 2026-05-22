@@ -280,9 +280,12 @@ impl<'a> BorrowChecker<'a> {
                 }
             }
             HirExprKind::Block(block) => self.check_block(block),
-            HirExprKind::Si(cond, then_block, else_block) => {
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.check_expr(cond);
                 self.check_block(then_block);
+                if let Some(catch) = then_catch {
+                    self.check_block(&catch.body);
+                }
                 if let Some(block) = else_block {
                     self.check_block(block);
                 }
@@ -361,6 +364,10 @@ impl<'a> BorrowChecker<'a> {
                 }
             }
             HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.check_expr(value),
+            HirExprKind::Handled { body, catch } => {
+                self.check_block(body);
+                self.check_block(&catch.body);
+            }
             HirExprKind::Tempta { body, catch, finally } => {
                 self.check_block(body);
                 if let Some(catch) = catch {

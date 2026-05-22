@@ -191,9 +191,15 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirExprKind::Block(block) => self.finalize_block(block),
-            HirExprKind::Si(cond, then_block, else_block) => {
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.finalize_expr(cond);
                 self.finalize_block(then_block);
+                if let Some(catch) = then_catch {
+                    if let Some(ty) = catch.binding_ty {
+                        catch.binding_ty = Some(self.resolve_type(ty));
+                    }
+                    self.finalize_block(&mut catch.body);
+                }
                 if let Some(block) = else_block {
                     self.finalize_block(block);
                 }
@@ -253,6 +259,13 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.finalize_expr(value),
+            HirExprKind::Handled { body, catch } => {
+                self.finalize_block(body);
+                if let Some(ty) = catch.binding_ty {
+                    catch.binding_ty = Some(self.resolve_type(ty));
+                }
+                self.finalize_block(&mut catch.body);
+            }
             HirExprKind::Tempta { body, catch, finally } => {
                 self.finalize_block(body);
                 if let Some(catch) = catch {

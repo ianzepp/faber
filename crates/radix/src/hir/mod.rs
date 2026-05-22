@@ -34,7 +34,7 @@ mod nodes;
 
 pub use lower::{lower, lower_with_cli, LowerError};
 pub use nodes::{
-    DefId, HirAd, HirAdBinding, HirArrayElement, HirBinOp, HirBlock, HirCasuArm, HirCollectionFilter,
+    DefId, HirAd, HirAdBinding, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirCollectionFilter,
     HirCollectionFilterKind, HirCollectionTransform, HirConst, HirEndpointVerb, HirEnum, HirExpr, HirExprKind,
     HirField, HirFunction, HirId, HirImport, HirImportItem, HirInterface, HirInterfaceMethod, HirItem, HirItemKind,
     HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,

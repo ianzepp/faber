@@ -640,8 +640,18 @@ fn scan_else_for_go_unsupported_errors(
                 scan_else_for_go_unsupported_errors(else_, file, dynamic_externa, diagnostics);
             }
         }
-        SecusClause::Block(block) => scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics),
-        SecusClause::Stmt(stmt) => scan_stmt_for_go_unsupported_errors(stmt, file, dynamic_externa, diagnostics),
+        SecusClause::Block { body, catch } => {
+            scan_block_for_go_unsupported_errors(body, file, dynamic_externa, diagnostics);
+            if let Some(catch) = catch {
+                scan_block_for_go_unsupported_errors(&catch.body, file, dynamic_externa, diagnostics);
+            }
+        }
+        SecusClause::Stmt { stmt, catch } => {
+            scan_stmt_for_go_unsupported_errors(stmt, file, dynamic_externa, diagnostics);
+            if let Some(catch) = catch {
+                scan_block_for_go_unsupported_errors(&catch.body, file, dynamic_externa, diagnostics);
+            }
+        }
     }
 }
 
@@ -1115,8 +1125,28 @@ fn scan_else_for_rust_unsupported_errors(clause: &SecusClause, file: &str, diagn
                 scan_else_for_rust_unsupported_errors(else_, file, diagnostics);
             }
         }
-        SecusClause::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
-        SecusClause::Stmt(stmt) => scan_stmt_for_rust_unsupported_errors(stmt, file, diagnostics),
+        SecusClause::Block { body, catch } => {
+            scan_block_for_rust_unsupported_errors(body, file, diagnostics);
+            if let Some(catch) = catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+        }
+        SecusClause::Stmt { stmt, catch } => {
+            scan_stmt_for_rust_unsupported_errors(stmt, file, diagnostics);
+            if let Some(catch) = catch {
+                diagnostics.push(rust_target_exception_diagnostic(
+                    file,
+                    catch.span,
+                    "cape is not supported for Rust targets",
+                ));
+                scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+            }
+        }
     }
 }
 
@@ -1410,8 +1440,18 @@ fn scan_else_for_rust_warnings(else_: &SecusClause, file: &str, diagnostics: &mu
                 scan_else_for_rust_warnings(else_clause, file, diagnostics);
             }
         }
-        SecusClause::Block(block) => scan_block_for_rust_warnings(block, file, diagnostics),
-        SecusClause::Stmt(stmt) => scan_stmt_for_rust_warnings(stmt, file, diagnostics),
+        SecusClause::Block { body, catch } => {
+            scan_block_for_rust_warnings(body, file, diagnostics);
+            if let Some(catch) = catch {
+                scan_block_for_rust_warnings(&catch.body, file, diagnostics);
+            }
+        }
+        SecusClause::Stmt { stmt, catch } => {
+            scan_stmt_for_rust_warnings(stmt, file, diagnostics);
+            if let Some(catch) = catch {
+                scan_block_for_rust_warnings(&catch.body, file, diagnostics);
+            }
+        }
     }
 }
 

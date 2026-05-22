@@ -241,11 +241,17 @@ impl<'a> Lowerer<'a> {
     fn lower_dum(&mut self, while_stmt: &crate::syntax::DumStmt) -> HirStmtKind {
         let cond = self.lower_expr(&while_stmt.cond);
         let body = self.lower_ergo_body(&while_stmt.body);
-        let expr = HirExpr {
+        let dum = HirExpr {
             id: self.next_hir_id(),
             kind: HirExprKind::Dum(Box::new(cond), body),
             ty: None,
             span: self.current_span,
+        };
+        let expr = if let Some(catch) = &while_stmt.catch {
+            let cape = self.lower_cape_clause(catch);
+            self.handled_expr(dum, cape)
+        } else {
+            dum
         };
 
         HirStmtKind::Expr(expr)
@@ -473,7 +479,12 @@ impl<'a> Lowerer<'a> {
 
         let mut expr = HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Si(Box::new(self.lower_expr(&first.cond)), self.lower_ergo_body(&first.body), None),
+            kind: HirExprKind::Si {
+                cond: Box::new(self.lower_expr(&first.cond)),
+                then_block: self.lower_ergo_body(&first.body),
+                then_catch: None,
+                else_block: None,
+            },
             ty: None,
             span: first.span,
         };
@@ -481,11 +492,12 @@ impl<'a> Lowerer<'a> {
         for clause in clauses {
             expr = HirExpr {
                 id: self.next_hir_id(),
-                kind: HirExprKind::Si(
-                    Box::new(self.lower_expr(&clause.cond)),
-                    self.lower_ergo_body(&clause.body),
-                    Some(HirBlock { stmts: Vec::new(), expr: Some(Box::new(expr)), span: clause.span }),
-                ),
+                kind: HirExprKind::Si {
+                    cond: Box::new(self.lower_expr(&clause.cond)),
+                    then_block: self.lower_ergo_body(&clause.body),
+                    then_catch: None,
+                    else_block: Some(HirBlock { stmts: Vec::new(), expr: Some(Box::new(expr)), span: clause.span }),
+                },
                 ty: None,
                 span: clause.span,
             };
@@ -635,6 +647,10 @@ impl<'a> Lowerer<'a> {
     fn lower_si_expr(&mut self, if_stmt: &crate::syntax::SiStmt) -> HirExpr {
         let cond = self.lower_expr(&if_stmt.cond);
         let then_block = self.lower_ergo_body(&if_stmt.then);
+        let then_catch = if_stmt
+            .catch
+            .as_ref()
+            .map(|catch| Box::new(self.lower_cape_clause(catch)));
         let else_block = if_stmt
             .else_
             .as_ref()
@@ -642,7 +658,7 @@ impl<'a> Lowerer<'a> {
 
         HirExpr {
             id: self.next_hir_id(),
-            kind: HirExprKind::Si(Box::new(cond), then_block, else_block),
+            kind: HirExprKind::Si { cond: Box::new(cond), then_block, then_catch, else_block },
             ty: None,
             span: self.current_span,
         }
@@ -654,9 +670,25 @@ impl<'a> Lowerer<'a> {
                 let expr = self.lower_si_expr(stmt);
                 self.block_expr_block(expr)
             }
-            crate::syntax::SecusClause::Block(block) => self.lower_block(block),
-            crate::syntax::SecusClause::Stmt(stmt) => {
-                HirBlock { stmts: lower_stmt_expanded(self, stmt), expr: None, span: stmt.span }
+            crate::syntax::SecusClause::Block { body, catch } => {
+                let block = self.lower_block(body);
+                if let Some(catch) = catch {
+                    let cape = self.lower_cape_clause(catch);
+                    let expr = self.handled_block_expr(block, cape, body.span);
+                    self.block_expr_block(expr)
+                } else {
+                    block
+                }
+            }
+            crate::syntax::SecusClause::Stmt { stmt, catch } => {
+                let block = HirBlock { stmts: lower_stmt_expanded(self, stmt), expr: None, span: stmt.span };
+                if let Some(catch) = catch {
+                    let cape = self.lower_cape_clause(catch);
+                    let expr = self.handled_block_expr(block, cape, stmt.span);
+                    self.block_expr_block(expr)
+                } else {
+                    block
+                }
             }
         }
     }
@@ -674,27 +706,51 @@ impl<'a> Lowerer<'a> {
         out.extend(block.stmts);
     }
 
-    fn lower_cape_clause_block(&mut self, catch: &crate::syntax::CapeClause) -> HirBlock {
+    fn lower_cape_clause(&mut self, catch: &crate::syntax::CapeClause) -> crate::hir::HirCape {
         self.push_scope();
         let catch_def_id = self.next_def_id();
         self.bind_local(catch.binding.name, catch_def_id);
-        let mut stmts = Vec::new();
-        stmts.push(HirStmt {
-            id: self.next_hir_id(),
-            kind: HirStmtKind::Local(crate::hir::HirLocal {
-                def_id: catch_def_id,
-                name: catch.binding.name,
-                ty: Some(self.types.primitive(crate::semantic::Primitive::Ignotum)),
-                init: None,
-                mutable: false,
-            }),
-            span: catch.binding.span,
-        });
-        for lowered in self.lower_block(&catch.body).stmts {
-            stmts.push(lowered);
-        }
+        let body = self.lower_block(&catch.body);
         self.pop_scope();
-        HirBlock { stmts, expr: None, span: catch.span }
+        crate::hir::HirCape {
+            binding_def_id: catch_def_id,
+            binding_name: catch.binding.name,
+            binding_ty: None,
+            body,
+            span: catch.span,
+        }
+    }
+
+    fn lower_cape_clause_block(&mut self, catch: &crate::syntax::CapeClause) -> HirBlock {
+        let cape = self.lower_cape_clause(catch);
+        let mut body = cape.body;
+        body.stmts.insert(
+            0,
+            HirStmt {
+                id: self.next_hir_id(),
+                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                    def_id: cape.binding_def_id,
+                    name: cape.binding_name,
+                    ty: cape
+                        .binding_ty
+                        .or_else(|| Some(self.types.primitive(crate::semantic::Primitive::Ignotum))),
+                    init: None,
+                    mutable: false,
+                }),
+                span: cape.span,
+            },
+        );
+        body
+    }
+
+    fn handled_expr(&mut self, body: HirExpr, catch: crate::hir::HirCape) -> HirExpr {
+        let span = self.current_span;
+        let body = self.block_expr_block(body);
+        self.handled_block_expr(body, catch, span)
+    }
+
+    fn handled_block_expr(&mut self, body: HirBlock, catch: crate::hir::HirCape, span: Span) -> HirExpr {
+        HirExpr { id: self.next_hir_id(), kind: HirExprKind::Handled { body, catch: Box::new(catch) }, ty: None, span }
     }
 
     fn lower_ad_body(
@@ -771,11 +827,12 @@ impl<'a> Lowerer<'a> {
                         id: self.next_hir_id(),
                         kind: HirStmtKind::Expr(HirExpr {
                             id: self.next_hir_id(),
-                            kind: HirExprKind::Si(
-                                Box::new(negate_cond),
-                                HirBlock { stmts: vec![break_stmt], expr: None, span: cond.span },
-                                None,
-                            ),
+                            kind: HirExprKind::Si {
+                                cond: Box::new(negate_cond),
+                                then_block: HirBlock { stmts: vec![break_stmt], expr: None, span: cond.span },
+                                then_catch: None,
+                                else_block: None,
+                            },
                             ty: None,
                             span: cond.span,
                         }),
@@ -791,24 +848,8 @@ impl<'a> Lowerer<'a> {
         };
 
         if let Some(catch) = &stmt.catch {
-            HirExpr {
-                id: self.next_hir_id(),
-                kind: HirExprKind::Tempta {
-                    body: HirBlock {
-                        stmts: vec![HirStmt {
-                            id: self.next_hir_id(),
-                            kind: HirStmtKind::Expr(expr),
-                            span: self.current_span,
-                        }],
-                        expr: None,
-                        span: self.current_span,
-                    },
-                    catch: Some(self.lower_cape_clause_block(catch)),
-                    finally: None,
-                },
-                ty: None,
-                span: self.current_span,
-            }
+            let cape = self.lower_cape_clause(catch);
+            self.handled_expr(expr, cape)
         } else {
             expr
         }

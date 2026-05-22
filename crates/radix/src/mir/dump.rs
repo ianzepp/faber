@@ -88,6 +88,20 @@ fn terminator_kind(kind: &MirTerminatorKind) -> String {
         MirTerminatorKind::Return(Some(value)) => format!("return {}", operand(value)),
         MirTerminatorKind::Return(None) => "return".to_owned(),
         MirTerminatorKind::ReturnError(value) => format!("return_error {}", operand(value)),
+        MirTerminatorKind::TryCall { destination, callee, args, ok_block, error_place, error_block } => {
+            let lhs = destination
+                .as_ref()
+                .map(|place| format!("{} = ", place_fmt(place)))
+                .unwrap_or_default();
+            format!(
+                "{lhs}try_call {}({}) ok {} error {} -> {}",
+                callee_fmt(callee),
+                operands(args),
+                block_id(*ok_block),
+                place_fmt(error_place),
+                block_id(*error_block)
+            )
+        }
         MirTerminatorKind::Goto(target) => format!("goto {}", block_id(*target)),
         MirTerminatorKind::Branch { condition, then_block, else_block } => {
             format!(

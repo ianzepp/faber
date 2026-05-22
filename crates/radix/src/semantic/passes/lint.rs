@@ -306,9 +306,12 @@ impl<'a> LintContext<'a> {
                 }
             }
             HirExprKind::Block(block) => self.check_block(block, in_loop),
-            HirExprKind::Si(cond, then_block, else_block) => {
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.check_expr(cond, in_loop);
                 self.check_block(then_block, in_loop);
+                if let Some(catch) = then_catch {
+                    self.check_block(&catch.body, in_loop);
+                }
                 if let Some(block) = else_block {
                     self.check_block(block, in_loop);
                 }
@@ -380,6 +383,10 @@ impl<'a> LintContext<'a> {
                 }
             }
             HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.check_expr(value, in_loop),
+            HirExprKind::Handled { body, catch } => {
+                self.check_block(body, in_loop);
+                self.check_block(&catch.body, in_loop);
+            }
             HirExprKind::Tempta { body, catch, finally } => {
                 self.check_block(body, in_loop);
                 if let Some(catch) = catch {

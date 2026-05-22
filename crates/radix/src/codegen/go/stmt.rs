@@ -398,7 +398,7 @@ fn generate_expr_stmt(
             w.newline();
             Ok(())
         }
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch: None, else_block } => {
             w.write("if ");
             generate_expr(codegen, cond, types, w)?;
             w.write(" ");
@@ -409,6 +409,11 @@ fn generate_expr_stmt(
             }
             w.newline();
             Ok(())
+        }
+        HirExprKind::Si { then_catch: Some(_), .. } | HirExprKind::Handled { .. } => {
+            Err(crate::codegen::CodegenError {
+                message: "structured cape handlers are not emitted by Go codegen in Phase 5C".to_owned(),
+            })
         }
         HirExprKind::Loop(block) => {
             w.write("for ");

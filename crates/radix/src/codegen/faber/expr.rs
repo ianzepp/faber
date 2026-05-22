@@ -153,7 +153,7 @@ impl super::FaberCodegen {
                 w.indented(|w| self.write_block(block, types, names, interner, w));
                 w.write("}");
             }
-            HirExprKind::Si(cond, then_block, else_block) => {
+            HirExprKind::Si { cond, then_block, then_catch: None, else_block } => {
                 if self.write_sic_secus_chain(cond, then_block, else_block.as_ref(), types, names, interner, w) {
                     if needs_parens {
                         w.write(")");
@@ -161,6 +161,9 @@ impl super::FaberCodegen {
                     return;
                 }
                 self.write_si_chain(cond, then_block, else_block.as_ref(), types, names, interner, w);
+            }
+            HirExprKind::Si { then_catch: Some(_), .. } | HirExprKind::Handled { .. } => {
+                w.write("/* structured cape handler */");
             }
             HirExprKind::Discerne(scrutinees, arms) => {
                 w.write("discerne ");

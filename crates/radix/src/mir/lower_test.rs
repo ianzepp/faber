@@ -321,21 +321,21 @@ function f0 -> ty#5 {
 #[test]
 fn rejects_non_empty_entry_blocks_with_explicit_unsupported_error() {
     let unit = analyze(r#"incipit { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in phase 5B");
+    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in phase 5C");
 
     assert_eq!(errors.len(), 1);
     assert!(errors[0]
         .message
-        .contains("unsupported MIR lowering in phase 5B: non-empty entry blocks"));
+        .contains("unsupported MIR lowering in phase 5C: non-empty entry blocks"));
 }
 
 #[test]
 fn rejects_unsupported_top_level_items_explicitly() {
     let unit = analyze("genus Persona { textus nomen }");
-    let errors = lower_analyzed_unit(&unit).expect_err("structs are unsupported in phase 5B");
+    let errors = lower_analyzed_unit(&unit).expect_err("structs are unsupported in phase 5C");
 
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message, "unsupported MIR lowering in phase 5B: top-level struct");
+    assert_eq!(errors[0].message, "unsupported MIR lowering in phase 5C: top-level struct");
 }
 
 #[test]
@@ -531,33 +531,6 @@ fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
     assert!(discerne_errors[0]
         .message
         .contains("discerne before switch MIR lowering"));
-
-    let tempta_unit = analyze("functio temptare() → numerus { tempta { redde 1 } cape err { redde 0 } }");
-    let tempta_errors = lower_analyzed_unit(&tempta_unit).expect_err("tempta is deferred");
-    assert_eq!(tempta_errors.len(), 1);
-    assert!(tempta_errors[0]
-        .message
-        .contains("tempta legacy local-handler surface deferred to Phase 5C"));
-}
-
-#[test]
-fn tempta_with_inner_iace_remains_fail_closed_as_a_whole() {
-    let unit = analyze(
-        r#"functio handled() → numerus ⇥ textus {
-  tempta {
-    iace "later"
-  } cape err {
-    redde 0
-  }
-  redde 1
-}"#,
-    );
-    let errors = lower_analyzed_unit(&unit).expect_err("tempta remains deferred even when it contains iace");
-
-    assert_eq!(errors.len(), 1);
-    assert!(errors[0]
-        .message
-        .contains("tempta legacy local-handler surface deferred to Phase 5C"));
 }
 
 #[test]
@@ -599,9 +572,61 @@ fn rejects_fabricated_iace_without_alternate_exit_type() {
 }
 
 #[test]
+fn lowers_fac_cape_iace_to_local_handler_edge() {
+    let dump = dump_source(r#"functio handled() → numerus { fac { iace "bad" } cape err { redde 0 } redde 1 }"#);
+
+    assert!(dump.starts_with("function f0 -> ty#1 {\n"));
+    assert!(dump.contains("locals:\n    let _0: ty#0\n"));
+    assert!(dump.contains("%0 = const string sym#"));
+    assert!(dump.contains("_0 = %0: ty#0\n    goto bb1"));
+    assert!(dump.contains("bb1:\n    %1 = const int 0: ty#1\n    return %1"));
+    assert!(!dump.contains("return_error"));
+}
+
+#[test]
+fn lowers_fac_cape_failable_call_to_try_call_edge() {
+    let dump = dump_source(
+        r#"
+functio fail() → numerus ⇥ textus { iace "bad" }
+functio safe() → numerus { fac { redde fail() } cape err { redde 0 } }
+"#,
+    );
+
+    assert!(dump.contains("function f0 -> ty#1 ⇥ ty#0"));
+    assert!(dump.contains("function f1 -> ty#1"));
+    assert!(dump.contains("%0 = try_call def#0() ok bb3 error _0 -> bb1"));
+    assert!(dump.contains("bb1:\n    %1 = const int 0: ty#1\n    return %1"));
+}
+
+#[test]
+fn lowers_dum_cape_iace_to_handler_and_loop_exit() {
+    let dump = dump_source(
+        r#"functio loop(bivalens ready) → numerus { varia numerus x ← 0 dum ready { iace "bad" } cape err { x ← 1 } redde x }"#,
+    );
+
+    assert!(dump.contains("branch _0 bb4 bb5"));
+    assert!(dump.contains("_2 = %0: ty#0\n    goto bb1"));
+    assert!(dump.contains("bb1:\n    _1 = const int 1: ty#1\n    goto bb2"));
+    assert!(dump.contains("bb2:\n    return _1"));
+}
+
+#[test]
+fn lowers_si_arm_cape_iace_to_arm_handler() {
+    let dump = dump_source(
+        r#"functio choose(bivalens ready) → numerus { si ready { iace "bad" } cape err { redde 0 } secus { redde 2 } redde 1 }"#,
+    );
+
+    assert!(dump.contains("branch _0 bb1 bb2"));
+    assert!(dump.contains("_1 = %0: ty#0\n    goto bb4"));
+    assert!(dump.contains("bb2:\n    %2 = const int 2: ty#1\n    return %2"));
+    assert!(dump.contains("bb4:\n    %1 = const int 0: ty#1\n    return %1"));
+    assert!(!dump.contains("return_error"));
+}
+
+#[test]
 fn rejects_diagnostic_verbs_with_construct_specific_diagnostics() {
     let unit = analyze(r#"functio malum() { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("nota is not phase 5B MIR");
+    let errors = lower_analyzed_unit(&unit).expect_err("nota is not phase 5C MIR");
 
     assert_eq!(errors.len(), 1);
     assert!(errors[0]

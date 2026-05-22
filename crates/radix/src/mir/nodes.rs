@@ -145,6 +145,14 @@ pub struct MirTerminator {
 pub enum MirTerminatorKind {
     Return(Option<MirOperand>),
     ReturnError(MirOperand),
+    TryCall {
+        destination: Option<MirPlace>,
+        callee: MirCallee,
+        args: Vec<MirOperand>,
+        ok_block: MirBlockId,
+        error_place: MirPlace,
+        error_block: MirBlockId,
+    },
     Goto(MirBlockId),
     Branch {
         condition: MirOperand,

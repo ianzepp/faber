@@ -108,9 +108,13 @@ impl Parser {
         }
 
         if self.check(&TokenKind::LBrace) {
-            Ok(SecusClause::Block(self.parse_block()?))
+            let body = self.parse_block()?;
+            let catch = self.try_parse_cape_stmt()?;
+            Ok(SecusClause::Block { body, catch })
         } else if self.eat_keyword(TokenKind::Ergo) {
-            Ok(SecusClause::Stmt(Box::new(self.parse_statement()?)))
+            let stmt = Box::new(self.parse_statement()?);
+            let catch = self.try_parse_cape_stmt()?;
+            Ok(SecusClause::Stmt { stmt, catch })
         } else {
             Err(self.error(ParseErrorKind::MissingBlock, "expected block or 'ergo'"))
         }
@@ -399,17 +403,10 @@ impl Parser {
     /// unconditionally (like finally). Both are optional.
     pub(super) fn parse_tempta_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Tempta, "expected 'tempta'")?;
-
-        let body = self.parse_block()?;
-        let catch = self.try_parse_cape_stmt()?;
-
-        let finally = if self.eat_keyword(TokenKind::Demum) {
-            Some(self.parse_block()?)
-        } else {
-            None
-        };
-
-        Ok(StmtKind::Tempta(TemptaStmt { body, catch, finally }))
+        Err(self.error(
+            ParseErrorKind::Expected,
+            "tempta is no longer canonical; use 'fac { ... } cape err { ... }'",
+        ))
     }
 
     /// Parse assert statement.

@@ -1,6 +1,6 @@
 use crate::driver::AnalyzedUnit;
 use crate::hir::{
-    DefId, HirBinOp, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirLocal,
+    DefId, HirBinOp, HirBlock, HirCape, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirLiteral, HirLocal,
     HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
 };
 use crate::lexer::Span;
@@ -20,7 +20,7 @@ pub struct MirError {
 
 impl MirError {
     fn unsupported(span: Span, what: impl Into<String>) -> Self {
-        Self { message: format!("unsupported MIR lowering in phase 5B: {}", what.into()), span }
+        Self { message: format!("unsupported MIR lowering in phase 5C: {}", what.into()), span }
     }
 
     fn missing_type(span: Span, what: impl Into<String>) -> Self {
@@ -90,7 +90,7 @@ impl MirLowerer<'_> {
         };
 
         let error_ty = function.err_ty.map(MirType::semantic);
-        let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty);
+        let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, self.function_error_map());
         for param in &function.params {
             builder.add_param(param.def_id, param.name, param.ty, param.span);
         }
@@ -113,6 +113,19 @@ impl MirLowerer<'_> {
             error_ty,
             span: item.span,
         });
+    }
+
+    fn function_error_map(&self) -> FxHashMap<DefId, MirType> {
+        let mut errors = FxHashMap::default();
+        for item in &self.unit.hir.items {
+            let HirItemKind::Function(function) = &item.kind else {
+                continue;
+            };
+            if let Some(err_ty) = function.err_ty {
+                errors.insert(item.def_id, MirType::semantic(err_ty));
+            }
+        }
+        errors
     }
 
     fn lower_entry(&mut self, entry: &HirBlock) {
@@ -159,9 +172,16 @@ struct LoopContext {
     rumpe_target: MirBlockId,
 }
 
+#[derive(Debug, Clone)]
+struct HandlerContext {
+    error_place: MirPlace,
+    error_block: MirBlockId,
+}
+
 struct FunctionBuilder<'a> {
     types: &'a TypeTable,
     error_ty: Option<MirType>,
+    function_errors: FxHashMap<DefId, MirType>,
     bindings: FxHashMap<DefId, LocalBinding>,
     params: Vec<MirParam>,
     locals: Vec<MirLocalDecl>,
@@ -169,6 +189,7 @@ struct FunctionBuilder<'a> {
     blocks: Vec<OpenBlock>,
     current: Option<MirBlockId>,
     loops: Vec<LoopContext>,
+    handlers: Vec<HandlerContext>,
     errors: Vec<MirError>,
     next_value: u32,
 }
@@ -176,13 +197,18 @@ struct FunctionBuilder<'a> {
 impl<'a> FunctionBuilder<'a> {
     #[cfg(test)]
     fn new(types: &'a TypeTable) -> Self {
-        Self::for_function(types, None)
+        Self::for_function(types, None, FxHashMap::default())
     }
 
-    fn for_function(types: &'a TypeTable, error_ty: Option<MirType>) -> Self {
+    fn for_function(
+        types: &'a TypeTable,
+        error_ty: Option<MirType>,
+        function_errors: FxHashMap<DefId, MirType>,
+    ) -> Self {
         Self {
             types,
             error_ty,
+            function_errors,
             bindings: FxHashMap::default(),
             params: Vec::new(),
             locals: Vec::new(),
@@ -190,6 +216,7 @@ impl<'a> FunctionBuilder<'a> {
             blocks: Vec::new(),
             current: None,
             loops: Vec::new(),
+            handlers: Vec::new(),
             errors: Vec::new(),
             next_value: 0,
         }
@@ -311,8 +338,11 @@ impl<'a> FunctionBuilder<'a> {
             HirExprKind::Binary(op, lhs, rhs) => self.lower_binary(*op, lhs, rhs, expr),
             HirExprKind::Call(callee, args) => self.lower_call(callee, args, expr),
             HirExprKind::Block(block) => self.lower_block_expr(block, expr),
-            HirExprKind::Si(cond, then_block, else_block) => self.lower_si_expr(cond, then_block, else_block, expr),
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
+                self.lower_si_expr(cond, then_block, then_catch.as_deref(), else_block, expr)
+            }
             HirExprKind::Dum(cond, block) => self.lower_dum_expr(cond, block, expr),
+            HirExprKind::Handled { body, catch } => self.lower_handled_expr(body, catch, expr),
             HirExprKind::Assign(_, _) => self.lower_assignment_expr(expr),
             HirExprKind::Throw(value) => self.lower_iace(value, expr.span),
             HirExprKind::Panic(value) => self.lower_mori(value, expr.span),
@@ -347,6 +377,15 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_iace(&mut self, value: &HirExpr, span: Span) -> Option<MirOperand> {
+        if let Some(handler) = self.handlers.last().cloned() {
+            let error_ty = self.expr_ty(value)?;
+            let value = self.lower_transfer_expr(value)?;
+            let place = handler.error_place;
+            self.assign(place, value, error_ty, span);
+            self.terminate_current(MirTerminatorKind::Goto(handler.error_block), span);
+            return None;
+        }
+
         if self.error_ty.is_none() {
             self.errors
                 .push(MirError::unsupported(span, "iace without a declared alternate-exit type"));
@@ -376,10 +415,68 @@ impl<'a> FunctionBuilder<'a> {
         None
     }
 
+    fn lower_handled_expr(&mut self, body: &HirBlock, catch: &HirCape, expr: &HirExpr) -> Option<MirOperand> {
+        let ty = self.expr_ty(expr)?;
+        if !self.is_vacuum(ty) {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "expression-valued cape handler before value-join MIR lowering",
+            ));
+            return None;
+        }
+
+        self.lower_handled_block(body, catch, expr.span);
+        Some(MirOperand::Constant(MirConstant::Unit))
+    }
+
+    fn lower_handled_block(&mut self, body: &HirBlock, catch: &HirCape, span: Span) {
+        let Some(error_ty) = catch.binding_ty.map(MirType::semantic) else {
+            self.errors
+                .push(MirError::missing_type(catch.span, "cape handler binding"));
+            return;
+        };
+
+        let handler_id = self.fresh_block(catch.body.span);
+        let after_id = self.fresh_block(span);
+        let handler_local = self.next_local_id();
+        self.locals.push(MirLocalDecl {
+            id: handler_local,
+            name: Some(catch.binding_name),
+            ty: error_ty,
+            mutable: false,
+            span: catch.span,
+        });
+        let handler_binding = LocalBinding { local: handler_local, ty: error_ty };
+        self.bindings.insert(catch.binding_def_id, handler_binding);
+
+        self.handlers
+            .push(HandlerContext { error_place: MirPlace::local(handler_local), error_block: handler_id });
+        self.lower_block_statement(body);
+        self.handlers.pop();
+        let body_reaches = self.terminate_open_current(MirTerminatorKind::Goto(after_id), span);
+
+        self.switch_to(handler_id);
+        self.lower_block_statement(&catch.body);
+        let handler_reaches = self.terminate_open_current(MirTerminatorKind::Goto(after_id), catch.span);
+
+        if body_reaches || handler_reaches {
+            self.switch_to(after_id);
+        } else {
+            self.seal_unreachable(after_id, span);
+        }
+    }
+
     fn lower_expr_to_destination(&mut self, expr: &HirExpr, destination: MirPlace, ty: MirType) -> Option<()> {
         match &expr.kind {
             HirExprKind::Block(block) => self.lower_block_to_destination(block, destination, ty, expr.span),
-            HirExprKind::Si(cond, then_block, else_block) => {
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
+                if then_catch.is_some() {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "expression-valued si with cape before handler value MIR lowering",
+                    ));
+                    return None;
+                }
                 self.lower_si_to_destination(cond, then_block, else_block.as_ref(), destination, ty, expr.span)
             }
             _ => {
@@ -406,13 +503,22 @@ impl<'a> FunctionBuilder<'a> {
         &mut self,
         cond: &HirExpr,
         then_block: &HirBlock,
+        then_catch: Option<&HirCape>,
         else_block: &Option<HirBlock>,
         expr: &HirExpr,
     ) -> Option<MirOperand> {
         let ty = self.expr_ty(expr)?;
         if self.is_vacuum(ty) {
-            self.lower_si_statement(cond, then_block, else_block.as_ref(), expr.span);
+            self.lower_si_statement(cond, then_block, then_catch, else_block.as_ref(), expr.span);
             return Some(MirOperand::Constant(MirConstant::Unit));
+        }
+
+        if then_catch.is_some() {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "expression-valued si with cape before handler value MIR lowering",
+            ));
+            return None;
         }
 
         let temp = self.push_temp(ty, expr.span);
@@ -501,6 +607,48 @@ impl<'a> FunctionBuilder<'a> {
 
         let ty = self.expr_ty(expr)?;
 
+        if let Some(_err_ty) = self.function_errors.get(def_id).copied() {
+            let Some(handler) = self.handlers.last().cloned() else {
+                self.errors.push(MirError::unsupported(
+                    expr.span,
+                    "failable call without an active local cape handler",
+                ));
+                return None;
+            };
+
+            let ok_block = self.fresh_block(expr.span);
+            if self.is_vacuum(ty) {
+                self.terminate_current(
+                    MirTerminatorKind::TryCall {
+                        destination: None,
+                        callee: MirCallee::Definition(*def_id),
+                        args: lowered_args,
+                        ok_block,
+                        error_place: handler.error_place,
+                        error_block: handler.error_block,
+                    },
+                    expr.span,
+                );
+                self.switch_to(ok_block);
+                return Some(MirOperand::Constant(MirConstant::Unit));
+            }
+
+            let destination = self.push_temp(ty, expr.span);
+            self.terminate_current(
+                MirTerminatorKind::TryCall {
+                    destination: Some(MirPlace::temp(destination)),
+                    callee: MirCallee::Definition(*def_id),
+                    args: lowered_args,
+                    ok_block,
+                    error_place: handler.error_place,
+                    error_block: handler.error_block,
+                },
+                expr.span,
+            );
+            self.switch_to(ok_block);
+            return Some(MirOperand::Temp(destination));
+        }
+
         if self.is_vacuum(ty) {
             self.append_stmt(MirStmt {
                 kind: MirStmtKind::Call {
@@ -527,6 +675,9 @@ impl<'a> FunctionBuilder<'a> {
 
     fn lower_block_statement(&mut self, block: &HirBlock) {
         for stmt in &block.stmts {
+            if !self.current_is_open() {
+                break;
+            }
             self.lower_stmt(stmt);
         }
 
@@ -545,6 +696,9 @@ impl<'a> FunctionBuilder<'a> {
         span: Span,
     ) -> Option<()> {
         for stmt in &block.stmts {
+            if !self.current_is_open() {
+                return Some(());
+            }
             self.lower_stmt(stmt);
         }
 
@@ -567,7 +721,19 @@ impl<'a> FunctionBuilder<'a> {
         self.lower_expr_to_destination(expr, destination, ty)
     }
 
-    fn lower_si_statement(&mut self, cond: &HirExpr, then_block: &HirBlock, else_block: Option<&HirBlock>, span: Span) {
+    fn lower_si_statement(
+        &mut self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        then_catch: Option<&HirCape>,
+        else_block: Option<&HirBlock>,
+        span: Span,
+    ) {
+        if let Some(catch) = then_catch {
+            self.lower_handled_si_statement(cond, then_block, catch, else_block, span);
+            return;
+        }
+
         let Some(condition) = self.lower_expr(cond) else {
             return;
         };
@@ -603,6 +769,83 @@ impl<'a> FunctionBuilder<'a> {
         };
 
         if then_reaches || else_reaches {
+            self.switch_to(join_id);
+        } else {
+            self.seal_unreachable(join_id, span);
+        }
+    }
+
+    fn lower_handled_si_statement(
+        &mut self,
+        cond: &HirExpr,
+        then_block: &HirBlock,
+        catch: &HirCape,
+        else_block: Option<&HirBlock>,
+        span: Span,
+    ) {
+        let Some(error_ty) = catch.binding_ty.map(MirType::semantic) else {
+            self.errors
+                .push(MirError::missing_type(catch.span, "cape handler binding"));
+            return;
+        };
+
+        let then_id = self.fresh_block(then_block.span);
+        let (else_id, join_id) = match else_block {
+            Some(block) => {
+                let else_id = self.fresh_block(block.span);
+                let join_id = self.fresh_block(span);
+                (else_id, join_id)
+            }
+            None => {
+                let join_id = self.fresh_block(span);
+                (join_id, join_id)
+            }
+        };
+        let handler_id = self.fresh_block(catch.body.span);
+
+        let handler_local = self.next_local_id();
+        self.locals.push(MirLocalDecl {
+            id: handler_local,
+            name: Some(catch.binding_name),
+            ty: error_ty,
+            mutable: false,
+            span: catch.span,
+        });
+        self.bindings
+            .insert(catch.binding_def_id, LocalBinding { local: handler_local, ty: error_ty });
+
+        self.handlers
+            .push(HandlerContext { error_place: MirPlace::local(handler_local), error_block: handler_id });
+        let Some(condition) = self.lower_expr(cond) else {
+            self.handlers.pop();
+            self.seal_unreachable(handler_id, catch.span);
+            self.switch_to(join_id);
+            return;
+        };
+
+        self.terminate_current(
+            MirTerminatorKind::Branch { condition, then_block: then_id, else_block: else_id },
+            span,
+        );
+
+        self.switch_to(then_id);
+        self.lower_block_statement(then_block);
+        self.handlers.pop();
+        let then_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+
+        self.switch_to(handler_id);
+        self.lower_block_statement(&catch.body);
+        let handler_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), catch.span);
+
+        let else_reaches = if let Some(block) = else_block {
+            self.switch_to(else_id);
+            self.lower_block_statement(block);
+            self.terminate_open_current(MirTerminatorKind::Goto(join_id), span)
+        } else {
+            true
+        };
+
+        if then_reaches || handler_reaches || else_reaches {
             self.switch_to(join_id);
         } else {
             self.seal_unreachable(join_id, span);
@@ -894,7 +1137,7 @@ fn unsupported_expr_kind_name(kind: &HirExprKind) -> &'static str {
         HirExprKind::NonNull(_, _) => "non-null assertions before nullable control-flow MIR lowering",
         HirExprKind::Ab { .. } => "ab collection pipelines before collection MIR lowering",
         HirExprKind::Block(_) => "block expressions before nested-block MIR lowering",
-        HirExprKind::Si(_, _, _) => "si before control-flow MIR lowering",
+        HirExprKind::Si { .. } => "si before control-flow MIR lowering",
         HirExprKind::Discerne(_, _) => "discerne before switch MIR lowering",
         HirExprKind::Loop(_) => "loop before control-flow MIR lowering",
         HirExprKind::Dum(_, _) => "dum before control-flow MIR lowering",
@@ -908,6 +1151,7 @@ fn unsupported_expr_kind_name(kind: &HirExprKind) -> &'static str {
         HirExprKind::Adfirma(_, _) => "adfirma before assert intrinsic MIR lowering",
         HirExprKind::Panic(_) => "mori fatal flow",
         HirExprKind::Throw(_) => "iace error-flow",
+        HirExprKind::Handled { .. } => "structured cape before local-handler MIR lowering",
         HirExprKind::Tempta { .. } => "tempta legacy local-handler surface deferred to Phase 5C",
         HirExprKind::Clausura(_, _, _) => "closures before callable-value MIR lowering",
         HirExprKind::Cede(_) => "cede before async MIR lowering",

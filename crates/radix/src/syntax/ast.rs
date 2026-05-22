@@ -435,8 +435,8 @@ pub enum IfBody {
 #[derive(Debug)]
 pub enum SecusClause {
     Sin(Box<SiStmt>),
-    Block(BlockStmt),
-    Stmt(Box<Stmt>),
+    Block { body: BlockStmt, catch: Option<CapeClause> },
+    Stmt { stmt: Box<Stmt>, catch: Option<CapeClause> },
 }
 
 #[derive(Debug)]

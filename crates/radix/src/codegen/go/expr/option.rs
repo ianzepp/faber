@@ -19,8 +19,9 @@ pub(super) fn expr_is_native_option_value(expr: &HirExpr, types: &TypeTable) -> 
             | HirExprKind::MethodCall(_, _, _)
             | HirExprKind::Verte { .. }
             | HirExprKind::Conversio { .. }
-            | HirExprKind::Si(_, _, _)
+            | HirExprKind::Si { .. }
             | HirExprKind::Block(_)
+            | HirExprKind::Handled { .. }
     )
 }
 pub(super) fn generate_coalesce_expr(

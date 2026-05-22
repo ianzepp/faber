@@ -47,7 +47,7 @@
 //!   but may produce cascading errors if types remain unresolved
 
 use crate::hir::{
-    DefId, HirArrayElement, HirBinOp, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirId, HirItem,
+    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirExpr, HirExprKind, HirFunction, HirId, HirItem,
     HirItemKind, HirLiteral, HirLocal, HirObjectField, HirObjectKey, HirParam, HirParamMode, HirPattern, HirProgram,
     HirStmt, HirStmtKind, HirStruct,
 };
@@ -91,6 +91,12 @@ struct StructFieldInfo {
     span: crate::lexer::Span,
 }
 
+#[derive(Clone, Copy)]
+enum ErrorSink {
+    Function(TypeId),
+    Local(TypeId),
+}
+
 struct TypeChecker<'a> {
     #[allow(dead_code)]
     resolver: &'a Resolver,
@@ -104,7 +110,7 @@ struct TypeChecker<'a> {
     variant_fields: FxHashMap<DefId, Vec<TypeId>>,
     variant_parent: FxHashMap<DefId, DefId>,
     current_return: Option<TypeId>,
-    current_error: Option<TypeId>,
+    current_error: Option<ErrorSink>,
     inferred_return: Option<TypeId>,
     next_infer: u32,
     infer_ids: FxHashMap<InferVar, TypeId>,

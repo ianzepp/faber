@@ -4,7 +4,7 @@ impl super::FaberCodegen {
     pub(super) fn expr_precedence(&self, expr: &HirExpr) -> u8 {
         match &expr.kind {
             HirExprKind::Assign(_, _) | HirExprKind::AssignOp(_, _, _) => 1,
-            HirExprKind::Si(_, _, _) | HirExprKind::Conversio { .. } => 2,
+            HirExprKind::Si { .. } | HirExprKind::Conversio { .. } => 2,
             HirExprKind::Binary(op, _, _) => self.binop_precedence(*op),
             HirExprKind::Unary(_, _) | HirExprKind::Ref(_, _) | HirExprKind::Deref(_) => 12,
             HirExprKind::Call(_, _)

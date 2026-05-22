@@ -189,9 +189,15 @@ impl<'a> TypeChecker<'a> {
     }
 
     pub(super) fn reject_failable_call(&mut self, sig: &FuncSig, span: crate::lexer::Span) -> bool {
-        if sig.err.is_none() {
+        let Some(err_ty) = sig.err else {
+            return false;
+        };
+
+        if let Some(ErrorSink::Local(handler_ty)) = self.current_error {
+            self.unify(err_ty, handler_ty, span, "handled failable call error type mismatch");
             return false;
         }
+
         self.error(
             SemanticErrorKind::InvalidOperandTypes,
             "failable call requires handling or propagation syntax",

@@ -12,7 +12,7 @@ statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pac
              | typeAliasDecl | enumDecl | discretioDecl
              | ifStmt | whileStmt | iteraStmt
              | eligeStmt | discerneStmt | guardStmt | curaStmt
-             | tryStmt | returnStmt | breakStmt | continueStmt | noopStmt | throwStmt
+             | returnStmt | breakStmt | continueStmt | noopStmt | throwStmt
              | assertStmt | outputStmt | adStmt | incipitStmt
              | extractStmt
              | probandumDecl | probaStmt | blockStmt | exprStmt
@@ -250,9 +250,10 @@ functio apply((numerus) → numerus ⇥ textus op, numerus n) → numerus ⇥ te
 ### Conditionals
 
 ```ebnf
-ifStmt     := 'si' expression (blockStmt | 'ergo' statement)
-              ('cape' IDENTIFIER blockStmt)? (elseClause | 'sin' ifStmt)?
-elseClause := 'secus' (blockStmt | 'ergo' statement | 'sin' ifStmt)
+ifStmt     := 'si' expression arm ('sin' ifStmt | elseClause)?
+elseClause := 'secus' elseArm
+arm        := (blockStmt | 'ergo' statement) catchClause?
+elseArm    := (blockStmt | 'ergo' statement) catchClause?
 ```
 
 - `si` = if, `sin` = else-if, `secus` = else
@@ -262,7 +263,7 @@ elseClause := 'secus' (blockStmt | 'ergo' statement | 'sin' ifStmt)
 ### Loops
 
 ```ebnf
-whileStmt  := 'dum' expression (blockStmt | 'ergo' statement) ('cape' IDENTIFIER blockStmt)?
+whileStmt  := 'dum' expression (blockStmt | 'ergo' statement) catchClause?
 iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expression)?) ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
 ```
 
@@ -326,13 +327,15 @@ noopStmt     := 'tacet'
 ## Error Handling
 
 ```ebnf
-tryStmt     := 'tempta' blockStmt ('cape' IDENTIFIER blockStmt)? ('demum' blockStmt)?
 throwStmt   := ('iace' | 'mori') expression
 catchClause := 'cape' IDENTIFIER blockStmt
 assertStmt  := 'adfirma' expression (',' expression)?
 ```
 
-- `tempta` = try, `cape` = catch, `demum` = finally
+- `cape` attaches to structured statements and conditional arms. It does not attach to arbitrary bare blocks.
+- `fac { ... } cape err { ... }` is the canonical one-shot local recoverable-error boundary.
+- `tempta` is a legacy try/catch surface and is rejected with a migration diagnostic.
+- `demum` cleanup/finally semantics are deferred until resource cleanup rules are designed.
 - `iace` = throw (recoverable), `mori` = panic (fatal)
 
 ---
@@ -558,7 +561,7 @@ dslVerb       := 'prima' | 'ultima' | 'summa'
 ## Fac Block
 
 ```ebnf
-facBlockStmt := 'fac' blockStmt ('cape' IDENTIFIER blockStmt)? ('dum' expression)?
+facBlockStmt := 'fac' blockStmt catchClause? ('dum' expression)?
 ```
 
 - Creates scope, optionally with catch or do-while
@@ -611,9 +614,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `rumpe`                       | break               |
 |                     | `perge`                       | continue            |
 |                     | `tacet`                       | no-op (silence)     |
-| **Error Handling**  | `tempta`                      | try                 |
-|                     | `cape`                        | catch               |
-|                     | `demum`                       | finally             |
+| **Error Handling**  | `cape`                        | structured local handler |
 |                     | `iace`                        | throw               |
 |                     | `iacit`                       | throws modifier     |
 |                     | `mori`                        | panic               |

@@ -916,14 +916,14 @@ fn expr_codegen_handles_control_flow_and_operators() {
             },
             HirExpr {
                 id: HirId(315),
-                kind: HirExprKind::Si(
-                    Box::new(HirExpr {
+                kind: HirExprKind::Si {
+                    cond: Box::new(HirExpr {
                         id: HirId(316),
                         kind: HirExprKind::Literal(HirLiteral::Bool(true)),
                         ty: Some(bivalens),
                         span: span(),
                     }),
-                    HirBlock {
+                    then_block: HirBlock {
                         stmts: vec![HirStmt {
                             id: HirId(317),
                             kind: HirStmtKind::Expr(HirExpr {
@@ -937,7 +937,8 @@ fn expr_codegen_handles_control_flow_and_operators() {
                         expr: None,
                         span: span(),
                     },
-                    Some(HirBlock {
+                    then_catch: None,
+                    else_block: Some(HirBlock {
                         stmts: Vec::new(),
                         expr: Some(Box::new(HirExpr {
                             id: HirId(319),
@@ -947,7 +948,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                         })),
                         span: span(),
                     }),
-                ),
+                },
                 ty: None,
                 span: span(),
             },

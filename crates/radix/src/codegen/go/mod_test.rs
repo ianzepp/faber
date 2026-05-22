@@ -31,8 +31,11 @@ fn scribe_emits_println() {
 }
 
 #[test]
-fn tempta_catch_binds_recovered_value() {
-    let code = compile_go(
+fn legacy_tempta_is_rejected_before_go_codegen() {
+    let session = Session::new(Config::default().with_target(Target::Go));
+    let result = crate::driver::compile(
+        &session,
+        "<test>",
         r#"incipit {
   tempta {
     iace "ignis"
@@ -42,8 +45,11 @@ fn tempta_catch_binds_recovered_value() {
 }"#,
     );
 
-    assert!(code.contains("err := r"));
-    assert!(!code.contains("var err any"));
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("tempta is no longer canonical")));
 }
 
 #[test]

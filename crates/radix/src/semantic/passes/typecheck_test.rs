@@ -355,6 +355,69 @@ fn rejects_failable_call_in_ordinary_expression_position() {
 }
 
 #[test]
+fn structured_cape_consumes_local_iace_without_function_alternate_exit() {
+    let session =
+        crate::driver::Session::new(crate::driver::Config::default().with_target(crate::codegen::Target::Faber));
+    let result = crate::driver::analyze_source(
+        &session,
+        "<test>",
+        r#"functio handled() → numerus { fac { iace "bad" } cape err { redde 0 } redde 1 }"#,
+    );
+
+    if let Err(errors) = result {
+        panic!("expected local cape to consume iace: {errors:?}");
+    }
+}
+
+#[test]
+fn structured_cape_consumes_failable_direct_call() {
+    let session =
+        crate::driver::Session::new(crate::driver::Config::default().with_target(crate::codegen::Target::Faber));
+    let result = crate::driver::analyze_source(
+        &session,
+        "<test>",
+        r#"
+functio fail() → numerus ⇥ textus { iace "bad" }
+functio handled() → numerus { fac { redde fail() } cape err { redde 0 } }
+"#,
+    );
+
+    if let Err(errors) = result {
+        panic!("expected local cape to consume failable call: {errors:?}");
+    }
+}
+
+#[test]
+fn structured_cape_rejects_incompatible_handler_error_types() {
+    let session =
+        crate::driver::Session::new(crate::driver::Config::default().with_target(crate::codegen::Target::Faber));
+    let result = crate::driver::analyze_source(
+        &session,
+        "<test>",
+        r#"
+functio fail_text() → numerus ⇥ textus { iace "bad" }
+functio fail_num() → numerus ⇥ numerus { iace 1 }
+functio handled() → numerus {
+    fac {
+        fail_text()
+        fail_num()
+    } cape err {
+        redde 0
+    }
+}
+"#,
+    );
+
+    let errors = match result {
+        Ok(_) => panic!("expected mixed handled error types to be rejected"),
+        Err(errors) => errors,
+    };
+    assert!(errors.iter().any(|err| err
+        .message
+        .contains("handled failable call error type mismatch")));
+}
+
+#[test]
 fn resolves_method_call_type() {
     let mut types = TypeTable::new();
     let numerus = types.primitive(Primitive::Numerus);

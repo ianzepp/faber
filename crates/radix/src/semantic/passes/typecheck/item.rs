@@ -15,7 +15,7 @@ impl<'a> TypeChecker<'a> {
         let prev_error = self.current_error;
         let prev_inferred = self.inferred_return;
         self.current_return = func.ret_ty;
-        self.current_error = func.err_ty;
+        self.current_error = func.err_ty.map(ErrorSink::Function);
         self.inferred_return = None;
 
         if let Some(body) = &mut func.body {

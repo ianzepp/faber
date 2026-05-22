@@ -440,7 +440,7 @@ fn incipit_argumenta_compiles_for_faber_target() {
 }
 
 #[test]
-fn tempta_iace_fac_custodi_compile_for_faber_target() {
+fn structured_cape_iace_fac_custodi_compile_for_faber_target() {
     let session = session(Target::Faber);
     let source = r#"functio probe(numerus n) → vacuum ⇥ textus {
   custodi {
@@ -450,7 +450,7 @@ fn tempta_iace_fac_custodi_compile_for_faber_target() {
   }
 
   fac {
-    tempta {
+    fac {
       iace "boom"
     } cape err {
       nota err
@@ -489,10 +489,10 @@ fn ergo_iace_mori_and_tacet_compile_for_faber_target() {
 #[test]
 fn rust_target_rejects_exception_constructs() {
     let session = session(Target::Rust);
-    let source = r#"functio probe(bivalens ok) → vacuum {
+    let source = r#"functio probe(bivalens ok) → vacuum ⇥ textus {
   si ok ergo iace "boom"
 
-  tempta {
+  fac {
     iace "bad"
   } cape err {
     nota err
@@ -506,9 +506,6 @@ fn rust_target_rejects_exception_constructs() {
         .diagnostics
         .iter()
         .any(|d| d.is_error() && d.message.contains("iace is not supported for Rust targets")));
-    assert!(result.diagnostics.iter().any(|d| d.is_error()
-        && d.message
-            .contains("tempta is not supported for Rust targets")));
     assert!(result
         .diagnostics
         .iter()

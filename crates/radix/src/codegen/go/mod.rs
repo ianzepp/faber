@@ -296,9 +296,12 @@ impl<'a> GoCodegen<'a> {
                 }
             }
             HirExprKind::Block(block) | HirExprKind::Loop(block) => self.collect_block_use_counts(counts, block),
-            HirExprKind::Si(cond, then_block, else_block) => {
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.collect_expr_use_counts(counts, cond);
                 self.collect_block_use_counts(counts, then_block);
+                if let Some(catch) = then_catch {
+                    self.collect_block_use_counts(counts, &catch.body);
+                }
                 if let Some(else_block) = else_block {
                     self.collect_block_use_counts(counts, else_block);
                 }
@@ -370,6 +373,10 @@ impl<'a> GoCodegen<'a> {
                 if let Some(finally) = finally {
                     self.collect_block_use_counts(counts, finally);
                 }
+            }
+            HirExprKind::Handled { body, catch } => {
+                self.collect_block_use_counts(counts, body);
+                self.collect_block_use_counts(counts, &catch.body);
             }
             HirExprKind::Clausura(params, _, body) => {
                 for param in params {
@@ -530,9 +537,12 @@ fn stmt_contains_ad(stmt: &crate::hir::HirStmt) -> bool {
 fn expr_contains_ad(expr: &HirExpr) -> bool {
     match &expr.kind {
         HirExprKind::Block(block) | HirExprKind::Loop(block) => block_contains_ad(block),
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
             expr_contains_ad(cond)
                 || block_contains_ad(then_block)
+                || then_catch
+                    .as_ref()
+                    .is_some_and(|catch| block_contains_ad(&catch.body))
                 || else_block.as_ref().is_some_and(block_contains_ad)
         }
         HirExprKind::Dum(cond, block) => expr_contains_ad(cond) || block_contains_ad(block),
@@ -541,6 +551,7 @@ fn expr_contains_ad(expr: &HirExpr) -> bool {
                 || catch.as_ref().is_some_and(block_contains_ad)
                 || finally.as_ref().is_some_and(block_contains_ad)
         }
+        HirExprKind::Handled { body, catch } => block_contains_ad(body) || block_contains_ad(&catch.body),
         HirExprKind::Itera(_, _, _, iter, block) => expr_contains_ad(iter) || block_contains_ad(block),
         HirExprKind::Intervallum { start, end, step, .. } => {
             expr_contains_ad(start) || expr_contains_ad(end) || step.as_ref().is_some_and(|step| expr_contains_ad(step))

@@ -195,9 +195,12 @@ fn check_expr(
             }
         }
         HirExprKind::Block(block) => check_block(block, types, enum_variants, errors),
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
             check_expr(cond, types, enum_variants, errors);
             check_block(then_block, types, enum_variants, errors);
+            if let Some(catch) = then_catch {
+                check_block(&catch.body, types, enum_variants, errors);
+            }
             if let Some(block) = else_block {
                 check_block(block, types, enum_variants, errors);
             }
@@ -270,6 +273,10 @@ fn check_expr(
             }
         }
         HirExprKind::Panic(value) | HirExprKind::Throw(value) => check_expr(value, types, enum_variants, errors),
+        HirExprKind::Handled { body, catch } => {
+            check_block(body, types, enum_variants, errors);
+            check_block(&catch.body, types, enum_variants, errors);
+        }
         HirExprKind::Tempta { body, catch, finally } => {
             check_block(body, types, enum_variants, errors);
             if let Some(catch) = catch {

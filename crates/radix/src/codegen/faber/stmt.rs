@@ -10,7 +10,7 @@ impl super::FaberCodegen {
         let HirStmtKind::Expr(expr) = &last.kind else {
             return None;
         };
-        let HirExprKind::Si(cond, then_block, None) = &expr.kind else {
+        let HirExprKind::Si { cond, then_block, then_catch: None, else_block: None } = &expr.kind else {
             return None;
         };
         let HirExprKind::Unary(crate::hir::HirUnOp::Not, inner) = &cond.kind else {
@@ -46,7 +46,7 @@ impl super::FaberCodegen {
         }
 
         let expr = block.expr.as_ref()?;
-        if let HirExprKind::Si(cond, then_block, else_block) = &expr.kind {
+        if let HirExprKind::Si { cond, then_block, then_catch: None, else_block } = &expr.kind {
             Some((cond, then_block, else_block.as_ref()))
         } else {
             None

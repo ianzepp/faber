@@ -176,7 +176,12 @@ impl<'a> Lowerer<'a> {
         let cond = lower_expr(self, &ternary.cond);
         let then_expr = lower_expr(self, &ternary.then);
         let else_expr = lower_expr(self, &ternary.else_);
-        HirExprKind::Si(Box::new(cond), self.expr_block(then_expr), Some(self.expr_block(else_expr)))
+        HirExprKind::Si {
+            cond: Box::new(cond),
+            then_block: self.expr_block(then_expr),
+            then_catch: None,
+            else_block: Some(self.expr_block(else_expr)),
+        }
     }
 
     /// Lower call expression (vocare)

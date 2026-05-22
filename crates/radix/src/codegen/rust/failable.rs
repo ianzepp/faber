@@ -151,6 +151,10 @@ fn visit_expr(expr: &HirExpr, suppressed: bool, deps: &mut FnDeps) {
                 visit_block(finally_block, suppressed, deps);
             }
         }
+        HirExprKind::Handled { body, catch } => {
+            visit_block(body, true, deps);
+            visit_block(&catch.body, suppressed, deps);
+        }
         HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
             visit_expr(lhs, suppressed, deps);
             visit_expr(rhs, suppressed, deps);
@@ -225,9 +229,12 @@ fn visit_expr(expr: &HirExpr, suppressed: bool, deps: &mut FnDeps) {
         HirExprKind::Block(block) | HirExprKind::Loop(block) => {
             visit_block(block, suppressed, deps);
         }
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
             visit_expr(cond, suppressed, deps);
             visit_block(then_block, suppressed, deps);
+            if let Some(catch) = then_catch {
+                visit_block(&catch.body, suppressed, deps);
+            }
             if let Some(else_block) = else_block {
                 visit_block(else_block, suppressed, deps);
             }

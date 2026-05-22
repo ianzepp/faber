@@ -370,7 +370,7 @@ pub fn generate_expr(
             stmt::generate_inline_block(codegen, block, types, w)?;
             w.write(")()");
         }
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch: None, else_block } => {
             w.write("(");
             generate_expr(codegen, cond, types, w)?;
             w.write(" ? ");
@@ -386,6 +386,11 @@ pub fn generate_expr(
                 w.write("undefined");
             }
             w.write(")");
+        }
+        HirExprKind::Si { then_catch: Some(_), .. } | HirExprKind::Handled { .. } => {
+            return Err(CodegenError {
+                message: "structured cape handlers are not emitted by TypeScript codegen in Phase 5C".to_owned(),
+            });
         }
         HirExprKind::Discerne(_, _) => {
             w.write("undefined");
@@ -946,9 +951,12 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                 })
         }
         HirExprKind::Block(block) | HirExprKind::Loop(block) => contains_await_in_block(block),
-        HirExprKind::Si(cond, then_block, else_block) => {
+        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
             contains_await_in_expr(cond)
                 || contains_await_in_block(then_block)
+                || then_catch
+                    .as_ref()
+                    .is_some_and(|catch| contains_await_in_block(&catch.body))
                 || else_block.as_ref().is_some_and(contains_await_in_block)
         }
         HirExprKind::Discerne(scrutinees, arms) => {
@@ -980,6 +988,7 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                 || catch.as_ref().is_some_and(contains_await_in_block)
                 || finally.as_ref().is_some_and(contains_await_in_block)
         }
+        HirExprKind::Handled { body, catch } => contains_await_in_block(body) || contains_await_in_block(&catch.body),
         HirExprKind::Clausura(_, _, body) => contains_await_in_expr(body),
         HirExprKind::Verte { source, entries, .. } => {
             contains_await_in_expr(source)

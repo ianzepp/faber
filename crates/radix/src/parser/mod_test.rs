@@ -783,7 +783,6 @@ elige value { casu 1 ergo redde 1 ceterum ergo tacet } cape err {}
 discerne omnia value, other { casu Ok ut result, _ ergo redde result ceterum ergo mori "bad" }
 custodi { si verum ergo redde 1 si falsum ergo nota "no" }
 fac {} cape err {} dum verum
-tempta {} cape err {} demum {}
 adfirma verum, "msg"
 nota "a", "b"
 vide "c"
@@ -802,7 +801,7 @@ tacet
         .program
         .as_ref()
         .expect("parser should produce a program");
-    assert_eq!(program.stmts.len(), 19);
+    assert_eq!(program.stmts.len(), 18);
 
     let StmtKind::Si(if_stmt) = &program.stmts[0].kind else {
         panic!("expected if statement");
@@ -813,7 +812,10 @@ tacet
         panic!("expected sin clause");
     };
     assert!(matches!(sin_stmt.then, IfBody::Ergo(_)));
-    assert!(matches!(sin_stmt.else_.as_ref().expect("secus clause"), SecusClause::Stmt(_)));
+    assert!(matches!(
+        sin_stmt.else_.as_ref().expect("secus clause"),
+        SecusClause::Stmt { .. }
+    ));
 
     let StmtKind::Dum(while_stmt) = &program.stmts[1].kind else {
         panic!("expected while statement");
@@ -860,35 +862,77 @@ tacet
     assert!(fac_stmt.catch.is_some());
     assert!(fac_stmt.while_.is_some());
 
-    let StmtKind::Tempta(try_stmt) = &program.stmts[7].kind else {
-        panic!("expected tempta statement");
-    };
-    assert!(try_stmt.catch.is_some());
-    assert!(try_stmt.finally.is_some());
-
-    assert!(matches!(program.stmts[8].kind, StmtKind::Adfirma(_)));
-    match &program.stmts[9].kind {
+    assert!(matches!(program.stmts[7].kind, StmtKind::Adfirma(_)));
+    match &program.stmts[8].kind {
         StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Nota)),
         _ => panic!("expected diagnostic statement"),
     }
-    match &program.stmts[10].kind {
+    match &program.stmts[9].kind {
         StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Vide)),
         _ => panic!("expected vide statement"),
     }
-    match &program.stmts[11].kind {
+    match &program.stmts[10].kind {
         StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Mone)),
         _ => panic!("expected mone statement"),
     }
-    match &program.stmts[12].kind {
+    match &program.stmts[11].kind {
         StmtKind::Scribe(stmt) => assert!(matches!(stmt.kind, ScribeKind::Scribe)),
         _ => panic!("expected scribe compatibility statement"),
     }
-    assert!(matches!(program.stmts[13].kind, StmtKind::Redde(_)));
-    assert!(matches!(program.stmts[14].kind, StmtKind::Rumpe(_)));
-    assert!(matches!(program.stmts[15].kind, StmtKind::Perge(_)));
-    assert!(matches!(program.stmts[16].kind, StmtKind::Iace(_)));
-    assert!(matches!(program.stmts[17].kind, StmtKind::Mori(_)));
-    assert!(matches!(program.stmts[18].kind, StmtKind::Tacet(_)));
+    assert!(matches!(program.stmts[12].kind, StmtKind::Redde(_)));
+    assert!(matches!(program.stmts[13].kind, StmtKind::Rumpe(_)));
+    assert!(matches!(program.stmts[14].kind, StmtKind::Perge(_)));
+    assert!(matches!(program.stmts[15].kind, StmtKind::Iace(_)));
+    assert!(matches!(program.stmts[16].kind, StmtKind::Mori(_)));
+    assert!(matches!(program.stmts[17].kind, StmtKind::Tacet(_)));
+}
+
+#[test]
+fn parses_structured_cape_attachment_targets() {
+    let result = parse_ok(
+        r#"
+si verum { tacet } cape err {} sin falsum { tacet } cape err {} secus { tacet } cape err {}
+dum verum { tacet } cape err {}
+fac { tacet } cape err {}
+"#,
+    );
+    let program = result.program.as_ref().expect("program");
+    assert_eq!(program.stmts.len(), 3);
+
+    let StmtKind::Si(si_stmt) = &program.stmts[0].kind else {
+        panic!("expected si");
+    };
+    assert!(si_stmt.catch.is_some());
+    let SecusClause::Sin(sin_stmt) = si_stmt.else_.as_ref().expect("sin") else {
+        panic!("expected sin");
+    };
+    assert!(sin_stmt.catch.is_some());
+    let SecusClause::Block { catch, .. } = sin_stmt.else_.as_ref().expect("secus") else {
+        panic!("expected secus block");
+    };
+    assert!(catch.is_some());
+
+    let StmtKind::Dum(dum_stmt) = &program.stmts[1].kind else {
+        panic!("expected dum");
+    };
+    assert!(dum_stmt.catch.is_some());
+
+    let StmtKind::Fac(fac_stmt) = &program.stmts[2].kind else {
+        panic!("expected fac");
+    };
+    assert!(fac_stmt.catch.is_some());
+}
+
+#[test]
+fn rejects_bare_block_cape_and_legacy_tempta() {
+    assert_parse_error_contains(
+        r#"functio invalid() → vacuum { { tacet } cape err { tacet } }"#,
+        "expected expression",
+    );
+    assert_parse_error_contains(
+        r#"functio old() → vacuum { tempta { tacet } cape err { tacet } }"#,
+        "tempta is no longer canonical",
+    );
 }
 
 #[test]

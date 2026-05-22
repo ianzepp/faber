@@ -243,14 +243,14 @@ fn emits_si_sin_secus_chain_with_ergo_redde() {
 
     let expr = HirExpr {
         id: crate::hir::HirId(10),
-        kind: HirExprKind::Si(
-            Box::new(HirExpr {
+        kind: HirExprKind::Si {
+            cond: Box::new(HirExpr {
                 id: crate::hir::HirId(11),
                 kind: HirExprKind::Literal(HirLiteral::Bool(true)),
                 ty: Some(bivalens),
                 span: span(),
             }),
-            HirBlock {
+            then_block: HirBlock {
                 stmts: vec![HirStmt {
                     id: crate::hir::HirId(12),
                     kind: HirStmtKind::Redde(Some(HirExpr {
@@ -264,18 +264,19 @@ fn emits_si_sin_secus_chain_with_ergo_redde() {
                 expr: None,
                 span: span(),
             },
-            Some(HirBlock {
+            then_catch: None,
+            else_block: Some(HirBlock {
                 stmts: Vec::new(),
                 expr: Some(Box::new(HirExpr {
                     id: crate::hir::HirId(14),
-                    kind: HirExprKind::Si(
-                        Box::new(HirExpr {
+                    kind: HirExprKind::Si {
+                        cond: Box::new(HirExpr {
                             id: crate::hir::HirId(15),
                             kind: HirExprKind::Literal(HirLiteral::Bool(false)),
                             ty: Some(bivalens),
                             span: span(),
                         }),
-                        HirBlock {
+                        then_block: HirBlock {
                             stmts: vec![HirStmt {
                                 id: crate::hir::HirId(16),
                                 kind: HirStmtKind::Redde(Some(HirExpr {
@@ -289,7 +290,8 @@ fn emits_si_sin_secus_chain_with_ergo_redde() {
                             expr: None,
                             span: span(),
                         },
-                        Some(HirBlock {
+                        then_catch: None,
+                        else_block: Some(HirBlock {
                             stmts: vec![HirStmt {
                                 id: crate::hir::HirId(18),
                                 kind: HirStmtKind::Redde(Some(HirExpr {
@@ -303,13 +305,13 @@ fn emits_si_sin_secus_chain_with_ergo_redde() {
                             expr: None,
                             span: span(),
                         }),
-                    ),
+                    },
                     ty: Some(textus),
                     span: span(),
                 })),
                 span: span(),
             }),
-        ),
+        },
         ty: Some(textus),
         span: span(),
     };

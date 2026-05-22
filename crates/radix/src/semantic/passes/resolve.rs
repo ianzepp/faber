@@ -586,8 +586,38 @@ fn resolve_secus_clause(
 ) {
     match clause {
         crate::syntax::SecusClause::Sin(stmt) => resolve_si_stmt(resolver, interner, stmt, errors),
-        crate::syntax::SecusClause::Block(block) => resolve_block(resolver, interner, block, errors),
-        crate::syntax::SecusClause::Stmt(stmt) => resolve_stmt(resolver, interner, stmt, errors),
+        crate::syntax::SecusClause::Block { body, catch } => {
+            resolve_block(resolver, interner, body, errors);
+            if let Some(catch) = catch {
+                resolver.enter_scope(ScopeKind::Block);
+                define_symbol(
+                    resolver,
+                    catch.binding.name,
+                    catch.binding.span,
+                    SymbolKind::Local,
+                    false,
+                    errors,
+                );
+                resolve_block(resolver, interner, &catch.body, errors);
+                resolver.exit_scope();
+            }
+        }
+        crate::syntax::SecusClause::Stmt { stmt, catch } => {
+            resolve_stmt(resolver, interner, stmt, errors);
+            if let Some(catch) = catch {
+                resolver.enter_scope(ScopeKind::Block);
+                define_symbol(
+                    resolver,
+                    catch.binding.name,
+                    catch.binding.span,
+                    SymbolKind::Local,
+                    false,
+                    errors,
+                );
+                resolve_block(resolver, interner, &catch.body, errors);
+                resolver.exit_scope();
+            }
+        }
     }
 }
 

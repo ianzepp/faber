@@ -347,6 +347,15 @@ pub struct HirExpr {
 }
 
 #[derive(Debug)]
+pub struct HirCape {
+    pub binding_def_id: DefId,
+    pub binding_name: Symbol,
+    pub binding_ty: Option<TypeId>,
+    pub body: HirBlock,
+    pub span: Span,
+}
+
+#[derive(Debug)]
 pub enum HirExprKind {
     /// Resolved path to a definition
     Path(DefId),
@@ -377,7 +386,12 @@ pub enum HirExprKind {
     /// Block expression
     Block(HirBlock),
     /// If expression
-    Si(Box<HirExpr>, HirBlock, Option<HirBlock>),
+    Si {
+        cond: Box<HirExpr>,
+        then_block: HirBlock,
+        then_catch: Option<Box<HirCape>>,
+        else_block: Option<HirBlock>,
+    },
     /// Match expression
     Discerne(Vec<HirExpr>, Vec<HirCasuArm>),
     /// Loop (while true)
@@ -413,6 +427,8 @@ pub enum HirExprKind {
     Panic(Box<HirExpr>),
     /// Recoverable throw expression (`iace`)
     Throw(Box<HirExpr>),
+    /// Structured local recoverable-error handler.
+    Handled { body: HirBlock, catch: Box<HirCape> },
     /// try/catch/finally expression
     Tempta {
         body: HirBlock,

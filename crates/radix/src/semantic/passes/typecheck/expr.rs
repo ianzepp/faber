@@ -48,8 +48,8 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::NonNull(object, chain) => self.check_non_null(object, chain, expr.span),
             HirExprKind::Ab { source, filter, transforms } => self.check_ab(source, filter.as_mut(), transforms),
             HirExprKind::Block(block) => self.check_block(block, expected),
-            HirExprKind::Si(cond, then_block, else_block) => {
-                self.check_if(cond, then_block, else_block.as_mut(), expected)
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
+                self.check_if(cond, then_block, then_catch.as_deref_mut(), else_block.as_mut(), expected)
             }
             HirExprKind::Discerne(scrutinees, arms) => self.check_match(scrutinees, arms, expected),
             HirExprKind::Loop(block) => {
@@ -129,7 +129,9 @@ impl<'a> TypeChecker<'a> {
             }
             HirExprKind::Throw(value) => {
                 let value_ty = self.check_expr(value);
-                if let Some(err_ty) = self.current_error {
+                if let Some(err_ty) = self.current_error.map(|sink| match sink {
+                    ErrorSink::Function(ty) | ErrorSink::Local(ty) => ty,
+                }) {
                     self.unify(value_ty, err_ty, value.span, "alternate exit value type mismatch");
                 } else {
                     self.error(
@@ -140,10 +142,11 @@ impl<'a> TypeChecker<'a> {
                 }
                 self.vacuum_type()
             }
+            HirExprKind::Handled { body, catch } => self.check_handled_block(body, catch, expected),
             HirExprKind::Tempta { body, catch, finally } => {
                 if catch.is_some() {
                     let prev_error = self.current_error;
-                    self.current_error = Some(self.types.primitive(Primitive::Ignotum));
+                    self.current_error = Some(ErrorSink::Local(self.types.primitive(Primitive::Ignotum)));
                     self.check_block(body, None);
                     self.current_error = prev_error;
                 } else {

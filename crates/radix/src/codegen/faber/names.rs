@@ -110,9 +110,12 @@ impl super::FaberCodegen {
                 }
             }
             HirExprKind::Block(block) => self.collect_block_names(names, Some(block)),
-            HirExprKind::Si(cond, then_block, else_block) => {
+            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.collect_expr_names(names, cond);
                 self.collect_block_names(names, Some(then_block));
+                if let Some(catch) = then_catch {
+                    self.collect_block_names(names, Some(&catch.body));
+                }
                 self.collect_block_names(names, else_block.as_ref());
             }
             HirExprKind::Discerne(scrutinees, arms) => {
@@ -174,6 +177,10 @@ impl super::FaberCodegen {
                 self.collect_block_names(names, Some(body));
                 self.collect_block_names(names, catch.as_ref());
                 self.collect_block_names(names, finally.as_ref());
+            }
+            HirExprKind::Handled { body, catch } => {
+                self.collect_block_names(names, Some(body));
+                self.collect_block_names(names, Some(&catch.body));
             }
             HirExprKind::Struct(_, fields) => {
                 for (_, value) in fields {
