@@ -49,9 +49,10 @@ impl Parser {
     /// without committing. Used internally for disambiguation.
     #[allow(dead_code)]
     pub(super) fn try_parse_type(&mut self) -> Result<Option<TypeExpr>, ParseError> {
-        // Check for type start (mode prefix or base: ident, '(', or later ∪ handled inside parse_type)
+        // Check for type start (mode prefix or base: '_', ident, '(', or later ∪ handled inside parse_type)
         if self.check_keyword(TokenKind::De)
             || self.check_keyword(TokenKind::In)
+            || matches!(self.peek().kind, TokenKind::Underscore(_))
             || matches!(self.peek().kind, TokenKind::Ident(_))
             || self.check(&TokenKind::LParen)
             || self.check(&TokenKind::Cup)
@@ -96,31 +97,37 @@ impl Parser {
             return self.parse_union_tail(core, start);
         }
 
-        // Named type (including 'nihil' as type name)
-        let name = if self.check_keyword(TokenKind::Nihil) {
-            let span = self.peek().span;
+        // Inferred type marker: _
+        let mut kind = if matches!(self.peek().kind, TokenKind::Underscore(_)) {
             self.advance();
-            self.keyword_ident("nihil", span)
+            TypeExprKind::Infer
         } else {
-            self.parse_ident()?
-        };
+            // Named type (including 'nihil' as type name)
+            let name = if self.check_keyword(TokenKind::Nihil) {
+                let span = self.peek().span;
+                self.advance();
+                self.keyword_ident("nihil", span)
+            } else {
+                self.parse_ident()?
+            };
 
-        // Generic type parameters: Type<A, B>
-        let params = if self.eat(&TokenKind::Lt) {
-            let mut params = Vec::new();
-            loop {
-                params.push(self.parse_type()?);
-                if !self.eat(&TokenKind::Comma) {
-                    break;
+            // Generic type parameters: Type<A, B>
+            let params = if self.eat(&TokenKind::Lt) {
+                let mut params = Vec::new();
+                loop {
+                    params.push(self.parse_type()?);
+                    if !self.eat(&TokenKind::Comma) {
+                        break;
+                    }
                 }
-            }
-            self.expect(&TokenKind::Gt, "expected '>'")?;
-            params
-        } else {
-            Vec::new()
-        };
+                self.expect(&TokenKind::Gt, "expected '>'")?;
+                params
+            } else {
+                Vec::new()
+            };
 
-        let mut kind = TypeExprKind::Named(name, params);
+            TypeExprKind::Named(name, params)
+        };
 
         // Array postfix: Type[][]
         while self.check(&TokenKind::LBracket) {

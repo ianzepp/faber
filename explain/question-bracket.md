@@ -11,5 +11,5 @@ related = ["?.", "?("]
 Performs an optional indexed access.
 
 ```fab
-fixum first = items?[0]
+fixum _ first = items?[0]
 ```

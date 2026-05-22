@@ -11,7 +11,7 @@ incipit {
     # Async endpoint dispatch
     @ futura
     ad "caelum:pete" ("https://api.example.com/data") → objectum pro response {
-        fixum data ← cede response.json()
+        fixum _ data ← cede response.json()
         nota data
     }
 

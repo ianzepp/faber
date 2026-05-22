@@ -5,8 +5,8 @@
 # mone <expr>    → console.warn (warning output)
 
 incipit {
-    fixum status ← "running"
-    fixum count ← 42
+    fixum _ status ← "running"
+    fixum _ count ← 42
 
     # Neutral diagnostic note
     nota "Application started"

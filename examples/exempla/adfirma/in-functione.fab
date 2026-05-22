@@ -18,7 +18,7 @@ functio calculateAge(numerus birthYear, numerus currentYear) → numerus {
 
 # Postcondition: validate result before returning
 functio absoluteValue(numerus n) → numerus {
-    varia result ← n
+    varia _ result ← n
     si n < 0 {
         result ← -n
     }
@@ -27,12 +27,12 @@ functio absoluteValue(numerus n) → numerus {
 }
 
 incipit {
-    fixum quotient ← divide(20, 4)
+    fixum _ quotient ← divide(20, 4)
     adfirma quotient ≡ 5
 
-    fixum age ← calculateAge(1990, 2024)
+    fixum _ age ← calculateAge(1990, 2024)
     adfirma age ≡ 34
 
-    fixum abs ← absoluteValue(-42)
+    fixum _ abs ← absoluteValue(-42)
     adfirma abs ≡ 42
 }

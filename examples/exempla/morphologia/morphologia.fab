@@ -7,18 +7,18 @@
 # Run with: bun run faber compile exempla/morphologia.fab
 
 incipit {
-    varia items ← [1, 2, 3, 4, 5] ⇢ numerus[]
+    varia _ items ← [1, 2, 3, 4, 5] ⇢ numerus[]
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # FILTER: filtr-
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # filtrata (participle) - returns new filtered list
-    fixum evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)
+    fixum _ evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)
     nota "filtrata (returns new):", evens
 
     # TODO (type errors) - filtra (imperative) - mutates in place
-    # varia nums ← [1, 2, 3, 4, 5]
+    # varia _ nums ← [1, 2, 3, 4, 5]
     # nums.filtra(clausura x: x > 2)
     # nota "filtra (mutates):", nums
 
@@ -27,11 +27,11 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # addita (participle) - returns new list with element added
-    fixum extended ← items.addita(6)
+    fixum _ extended ← items.addita(6)
     nota "addita (returns new):", extended
 
     # appende (imperative) - mutates in place
-    varia list ← [1, 2, 3]
+    varia _ list ← [1, 2, 3]
     list.appende(4)
     nota "appende (mutates):", list
 
@@ -40,11 +40,11 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # inversa (participle) - returns new reversed list
-    fixum reversed ← items.inversa()
+    fixum _ reversed ← items.inversa()
     nota "inversa (returns new):", reversed
 
     # inverte (imperative) - mutates in place
-    varia toReverse ← [1, 2, 3]
+    varia _ toReverse ← [1, 2, 3]
     toReverse.inverte()
     nota "inverte (mutates):", toReverse
 
@@ -53,7 +53,7 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # ordinata (participle) - returns new sorted list
-    fixum sorted ← items.ordinata()
+    fixum _ sorted ← items.ordinata()
     nota "ordinata (returns new):", sorted
 
     # NOTE: ordina (imperative) conflicts with keyword - use ordinata for now
@@ -63,7 +63,7 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # mappata (participle) - returns new mapped list
-    fixum doubled ← items.mappata(clausura numerus x: x * 2)
+    fixum _ doubled ← items.mappata(clausura numerus x: x * 2)
     nota "mappata (returns new):", doubled
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡

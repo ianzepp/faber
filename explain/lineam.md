@@ -11,5 +11,5 @@ related = ["lege"]
 Reads one line of input.
 
 ```fab
-fixum line = lege lineam
+fixum _ line = lege lineam
 ```

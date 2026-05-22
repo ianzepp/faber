@@ -38,12 +38,12 @@ proba "caching layer" futurum "depends on feature X" {
 
 # Skipped test with complex body
 proba "api integration" omitte "external service down" {
-    fixum status ← 500
+    fixum _ status ← 500
     adfirma status ≡ 200
 }
 
 # Todo test with setup
 proba "user creation flow" futurum "needs database fixtures" {
-    varia userId ← 0
+    varia _ userId ← 0
     adfirma userId > 0
 }

@@ -6,7 +6,7 @@
 #   secus ← else ("otherwise")
 
 incipit {
-    fixum hour ← 14
+    fixum _ hour ← 14
 
     si hour < 6 {
         nota "Late night"

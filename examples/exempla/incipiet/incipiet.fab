@@ -25,10 +25,10 @@ incipiet {
     nota "Starting async program..."
 
     # Await async functions with cede
-    fixum data ← cede fetchData()
+    fixum _ data ← cede fetchData()
     nota "Received:", data
 
-    fixum length ← cede processData(data)
+    fixum _ length ← cede processData(data)
     nota "Length:", length
 
     nota "Program complete"

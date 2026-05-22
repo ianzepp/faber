@@ -83,7 +83,7 @@ After a wildcard import, access symbols through the alias:
 
 ```fab
 importa ex "lodash" privata * ut _
-fixum doubled = _.map(numbers, clausura x: x * 2)
+fixum _ doubled = _.map(numbers, clausura x: x * 2)
 ```
 
 Use wildcards sparingly. Named imports are clearer about dependencies and help tree-shaking in build systems.
@@ -98,7 +98,7 @@ The `@ publica` annotation marks a declaration as exported:
 
 ```fab
 @ publica
-fixum VERSION = "1.0.0"
+fixum _ VERSION = "1.0.0"
 
 @ publica
 functio greet(textus name) → textus {

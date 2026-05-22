@@ -12,5 +12,5 @@ related = ["aut", "non"]
 Combines boolean expressions with logical and.
 
 ```fab
-fixum both = verum et falsum
+fixum _ both = verum et falsum
 ```

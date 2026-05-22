@@ -12,5 +12,5 @@ related = ["∧", "∨", "⊻"]
 Negates a boolean or bitwise value.
 
 ```fab
-fixum negated = ¬flag
+fixum _ negated = ¬flag
 ```

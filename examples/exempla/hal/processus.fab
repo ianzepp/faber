@@ -9,32 +9,32 @@ incipit {
     consolum.fundeLineam("≡ Process Management Demo ≡\n")
 
     # Current working directory
-    fixum dir ← processus.cwd()
+    fixum _ dir ← processus.cwd()
     consolum.fundeLineam("Current directory: §"(dir))
 
     # Process ID
-    fixum pid ← processus.pid()
+    fixum _ pid ← processus.pid()
     consolum.fundeLineam("Process ID: §"(pid))
 
     # Command line arguments
-    fixum args ← processus.argv()
+    fixum _ args ← processus.argv()
     consolum.fundeLineam("Arguments: §"(args))
 
     # Environment variables
-    fixum path ← processus.envVel("PATH", "(not set)")
+    fixum _ path ← processus.envVel("PATH", "(not set)")
     consolum.fundeLineam("PATH: §"(path))
 
-    fixum home ← processus.envVel("HOME", "(not set)")
+    fixum _ home ← processus.envVel("HOME", "(not set)")
     consolum.fundeLineam("HOME: §"(home))
 
     # Execute a simple command
     consolum.fundeLineam("\n--- Executing: echo 'Hello from subprocess' ---")
-    fixum output ← processus.exsequi("echo 'Hello from subprocess'")
+    fixum _ output ← processus.exsequi("echo 'Hello from subprocess'")
     consolum.fundeLineam("Output: §"(output))
 
     # Execute command and check exit code
     consolum.fundeLineam("\n--- Checking exit code: true ---")
-    fixum exitCode ← processus.exsequiCodem("true")
+    fixum _ exitCode ← processus.exsequiCodem("true")
     consolum.fundeLineam("Exit code: §"(exitCode))
 
     consolum.fundeLineam("\n≡ Demo Complete ≡")

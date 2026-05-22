@@ -130,10 +130,10 @@ impl Parser {
     /// Parse variable declaration.
     ///
     /// GRAMMAR:
-    ///   var-decl := ('fixum' | 'varia') [type] pattern ['←' expr]
+    ///   var-decl := ('fixum' | 'varia') type pattern ['←' expr]
     ///
-    /// WHY: Faber supports both type-inferred (`fixum name ← value`) and explicitly
-    /// typed (`fixum type name ← value`) declarations. Lookahead distinguishes these.
+    /// WHY: Inferred locals use an explicit `_` type marker (`fixum _ name ← value`),
+    /// keeping the declaration shape mechanical and avoiding type/name lookahead.
     ///
     /// EDGE: Array destructuring patterns like `[a, b, ceteri rest]` require
     /// special handling for rest elements.
@@ -150,14 +150,11 @@ impl Parser {
             _ => unreachable!(),
         };
 
-        // Check: is this "name =" (no type) or "type... name =" (with type)?
+        // Destructuring keeps the historical untyped pattern form; simple bindings
+        // use an explicit type slot, with `_` meaning "infer from the initializer".
         let ty = if self.check(&TokenKind::LBracket) {
             None
-        } else if self.is_simple_var_decl() {
-            // Pattern: fixum name = ...
-            None
         } else {
-            // Pattern: fixum [type-annotation] name = ...
             Some(self.parse_type()?)
         };
 

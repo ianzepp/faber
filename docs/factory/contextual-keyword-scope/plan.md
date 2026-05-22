@@ -225,7 +225,7 @@ Those are not part of this implementation factory. They are a follow-up language
 | 0 | Baseline inventory | Classify active non-test keywords by scope and parser ownership. | Ledger lists each keyword as global, contextual, alias, backlog candidate, or test-owned. |
 | 1 | Metadata registry | Add `KeywordSpec` / `KeywordScope` metadata without behavior changes. | Registry agrees with current lexer table and contextual vocabulary; validation prevents unclassified active spellings. |
 | 2 | Contextual parser helpers | Add shared grammar-word and contextual-identifier helpers. | Existing parser behavior unchanged; helper tests cover ident and old-token migration forms. |
-| 3 | First migration: `cura` kind | Move `arena` out of global keyword handling and parse it contextually with `page`. | `cura arena ...` and `cura page ...` still parse; `fixum arena ← 1` is legal. |
+| 3 | First migration: `cura` kind | Move `arena` out of global keyword handling and parse it contextually with `page`. | `cura arena ...` and `cura page ...` still parse; `fixum _ arena ← 1` is legal. |
 | 4 | Function and entry modifiers | Contextualize `argumenta`, `exitus`, `curata`, `errata`, `optiones`, `immutata`, `iacit`. | Modifier syntax still parses; those words become legal identifiers outside modifier positions. |
 | 5 | Genus/member modifiers | Contextualize `generis`, `nexum`, `sub`, `implet`, and possibly `abstractus`. | Genus syntax still parses; those words become legal identifiers outside genus contexts. |
 | 6 | Rest/spread/context operators | Contextualize `ceteri` and `sparge` where feasible. | Rest/spread syntax still parses; non-context usage is identifier-safe. |
@@ -323,8 +323,8 @@ Steps:
 - Keep `TokenKind::Arena` only if needed temporarily for compatibility tests; otherwise delete it.
 - Parse `cura arena` and `cura page` via contextual helper.
 - Add negative/identifier tests:
-  - `fixum arena ← 1` parses as a variable declaration,
-  - `fixum page ← 1` continues to parse,
+  - `fixum _ arena ← 1` parses as a variable declaration,
+  - `fixum _ page ← 1` continues to parse,
   - `cura page source fixum textus page {}` still distinguishes the `page` kind word from later type/binding identifiers,
   - `cura bogus {}` produces a curator-kind diagnostic.
 - Update docs and explain entries to say `arena` is contextual under `cura`.
@@ -401,7 +401,7 @@ Steps:
 Checkpoint:
 
 - Rest/spread examples parse.
-- `fixum ceteri ← 1` and `fixum sparge ← 1` are legal if migrated.
+- `fixum _ ceteri ← 1` and `fixum _ sparge ← 1` are legal if migrated.
 
 ### Phase 7: Guardrails
 

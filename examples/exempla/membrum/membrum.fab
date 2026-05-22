@@ -2,34 +2,34 @@
 
 incipit {
     # Object with dot access
-    fixum point ← { x: 10, y: 20 }
+    fixum _ point ← { x: 10, y: 20 }
     nota point.x
     nota point.y
 
     # Array with bracket access
-    fixum numbers ← [1, 2, 3]
+    fixum _ numbers ← [1, 2, 3]
     nota numbers[0]
     nota numbers[2]
 
     # Object with bracket access (string key)
-    fixum config ← { name: "test", value: 42 }
+    fixum _ config ← { name: "test", value: 42 }
     nota config["name"]
     nota config["value"]
 
     # Chained member access
-    fixum nested ← { outer: { inner: { deep: "found" } } }
+    fixum _ nested ← { outer: { inner: { deep: "found" } } }
     nota nested.outer.inner.deep
 
     # Mixed dot and bracket access
-    fixum data ← { items: ["first", "second", "third"] }
+    fixum _ data ← { items: ["first", "second", "third"] }
     nota data.items[0]
     nota data.items[2]
 
     # Optional chaining
-    fixum maybe ← { present: { value: 100 } }
+    fixum _ maybe ← { present: { value: 100 } }
     nota maybe?.present?.value
 
     # Optional chaining with nihil
-    fixum empty ← nihil
+    fixum _ empty ← nihil
     nota empty?.missing
 }

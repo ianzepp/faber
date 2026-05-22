@@ -26,12 +26,13 @@ blockStmt   := '{' statement* '}'
 ### Variables
 
 ```ebnf
-varDecl      := ('fixum' | 'varia') typeAnnotation? IDENTIFIER ('←' expression)?
+varDecl      := ('fixum' | 'varia') typeAnnotation IDENTIFIER ('←' expression)?
 arrayDestruct := ('fixum' | 'varia') arrayPattern '←' expression
 objectDestruct := ('fixum' | 'varia') objectPattern '←' expression
 ```
 
 - `fixum` = const, `varia` = let
+- Use `_` as the type annotation when the initializer determines the type: `fixum _ name ← value`
 
 ### Functions
 
@@ -195,7 +196,7 @@ importa ex "./types" publica User               # re-export
 
 ```ebnf
 typeAnnotation := ('de' | 'in')? baseType ( '∪' typeAnnotation )*
-baseType       := functionType | IDENTIFIER typeParams? arrayBrackets* | '(' typeAnnotation ')'
+baseType       := '_' arrayBrackets* | functionType | IDENTIFIER typeParams? arrayBrackets* | '(' typeAnnotation ')'
 functionType   := '(' typeList? ')' '→' typeAnnotation
 typeList       := typeAnnotation (',' typeAnnotation)*
 typeParams     := '<' typeParameter (',' typeParameter)* '>'

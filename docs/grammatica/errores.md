@@ -133,7 +133,7 @@ iace "Something went wrong"
 The expression following `iace` becomes the error value. Typically this is a string message, but it can be any expression:
 
 ```fab
-fixum code = 404
+fixum _ code = 404
 iace "Error code: {}"(code)
 ```
 
@@ -179,7 +179,7 @@ From Latin _facere_ (to do, to make). A `fac` block creates an explicit scope fo
 
 ```fab
 fac {
-    fixum x = 42
+    fixum _ x = 42
     nota x
 }
 # x is not accessible here
@@ -193,7 +193,7 @@ A `fac` block can include a `cape` clause to handle errors from the block's body
 
 ```fab
 fac {
-    fixum value = riskyComputation()
+    fixum _ value = riskyComputation()
     nota value
 } cape err {
     nota "Error occurred:", err
@@ -204,7 +204,7 @@ This is more concise than `tempta`/`cape` when you also want scope isolation, an
 
 ```fab
 tempta {
-    fixum value = riskyComputation()
+    fixum _ value = riskyComputation()
     nota value
 }
 cape err {
@@ -271,7 +271,7 @@ functio divide(numerus a, numerus b) → numerus {
 
 # Caller must handle the error
 tempta {
-    fixum result = divide(10, 0)
+    fixum _ result = divide(10, 0)
 }
 cape err {
     nota "Division failed:", err
@@ -284,7 +284,7 @@ The `tempta`/`cape`/`demum` pattern is particularly valuable when working with r
 
 ```fab
 functio processWithCleanup(textus name) {
-    varia resource = "pending"
+    varia _ resource = "pending"
 
     tempta {
         nota "Opening:", name

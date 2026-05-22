@@ -2,18 +2,18 @@
 
 incipit {
     # Numeric negation
-    fixum x ← 5
-    fixum neg ← -x
+    fixum _ x ← 5
+    fixum _ neg ← -x
     nota neg  # -5
 
     # Logical negation
-    fixum flag ← verum
-    fixum notFlag ← non flag
+    fixum _ flag ← verum
+    fixum _ notFlag ← non flag
     nota notFlag  # falsum
 
     # Positive/negative checks
-    fixum a ← 10
-    fixum b ← -3
+    fixum _ a ← 10
+    fixum _ b ← -3
     nota positivum a   # verum
     nota negativum a   # falsum
     nota positivum b   # falsum

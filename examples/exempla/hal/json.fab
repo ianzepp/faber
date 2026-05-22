@@ -10,23 +10,23 @@ incipit {
 
     # Serialize objects
     consolum.fundeLineam("--- Serialization ---")
-    fixum obj ← { "name": "Alice", "age": 30, "active": verum }
-    fixum compact ← json.solve(obj)
+    fixum _ obj ← { "name": "Alice", "age": 30, "active": verum }
+    fixum _ compact ← json.solve(obj)
     consolum.fundeLineam("Compact: §"(compact))
 
-    fixum pretty ← json.solvePulchre(obj, 2)
+    fixum _ pretty ← json.solvePulchre(obj, 2)
     consolum.fundeLineam("Pretty:\n§"(pretty))
 
     # Parse JSON
     consolum.fundeLineam("\n--- Parsing ---")
-    fixum parsed ← json.pange("{\"x\": 100, \"y\": 200}")
+    fixum _ parsed ← json.pange("{\"x\": 100, \"y\": 200}")
     consolum.fundeLineam("Parsed: §"(parsed))
 
     # Safe parse (returns nihil on error)
-    fixum good ← json.pangeTuto("{\"valid\": true}")
+    fixum _ good ← json.pangeTuto("{\"valid\": true}")
     consolum.fundeLineam("Good JSON: §"(good))
 
-    fixum bad ← json.pangeTuto("not valid json")
+    fixum _ bad ← json.pangeTuto("not valid json")
     consolum.fundeLineam("Bad JSON: §"(bad))
 
     # Type checking
@@ -37,16 +37,16 @@ incipit {
 
     # Value extraction with defaults
     consolum.fundeLineam("\n--- Value Extraction ---")
-    fixum data ← { "name": "Bob", "count": 42 }
-    fixum name ← json.cape(data, "name")
-    fixum count ← json.cape(data, "count")
+    fixum _ data ← { "name": "Bob", "count": 42 }
+    fixum _ name ← json.cape(data, "name")
+    fixum _ count ← json.cape(data, "count")
     consolum.fundeLineam("name: §"(json.utTextus(name, "unknown")))
     consolum.fundeLineam("count: §"(json.utNumerus(count, 0)))
 
     # Path access for nested data
     consolum.fundeLineam("\n--- Path Access ---")
-    fixum nested ← { "user": { "profile": { "email": "alice@example.com" } } }
-    fixum email ← json.capeVia(nested, "user.profile.email")
+    fixum _ nested ← { "user": { "profile": { "email": "alice@example.com" } } }
+    fixum _ email ← json.capeVia(nested, "user.profile.email")
     consolum.fundeLineam("email: §"(email))
 
     consolum.fundeLineam("\n≡ Demo Complete ≡")

@@ -3,16 +3,16 @@
 
 incipit {
     # Simple patterns
-    fixum digits ← sed "\d+"
-    fixum word ← sed "\w+"
+    fixum _ digits ← sed "\d+"
+    fixum _ word ← sed "\w+"
 
     # With inline flags (i ← case insensitive, m ← multiline)
-    fixum insensitive ← sed "(?i)hello"
-    fixum multiline ← sed "(?im)^start"
+    fixum _ insensitive ← sed "(?i)hello"
+    fixum _ multiline ← sed "(?im)^start"
 
     # Complex patterns
-    fixum email ← sed "[^@]+@[^@]+"
-    fixum paths ← sed "/usr/local/.*"
+    fixum _ email ← sed "[^@]+@[^@]+"
+    fixum _ paths ← sed "/usr/local/.*"
 
     nota digits
     nota word

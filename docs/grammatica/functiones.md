@@ -110,7 +110,7 @@ The `ceteri` modifier (Latin "the rest, the others") collects remaining argument
 
 ```fab
 functio sum(ceteri numerus[] nums) → numerus {
-    varia total ← 0
+    varia _ total ← 0
     itera ex nums fixum n {
         total ⊕ n
     }
@@ -186,7 +186,7 @@ The `@ futura` annotation (Latin "future things," neuter plural of _futurus_) ma
 ```fab
 @ futura
 functio fetchData(textus url) → textus {
-    fixum response = cede fetch(url)
+    fixum _ response = cede fetch(url)
     redde response.text()
 }
 ```
@@ -200,9 +200,9 @@ Inside async functions, `cede` (Latin "yield, give way, surrender") awaits a pro
 ```fab
 @ futura
 functio processAll(textus[] urls) → textus[] {
-    varia results = []
+    varia _ results = []
     itera ex urls fixum url {
-        fixum data = cede fetchData(url)
+        fixum _ data = cede fetchData(url)
         results.appende(data)
     }
     redde results
@@ -279,8 +279,8 @@ functio max(prae typus T, T a, T b) → T {
     redde b
 }
 
-fixum larger = max(10, 20)           # T inferred as numerus
-fixum longer = max("alpha", "beta")  # T inferred as textus
+fixum _ larger = max(10, 20)           # T inferred as numerus
+fixum _ longer = max("alpha", "beta")  # T inferred as textus
 ```
 
 Type parameters must come first in the parameter list, followed by regular parameters. This matches conventions in TypeScript, Rust, and Zig.
@@ -300,8 +300,8 @@ functio pair(prae typus T, prae typus U, T first, U second) → [T, U] {
 Clausura expressions use `clausura` (Latin for "closure") followed by parameters, a colon, and an expression:
 
 ```fab
-fixum double = clausura x: x * 2
-fixum add = clausura a, b: a + b
+fixum _ double = clausura x: x * 2
+fixum _ add = clausura a, b: a + b
 ```
 
 The colon separates parameters from the body. For single expressions, the result is implicitly returned.
@@ -311,8 +311,8 @@ The colon separates parameters from the body. For single expressions, the result
 When type annotation is needed, use an arrow before the colon:
 
 ```fab
-fixum add = clausura a, b → numerus: a + b
-fixum isPositive = clausura n → bivalens: n > 0
+fixum _ add = clausura a, b → numerus: a + b
+fixum _ isPositive = clausura n → bivalens: n > 0
 ```
 
 ### Block Bodies
@@ -320,8 +320,8 @@ fixum isPositive = clausura n → bivalens: n > 0
 For multi-statement clausuras, use braces and explicit `redde`:
 
 ```fab
-fixum process = clausura x {
-    varia result = x * 2
+fixum _ process = clausura x {
+    varia _ result = x * 2
     result ⊕ 10
     redde result
 }
@@ -332,7 +332,7 @@ fixum process = clausura x {
 When a clausura takes no parameters, place the colon immediately after `clausura`:
 
 ```fab
-fixum getFortyTwo = clausura: 42
+fixum _ getFortyTwo = clausura: 42
 ```
 
 ### Async Clausuras
@@ -340,8 +340,8 @@ fixum getFortyTwo = clausura: 42
 Async is inferred from the presence of `cede` in the body:
 
 ```fab
-fixum fetchAndProcess = clausura url {
-    fixum data = cede fetch(url)
+fixum _ fetchAndProcess = clausura url {
+    fixum _ data = cede fetch(url)
     redde process(data)
 }
 ```
@@ -350,7 +350,7 @@ This is useful for callbacks in async contexts:
 
 ```fab
 app.post("/users", clausura context {
-    fixum data = cede context.json()
+    fixum _ data = cede context.json()
     redde data
 })
 ```
@@ -360,16 +360,16 @@ app.post("/users", clausura context {
 Clausuras shine in functional operations:
 
 ```fab
-fixum numbers = [1, 2, 3, 4, 5]
+fixum _ numbers = [1, 2, 3, 4, 5]
 
 # Filter
-fixum evens = numbers.filter(clausura x: x % 2 ≡ 0)
+fixum _ evens = numbers.filter(clausura x: x % 2 ≡ 0)
 
 # Map
-fixum doubled = numbers.map(clausura x: x * 2)
+fixum _ doubled = numbers.map(clausura x: x * 2)
 
 # Reduce
-fixum sum = numbers.reduce(0, clausura acc, x: acc + x)
+fixum _ sum = numbers.reduce(0, clausura acc, x: acc + x)
 ```
 
 ## Allocator Binding with curata

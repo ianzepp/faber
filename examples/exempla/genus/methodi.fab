@@ -36,7 +36,7 @@ genus Counter {
 
 incipit {
     # Methods that return values
-    fixum rect ← {
+    fixum _ rect ← {
         width: 10,
         height: 5
     } ⇢ Rectangle
@@ -46,7 +46,7 @@ incipit {
     nota rect.isSquare()
 
     # Methods that modify state
-    varia counter ← {} ⇢ Counter
+    varia _ counter ← {} ⇢ Counter
 
     nota counter.getValue()
 

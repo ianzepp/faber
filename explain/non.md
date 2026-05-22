@@ -12,5 +12,5 @@ related = ["verum", "falsum"]
 Negates a boolean expression.
 
 ```fab
-fixum negated = non flag
+fixum _ negated = non flag
 ```

@@ -11,5 +11,5 @@ related = ["discretio", "verte"]
 Constructs a tagged union variant.
 
 ```fab
-fixum event = finge Click { x: 1, y: 2 }
+fixum _ event = finge Click { x: 1, y: 2 }
 ```

@@ -7,30 +7,30 @@
 # Latin: sic ← "thus/so", secus ← "otherwise"
 
 incipit {
-    fixum age ← 25
+    fixum _ age ← 25
 
     # Latin ternary
-    fixum statusLatin ← age ≥ 18 sic "adult" secus "minor"
+    fixum _ statusLatin ← age ≥ 18 sic "adult" secus "minor"
     nota statusLatin  # "adult"
 
     # Latin nested (reads more clearly)
-    fixum score ← 85
-    fixum gradeLatin ←
+    fixum _ score ← 85
+    fixum _ gradeLatin ←
         score ≥ 90 sic "A" secus
         score ≥ 80 sic "B" secus
         score ≥ 70 sic "C" secus "F"
     nota gradeLatin  # "B"
 
     # In expressions
-    fixum max ← age > 30 sic age secus 30
+    fixum _ max ← age > 30 sic age secus 30
     nota "Max:", max
 
     # With nullish values
-    varia maybe ← nihil ⇢ textus ∪ nihil
-    fixum result ← nonnihil maybe sic maybe secus "default"
+    varia _ maybe ← nihil ⇢ textus ∪ nihil
+    fixum _ result ← nonnihil maybe sic maybe secus "default"
     nota result  # "default"
 
     # Prefer sic/secus for clarity
-    fixum readable ← age ≥ 21 sic "can drink" secus "cannot drink"
+    fixum _ readable ← age ≥ 21 sic "can drink" secus "cannot drink"
     nota readable
 }

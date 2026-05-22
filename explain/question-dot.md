@@ -11,5 +11,5 @@ related = ["?[", "?("]
 Performs an optional member access.
 
 ```fab
-fixum city = person?.nomen
+fixum _ city = person?.nomen
 ```

@@ -1,6 +1,6 @@
 probandum "math suite" {
     praepara omnia {
-        fixum setup_value ← 1
+        fixum _ setup_value ← 1
         adfirma setup_value ≡ 1
     }
 

@@ -18,33 +18,33 @@ genus User {
 
 incipit {
     # User with full address
-    fixum alice ← {
+    fixum _ alice ← {
         name: "Alice",
         address: { city: "Roma", state: "Italia" } ⇢ Address
     } ⇢ User
 
     # Optional chaining prevents errors when properties might be nihil
-    fixum city ← alice?.address?.city
+    fixum _ city ← alice?.address?.city
     nota city  # "Roma"
 
-    fixum state ← alice?.address?.state
+    fixum _ state ← alice?.address?.state
     nota state  # "Italia"
 
     # User with no address
-    fixum bob ← { name: "Bob" } ⇢ User
-    fixum bobCity ← bob?.address?.city
+    fixum _ bob ← { name: "Bob" } ⇢ User
+    fixum _ bobCity ← bob?.address?.city
     nota bobCity  # nihil (no error thrown)
 
     # Chaining through multiple levels
-    fixum bobState ← bob?.address?.state
+    fixum _ bobState ← bob?.address?.state
     nota bobState  # nihil
 
     # Optional array access
-    fixum items ← ["a", "b", "c"]
+    fixum _ items ← ["a", "b", "c"]
     nota items?[0]  # "a"
     nota items?[10] # undefined/nihil (out of bounds)
 
     # Combining with vel for defaults
-    fixum defaultCity ← bob?.address?.city vel "Unknown"
+    fixum _ defaultCity ← bob?.address?.city vel "Unknown"
     nota defaultCity  # "Unknown"
 }

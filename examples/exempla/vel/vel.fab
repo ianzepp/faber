@@ -10,18 +10,18 @@
 incipit {
     # Basic nullish coalescing
     fixum textus ∪ nihil name ← nihil
-    fixum display ← name vel "Anonymous"
+    fixum _ display ← name vel "Anonymous"
     nota display  # "Anonymous"
 
     # With non-null value
     fixum textus ∪ nihil actualName ← "Marcus"
-    fixum displayName ← actualName vel "Anonymous"
+    fixum _ displayName ← actualName vel "Anonymous"
     nota displayName  # "Marcus"
 
     # Difference from logical or: vel only checks nihil
-    fixum zero ← 0
-    fixum emptyStr ← ""
-    fixum falseBool ← falsum
+    fixum _ zero ← 0
+    fixum _ emptyStr ← ""
+    fixum _ falseBool ← falsum
 
     # vel preserves falsy non-null values
     nota zero vel 999        # 0 (not nihil)
@@ -29,22 +29,22 @@ incipit {
     nota falseBool vel verum # falsum (not nihil)
 
     # Symbolic syntax (equivalent)
-    fixum result2 ← name vel "Default"
+    fixum _ result2 ← name vel "Default"
     nota result2
 
     # Chaining
     fixum textus ∪ nihil a ← nihil
     fixum textus ∪ nihil b ← nihil
     fixum textus ∪ nihil c ← "found"
-    fixum first ← a vel b vel c vel "none"
+    fixum _ first ← a vel b vel c vel "none"
     nota first  # "found"
 
     # With conversion operators
-    fixum input ← "abc"
-    fixum num ← input ⇒ numerus vel 0
+    fixum _ input ← "abc"
+    fixum _ num ← input ⇒ numerus vel 0
     nota num  # 0 (parse failed, uses default)
 
-    fixum validInput ← "42"
-    fixum validNum ← validInput ⇒ numerus vel 0
+    fixum _ validInput ← "42"
+    fixum _ validNum ← validInput ⇒ numerus vel 0
     nota validNum  # 42
 }

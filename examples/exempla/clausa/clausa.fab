@@ -4,24 +4,24 @@
 
 incipit {
     # Simple lambda with single parameter
-    fixum double ← clausura numerus x: x * 2
+    fixum _ double ← clausura numerus x: x * 2
     nota double(5)
 
     # Multi-parameter lambda
-    fixum add ← clausura numerus a, numerus b → numerus: a + b
+    fixum _ add ← clausura numerus a, numerus b → numerus: a + b
     nota add(3, 4)
 
     # Lambda with array map
-    fixum numbers ← [1, 2, 3]
-    fixum doubled ← numbers.map(clausura numerus x: x * 2)
+    fixum _ numbers ← [1, 2, 3]
+    fixum _ doubled ← numbers.map(clausura numerus x: x * 2)
     nota doubled
 
     # Lambda with array filter
-    fixum evens ← numbers.filter(clausura numerus x: x % 2 ≡ 0)
+    fixum _ evens ← numbers.filter(clausura numerus x: x % 2 ≡ 0)
     nota evens
 
     # Lambda stored and reused
-    fixum isPositive ← clausura numerus n → bivalens: n > 0
+    fixum _ isPositive ← clausura numerus n → bivalens: n > 0
     nota isPositive(10)
     nota isPositive(-5)
 }

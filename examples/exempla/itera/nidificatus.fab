@@ -2,8 +2,8 @@
 
 incipit {
     # Nested array iteration
-    fixum rows ← [1, 2, 3]
-    fixum cols ← ["A", "B", "C"]
+    fixum _ rows ← [1, 2, 3]
+    fixum _ cols ← ["A", "B", "C"]
 
     itera ex rows fixum row {
         itera ex cols fixum col {

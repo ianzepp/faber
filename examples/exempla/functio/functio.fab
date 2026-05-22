@@ -28,7 +28,7 @@ incipit {
 
     dic("Bonum diem!")
 
-    fixum rex ← nomen()
+    fixum _ rex ← nomen()
     nota rex
 
     nota duplica(21)

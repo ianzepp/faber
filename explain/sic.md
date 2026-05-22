@@ -12,5 +12,5 @@ related = ["si", "secus"]
 Starts the true branch of a one-line conditional expression.
 
 ```fab
-fixum max = a > b sic a secus b
+fixum _ max = a > b sic a secus b
 ```

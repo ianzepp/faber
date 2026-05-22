@@ -11,5 +11,5 @@ related = ["est"]
 Negates the `est` relation.
 
 ```fab
-fixum isNotNull = maybeValue non est nihil
+fixum _ isNotNull = maybeValue non est nihil
 ```

@@ -223,7 +223,7 @@ fn rejects_old_ascii_compound_operators() {
         ("/=", TokenKind::SlashEq),
     ];
     for &(op, ref compound) in cases {
-        let src = format!("fixum x = 1 {} 2", op);
+        let src = format!("fixum _ x = 1 {} 2", op);
         let result = lex(&src);
         // Lex itself does not error (single-char tokens are valid), but must not emit the compound.
         let emits_compound = result

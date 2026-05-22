@@ -39,20 +39,20 @@ genus Circle {
 
 incipit {
     # Validation in creo
-    fixum normal ← {
+    fixum _ normal ← {
         value: 50
     } ⇢ BoundedValue
 
     nota normal.getValue()
 
-    fixum clamped ← {
+    fixum _ clamped ← {
         value: 200
     } ⇢ BoundedValue
 
     nota clamped.getValue()
 
     # Derived initialization in creo
-    fixum c ← {
+    fixum _ c ← {
         radius: 5
     } ⇢ Circle
 

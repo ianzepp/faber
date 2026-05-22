@@ -3,7 +3,7 @@
 # si <condition> { <body> }
 
 incipit {
-    fixum x ← 10
+    fixum _ x ← 10
 
     si x > 5 {
         nota "x is greater than 5"
@@ -14,7 +14,7 @@ incipit {
     }
 
     # Multiple statements in block
-    fixum age ← 25
+    fixum _ age ← 25
 
     si age ≥ 18 {
         nota "Adult"

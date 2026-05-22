@@ -172,7 +172,7 @@ genus Capsa<T> {
     }
 }
 
-fixum c = { valor: 42 } ⇢ Capsa<numerus>
+fixum _ c = { valor: 42 } ⇢ Capsa<numerus>
 nota c.accipe()  # 42
 ```
 
@@ -242,7 +242,7 @@ genus Document implet Readable, Writable, Printable {
 The `⇢` operator participates in postfix construction (and type conversion). The glyph is the canonical spelling; previous Latin aliases (`novum` etc.) have been removed.
 
 ```fab
-fixum p = { x: 10, y: 20 } ⇢ Punctum
+fixum _ p = { x: 10, y: 20 } ⇢ Punctum
 ```
 
 Field values are provided in an object literal before the type name. Required fields (those without defaults) must be specified:
@@ -254,11 +254,11 @@ genus Persona {
 }
 
 # nomen is required, aetas is optional
-fixum marcus = { nomen: "Marcus" } ⇢ Persona
+fixum _ marcus = { nomen: "Marcus" } ⇢ Persona
 nota marcus.aetas  # 0 (default)
 
 # Override defaults by providing values
-fixum julia = { nomen: "Julia", aetas: 25 } ⇢ Persona
+fixum _ julia = { nomen: "Julia", aetas: 25 } ⇢ Persona
 ```
 
 When all fields have defaults, the literal can be omitted entirely:
@@ -268,7 +268,7 @@ genus Counter {
     numerus count: 0
 }
 
-varia counter = {} ⇢ Counter
+varia _ counter = {} ⇢ Counter
 ```
 
 ### Construction from Existing Values
@@ -276,8 +276,8 @@ varia counter = {} ⇢ Counter
 When you already have source values, build the object literal explicitly and then apply `⇢`:
 
 ```fab
-fixum props = getPersonaProps()
-fixum p = {
+fixum _ props = getPersonaProps()
+fixum _ p = {
     nomen: props.nomen,
     aetas: props.aetas
 } ⇢ Persona
@@ -326,7 +326,7 @@ genus Circle {
     }
 }
 
-fixum c = { radius: 5 } ⇢ Circle
+fixum _ c = { radius: 5 } ⇢ Circle
 nota c.diameter  # 10
 nota c.area      # 78.54
 ```

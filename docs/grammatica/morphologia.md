@@ -47,8 +47,8 @@ The perfect passive participle describes a completed action: _filtrata_ ("having
 
 ```fab
 fixum lista<numerus> items = [3, 1, 2]
-fixum filtered = items.filtrata(|n| n > 1)  # [3, 2], items unchanged
-fixum sorted = items.ordinata()              # [1, 2, 3], items unchanged
+fixum _ filtered = items.filtrata(|n| n > 1)  # [3, 2], items unchanged
+fixum _ sorted = items.ordinata()              # [1, 2, 3], items unchanged
 ```
 
 This is functional programming's bread and butter: transformations that preserve immutability. The perfect participle makes the semantics explicit—you're receiving the _result_ of an action, not commanding the action itself.
@@ -80,8 +80,8 @@ This form is less common—most async operations return new values rather than m
 The future active participle describes what is about to happen: _filtratura_ ("about to filter"), _lectura_ ("about to read"). In Faber, future active forms **return a new value** and execute **asynchronously**.
 
 ```fab
-fixum data = cede solum.lectura(path)        # async read, returns content
-fixum processed = cede items.filtratura(pred) # async filter, returns new list
+fixum _ data = cede solum.lectura(path)        # async read, returns content
+fixum _ processed = cede items.filtratura(pred) # async filter, returns new list
 ```
 
 This is the async equivalent of the perfect participle: functional transformations that happen to be asynchronous. The form signals both the async nature and the non-mutating behavior.
@@ -181,15 +181,15 @@ The same morphological system serves different semantic purposes depending on th
 For collections, morphology distinguishes **mutation vs allocation**:
 
 ```fab
-varia items = [1, 2, 3]
+varia _ items = [1, 2, 3]
 
 # Imperative: mutate in place
 items.appende(4)           # items = [1, 2, 3, 4]
 items.filtra(|n| n > 2) # items = [3, 4]
 
 # Perfect: return new collection
-fixum with4 = items.addita(4)       # new list, items unchanged
-fixum big = items.filtrata(|n| n > 2) # new list, items unchanged
+fixum _ with4 = items.addita(4)       # new list, items unchanged
+fixum _ big = items.filtrata(|n| n > 2) # new list, items unchanged
 ```
 
 ### I/O Operations (solum)
@@ -198,10 +198,10 @@ For I/O, morphology distinguishes **sync vs async vs streaming**:
 
 ```fab
 # Imperative: synchronous, blocking
-fixum content = solum.lege(path)
+fixum _ content = solum.lege(path)
 
 # Future: asynchronous, returns Promise
-fixum content = cede solum.leget(path)
+fixum _ content = cede solum.leget(path)
 
 # Present plural: synchronous streaming
 itera ex solum.legunt(path) fixum chunk {

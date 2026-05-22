@@ -593,6 +593,41 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
 }
 
 #[test]
+fn parses_infer_marker_as_type_annotation() {
+    let result = parse_ok(
+        r#"
+fixum _ name ← "Marcus"
+varia _ count ← 1
+functio answer() → _ { redde 42 }
+"#,
+    );
+
+    let program = result.program.as_ref().expect("program");
+
+    let StmtKind::Var(name_var) = &program.stmts[0].kind else {
+        panic!("expected variable declaration");
+    };
+    assert!(matches!(
+        name_var.ty.as_ref().expect("explicit infer marker").kind,
+        TypeExprKind::Infer
+    ));
+
+    let StmtKind::Func(func) = &program.stmts[2].kind else {
+        panic!("expected function declaration");
+    };
+    assert!(matches!(
+        func.ret.as_ref().expect("explicit inferred return").kind,
+        TypeExprKind::Infer
+    ));
+}
+
+#[test]
+fn bare_inferred_variable_declaration_requires_marker() {
+    assert_parse_error_contains(r#"fixum name ← "Marcus""#, "expected");
+    assert_parse_error_contains(r#"varia count ← 1"#, "expected");
+}
+
+#[test]
 fn parses_class_interface_and_test_keywords() {
     let result = parse_ok(
         r#"

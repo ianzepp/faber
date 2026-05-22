@@ -14,40 +14,40 @@ functio getValue() → numerus {
 
 incipit {
     # Cast to string
-    fixum data ← 42
-    fixum asText ← data ⇢ textus
+    fixum _ data ← 42
+    fixum _ asText ← data ⇢ textus
     nota asText
 
     # Cast to number
-    fixum input ← "100"
-    fixum asNum ← input ⇢ numerus
+    fixum _ input ← "100"
+    fixum _ asNum ← input ⇢ numerus
     nota asNum
 
     # Cast to boolean
-    fixum value ← 1
-    fixum asBool ← value ⇢ bivalens
+    fixum _ value ← 1
+    fixum _ asBool ← value ⇢ bivalens
     nota asBool
 
     # Cast to nullable type
-    fixum num ← 10
-    fixum maybe ← num ⇢ numerus ∪ nihil
+    fixum _ num ← 10
+    fixum _ maybe ← num ⇢ numerus ∪ nihil
     nota maybe
 
     # Cast to array type
-    fixum raw ← getData()
-    fixum items ← raw ⇢ lista<textus>
+    fixum _ raw ← getData()
+    fixum _ items ← raw ⇢ lista<textus>
     nota items
 
     # Cast with member access
-    fixum response ← getResponse()
-    fixum body ← response.body ⇢ textus
+    fixum _ response ← getResponse()
+    fixum _ body ← response.body ⇢ textus
     nota body
 
     # Cast call result directly
-    fixum result ← getValue() ⇢ textus
+    fixum _ result ← getValue() ⇢ textus
     nota result
 
     # Cast in parenthesized expression for chaining
-    fixum len ← (data ⇢ textus).length
+    fixum _ len ← (data ⇢ textus).length
     nota len
 }

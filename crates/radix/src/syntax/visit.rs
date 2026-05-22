@@ -284,6 +284,7 @@ fn walk_binding_pattern<V: Visitor>(visitor: &mut V, pattern: &BindingPattern) {
 
 pub fn walk_type_expr<V: Visitor>(visitor: &mut V, ty: &TypeExpr) {
     match &ty.kind {
+        TypeExprKind::Infer => {}
         TypeExprKind::Named(name, params) => {
             visitor.visit_ident(name);
             for param in params {

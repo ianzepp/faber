@@ -20,9 +20,9 @@ fixum textus empty ← ""
 String literals use double quotes. Block strings use `❝` and `❞`. Formatted strings use template application with `§` placeholders:
 
 ```fab
-fixum name = "Marcus"
-fixum message = "Hello, §"(name)
-fixum quote = ❝he said "salve"❞
+fixum _ name = "Marcus"
+fixum _ message = "Hello, §"(name)
+fixum _ quote = ❝he said "salve"❞
 ```
 
 ### numerus (Integer)
@@ -66,7 +66,7 @@ These literals read as Latin adjectives: "it is true," "it is false."
 From the Latin _nihil_, "nothing." The absence of value. Where other languages use `null` or `nil` or `None`, Faber uses `nihil`:
 
 ```fab
-fixum nothing = nihil
+fixum _ nothing = nihil
 ```
 
 A variable holding `nihil` holds nothing---not zero, not an empty string, but the explicit absence of any value.
@@ -158,8 +158,8 @@ varia textus status = "pending"
 Type annotations are optional when the type can be inferred:
 
 ```fab
-fixum name = "Marcus"    # inferred as textus
-fixum count = 42         # inferred as numerus
+fixum _ name = "Marcus"    # inferred as textus
+fixum _ count = 42         # inferred as numerus
 ```
 
 ### In Function Signatures
@@ -252,7 +252,7 @@ secus {
 The `est` operator performs type checking:
 
 ```fab
-fixum isNull = maybeValue est nihil
+fixum _ isNull = maybeValue est nihil
 ```
 
 Function return types use the same form when absence is possible:
@@ -297,8 +297,8 @@ The shorthand `textus[]` is equivalent to `lista<textus>`.
 For empty collections, use `⇢` (postfix) to construct the native type:
 
 ```fab
-varia items = [] ⇢ lista<textus>
-varia cache = {} ⇢ tabula<textus, numerus>
+varia _ items = [] ⇢ lista<textus>
+varia _ cache = {} ⇢ tabula<textus, numerus>
 ```
 
 Without `⇢`, empty literals lack methods. The operator creates proper native instances (e.g. `new Map()` in TypeScript, `HashMap` in Rust, etc.). The former `innatum` spelling is no longer valid.
@@ -306,8 +306,8 @@ Without `⇢`, empty literals lack methods. The operator creates proper native i
 Access elements by index:
 
 ```fab
-fixum first = names[0]
-fixum last = names[names.longitudo() - 1]
+fixum _ first = names[0]
+fixum _ last = names[names.longitudo() - 1]
 ```
 
 ### tabula (Map/Dictionary)
@@ -325,7 +325,7 @@ fixum tabula<textus, numerus> ages = {
 The type takes two parameters: key type and value type. Access values by key:
 
 ```fab
-fixum marcusAge = ages["Marcus"]
+fixum _ marcusAge = ages["Marcus"]
 ```
 
 ### copia (Set)
@@ -379,7 +379,7 @@ functio findUser(UserId id) → Username ∪ nihil {
 Use `typus` on the right-hand side to extract a type from a value:
 
 ```fab
-fixum config ← { port: 3000, host: "localhost" }
+fixum _ config ← { port: 3000, host: "localhost" }
 typus Config = typus config
 ```
 
@@ -400,7 +400,7 @@ genus capsa<T> {
     }
 }
 
-fixum c = { valor: 42 } ⇢ capsa<numerus>
+fixum _ c = { valor: 42 } ⇢ capsa<numerus>
 nota c.accipe()
 ```
 
@@ -459,23 +459,23 @@ sin value est textus {
 The `⇢` operator performs explicit type conversion (and native construction / instantiation):
 
 ```fab
-fixum data = 42
-fixum asText = data ⇢ textus
+fixum _ data = 42
+fixum _ asText = data ⇢ textus
 ```
 
 Casts are explicit acknowledgments of risk. When you write `⇢`, you are telling the compiler: "I know what I am doing." The compiler trusts you---but if you are wrong, runtime errors follow. (The former spellings `qua`, `innatum`, `novum` are no longer accepted in expression position.)
 
 ```fab
 # Cast to nullable type
-fixum num = 10
-fixum maybe = num ⇢ numerus ∪ nihil
+fixum _ num = 10
+fixum _ maybe = num ⇢ numerus ∪ nihil
 
 # Cast with member access
-fixum response = getResponse()
-fixum body = response.body ⇢ textus
+fixum _ response = getResponse()
+fixum _ body = response.body ⇢ textus
 
 # Cast for chaining
-fixum len = (data ⇢ textus).length
+fixum _ len = (data ⇢ textus).length
 ```
 
 Use casts sparingly. Prefer type guards (`est`) when possible, as they provide compile-time safety.
@@ -487,7 +487,7 @@ Use casts sparingly. Prefer type guards (`est`) when possible, as they provide c
 The `est` keyword checks whether a value is of a given type:
 
 ```fab
-fixum maybeValue = getValue()
+fixum _ maybeValue = getValue()
 
 si maybeValue est textus {
     # Within this block, maybeValue is known to be textus

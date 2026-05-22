@@ -11,5 +11,5 @@ related = ["?.", "?["]
 Performs an optional call.
 
 ```fab
-fixum value = maybeFn?(1, 2)
+fixum _ value = maybeFn?(1, 2)
 ```

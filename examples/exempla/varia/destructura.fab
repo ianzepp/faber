@@ -5,7 +5,7 @@
 
 incipit {
     # Basic array destructuring
-    fixum numbers ← [1, 2, 3]
+    fixum _ numbers ← [1, 2, 3]
     fixum [a, b, c] ← numbers
 
     nota a
@@ -20,7 +20,7 @@ incipit {
     nota third
 
     # Mutable destructuring
-    fixum coords ← [100, 200]
+    fixum _ coords ← [100, 200]
     varia [x, y] ← coords
 
     nota x
@@ -33,14 +33,14 @@ incipit {
     nota y
 
     # Destructure with fewer variables (partial)
-    fixum values ← [1, 2, 3, 4, 5]
+    fixum _ values ← [1, 2, 3, 4, 5]
     fixum [one, two] ← values
 
     nota one
     nota two
 
     # Nested arrays
-    fixum matrix ← [[1, 2], [3, 4]]
+    fixum _ matrix ← [[1, 2], [3, 4]]
     fixum [row1, row2] ← matrix
 
     nota row1

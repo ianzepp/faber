@@ -99,9 +99,10 @@ impl super::FaberCodegen {
             }
 
             // WHY: Canonical Faber output must stay inside real grammar even when
-            // semantic precision is degraded. `ignotum` is the nearest legal
-            // fallback for unresolved, union-shaped, or error-marker types.
-            Type::Infer(_) | Type::Union(_) | Type::Error => "ignotum".to_owned(),
+            // semantic precision is degraded. `_` preserves unresolved inference;
+            // `ignotum` remains the nearest fallback for union-shaped or error-marker types.
+            Type::Infer(_) => "_".to_owned(),
+            Type::Union(_) | Type::Error => "ignotum".to_owned(),
         }
     }
 }

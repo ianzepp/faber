@@ -38,7 +38,7 @@ functio countAbove(numerus[] nums, numerus threshold) → numerus {
 }
 
 incipit {
-    fixum numbers ← [1, 2, 3, 4, 5]
+    fixum _ numbers ← [1, 2, 3, 4, 5]
 
     nota sumArray(numbers)
     nota maxValue(numbers)

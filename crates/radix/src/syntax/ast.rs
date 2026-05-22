@@ -1084,6 +1084,8 @@ pub enum TypeMode {
 
 #[derive(Debug)]
 pub enum TypeExprKind {
+    /// Inferred type marker: _
+    Infer,
     /// Named type with optional type parameters
     Named(Ident, Vec<TypeExpr>),
     /// Array type: T[]

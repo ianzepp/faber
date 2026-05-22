@@ -11,5 +11,5 @@ related = ["ultima", "summa"]
 Selects the first matching item from a collection pipeline.
 
 ```fab
-fixum first = ab users prima
+fixum _ first = ab users prima
 ```

@@ -5,7 +5,7 @@
 incipit {
     # Basic fac with cape for error handling
     fac {
-        fixum x ← 10
+        fixum _ x ← 10
         nota x
     } cape err {
         nota err
@@ -13,7 +13,7 @@ incipit {
 
     # Scope block that might throw
     fac {
-        fixum value ← 42
+        fixum _ value ← 42
         nota value
     } cape error {
         nota "Error occurred:"

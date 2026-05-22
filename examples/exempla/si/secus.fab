@@ -5,7 +5,7 @@
 
 incipit {
     # Simple if-else
-    fixum score ← 85
+    fixum _ score ← 85
 
     si score ≥ 90 {
         nota "Grade: A"
@@ -15,7 +15,7 @@ incipit {
     }
 
     # Multiple statements in branches
-    fixum temperature ← 22
+    fixum _ temperature ← 22
 
     si temperature > 30 {
         nota "Hot"
@@ -27,7 +27,7 @@ incipit {
     }
 
     # If-else-if chain
-    fixum grade ← 75
+    fixum _ grade ← 75
 
     si grade ≥ 90 {
         nota "A - Excellent"

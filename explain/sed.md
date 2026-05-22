@@ -11,5 +11,5 @@ related = ["praefixum"]
 Introduces a regex literal.
 
 ```fab
-fixum re = sed "\d+" g
+fixum _ re = sed "\d+" g
 ```

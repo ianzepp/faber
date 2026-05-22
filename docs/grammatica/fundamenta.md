@@ -36,7 +36,7 @@ When your program needs to perform asynchronous operations at the top level, use
 
 ```fab
 incipiet {
-    fixum data = cede fetchData()
+    fixum _ data = cede fetchData()
     nota data
 }
 ```
@@ -52,10 +52,10 @@ Faber distinguishes between mutable and immutable bindings with distinct keyword
 The keyword `fixum` declares an immutable binding. It is the perfect passive participle of _figere_ (to fix, fasten): "that which has been fixed." Once bound, a `fixum` value cannot be reassigned.
 
 ```fab
-fixum greeting ← "Salve, Mundus!"
-fixum x ← 10
-fixum y ← 20
-fixum sum ← x + y
+fixum _ greeting ← "Salve, Mundus!"
+fixum _ x ← 10
+fixum _ y ← 20
+fixum _ sum ← x + y
 ```
 
 Immutable bindings are the default choice in Faber. They communicate intent clearly: this value will not change for the remainder of its scope. Prefer `fixum` unless you have a specific reason for mutability.
@@ -75,7 +75,7 @@ The pattern is always type-first: `fixum <type> <name> ← <value>`. This mirror
 The keyword `varia` declares a mutable binding. It comes from _variare_ (to vary): "let it vary." A `varia` binding can be reassigned throughout its scope.
 
 ```fab
-varia counter ← 0
+varia _ counter ← 0
 nota counter       # 0
 
 counter = 1
@@ -106,9 +106,9 @@ Faber supports the standard literal types with Latin keywords for boolean and nu
 Integers and floating-point numbers use standard notation:
 
 ```fab
-fixum integer = 42
-fixum decimal = 3.14
-fixum negative = -100
+fixum _ integer = 42
+fixum _ decimal = 3.14
+fixum _ negative = -100
 ```
 
 For typed declarations, `numerus` is the integer type and `fractus` (from _frangere_, to break) is the floating-point type:
@@ -123,20 +123,20 @@ fixum fractus rate = 0.05
 Strings use double quotes:
 
 ```fab
-fixum greeting = "hello"
+fixum _ greeting = "hello"
 ```
 
 Block strings use `❝` and `❞`, may span lines, and preserve their content:
 
 ```fab
-fixum quote = ❝he said "salve"❞
+fixum _ quote = ❝he said "salve"❞
 ```
 
 Formatted strings use template application with `§` placeholders:
 
 ```fab
-fixum name = "Mundus"
-fixum message = "Hello §"(name)
+fixum _ name = "Mundus"
+fixum _ message = "Hello §"(name)
 ```
 
 ### Booleans: verum and falsum
@@ -144,8 +144,8 @@ fixum message = "Hello §"(name)
 Rather than `true` and `false`, Faber uses Latin: `verum` (true, real) and `falsum` (false, deceptive). These are not arbitrary choices. Latin's _verum_ shares its root with English "verify" and "veracity"; _falsum_ gives us "falsify."
 
 ```fab
-fixum yes = verum
-fixum no = falsum
+fixum _ yes = verum
+fixum _ no = falsum
 fixum bivalens active = verum
 ```
 
@@ -156,7 +156,7 @@ The type `bivalens` (two-valued) names what a boolean is: a value that can be on
 The absence of a value is expressed as `nihil` (nothing). This is clearer than symbols like `null` or `nil` that have become so familiar we no longer notice their meaning.
 
 ```fab
-fixum nothing = nihil
+fixum _ nothing = nihil
 ```
 
 ## Diagnostics
@@ -174,8 +174,8 @@ nota "Hello, world!"
 Multiple arguments are emitted space-separated:
 
 ```fab
-fixum nomen = "Marcus"
-fixum aetas = 30
+fixum _ nomen = "Marcus"
+fixum _ aetas = 30
 nota "Name:", nomen
 nota "Age:", aetas
 nota "Coordinates:", x, y
@@ -207,7 +207,7 @@ Comments begin with `#` and extend to the end of the line. There is no block com
 
 ```fab
 # This is a comment
-fixum x = 10  # inline comment
+fixum _ x = 10  # inline comment
 ```
 
 Comments explain _why_, not _what_. The code itself shows what is happening; comments provide context that cannot be derived from the code alone.
@@ -221,7 +221,7 @@ Faber provides patterns for extracting values from objects and arrays. The synta
 To extract properties from an object, use `ex <source> fixum <properties>`:
 
 ```fab
-fixum person = { name: "Marcus", age: 30, city: "Roma" }
+fixum _ person = { name: "Marcus", age: 30, city: "Roma" }
 ex person fixum name, age
 
 nota name   # "Marcus"
@@ -231,7 +231,7 @@ nota age    # 30
 Use `ut` (as) to rename properties during extraction:
 
 ```fab
-fixum user = { name: "Julia", email: "julia@roma.com" }
+fixum _ user = { name: "Julia", email: "julia@roma.com" }
 ex user fixum name ut userName, email ut userEmail
 
 nota userName    # "Julia"
@@ -241,7 +241,7 @@ nota userEmail   # "julia@roma.com"
 Use `varia` instead of `fixum` for mutable bindings:
 
 ```fab
-fixum data = { count: 100, active: verum }
+fixum _ data = { count: 100, active: verum }
 ex data varia count, active
 
 count = 200
@@ -251,7 +251,7 @@ active = falsum
 The rest pattern `ceteri` (the rest, the others) collects remaining properties:
 
 ```fab
-fixum fullUser = { id: 1, name: "Gaius", email: "g@roma.com", role: "admin" }
+fixum _ fullUser = { id: 1, name: "Gaius", email: "g@roma.com", role: "admin" }
 ex fullUser fixum id, ceteri details
 
 nota id       # 1
@@ -263,7 +263,7 @@ nota details  # { name: "Gaius", email: "g@roma.com", role: "admin" }
 Arrays use bracket notation in the pattern:
 
 ```fab
-fixum numbers = [1, 2, 3]
+fixum _ numbers = [1, 2, 3]
 fixum [a, b, c] = numbers
 
 nota a  # 1
@@ -274,7 +274,7 @@ nota c  # 3
 Partial destructuring extracts only what you need:
 
 ```fab
-fixum values = [1, 2, 3, 4, 5]
+fixum _ values = [1, 2, 3, 4, 5]
 fixum [one, two] = values
 
 nota one  # 1
@@ -284,7 +284,7 @@ nota two  # 2
 The underscore `_` skips elements:
 
 ```fab
-fixum triple = [10, 20, 30]
+fixum _ triple = [10, 20, 30]
 fixum [_, middle, _] = triple
 
 nota middle  # 20
@@ -293,7 +293,7 @@ nota middle  # 20
 The rest pattern works with arrays too:
 
 ```fab
-fixum items = [1, 2, 3, 4, 5]
+fixum _ items = [1, 2, 3, 4, 5]
 fixum [head, ceteri tail] = items
 
 nota head  # 1
@@ -303,7 +303,7 @@ nota tail  # [2, 3, 4, 5]
 Mutable array destructuring uses `varia`:
 
 ```fab
-fixum coords = [100, 200]
+fixum _ coords = [100, 200]
 varia [x, y] = coords
 
 x = x + 50

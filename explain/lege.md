@@ -11,5 +11,5 @@ related = ["lineam", "scribe"]
 Reads input from the active input stream.
 
 ```fab
-fixum text = lege()
+fixum _ text = lege()
 ```

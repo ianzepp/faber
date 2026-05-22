@@ -9,22 +9,22 @@
 
 incipit {
     # Compile-time constant expression
-    fixum myPi ← praefixum(3.14159)
-    fixum myTau ← praefixum(2 * 3.14159)
+    fixum _ myPi ← praefixum(3.14159)
+    fixum _ myTau ← praefixum(2 * 3.14159)
     nota "myPi:", myPi
     nota "myTau:", myTau
 
     # Compile-time computation
-    fixum DAYS_IN_YEAR ← praefixum(365)
-    fixum HOURS_IN_YEAR ← praefixum(365 * 24)
-    fixum SECONDS_IN_YEAR ← praefixum(365 * 24 * 60 * 60)
+    fixum _ DAYS_IN_YEAR ← praefixum(365)
+    fixum _ HOURS_IN_YEAR ← praefixum(365 * 24)
+    fixum _ SECONDS_IN_YEAR ← praefixum(365 * 24 * 60 * 60)
 
     nota "Days:", DAYS_IN_YEAR
     nota "Hours:", HOURS_IN_YEAR
     nota "Seconds:", SECONDS_IN_YEAR
 
     # Compile-time block
-    fixum STATUS_CODES ← praefixum({
+    fixum _ STATUS_CODES ← praefixum({
         ok: 200,
         created: 201,
         notFound: 404,

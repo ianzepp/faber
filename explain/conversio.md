@@ -12,5 +12,5 @@ related = ["⇢"]
 Converts a value with explicit runtime conversion semantics.
 
 ```fab
-fixum n = "42" ⇒ numerus
+fixum _ n = "42" ⇒ numerus
 ```

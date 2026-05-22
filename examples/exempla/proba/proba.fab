@@ -16,15 +16,15 @@ proba "validates arithmetic" {
 
 # Test with variables
 proba "string concatenation works" {
-    fixum greeting ← "hello"
-    fixum name ← "world"
-    fixum result ← "§ §"(greeting, name)
+    fixum _ greeting ← "hello"
+    fixum _ name ← "world"
+    fixum _ result ← "§ §"(greeting, name)
     adfirma result ≡ "hello world"
 }
 
 # Test boolean conditions
 proba "comparison operators" {
-    fixum x ← 10
+    fixum _ x ← 10
     adfirma x > 5
     adfirma x < 20
     adfirma x ≥ 10
@@ -39,6 +39,6 @@ proba "negated assertions" {
 
 # Test with complex logical assertion
 proba "complex assertion" {
-    fixum x ← 50
+    fixum _ x ← 50
     adfirma x > 0 et x < 100
 }

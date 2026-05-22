@@ -11,5 +11,5 @@ related = ["non est"]
 Tests whether a value is or matches a type-like target.
 
 ```fab
-fixum isNull = maybeValue est nihil
+fixum _ isNull = maybeValue est nihil
 ```

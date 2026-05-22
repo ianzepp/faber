@@ -30,7 +30,7 @@ functio validatePositive(numerus value) → numerus {
 }
 
 functio processWithCleanup(textus name) {
-    varia resource ← "pending"
+    varia _ resource ← "pending"
 
     tempta {
         nota "Opening:", name

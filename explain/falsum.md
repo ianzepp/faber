@@ -11,5 +11,5 @@ related = ["verum", "nihil"]
 Represents the false boolean value and can prefix a falsity check.
 
 ```fab
-fixum inactive = falsum
+fixum _ inactive = falsum
 ```

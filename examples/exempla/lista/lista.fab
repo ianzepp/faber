@@ -2,27 +2,27 @@
 
 incipit {
     # Empty array
-    fixum empty ← []
+    fixum _ empty ← []
 
     # Number array
-    fixum numbers ← [1, 2, 3, 4, 5]
+    fixum _ numbers ← [1, 2, 3, 4, 5]
 
     # String array
-    fixum names ← ["Marcus", "Julia", "Gaius"]
+    fixum _ names ← ["Marcus", "Julia", "Gaius"]
 
     # Boolean array
-    fixum flags ← [verum, falsum, verum]
+    fixum _ flags ← [verum, falsum, verum]
 
     # Nested arrays
-    fixum matrix ← [[1, 2], [3, 4], [5, 6]]
+    fixum _ matrix ← [[1, 2], [3, 4], [5, 6]]
 
     # Spread operator: combine arrays
-    fixum first ← [1, 2, 3]
-    fixum second ← [4, 5, 6]
-    fixum combined ← [sparge first, sparge second]
+    fixum _ first ← [1, 2, 3]
+    fixum _ second ← [4, 5, 6]
+    fixum _ combined ← [sparge first, sparge second]
 
     # Spread with additional elements
-    fixum extended ← [0, sparge first, 99]
+    fixum _ extended ← [0, sparge first, 99]
 
     nota empty
     nota numbers

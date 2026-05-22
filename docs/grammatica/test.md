@@ -24,7 +24,7 @@ proba "arithmetic passes" {
 ```fab
 probandum "math suite" tag "math" {
     praepara omnia {
-        fixum setup_value ← 1
+        fixum _ setup_value ← 1
     }
 
     proba "nested case" {

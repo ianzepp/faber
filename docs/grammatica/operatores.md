@@ -11,24 +11,24 @@ This dual nature is not redundancy. Latin keywords read like natural language, m
 Standard mathematical operators work as expected:
 
 ```fab
-fixum sum ← 10 + 5       # addition
-fixum diff ← 10 - 5      # subtraction
-fixum prod ← 10 * 5      # multiplication
-fixum quot ← 10 / 5      # division
-fixum rem ← 10 % 3       # modulo (remainder)
+fixum _ sum ← 10 + 5       # addition
+fixum _ diff ← 10 - 5      # subtraction
+fixum _ prod ← 10 * 5      # multiplication
+fixum _ quot ← 10 / 5      # division
+fixum _ rem ← 10 % 3       # modulo (remainder)
 ```
 
 The `+` operator also handles string concatenation:
 
 ```fab
-fixum greeting = "salve" + " mundus"
+fixum _ greeting = "salve" + " mundus"
 ```
 
 Unary negation uses the minus sign as a prefix:
 
 ```fab
-fixum x = 5
-fixum neg = -x           # -5
+fixum _ x = 5
+fixum _ neg = -x           # -5
 ```
 
 There are no increment (`++`) or decrement (`--`) operators. Use compound assignment instead.
@@ -40,17 +40,17 @@ There are no increment (`++`) or decrement (`--`) operators. Use compound assign
 Relational operators compare values and return boolean results:
 
 ```fab
-fixum isLess = 5 < 10           # less than
-fixum isGreater = 10 > 5        # greater than
-fixum isLessOrEqual = 5 ≤ 5     # less than or equal
-fixum isGreaterOrEqual = 10 ≥ 10
+fixum _ isLess = 5 < 10           # less than
+fixum _ isGreater = 10 > 5        # greater than
+fixum _ isLessOrEqual = 5 ≤ 5     # less than or equal
+fixum _ isGreaterOrEqual = 10 ≥ 10
 ```
 
 For equality, use the canonical glyphs (or Latin keywords `est` / `non est` for strict identity):
 
 ```fab
-fixum eq = 10 ≡ 10              # equality
-fixum neq = 10 ≠ 5              # inequality
+fixum _ eq = 10 ≡ 10              # equality
+fixum _ neq = 10 ≠ 5              # inequality
 ```
 
 Legacy ASCII forms (`==`, `!=`, `===`, `!==`) are no longer accepted in Faber source; use `≡` / `≠` or `est` / `non est`. See `faber explain ==` for migration guidance.
@@ -66,9 +66,9 @@ Logical operators combine boolean expressions. Faber offers both symbolic and La
 The Latin keywords read naturally in conditional expressions:
 
 ```fab
-fixum both = verum et verum       # and
-fixum either = falsum aut verum   # or
-fixum negated = non flag          # not
+fixum _ both = verum et verum       # and
+fixum _ either = falsum aut verum   # or
+fixum _ negated = non flag          # not
 ```
 
 Etymology:
@@ -82,9 +82,9 @@ Etymology:
 Symbolic logical operators (`&&`, `||`, `!`) are not canonical Faber source. Use the Latin keywords:
 
 ```fab
-fixum both = verum et verum
-fixum either = falsum aut verum
-fixum negated = non flag
+fixum _ both = verum et verum
+fixum _ either = falsum aut verum
+fixum _ negated = non flag
 ```
 
 **Style guidance:** Always prefer Latin forms (`et`, `aut`, `non`). They read clearly and avoid ambiguity with non-null postfix `!.` `![` `!(`. (The `!` bare logical not is not supported in source.)
@@ -101,7 +101,7 @@ The `vel` operator provides a default value when the left operand is `nihil` (nu
 
 ```fab
 fixum textus ∪ nihil maybeName ← nihil
-fixum name = maybeName vel "default"   # "default"
+fixum _ name = maybeName vel "default"   # "default"
 ```
 
 Unlike `aut` (logical or), `vel` only triggers on null, not on falsy values:
@@ -149,13 +149,13 @@ The `est` operator tests whether a value is of a particular type or is null:
 
 ```fab
 fixum numerus ∪ nihil maybeValue ← nihil
-fixum isNull = maybeValue est nihil    # verum
+fixum _ isNull = maybeValue est nihil    # verum
 ```
 
 For negative type checking:
 
 ```fab
-fixum isNotNull = maybeValue non est nihil
+fixum _ isNotNull = maybeValue non est nihil
 ```
 
 Etymology: `est` is the Latin verb "is" (third person singular of "esse", to be). The phrase `x est nihil` reads naturally as "x is nothing."
@@ -165,9 +165,9 @@ Etymology: `est` is the Latin verb "is" (third person singular of "esse", to be)
 Faber allows testing boolean values with `verum` and `falsum` as prefix operators:
 
 ```fab
-fixum enabled = verum
-fixum isTrue = verum enabled     # strict check that enabled is true
-fixum isFalse = falsum disabled  # strict check that disabled is false
+fixum _ enabled = verum
+fixum _ isTrue = verum enabled     # strict check that enabled is true
+fixum _ isFalse = falsum disabled  # strict check that disabled is false
 ```
 
 ---
@@ -181,8 +181,8 @@ Conditional expressions select between two values based on a condition.
 The familiar question-mark-colon syntax:
 
 ```fab
-fixum max = a > b ? a : b
-fixum grade = score ≥ 90 ? "A" : score ≥ 80 ? "B" : "C"
+fixum _ max = a > b ? a : b
+fixum _ grade = score ≥ 90 ? "A" : score ≥ 80 ? "B" : "C"
 ```
 
 ### Latin Style
@@ -190,7 +190,7 @@ fixum grade = score ≥ 90 ? "A" : score ≥ 80 ? "B" : "C"
 The `sic ... secus` form reads as "thus ... otherwise":
 
 ```fab
-fixum max = a > b sic a secus b
+fixum _ max = a > b sic a secus b
 ```
 
 Etymology:
@@ -297,17 +297,17 @@ Faber provides postfix runtime conversion with the `⇒` glyph. The target type 
 Parse a string to an integer, or convert other types to integer:
 
 ```fab
-fixum n = "42" ⇒ numerus              # 42
-fixum hex = "ff" ⇒ numerus<i32, Hex>  # 255 (hexadecimal)
-fixum bin = "101" ⇒ numerus<u8, Bin>  # 5 (binary)
-fixum oct = "777" ⇒ numerus<i32, Oct> # 511 (octal)
+fixum _ n = "42" ⇒ numerus              # 42
+fixum _ hex = "ff" ⇒ numerus<i32, Hex>  # 255 (hexadecimal)
+fixum _ bin = "101" ⇒ numerus<u8, Bin>  # 5 (binary)
+fixum _ oct = "777" ⇒ numerus<i32, Oct> # 511 (octal)
 ```
 
 Without a fallback, parse failure causes a panic. Use `vel` to provide a default:
 
 ```fab
-fixum n = "bad" ⇒ numerus vel 0       # 0 (fallback on parse failure)
-fixum n = userInput ⇒ numerus vel -1  # -1 if input is not a valid number
+fixum _ n = "bad" ⇒ numerus vel 0       # 0 (fallback on parse failure)
+fixum _ n = userInput ⇒ numerus vel -1  # -1 if input is not a valid number
 ```
 
 ### `⇒ fractus` (to float)
@@ -315,8 +315,8 @@ fixum n = userInput ⇒ numerus vel -1  # -1 if input is not a valid number
 Parse a string to a floating-point number:
 
 ```fab
-fixum f = "3.14" ⇒ fractus            # 3.14
-fixum f = "bad" ⇒ fractus vel 0.0     # 0.0 (fallback)
+fixum _ f = "3.14" ⇒ fractus            # 3.14
+fixum _ f = "bad" ⇒ fractus vel 0.0     # 0.0 (fallback)
 ```
 
 ### `⇒ textus` (to string)
@@ -324,9 +324,9 @@ fixum f = "bad" ⇒ fractus vel 0.0     # 0.0 (fallback)
 Convert any value to its string representation. This conversion is infallible:
 
 ```fab
-fixum s = 42 ⇒ textus                 # "42"
-fixum s = 3.14 ⇒ textus               # "3.14"
-fixum s = verum ⇒ textus              # "verum"
+fixum _ s = 42 ⇒ textus                 # "42"
+fixum _ s = 3.14 ⇒ textus               # "3.14"
+fixum _ s = verum ⇒ textus              # "verum"
 ```
 
 ### `⇒ bivalens` (to boolean)
@@ -334,12 +334,12 @@ fixum s = verum ⇒ textus              # "verum"
 Convert any value to a boolean based on "truthiness." This follows the same semantics as `nonnulla`:
 
 ```fab
-fixum b = 0 ⇒ bivalens                # falsum (zero)
-fixum b = 42 ⇒ bivalens               # verum (non-zero)
-fixum b = "" ⇒ bivalens               # falsum (empty string)
-fixum b = "hello" ⇒ bivalens          # verum (non-empty)
-fixum b = [] ⇒ bivalens               # falsum (empty collection)
-fixum b = nihil ⇒ bivalens            # falsum (null)
+fixum _ b = 0 ⇒ bivalens                # falsum (zero)
+fixum _ b = 42 ⇒ bivalens               # verum (non-zero)
+fixum _ b = "" ⇒ bivalens               # falsum (empty string)
+fixum _ b = "hello" ⇒ bivalens          # verum (non-empty)
+fixum _ b = [] ⇒ bivalens               # falsum (empty collection)
+fixum _ b = nihil ⇒ bivalens            # falsum (null)
 ```
 
 ### Chaining Conversions
@@ -347,7 +347,7 @@ fixum b = nihil ⇒ bivalens            # falsum (null)
 Conversion operators chain left-to-right like other postfix operators:
 
 ```fab
-fixum s = "42" ⇒ numerus ⇒ textus     # "42" -> 42 -> "42"
+fixum _ s = "42" ⇒ numerus ⇒ textus     # "42" -> 42 -> "42"
 ```
 
 ### Radix Types
@@ -370,14 +370,14 @@ If no radix is specified, decimal (base 10) is assumed.
 Simple assignment uses the equals sign:
 
 ```fab
-varia x = 10
+varia _ x = 10
 x = 20
 ```
 
 Compound assignment operators combine an operation with assignment using the canonical glyphs:
 
 ```fab
-varia counter = 0
+varia _ counter = 0
 counter ⊕ 10    # add and assign
 counter ⊖ 3     # subtract and assign
 counter ⊛ 2     # multiply and assign
@@ -387,7 +387,7 @@ counter ⊘ 2     # divide and assign
 Bitwise compound assignment uses the corresponding glyphs:
 
 ```fab
-varia flags = 0b1010
+varia _ flags = 0b1010
 flags ⊜ mask    # bitwise AND and assign
 flags ⊚ flag    # bitwise OR and assign
 ```
@@ -399,13 +399,13 @@ flags ⊚ flag    # bitwise OR and assign
 Low-level bit manipulation uses symbolic operators for AND, OR, XOR, and NOT:
 
 ```fab
-fixum flags = 0b1010
-fixum mask = 0b1100
+fixum _ flags = 0b1010
+fixum _ mask = 0b1100
 
-fixum bitwiseAnd = flags & mask      # AND
-fixum bitwiseOr = flags | mask       # OR
-fixum bitwiseXor = flags ^ mask      # XOR
-fixum bitwiseNot = ~flags            # NOT (complement)
+fixum _ bitwiseAnd = flags & mask      # AND
+fixum _ bitwiseOr = flags | mask       # OR
+fixum _ bitwiseXor = flags ^ mask      # XOR
+fixum _ bitwiseNot = ~flags            # NOT (complement)
 ```
 
 **Precedence note:** Unlike C, bitwise operators in Faber bind tighter than comparison operators. This means:
@@ -421,8 +421,8 @@ This matches programmer intent and avoids a common source of bugs in C-family la
 Bit shift operations use Latin postfix keywords rather than `<<` and `>>` symbols. This avoids ambiguity with nested generics like `lista<lista<T>>` where `>>` would otherwise tokenize as a shift operator.
 
 ```fab
-fixum shifted = 1 sinistratum 4      # left shift: 1 << 4 = 16
-fixum halved = 16 dextratum 2        # right shift: 16 >> 2 = 4
+fixum _ shifted = 1 sinistratum 4      # left shift: 1 << 4 = 16
+fixum _ halved = 16 dextratum 2        # right shift: 16 >> 2 = 4
 ```
 
 Etymology:

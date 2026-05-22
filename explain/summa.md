@@ -11,5 +11,5 @@ related = ["prima", "ultima"]
 Reduces a collection pipeline to a sum.
 
 ```fab
-fixum total = ab numbers summa
+fixum _ total = ab numbers summa
 ```

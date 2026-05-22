@@ -11,7 +11,7 @@ related = ["lege", "lineam"]
 Creates a formatted string with `§` placeholders. The canonical source form is string-template application:
 
 ```fab
-fixum greeting = "Salve, §!"(name)
+fixum _ greeting = "Salve, §!"(name)
 ```
 
 The explicit desugared form remains available as `scriptum("<template>", args...)`.

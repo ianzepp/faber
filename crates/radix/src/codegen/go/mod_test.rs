@@ -92,7 +92,7 @@ fn ad_with_catch_is_rejected_for_go_targets() {
 fn nested_object_honors_enclosing_map_value_type() {
     let code = compile_go(
         r#"incipit {
-  fixum nested ← { outer: { inner: 1 } }
+  fixum _ nested ← { outer: { inner: 1 } }
   nota nested
 }"#,
     );
@@ -105,8 +105,8 @@ fn nested_object_honors_enclosing_map_value_type() {
 fn map_member_access_asserts_precise_types_when_map_values_are_any() {
     let code = compile_go(
         r#"incipit {
-  fixum nested ← { outer: { inner: { deep: "found" } } }
-  fixum data ← { items: ["first", "second", "third"] }
+  fixum _ nested ← { outer: { inner: { deep: "found" } } }
+  fixum _ data ← { items: ["first", "second", "third"] }
   nota nested.outer.inner.deep
   nota data.items[0]
 }"#,
@@ -122,9 +122,9 @@ fn map_member_access_asserts_precise_types_when_map_values_are_any() {
 fn optional_map_members_deref_pointer_maps_and_unknown_maps_explicitly() {
     let code = compile_go(
         r#"incipit {
-  fixum maybe ← { present: { value: 100 } }
+  fixum _ maybe ← { present: { value: 100 } }
   nota maybe?.present?.value
-  fixum empty ← nihil
+  fixum _ empty ← nihil
   nota empty?.missing
 }"#,
     );
@@ -244,7 +244,7 @@ genus User {
 }
 
 incipit {
-  fixum alice ← {
+  fixum _ alice ← {
     name: "Alice",
     address: { city: "Roma", state: "Italia" } ⇢ Address
   } ⇢ User
@@ -267,8 +267,8 @@ genus User {
 }
 
 incipit {
-  fixum bob ← {} ⇢ User
-  fixum city ← bob?.address?.city
+  fixum _ bob ← {} ⇢ User
+  fixum _ city ← bob?.address?.city
   nota city
 }"#,
     );
@@ -291,8 +291,8 @@ genus User {
 }
 
 incipit {
-  fixum alice ← {} ⇢ User
-  fixum state ← alice?.address?.state
+  fixum _ alice ← {} ⇢ User
+  fixum _ state ← alice?.address?.state
   nota state
 }"#,
     );
@@ -315,8 +315,8 @@ genus User {
 }
 
 incipit {
-  fixum bob ← {} ⇢ User
-  fixum city ← bob?.address?.city vel "Unknown"
+  fixum _ bob ← {} ⇢ User
+  fixum _ city ← bob?.address?.city vel "Unknown"
   nota city
 }"#,
     );
@@ -331,7 +331,7 @@ fn explicit_optional_local_initializers_wrap_pointer_values() {
     let code = compile_go(
         r#"incipit {
   fixum textus ∪ nihil name ← "Marcus"
-  fixum display ← name vel "Anonymous"
+  fixum _ display ← name vel "Anonymous"
   nota display
 }"#,
     );
@@ -344,7 +344,7 @@ fn explicit_optional_local_initializers_wrap_pointer_values() {
 fn inferred_optional_nil_local_emits_typed_var() {
     let code = compile_go(
         r#"incipit {
-  varia maybe ← nihil ⇢ textus ∪ nihil
+  varia _ maybe ← nihil ⇢ textus ∪ nihil
   nota maybe
 }"#,
     );
@@ -357,8 +357,8 @@ fn inferred_optional_nil_local_emits_typed_var() {
 fn ternary_optional_result_coerces_branches_once() {
     let code = compile_go(
         r#"incipit {
-  varia maybe ← nihil ⇢ textus ∪ nihil
-  fixum result ← nonnihil maybe sic maybe secus "default"
+  varia _ maybe ← nihil ⇢ textus ∪ nihil
+  fixum _ result ← nonnihil maybe sic maybe secus "default"
   nota result
 }"#,
     );
@@ -378,14 +378,14 @@ fn qua_primitive_and_array_conversions_emit_go_conversions() {
 }
 
 incipit {
-  fixum data ← 42
-  fixum asText ← data ⇢ textus
-  fixum input ← "100"
-  fixum asNum ← input ⇢ numerus
-  fixum value ← 1
-  fixum asBool ← value ⇢ bivalens
-  fixum raw ← getData()
-  fixum items ← raw ⇢ lista<textus>
+  fixum _ data ← 42
+  fixum _ asText ← data ⇢ textus
+  fixum _ input ← "100"
+  fixum _ asNum ← input ⇢ numerus
+  fixum _ value ← 1
+  fixum _ asBool ← value ⇢ bivalens
+  fixum _ raw ← getData()
+  fixum _ items ← raw ⇢ lista<textus>
   nota asText, asNum, asBool, items
 }"#,
     );
@@ -400,8 +400,8 @@ incipit {
 fn innatum_empty_and_nonempty_lists_emit_typed_slices() {
     let code = compile_go(
         r#"incipit {
-  fixum empty ← [] ⇢ lista<textus>
-  fixum nums ← [1, 2, 3] ⇢ lista<numerus>
+  fixum _ empty ← [] ⇢ lista<textus>
+  fixum _ nums ← [1, 2, 3] ⇢ lista<numerus>
   nota empty, nums
 }"#,
     );
@@ -487,8 +487,8 @@ fn returning_ego_and_chaining_uses_value_return_with_pointer_temps() {
 }
 
 incipit {
-  varia calc ← {} ⇢ Calculator
-  fixum result ← calc.setValue(5).double().getResult()
+  varia _ calc ← {} ⇢ Calculator
+  fixum _ result ← calc.setValue(5).double().getResult()
   nota result
 }"#,
     );
@@ -523,13 +523,13 @@ incipit {
 fn translated_slice_helpers_emit_go_loops() {
     let code = compile_go(
         r#"incipit {
-  varia items ← [1, 2, 3] ⇢ lista<numerus>
-  fixum first ← items.primus()
-  fixum doubled ← items.mappata(clausura numerus x: x * 2)
-  fixum evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)
-  fixum extended ← items.addita(4)
-  fixum reversed ← items.inversa()
-  fixum sorted ← items.ordinata()
+  varia _ items ← [1, 2, 3] ⇢ lista<numerus>
+  fixum _ first ← items.primus()
+  fixum _ doubled ← items.mappata(clausura numerus x: x * 2)
+  fixum _ evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)
+  fixum _ extended ← items.addita(4)
+  fixum _ reversed ← items.inversa()
+  fixum _ sorted ← items.ordinata()
   items.inverte()
   nota first, doubled, evens, extended, reversed, sorted
 }"#,
@@ -549,17 +549,17 @@ fn translated_slice_helpers_emit_go_loops() {
 fn ab_property_filters_and_transforms_emit_real_go_pipeline() {
     let code = compile_go(
         r#"incipit {
-  fixum users ← [
+  fixum _ users ← [
     { nomen: "Marcus", activus: verum },
     { nomen: "Julia", activus: falsum },
     { nomen: "Gaius", activus: verum }
   ]
-  fixum nums ← [1, 2, 3, 4, 5]
-  fixum active ← ab users activus
-  fixum inactive ← ab users non activus
-  fixum top2 ← ab nums, prima 2
-  fixum last2 ← ab nums, ultima 2
-  fixum sumFirst ← ab nums, prima 3, summa
+  fixum _ nums ← [1, 2, 3, 4, 5]
+  fixum _ active ← ab users activus
+  fixum _ inactive ← ab users non activus
+  fixum _ top2 ← ab nums, prima 2
+  fixum _ last2 ← ab nums, ultima 2
+  fixum _ sumFirst ← ab nums, prima 3, summa
   nota active, inactive, top2, last2, sumFirst
 }"#,
     );
@@ -577,12 +577,12 @@ fn ab_property_filters_and_transforms_emit_real_go_pipeline() {
 fn ab_member_source_pipeline_emits_filtered_slice() {
     let code = compile_go(
         r#"incipit {
-  fixum users ← [
+  fixum _ users ← [
     { nomen: "Marcus", activus: verum },
     { nomen: "Julia", activus: falsum }
   ]
-  fixum data ← { users: users }
-  fixum active ← ab data.users activus
+  fixum _ data ← { users: users }
+  fixum _ active ← ab data.users activus
   nota active
 }"#,
     );
@@ -602,7 +602,7 @@ fn spread_calls_recover_fixed_arity_array_arguments() {
 
 incipit {
   fixum numerus[] numbers ← [3, 7]
-  fixum total ← add(sparge numbers)
+  fixum _ total ← add(sparge numbers)
   nota total
 }"#,
     );

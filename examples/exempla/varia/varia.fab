@@ -5,7 +5,7 @@
 
 incipit {
     # Mutable variable with varia
-    varia counter ← 0
+    varia _ counter ← 0
     nota counter
 
     counter ← 1
@@ -15,17 +15,17 @@ incipit {
     nota counter
 
     # Immutable variable with fixum
-    fixum greeting ← "Salve, Mundus!"
+    fixum _ greeting ← "Salve, Mundus!"
     nota greeting
 
     # Multiple declarations
-    fixum x ← 10
-    fixum y ← 20
-    fixum sum ← x + y
+    fixum _ x ← 10
+    fixum _ y ← 20
+    fixum _ sum ← x + y
     nota sum
 
     # Mutable reassignment
-    varia message ← "Hello"
+    varia _ message ← "Hello"
     message ← "Goodbye"
     nota message
 }

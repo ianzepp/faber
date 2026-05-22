@@ -9,48 +9,48 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # Basic string to number
-    fixum n1 ← "42" ⇒ numerus
+    fixum _ n1 ← "42" ⇒ numerus
     nota n1  # 42
 
     # With fallback for invalid input
-    fixum n2 ← "invalid" ⇒ numerus vel 0
+    fixum _ n2 ← "invalid" ⇒ numerus vel 0
     nota n2  # 0
 
     # With type parameter for sized integers
-    fixum n3 ← "255" ⇒ numerus<i32>
+    fixum _ n3 ← "255" ⇒ numerus<i32>
     nota n3  # 255
 
     # With radix for hex/octal/binary parsing
-    fixum hex ← "ff" ⇒ numerus<i32, Hex>
+    fixum _ hex ← "ff" ⇒ numerus<i32, Hex>
     nota hex  # 255
 
-    fixum bin ← "1010" ⇒ numerus<i32, Bin>
+    fixum _ bin ← "1010" ⇒ numerus<i32, Bin>
     nota bin  # 10
 
-    fixum oct ← "755" ⇒ numerus<i32, Oct>
+    fixum _ oct ← "755" ⇒ numerus<i32, Oct>
     nota oct  # 493
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # ⇒ fractus - Convert to float
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
-    fixum f1 ← "3.14159" ⇒ fractus
+    fixum _ f1 ← "3.14159" ⇒ fractus
     nota f1  # 3.14159
 
-    fixum f2 ← "invalid" ⇒ fractus vel 0.0
+    fixum _ f2 ← "invalid" ⇒ fractus vel 0.0
     nota f2  # 0.0
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # ⇒ textus - Convert to string (infallible)
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
-    fixum s1 ← 42 ⇒ textus
+    fixum _ s1 ← 42 ⇒ textus
     nota s1  # "42"
 
-    fixum s2 ← 3.14 ⇒ textus
+    fixum _ s2 ← 3.14 ⇒ textus
     nota s2  # "3.14"
 
-    fixum s3 ← verum ⇒ textus
+    fixum _ s3 ← verum ⇒ textus
     nota s3  # "true"
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
@@ -58,13 +58,13 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # Numbers: 0 is falsum, non-zero is verum
-    fixum b1 ← 0 ⇒ bivalens
-    fixum b2 ← 42 ⇒ bivalens
+    fixum _ b1 ← 0 ⇒ bivalens
+    fixum _ b2 ← 42 ⇒ bivalens
     nota b1, b2  # false, true
 
     # Strings: empty is falsum, non-empty is verum
-    fixum b3 ← "" ⇒ bivalens
-    fixum b4 ← "hello" ⇒ bivalens
+    fixum _ b3 ← "" ⇒ bivalens
+    fixum _ b4 ← "hello" ⇒ bivalens
     nota b3, b4  # false, true
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
@@ -72,10 +72,10 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # Parse then format back
-    fixum roundtrip ← "42" ⇒ numerus ⇒ textus
+    fixum _ roundtrip ← "42" ⇒ numerus ⇒ textus
     nota roundtrip  # "42"
 
     # Parse with fallback, then check truthiness
-    fixum hasValue ← ("123" ⇒ numerus vel 0) ⇒ bivalens
+    fixum _ hasValue ← ("123" ⇒ numerus vel 0) ⇒ bivalens
     nota hasValue  # true
 }

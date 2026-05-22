@@ -527,7 +527,7 @@ fn rust_target_rejects_exception_constructs() {
 fn unsupported_expression_kind_reports_lowering_error() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum x ← lege
+  fixum _ x ← lege
   nota x
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -543,7 +543,7 @@ fn unsupported_expression_kind_reports_lowering_error() {
 fn sed_regex_literals_no_longer_report_unsupported_lowering_error() {
     let session = session(Target::Faber);
     let source = r#"incipit {
-  fixum pattern ← sed "\d+" g
+  fixum _ pattern ← sed "\d+" g
   nota pattern
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -588,7 +588,7 @@ fn typescript_target_skips_rust_specific_cura_arena_warning() {
 fn warning_only_semantic_diagnostics_still_emit_output() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum unused ← 1
+  fixum _ unused ← 1
 }"#;
     let result = compile(&session, "test.fab", source);
 
@@ -615,8 +615,8 @@ fn compile_accepts_textus_concatenation_and_compound_add() {
 fn backtick_template_string_is_not_faber_syntax() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum name ← "Mundus"
-  fixum message ← `Hello ${name}`
+  fixum _ name ← "Mundus"
+  fixum _ message ← `Hello ${name}`
   nota message
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -631,7 +631,7 @@ fn backtick_template_string_is_not_faber_syntax() {
 #[test]
 fn block_string_literal_uses_quote_glyphs() {
     let session = session(Target::Rust);
-    let source = "incipit {\n  fixum quote ← ❝he said \"salve\"❞\n  nota quote\n}";
+    let source = "incipit {\n  fixum _ quote ← ❝he said \"salve\"❞\n  nota quote\n}";
     let result = compile(&session, "test.fab", source);
 
     assert!(result.success());
@@ -644,7 +644,7 @@ fn block_string_literal_uses_quote_glyphs() {
 #[test]
 fn single_quote_string_is_not_faber_syntax() {
     let session = session(Target::Rust);
-    let source = "incipit {\n  fixum value ← 'hello'\n  nota value\n}";
+    let source = "incipit {\n  fixum _ value ← 'hello'\n  nota value\n}";
     let result = compile(&session, "test.fab", source);
 
     assert!(!result.success());
@@ -657,7 +657,7 @@ fn single_quote_string_is_not_faber_syntax() {
 #[test]
 fn triple_quote_string_is_not_faber_syntax() {
     let session = session(Target::Rust);
-    let source = "incipit {\n  fixum value ← \"\"\"hello\"\"\"\n  nota value\n}";
+    let source = "incipit {\n  fixum _ value ← \"\"\"hello\"\"\"\n  nota value\n}";
     let result = compile(&session, "test.fab", source);
 
     assert!(!result.success());
@@ -731,12 +731,12 @@ fn ad_stmt_arguments_allow_unresolved_endpoint_identifiers() {
 fn compile_accepts_array_and_ex_destructuring_bindings() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum xs ← [1, 2]
+  fixum _ xs ← [1, 2]
   fixum [a, b] ← xs
   nota a
   nota b
 
-  fixum person ← { name: "Marcus", age: 1 }
+  fixum _ person ← { name: "Marcus", age: 1 }
   ex person fixum name
   nota name
 }"#;
@@ -752,7 +752,7 @@ fn enum_member_access_no_longer_reports_unknown_identifier() {
     let source = r#"ordo Color { rubrum, viridis }
 
 incipit {
-  fixum color ← Color.rubrum
+  fixum _ color ← Color.rubrum
   elige color {
     casu Color.rubrum { nota "r" }
     casu Color.viridis { nota "v" }
@@ -888,7 +888,7 @@ fn ignotum_receiver_method_calls_no_longer_leave_infer_type() {
 fixum ignotum process
 
 incipit {
-  fixum args = process.argv ⇢ lista<textus>
+  fixum _ args = process.argv ⇢ lista<textus>
   nota args.longitudo()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -942,7 +942,7 @@ fn go_target_allows_externa_with_explicit_cast_contract() {
 functio argv() → ignotum
 
 incipit {
-  fixum args ← argv() ⇢ lista<textus>
+  fixum _ args ← argv() ⇢ lista<textus>
   nota args.longitudo()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -964,8 +964,8 @@ incipit {
 fn ab_property_filter_no_longer_reports_unknown_identifier() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum users ← [{ activus: verum }]
-  fixum active ← ab users activus
+  fixum _ users ← [{ activus: verum }]
+  fixum _ active ← ab users activus
   nota active
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -981,12 +981,12 @@ fn ab_property_filter_no_longer_reports_unknown_identifier() {
 fn ab_pipeline_from_object_member_no_longer_leaves_infer_types() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum users ← [
+  fixum _ users ← [
     { nomen: "Marcus", activus: verum, aetas: 25 },
     { nomen: "Julia", activus: falsum, aetas: 30 }
   ]
-  fixum data ← { users: users }
-  fixum active ← ab data.users activus
+  fixum _ data ← { users: users }
+  fixum _ active ← ab data.users activus
   nota active
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1006,7 +1006,7 @@ fn ab_pipeline_from_object_member_no_longer_leaves_infer_types() {
 fn ex_object_varia_bindings_accept_same_type_reassignment() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum data ← { count: 100, active: verum }
+  fixum _ data ← { count: 100, active: verum }
   ex data varia count, active
   count ← 200
   active ← falsum
@@ -1029,8 +1029,8 @@ fn ex_object_varia_bindings_accept_same_type_reassignment() {
 fn compile_lowers_scriptum_without_stub_diagnostic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum name ← "Marcus"
-  fixum msg ← scriptum("salve, §!", name)
+  fixum _ name ← "Marcus"
+  fixum _ msg ← scriptum("salve, §!", name)
   nota msg
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1042,10 +1042,42 @@ fn compile_lowers_scriptum_without_stub_diagnostic() {
 }
 
 #[test]
+fn rust_compile_accepts_explicit_infer_type_marker() {
+    let session = session(Target::Rust);
+    let source = r#"functio answer() → _ {
+  redde 42
+}
+
+incipit {
+  fixum _ name ← "Marcus"
+  varia _ count ← answer()
+  count ← count + 1
+  nota "§: §"(name, count)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(
+        result.success(),
+        "expected compile success, got diagnostics: {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+    let Some(crate::Output::Rust(output)) = result.output else {
+        panic!("expected Rust output");
+    };
+    assert!(output.code.contains("fn answer() -> i64"));
+    assert!(output.code.contains("let name: String"));
+    assert!(output.code.contains("let mut count: i64"));
+}
+
+#[test]
 fn rust_output_uses_format_macro_for_scriptum() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum value ← 7
+  fixum _ value ← 7
   nota scriptum("valor: §", value)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1061,8 +1093,8 @@ fn rust_output_uses_format_macro_for_scriptum() {
 fn rust_output_uses_zero_based_numbered_scriptum_placeholders() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum first ← "prima"
-  fixum second ← "secunda"
+  fixum _ first ← "prima"
+  fixum _ second ← "secunda"
   nota scriptum("ordo: §1, §0", first, second)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1078,7 +1110,7 @@ fn rust_output_uses_zero_based_numbered_scriptum_placeholders() {
 fn rust_output_uses_string_literal_format_application() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum value ← 7
+  fixum _ value ← 7
   nota "valor: §"(value)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1094,8 +1126,8 @@ fn rust_output_uses_string_literal_format_application() {
 fn rust_output_uses_numbered_string_literal_format_application() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum first ← "prima"
-  fixum second ← "secunda"
+  fixum _ first ← "prima"
+  fixum _ second ← "secunda"
   nota "ordo: §1, §0"(first, second)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1111,10 +1143,10 @@ fn rust_output_uses_numbered_string_literal_format_application() {
 fn rust_output_supports_unicode_textus_index_and_range_slice() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum ch ← "Salve, §!"[7]
-  fixum prefix ← "hello world"[0‥5]
-  fixum whole ← "hello world"[0 usque 10]
-  fixum stepped ← "abcdef"[0‥6 per 2]
+  fixum _ ch ← "Salve, §!"[7]
+  fixum _ prefix ← "hello world"[0‥5]
+  fixum _ whole ← "hello world"[0 usque 10]
+  fixum _ stepped ← "abcdef"[0‥6 per 2]
   nota ch, prefix, whole, stepped
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1132,10 +1164,10 @@ fn rust_output_supports_unicode_textus_index_and_range_slice() {
 fn typescript_output_supports_unicode_textus_index_and_range_slice() {
     let session = session(Target::TypeScript);
     let source = r#"incipit {
-  fixum ch ← "Salve, §!"[7]
-  fixum prefix ← "hello world"[0‥5]
-  fixum whole ← "hello world"[0 usque 10]
-  fixum stepped ← "abcdef"[0‥6 per 2]
+  fixum _ ch ← "Salve, §!"[7]
+  fixum _ prefix ← "hello world"[0‥5]
+  fixum _ whole ← "hello world"[0 usque 10]
+  fixum _ stepped ← "abcdef"[0‥6 per 2]
   nota ch, prefix, whole, stepped
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1153,10 +1185,10 @@ fn typescript_output_supports_unicode_textus_index_and_range_slice() {
 fn go_output_supports_unicode_textus_index_and_range_slice() {
     let session = session(Target::Go);
     let source = r#"incipit {
-  fixum ch ← "Salve, §!"[7]
-  fixum prefix ← "hello world"[0‥5]
-  fixum whole ← "hello world"[0 usque 10]
-  fixum stepped ← "abcdef"[0‥6 per 2]
+  fixum _ ch ← "Salve, §!"[7]
+  fixum _ prefix ← "hello world"[0‥5]
+  fixum _ whole ← "hello world"[0 usque 10]
+  fixum _ stepped ← "abcdef"[0‥6 per 2]
   nota ch, prefix, whole, stepped
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1184,7 +1216,7 @@ incipit {
   varia textus name ← "Marcus"
   fixum textus[] words ← ["a", "b"]
   fixum textus ∪ nihil maybe ← nihil
-  fixum fallback ← maybe vel "x"
+  fixum _ fallback ← maybe vel "x"
   nota pick(verum), name, words, fallback
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1229,7 +1261,7 @@ fn rust_output_uses_or_for_option_coalesce() {
     let source = r#"incipit {
   fixum textus ∪ nihil a ← nihil
   fixum textus ∪ nihil b ← nihil
-  fixum first ← a vel b
+  fixum _ first ← a vel b
   nota first
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1324,7 +1356,7 @@ fn ego_field_access_no_longer_reports_non_struct_member_error() {
 }
 
 incipit {
-  fixum c = {} ⇢ Counter
+  fixum _ c = {} ⇢ Counter
   nota c.inc()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1339,8 +1371,8 @@ incipit {
 fn array_method_call_no_longer_reports_non_struct_member_error() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum numbers = [1, 2, 3]
-  fixum doubled = numbers.map(clausura numerus x: x * 2)
+  fixum _ numbers = [1, 2, 3]
+  fixum _ doubled = numbers.map(clausura numerus x: x * 2)
   nota doubled
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1369,7 +1401,7 @@ functio render(Drawable d) → vacuum {
 }
 
 incipit {
-  fixum c = {} ⇢ Circle
+  fixum _ c = {} ⇢ Circle
   render(c)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1384,10 +1416,10 @@ incipit {
 fn object_member_and_index_chains_no_longer_report_index_errors() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum config = { name: "test", value: 42 }
+  fixum _ config = { name: "test", value: 42 }
   nota config["name"]
 
-  fixum data = { items: ["first", "second"] }
+  fixum _ data = { items: ["first", "second"] }
   nota data.items[0]
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1406,7 +1438,7 @@ fn object_member_and_index_chains_no_longer_report_index_errors() {
 fn array_method_closure_argument_no_longer_reports_argument_type_mismatch() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum numbers = [1, 2, 3]
+  fixum _ numbers = [1, 2, 3]
   nota numbers.map(clausura numerus x: x * 2)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1460,7 +1492,7 @@ incipit {
 fn itera_de_array_index_no_longer_leaves_infer_types() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum xs ← [10, 20, 30]
+  fixum _ xs ← [10, 20, 30]
   itera de xs fixum idx {
     nota xs[idx]
   }
@@ -1546,8 +1578,8 @@ fn cura_arena_anonymous_scope_no_longer_reports_infer_variable_error() {
 fn compile_supports_extended_binary_operators() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum a ← 1
-  fixum b ← 2
+  fixum _ a ← 1
+  fixum _ b ← 2
   fixum numerus ∪ nihil maybe ← nihil
 
   nota a ≡ b
@@ -1570,9 +1602,9 @@ fn compile_supports_extended_binary_operators() {
 fn compile_supports_extended_unary_operators() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum flag ← verum
+  fixum _ flag ← verum
   fixum textus ∪ nihil maybe ← nihil
-  fixum n ← -3
+  fixum _ n ← -3
 
   nota non flag
   nota nulla maybe
@@ -1648,7 +1680,7 @@ fn compile_lowers_probandum_nested_cases_without_lowering_errors() {
     let session = session(Target::Rust);
     let source = r#"probandum "suite" {
   praepara omnia {
-    fixum x = 1
+    fixum _ x = 1
     nota x
   }
 
@@ -1681,7 +1713,7 @@ fn ego_field_assignment_no_longer_reports_assignment_type_mismatch() {
 }
 
 incipit {
-  fixum c = {} ⇢ Circulus
+  fixum _ c = {} ⇢ Circulus
   c.crescere(2)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1712,7 +1744,7 @@ fn typed_array_index_assignment_no_longer_reports_assignment_type_mismatch() {
 fn ex_destructured_object_fields_can_be_used_in_arithmetic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum point = { x: 4, y: 6 } ⇢ Point
+  fixum _ point = { x: 4, y: 6 } ⇢ Point
   ex point fixum x, y
   fixum numerus sum = x + y
   nota sum
@@ -1734,7 +1766,7 @@ genus Point {
 fn array_destructured_vars_can_be_used_in_arithmetic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum coords = [100, 200]
+  fixum _ coords = [100, 200]
   varia [x, y] = coords
   x = x + 50
   y = y + 50
@@ -1759,7 +1791,7 @@ fn method_return_values_can_participate_in_numeric_comparisons() {
 }
 
 incipit {
-  fixum nums = [1, 2, 3]
+  fixum _ nums = [1, 2, 3]
   nota accessArray(nums, 1)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1792,7 +1824,7 @@ functio maxValue(numerus[] nums) → numerus {
 }
 
 incipit {
-  fixum numbers = [1, 2, 3, 4, 5]
+  fixum _ numbers = [1, 2, 3, 4, 5]
   nota sumArray(numbers)
   nota maxValue(numbers)
 }"#;
@@ -1808,7 +1840,7 @@ incipit {
 fn assignment_and_tempta_flow_no_longer_report_use_after_move() {
     let session = session(Target::Rust);
     let source = r#"functio process(textus name) → vacuum {
-  varia resource = "pending"
+  varia _ resource = "pending"
   tempta {
     resource = name
     si name ≡ "" {
@@ -1839,9 +1871,9 @@ incipit {
 fn empty_array_and_spread_literals_no_longer_report_annotation_or_type_errors() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum empty = []
-  fixum first = [1, 2, 3]
-  fixum extended = [0, sparge first, 99]
+  fixum _ empty = []
+  fixum _ first = [1, 2, 3]
+  fixum _ extended = [0, sparge first, 99]
   nota empty, extended
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1867,7 +1899,7 @@ functio rangeSync(numerus n) → numerus {
 }
 
 incipit {
-  varia syncResults = []
+  varia _ syncResults = []
   itera ex rangeSync(5) fixum num {
     syncResults.appende(num * 2)
   }
@@ -1899,10 +1931,10 @@ functio id(textus x) → textus {
 
 incipit {
   fixum User ∪ nihil maybeUser ← nihil
-  fixum a ← maybeUser?.name
-  fixum b ← maybeUser?.nums?[0]
+  fixum _ a ← maybeUser?.name
+  fixum _ b ← maybeUser?.nums?[0]
   fixum (textus) → textus ∪ nihil maybeFn ← id
-  fixum c ← maybeFn?("x")
+  fixum _ c ← maybeFn?("x")
   nota a, b, c
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1925,9 +1957,9 @@ functio id(textus x) → textus {
 
 incipit {
   fixum User ∪ nihil maybeUser ← nihil
-  fixum a ← maybeUser?.name
+  fixum _ a ← maybeUser?.name
   fixum (textus) → textus ∪ nihil maybeFn ← id
-  fixum c ← maybeFn?("x")
+  fixum _ c ← maybeFn?("x")
   nota a, c
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1949,9 +1981,9 @@ incipit {
 fn rust_output_translates_stdlib_lista_methods() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  varia xs ← [1, 2]
+  varia _ xs ← [1, 2]
   xs.appende(3)
-  fixum n ← xs.longitudo()
+  fixum _ n ← xs.longitudo()
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1974,7 +2006,7 @@ fn struct_construction_requires_fields_and_checks_defaults() {
 }
 
 incipit {
-  fixum u ← { email: "a@example.com" } ⇢ User
+  fixum _ u ← { email: "a@example.com" } ⇢ User
 }"#;
     let missing_result = compile(&session, "missing.fab", missing);
     assert!(!missing_result.success());
@@ -1988,7 +2020,7 @@ incipit {
 }
 
 incipit {
-  fixum u ← { } ⇢ User
+  fixum _ u ← { } ⇢ User
 }"#;
     let default_result = compile(&session, "default.fab", bad_default);
     assert!(!default_result.success());
@@ -2002,14 +2034,14 @@ incipit {
 fn ab_pipeline_no_longer_reports_lowering_stub() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum items ← [
+  fixum _ items ← [
     { valor: 10, visibilis: verum },
     { valor: 20, visibilis: falsum },
     { valor: 30, visibilis: verum }
   ]
-  fixum nums ← [1, 2, 3, 4, 5]
-  fixum visible ← ab items visibilis, prima 2
-  fixum sumFirst ← ab nums, prima 3, summa
+  fixum _ nums ← [1, 2, 3, 4, 5]
+  fixum _ visible ← ab items visibilis, prima 2
+  fixum _ sumFirst ← ab nums, prima 3, summa
   nota visible, sumFirst
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2023,14 +2055,14 @@ fn ab_pipeline_no_longer_reports_lowering_stub() {
 fn rust_output_emits_iterator_pipeline_for_ab_expr() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum items ← [
+  fixum _ items ← [
     { valor: 10, visibilis: verum },
     { valor: 20, visibilis: falsum },
     { valor: 30, visibilis: verum }
   ]
-  fixum nums ← [1, 2, 3, 4, 5]
-  fixum top ← ab items visibilis, prima 2
-  fixum total ← ab nums, prima 3, summa
+  fixum _ nums ← [1, 2, 3, 4, 5]
+  fixum _ top ← ab items visibilis, prima 2
+  fixum _ total ← ab nums, prima 3, summa
   nota top, total
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2053,7 +2085,7 @@ fn objectum_return_type_no_longer_reports_unknown_type() {
 }
 
 incipit {
-  fixum response ← getResponse()
+  fixum _ response ← getResponse()
   nota response
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2101,7 +2133,7 @@ fn quidlibet_container_annotation_no_longer_reports_unknown_type() {
 fn conversio_type_params_no_longer_report_unknown_type() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← "ff" ⇒ numerus<i32, Hex>
+  fixum _ n ← "ff" ⇒ numerus<i32, Hex>
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2116,11 +2148,11 @@ fn conversio_type_params_no_longer_report_unknown_type() {
 fn verte_vel_no_longer_reports_invalid_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum data ← 42
-  fixum asText ← data ⇢ textus
-  fixum parsed ← "invalid" ⇒ numerus vel 0
-  fixum cache ← { alice: 95, bob: 87 } ⇢ tabula<textus, numerus>
-  fixum items ← [] ⇢ lista<textus>
+  fixum _ data ← 42
+  fixum _ asText ← data ⇢ textus
+  fixum _ parsed ← "invalid" ⇒ numerus vel 0
+  fixum _ cache ← { alice: 95, bob: 87 } ⇢ tabula<textus, numerus>
+  fixum _ items ← [] ⇢ lista<textus>
   nota asText, parsed, cache, items
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2140,9 +2172,9 @@ fn rust_output_emits_verte_construction_and_coalesce_unwrap() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum textus ∪ nihil name ← nihil
-  fixum display ← name vel "Anonymous"
-  fixum cache ← { alice: 95 } ⇢ tabula<textus, numerus>
-  fixum items ← [] ⇢ lista<textus>
+  fixum _ display ← name vel "Anonymous"
+  fixum _ cache ← { alice: 95 } ⇢ tabula<textus, numerus>
+  fixum _ items ← [] ⇢ lista<textus>
   nota display, cache, items
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2169,8 +2201,8 @@ fn rust_output_wraps_sponte_fields_in_verte_struct_literals() {
 }
 
 incipit {
-  fixum a ← { name: "Ada" } ⇢ User
-  fixum b ← { name: "Lin", email: "lin@example.com" } ⇢ User
+  fixum _ a ← { name: "Ada" } ⇢ User
+  fixum _ b ← { name: "Lin", email: "lin@example.com" } ⇢ User
   nota a.name
   nota b.name
 }"#;
@@ -2199,9 +2231,9 @@ fn rust_output_applies_nullable_field_defaults_in_verte_struct_literals() {
 }
 
 incipit {
-  fixum a ← { name: "Ada" } ⇢ User
-  fixum b ← { name: "Lin", email: nihil } ⇢ User
-  fixum c ← { name: "Ken", email: "ken@example.com" } ⇢ User
+  fixum _ a ← { name: "Ada" } ⇢ User
+  fixum _ b ← { name: "Lin", email: nihil } ⇢ User
+  fixum _ c ← { name: "Ken", email: "ken@example.com" } ⇢ User
 }"#;
     let result = compile(&session, "test.fab", source);
 
@@ -2246,7 +2278,7 @@ fn elige_accepts_enum_variant_case_values() {
     let source = r#"ordo Color { rubrum, viridis, caeruleum }
 
 incipit {
-  fixum color ← Color.rubrum
+  fixum _ color ← Color.rubrum
   elige color {
     casu Color.rubrum { nota "R" }
     casu Color.viridis { nota "G" }
@@ -2377,7 +2409,7 @@ fn degenerate_nihil_only_union_is_rejected() {
 fn conversio_glyph_form_compiles_to_parse() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← "22" ⇒ numerus
+  fixum _ n ← "22" ⇒ numerus
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2393,7 +2425,7 @@ fn conversio_glyph_form_compiles_to_parse() {
 fn conversio_emits_parse_not_as_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← "42" ⇒ numerus
+  fixum _ n ← "42" ⇒ numerus
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2410,7 +2442,7 @@ fn conversio_emits_parse_not_as_cast() {
 fn conversio_with_fallback_emits_unwrap_or() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← "bad" ⇒ numerus vel 0
+  fixum _ n ← "bad" ⇒ numerus vel 0
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2426,8 +2458,8 @@ fn conversio_with_fallback_emits_unwrap_or() {
 fn conversio_to_textus_emits_to_string() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← 42
-  fixum s ← n ⇒ textus
+  fixum _ n ← 42
+  fixum _ s ← n ⇒ textus
   nota s
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2443,8 +2475,8 @@ fn conversio_to_textus_emits_to_string() {
 fn verte_qua_still_emits_as_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum n ← 42
-  fixum f ← n ⇢ fractus
+  fixum _ n ← 42
+  fixum _ f ← n ⇢ fractus
   nota f
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2460,7 +2492,7 @@ fn verte_qua_still_emits_as_cast() {
 fn conversio_glyph_form_roundtrips_through_faber_codegen() {
     let session = session(Target::Faber);
     let source = r#"incipit {
-  fixum n ← "22" ⇒ numerus
+  fixum _ n ← "22" ⇒ numerus
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2476,7 +2508,7 @@ fn conversio_glyph_form_roundtrips_through_faber_codegen() {
 fn conversio_with_fallback_roundtrips_through_faber_codegen() {
     let session = session(Target::Faber);
     let source = r#"incipit {
-  fixum n ← "bad" ⇒ numerus vel 0
+  fixum _ n ← "bad" ⇒ numerus vel 0
   nota n
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2491,7 +2523,7 @@ fn conversio_with_fallback_roundtrips_through_faber_codegen() {
 #[test]
 fn fac_do_while_roundtrips_through_faber_codegen() {
     let source = r#"incipit {
-  varia counter ← 0
+  varia _ counter ← 0
   fac {
     counter ← counter + 1
     nota counter

@@ -12,5 +12,5 @@ related = ["∧", "∨", "¬"]
 Combines two expressions with exclusive or.
 
 ```fab
-fixum parity = a ⊻ b
+fixum _ parity = a ⊻ b
 ```

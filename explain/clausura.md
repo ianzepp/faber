@@ -12,5 +12,5 @@ related = ["functio", "cede"]
 Declares an inline closure expression.
 
 ```fab
-fixum double = clausura x: x * 2
+fixum _ double = clausura x: x * 2
 ```

@@ -47,7 +47,7 @@ fn compile_package_resolves_builtin_norma_library_imports_without_local_modules(
 importa ex "norma/json" privata json
 
 incipit {
-  fixum parsed ← json.solve("{}")
+  fixum _ parsed ← json.solve("{}")
 }
 "#,
     )
@@ -81,7 +81,7 @@ fn compile_package_resolves_builtin_norma_toml_library_imports() {
 importa ex "norma/toml" privata toml
 
 incipit {
-  fixum parsed ← toml.solve("name = \"faber\"")
+  fixum _ parsed ← toml.solve("name = \"faber\"")
 }
 "#,
     )

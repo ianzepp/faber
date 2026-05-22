@@ -4,7 +4,7 @@ proba "arithmetic passes" {
 }
 
 proba "text passes" {
-    fixum greeting ← "salve"
+    fixum _ greeting ← "salve"
     adfirma greeting ≡ "salve"
 }
 

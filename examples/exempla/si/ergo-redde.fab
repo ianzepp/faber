@@ -56,7 +56,7 @@ incipit {
     nota grade(85)  # B
     nota grade(55)  # F
 
-    fixum nums ← [1, 2, 3, 4, 5]
+    fixum _ nums ← [1, 2, 3, 4, 5]
     nota findFirst(nums, 3)  # 3
     nota findFirst(nums, 9)  # nihil
 }

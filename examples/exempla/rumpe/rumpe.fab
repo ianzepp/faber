@@ -4,7 +4,7 @@
 
 incipit ergo cura arena {
     # Break when reaching 5
-    varia i ← 0
+    varia _ i ← 0
 
     dum i < 10 {
         si i ≡ 5 {
@@ -15,10 +15,10 @@ incipit ergo cura arena {
     }
 
     # Break in nested loop (exits inner only)
-    varia outer ← 0
+    varia _ outer ← 0
 
     dum outer < 3 {
-        varia inner ← 0
+        varia _ inner ← 0
 
         dum inner < 10 {
             si inner ≡ 2 {

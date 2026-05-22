@@ -824,6 +824,7 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
 
 fn resolve_type(resolver: &mut Resolver, interner: &Interner, ty: &TypeExpr, errors: &mut Vec<SemanticError>) {
     match &ty.kind {
+        TypeExprKind::Infer => {}
         TypeExprKind::Named(name, params) => {
             resolve_type_ident(resolver, interner, name, errors);
             for param in params {
@@ -1063,6 +1064,7 @@ fn lower_type_expr(
     types: &mut TypeTable,
 ) -> Result<TypeId, TypeLowerError> {
     let mut ty_id = match &ty.kind {
+        TypeExprKind::Infer => types.intern(Type::Infer(crate::semantic::InferVar(ty.span.start))),
         TypeExprKind::Named(name, params) => lower_named_type(name, params, resolver, interner, types)?,
         TypeExprKind::Array(inner) => {
             let inner_id = lower_type_expr(inner, resolver, interner, types)?;

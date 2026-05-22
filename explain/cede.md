@@ -12,5 +12,5 @@ related = ["futura", "cursor"]
 Awaits a promise or yields a value depending on context.
 
 ```fab
-fixum data = cede fetchData()
+fixum _ data = cede fetchData()
 ```

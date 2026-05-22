@@ -15,11 +15,11 @@ That means the names in `stdlib/norma/*.fab` are not disposable temporary names.
 
 ```fab
 # Today: full annotated declarations may exist.
-fixum rows = cede conn.quaeret(sql, params)
+fixum _ rows = cede conn.quaeret(sql, params)
 
 # Later: the declaration may collapse to a root-backed operation, but user code
 # should still call the same conjugated form.
-fixum rows = cede conn.quaeret(sql, params)
+fixum _ rows = cede conn.quaeret(sql, params)
 ```
 
 Possible wrapper dimensions include:

@@ -151,26 +151,26 @@ incipit {
     # Arithmetic operators: + - * / %
     # --------------------------------------------------------------------------
 
-    fixum sum ← 10 + 5
+    fixum _ sum ← 10 + 5
     nota sum
 
-    fixum diff ← 10 - 5
+    fixum _ diff ← 10 - 5
     nota diff
 
-    fixum prod ← 10 * 5
+    fixum _ prod ← 10 * 5
     nota prod
 
-    fixum quot ← 10 / 5
+    fixum _ quot ← 10 / 5
     nota quot
 
-    fixum rem ← 10 % 3
+    fixum _ rem ← 10 % 3
     nota rem
 
     # --------------------------------------------------------------------------
     # Compound assignment: ⊕ ⊖ ⊛ ⊘ ⊜ ⊚
     # --------------------------------------------------------------------------
 
-    varia counter ← 0
+    varia _ counter ← 0
     counter ⊕ 10
     counter ⊖ 3
     counter ⊛ 2
@@ -180,29 +180,29 @@ incipit {
     # Comparison operators: < > ≤ ≥ ≡ ≠ ≡ ≠
     # --------------------------------------------------------------------------
 
-    fixum isEqual ← 10 ≡ 10
+    fixum _ isEqual ← 10 ≡ 10
     nota isEqual
 
-    fixum isNotEqual ← 10 ≠ 5
+    fixum _ isNotEqual ← 10 ≠ 5
     nota isNotEqual
 
-    fixum isStrictEqual ← 10 ≡ 10
+    fixum _ isStrictEqual ← 10 ≡ 10
     nota isStrictEqual
 
-    fixum isLess ← 5 < 10
+    fixum _ isLess ← 5 < 10
     nota isLess
 
-    fixum isGreater ← 10 > 5
+    fixum _ isGreater ← 10 > 5
     nota isGreater
 
-    fixum isLessOrEqual ← 5 ≤ 5
+    fixum _ isLessOrEqual ← 5 ≤ 5
     nota isLessOrEqual
 
-    fixum isGreaterOrEqual ← 10 ≥ 10
+    fixum _ isGreaterOrEqual ← 10 ≥ 10
     nota isGreaterOrEqual
 
     # Comparison chaining
-    fixum inRange ← 0 < 5 et 5 < 10
+    fixum _ inRange ← 0 < 5 et 5 < 10
     nota inRange
 
     # --------------------------------------------------------------------------
@@ -210,17 +210,17 @@ incipit {
     # --------------------------------------------------------------------------
     # PREFER: 'et' over 'et', 'aut' over 'aut'
 
-    fixum both ← verum et verum
+    fixum _ both ← verum et verum
     nota both
 
-    fixum either ← falsum aut verum
+    fixum _ either ← falsum aut verum
     nota either
 
-    fixum neither ← falsum et falsum
+    fixum _ neither ← falsum et falsum
     nota neither
 
     # Short-circuit evaluation works as expected
-    fixum shortCircuit ← falsum et expensiveCheck()
+    fixum _ shortCircuit ← falsum et expensiveCheck()
     nota shortCircuit
 
     # --------------------------------------------------------------------------
@@ -229,14 +229,14 @@ incipit {
     # PREFER: 'vel' — the '??' operator does not exist in Faber
 
     fixum textus ∪ nihil maybeName ← nihil
-    fixum resolvedName ← maybeName vel "default"
+    fixum _ resolvedName ← maybeName vel "default"
     nota resolvedName
 
     # Chain multiple fallbacks
     fixum textus ∪ nihil first ← nihil
     fixum textus ∪ nihil second ← nihil
     fixum textus third ← "fallback"
-    fixum fallbackResult ← first vel second vel third
+    fixum _ fallbackResult ← first vel second vel third
     nota fallbackResult
 
     # --------------------------------------------------------------------------
@@ -244,13 +244,13 @@ incipit {
     # --------------------------------------------------------------------------
     # Latin form for ternary expressions.
 
-    fixum age ← 25
-    fixum ageCategory ← age ≥ 18 sic "adult" secus "minor"
+    fixum _ age ← 25
+    fixum _ ageCategory ← age ≥ 18 sic "adult" secus "minor"
     nota ageCategory
 
     # Nested ternary (right-associative)
-    fixum score ← 85
-    fixum grade ← score ≥ 90 sic "A" secus score ≥ 80 sic "B" secus score ≥ 70 sic "C" secus "F"
+    fixum _ score ← 85
+    fixum _ grade ← score ≥ 90 sic "A" secus score ≥ 80 sic "B" secus score ≥ 70 sic "C" secus "F"
     nota grade
 
     # --------------------------------------------------------------------------
@@ -258,30 +258,30 @@ incipit {
     # --------------------------------------------------------------------------
     # Note: Bitwise has higher precedence than comparison (unlike C)
 
-    fixum flags ← 0b1010
-    fixum mask ← 0b1100
+    fixum _ flags ← 0b1010
+    fixum _ mask ← 0b1100
 
-    fixum bitwiseAnd ← flags ∧ mask
+    fixum _ bitwiseAnd ← flags ∧ mask
     nota bitwiseAnd
 
-    fixum bitwiseOr ← flags ∨ mask
+    fixum _ bitwiseOr ← flags ∨ mask
     nota bitwiseOr
 
-    fixum bitwiseXor ← flags ⊻ mask
+    fixum _ bitwiseXor ← flags ⊻ mask
     nota bitwiseXor
 
     # --------------------------------------------------------------------------
     # Bit shift: ≪ (<<), ≫ (>>)
     # --------------------------------------------------------------------------
-    fixum leftShift ← 1 ≪ 4
+    fixum _ leftShift ← 1 ≪ 4
     nota leftShift
 
-    fixum rightShift ← 16 ≫ 2
+    fixum _ rightShift ← 16 ≫ 2
     nota rightShift
 
     # Precedence: (flags ∧ mask) ≡ 0, not flags ∧ (mask ≡ 0)
     # Using explicit parens to avoid TS literal comparison warning
-    fixum checkMask ← (flags ∧ mask) ≡ 0
+    fixum _ checkMask ← (flags ∧ mask) ≡ 0
     nota checkMask
 }
 

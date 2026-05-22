@@ -141,7 +141,7 @@ functio stream() → datum
 Use string-template application for formatted strings:
 
 ```fab
-fixum greeting = "Hello, §!"(name)
+fixum _ greeting = "Hello, §!"(name)
 ```
 
 ## Primitive Types

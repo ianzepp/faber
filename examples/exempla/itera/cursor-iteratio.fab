@@ -29,7 +29,7 @@ incipit {
     }
 
     # Collect all results from generator function
-    varia syncResults ← []
+    varia _ syncResults ← []
     itera ex rangeSync(5) fixum num {
         syncResults.appende(num * 2)
     }

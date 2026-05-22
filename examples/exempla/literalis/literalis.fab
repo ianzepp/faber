@@ -2,24 +2,24 @@
 
 incipit {
     # Numbers
-    fixum integer ← 42
-    fixum decimal ← 3.14
-    fixum negative ← -100
+    fixum _ integer ← 42
+    fixum _ decimal ← 3.14
+    fixum _ negative ← -100
 
     # Strings
-    fixum greeting ← "hello"
-    fixum block ← ❝block "quotes"❞
+    fixum _ greeting ← "hello"
+    fixum _ block ← ❝block "quotes"❞
 
     # Booleans
-    fixum yes ← verum
-    fixum no ← falsum
+    fixum _ yes ← verum
+    fixum _ no ← falsum
 
     # Null
-    fixum nothing ← nihil
+    fixum _ nothing ← nihil
 
     # Template application
-    fixum name ← "Mundus"
-    fixum message ← "Hello §"(name)
+    fixum _ name ← "Mundus"
+    fixum _ message ← "Hello §"(name)
 
     nota integer
     nota decimal

@@ -3,7 +3,7 @@ proba "selected case" {
 }
 
 proba "broken case" {
-    fixum broken ← missing_value
+    fixum _ broken ← missing_value
 }
 
 incipit {}

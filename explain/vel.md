@@ -12,5 +12,5 @@ related = ["nihil", "nonnihil"]
 Provides a default when the left side is null.
 
 ```fab
-fixum name = maybeName vel "default"
+fixum _ name = maybeName vel "default"
 ```

@@ -7,25 +7,25 @@
 incipit {
     # Null checking with est
     fixum numerus ∪ nihil maybeValue ← nihil
-    fixum isNull ← maybeValue est nihil
+    fixum _ isNull ← maybeValue est nihil
     nota isNull
 
     # Boolean true check with verum prefix
-    fixum enabled ← verum
-    fixum isTrue ← verum enabled
+    fixum _ enabled ← verum
+    fixum _ isTrue ← verum enabled
     nota isTrue
 
     # Boolean false check with falsum prefix
-    fixum disabled ← falsum
-    fixum isFalse ← falsum disabled
+    fixum _ disabled ← falsum
+    fixum _ isFalse ← falsum disabled
     nota isFalse
 
     # Chained with logical operators
     fixum textus ∪ nihil name ← nihil
-    fixum needsDefault ← name est nihil et verum enabled
+    fixum _ needsDefault ← name est nihil et verum enabled
     nota needsDefault
 
     # Parenthesized for clarity
-    fixum bothNull ← (maybeValue est nihil) et (name est nihil)
+    fixum _ bothNull ← (maybeValue est nihil) et (name est nihil)
     nota bothNull
 }

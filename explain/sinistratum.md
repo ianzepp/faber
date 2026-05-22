@@ -12,5 +12,5 @@ related = ["≫"]
 Shifts the left value left by a number of bits.
 
 ```fab
-fixum shifted = 1 ≪ 4
+fixum _ shifted = 1 ≪ 4
 ```

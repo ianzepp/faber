@@ -1,18 +1,18 @@
 # Format string expressions using template application
 
 incipit ergo cura arena {
-    fixum name ← "Marcus"
-    fixum age ← 30
+    fixum _ name ← "Marcus"
+    fixum _ age ← 30
 
     # Single placeholder
-    fixum greeting ← "Salve, §!"(name)
+    fixum _ greeting ← "Salve, §!"(name)
     nota greeting
 
     # Multiple placeholders
-    fixum info ← "§ is § years old"(name, age)
+    fixum _ info ← "§ is § years old"(name, age)
     nota info
 
     # With expression
-    fixum calc ← "10 + 20 ← §"(10 + 20)
+    fixum _ calc ← "10 + 20 ← §"(10 + 20)
     nota calc
 }

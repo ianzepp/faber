@@ -18,7 +18,7 @@ genus Persona {
 
 incipit {
     # Instantiate with all required fields
-    fixum p ← {
+    fixum _ p ← {
         x: 10,
         y: 20
     } ⇢ Punctum
@@ -27,7 +27,7 @@ incipit {
     nota p.y
 
     # Instantiate with required + optional defaults
-    fixum marcus ← {
+    fixum _ marcus ← {
         nomen: "Marcus"
     } ⇢ Persona
 
@@ -36,7 +36,7 @@ incipit {
     nota marcus.activus
 
     # Override defaults
-    fixum julia ← {
+    fixum _ julia ← {
         nomen: "Julia",
         aetas: 25,
         activus: falsum

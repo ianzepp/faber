@@ -12,6 +12,6 @@ Declares the asynchronous program entry point.
 
 ```fab
 incipiet {
-fixum data = cede fetchData()
+fixum _ data = cede fetchData()
 }
 ```

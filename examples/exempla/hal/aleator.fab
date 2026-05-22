@@ -10,18 +10,18 @@ incipit {
 
     # Basic random numbers
     consolum.fundeLineam("--- Basic Generation ---")
-    fixum f ← aleator.fractus()
+    fixum _ f ← aleator.fractus()
     consolum.fundeLineam("Random float [0,1): §"(f))
 
-    fixum n ← aleator.inter(1, 100)
+    fixum _ n ← aleator.inter(1, 100)
     consolum.fundeLineam("Random int [1,100]: §"(n))
 
     # Cryptographic
     consolum.fundeLineam("\n--- Cryptographic ---")
-    fixum id ← aleator.uuid()
+    fixum _ id ← aleator.uuid()
     consolum.fundeLineam("UUID v4: §"(id))
 
-    fixum bytes ← aleator.octeti(8)
+    fixum _ bytes ← aleator.octeti(8)
     consolum.fundeLineam("Random 8 bytes: §"(bytes))
 
     # Seeded (reproducible) random

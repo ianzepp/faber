@@ -37,7 +37,7 @@ si user.authenticated {
 The keyword `sin` is a classical Latin contraction of `si non`—"but if" or "if however." It chains additional conditions after an initial `si`.
 
 ```fab
-fixum hour = 14
+fixum _ hour = 14
 
 si hour < 6 {
     nota "Late night"
@@ -190,7 +190,7 @@ dum i > 0 ergo i = i - 1
 The `itera ex` construct iterates over values in a collection. The syntax follows Faber's verb-first pattern: "iterate from items, binding each item."
 
 ```fab
-fixum numbers = [1, 2, 3, 4, 5]
+fixum _ numbers = [1, 2, 3, 4, 5]
 
 itera ex numbers fixum n {
     nota n
@@ -204,7 +204,7 @@ This verb-first syntax aligns with other Faber statements like `nota`, `iace`, a
 The syntax works with any iterable:
 
 ```fab
-fixum names = ["Marcus", "Julia", "Claudia"]
+fixum _ names = ["Marcus", "Julia", "Claudia"]
 
 itera ex names fixum name {
     nota name
@@ -214,10 +214,10 @@ itera ex names fixum name {
 Processing each item:
 
 ```fab
-fixum values = [10, 20, 30]
+fixum _ values = [10, 20, 30]
 
 itera ex values fixum v {
-    fixum doubled = v * 2
+    fixum _ doubled = v * 2
     nota doubled
 }
 ```
@@ -279,7 +279,7 @@ itera ex 0 usque 10 per 2 fixum i {
 The `itera de` construct iterates over keys (property names or indices) rather than values. The syntax reads: "iterate concerning the object, binding each key."
 
 ```fab
-fixum persona = { nomen: "Marcus", aetas: 30, urbs: "Roma" }
+fixum _ persona = { nomen: "Marcus", aetas: 30, urbs: "Roma" }
 
 itera de persona fixum clavis {
     nota clavis
@@ -299,7 +299,7 @@ itera de persona fixum clavis {
 For arrays, `de` iterates indices:
 
 ```fab
-fixum numeri = [10, 20, 30]
+fixum _ numeri = [10, 20, 30]
 
 itera de numeri fixum index {
     nota "Index §: §"(index, numeri[index])
@@ -332,7 +332,7 @@ Two keywords control loop flow:
 The keyword `rumpe` is the imperative of _rumpere_ ("to break"). It exits the innermost loop immediately.
 
 ```fab
-varia i = 0
+varia _ i = 0
 
 dum i < 10 {
     si i ≡ 5 {
@@ -386,7 +386,7 @@ Branching statements select one path among several based on a value.
 The keyword `elige` is the imperative of _eligere_ ("to choose"). It matches a value against cases.
 
 ```fab
-fixum status = "active"
+fixum _ status = "active"
 
 elige status {
     casu "pending" {

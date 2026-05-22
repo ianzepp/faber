@@ -12,5 +12,5 @@ related = ["et", "vel"]
 Combines boolean expressions with logical or.
 
 ```fab
-fixum either = falsum aut verum
+fixum _ either = falsum aut verum
 ```

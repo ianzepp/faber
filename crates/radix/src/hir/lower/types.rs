@@ -33,7 +33,7 @@
 //! rather than panicking, allowing continued analysis and error reporting.
 
 use super::Lowerer;
-use crate::semantic::{CollectionKind, FuncSig, Mutability, ParamMode, ParamType, Primitive, Type, TypeId};
+use crate::semantic::{CollectionKind, FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeId};
 use crate::syntax::{Ident, TypeExpr, TypeExprKind};
 
 impl<'a> Lowerer<'a> {
@@ -42,6 +42,10 @@ impl<'a> Lowerer<'a> {
         self.current_span = ty.span;
 
         let mut ty_id = match &ty.kind {
+            TypeExprKind::Infer => {
+                let infer_id = self.next_def_id().0;
+                self.types.intern(Type::Infer(InferVar(infer_id)))
+            }
             TypeExprKind::Named(name, params) => self.lower_named_type(name, params),
             TypeExprKind::Array(inner) => {
                 let inner_id = self.lower_type(inner);

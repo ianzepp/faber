@@ -7,21 +7,21 @@
 
 incipit {
     # Basic field extraction
-    fixum person ← { name: "Marcus", age: 30, city: "Roma" }
+    fixum _ person ← { name: "Marcus", age: 30, city: "Roma" }
     ex person fixum name, age
 
     nota name
     nota age
 
     # Extract with alias using 'ut'
-    fixum user ← { name: "Julia", email: "julia@roma.com" }
+    fixum _ user ← { name: "Julia", email: "julia@roma.com" }
     ex user fixum name ut userName, email ut userEmail
 
     nota userName
     nota userEmail
 
     # Mutable destructuring with varia
-    fixum data ← { count: 100, active: verum }
+    fixum _ data ← { count: 100, active: verum }
     ex data varia count, active
 
     nota count
@@ -34,7 +34,7 @@ incipit {
     nota active
 
     # Mixed alias and regular fields
-    fixum config ← { host: "localhost", port: 8080, secure: verum }
+    fixum _ config ← { host: "localhost", port: 8080, secure: verum }
     ex config fixum host, port ut serverPort, secure
 
     nota host
@@ -42,21 +42,21 @@ incipit {
     nota secure
 
     # Rest pattern with ceteri
-    fixum fullUser ← { id: 1, name: "Gaius", email: "g@roma.com", role: "admin" }
+    fixum _ fullUser ← { id: 1, name: "Gaius", email: "g@roma.com", role: "admin" }
     ex fullUser fixum id, ceteri details
 
     nota id
     nota details
 
     # Destructure from nested access
-    fixum response ← { data: { user: { name: "Claudia", verified: verum } } }
+    fixum _ response ← { data: { user: { name: "Claudia", verified: verum } } }
     ex response.data.user fixum name ut nestedName, verified
 
     nota nestedName
     nota verified
 
     # Single field extraction
-    fixum settings ← { theme: "dark", lang: "la" }
+    fixum _ settings ← { theme: "dark", lang: "la" }
     ex settings fixum theme
 
     nota theme
