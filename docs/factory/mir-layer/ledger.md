@@ -406,6 +406,8 @@ Verification:
 
 - `cargo test -p radix mir` passed: 34 tests passed.
 - `cargo test -p radix` passed: 358 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
+- Verification audit on 2026-05-22 reran `cargo test -p radix mir`, `cargo test -p radix`, and `./scripta/ci`; all passed.
+- Manual `radix mir` probes confirmed failable functions render `⇥`, `iace` lowers to `return_error`, `mori` lowers to `runtime panic(...) -> numquam` followed by `unreachable`, `tempta` fails closed with the Phase 5C diagnostic, and unhandled failable calls are rejected before MIR.
 
 Behavior boundary:
 
