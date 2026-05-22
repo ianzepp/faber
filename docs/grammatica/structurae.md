@@ -194,12 +194,12 @@ pactum Drawable {
 }
 
 pactum Iterabilis<T> {
-    functio sequens() → si numerus
+    functio sequens() → numerus ∪ nihil
     functio habet() → bivalens
 }
 ```
 
-Unlike `genus`, a `pactum` cannot have fields or property requirements. It defines only what a type can _do_, not what it _has_. This constraint keeps interfaces focused on behavior. When a method returns an optional value, current grammar uses the `si` prefix form rather than a trailing `?`.
+Unlike `genus`, a `pactum` cannot have fields or property requirements. It defines only what a type can _do_, not what it _has_. This constraint keeps interfaces focused on behavior. When a method returns a nullable value, use the inline union form `T ∪ nihil`.
 
 ### Implementation with implet
 

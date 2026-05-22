@@ -128,7 +128,7 @@ functio classify(numerus x) → textus {
 This form excels at guard clauses—conditions that validate input and exit early:
 
 ```fab
-functio divide(numerus a, numerus b) → numerus? {
+functio divide(numerus a, numerus b) → numerus ∪ nihil {
     si b ≡ 0 ergo redde nihil
     redde a / b
 }

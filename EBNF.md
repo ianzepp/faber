@@ -39,7 +39,7 @@ objectDestruct := ('fixum' | 'varia') objectPattern '←' expression
 funcDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
 paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
-parameter    := 'si'? ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('ut' IDENTIFIER)? ('vel' expression)?
+parameter    := ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? ('ut' IDENTIFIER)? ('vel' expression)?
 funcModifier := 'curata' IDENTIFIER | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
 returnClause := '→' typeAnnotation
 clausuraExpr   := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
@@ -49,7 +49,8 @@ clausuraParam  := typeAnnotation IDENTIFIER
 
 - Return syntax: `→` (arrow) with optional `@ futura`/`@ cursor` annotations for async/generator
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
-- `si` marks optional, `ceteri` marks rest parameter
+- Post-name markers: `sponte` (voluntary/optional provision), `fixus` (fixed after first assignment); canonical order `sponte fixus`
+- `ceteri` marks rest parameter
 - `curata NAME` declares allocator requirement; NAME is auto-injected at call sites within `cura` blocks
 
 ### Classes
@@ -57,7 +58,7 @@ clausuraParam  := typeAnnotation IDENTIFIER
 ```ebnf
 genusDecl    := 'abstractus'? 'genus' IDENTIFIER typeParams? ('sub' IDENTIFIER)? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
 genusMember  := annotation* (fieldDecl | methodDecl)
-fieldDecl    := 'generis'? 'nexum'? typeAnnotation IDENTIFIER (':' expression)?
+fieldDecl    := 'generis'? 'nexum'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? (':' expression)?
 methodDecl   := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
 annotation   := '@' IDENTIFIER+ | stdlibAnnotation
 ```
@@ -193,7 +194,8 @@ importa ex "./types" publica User               # re-export
 ## Types
 
 ```ebnf
-typeAnnotation := 'si'? ('de' | 'in')? (functionType | IDENTIFIER typeParams? arrayBrackets*)
+typeAnnotation := ('de' | 'in')? baseType ( '∪' typeAnnotation )*
+baseType       := functionType | IDENTIFIER typeParams? arrayBrackets* | '(' typeAnnotation ')'
 functionType   := '(' typeList? ')' '→' typeAnnotation
 typeList       := typeAnnotation (',' typeAnnotation)*
 typeParams     := '<' typeParameter (',' typeParameter)* '>'
@@ -201,9 +203,10 @@ typeParameter  := typeAnnotation | NUMBER | MODIFIER
 arrayBrackets  := '[]'
 ```
 
-- `si` prefix marks nullable types: `si textus` = nullable string
-- `de`/`in` mark ownership for Rust/Zig targets: `de textus` = borrowed string
-- Combined: `si de textus` = nullable borrowed string
+- `de`/`in` mark ownership (borrow/mut-borrow) as prefixes on the type.
+- Inline union `T ∪ U` (cup) for ad-hoc value unions; `T ∪ nihil` is the canonical nullable type form (lowers to Option<T>).
+- Unions are right-associative in the grammar but parsed flat; duplicates and `nihil`-only cases are diagnosed in semantic lowering.
+- `sponte` and `fixus` are declaration markers (post-name on params/fields), never prefixes on types.
 
 Function types enable higher-order function signatures:
 

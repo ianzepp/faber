@@ -100,7 +100,7 @@ Short-circuit evaluation works as expected. In `falsum et expensiveCheck()`, the
 The `vel` operator provides a default value when the left operand is `nihil` (null):
 
 ```fab
-fixum textus? maybeName = nihil
+fixum textus ∪ nihil maybeName ← nihil
 fixum name = maybeName vel "default"   # "default"
 ```
 
@@ -121,7 +121,7 @@ Etymology: `vel` is the Latin inclusive "or" (meaning "or if you prefer"). In Fa
 Faber provides unary prefix operators for checking null state:
 
 ```fab
-fixum textus? maybe = nihil
+fixum textus ∪ nihil maybe ← nihil
 
 nota nihil maybe       # verum (is null)
 nota nonnihil maybe    # falsum (is not null)
@@ -148,7 +148,7 @@ The distinction matters:
 The `est` operator tests whether a value is of a particular type or is null:
 
 ```fab
-fixum numerus? maybeValue = nihil
+fixum numerus ∪ nihil maybeValue ← nihil
 fixum isNull = maybeValue est nihil    # verum
 ```
 

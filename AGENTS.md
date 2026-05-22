@@ -51,7 +51,7 @@ How it works:
 2. **Verify grammar**: Check `EBNF.md` before assuming syntax exists.
 3. **No invented syntax**: No `Type?`, no made-up suffixes.
 4. **Banned keyword**: `cum` (English homograph).
-5. **Nullable params**: Use `ignotum`, not invented patterns.
+5. **Nullable value types**: Use `T ∪ nihil` in type position (returns, aliases, annotations). Use `sponte` after the name for voluntary declaration slots in parameters and genus fields. `ignotum` is the top-level unknown/escape type, not for nullability.
 6. **Rust-only tooling**: Use Cargo and `scripta/` helpers, not Bun or Node.
 7. **Correctness over completion**: Explicit over convenient.
 8. **Fix root causes**: Do not paper over upstream missing type information.

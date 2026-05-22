@@ -225,19 +225,19 @@ Multiple parameters are comma-separated; no parameters use empty parentheses:
 
 ---
 
-## Nullable Types
+## Nullable Types (Value Domain)
 
-The `?` suffix marks a type as nullable---able to hold either a value of that type or `nihil`:
+Nullable value types use the inline union form `T ∪ nihil`. This is the canonical way to express that a value may be either `T` or the explicit absence `nihil`.
 
 ```fab
-fixum textus? maybeName = nihil
-fixum numerus? maybeCount = 42
+fixum textus ∪ nihil maybeName ← nihil
+fixum numerus ∪ nihil maybeCount ← 42
 ```
 
-A nullable type requires handling before use. You cannot call methods on a `textus?` without first checking that it is not `nihil`:
+A nullable type requires handling before use. You cannot call methods on a `textus ∪ nihil` without first checking that it is not `nihil`:
 
 ```fab
-fixum textus? name = getOptionalName()
+fixum textus ∪ nihil name ← getOptionalName()
 
 # Using type guard
 si name est nihil {
@@ -254,13 +254,21 @@ The `est` operator performs type checking:
 fixum isNull = maybeValue est nihil
 ```
 
-Function return types can be nullable to indicate that a function might not find what it is looking for:
+Function return types use the same form when absence is possible:
 
 ```fab
-functio inveni(textus id) → persona? {
+functio inveni(textus id) → persona ∪ nihil {
     # might return nihil if not found
 }
 ```
+
+**Declaration optionality vs value nullability**
+
+- Use `sponte` after a *name* on parameters or genus fields when the *provider* may omit the slot (`textus email sponte`).
+- Use `T ∪ nihil` in *type position* (returns, `typus` aliases, casts, var annotations) when the *value* may be `nihil`.
+- These are separate: a `sponte` field without default is stored as `Option<T>` in Rust today, but the concepts remain distinct in the source language.
+
+See the `∪` explain entry and `sponte`/`fixus` entries for full detail.
 
 ---
 
@@ -354,13 +362,13 @@ Aliases are especially useful for complex types:
 ```fab
 typus Names = lista<textus>
 typus UserCache = tabula<textus, numerus>
-typus OptionalName = textus?
+typus OptionalName = textus ∪ nihil
 ```
 
 This makes function signatures more readable:
 
 ```fab
-functio findUser(UserId id) → Username? {
+functio findUser(UserId id) → Username ∪ nihil {
     # ...
 }
 ```
@@ -489,7 +497,7 @@ si maybeValue est textus {
 Type guards work with nullable types:
 
 ```fab
-fixum textus? name = getOptionalName()
+fixum textus ∪ nihil name ← getOptionalName()
 
 si name est nihil {
     nota "No name"

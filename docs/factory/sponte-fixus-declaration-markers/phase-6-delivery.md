@@ -2,7 +2,7 @@
 
 **Parent Plan**: `docs/factory/sponte-fixus-declaration-markers/plan.md`
 **Phase**: 6 - Documentation & Teaching
-**Status**: planned
+**Status**: implemented
 **Created**: 2026-05-22
 
 ## Interpreted Phase Problem
@@ -89,3 +89,34 @@ Phase 6 is complete when:
 - The explain corpus includes a discoverable entry for `∪` / inline union types.
 - Searches for stale nullable teaching forms are either clean or explicitly classified as legacy/negative examples.
 - `cargo test -p faber` passes if explain corpus generation or explain tests are affected.
+
+## Implementation Results
+
+**Created explain entries** (with coverage.toml updates):
+- `explain/sponte.md` — voluntary declaration marker for params/fields; distinguishes from value nullability.
+- `explain/fixus.md` — post-init fixed intent marker; metadata only (enforcement deferred).
+- `explain/∪.md` (unicode filename per test policy) — inline union operator; teaches `T ∪ nihil` canonical nullable form, canonicalization rules, and clear separation from `discretio` tagged unions. Aliases avoid collision with "union" (discretio).
+
+**Updated explain content**:
+- `explain/nihil.md` now cross-links to `∪` and notes the `sponte` vs. value-domain distinction.
+
+**Grammar documentation**:
+- `EBNF.md` — modernized `parameter`, `fieldDecl`, and `typeAnnotation` productions; removed `si` references; documented post-name markers and `∪` unions with notes on ordering and lowering.
+
+**Teaching docs cleaned and aligned** (all `T?` and `si T` nullable examples removed or labeled; prose updated):
+- `docs/grammatica/functiones.md` — Optional Parameters → Voluntary Parameters with `sponte`; defaults section; ownership+optional example; explicit distinction call-out.
+- `docs/grammatica/structurae.md` — pactum example and note updated to `numerus ∪ nihil`.
+- `docs/grammatica/typi.md` — entire "Nullable Types" section rewritten around `T ∪ nihil`; alias and return examples; type-guard examples; added declaration-vs-value-nullability guidance.
+- `docs/grammatica/operatores.md` — vel / est / null-check examples now use `textus ∪ nihil` / `numerus ∪ nihil` local patterns.
+- `docs/grammatica/regimen.md` — guard-clause divide example return type updated.
+
+**Project guidance**:
+- `AGENTS.md` — revised rule 5 from "use ignotum for nullable params" to current `sponte` + `T ∪ nihil` guidance, with clarification that ignotum remains the unknown escape hatch.
+
+**Verification**:
+- `cargo test -p faber -- explain` : all 12 tests green (including coverage manifest and embedded entry validation).
+- `cargo run -p faber -- explain ∪` (and sponte/fixus) resolve correctly and render teaching content.
+- Residue searches for `si <type>` / `T?` in live docs/ and *.fab (outside si/ control-flow examples and factory/ history) are clean.
+- No changes to compiler behavior or examples/stdlib (Phase 5 already migrated).
+
+All checkpoints met. Phase 6 delivers consistent teaching of the sponte/fixus/∪ split. Next (Phase 7) would add guardrail searches and negative parser tests if not already present from earlier phases.

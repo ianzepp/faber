@@ -68,12 +68,12 @@ The `ut` keyword provides a unified aliasing syntax across the language:
 
 All three express the same concept: "X, known locally as Y."
 
-### Optional Parameters
+### Voluntary Parameters with `sponte`
 
-The `si` modifier (Latin "if") marks a parameter as optional. Without a default value, the parameter type becomes nullable (`ignotum<T>`):
+The `sponte` marker (Latin "of one's own accord") follows the parameter name and marks the slot as voluntary: the caller may omit it. It is a declaration marker, not a type prefix.
 
 ```fab
-functio greet(textus nomen, si textus titulus) → textus {
+functio greet(textus nomen, textus titulus sponte) → textus {
     si titulus est nihil {
         redde scriptum("Salve, §!", nomen)
     }
@@ -86,10 +86,10 @@ greet("Marcus", "Dominus")   # titulus receives "Dominus"
 
 ### Default Values
 
-Default values use `vel` (Latin "or"), consistent with the nullish coalescing operator in expressions:
+Default values use `vel` (Latin "or"), consistent with the nullish coalescing operator in expressions. The `vel` follows any `sponte` marker:
 
 ```fab
-functio paginate(si numerus pagina vel 1, si numerus per_pagina vel 10) → textus {
+functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) → textus {
     redde scriptum("Page § with § items", pagina, per_pagina)
 }
 
@@ -101,6 +101,8 @@ paginate(2, 25)   # "Page 2 with 25 items"
 The choice of `vel` provides consistency: `vel` already means "or if nil" in expressions like `value vel "default"`, making parameter defaults read naturally as "numerus pagina or 1."
 
 Default values only make sense for owned parameters. Borrowed (`de`) and mutable (`in`) parameters require the caller to provide a value since there is nothing to borrow by default.
+
+`sponte` governs whether a value must be *provided* at the call site. When the value domain itself may be `nihil`, use the union form `T ∪ nihil` in return types, aliases, and type annotations (see `∪` and the typi chapter). These are distinct concepts.
 
 ### Rest Parameters
 
@@ -414,7 +416,7 @@ functio processPoints(de Point[] points, in Point[] targets) {
 These prepositions combine naturally with other parameter modifiers:
 
 ```fab
-functio analyze(textus source, de si numerus depth) → numerus {
+functio analyze(textus source, de numerus depth sponte) → numerus {
     si depth est nihil { redde 3 }
     redde depth
 }
