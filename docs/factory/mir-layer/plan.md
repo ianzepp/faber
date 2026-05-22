@@ -172,7 +172,7 @@ drop value
 | 6B | Aggregate and option lowering | Represent structs, enums, tuples, arrays, maps, option/null, optional chain, and non-null assertion using the Phase 6A contract. | MIR uses explicit construction/projection/runtime operations; no high-level optional-chain nodes remain for the supported subset. |
 | 7 | Runtime intrinsic boundary | Define and lower target-neutral intrinsics for printing, string formatting, collection operations, conversions, and stdlib-backed calls using the Phase 6A contract. | MIR references runtime/provider operations without Rust module paths or Cargo details. |
 | 8 | MIR validation | Add validation for block termination, type presence, operand compatibility, def-use sanity, and unresolved placeholders. | Invalid MIR is rejected before any backend sees it; diagnostics point back to source spans where possible. |
-| 9 | Rust backend vertical slice | Add a MIR-to-Rust backend behind an explicit experimental path for the supported subset. | Selected examples generate Rust from MIR and compile/run through Cargo with behavior matching the existing backend. |
+| 9 | MIR Rust probe | Add a deliberately temporary MIR-to-Rust probe behind an explicit experimental path for the supported subset. | Selected examples generate Rust from validated MIR and compile/run through Cargo without changing the existing default backend. |
 | 10 | Rust backend migration | Move stable lowering responsibilities from HIR-to-Rust into MIR where proven. | Existing Rust backend tests pass with MIR enabled for selected constructs; fallback remains for unported constructs. |
 | 11 | WASM readiness slice | Use MIR to scope a minimal WASM backend or WASM text/object experiment. | A primitive `incipit` program can lower from MIR to WASM-oriented output without changing HIR semantics. |
 | 12 | Native readiness review | Decide whether Cranelift/native is justified based on MIR completeness, runtime ABI, and WASM evidence. | Review produces a separate factory plan for Cranelift/native or explicitly defers it. |
@@ -417,19 +417,22 @@ Checkpoint:
 - MIR validation fails closed.
 - Backends can assume validated MIR invariants.
 
-### Phase 9: Rust Backend Vertical Slice
+### Phase 9: MIR Rust Probe
 
 Steps:
 
-- Add an experimental MIR-to-Rust emitter.
-- Start with the primitive subset from Phases 3 and 4.
+- Add a deliberately temporary MIR-to-Rust probe under the MIR experiment surface.
+- Treat the probe file as replaceable boundary-test scaffolding, not permanent backend architecture.
+- Start with the primitive/control-flow subset from Phases 3 and 4.
 - Compile generated Rust through existing package or test helpers.
 - Compare behavior against the current HIR-to-Rust backend.
+- Fail closed for unsupported MIR with clear probe diagnostics.
 
 Checkpoint:
 
-- Selected examples compile and run through MIR-backed Rust.
+- Selected examples compile and run through Rust emitted from validated MIR.
 - Existing HIR-to-Rust remains available and is still the default unless explicitly changed.
+- No file path or module layout is blessed as the long-term MIR Rust backend.
 
 ### Phase 10: Rust Backend Migration
 

@@ -731,3 +731,20 @@ Validation rerun after the fixes:
 - `cargo test -p radix` passed: 391 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
 - `cargo fmt --all --check` passed.
 - `./scripta/ci` passed.
+
+## Phase 9 Planning Baseline
+
+Status: planned.
+
+Planning decision:
+
+- Phase 9 is a MIR Rust probe, not the start of permanent Rust backend architecture.
+- The durable compiler boundary being tested is `validated MIR -> target code`.
+- The probe implementation should live under the MIR experiment surface, for example `crates/radix/src/mir/rust_probe.rs` or `crates/radix/src/mir/probe_rust.rs`.
+- `crates/radix/src/codegen/rust_mir.rs` should not be introduced in Phase 9 unless the goal changes to a permanent backend surface.
+- The existing HIR-to-Rust backend remains the default and should not silently switch to MIR.
+- Unsupported MIR should fail closed with clear `MIR-to-Rust unsupported` diagnostics.
+
+Delivery document:
+
+- `docs/factory/mir-layer/phase-9-delivery.md`

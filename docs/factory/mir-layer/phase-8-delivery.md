@@ -4,7 +4,7 @@
 
 ## Interpreted Problem
 
-Phases 1 through 7 make MIR inspectable and expressive enough for a meaningful Rust backend vertical slice. MIR now represents primitive computation, explicit control flow, alternate exits, structured `cape` handling, aggregate and option/null operations, runtime intrinsics, collection operations, and provider calls.
+Phases 1 through 7 make MIR inspectable and expressive enough for a meaningful Rust emission probe. MIR now represents primitive computation, explicit control flow, alternate exits, structured `cape` handling, aggregate and option/null operations, runtime intrinsics, collection operations, and provider calls.
 
 Before any backend consumes MIR, the compiler needs a validation pass that proves the MIR program is internally coherent. Without that gate, every backend must defensively rediscover basic invariants, and lowering bugs can turn into confusing backend failures.
 
