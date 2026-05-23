@@ -1,35 +1,78 @@
+//! Embedded reference registry for `faber explain`.
+//!
+//! This module is the data boundary between the Markdown reference corpus in
+//! `explain/` and the user-facing `faber explain` command. The build script
+//! embeds each Markdown file as a [`RawEntry`]; this module parses the TOML
+//! front matter, validates cross-entry references, builds deterministic lookup
+//! indexes, and exposes rendering-friendly lookup/search results.
+//!
+//! DESIGN PHILOSOPHY
+//! =================
+//! - Corpus errors are programmer errors: malformed entries fail during
+//!   registry construction instead of producing partial help output.
+//! - Canonical entries and legacy spellings stay distinct so the CLI can teach
+//!   current Faber syntax while still explaining historical or familiar forms.
+//! - Ordered maps are used deliberately to keep list/search output stable for
+//!   tests, docs, and terminal users.
+
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Raw embedded source for one `explain/*.md` document.
+///
+/// Values are generated at build time by `crates/faber/build.rs`; keeping the
+/// filename beside the source lets parse and validation errors name the source
+/// document even though runtime lookup never reads from disk.
 #[derive(Debug, Clone, Copy)]
 pub struct RawEntry {
+    /// Source filename relative to the explain corpus.
     pub filename: &'static str,
+    /// Complete Markdown source, including TOML front matter.
     pub source: &'static str,
 }
 
+/// Build-script generated explain corpus embedded into the `faber` binary.
 pub static RAW_ENTRIES: &[RawEntry] = include!(concat!(env!("OUT_DIR"), "/explain_entries.rs"));
 
+/// Parsed explain entry consumed by lookup, search, rendering, and JSON output.
+///
+/// `canonical` and `canonical_term` form the central invariant:
+/// canonical entries describe the current syntax, while non-canonical entries
+/// must point at the current term they should redirect users toward.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Entry {
+    /// Primary spelling or glyph shown to users.
     pub term: String,
+    /// Broad reference kind used for grouping and display.
     pub kind: Kind,
+    /// Human-readable topic bucket, such as `comparison` or `control-flow`.
     pub category: String,
+    /// Whether this entry describes current canonical Faber syntax.
     pub canonical: bool,
+    /// One-sentence summary used in lists and short renderings.
     pub summary: String,
+    /// Compact syntax contract shown before the long description.
     pub syntax: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    /// Example snippets declared in front matter for structured consumers.
     pub examples: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    /// Alternate query terms that resolve to this entry without legacy status.
     pub aliases: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    /// Historical spellings or forms associated with this entry.
     pub legacy: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// Canonical replacement term for non-canonical entries.
     pub canonical_term: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    /// Related terms, aliases, or legacy spellings for cross-reference output.
     pub related: Vec<String>,
+    /// Markdown body after front matter.
     pub body: String,
 }
 
+/// Reference taxonomy used for grouping, display, and JSON consumers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Kind {
@@ -66,6 +109,11 @@ struct FrontMatter {
     related: Vec<String>,
 }
 
+/// Result of resolving a user query against the registry.
+///
+/// The variants preserve resolution provenance so renderers can distinguish a
+/// direct canonical lookup from an alias hit or a legacy spelling that should
+/// show both old and replacement terms.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Lookup<'a> {
     Exact(&'a Entry),
@@ -80,12 +128,24 @@ pub enum Lookup<'a> {
     },
 }
 
+/// Ranked search result.
+///
+/// Lower scores are better. The numeric value is intentionally small and local
+/// to this module; callers should sort through [`Registry::search`] rather than
+/// depending on score constants.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchHit<'a> {
+    /// Entry to display for this hit, usually canonicalized from legacy matches.
     pub entry: &'a Entry,
+    /// Relative match quality; lower values sort first.
     pub score: u8,
 }
 
+/// Parsed and indexed explain corpus.
+///
+/// The three maps split exact terms, aliases, and legacy spellings because each
+/// route has different user-facing behavior. Map values are indexes into
+/// `entries`, which keeps lookup results borrowing from one owned corpus.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Registry {
     entries: Vec<Entry>,
@@ -94,8 +154,10 @@ pub struct Registry {
     legacy: BTreeMap<String, usize>,
 }
 
+/// Error type for corpus parsing, validation, and rendering failures.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExplainError {
+    /// Human-readable diagnostic with source filename when available.
     pub message: String,
 }
 
@@ -116,10 +178,18 @@ impl std::fmt::Display for ExplainError {
 impl std::error::Error for ExplainError {}
 
 impl Registry {
+    /// Load the build-script embedded explain corpus.
+    ///
+    /// This is the normal production entry point for the CLI. It performs the
+    /// same validation as test-only raw entry construction.
     pub fn load() -> Result<Self, ExplainError> {
         Self::from_raw_entries(RAW_ENTRIES)
     }
 
+    /// Parse, index, and validate a raw corpus.
+    ///
+    /// Exposed for tests and future tooling that want to validate generated or
+    /// alternate corpora without going through the build-time static.
     pub fn from_raw_entries(raw_entries: &[RawEntry]) -> Result<Self, ExplainError> {
         let mut entries = Vec::new();
         for raw in raw_entries {
@@ -137,10 +207,12 @@ impl Registry {
         Ok(registry)
     }
 
+    /// Return parsed entries in embedded corpus order.
     pub fn entries(&self) -> &[Entry] {
         &self.entries
     }
 
+    /// Return all declared categories in deterministic order.
     pub fn categories(&self) -> BTreeSet<&str> {
         self.entries
             .iter()
@@ -148,6 +220,7 @@ impl Registry {
             .collect()
     }
 
+    /// Return entries whose category exactly matches `category`.
     pub fn by_category(&self, category: &str) -> Vec<&Entry> {
         self.entries
             .iter()
@@ -155,7 +228,15 @@ impl Registry {
             .collect()
     }
 
+    /// Resolve an exact term, alias, or legacy spelling.
+    ///
+    /// This function intentionally does not normalize `query`; CLI callers can
+    /// choose whether exact explain lookup should be case-sensitive, while
+    /// [`Registry::search`] handles fuzzy discovery.
     pub fn lookup(&self, query: &str) -> Option<Lookup<'_>> {
+        // Exact terms win over aliases and legacy spellings. A non-canonical
+        // exact term still resolves as legacy so the caller can display the
+        // replacement contract instead of treating old syntax as current.
         if let Some(index) = self.terms.get(query) {
             let entry = &self.entries[*index];
             if entry.canonical {
@@ -195,6 +276,10 @@ impl Registry {
         })
     }
 
+    /// Search terms, aliases, references, summaries, syntax strings, and body text.
+    ///
+    /// Results are normalized to canonical display entries when a legacy entry
+    /// matches, then sorted by match quality and term for deterministic output.
     pub fn search(&self, query: &str) -> Vec<SearchHit<'_>> {
         let query = normalize_query(query);
         let mut hits: BTreeMap<String, SearchHit<'_>> = BTreeMap::new();
@@ -208,6 +293,9 @@ impl Registry {
                 continue;
             };
 
+            // Multiple old spellings may point to the same canonical entry.
+            // Keep one display row per canonical term, preserving the strongest
+            // match score that led the user there.
             let key = display_entry.term.clone();
             let should_replace = match hits.get(&key) {
                 Some(existing) => {
@@ -241,10 +329,14 @@ impl Registry {
     }
 
     fn index(&mut self) -> Result<(), ExplainError> {
+        // Terms are globally unique, including non-canonical entries. That lets
+        // `lookup()` detect exact old spellings before checking aliases.
         for (index, entry) in self.entries.iter().enumerate() {
             insert_unique(&mut self.terms, &entry.term, index, "term")?;
         }
 
+        // Aliases are for alternate names of the same current concept. Legacy
+        // spellings are indexed separately because they need different output.
         for (index, entry) in self.entries.iter().enumerate() {
             for alias in &entry.aliases {
                 insert_unique(&mut self.aliases, alias, index, "alias")?;
@@ -261,6 +353,8 @@ impl Registry {
 
         for (index, entry) in self.entries.iter().enumerate() {
             for legacy in &entry.legacy {
+                // If a legacy spelling has its own non-canonical entry, prefer
+                // that full entry over a bare legacy alias.
                 if let Some(explicit_index) = self.terms.get(legacy) {
                     if !self.entries[*explicit_index].canonical {
                         continue;
@@ -275,6 +369,9 @@ impl Registry {
     }
 
     fn validate_references(&self) -> Result<(), ExplainError> {
+        // Reference validation runs after indexing so related terms may point
+        // at canonical terms, aliases, or legacy spellings with identical rules
+        // to interactive lookup.
         for entry in &self.entries {
             if !entry.canonical && entry.canonical_term.is_none() {
                 return Err(ExplainError::new(format!(
@@ -325,14 +422,17 @@ impl Registry {
     }
 }
 
+/// Render one lookup result in the terminal-oriented explain format.
 pub fn render_plain(lookup: &Lookup<'_>) -> String {
     crate::explain_render::render_lookup_plain(lookup)
 }
 
+/// Render ranked search results for terminal output.
 pub fn render_search(query: &str, hits: &[SearchHit<'_>]) -> String {
     crate::explain_render::render_search(query, hits)
 }
 
+/// Render one lookup result as JSON while preserving resolution provenance.
 pub fn render_json(lookup: &Lookup<'_>) -> Result<String, ExplainError> {
     match lookup {
         Lookup::Exact(entry) => serde_json::to_string_pretty(entry),
@@ -356,6 +456,10 @@ pub fn render_json(lookup: &Lookup<'_>) -> Result<String, ExplainError> {
     .map_err(|err| ExplainError::new(format!("failed to render JSON: {err}")))
 }
 
+/// Render a grouped list of canonical explain terms.
+///
+/// Legacy entries are intentionally omitted from the normal list so the command
+/// presents the current language surface first.
 pub fn render_list(registry: &Registry) -> String {
     let mut out = String::new();
     let entries = registry
@@ -411,6 +515,10 @@ pub fn render_list(registry: &Registry) -> String {
     out
 }
 
+/// Render all entries in one category.
+///
+/// Unlike [`render_list`], category output includes legacy entries. This makes
+/// category views useful for auditing a whole documentation area.
 pub fn render_category(registry: &Registry, category: &str) -> Option<String> {
     let entries = registry.by_category(category);
     if entries.is_empty() {
@@ -467,8 +575,10 @@ fn parse_entry(filename: &str, source: &str) -> Result<Entry, ExplainError> {
         )));
     }
 
-    // Collect raw lines between the +++ delimiters (for toml::from_str).
-    // Use same offset logic as before (+++ and --- are both 3 bytes + \n).
+    // Collect raw lines between the +++ delimiters while tracking the byte
+    // offset of the Markdown body. The generated corpus is UTF-8 source, so
+    // byte slicing is safe only because delimiters are ASCII and line splits
+    // come from `split_inclusive`.
     let mut frontmatter = Vec::new();
     let mut body_start = None;
     let mut offset = 4;
@@ -500,8 +610,9 @@ fn parse_entry(filename: &str, source: &str) -> Result<Entry, ExplainError> {
         )));
     }
 
-    // Parse as TOML table into typed struct (rejects unknown fields, wrong types,
-    // duplicate keys via the toml crate, missing required via serde).
+    // TOML + serde gives this small registry a strict schema: unknown fields,
+    // wrong value types, duplicate keys, and missing required keys all fail
+    // before any entry reaches the searchable registry.
     let frontmatter_text = frontmatter.join("\n");
     let fm: FrontMatter = toml::from_str(&frontmatter_text)
         .map_err(|e| ExplainError::new(format!("{filename}: {e}")))?;
@@ -606,6 +717,8 @@ fn search_score(entry: &Entry, query: &str) -> Option<u8> {
         return None;
     }
 
+    // Lower is better. Bias keeps exact/current terminology above prose hits
+    // while still allowing body text to make an entry discoverable.
     let mut best: Option<u8> = None;
     score_term(&mut best, &entry.term, query, 0);
 
