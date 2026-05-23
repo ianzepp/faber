@@ -12,6 +12,16 @@ fn lexes_unicode_identifiers() {
 }
 
 #[test]
+fn lexes_ergo_symbol_as_ergo_token() {
+    let result = lex("si verum ∴ tacet");
+    assert!(result.errors.is_empty());
+    assert!(result
+        .tokens
+        .iter()
+        .any(|token| token.kind == TokenKind::Ergo));
+}
+
+#[test]
 fn keyword_registry_covers_normal_mode_keyword_table() {
     for (text, token_variant) in normal_mode_keyword_entries() {
         let spec = lookup_keyword_spec(&text)

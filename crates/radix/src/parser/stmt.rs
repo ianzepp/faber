@@ -318,18 +318,25 @@ impl Parser {
     /// WHY: Body executes at least once, optional while condition controls repetition.
     /// Without 'dum' clause, executes exactly once (equivalent to bare block with error handling).
     pub(super) fn parse_fac_stmt(&mut self) -> Result<StmtKind, ParseError> {
+        Ok(StmtKind::Fac(self.parse_fac_construct(true)?))
+    }
+
+    pub(super) fn parse_fac_construct(&mut self, allow_while: bool) -> Result<FacStmt, ParseError> {
         self.expect_keyword(TokenKind::Fac, "expected 'fac'")?;
 
         let body = self.parse_block()?;
         let catch = self.try_parse_cape_stmt()?;
 
         let while_ = if self.eat_keyword(TokenKind::Dum) {
+            if !allow_while {
+                return Err(self.error(ParseErrorKind::InvalidExpression, "closure fac body cannot use 'dum'"));
+            }
             Some(Box::new(self.parse_expression()?))
         } else {
             None
         };
 
-        Ok(StmtKind::Fac(FacStmt { body, catch, while_ }))
+        Ok(FacStmt { body, catch, while_ })
     }
 
     // =============================================================================

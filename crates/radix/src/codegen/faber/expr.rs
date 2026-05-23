@@ -340,7 +340,10 @@ impl super::FaberCodegen {
                 w.write("}");
             }
             HirExprKind::Clausura(params, ret, body) => {
-                w.write("clausura ");
+                let parenthesized = params.len() != 1;
+                if parenthesized {
+                    w.write("(");
+                }
                 for (idx, param) in params.iter().enumerate() {
                     if idx > 0 {
                         w.write(", ");
@@ -349,11 +352,17 @@ impl super::FaberCodegen {
                     w.write(" ");
                     w.write(&self.symbol_to_string(param.name, interner));
                 }
+                if parenthesized {
+                    w.write(")");
+                }
                 if let Some(ret) = ret {
                     w.write(" → ");
                     w.write(&self.type_to_faber(*ret, types, names, interner));
                 }
-                w.write(": ");
+                w.write(" ∴ ");
+                if matches!(body.kind, HirExprKind::Block(_)) {
+                    w.write("fac ");
+                }
                 self.write_expr(body, types, names, interner, w);
             }
             HirExprKind::Cede(inner) => {

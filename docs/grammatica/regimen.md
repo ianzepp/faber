@@ -77,12 +77,13 @@ A `secus` block always executes if reached—it has no condition to test. It mus
 
 Faber provides concise syntax for simple conditionals.
 
-#### ergo (Therefore)
+#### ergo / ∴ (Therefore)
 
-The keyword `ergo` means "therefore" or "thus" in Latin—expressing logical consequence. Use it for one-liner conditionals where a block would be verbose.
+The keyword `ergo` means "therefore" or "thus" in Latin, and `∴` is its symbolic spelling. Use either spelling for one-statement tails where a block would be verbose.
 
 ```fab
 si x > 5 ergo nota "x is big"
+si x > 5 ∴ nota "x is big"
 ```
 
 This is equivalent to:
@@ -96,7 +97,7 @@ si x > 5 {
 The `ergo` form works with `secus` for one-liner if-else:
 
 ```fab
-si age ≥ 18 ergo nota "Adult" secus ergo nota "Minor"
+si age ≥ 18 ∴ nota "Adult" secus ∴ nota "Minor"
 ```
 
 #### ergo redde (Early Return)

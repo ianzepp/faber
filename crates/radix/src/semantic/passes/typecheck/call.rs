@@ -82,7 +82,7 @@ impl<'a> TypeChecker<'a> {
         }
 
         for (arg, param) in args.iter_mut().zip(sig.params.iter()) {
-            let arg_ty = self.check_expr(arg);
+            let arg_ty = self.check_expr_with_expected(arg, Some(param.ty));
             self.unify(arg_ty, param.ty, arg.span, "argument type mismatch");
         }
     }

@@ -44,7 +44,12 @@ parameter    := ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('spon
 funcModifier := 'curata' IDENTIFIER ('ut' IDENTIFIER)? | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
 returnClause := '→' typeAnnotation alternateExitClause?
 alternateExitClause := '⇥' typeAnnotation
-clausuraExpr   := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
+ergoToken      := 'ergo' | '∴'
+clausuraExpr   := compactClausuraExpr | legacyClausuraExpr
+compactClausuraExpr := clausuraSignature ergoToken (expression | closureFacBlock)
+clausuraSignature := (clausuraParam | '(' clausuraParams? ')') ('→' typeAnnotation alternateExitClause?)?
+closureFacBlock := 'fac' blockStmt catchClause?
+legacyClausuraExpr := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
 clausuraParams := clausuraParam (',' clausuraParam)*
 clausuraParam  := typeAnnotation IDENTIFIER
 ```
@@ -252,19 +257,19 @@ functio apply((numerus) → numerus ⇥ textus op, numerus n) → numerus ⇥ te
 ```ebnf
 ifStmt     := 'si' expression arm ('sin' ifStmt | elseClause)?
 elseClause := 'secus' elseArm
-arm        := (blockStmt | 'ergo' statement) catchClause?
-elseArm    := (blockStmt | 'ergo' statement) catchClause?
+arm        := (blockStmt | ergoToken statement) catchClause?
+elseArm    := (blockStmt | ergoToken statement) catchClause?
 ```
 
 - `si` = if, `sin` = else-if, `secus` = else
-- `ergo` for one-liners, including `ergo redde`, `ergo iace`, `ergo mori`, and `ergo tacet`
+- `ergo`/`∴` for one-liners, including `ergo redde`, `∴ iace`, `ergo mori`, and `∴ tacet`
 - `tacet` for explicit no-op (from musical notation: "it is silent")
 
 ### Loops
 
 ```ebnf
-whileStmt  := 'dum' expression (blockStmt | 'ergo' statement) catchClause?
-iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expression)?) ('fixum' | 'varia') IDENTIFIER (blockStmt | 'ergo' statement) catchClause?
+whileStmt  := 'dum' expression (blockStmt | ergoToken statement) catchClause?
+iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expression)?) ('fixum' | 'varia') IDENTIFIER (blockStmt | ergoToken statement) catchClause?
 ```
 
 - `dum` = while
@@ -276,8 +281,8 @@ iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expres
 
 ```ebnf
 eligeStmt    := 'elige' expression '{' eligeCase* defaultCase? '}' catchClause?
-eligeCase    := 'casu' expression (blockStmt | 'ergo' statement)
-defaultCase  := 'ceterum' (blockStmt | 'ergo' statement)
+eligeCase    := 'casu' expression (blockStmt | ergoToken statement)
+defaultCase  := 'ceterum' (blockStmt | ergoToken statement)
 ```
 
 ### Pattern Matching
@@ -285,7 +290,7 @@ defaultCase  := 'ceterum' (blockStmt | 'ergo' statement)
 ```ebnf
 discerneStmt := 'discerne' 'omnia'? discriminants '{' variantCase* defaultCase? '}'
 discriminants := expression (',' expression)*
-variantCase  := 'casu' patterns (blockStmt | 'ergo' statement)
+variantCase  := 'casu' patterns (blockStmt | ergoToken statement)
 patterns     := pattern ((',' | 'et') pattern)*
 pattern      := '_' | literal | (IDENTIFIER patternBind?)
 patternBind  := ('ut' IDENTIFIER) | (('fixum' | 'varia') IDENTIFIER (',' IDENTIFIER)*)
@@ -295,7 +300,7 @@ patternBind  := ('ut' IDENTIFIER) | (('fixum' | 'varia') IDENTIFIER (',' IDENTIF
 
 ```ebnf
 guardStmt   := 'custodi' '{' guardClause+ '}'
-guardClause := 'si' expression (blockStmt | 'ergo' statement)
+guardClause := 'si' expression (blockStmt | ergoToken statement)
 ```
 
 ### Resource Management

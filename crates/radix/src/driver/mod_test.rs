@@ -1444,6 +1444,33 @@ fn array_method_closure_argument_no_longer_reports_argument_type_mismatch() {
 }
 
 #[test]
+fn compact_inferred_closure_argument_uses_expected_method_signature() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum _ numbers ← [1, 2, 3]
+  nota numbers.map(_ x ∴ x * 2)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success(), "{:?}", result.diagnostics);
+}
+
+#[test]
+fn faber_output_prefers_compact_closure_syntax() {
+    let session = session(Target::Faber);
+    let source = r#"incipit {
+  fixum _ double ← clausura numerus x: x * 2
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    let Some(crate::Output::Faber(output)) = result.output else {
+        panic!("expected Faber output");
+    };
+    assert!(output.code.contains("numerus x ∴ x * 2"));
+    assert!(!output.code.contains("clausura numerus x"));
+}
+
+#[test]
 fn module_method_call_in_condition_no_longer_leaves_infer_type() {
     let session = session(Target::Rust);
     let source = r#"importa ex "../../norma/hal/consolum" privata consolum

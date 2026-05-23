@@ -4,7 +4,7 @@
 # - Imperative (-a, -e, -i): mutates in place
 # - Perfect participle (-ata, -ita, -sa): returns new collection
 #
-# Run with: bun run faber compile exempla/morphologia.fab
+# Run with: cargo run -p faber -- build examples/exempla/morphologia/morphologia.fab
 
 incipit {
     varia _ items ← [1, 2, 3, 4, 5] ⇢ numerus[]
@@ -14,12 +14,12 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # filtrata (participle) - returns new filtered list
-    fixum _ evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)
+    fixum _ evens ← items.filtrata(numerus x ∴ x % 2 ≡ 0)
     nota "filtrata (returns new):", evens
 
     # TODO (type errors) - filtra (imperative) - mutates in place
     # varia _ nums ← [1, 2, 3, 4, 5]
-    # nums.filtra(clausura x: x > 2)
+    # nums.filtra(_ x ∴ x > 2)
     # nota "filtra (mutates):", nums
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
@@ -63,7 +63,7 @@ incipit {
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
 
     # mappata (participle) - returns new mapped list
-    fixum _ doubled ← items.mappata(clausura numerus x: x * 2)
+    fixum _ doubled ← items.mappata(numerus x ∴ x * 2)
     nota "mappata (returns new):", doubled
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡

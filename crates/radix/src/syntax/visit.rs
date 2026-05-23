@@ -232,9 +232,21 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
             if let Some(ret) = &closure.ret {
                 visitor.visit_type_expr(ret);
             }
+            if let Some(err) = &closure.err {
+                visitor.visit_type_expr(err);
+            }
             match &closure.body {
                 ClausuraBody::Expr(e) => visitor.visit_expr(e),
                 ClausuraBody::Block(b) => visitor.visit_block(b),
+                ClausuraBody::Fac(f) => {
+                    visitor.visit_block(&f.body);
+                    if let Some(catch) = &f.catch {
+                        visitor.visit_block(&catch.body);
+                    }
+                    if let Some(while_) = &f.while_ {
+                        visitor.visit_expr(while_);
+                    }
+                }
             }
         }
         ExprKind::Cede(cede) => {

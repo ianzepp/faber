@@ -804,6 +804,15 @@ fn scan_expr_for_go_unsupported_errors(
             ClausuraBody::Block(block) => {
                 scan_block_for_go_unsupported_errors(block, file, dynamic_externa, diagnostics)
             }
+            ClausuraBody::Fac(stmt) => {
+                scan_block_for_go_unsupported_errors(&stmt.body, file, dynamic_externa, diagnostics);
+                if let Some(catch) = &stmt.catch {
+                    scan_block_for_go_unsupported_errors(&catch.body, file, dynamic_externa, diagnostics);
+                }
+                if let Some(while_) = &stmt.while_ {
+                    scan_expr_for_go_unsupported_errors(while_, file, dynamic_externa, diagnostics);
+                }
+            }
         },
         ExprKind::Conversio(conversio) => {
             scan_expr_for_go_unsupported_errors(&conversio.expr, file, dynamic_externa, diagnostics);
@@ -1252,6 +1261,15 @@ fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &
         ExprKind::Clausura(clausura) => match &clausura.body {
             ClausuraBody::Expr(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
             ClausuraBody::Block(block) => scan_block_for_rust_unsupported_errors(block, file, diagnostics),
+            ClausuraBody::Fac(stmt) => {
+                scan_block_for_rust_unsupported_errors(&stmt.body, file, diagnostics);
+                if let Some(catch) = &stmt.catch {
+                    scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
+                }
+                if let Some(while_) = &stmt.while_ {
+                    scan_expr_for_rust_unsupported_errors(while_, file, diagnostics);
+                }
+            }
         },
         ExprKind::Conversio(conversio) => {
             scan_expr_for_rust_unsupported_errors(&conversio.expr, file, diagnostics);

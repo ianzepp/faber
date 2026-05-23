@@ -920,6 +920,7 @@ pub struct FingeFieldInit {
 pub struct ClausuraExpr {
     pub params: Vec<ClausuraParam>,
     pub ret: Option<TypeExpr>,
+    pub err: Option<TypeExpr>,
     pub body: ClausuraBody,
 }
 
@@ -934,6 +935,7 @@ pub struct ClausuraParam {
 pub enum ClausuraBody {
     Expr(Box<Expr>),
     Block(BlockStmt),
+    Fac(FacStmt),
 }
 
 #[derive(Debug)]

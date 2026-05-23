@@ -770,9 +770,31 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
             if let Some(ret) = &expr.ret {
                 resolve_type(resolver, interner, ret, errors);
             }
+            if let Some(err) = &expr.err {
+                resolve_type(resolver, interner, err, errors);
+            }
             match &expr.body {
                 ClausuraBody::Expr(expr) => resolve_expr(resolver, interner, expr, errors),
                 ClausuraBody::Block(block) => resolve_block(resolver, interner, block, errors),
+                ClausuraBody::Fac(stmt) => {
+                    resolve_block(resolver, interner, &stmt.body, errors);
+                    if let Some(catch) = &stmt.catch {
+                        resolver.enter_scope(ScopeKind::Block);
+                        define_symbol(
+                            resolver,
+                            catch.binding.name,
+                            catch.binding.span,
+                            SymbolKind::Local,
+                            false,
+                            errors,
+                        );
+                        resolve_block(resolver, interner, &catch.body, errors);
+                        resolver.exit_scope();
+                    }
+                    if let Some(cond) = &stmt.while_ {
+                        resolve_expr(resolver, interner, cond, errors);
+                    }
+                }
             }
             resolver.exit_scope();
         }

@@ -809,7 +809,7 @@ impl<'a> Lowerer<'a> {
         lowered_body
     }
 
-    fn lower_fac_expr(&mut self, stmt: &crate::syntax::FacStmt) -> HirExpr {
+    pub(super) fn lower_fac_expr(&mut self, stmt: &crate::syntax::FacStmt) -> HirExpr {
         let block = self.lower_block(&stmt.body);
         let expr = if let Some(cond) = &stmt.while_ {
             let negate_cond = HirExpr {

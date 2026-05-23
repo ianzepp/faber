@@ -717,6 +717,10 @@ impl Parser {
     /// WHY: Primary expressions are the atoms of expression parsing. They can
     /// stand alone or be composed via operators and postfix operations.
     fn parse_primary(&mut self) -> Result<Expr, ParseError> {
+        if let Some(expr) = self.try_parse_compact_clausura_expr()? {
+            return Ok(expr);
+        }
+
         let start = self.current_span();
         let id = self.next_id();
 
@@ -871,23 +875,14 @@ impl Parser {
                 break;
             }
 
-            let param_start = self.current_span();
-            let ty = self.parse_type()?;
-            let name = self.parse_ident()?;
-            let param_span = param_start.merge(self.previous_span());
-            params.push(ClausuraParam { ty, name, span: param_span });
+            params.push(self.parse_clausura_param()?);
 
             if !self.eat(&TokenKind::Comma) {
                 break;
             }
         }
 
-        // Optional return type
-        let ret = if self.eat(&TokenKind::Arrow) {
-            Some(self.parse_type()?)
-        } else {
-            None
-        };
+        let (ret, err) = self.parse_optional_clausura_signature()?;
 
         // Body: either `: expr` or `{ block }`
         let body = if self.eat(&TokenKind::Colon) {
@@ -900,7 +895,107 @@ impl Parser {
 
         let span = start.merge(self.previous_span());
         let id = self.next_id();
-        Ok(Expr { id, kind: ExprKind::Clausura(ClausuraExpr { params, ret, body }), span })
+        Ok(Expr { id, kind: ExprKind::Clausura(ClausuraExpr { params, ret, err, body }), span })
+    }
+
+    fn try_parse_compact_clausura_expr(&mut self) -> Result<Option<Expr>, ParseError> {
+        if !self.can_start_compact_clausura() {
+            return Ok(None);
+        }
+
+        let saved_pos = self.pos;
+        let saved_next_id = self.next_node_id;
+        match self.parse_compact_clausura_expr() {
+            Ok(expr) => Ok(Some(expr)),
+            Err(err)
+                if self.tokens[saved_pos..self.pos]
+                    .iter()
+                    .any(|token| token.kind == TokenKind::Ergo) =>
+            {
+                Err(err)
+            }
+            Err(_) => {
+                self.pos = saved_pos;
+                self.next_node_id = saved_next_id;
+                Ok(None)
+            }
+        }
+    }
+
+    fn can_start_compact_clausura(&self) -> bool {
+        matches!(
+            (&self.peek().kind, &self.peek_at(1).kind),
+            (
+                TokenKind::Underscore(_),
+                TokenKind::Ident(_) | TokenKind::Underscore(_) | TokenKind::Tag
+            ) | (
+                TokenKind::Ident(_),
+                TokenKind::Ident(_) | TokenKind::Underscore(_) | TokenKind::Tag
+            ) | (TokenKind::LParen, _)
+                | (TokenKind::De | TokenKind::In, TokenKind::Underscore(_) | TokenKind::Ident(_))
+        )
+    }
+
+    fn parse_compact_clausura_expr(&mut self) -> Result<Expr, ParseError> {
+        let start = self.current_span();
+        let params = if self.eat(&TokenKind::LParen) {
+            let params = self.parse_clausura_param_list_until(&TokenKind::RParen)?;
+            self.expect(&TokenKind::RParen, "expected ')' after closure parameters")?;
+            params
+        } else {
+            vec![self.parse_clausura_param()?]
+        };
+
+        let (ret, err) = self.parse_optional_clausura_signature()?;
+        self.expect_keyword(TokenKind::Ergo, "expected '∴' after closure signature")?;
+        let body = self.parse_compact_clausura_body()?;
+
+        let span = start.merge(self.previous_span());
+        let id = self.next_id();
+        Ok(Expr { id, kind: ExprKind::Clausura(ClausuraExpr { params, ret, err, body }), span })
+    }
+
+    fn parse_clausura_param_list_until(&mut self, end: &TokenKind) -> Result<Vec<ClausuraParam>, ParseError> {
+        let mut params = Vec::new();
+        while !self.check(end) && !self.is_at_end() {
+            params.push(self.parse_clausura_param()?);
+            if !self.eat(&TokenKind::Comma) {
+                break;
+            }
+        }
+        Ok(params)
+    }
+
+    fn parse_clausura_param(&mut self) -> Result<ClausuraParam, ParseError> {
+        let param_start = self.current_span();
+        let ty = self.parse_type()?;
+        let name = self.parse_ident()?;
+        let span = param_start.merge(self.previous_span());
+        Ok(ClausuraParam { ty, name, span })
+    }
+
+    fn parse_optional_clausura_signature(&mut self) -> Result<(Option<TypeExpr>, Option<TypeExpr>), ParseError> {
+        let ret = if self.eat(&TokenKind::Arrow) {
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
+        let err = if self.eat(&TokenKind::ExitArrow) {
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
+        Ok((ret, err))
+    }
+
+    fn parse_compact_clausura_body(&mut self) -> Result<ClausuraBody, ParseError> {
+        if self.check_keyword(TokenKind::Fac) {
+            return Ok(ClausuraBody::Fac(self.parse_fac_construct(false)?));
+        }
+        if self.check(&TokenKind::LBrace) {
+            return Err(self.error(ParseErrorKind::InvalidExpression, "closure block body must use 'fac' after '∴'"));
+        }
+        Ok(ClausuraBody::Expr(Box::new(self.parse_expression()?)))
     }
 
     // =============================================================================

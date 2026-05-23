@@ -83,7 +83,7 @@ After a wildcard import, access symbols through the alias:
 
 ```fab
 importa ex "lodash" privata * ut _
-fixum _ doubled = _.map(numbers, clausura x: x * 2)
+fixum _ doubled = _.map(numbers, _ x ∴ x * 2)
 ```
 
 Use wildcards sparingly. Named imports are clearer about dependencies and help tree-shaking in build systems.

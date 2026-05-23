@@ -1,9 +1,9 @@
 use super::parse;
 use crate::lexer::lex;
 use crate::syntax::{
-    AnnotationKind, BindingPattern, ClassMemberKind, CuraKind, ExprKind, IfBody, ImportKind, IteraMode, Literal,
-    Mutability, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause, StmtKind,
-    TypeExprKind,
+    AnnotationKind, BindingPattern, ClassMemberKind, ClausuraBody, CuraKind, ExprKind, IfBody, ImportKind, IteraMode,
+    Literal, Mutability, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause,
+    StmtKind, TypeExprKind,
 };
 
 fn parse_program(source: &str) -> super::ParseResult {
@@ -885,6 +885,92 @@ tacet
     assert!(matches!(program.stmts[15].kind, StmtKind::Iace(_)));
     assert!(matches!(program.stmts[16].kind, StmtKind::Mori(_)));
     assert!(matches!(program.stmts[17].kind, StmtKind::Tacet(_)));
+}
+
+#[test]
+fn parses_ergo_symbol_as_statement_tail() {
+    let result = parse_ok(
+        r#"
+si verum ∴ nota "yes"
+dum falsum ∴ tacet
+itera pro items fixum item ∴ redde item
+"#,
+    );
+    let program = result.program.as_ref().expect("program");
+    assert_eq!(program.stmts.len(), 3);
+    let StmtKind::Si(stmt) = &program.stmts[0].kind else {
+        panic!("expected si statement");
+    };
+    assert!(matches!(stmt.then, IfBody::Ergo(_)));
+    let StmtKind::Dum(stmt) = &program.stmts[1].kind else {
+        panic!("expected dum statement");
+    };
+    assert!(matches!(stmt.body, IfBody::Ergo(_)));
+}
+
+#[test]
+fn parses_compact_closure_forms() {
+    let result = parse_ok(
+        r#"
+fixum _ a ← users.filtrata(_ user ∴ non user.activus)
+fixum _ b ← users.filtrata(User user ∴ non user.activus)
+fixum _ c ← numeri.compone((_ a, _ b) ∴ a + b)
+fixum _ d ← numeri.compone((numerus a, numerus b) ∴ fac { redde a + b })
+fixum _ e ← texts.mappata(textus s → numerus ⇥ ParseError ∴ fac { redde parse(s) } cape err { redde 0 })
+"#,
+    );
+    let program = result.program.as_ref().expect("program");
+    assert_eq!(program.stmts.len(), 5);
+
+    for stmt in &program.stmts[..3] {
+        let StmtKind::Var(var) = &stmt.kind else {
+            panic!("expected variable");
+        };
+        let ExprKind::Call(call) = &var.init.as_ref().expect("init").kind else {
+            panic!("expected call");
+        };
+        let ExprKind::Clausura(closure) = &call.args[0].value.kind else {
+            panic!("expected compact closure");
+        };
+        assert!(matches!(closure.body, ClausuraBody::Expr(_)));
+    }
+
+    let StmtKind::Var(block_var) = &program.stmts[3].kind else {
+        panic!("expected variable");
+    };
+    let ExprKind::Call(call) = &block_var.init.as_ref().expect("init").kind else {
+        panic!("expected call");
+    };
+    let ExprKind::Clausura(closure) = &call.args[0].value.kind else {
+        panic!("expected compact closure");
+    };
+    assert_eq!(closure.params.len(), 2);
+    assert!(matches!(closure.body, ClausuraBody::Fac(_)));
+
+    let StmtKind::Var(fallible_var) = &program.stmts[4].kind else {
+        panic!("expected variable");
+    };
+    let ExprKind::Call(call) = &fallible_var.init.as_ref().expect("init").kind else {
+        panic!("expected call");
+    };
+    let ExprKind::Clausura(closure) = &call.args[0].value.kind else {
+        panic!("expected compact closure");
+    };
+    assert!(closure.ret.is_some());
+    assert!(closure.err.is_some());
+    assert!(matches!(closure.body, ClausuraBody::Fac(_)));
+}
+
+#[test]
+fn compact_closure_rejects_bare_block_and_fac_dum_body() {
+    assert_parse_error_contains(
+        "fixum _ inactive ← users.filtrata(_ user ∴ { redde non user.activus })",
+        "closure block body must use 'fac'",
+    );
+    assert_parse_error_contains(
+        "fixum _ inactive ← users.filtrata(_ user ∴ fac { redde non user.activus } dum user.activus)",
+        "closure fac body cannot use 'dum'",
+    );
 }
 
 #[test]

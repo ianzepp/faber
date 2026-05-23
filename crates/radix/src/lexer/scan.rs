@@ -188,6 +188,7 @@ impl<'a> Lexer<'a> {
             '⊚' => TokenKind::PipeEq,
             '⇢' => TokenKind::Verte,
             '⇒' => TokenKind::Conversio,
+            '∴' => TokenKind::Ergo,
             '∪' => TokenKind::Cup,
             '+' => TokenKind::Plus,
             '*' => TokenKind::Star,

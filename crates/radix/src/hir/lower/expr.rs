@@ -528,6 +528,7 @@ impl<'a> Lowerer<'a> {
                 ty: None,
                 span: block.span,
             },
+            crate::syntax::ClausuraBody::Fac(stmt) => self.lower_fac_expr(stmt),
         };
         self.pop_scope();
 

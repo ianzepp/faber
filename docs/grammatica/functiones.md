@@ -1,6 +1,6 @@
 # Functiones
 
-Functions in Faber are declared using the `functio` keyword, derived from the Latin _functio_ meaning "performance, execution." This chapter covers function declarations, parameters, return types, async patterns, generators, and clausura expressions.
+Functions in Faber are declared using the `functio` keyword, derived from the Latin _functio_ meaning "performance, execution." This chapter covers function declarations, parameters, return types, async patterns, generators, and closure expressions.
 
 ## Declaring Functions
 
@@ -312,54 +312,63 @@ functio pair(prae typus T, prae typus U, T first, U second) → [T, U] {
 }
 ```
 
-## Clausura Expressions (Closures)
+## Closure Expressions
 
 ### Basic Syntax
 
-Clausura expressions use `clausura` (Latin for "closure") followed by parameters, a colon, and an expression:
+Inline closures use type-first named parameters followed by `∴` or `ergo` and a single expression body. Use `_` as the type slot when the surrounding callable context supplies the parameter type:
 
 ```fab
-fixum _ double = clausura x: x * 2
-fixum _ add = clausura a, b: a + b
+fixum _ active = users.filtrata(_ user ∴ user.activus)
+fixum _ names = users.mappata(User user ∴ user.nomen)
 ```
 
-The colon separates parameters from the body. For single expressions, the result is implicitly returned.
+The tail marker scopes to one following expression or statement. Bare identifiers are not closure parameters; inferred parameters still use `_ name`.
+
+Multiple parameters are parenthesized:
+
+```fab
+fixum _ add = numeri.compone((_ a, _ b) ∴ a + b)
+fixum _ addTyped = numeri.compone((numerus a, numerus b) ∴ a + b)
+```
 
 ### With Return Type Annotation
 
-When type annotation is needed, use an arrow before the colon:
+When return or recoverable alternate-exit annotation is needed, use the same callable markers as function types before `∴`:
 
 ```fab
-fixum _ add = clausura a, b → numerus: a + b
-fixum _ isPositive = clausura n → bivalens: n > 0
+fixum _ isPositive = numerus n → bivalens ∴ n > 0
+fixum _ parsed = textus s → numerus ⇥ ParseError ∴ fac {
+    redde parse(s)
+} cape err {
+    redde 0
+}
 ```
 
 ### Block Bodies
 
-For multi-statement clausuras, use braces and explicit `redde`:
+For multi-statement closures, use an explicit `fac` block after `∴` and return from the block with `redde`:
 
 ```fab
-fixum _ process = clausura x {
+fixum _ process = numerus x ∴ fac {
     varia _ result = x * 2
     result ⊕ 10
     redde result
 }
 ```
 
-### Zero-Parameter Clausuras
+Closure `fac` bodies may use `cape` for local recovery. `fac ... dum` is not part of closure body syntax.
 
-When a clausura takes no parameters, place the colon immediately after `clausura`:
+### Compatibility
 
-```fab
-fixum _ getFortyTwo = clausura: 42
-```
+The legacy `clausura ... : ...` form is still accepted during the migration window, but new examples should prefer compact closure syntax.
 
-### Async Clausuras
+### Async Closures
 
 Async is inferred from the presence of `cede` in the body:
 
 ```fab
-fixum _ fetchAndProcess = clausura url {
+fixum _ fetchAndProcess = textus url ∴ fac {
     fixum _ data = cede fetch(url)
     redde process(data)
 }
@@ -368,7 +377,7 @@ fixum _ fetchAndProcess = clausura url {
 This is useful for callbacks in async contexts:
 
 ```fab
-app.post("/users", clausura context {
+app.post("/users", _ context ∴ fac {
     fixum _ data = cede context.json()
     redde data
 })
@@ -382,13 +391,13 @@ Clausuras shine in functional operations:
 fixum _ numbers = [1, 2, 3, 4, 5]
 
 # Filter
-fixum _ evens = numbers.filter(clausura x: x % 2 ≡ 0)
+fixum _ evens = numbers.filter(_ x ∴ x % 2 ≡ 0)
 
 # Map
-fixum _ doubled = numbers.map(clausura x: x * 2)
+fixum _ doubled = numbers.map(_ x ∴ x * 2)
 
 # Reduce
-fixum _ sum = numbers.reduce(0, clausura acc, x: acc + x)
+fixum _ sum = numbers.reduce(0, (_ acc, _ x) ∴ acc + x)
 ```
 
 ## Allocator Binding with curata
@@ -456,6 +465,6 @@ Faber's function system balances Latin linguistic authenticity with practical pr
 - `@ futura` and `@ cursor` annotations for async and generator behavior, plus post-function modifiers such as `curata`, `errata`, `immutata`, and `iacit`
 - `cede` for await (async) or yield (generator)
 - `prae typus` for generics
-- `clausura` for closures (async inferred from `cede` usage)
+- Compact `∴` closure expressions, with legacy `clausura` still accepted during migration
 
 The Latin vocabulary maps naturally to programming concepts: _futura_ captures async's temporal nature, _cursor_ captures generator behavior, and _cede_ captures yielding control.
