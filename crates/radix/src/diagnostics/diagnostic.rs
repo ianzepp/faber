@@ -1,23 +1,23 @@
-//! Diagnostic Types
+//! Canonical diagnostic data model.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Defines the core Diagnostic struct that represents a compiler error, warning,
-//! or info message. Provides constructors for creating diagnostics from various
-//! error types (lex, parse, semantic, I/O).
+//! This module is the normalization boundary between compiler-internal error
+//! types and reportable diagnostics. Lexer, parser, and semantic analysis keep
+//! their own rich error enums, but anything leaving those phases is converted
+//! into [`Diagnostic`] so renderers, CLIs, and tests can reason about one
+//! severity/code/span/help contract.
 //!
-//! COMPILER PHASE: Diagnostics (infrastructure)
-//! INPUT: Error objects (LexError, ParseError, SemanticError)
-//! OUTPUT: Diagnostic structs ready for rendering
+//! The model intentionally stores display-ready strings and optional source
+//! context instead of borrowing phase errors. Diagnostics may outlive a phase
+//! value, be accumulated across a session, and still render even when source
+//! context is unavailable.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Builder pattern: Chainable methods for constructing diagnostics incrementally.
-//!   WHY: Diagnostic::error(msg).with_code("SEM001").with_span(span) is readable.
-//! - Unified representation: All errors/warnings use the same Diagnostic struct.
-//!   WHY: Simplifies rendering and filtering; severity distinguishes error vs warning.
-//! - Source line capture: Diagnostics include the problematic source line.
-//!   WHY: Users need context to understand errors without opening the file.
+//! INVARIANTS
+//! ==========
+//! - Catalog-derived diagnostics carry stable codes from `catalog`.
+//! - Semantic warnings and errors share the same type; severity is the contract
+//!   that decides whether compilation may proceed.
+//! - Missing file, span, source line, or help information is valid for
+//!   infrastructure failures and late backend errors.
 
 use super::catalog;
 use crate::lexer::{LexError, Span};
@@ -25,32 +25,51 @@ use crate::parser::ParseError;
 use crate::semantic::SemanticError;
 use std::path::Path;
 
-/// Diagnostic severity level.
-///
-/// WHY: Distinguishes errors (must fix) from warnings (should fix) from info (FYI).
+/// User-visible severity and compilation policy for a diagnostic.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Severity {
+    /// Fatal diagnostic that should prevent successful compilation.
     Error,
+
+    /// Non-fatal diagnostic for suspicious code or discouraged usage.
     Warning,
+
+    /// Advisory note that explains context without indicating a fault.
     Info,
 }
 
-/// A compiler diagnostic (error, warning, or info).
+/// Reportable compiler message after phase-specific errors are normalized.
 ///
-/// WHY: Unified representation for all compiler messages enables consistent
-/// rendering, filtering, and aggregation.
+/// This is the transport contract between compiler phases and presentation
+/// layers. It intentionally keeps fields simple so callers can aggregate,
+/// render, snapshot, or serialize diagnostics without retaining phase-specific
+/// error values.
 #[derive(Debug)]
 pub struct Diagnostic {
+    /// Compilation policy and visual priority for the message.
     pub severity: Severity,
+
+    /// Human-readable problem statement without the diagnostic code prefix.
     pub message: String,
+
+    /// Stable catalog code used by docs, tests, and external tooling.
     pub code: Option<&'static str>,
+
+    /// Source filename or path to display in reports.
     pub file: String,
+
+    /// Byte span in `file`; absent when the error is not tied to source text.
     pub span: Option<Span>,
+
+    /// Full source line containing `span`, captured for plain renderers.
     pub source_line: Option<String>,
+
+    /// Actionable guidance shown after the primary message.
     pub help: Option<String>,
 }
 
 impl Diagnostic {
+    /// Start an error diagnostic and attach context with builder methods.
     pub fn error(message: impl Into<String>) -> Self {
         Self {
             severity: Severity::Error,
@@ -63,6 +82,7 @@ impl Diagnostic {
         }
     }
 
+    /// Start a warning diagnostic and attach context with builder methods.
     pub fn warning(message: impl Into<String>) -> Self {
         Self {
             severity: Severity::Warning,
@@ -75,43 +95,50 @@ impl Diagnostic {
         }
     }
 
+    /// Attach a stable diagnostic code from the public catalog.
     pub fn with_code(mut self, code: &'static str) -> Self {
         self.code = Some(code);
         self
     }
 
+    /// Attach the display filename used by renderers and plain output.
     pub fn with_file(mut self, file: impl Into<String>) -> Self {
         self.file = file.into();
         self
     }
 
+    /// Attach the source span that should be highlighted.
     pub fn with_span(mut self, span: Span) -> Self {
         self.span = Some(span);
         self
     }
 
+    /// Attach the source line containing the primary span.
     pub fn with_source_line(mut self, line: impl Into<String>) -> Self {
         self.source_line = Some(line.into());
         self
     }
 
+    /// Attach actionable user guidance.
     pub fn with_help(mut self, help: impl Into<String>) -> Self {
         self.help = Some(help.into());
         self
     }
 
+    /// Whether this diagnostic should make the compilation result fail.
     pub fn is_error(&self) -> bool {
         self.severity == Severity::Error
     }
 
-    /// Create from IO error
+    /// Convert a filesystem read failure into a path-scoped diagnostic.
     pub fn io_error(path: &Path, err: std::io::Error) -> Self {
         Self::error(format!("cannot read '{}': {}", path.display(), err)).with_file(path.display().to_string())
     }
 
-    /// Create diagnostic from a lexer error.
+    /// Normalize a lexer error using the diagnostic code catalog.
     ///
-    /// WHY: Lexer errors need source line context and error codes from catalog.
+    /// Lexer errors already carry a concrete byte span, so this conversion also
+    /// captures the containing source line for non-ariadne renderers.
     pub fn from_lex_error(file: &str, source: &str, err: &LexError) -> Self {
         let line = get_line_at_offset(source, err.span.start as usize);
         let spec = catalog::lex_spec(err.kind);
@@ -123,9 +150,11 @@ impl Diagnostic {
             .with_help_opt(spec.help)
     }
 
-    /// Create diagnostic from a parser error.
+    /// Normalize a parser error using the diagnostic code catalog.
     ///
-    /// WHY: Parser errors need source line context and error codes from catalog.
+    /// Parser recovery can produce multiple errors over the same token stream;
+    /// this conversion keeps each one independently renderable with its own
+    /// span and help contract.
     pub fn from_parse_error(file: &str, source: &str, err: &ParseError) -> Self {
         let line = get_line_at_offset(source, err.span.start as usize);
         let spec = catalog::parse_spec(err.kind);
@@ -137,9 +166,11 @@ impl Diagnostic {
             .with_help_opt(spec.help)
     }
 
-    /// Create diagnostic from a semantic error.
+    /// Normalize a semantic error while preserving semantic warning policy.
     ///
-    /// WHY: Semantic errors can be warnings or errors; help text may be custom.
+    /// Semantic analysis is the first phase that can emit both fatal errors and
+    /// warnings. Custom help carried by the semantic error wins over catalog
+    /// help because it can include context discovered during analysis.
     pub fn from_semantic_error(file: &str, source: &str, err: &SemanticError) -> Self {
         let line = get_line_at_offset(source, err.span.start as usize);
         let severity = if err.is_error() {
@@ -166,7 +197,7 @@ impl Diagnostic {
         }
     }
 
-    /// Create codegen error
+    /// Create a backend diagnostic when generation fails outside source spans.
     pub fn codegen_error(message: &str) -> Self {
         Self::error(format!("code generation failed: {}", message)).with_code("CODEGEN001")
     }

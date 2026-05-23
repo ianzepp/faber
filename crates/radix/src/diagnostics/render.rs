@@ -1,29 +1,29 @@
-//! Diagnostic Rendering
+//! Terminal rendering boundary for normalized diagnostics.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Renders diagnostics to human-readable output using the `ariadne` crate for
-//! pretty-printed, color-coded error messages with source snippets and underlines.
+//! Rendering is intentionally downstream of diagnostic construction. By the
+//! time a value reaches this module, it already has a severity, optional code,
+//! display file, source span, and help text; this file decides only how that
+//! contract appears in terminal and plain-text output.
 //!
-//! COMPILER PHASE: Diagnostics (infrastructure)
-//! INPUT: Diagnostic structs and source file map
-//! OUTPUT: Rendered error messages to stderr
+//! The pretty renderer delegates span layout and color handling to `ariadne`.
+//! The plain renderer stays local because tests, CI logs, and non-TTY consumers
+//! need deterministic text without depending on terminal capabilities.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Leverage ariadne: Use a mature error rendering library rather than custom formatting.
-//!   WHY: ariadne provides color, source snippets, and multi-line spans out of the box.
-//! - Color-coded severity: Errors are red, warnings are yellow, info is blue.
-//!   WHY: Visual distinction helps users prioritize fixing errors over warnings.
-//! - Source context: Show the problematic line with an underline highlight.
-//!   WHY: Users need to see the error in context without opening the file.
+//! INVARIANTS
+//! ==========
+//! - Rendering must not panic when source text is missing; callers may report
+//!   diagnostics for generated or filesystem-only failures.
+//! - Codes are prefixed to the primary message before presentation.
+//! - Severity controls both ariadne report kind and label color.
 
 use super::{Diagnostic, Severity};
 use ariadne::{Color, Label, Report, ReportKind, Source};
 
-/// Render diagnostics to stderr using ariadne.
+/// Render a batch of normalized diagnostics to stderr with source snippets.
 ///
-/// WHY: Batch rendering allows grouped output and deduplication if needed.
+/// `sources` is a simple `(display_name, source_text)` map because diagnostics
+/// may be produced across package inputs. Missing entries are tolerated and
+/// render as span-less context rather than failing the reporting path.
 pub fn render_diagnostics(diagnostics: &[Diagnostic], sources: &[(String, String)]) {
     for diag in diagnostics {
         render_one(diag, sources);
@@ -43,7 +43,7 @@ fn render_one(diag: &Diagnostic, sources: &[(String, String)]) {
         diag.message.clone()
     };
 
-    // Find the source for this file
+    // Missing source is valid for backend and filesystem diagnostics.
     let source = sources
         .iter()
         .find(|(name, _)| name == &diag.file)
@@ -74,9 +74,10 @@ fn render_one(diag: &Diagnostic, sources: &[(String, String)]) {
     let _ = builder.finish().eprint((&diag.file, Source::from(source)));
 }
 
-/// Render diagnostic as plain text without colors.
+/// Render one diagnostic as deterministic plain text without terminal colors.
 ///
-/// WHY: Useful for tests, CI logs, and environments without TTY color support.
+/// This mirrors the same semantic pieces as the ariadne renderer while keeping
+/// output stable for snapshots and environments that cannot render rich spans.
 #[allow(dead_code)]
 pub fn render_plain(diag: &Diagnostic) -> String {
     let severity = match diag.severity {

@@ -1,43 +1,40 @@
-//! radix-rs - Production Faber compiler
+//! Core compiler library for Faber.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! radix-rs is a recursive descent compiler for the Faber programming language,
-//! a Latin-based IR designed for LLM code generation. The compiler follows a
-//! multi-phase pipeline:
+//! `radix` owns the language implementation: lexing, parsing, semantic
+//! analysis, lowering, target code generation, diagnostics, and the
+//! developer-facing inspection surfaces that expose those phases. The
+//! user-facing `faber` crate builds package and project workflows on top of
+//! this library; package policy, manifest loading, and generated Cargo layouts
+//! deliberately live there instead of here.
+//!
+//! The public API keeps the embedding contract small. Callers choose a
+//! [`Config`], instantiate a [`Compiler`], and receive a [`CompileResult`] that
+//! carries both output and diagnostics. Command-line tools use the same driver
+//! pipeline as library callers so phase behavior does not drift between API and
+//! terminal use.
+//!
+//! PIPELINE
+//! ========
 //!
 //! ```text
 //! Source (.fab)
 //!   → Lexer (tokens)
 //!   → Parser (AST)
-//!   → Semantic Analysis (HIR + type table)
-//!   → Codegen (Rust or Faber pretty-print)
+//!   → Collect + Resolve + Lower
+//!   → Typecheck + Analysis
+//!   → Codegen (Rust, Faber, TypeScript, or Go)
 //! ```
 //!
-//! COMPILER PHASES
-//! ===============
-//! 1. **Lexing** (`lexer`): Tokenizes source into Latin keywords and symbols
-//! 2. **Parsing** (`parser`): Builds abstract syntax tree (AST)
-//! 3. **Semantic** (`semantic`): Name resolution, type checking, borrow analysis
-//! 4. **HIR Lowering** (`hir`): Converts AST to high-level IR
-//! 5. **Codegen** (`codegen`): Emits target source (Rust, Faber, etc.)
+//! INVARIANTS
+//! ==========
+//! - Malformed source returns diagnostics rather than panicking.
+//! - Missing semantic facts must be fixed before codegen; backend guessing is
+//!   not part of the contract.
+//! - Rust is the primary executable backend, while Faber output is the
+//!   canonical pretty-printing and round-trip target.
+//! - CLI and library entry points both go through `driver` so diagnostics and
+//!   phase ordering remain consistent.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - **Never crash**: Collect errors, don't panic. The compiler must process
-//!   malformed input gracefully and report actionable diagnostics.
-//!
-//! - **Multi-target**: Backends are pluggable. Rust is the primary target;
-//!   Faber pretty-print enables formatting and round-tripping.
-//!
-//! - **Type-first syntax**: Faber uses `textus name` not `name: textus`, matching
-//!   mathematical notation and reducing cognitive load for type inference.
-//!
-//! - **Latin vocabulary**: Keywords are Latin (functio, genus, discerne) to
-//!   avoid conflicts with English reserved words in target languages.
-//!
-//! USAGE
-//! =====
 //! ```no_run
 //! use radix::{Compiler, Config, Target};
 //! use std::path::Path;
@@ -73,82 +70,90 @@ pub use codegen::Target;
 pub use diagnostics::Diagnostic;
 pub use driver::{Config, Session};
 
-// =============================================================================
-// TYPES
-// =============================================================================
-//
-// Public API types for compilation results and outputs.
-
-/// Primary compilation result.
+/// Output and diagnostics from one compiler invocation.
 ///
-/// WHY: Bundles output and diagnostics together, allowing callers to inspect
-/// warnings even when compilation succeeds.
+/// Successful compilations may still carry warnings. Callers should use
+/// [`CompileResult::success`] when they need the same success policy as the CLI:
+/// target output must exist and no diagnostic may be classified as an error.
 pub struct CompileResult {
+    /// Target-specific generated output, absent when compilation failed before
+    /// codegen or codegen rejected the analyzed program.
     pub output: Option<Output>,
+
+    /// Ordered diagnostics accumulated across compiler phases.
     pub diagnostics: Vec<Diagnostic>,
 }
 
 impl CompileResult {
+    /// Return true when codegen produced output and no error diagnostics remain.
     pub fn success(&self) -> bool {
         self.output.is_some() && !self.diagnostics.iter().any(|d| d.is_error())
     }
 }
 
-/// Compiled output for a target.
+/// Generated source for the requested backend.
 ///
-/// WHY: Enum allows type-safe dispatch to target-specific output formats
-/// without runtime string matching or dynamic dispatch.
+/// The enum keeps callers honest about backend-specific output while avoiding
+/// stringly typed target dispatch at the public API boundary.
 pub enum Output {
+    /// Rust backend output, currently the primary executable target.
     Rust(RustOutput),
+
+    /// Canonical Faber pretty-printer output.
     Faber(FaberOutput),
+
+    /// TypeScript backend output.
     TypeScript(TypeScriptOutput),
+
+    /// Go backend output.
     Go(GoOutput),
 }
 
-/// Rust compilation output.
+/// Rust backend output.
 pub struct RustOutput {
+    /// Complete generated Rust source.
     pub code: String,
 }
 
 /// Faber canonical output (pretty-printed Faber source).
 pub struct FaberOutput {
+    /// Complete canonicalized Faber source.
     pub code: String,
 }
 
-/// TypeScript compilation output.
+/// TypeScript backend output.
 pub struct TypeScriptOutput {
+    /// Complete generated TypeScript source.
     pub code: String,
 }
 
-/// Go compilation output.
+/// Go backend output.
 pub struct GoOutput {
+    /// Complete generated Go source.
     pub code: String,
 }
 
-// =============================================================================
-// COMPILER API
-// =============================================================================
-//
-// High-level API for invoking the compilation pipeline.
-
-/// Main compiler entry point.
+/// Stable library entry point for compiling Faber source.
 ///
-/// WHY: Encapsulates session state and provides a clean API for file or
-/// string compilation. The session holds configuration that persists across
-/// multiple compile calls.
+/// A compiler owns one [`Session`] so repeated calls share the same target and
+/// diagnostic policy. It does not own package discovery or import graph loading;
+/// callers that need package semantics should assemble source through the
+/// higher-level `faber` package layer.
 pub struct Compiler {
     session: Session,
 }
 
 impl Compiler {
+    /// Create a compiler configured for one target and diagnostic policy.
     pub fn new(config: Config) -> Self {
         Self { session: Session::new(config) }
     }
 
     /// Compile a file from disk.
     ///
-    /// WHY: Convenience wrapper that handles file I/O and delegates to compile_str.
-    /// I/O errors are converted to diagnostics rather than propagated as Results.
+    /// File I/O errors are reported through [`CompileResult::diagnostics`] so
+    /// callers can handle all compile failures through the same diagnostic
+    /// channel.
     pub fn compile(&self, path: &Path) -> CompileResult {
         let source = match std::fs::read_to_string(path) {
             Ok(s) => s,
@@ -162,8 +167,9 @@ impl Compiler {
 
     /// Compile source code from a string.
     ///
-    /// WHY: Core compilation path. File-based compilation delegates to this
-    /// after reading the source, enabling in-memory compilation for tests.
+    /// This is the core in-memory path used by tests, tools, and file-based
+    /// compilation after source loading. `name` is diagnostic identity only; it
+    /// does not imply filesystem-backed package behavior.
     pub fn compile_str(&self, name: &str, source: &str) -> CompileResult {
         driver::compile(&self.session, name, source)
     }

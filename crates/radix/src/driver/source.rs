@@ -1,44 +1,48 @@
-//! Source File Management
+//! Source text identity and byte-position indexing.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Manages source file metadata and provides utilities for mapping byte offsets
-//! to line/column positions. This enables accurate diagnostic reporting with
-//! human-readable locations.
+//! Diagnostics are produced by compiler phases in byte offsets, but humans and
+//! editors need stable file names, line numbers, and displayable line excerpts.
+//! [`SourceFile`] is the driver-side adapter between those two views: it stores
+//! source text with its origin and precomputes line starts once so every later
+//! diagnostic lookup can be cheap and deterministic.
 //!
-//! COMPILER PHASE: Driver (infrastructure)
-//! INPUT: File path and source text
-//! OUTPUT: SourceFile with line indexing for diagnostics
+//! INVARIANTS
+//! ==========
+//! - `line_starts[0]` is always `0`, even for empty input.
+//! - Line starts are byte offsets, not character indexes; spans throughout the
+//!   compiler use byte positions.
+//! - Displayed line and column numbers are one-based.
+//! - Inline sources keep an empty path but still carry a user-facing name for
+//!   diagnostics, REPLs, and tests.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Precomputed line starts: Build index once during construction.
-//!   WHY: Repeated offset-to-line-col conversions during error reporting would be
-//!   O(n) each time; precomputation makes lookups O(log n) via binary search.
-//! - Support inline sources: `SourceFile::inline` for REPL or test cases.
-//!   WHY: Not all Faber code comes from disk files (string compilation, LSP).
+//! PERFORMANCE
+//! ===========
+//! Position conversion uses a binary search over precomputed line starts. That
+//! keeps repeated diagnostics proportional to `log(lines)` instead of rescanning
+//! the full source for every span.
 
 use std::path::PathBuf;
 
-/// A source file with precomputed line indexing.
-///
-/// WHY: Line/column lookups are frequent during error reporting; precomputing
-/// line starts amortizes the O(n) indexing cost across all diagnostics.
-///
-/// INVARIANTS:
-/// ----------
-/// INV-1: line_starts[0] is always 0 (first line starts at byte 0).
-/// INV-2: line_starts is sorted in ascending order (monotonic byte offsets).
+/// Source text plus the lookup table needed for diagnostic rendering.
 #[derive(Debug)]
 pub struct SourceFile {
+    /// Filesystem origin for disk-backed sources; empty for inline sources.
     pub path: PathBuf,
+
+    /// User-facing name used in diagnostics.
     pub name: String,
+
+    /// Complete UTF-8 source text.
     pub content: String,
+
     line_starts: Vec<u32>,
 }
 
 impl SourceFile {
-    /// Create from path and content
+    /// Build a disk-backed source file from its path and contents.
+    ///
+    /// The display name is derived from the final path component so diagnostics
+    /// stay readable even when callers pass absolute paths.
     pub fn new(path: PathBuf, content: String) -> Self {
         let name = path
             .file_name()
@@ -50,7 +54,10 @@ impl SourceFile {
         Self { path, name, content, line_starts }
     }
 
-    /// Create from just content (for inline compilation)
+    /// Build an inline source file with no filesystem path.
+    ///
+    /// Inline inputs are used by string compilation, tests, and tool surfaces
+    /// where diagnostics still need a stable source name.
     pub fn inline(name: impl Into<String>, content: String) -> Self {
         let name = name.into();
         let line_starts = compute_line_starts(&content);
@@ -58,11 +65,10 @@ impl SourceFile {
         Self { path: PathBuf::new(), name, content, line_starts }
     }
 
-    /// Convert byte offset to 1-based line and column numbers.
+    /// Convert a byte offset to one-based line and column numbers.
     ///
-    /// WHY: Diagnostics display line:col in human-readable form (editors use 1-based).
-    ///
-    /// PERF: Binary search in precomputed line_starts is O(log n).
+    /// Offsets beyond the final recorded line start are anchored to the last
+    /// known line. The column is byte-based to match compiler spans.
     pub fn offset_to_line_col(&self, offset: u32) -> (u32, u32) {
         let line = self
             .line_starts
@@ -75,7 +81,10 @@ impl SourceFile {
         (line as u32 + 1, column + 1)
     }
 
-    /// Get the content of a specific line
+    /// Return one display line by one-based line number.
+    ///
+    /// The returned slice trims the trailing line feed so diagnostic renderers
+    /// can place carets without carrying source line endings into output.
     pub fn line_content(&self, line: u32) -> Option<&str> {
         let line_idx = line.saturating_sub(1) as usize;
         let start = *self.line_starts.get(line_idx)? as usize;
@@ -89,11 +98,10 @@ impl SourceFile {
     }
 }
 
-/// Compute byte offsets of each line start.
+/// Compute byte offsets of each line start for binary-search lookup.
 ///
-/// WHY: Enables O(log n) offset-to-line conversion via binary search.
-///
-/// NOTE: Handles both \n and \r\n line endings (only \n is recorded).
+/// EDGE: `\r\n` input records the byte after `\n`; any preceding `\r` remains
+/// part of the line slice because display trimming only removes the line feed.
 fn compute_line_starts(content: &str) -> Vec<u32> {
     let mut starts = vec![0];
 

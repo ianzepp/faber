@@ -1,52 +1,56 @@
-//! radix CLI - Command-line interface for the Faber compiler
+//! Command implementation layer for Faber CLI surfaces.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This binary provides the current `radix` command surface for `radix-rs`.
-//! It now spans both product-facing compilation commands and compiler
-//! inspection commands:
+//! This module is the executable boundary around the `radix` compiler library.
+//! It owns clap command shapes, stdin/file source loading, terminal diagnostics,
+//! JSON-ish inspection output, target formatting/linting hooks, and the policy
+//! split between the developer `radix` binary and the user-facing `faber`
+//! package tool.
 //!
-//! - product-facing: `build`, `targets`, `check`
-//! - inspection-oriented: `lex`, `parse`, `hir`, `emit`
+//! `radix` remains a single-file compiler and phase-inspection tool. Package
+//! compilation is intentionally rejected here and delegated to `crates/faber`,
+//! where manifests, import graphs, stdlib binding, and generated Cargo layouts
+//! are available. That separation keeps compiler phase debugging lightweight
+//! while preventing the developer tool from growing a second package policy.
 //!
-//! COMMANDS
-//! ========
-//! - `build`: Compile a file or package and write output to disk
-//! - `targets`: Show supported targets and capability notes
-//! - `check`: Run semantic analysis (with optional `--permissive`)
-//! - `lex`: Tokenize source and emit JSON
-//! - `parse`: Parse source and emit AST as JSON
-//! - `hir`: Lower AST to HIR and emit JSON
-//! - `mir`: Lower checked HIR to MIR and emit a deterministic text dump
-//! - `emit`: Compile to target for stdout-oriented and debug workflows
+//! ERROR STRATEGY
+//! ==============
+//! The command functions are process-facing: they print diagnostics and call
+//! `std::process::exit` on fatal errors. Reusable helpers such as
+//! [`mir_output_for_source`], [`compile_cli_source`], and formatter/linter
+//! wrappers return values so tests and wrappers can exercise the same policy
+//! without spawning a binary.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Two-layer surface: The same binary supports ordinary compile/check flows
-//!   and lower-level compiler inspection without teaching a separate tool.
-//!
-//! - Phase introspection: Inspection commands still expose specific compiler
-//!   phases, allowing developers to debug lexing, parsing, or semantic issues
-//!   in isolation.
-//!
-//! - JSON output: Machine-readable output enables automated testing and tooling
-//!   integration (e.g., language servers, formatters).
-//!
-//! - Stdin support: All commands accept stdin when no file is given, enabling
-//!   pipeline composition and REPL-style workflows.
+//! INVARIANTS
+//! ==========
+//! - Stdin is valid for single-file commands and invalid for package mode.
+//! - `radix` package requests fail fast with a message pointing to `faber`.
+//! - Inspection commands expose deterministic, machine-readable output for
+//!   tests and tools rather than pretty terminal prose.
+//! - Formatting and linting are best-effort post-processing steps; failures are
+//!   warnings that leave generated compiler output available.
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use std::fs;
 use std::io::{self, Read};
 use std::path::PathBuf;
 
+/// Clap parser for the user-facing `faber` binary.
+///
+/// Execution is intentionally split into `crates/faber`; this type remains here
+/// so both binaries share flag spelling and target parsing.
 #[derive(Parser, Debug)]
 #[command(name = "faber", bin_name = "faber", about = "Faber compiler", version)]
 pub struct FaberCli {
+    /// User-facing command selected by the `faber` binary.
     #[command(subcommand)]
     pub command: FaberCommand,
 }
 
+/// User-facing CLI command grammar.
+///
+/// The shape lives beside `RadixCommand` because both binaries share parsing
+/// types and command payloads, but package-aware execution is owned by
+/// `crates/faber` rather than this module.
 #[derive(Subcommand, Debug)]
 pub enum FaberCommand {
     /// Compile a file or package and write output to disk
@@ -67,13 +71,16 @@ pub enum FaberCommand {
     Emit(EmitArgs),
 }
 
+/// Clap parser for the developer-facing `radix` binary.
 #[derive(Parser, Debug)]
 #[command(name = "radix", bin_name = "radix", about = "Faber compiler developer tool", version)]
 pub struct RadixCli {
+    /// Developer command selected by the `radix` binary.
     #[command(subcommand)]
     pub command: RadixCommand,
 }
 
+/// Developer CLI command grammar for direct compiler phase inspection.
 #[derive(Subcommand, Debug)]
 pub enum RadixCommand {
     /// Tokenize source and output JSON
@@ -94,12 +101,14 @@ pub enum RadixCommand {
     Targets,
 }
 
+/// Shared source-input grammar for phase inspection commands.
 #[derive(Args, Debug)]
 pub struct InputArgs {
     /// Input file path, or '-' / omitted for stdin
     pub input: Vec<String>,
 }
 
+/// Parsed `check` command payload after clap normalization.
 #[derive(Args, Debug)]
 pub struct CheckArgs {
     /// Downgrade unresolved/import-driven semantic errors to warnings
@@ -114,6 +123,7 @@ pub struct CheckArgs {
     pub input: Vec<String>,
 }
 
+/// Parsed `emit` command payload after clap normalization.
 #[derive(Args, Debug)]
 pub struct EmitArgs {
     /// Output target language
@@ -137,6 +147,7 @@ pub struct EmitArgs {
     pub input: Vec<String>,
 }
 
+/// Parsed `build` command payload after clap normalization.
 #[derive(Args, Debug)]
 pub struct BuildArgs {
     /// Output target language
@@ -168,41 +179,79 @@ pub struct BuildArgs {
     pub input: String,
 }
 
+/// Process-independent check command contract used by command dispatch.
 #[derive(Debug)]
 pub struct CheckCommand {
+    /// Input file path, `-`, or empty for stdin.
     pub input: Vec<String>,
+
+    /// Whether the caller requested package mode.
     pub package: bool,
+
+    /// Whether selected unresolved/import-driven semantic errors become warnings.
     pub permissive: bool,
 }
 
+/// Process-independent emit command contract used by command dispatch.
 #[derive(Debug)]
 pub struct EmitCommand {
+    /// Input file path, `-`, or empty for stdin.
     pub input: Vec<String>,
+
+    /// Whether the caller requested package mode.
     pub package: bool,
+
+    /// Backend target for emitted source.
     pub target: crate::codegen::Target,
+
+    /// Whether to run the target formatter before printing.
     pub format: bool,
+
+    /// Whether to run target lint auto-fix before printing.
     pub linter: bool,
 }
 
+/// Process-independent build command contract used by command dispatch.
 #[derive(Debug)]
 pub struct BuildCommand {
+    /// Input file or package path.
     pub input: String,
+
+    /// Directory where generated source should be written.
     pub out_dir: PathBuf,
+
+    /// Whether the caller requested package mode.
     pub package: bool,
+
+    /// Whether to request a release build profile when applicable.
     pub release: bool,
+
+    /// Backend target for generated source.
     pub target: crate::codegen::Target,
+
+    /// Whether to run the target formatter before writing.
     pub format: bool,
+
+    /// Whether to run target lint auto-fix before writing.
     pub linter: bool,
 }
 
+/// Target names accepted by CLI flags.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, ValueEnum)]
 pub enum CliTarget {
+    /// Rust backend.
     #[default]
     Rust,
+
+    /// Canonical Faber pretty-printer.
     #[value(alias = "fab")]
     Faber,
+
+    /// TypeScript backend.
     #[value(name = "ts", alias = "typescript")]
     TypeScript,
+
+    /// Go backend.
     Go,
 }
 
@@ -217,6 +266,10 @@ impl From<CliTarget> for crate::codegen::Target {
     }
 }
 
+/// Capability row printed by `targets`.
+///
+/// The fields are private because callers should use `target_capabilities` and
+/// `cmd_targets` rather than depending on this display schema as a stable API.
 pub struct TargetCapabilities {
     check: bool,
     build: bool,
@@ -225,10 +278,11 @@ pub struct TargetCapabilities {
     note: &'static str,
 }
 
-/// Read source from file argument or stdin.
+/// Read source from a file argument or stdin.
 ///
-/// WHY: Centralizes source reading logic for all commands. Stdin support
-/// enables piping from other tools.
+/// This is the process-facing loader for single-file commands. It exits on I/O
+/// failure because command handlers already report diagnostics through stderr,
+/// while library callers should use `Compiler` directly for non-exiting flows.
 pub fn read_source(args: &[String]) -> (String, String) {
     if args.is_empty() || args[0] == "-" {
         let mut source = String::new();
@@ -253,6 +307,7 @@ fn source_file_from_input(name: String, source: String) -> crate::driver::Source
     crate::driver::SourceFile::inline(name, source)
 }
 
+/// Format an offset in a loaded source file for terminal diagnostics.
 pub fn format_location(source_file: &crate::driver::SourceFile, offset: u32) -> String {
     let (line, column) = source_file.offset_to_line_col(offset);
     format!("{}:{}:{}", source_file.name.as_str(), line, column)
@@ -263,9 +318,10 @@ fn format_optional_location(source_file: &crate::driver::SourceFile, span: Optio
         .unwrap_or_else(|| source_file.name.clone())
 }
 
-/// Tokenize source and emit JSON.
+/// Tokenize source and emit a compact JSON inspection payload.
 ///
-/// WHY: Enables inspection of lexer output for debugging tokenization issues.
+/// The output intentionally exposes token kinds and spans rather than formatted
+/// source so lexer regressions can be tested without backend involvement.
 pub fn cmd_lex(args: &[String]) {
     let (name, source) = read_source(args);
     let source_file = source_file_from_input(name, source);
@@ -317,9 +373,11 @@ pub fn cmd_lex(args: &[String]) {
     }
 }
 
-/// Parse source and emit AST JSON.
+/// Parse source and emit a compact AST inspection payload.
 ///
-/// WHY: Enables inspection of parser output for debugging AST structure.
+/// This command stops after parsing and reports lexer/parser diagnostics
+/// directly, making it useful for grammar work where semantic phases would add
+/// distracting failures.
 pub fn cmd_parse(args: &[String]) {
     let (name, source) = read_source(args);
     let source_file = source_file_from_input(name, source);
@@ -383,10 +441,10 @@ pub fn cmd_parse(args: &[String]) {
     }
 }
 
-/// Lower AST to HIR and emit JSON.
+/// Lower parsed source to HIR and emit a compact inspection payload.
 ///
-/// WHY: Enables inspection of HIR lowering for debugging name resolution
-/// and type assignment issues.
+/// HIR inspection runs the prerequisite collection and resolution passes before
+/// lowering so IDs and spans reflect the same semantic inputs used by codegen.
 pub fn cmd_hir(args: &[String]) {
     let (name, source) = read_source(args);
     let source_file = source_file_from_input(name, source);
@@ -475,6 +533,7 @@ pub fn cmd_hir(args: &[String]) {
     }
 }
 
+/// Lower checked source to MIR and print the deterministic MIR dump.
 pub fn cmd_mir(args: &[String]) {
     let (name, source) = read_source(args);
     let source_file = source_file_from_input(name, source);
@@ -490,6 +549,10 @@ pub fn cmd_mir(args: &[String]) {
     }
 }
 
+/// Produce MIR inspection text without exiting the process.
+///
+/// Errors are returned already formatted for terminal display because MIR
+/// inspection is primarily a developer-tool surface, not a library data model.
 pub fn mir_output_for_source(name: &str, source: &str) -> Result<String, Vec<String>> {
     let source_file = source_file_from_input(name.to_owned(), source.to_owned());
     let session =
@@ -522,6 +585,7 @@ pub fn mir_output_for_source(name: &str, source: &str) -> Result<String, Vec<Str
     }
 }
 
+/// Analyze CLI annotations and print the normalized CLI IR.
 pub fn cmd_cli_ir(args: &[String]) {
     let (name, source) = read_source(args);
     let source_file = source_file_from_input(name, source);
@@ -558,10 +622,12 @@ pub fn cmd_cli_ir(args: &[String]) {
     }
 }
 
-/// Run semantic analysis.
+/// Run semantic analysis for a single-file input.
 ///
-/// WHY: --permissive mode allows checking files with unresolved imports,
-/// useful for partial compilation or library development.
+/// `radix check` rejects package mode because package graph loading and stdlib
+/// binding belong to the `faber` tool. `--permissive` exists for partial files
+/// and library-development workflows where unresolved/import-driven errors
+/// should be visible but not fatal.
 pub fn cmd_check(command: CheckCommand) {
     if command.package || should_treat_as_package_from_input(&command.input) {
         eprintln!("error: package checking is owned by the `faber` tool; rerun with `faber check --package`");
@@ -649,10 +715,10 @@ fn should_treat_as_package_from_input(input: &[String]) -> bool {
     should_treat_as_package(path)
 }
 
-/// Compile to target language.
+/// Compile single-file input to a target language and print generated source.
 ///
-/// WHY: End-to-end compilation command. Accepts -t flag to select Rust or
-/// Faber pretty-print output.
+/// Package inputs are rejected before compilation so users do not accidentally
+/// get a single-file interpretation of a package directory or manifest.
 pub fn cmd_emit(command: EmitCommand) {
     let result = compile_cli_input(&command.input, command.package, command.target);
 
@@ -692,6 +758,11 @@ pub fn cmd_emit(command: EmitCommand) {
     println!("{}", code);
 }
 
+/// Compile single-file input and write generated source to disk.
+///
+/// This is intentionally source-emission only inside `radix`; executable
+/// package builds are routed through `faber`, where generated Cargo layout
+/// policy is available.
 pub fn cmd_build(command: BuildCommand) {
     let input_path = PathBuf::from(&command.input);
     let is_package = resolve_package_mode(&input_path, command.package);
@@ -746,6 +817,7 @@ pub fn cmd_build(command: BuildCommand) {
     println!("{}", output_path.display());
 }
 
+/// Print backend capability rows for terminal discovery.
 pub fn cmd_targets() {
     for target in [
         crate::codegen::Target::Rust,
@@ -766,14 +838,17 @@ pub fn cmd_targets() {
     }
 }
 
+/// Return whether an input path syntactically names package mode.
 pub fn should_treat_as_package(path: &std::path::Path) -> bool {
     path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some("faber.toml")
 }
 
+/// Combine explicit package mode with path-based package detection.
 pub fn resolve_package_mode(path: &std::path::Path, force_package: bool) -> bool {
     force_package || should_treat_as_package(path)
 }
 
+/// Compile command input after applying stdin and package-mode policy.
 pub fn compile_cli_input(input: &[String], package: bool, target: crate::codegen::Target) -> crate::CompileResult {
     if input.is_empty() || input[0] == "-" {
         if package {
@@ -789,6 +864,7 @@ pub fn compile_cli_input(input: &[String], package: bool, target: crate::codegen
     compile_cli_path(&path, resolve_package_mode(&path, package), target)
 }
 
+/// Compile a single file path through the public compiler API.
 pub fn compile_cli_path(path: &std::path::Path, package: bool, target: crate::codegen::Target) -> crate::CompileResult {
     if package || should_treat_as_package(path) {
         eprintln!("error: package compilation is owned by the `faber` tool; rerun with `faber build` or `faber emit`");
@@ -800,12 +876,17 @@ pub fn compile_cli_path(path: &std::path::Path, package: bool, target: crate::co
     compiler.compile(path)
 }
 
+/// Compile in-memory command source through the public compiler API.
 pub fn compile_cli_source(name: &str, source: &str, target: crate::codegen::Target) -> crate::CompileResult {
     let config = crate::driver::Config::default().with_target(target);
     let compiler = crate::Compiler::new(config);
     compiler.compile_str(name, source)
 }
 
+/// Derive the output path for source-emission builds.
+///
+/// Package mode currently uses a stable `main.<ext>` placeholder here because
+/// real package build layout is outside `radix` and owned by `faber`.
 pub fn build_output_path(
     out_dir: &std::path::Path,
     input_path: &std::path::Path,
@@ -843,6 +924,11 @@ fn target_name(target: crate::codegen::Target) -> &'static str {
     }
 }
 
+/// Return current command-surface support for a backend target.
+///
+/// These rows describe CLI capability, not necessarily backend maturity. For
+/// example, a target can support file emission while package compilation still
+/// remains unavailable from `radix`.
 pub fn target_capabilities(target: crate::codegen::Target) -> TargetCapabilities {
     match target {
         crate::codegen::Target::Rust => TargetCapabilities {
@@ -884,6 +970,7 @@ fn yes_no(value: bool) -> &'static str {
     }
 }
 
+/// Extract generated source from a target-specific compiler output.
 pub fn output_code(output: crate::Output) -> String {
     match output {
         crate::Output::Rust(out) => out.code,
@@ -893,10 +980,11 @@ pub fn output_code(output: crate::Output) -> String {
     }
 }
 
-/// Run the appropriate formatter for the generated code, if available.
+/// Run the appropriate formatter for generated target code, if available.
 ///
 /// Returns the formatted code on success, or an error message if the formatter
-/// could not be executed or failed.
+/// could not be executed or failed. The command layer treats those errors as
+/// warnings so formatter availability never changes compiler correctness.
 pub fn format_generated_code(target: crate::codegen::Target, code: &str) -> Result<String, String> {
     match target {
         crate::codegen::Target::Rust => run_formatter("rustfmt", &["--edition", "2021"], code),
@@ -916,7 +1004,7 @@ pub fn format_generated_code(target: crate::codegen::Target, code: &str) -> Resu
     }
 }
 
-/// Run a linter with auto-fix on the generated code where possible.
+/// Run a linter with auto-fix on generated target code where possible.
 ///
 /// This is intentionally best-effort. If the linter is not installed or fails,
 /// we return an error and the caller can decide to keep the original code.
@@ -1252,7 +1340,11 @@ fn json_string_opt(value: Option<&str>) -> String {
     }
 }
 
-/// Escape special characters for JSON strings.
+/// Escape special characters for hand-written JSON inspection strings.
+///
+/// The inspection commands use narrow, deterministic JSON builders instead of a
+/// public serialization contract. This helper keeps those surfaces valid for
+/// strings that come from source text or diagnostics.
 pub fn escape_json(s: &str) -> String {
     s.replace('\\', "\\\\")
         .replace('"', "\\\"")

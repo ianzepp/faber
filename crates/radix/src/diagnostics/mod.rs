@@ -1,26 +1,22 @@
-//! Diagnostic reporting system
+//! Cross-phase diagnostic contract for the compiler.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! The diagnostics module provides error and warning reporting with rich
-//! context: severity levels, error codes, help text, source spans, and
-//! pretty-printed output using ariadne.
+//! Diagnostics are the user-facing boundary where lexer, parser, semantic, I/O,
+//! and backend failures become one stable report shape. The compiler phases own
+//! the domain-specific error enums; this module owns the common vocabulary for
+//! severity, codes, help text, file/span context, and terminal rendering.
 //!
-//! COMPILER PHASE: Cross-cutting (used by all phases)
-//! INPUT: Error types from lexer, parser, semantic analyzer
-//! OUTPUT: Diagnostic messages with spans and help text
+//! Keeping the catalog, data model, and renderer split is deliberate. The
+//! catalog defines the public code/help taxonomy, `diagnostic` normalizes phase
+//! errors into one transport type, and `render` is the only layer coupled to
+//! ariadne's terminal output model.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Actionable errors: Every diagnostic has a help message suggesting how to
-//!   fix the problem. Error codes (e.g., SEM001, PARSE012) enable documentation
-//!   lookups and suppressions.
-//!
-//! - Rich context: Diagnostics include source spans, file names, and source
-//!   line content for precise error location.
-//!
-//! - Pretty printing: Uses ariadne for colored, underlined error output with
-//!   caret positioning (^^^^^) under the offending span.
+//! INVARIANTS
+//! ==========
+//! - Error codes are stable external handles, not incidental strings.
+//! - Phase-specific errors are converted before rendering so output policy stays
+//!   centralized.
+//! - Diagnostics tolerate missing spans and source text; that degradation must
+//!   produce less context, not a crash.
 
 mod catalog;
 mod diagnostic;

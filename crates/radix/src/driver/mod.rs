@@ -1,34 +1,30 @@
-//! Compilation driver - orchestrates the multi-phase pipeline
+//! Compilation pipeline boundary for `radix`.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! The driver module coordinates the execution of all compiler phases in sequence:
-//! lexing → parsing → semantic analysis → codegen. It collects diagnostics from
-//! each phase and halts on errors before attempting dependent phases.
+//! The driver is the narrow public entrypoint that turns one Faber source unit
+//! plus a [`Session`] into either target code or diagnostics. It owns phase
+//! ordering, diagnostic accumulation, target-policy checks that require parsed
+//! syntax, and the CLI-program handoff used by package builds. Individual
+//! compiler phases still own their domain models; this module decides when a
+//! later phase has enough trustworthy input to run.
 //!
-//! COMPILER PHASE: Driver (pipeline orchestration)
-//! INPUT: Source code string, session configuration
-//! OUTPUT: CompileResult with optional target code and diagnostics
+//! INVARIANTS
+//! ==========
+//! - Lexing, parsing, CLI analysis, semantic analysis, and codegen run in that
+//!   order; later phases are skipped after errors from their prerequisites.
+//! - Diagnostics are accumulated through successful phases so warnings survive
+//!   into a successful [`CompileResult`].
+//! - Target-specific policy that depends on syntax is enforced before semantic
+//!   lowering, keeping unsupported constructs out of backends that cannot model
+//!   them safely.
+//! - CLI overrides supplied by package compilation are retargeted into the
+//!   current parser interner before semantic analysis observes them.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Fail fast: Stop after each failed phase to avoid cascading errors. For
-//!   example, don't attempt parsing if lexing failed, as token stream is invalid.
-//!
-//! - Diagnostic collection: Gather all diagnostics from every phase, even when
-//!   compilation succeeds (to report warnings).
-//!
-//! - Target-aware warnings: Some constructs are no-ops in certain targets
-//!   (e.g., `cura "arena"` in Rust). The driver scans for these after parsing
-//!   and emits warnings before semantic analysis.
-//!
-//! PIPELINE PHASES
-//! ===============
-//! 1. Lexing: Tokenize source
-//! 2. Parsing: Build AST
-//! 3. Target warnings: Scan for target-specific no-ops
-//! 4. Semantic: Name resolution, type checking, borrow analysis
-//! 5. Codegen: Emit target source code
+//! ERROR STRATEGY
+//! ==============
+//! The driver returns diagnostics rather than panicking when a phase rejects user
+//! input. A "successful" phase that violates its internal contract, such as a
+//! parse result without a program, is converted into an explicit diagnostic so
+//! callers still receive the same failure surface.
 
 mod session;
 mod source;
@@ -47,23 +43,15 @@ use crate::syntax::*;
 use crate::CompileResult;
 use std::collections::HashSet;
 
-// =============================================================================
-// CORE
-// =============================================================================
-//
-// Main compilation pipeline entry point.
-
-/// Run the full compilation pipeline.
+/// Run analysis and code generation for one source unit.
 ///
-/// WHY: Single entry point for all compilation. Each phase is run sequentially,
-/// with early exit on errors to avoid wasting work on invalid input.
+/// This is the user-facing driver contract used by CLIs and package tooling
+/// when they want emitted target code. It delegates the shared front half to
+/// `analyze_source` so callers that only need HIR, type tables, or CLI
+/// analysis can stop before backend generation.
 ///
-/// PHASES:
-/// - Lexing: Tokenize source
-/// - Parsing: Build AST
-/// - Target warnings: Scan for constructs that are no-ops in the selected target
-/// - Semantic: Analyze types and borrows
-/// - Codegen: Emit target code
+/// Errors from any phase are returned as diagnostics with no output. Warnings
+/// collected before codegen are preserved on success.
 pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     let mut analysis = match analyze_source(session, name, source) {
         Ok(analysis) => analysis,
@@ -130,6 +118,9 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     }
 }
 
+// CLI analysis can already describe more surface than the Phase 03 Rust CLI
+// generator accepts. Keep the gap explicit here so unsupported programs fail
+// with CLI-shaped diagnostics instead of leaking backend assumptions.
 fn phase03_cli_codegen_gap(program: &crate::cli::CliProgram) -> Option<String> {
     for option in program
         .global_options
@@ -187,18 +178,48 @@ fn phase03_cli_codegen_gap(program: &crate::cli::CliProgram) -> Option<String> {
     None
 }
 
+/// Frontend analysis product shared by codegen and package-level tooling.
+///
+/// The driver keeps the interner, type table, HIR, optional CLI contract, and
+/// non-fatal diagnostics together because each was produced from the same parse
+/// session. Consumers should treat these values as one coherent analysis
+/// snapshot rather than mixing fields across source units.
 pub struct AnalyzedUnit {
+    /// Symbol table that owns names referenced by the parsed and lowered forms.
     pub interner: Interner,
+
+    /// Type information produced by semantic analysis.
     pub types: semantic::TypeTable,
+
+    /// Lowered program consumed by backend code generators.
     pub hir: HirProgram,
+
+    /// Runnable CLI contract discovered from source or supplied by package mode.
     pub cli_program: Option<crate::cli::CliProgram>,
+
+    /// Warnings and informational diagnostics accumulated before codegen.
     pub diagnostics: Vec<Diagnostic>,
 }
 
+/// Run the frontend pipeline without emitting target code.
+///
+/// This is the analysis-only contract for compiler internals that need the
+/// typed HIR and diagnostics but not a backend artifact. It performs the same
+/// lex, parse, target-policy, CLI, and semantic phases as [`compile`].
 pub(crate) fn analyze_source(session: &Session, name: &str, source: &str) -> Result<AnalyzedUnit, Vec<Diagnostic>> {
     analyze_source_with_cli_program(session, name, source, None)
 }
 
+/// Analyze source while optionally supplying a package-level CLI program.
+///
+/// Package compilation may discover mounted CLI commands while assembling the
+/// import graph. When it passes that contract here, the driver interns the CLI
+/// symbols into this source unit before semantic analysis so CLI bindings and
+/// lowered HIR share the same symbol space.
+///
+/// Returns [`AnalyzedUnit`] on success. User-source failures return diagnostics;
+/// internal phase-contract failures are also reported as diagnostics to keep the
+/// driver surface uniform.
 pub fn analyze_source_with_cli_program(
     session: &Session,
     name: &str,
@@ -321,12 +342,9 @@ fn retarget_cli_program_symbols(
     cli_program
 }
 
-// =============================================================================
-// HELPERS
-// =============================================================================
-//
-// Target-specific validation and warning detection.
-
+// Target policy checks live in the driver because they need parsed syntax but
+// are intentionally earlier than lowering/codegen. That keeps backend-specific
+// impossibilities visible as source diagnostics instead of late generator errors.
 fn collect_rust_unsupported_errors(program: &Program, file: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     for stmt in &program.stmts {

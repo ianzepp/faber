@@ -1,4 +1,24 @@
-//! Target-independent CLI IR construction and validation.
+//! Target-independent CLI surface analysis.
+//!
+//! Faber source can declare command-line programs with annotations such as
+//! `@ cli`, `@ imperium`, `@ optio`, and `@ operandus`. This module turns those
+//! annotations into a normalized CLI IR that later compiler phases and codegen
+//! can consume without re-reading syntax details from the AST.
+//!
+//! The analyzer is deliberately target-independent. It validates the language
+//! contract for command paths, option names, operand ordering, global surface
+//! placement, mounted command modules, and supported CLI-facing types, but it
+//! does not decide how Rust, TypeScript, or another backend should parse argv.
+//!
+//! INVARIANTS
+//! ==========
+//! - A root CLI program has at most one `@ cli` incipit entry point.
+//! - Command modules mounted into another CLI may expose `@ imperium` commands
+//!   but must not declare their own root `@ cli` entry point.
+//! - Global options and operands use `ubique` and are owned by the root entry
+//!   point, not by individual commands.
+//! - Validation errors are semantic diagnostics; analysis still returns the
+//!   best normalized shape it can construct for tooling and inspection.
 
 use crate::lexer::{Interner, Span};
 use crate::semantic::{SemanticError, SemanticErrorKind};
@@ -10,108 +30,263 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CliMode {
+    /// Program contains no CLI entry point or mounted command surface.
     NotCli,
+
+    /// One `@ cli` incipit owns the complete option and operand surface.
     SingleCommand,
+
+    /// Root entry point dispatches to one or more `@ imperium` commands.
     Subcommand,
 }
 
+/// Result of extracting a CLI surface from one parsed program.
+///
+/// The analyzer separates structural mode from the optional normalized program
+/// because mounted modules may be non-CLI files, and invalid CLI files still
+/// need diagnostics even when a partial IR exists.
 #[derive(Debug, Clone)]
 pub struct CliAnalysis {
+    /// Classification of the parsed source as a CLI surface.
     pub mode: CliMode,
+
+    /// Normalized CLI contract, present when a root or mounted command surface
+    /// was found.
     pub program: Option<CliProgram>,
+
+    /// Semantic validation errors found while reading CLI annotations.
     pub errors: Vec<SemanticError>,
 }
 
+/// Normalized command-line program contract consumed by codegen and tooling.
+///
+/// This type intentionally models the CLI surface, not the implementation body.
+/// Bindings point back to Faber argument records and command functions so later
+/// phases can generate parser glue without depending on annotation syntax.
 #[derive(Debug, Clone)]
 pub struct CliProgram {
+    /// User-facing command name from the root `@ cli` annotation.
     pub name: String,
+
+    /// Binding name used by the root `incipit argumenta <ident>` declaration.
     pub entry_args: String,
+
+    /// Whether this surface is a single command or subcommand dispatcher.
     pub mode: CliMode,
+
+    /// Optional version metadata declared with `@ versio`.
     pub version: Option<String>,
+
+    /// Optional long description declared with `@ descriptio`.
     pub description: Option<String>,
+
+    /// Options available to every command through `ubique`.
     pub global_options: Vec<CliOption>,
+
+    /// Operands available to every command through `ubique`.
     pub global_operands: Vec<CliOperand>,
+
+    /// Single-command local options declared on the root entry point.
     pub options: Vec<CliOption>,
+
+    /// Single-command local operands declared on the root entry point.
     pub operands: Vec<CliOperand>,
+
+    /// Subcommands declared by `@ imperium` functions.
     pub commands: Vec<CliCommand>,
+
+    /// Root exit expression reduced to the forms codegen currently supports.
     pub exit: Option<CliExit>,
 }
 
+/// Exit-code expression captured from a CLI `incipit`.
+///
+/// The variants preserve enough structure for codegen to emit stable exit
+/// handling while refusing to invent meaning for arbitrary expressions.
 #[derive(Debug, Clone)]
 pub enum CliExit {
+    /// Literal numeric exit status.
     Fixed(i64),
+
+    /// Exit status comes from a local binding.
     Binding(String),
+
+    /// Exit status comes from a field on a local binding.
     Field { object: String, field: String },
+
+    /// Expression was present but cannot be lowered as a CLI exit contract.
     Unsupported,
 }
 
+/// Normalized subcommand declaration.
+///
+/// A command path is already split into routing segments. Mounted modules may
+/// prefix the path and aliases after local validation, which is why this type
+/// carries both source-local function identity and user-facing route metadata.
 #[derive(Debug, Clone)]
 pub struct CliCommand {
+    /// Slash-separated route segments, stored normalized for collision checks.
     pub path: Vec<String>,
+
+    /// Module path when this command came from an imported command module.
     pub module_path: Option<Vec<String>>,
+
+    /// Faber function name that implements the command.
     pub function: String,
+
+    /// Interned function symbol for later semantic/codegen lookup.
     pub function_symbol: crate::lexer::Symbol,
+
+    /// Optional `argumenta <ident>` binding used by the command function.
     pub args_binding: Option<String>,
+
+    /// Alternate route names declared with `@ alias`.
     pub aliases: Vec<String>,
+
+    /// Optional user-facing command description.
     pub description: Option<String>,
+
+    /// Options local to this command.
     pub options: Vec<CliOption>,
+
+    /// Positional operands local to this command.
     pub operands: Vec<CliOperand>,
+
+    /// Source span used for command-level diagnostics.
     pub span: Span,
 }
 
+/// Normalized option declared with `@ optio`.
 #[derive(Debug, Clone)]
 pub struct CliOption {
+    /// Faber binding name that receives the parsed value.
     pub binding: String,
+
+    /// Interned binding symbol for semantic/codegen lookup.
     pub binding_symbol: crate::lexer::Symbol,
+
+    /// CLI-supported value type after syntax normalization.
     pub ty: CliType,
+
+    /// Single-character short flag without leading `-`.
     pub short: Option<String>,
+
+    /// Long flag without leading `--`.
     pub long: Option<String>,
+
+    /// Optional user-facing help text.
     pub description: Option<String>,
+
+    /// Whether the option is global through `ubique`.
     pub global: bool,
+
+    /// Default value declared in source or synthesized for boolean flags.
     pub default: Option<CliDefault>,
+
+    /// True when the option is a boolean flag rather than value-taking option.
     pub flag: bool,
+
+    /// Source span used for option diagnostics.
     pub span: Span,
 }
 
+/// Normalized positional operand declared with `@ operandus`.
 #[derive(Debug, Clone)]
 pub struct CliOperand {
+    /// Faber binding name that receives the parsed value.
     pub binding: String,
+
+    /// Interned binding symbol for semantic/codegen lookup.
     pub binding_symbol: crate::lexer::Symbol,
+
+    /// CLI-supported value type after syntax normalization.
     pub ty: CliType,
+
+    /// Whether this operand captures the remaining positional arguments.
     pub rest: bool,
+
+    /// Optional user-facing help text.
     pub description: Option<String>,
+
+    /// Whether the operand is global through `ubique`.
     pub global: bool,
+
+    /// Default value declared in source.
     pub default: Option<CliDefault>,
+
+    /// Source span used for operand diagnostics.
     pub span: Span,
 }
 
+/// Faber types currently accepted at the CLI boundary.
+///
+/// The CLI type set is narrower than the language type system because argv
+/// parsing needs an explicit, predictable conversion contract. Unsupported
+/// types are reported during analysis instead of being guessed in codegen.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CliType {
+    /// `textus`
     Textus,
+
+    /// `numerus`
     Numerus,
+
+    /// `fractus`
     Fractus,
+
+    /// `bivalens`
     Bivalens,
+
+    /// `octeti`
     Octeti,
+
+    /// `ignotum`
     Ignotum,
+
+    /// `lista<textus>`
     ListaTextus,
+
+    /// `lista<numerus>`
     ListaNumerus,
 }
 
+/// Default value captured from CLI annotation syntax.
+///
+/// Literal defaults keep typed shape. Non-literal expressions are preserved as
+/// debug text so inspection surfaces can explain what was seen while validation
+/// and codegen decide whether the form is supported.
 #[derive(Debug, Clone)]
 pub enum CliDefault {
+    /// String literal default.
     Text(String),
+
+    /// Integer literal default.
     Integer(i64),
+
+    /// Floating-point literal default.
     Float(f64),
+
+    /// Boolean literal default.
     Bool(bool),
+
+    /// `nihil` default.
     Nil,
+
+    /// Non-literal expression captured for diagnostics/inspection.
     Expr(String),
 }
 
+/// Analyze a parsed root program for a CLI surface.
 pub fn analyze(program: &Program, interner: &Interner) -> CliAnalysis {
     let mut builder = CliBuilder { interner, errors: Vec::new() };
     builder.analyze(program)
 }
 
+/// Analyze an imported command module and prefix its exposed routes.
+///
+/// Mounted modules are only allowed to contribute subcommands. They cannot
+/// declare a root `@ cli` entry point or nested command mounts because the root
+/// package owns dispatch topology.
 pub fn analyze_mounted_module(program: &Program, interner: &Interner, mount_prefix: &[String]) -> CliAnalysis {
     let mut builder = CliBuilder { interner, errors: Vec::new() };
     builder.analyze_mounted_module(program, mount_prefix)

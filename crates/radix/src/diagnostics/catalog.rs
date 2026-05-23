@@ -1,47 +1,45 @@
-//! Diagnostic Code Catalog
+//! Stable diagnostic code and help-text catalog.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Central registry of diagnostic codes and help text for all error and warning
-//! types. Provides structured error codes (LEX001, PARSE012, SEM033, WARN005)
-//! and actionable help messages for users.
+//! This module is the public taxonomy for compiler diagnostics. Phase-specific
+//! error kinds are allowed to move internally, but their outward-facing codes
+//! and baseline help text live here so CLI output, docs, snapshots, and future
+//! suppression/reporting tools have one stable contract.
 //!
-//! COMPILER PHASE: Diagnostics (infrastructure)
-//! INPUT: Error kind enums (LexErrorKind, ParseErrorKind, SemanticErrorKind)
-//! OUTPUT: DiagnosticSpec with code and help text
+//! The catalog deliberately returns tiny copyable specs instead of constructing
+//! full diagnostics. Phase adapters in `diagnostic` still own message text,
+//! source spans, and context-specific help overrides; this file owns only the
+//! stable code space and generic remediation language.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Stable error codes: Error codes never change; deprecated errors keep their codes.
-//!   WHY: Tooling and CI pipelines rely on stable error codes for filtering/suppression.
-//! - Actionable help: Help text explains HOW to fix the error, not just WHAT it is.
-//!   WHY: Users need guidance on resolution, not restatement of the error.
-//! - Centralized catalog: All codes defined in one place for easy reference.
-//!   WHY: Avoids duplication and makes code space management explicit.
+//! INVARIANTS
+//! ==========
+//! - Codes are stable user-facing identifiers; do not renumber existing kinds.
+//! - Help text should be corrective, not a restatement of the error message.
+//! - Warning codes remain in the same catalog as errors because renderers and
+//!   docs present one diagnostic namespace.
 
 use crate::lexer::LexErrorKind;
 use crate::parser::ParseErrorKind;
 use crate::semantic::{SemanticErrorKind, WarningKind};
 
-/// Diagnostic specification: error code and help text.
+/// Catalog entry attached to a phase-specific error kind.
 ///
-/// WHY: Pairs error codes with actionable help messages for display in diagnostics.
+/// The spec is intentionally small and `'static`: it is reference data, not a
+/// rendered message. Context-specific diagnostics may override help text later,
+/// but they should keep the code from this catalog.
 #[derive(Debug, Clone, Copy)]
 pub struct DiagnosticSpec {
-    /// Stable error code (e.g., "LEX001", "SEM033")
+    /// Stable diagnostic code, such as `LEX001` or `SEM033`.
     pub code: &'static str,
 
-    /// Optional help text explaining how to fix the error
+    /// Generic remediation shown when a phase does not provide custom help.
     pub help: Option<&'static str>,
 }
 
-/// Get diagnostic spec for a lexer error.
+/// Return the stable diagnostic spec for a lexer error kind.
 ///
-/// ERROR CODES:
-///   LEX001 - UnterminatedString
-///   LEX002 - InvalidNumber
-///   LEX003 - InvalidEscape
-///   LEX004 - UnexpectedCharacter
+/// Lexer codes are intentionally compact because lexing has a small error
+/// surface. Add new codes at the end of the `LEX` range rather than reusing or
+/// renumbering existing meanings.
 pub fn lex_spec(kind: LexErrorKind) -> DiagnosticSpec {
     match kind {
         LexErrorKind::UnterminatedString => {
@@ -59,16 +57,12 @@ pub fn lex_spec(kind: LexErrorKind) -> DiagnosticSpec {
     }
 }
 
-/// Get diagnostic spec for a parser error.
+/// Return the stable diagnostic spec for a parser error kind.
 ///
-/// ERROR CODES:
-///   PARSE001 - Expected token
-///   PARSE002 - Unexpected token
-///   PARSE010-019 - Declaration errors
-///   PARSE020-029 - Statement errors
-///   PARSE030-039 - Expression errors
-///   PARSE040-049 - Type errors
-///   PARSE050-059 - Import/directive errors
+/// Parser codes are grouped by grammar area to make reports scannable and to
+/// leave room for new syntax diagnostics without changing existing IDs:
+/// generic token errors, declarations, statements, expressions, types, and
+/// import/directive forms each occupy their own range.
 pub fn parse_spec(kind: ParseErrorKind) -> DiagnosticSpec {
     match kind {
         ParseErrorKind::LexError => DiagnosticSpec {
@@ -158,17 +152,13 @@ pub fn parse_spec(kind: ParseErrorKind) -> DiagnosticSpec {
     }
 }
 
-/// Get diagnostic spec for a semantic error.
+/// Return the stable diagnostic spec for a semantic error or warning kind.
 ///
-/// ERROR CODES:
-///   SEM001-009 - Name resolution and lowering
-///   SEM010-019 - Type checking
-///   SEM020-029 - Assignment and mutability
-///   SEM030-039 - Control flow
-///   SEM040-049 - Pattern matching
-///   SEM050-059 - Borrow checking
-///   WARN001-009 - Warnings (unused, unreachable)
-///   WARN010 - Explicit ignotum annotation
+/// Semantic codes cover multiple compiler policies after parsing has succeeded:
+/// name resolution/lowering, type checking, assignment and mutability, control
+/// flow, pattern matching, borrow rules, and warning categories. The ranges are
+/// descriptive rather than exhaustive; keep additions close to their policy
+/// area and preserve existing numbers.
 pub fn semantic_spec(kind: SemanticErrorKind) -> DiagnosticSpec {
     match kind {
         SemanticErrorKind::UndefinedVariable => {
