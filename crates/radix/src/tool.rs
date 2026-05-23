@@ -934,8 +934,19 @@ pub fn lint_generated_code(target: crate::codegen::Target, code: &str) -> Result
             if let Ok(fixed) = run_formatter("biome", &["check", "--apply", "--stdin-file-path", "main.ts"], code) {
                 return Ok(fixed);
             }
-            run_formatter("eslint", &["--fix-dry-run", "--stdin", "--stdin-filename", "main.ts", "--format", "json"], code)
-                .map(|_| code.to_string()) // eslint --fix-dry-run doesn't rewrite; real --fix needs files
+            run_formatter(
+                "eslint",
+                &[
+                    "--fix-dry-run",
+                    "--stdin",
+                    "--stdin-filename",
+                    "main.ts",
+                    "--format",
+                    "json",
+                ],
+                code,
+            )
+            .map(|_| code.to_string()) // eslint --fix-dry-run doesn't rewrite; real --fix needs files
         }
         crate::codegen::Target::Faber => Ok(code.to_string()),
     }
@@ -1010,7 +1021,10 @@ fn run_formatter(cmd: &str, args: &[&str], input: &str) -> Result<String, String
         .map_err(|e| format!("could not spawn {cmd}: {e} (is it installed?)"))?;
 
     {
-        let mut stdin = child.stdin.take().ok_or_else(|| "failed to open stdin".to_string())?;
+        let mut stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| "failed to open stdin".to_string())?;
         stdin
             .write_all(input.as_bytes())
             .map_err(|e| format!("failed to write to {cmd} stdin: {e}"))?;

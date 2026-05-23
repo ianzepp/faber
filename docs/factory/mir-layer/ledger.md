@@ -863,3 +863,17 @@ Validation:
 - `cargo test -p radix mir` passed: 76 tests passed.
 - `cargo test -p radix` passed: 405 tests passed, 2 ignored; hygiene passed 8 tests; doc tests passed 1 and ignored 1.
 - `./scripta/ci` passed.
+
+## Post-Closeout Documentation Audit
+
+Status: complete.
+
+Scope:
+
+- Rechecked current MIR code comments and factory closeout docs after the visitor and MIR decomposition work.
+- Confirmed the authoritative current state remains Phase 9.5 closeout: MIR is complete for its bounded experimental/compiler-developer scope, the Rust probe is temporary, and normal Rust output remains on the HIR backend.
+- Updated `crates/radix/src/mir/mod.rs` so its module comment describes the current layer instead of the historical Phase 1-only boundary.
+
+Validation:
+
+- `cargo test -p radix mir::` passed: 78 tests passed.

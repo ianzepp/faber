@@ -16,14 +16,12 @@ fn main() {
         RadixCommand::Check(args) => {
             tool::cmd_check(CheckCommand { input: args.input, package: args.package, permissive: args.permissive })
         }
-        RadixCommand::Emit(args) => {
-            tool::cmd_emit(EmitCommand {
-                input: args.input,
-                package: args.package,
-                target: args.target.into(),
-                format: args.format,
-                linter: args.linter,
-            })
-        }
+        RadixCommand::Emit(args) => tool::cmd_emit(EmitCommand {
+            input: args.input,
+            package: args.package,
+            target: args.target.into(),
+            format: args.format,
+            linter: args.linter,
+        }),
     }
 }

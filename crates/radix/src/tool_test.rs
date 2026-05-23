@@ -65,13 +65,25 @@ fn cmd_lex_parse_hir_check_emit_succeed_on_valid_file() {
     cmd_hir(&args);
     cmd_mir(&args);
     cmd_check(CheckCommand { input: args.clone(), package: false, permissive: false });
-    cmd_emit(EmitCommand { input: args, package: false, target: crate::codegen::Target::Rust, format: false, linter: false });
+    cmd_emit(EmitCommand {
+        input: args,
+        package: false,
+        target: crate::codegen::Target::Rust,
+        format: false,
+        linter: false,
+    });
 }
 
 #[test]
 fn cmd_emit_supports_faber_target_flag() {
     let file = write_temp_fab("emit-faber", "incipit {}");
-    cmd_emit(EmitCommand { input: vec![file], package: false, target: crate::codegen::Target::Faber, format: false, linter: false });
+    cmd_emit(EmitCommand {
+        input: vec![file],
+        package: false,
+        target: crate::codegen::Target::Faber,
+        format: false,
+        linter: false,
+    });
 }
 
 #[test]

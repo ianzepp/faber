@@ -63,8 +63,7 @@ fn exempla_rust_e2e() {
         };
 
         // Exercise the new --format + --linter path in the e2e harness
-        let mut output = crate::tool::format_generated_code(crate::codegen::Target::Rust, &output)
-            .unwrap_or(output);
+        let mut output = crate::tool::format_generated_code(crate::codegen::Target::Rust, &output).unwrap_or(output);
 
         if let Ok(fixed) = crate::tool::lint_generated_code(crate::codegen::Target::Rust, &output) {
             output = fixed;
@@ -206,8 +205,7 @@ fn exempla_go_e2e() {
         };
 
         // Exercise the new --format + --linter path in the e2e harness
-        let mut output = crate::tool::format_generated_code(crate::codegen::Target::Go, &output)
-            .unwrap_or(output);
+        let mut output = crate::tool::format_generated_code(crate::codegen::Target::Go, &output).unwrap_or(output);
 
         if let Ok(fixed) = crate::tool::lint_generated_code(crate::codegen::Target::Go, &output) {
             output = fixed;
@@ -244,11 +242,7 @@ fn exempla_go_e2e() {
 
         if !go_run.status.success() {
             let stderr = String::from_utf8_lossy(&go_run.stderr).trim().to_owned();
-            results.push(E2eResult {
-                path: file.clone(),
-                passed: false,
-                reason: format!("go run failed: {stderr}"),
-            });
+            results.push(E2eResult { path: file.clone(), passed: false, reason: format!("go run failed: {stderr}") });
             continue;
         }
 
@@ -264,18 +258,11 @@ fn exempla_go_e2e() {
             }
         }
 
-        results.push(E2eResult {
-            path: file.clone(),
-            passed: true,
-            reason: String::new(),
-        });
+        results.push(E2eResult { path: file.clone(), passed: true, reason: String::new() });
     }
 
     let pass_count = results.iter().filter(|r| r.passed).count();
-    eprintln!(
-        "Go e2e exempla: {pass_count}/{} exempla files pass end-to-end",
-        results.len()
-    );
+    eprintln!("Go e2e exempla: {pass_count}/{} exempla files pass end-to-end", results.len());
     eprintln!("Expected-output checks enabled for {expected_count} exempla files");
 
     for fail in results.iter().filter(|r| !r.passed) {

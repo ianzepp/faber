@@ -1,8 +1,10 @@
 //! Middle IR model.
 //!
 //! MIR is the execution-shaped layer below typed HIR and above target emitters.
-//! Phase 1 defines the data model and deterministic rendering only; HIR lowering,
-//! validation, CLI inspection, and backend consumption are intentionally deferred.
+//! The current layer includes a data model, deterministic dump rendering,
+//! HIR-to-MIR lowering for the supported compiler-developer subset, validation,
+//! the `radix mir` inspection command, and a temporary Rust probe. Normal target
+//! codegen still uses the existing HIR-backed backend path.
 
 mod dump;
 mod lower;
