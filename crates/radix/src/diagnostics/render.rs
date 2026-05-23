@@ -108,3 +108,54 @@ pub fn render_plain(diag: &Diagnostic) -> String {
 
     output
 }
+
+/// Render one diagnostic as an expanded deterministic developer record.
+///
+/// Diagnostics mode is intentionally more internal than normal terminal output:
+/// it exposes phase and byte-span ownership so compiler developers can decide
+/// where to start debugging without reverse-engineering a pretty report.
+pub fn render_expanded(diag: &Diagnostic) -> String {
+    let severity = severity_name(diag.severity);
+    let code = diag.code.unwrap_or("uncoded");
+    let file = if diag.file.is_empty() {
+        "<unknown>"
+    } else {
+        diag.file.as_str()
+    };
+    let span = diag
+        .span
+        .map(|span| format!("{}..{}", span.start, span.end))
+        .unwrap_or_else(|| "<none>".to_owned());
+
+    let mut output = format!(
+        "{}[{}] {} {}: {}\nphase: {}\nfile: {}\nspan: {}",
+        severity, code, diag.phase, file, diag.message, diag.phase, file, span
+    );
+
+    if let Some(line) = &diag.source_line {
+        output.push_str(&format!("\nsource: {}", line));
+    }
+
+    if let Some(help) = &diag.help {
+        output.push_str(&format!("\nhelp: {}", help));
+    }
+
+    output
+}
+
+/// Render a batch of diagnostics as expanded records separated by blank lines.
+pub fn render_expanded_diagnostics(diagnostics: &[Diagnostic]) -> String {
+    diagnostics
+        .iter()
+        .map(render_expanded)
+        .collect::<Vec<_>>()
+        .join("\n\n")
+}
+
+fn severity_name(severity: Severity) -> &'static str {
+    match severity {
+        Severity::Error => "error",
+        Severity::Warning => "warning",
+        Severity::Info => "info",
+    }
+}

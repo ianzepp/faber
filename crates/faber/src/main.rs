@@ -17,7 +17,7 @@ mod package;
 
 use clap::{Parser, Subcommand};
 use faber::explain::{self, Registry};
-use radix::tool::{self, BuildCommand, CheckCommand, EmitCommand};
+use radix::tool::{self, BuildCommand, CheckCommand, DiagnosticMode, EmitCommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -179,12 +179,22 @@ fn main() {
                     input: args.input,
                     package: args.package,
                     permissive: args.permissive,
+                    diagnostic_mode: if args.diagnostics {
+                        DiagnosticMode::Diagnostics
+                    } else {
+                        DiagnosticMode::Normal
+                    },
                 });
             } else {
                 tool::cmd_check(CheckCommand {
                     input: args.input,
                     package: args.package,
                     permissive: args.permissive,
+                    diagnostic_mode: if args.diagnostics {
+                        DiagnosticMode::Diagnostics
+                    } else {
+                        DiagnosticMode::Normal
+                    },
                 });
             }
         }
@@ -204,6 +214,11 @@ fn main() {
                     target: args.target.into(),
                     format: args.format,
                     linter: args.linter,
+                    diagnostic_mode: if args.diagnostics {
+                        DiagnosticMode::Diagnostics
+                    } else {
+                        DiagnosticMode::Normal
+                    },
                 });
             } else {
                 tool::cmd_emit(EmitCommand {
@@ -212,6 +227,11 @@ fn main() {
                     target: args.target.into(),
                     format: args.format,
                     linter: args.linter,
+                    diagnostic_mode: if args.diagnostics {
+                        DiagnosticMode::Diagnostics
+                    } else {
+                        DiagnosticMode::Normal
+                    },
                 });
             }
         }

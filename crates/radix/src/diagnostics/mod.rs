@@ -23,5 +23,5 @@ mod diagnostic;
 mod render;
 
 pub use catalog::{lex_spec, parse_spec, semantic_spec, DiagnosticSpec};
-pub use diagnostic::{Diagnostic, Severity};
-pub use render::render_diagnostics;
+pub use diagnostic::{Diagnostic, DiagnosticPhase, Severity};
+pub use render::{render_diagnostics, render_expanded, render_expanded_diagnostics};
