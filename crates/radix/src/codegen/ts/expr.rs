@@ -499,7 +499,8 @@ fn generate_vacua_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
     match expr.ty.map(|ty| types.get(ty)) {
         Some(Type::Map(_, _)) => w.write("new Map()"),
         Some(Type::Set(_)) => w.write("new Set()"),
-        Some(Type::Array(_)) | _ => w.write("[]"),
+        Some(Type::Array(_)) => w.write("[]"),
+        _ => w.write("[]"),
     }
 }
 

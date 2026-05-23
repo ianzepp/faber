@@ -430,7 +430,8 @@ fn generate_vacua_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
     match expr.ty.map(|ty| types.get(ty)) {
         Some(Type::Map(_, _)) => w.write("std::collections::HashMap::new()"),
         Some(Type::Set(_)) => w.write("std::collections::HashSet::new()"),
-        Some(Type::Array(_)) | _ => w.write("Vec::new()"),
+        Some(Type::Array(_)) => w.write("Vec::new()"),
+        _ => w.write("Vec::new()"),
     }
 }
 
