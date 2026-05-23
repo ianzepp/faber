@@ -915,7 +915,7 @@ fn function_builder_hir_visitor_lowers_statement_blocks() {
 }
 
 #[test]
-fn function_builder_expr_lowerer_emits_value_mir() {
+fn function_builder_expr_visitor_emits_value_mir() {
     use crate::hir::{HirBinOp, HirExpr, HirExprKind, HirId, HirLiteral};
     use crate::mir::MirPlaceBase;
     use crate::semantic::{Primitive, TypeTable};

@@ -533,7 +533,7 @@ impl<'a> FunctionBuilder<'a> {
 
     fn lower_assignment_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
         let HirExprKind::Assign(lhs, rhs) = &expr.kind else {
-            return self.lower_expr(expr);
+            return self.lower_expr_value(expr);
         };
 
         let fallback_ty = self.expr_ty(rhs)?;
@@ -567,7 +567,7 @@ impl<'a> FunctionBuilder<'a> {
             }
             HirExprKind::Index(object, index) => {
                 let (mut place, _) = self.lower_assignment_place_with_fallback(object, fallback_ty)?;
-                let index = self.lower_expr(index)?;
+                let index = self.lower_expr_value(index)?;
                 place.projections.push(MirProjection::Index(index));
                 let ty = expr.ty.map(MirType::semantic).unwrap_or(fallback_ty);
                 Some((place, ty))
@@ -582,12 +582,8 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    fn lower_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
-        self.lower_expr_value(expr)
-    }
-
     fn lower_transfer_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
-        let operand = self.lower_expr(expr)?;
+        let operand = self.lower_expr_value(expr)?;
         match operand {
             MirOperand::Constant(_) | MirOperand::Value(_) => {
                 let ty = self.expr_ty(expr)?;
@@ -623,7 +619,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_mori(&mut self, value: &HirExpr, span: Span) -> Option<MirOperand> {
-        let value = self.lower_expr(value)?;
+        let value = self.lower_expr_value(value)?;
         let numquam = MirType::semantic(self.types.primitive(Primitive::Numquam));
         self.append_stmt(MirStmt {
             kind: MirStmtKind::RuntimeCall {
@@ -643,7 +639,7 @@ impl<'a> FunctionBuilder<'a> {
     fn lower_scribe(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut lowered_args = Vec::with_capacity(args.len());
         for arg in args {
-            lowered_args.push(self.lower_expr(arg)?);
+            lowered_args.push(self.lower_expr_value(arg)?);
         }
         let ty = self.expr_ty(expr)?;
         Some(self.runtime_call_value(MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind)), lowered_args, ty, expr.span))
@@ -652,7 +648,7 @@ impl<'a> FunctionBuilder<'a> {
     fn lower_scriptum(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut lowered_args = Vec::with_capacity(args.len());
         for arg in args {
-            lowered_args.push(self.lower_expr(arg)?);
+            lowered_args.push(self.lower_expr_value(arg)?);
         }
         let ty = self.expr_ty(expr)?;
         Some(self.runtime_call_value(MirIntrinsic::FormatString { template }, lowered_args, ty, expr.span))
@@ -666,9 +662,9 @@ impl<'a> FunctionBuilder<'a> {
         fallback: Option<&HirExpr>,
         expr: &HirExpr,
     ) -> Option<MirOperand> {
-        let source = self.lower_expr(source)?;
+        let source = self.lower_expr_value(source)?;
         let fallback = match fallback {
-            Some(fallback) => Some(self.lower_expr(fallback)?),
+            Some(fallback) => Some(self.lower_expr_value(fallback)?),
             None => None,
         };
         let ty = self.expr_ty(expr)?;
@@ -750,7 +746,7 @@ impl<'a> FunctionBuilder<'a> {
                 self.lower_si_to_destination(cond, then_block, else_block.as_ref(), destination, ty, expr.span)
             }
             _ => {
-                let value = self.lower_expr(expr)?;
+                let value = self.lower_expr_value(expr)?;
                 self.assign(destination, value, ty, expr.span);
                 Some(())
             }
@@ -841,7 +837,7 @@ impl<'a> FunctionBuilder<'a> {
                 .push(MirError::unsupported(expr.span, "unary operator without a MIR primitive"));
             return None;
         };
-        let operand = self.lower_expr(operand)?;
+        let operand = self.lower_expr_value(operand)?;
         let ty = self.expr_ty(expr)?;
 
         Some(self.assign_temp(MirValueKind::Unary { op, operand }, ty, expr.span))
@@ -853,16 +849,16 @@ impl<'a> FunctionBuilder<'a> {
                 .push(MirError::unsupported(expr.span, "binary operator without a MIR primitive"));
             return None;
         };
-        let lhs = self.lower_expr(lhs)?;
-        let rhs = self.lower_expr(rhs)?;
+        let lhs = self.lower_expr_value(lhs)?;
+        let rhs = self.lower_expr_value(rhs)?;
         let ty = self.expr_ty(expr)?;
 
         Some(self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, expr.span))
     }
 
     fn lower_coalesce(&mut self, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
-        let value = self.lower_expr(lhs)?;
-        let fallback = self.lower_expr(rhs)?;
+        let value = self.lower_expr_value(lhs)?;
+        let fallback = self.lower_expr_value(rhs)?;
         let ty = self.expr_ty(expr)?;
         Some(self.assign_temp(MirValueKind::Option(MirOptionOp::Coalesce { value, fallback }), ty, expr.span))
     }
@@ -870,7 +866,7 @@ impl<'a> FunctionBuilder<'a> {
     fn lower_tuple(&mut self, items: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut fields = Vec::with_capacity(items.len());
         for item in items {
-            fields.push(MirAggregateItem::Operand(self.lower_expr(item)?));
+            fields.push(MirAggregateItem::Operand(self.lower_expr_value(item)?));
         }
         let ty = self.expr_ty(expr)?;
         Some(self.construct_temp(MirAggregateKind::Tuple, MirAggregateFields::Ordered(fields), ty, expr.span))
@@ -892,10 +888,10 @@ impl<'a> FunctionBuilder<'a> {
         for element in elements {
             match element {
                 HirArrayElement::Expr(expr) => {
-                    fields.push(MirAggregateItem::Operand(self.lower_expr(expr)?));
+                    fields.push(MirAggregateItem::Operand(self.lower_expr_value(expr)?));
                 }
                 HirArrayElement::Spread(expr) => {
-                    fields.push(MirAggregateItem::Spread(self.lower_expr(expr)?));
+                    fields.push(MirAggregateItem::Spread(self.lower_expr_value(expr)?));
                 }
             }
         }
@@ -910,7 +906,7 @@ impl<'a> FunctionBuilder<'a> {
     ) -> Option<MirOperand> {
         let mut named = Vec::with_capacity(fields.len());
         for (name, value) in fields {
-            named.push(MirNamedOperand { name: *name, value: self.lower_expr(value)? });
+            named.push(MirNamedOperand { name: *name, value: self.lower_expr_value(value)? });
         }
         let ty = self.expr_ty(expr)?;
         Some(self.construct_temp(
@@ -1006,7 +1002,7 @@ impl<'a> FunctionBuilder<'a> {
                 }
                 let mut lowered_args = Vec::with_capacity(args.len());
                 for arg in args {
-                    lowered_args.push(self.lower_expr(arg)?);
+                    lowered_args.push(self.lower_expr_value(arg)?);
                 }
                 let fields = self.variant_payload(*def_id, lowered_args);
                 Some(self.construct_temp(
@@ -1056,7 +1052,7 @@ impl<'a> FunctionBuilder<'a> {
                 return None;
             };
             supplied.insert(name);
-            fields.push(MirNamedOperand { name, value: self.lower_expr(value)? });
+            fields.push(MirNamedOperand { name, value: self.lower_expr_value(value)? });
         }
 
         if let Some(defaults) = self.context.structs.get(&def_id).cloned() {
@@ -1065,7 +1061,7 @@ impl<'a> FunctionBuilder<'a> {
                     continue;
                 }
                 if let Some(init) = &field.init {
-                    fields.push(MirNamedOperand { name: field.name, value: self.lower_expr(init)? });
+                    fields.push(MirNamedOperand { name: field.name, value: self.lower_expr_value(init)? });
                 }
             }
         }
@@ -1080,7 +1076,7 @@ impl<'a> FunctionBuilder<'a> {
                 HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
                     MirOperand::Constant(MirConstant::String(*name))
                 }
-                HirObjectKey::Computed(expr) => self.lower_expr(expr)?,
+                HirObjectKey::Computed(expr) => self.lower_expr_value(expr)?,
                 HirObjectKey::Spread(expr) => {
                     self.errors
                         .push(MirError::unsupported(expr.span, "map spread before aggregate MIR lowering"));
@@ -1094,7 +1090,7 @@ impl<'a> FunctionBuilder<'a> {
                 ));
                 return None;
             };
-            fields.push(MirKeyValueOperand { key, value: self.lower_expr(value)? });
+            fields.push(MirKeyValueOperand { key, value: self.lower_expr_value(value)? });
         }
         Some(fields)
     }
@@ -1107,7 +1103,7 @@ impl<'a> FunctionBuilder<'a> {
 
     fn lower_index(&mut self, object: &HirExpr, index: &HirExpr, _expr: &HirExpr) -> Option<MirOperand> {
         let mut place = self.lower_projectable_place(object)?;
-        let index = self.lower_expr(index)?;
+        let index = self.lower_expr_value(index)?;
         place.projections.push(MirProjection::Index(index));
         Some(MirOperand::Place(place))
     }
@@ -1131,13 +1127,13 @@ impl<'a> FunctionBuilder<'a> {
             }
             HirExprKind::Index(object, index) => {
                 let mut place = self.lower_projectable_place(object)?;
-                let index = self.lower_expr(index)?;
+                let index = self.lower_expr_value(index)?;
                 place.projections.push(MirProjection::Index(index));
                 Some(place)
             }
             _ => {
                 let ty = self.expr_ty(expr)?;
-                let operand = self.lower_expr(expr)?;
+                let operand = self.lower_expr_value(expr)?;
                 match operand {
                     MirOperand::Place(place) => Some(place),
                     MirOperand::Temp(temp) => Some(MirPlace::temp(temp)),
@@ -1159,7 +1155,7 @@ impl<'a> FunctionBuilder<'a> {
         chain: &HirOptionalChainKind,
         expr: &HirExpr,
     ) -> Option<MirOperand> {
-        let base = self.lower_expr(object)?;
+        let base = self.lower_expr_value(object)?;
         let link = self.lower_optional_chain_link(base.clone(), chain)?;
         let ty = self.expr_ty(expr)?;
         Some(self.assign_temp(MirValueKind::Option(MirOptionOp::Chain { base, link }), ty, expr.span))
@@ -1172,11 +1168,11 @@ impl<'a> FunctionBuilder<'a> {
     ) -> Option<MirOptionChainLink> {
         match chain {
             HirOptionalChainKind::Member(name) => Some(MirOptionChainLink::Field(*name)),
-            HirOptionalChainKind::Index(index) => Some(MirOptionChainLink::Index(self.lower_expr(index)?)),
+            HirOptionalChainKind::Index(index) => Some(MirOptionChainLink::Index(self.lower_expr_value(index)?)),
             HirOptionalChainKind::Call(args) => {
                 let mut lowered_args = Vec::with_capacity(args.len());
                 for arg in args {
-                    lowered_args.push(self.lower_expr(arg)?);
+                    lowered_args.push(self.lower_expr_value(arg)?);
                 }
                 Some(MirOptionChainLink::Call { callee: MirCallee::Value(base), args: lowered_args })
             }
@@ -1191,7 +1187,7 @@ impl<'a> FunctionBuilder<'a> {
                 Some(MirOperand::Place(place))
             }
             HirNonNullKind::Index(index) => {
-                let index = self.lower_expr(index)?;
+                let index = self.lower_expr_value(index)?;
                 place.projections.push(MirProjection::Index(index));
                 Some(MirOperand::Place(place))
             }
@@ -1206,7 +1202,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_non_null_base(&mut self, object: &HirExpr) -> Option<MirPlace> {
-        let value = self.lower_expr(object)?;
+        let value = self.lower_expr_value(object)?;
         let inner_ty = self
             .option_inner_ty(object)
             .unwrap_or(self.expr_ty(object)?);
@@ -1240,7 +1236,7 @@ impl<'a> FunctionBuilder<'a> {
             if let Some(import) = self.context.provider_imports.get(&def_id).cloned() {
                 let mut lowered_args = Vec::with_capacity(args.len());
                 for arg in args {
-                    lowered_args.push(self.lower_expr(arg)?);
+                    lowered_args.push(self.lower_expr_value(arg)?);
                 }
                 let ty = self.expr_ty(expr)?;
                 let mut module = import.module;
@@ -1263,9 +1259,9 @@ impl<'a> FunctionBuilder<'a> {
         };
 
         let mut lowered_args = Vec::with_capacity(args.len() + 1);
-        lowered_args.push(self.lower_expr(receiver)?);
+        lowered_args.push(self.lower_expr_value(receiver)?);
         for arg in args {
-            lowered_args.push(self.lower_expr(arg)?);
+            lowered_args.push(self.lower_expr_value(arg)?);
         }
         let ty = self.expr_ty(expr)?;
         Some(self.runtime_call_value(MirIntrinsic::Collection(op), lowered_args, ty, expr.span))
@@ -1282,7 +1278,7 @@ impl<'a> FunctionBuilder<'a> {
 
         let mut lowered_args = Vec::with_capacity(args.len());
         for arg in args {
-            let arg = self.lower_expr(arg)?;
+            let arg = self.lower_expr_value(arg)?;
             lowered_args.push(arg);
         }
 
@@ -1414,7 +1410,7 @@ impl<'a> FunctionBuilder<'a> {
             return;
         }
 
-        let Some(condition) = self.lower_expr(cond) else {
+        let Some(condition) = self.lower_expr_value(cond) else {
             return;
         };
 
@@ -1496,7 +1492,7 @@ impl<'a> FunctionBuilder<'a> {
 
         self.handlers
             .push(HandlerContext { error_place: MirPlace::local(handler_local), error_block: handler_id });
-        let Some(condition) = self.lower_expr(cond) else {
+        let Some(condition) = self.lower_expr_value(cond) else {
             self.handlers.pop();
             self.seal_unreachable(handler_id, catch.span);
             self.switch_to(join_id);
@@ -1547,7 +1543,7 @@ impl<'a> FunctionBuilder<'a> {
             return None;
         };
 
-        let condition = self.lower_expr(cond)?;
+        let condition = self.lower_expr_value(cond)?;
         let then_id = self.fresh_block(then_block.span);
         let else_id = self.fresh_block(else_block.span);
         let join_id = self.fresh_block(span);
@@ -1582,7 +1578,7 @@ impl<'a> FunctionBuilder<'a> {
         self.terminate_current(MirTerminatorKind::Goto(cond_id), span);
 
         self.switch_to(cond_id);
-        let Some(condition) = self.lower_expr(cond) else {
+        let Some(condition) = self.lower_expr_value(cond) else {
             self.seal_unreachable(cond_id, cond.span);
             self.switch_to(after_id);
             return;
@@ -2076,7 +2072,7 @@ impl HirVisitor for FunctionBuilder<'_> {
         if matches!(expr.kind, HirExprKind::Assign(_, _)) {
             self.lower_assignment_expr(expr);
         } else {
-            let _ = self.lower_expr(expr);
+            let _ = self.lower_expr_value(expr);
         }
     }
 }
