@@ -1,3 +1,31 @@
+//! Package build orchestration for the user-facing `faber` CLI.
+//!
+//! This module is the boundary between Faber source packages and the generated
+//! Rust crate that Cargo builds. It owns package discovery, manifest policy,
+//! import graph loading, built-in library binding, mounted CLI command analysis,
+//! generated-crate layout, and Cargo invocation. Compiler parsing, semantic
+//! analysis, and backend code generation remain in `radix`; this file decides
+//! how many source files and package-level policies become one compiler input
+//! and one generated build artifact.
+//!
+//! INVARIANTS
+//! ==========
+//! - Package mode is filesystem-backed; stdin cannot represent imports,
+//!   manifests, or generated layouts.
+//! - Generated Rust crates live under `<package>/target/faber/`.
+//! - Cargo artifacts live under sibling `<package>/target/{debug,release}/`.
+//! - Manifest, import, mount, and package-policy errors are diagnostics, not
+//!   silent fallbacks to single-file compilation.
+//! - Built-in library interfaces are parsed as Faber source so package builds
+//!   do not need compiler-only special cases for stdlib APIs.
+//!
+//! COMPATIBILITY
+//! =============
+//! Legacy direct-file and directory inputs are still accepted where possible.
+//! Those paths deliberately share layout discovery with manifest-backed
+//! packages so old examples keep deterministic binary names and target paths
+//! while `faber.toml` remains the preferred package surface.
+
 use crate::library::{LibraryResolveError, LibraryResolver, ResolvedLibraryModule};
 use radix::codegen::rust::TestSelection as RustTestSelection;
 use radix::codegen::Target;

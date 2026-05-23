@@ -6,14 +6,23 @@
 //! front matter, validates cross-entry references, builds deterministic lookup
 //! indexes, and exposes rendering-friendly lookup/search results.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
+//! WHY THIS EXISTS
+//! ===============
+//! The language reference is authored as Markdown so it can be reviewed and
+//! edited like documentation, but the CLI needs a strict, indexed, runtime-free
+//! registry. Keeping parsing and validation here makes the Markdown corpus a
+//! compiled data contract rather than loose help text.
+//!
+//! INVARIANTS
+//! ==========
 //! - Corpus errors are programmer errors: malformed entries fail during
 //!   registry construction instead of producing partial help output.
 //! - Canonical entries and legacy spellings stay distinct so the CLI can teach
 //!   current Faber syntax while still explaining historical or familiar forms.
 //! - Ordered maps are used deliberately to keep list/search output stable for
 //!   tests, docs, and terminal users.
+//! - Non-canonical entries must point at a canonical replacement before they can
+//!   be rendered or returned from search.
 
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};

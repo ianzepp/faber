@@ -4,6 +4,13 @@
 //! developer CLI while preserving compatibility aliases for compiler pipeline
 //! inspection. Package-aware commands route through `crate::package`; direct
 //! compiler operations continue to delegate to `radix::tool`.
+//!
+//! COMMAND POLICY
+//! ==============
+//! `faber` is the user workflow surface. It chooses package mode when paths look
+//! package-shaped, forwards compiler-inspection aliases for continuity with
+//! `radix`, and preserves process semantics for `run` and `test` so scripts can
+//! treat compiled Faber programs like ordinary binaries.
 
 mod library;
 mod package;

@@ -3,6 +3,18 @@
 //! The runtime command should not depend on the source tree being present, so
 //! Markdown entries from `explain/` are converted into a deterministic Rust
 //! slice during the Cargo build.
+//!
+//! This build script deliberately performs only filesystem collection and Rust
+//! literal generation. Corpus parsing, schema validation, and cross-reference
+//! checks stay in `explain.rs`, where tests can exercise the same code path the
+//! CLI uses and diagnostics can name the original Markdown file.
+//!
+//! BUILD CONTRACT
+//! ==============
+//! - Rebuild when the corpus directory or any Markdown entry changes.
+//! - Emit entries in filename order for deterministic binary output.
+//! - Allow a missing corpus directory so partial source distributions still
+//!   compile, but fail hard on unreadable files inside an existing corpus.
 
 use std::env;
 use std::fs;

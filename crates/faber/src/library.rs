@@ -9,6 +9,15 @@
 //! from the repository stdlib today, while the data model already has enough
 //! shape for future package-backed providers without baking Rust runtime
 //! metadata into import resolution.
+//!
+//! INVARIANTS
+//! ==========
+//! - A resolver returns `Ok(None)` when an import does not name a known library
+//!   provider; local package import resolution owns those paths.
+//! - Once a known provider is selected, malformed or missing modules are
+//!   diagnostics with known-module hints.
+//! - Resolved modules always point at `.fab` interface files, keeping stdlib
+//!   APIs on the normal parse/typecheck path.
 
 use std::path::{Path, PathBuf};
 

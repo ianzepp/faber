@@ -5,6 +5,14 @@
 //! reference data model evolves. The format intentionally resembles a compact
 //! manual page: predictable headings, no terminal styling, and deterministic
 //! whitespace for tests and redirected output.
+//!
+//! PRESENTATION POLICY
+//! ===================
+//! Lookup output is prose-oriented and explains one term; search output is dense
+//! and optimized for scanning candidates. Alias lookups render as the canonical
+//! entry because aliases are accepted current vocabulary. Legacy lookups render
+//! a redirect so old syntax remains explainable without being normalized into
+//! current source.
 
 use crate::explain::{Entry, Lookup, SearchHit};
 use std::fmt::Write;
