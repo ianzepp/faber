@@ -913,3 +913,37 @@ fn function_builder_hir_visitor_lowers_statement_blocks() {
         Some(MirTerminatorKind::Return(Some(MirOperand::Temp(MirTempId(0)))))
     ));
 }
+
+#[test]
+fn function_builder_expr_lowerer_emits_value_mir() {
+    use crate::hir::{HirBinOp, HirExpr, HirExprKind, HirId, HirLiteral};
+    use crate::mir::MirPlaceBase;
+    use crate::semantic::{Primitive, TypeTable};
+
+    let types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let span = crate::lexer::Span::default();
+    let mut builder = FunctionBuilder::new(&types);
+    let entry = builder.fresh_block(span);
+    builder.switch_to(entry);
+
+    let lhs = HirExpr { id: HirId(0), kind: HirExprKind::Literal(HirLiteral::Int(1)), ty: Some(numerus), span };
+    let rhs = HirExpr { id: HirId(1), kind: HirExprKind::Literal(HirLiteral::Int(2)), ty: Some(numerus), span };
+    let expr = HirExpr {
+        id: HirId(2),
+        kind: HirExprKind::Binary(HirBinOp::Add, Box::new(lhs), Box::new(rhs)),
+        ty: Some(numerus),
+        span,
+    };
+
+    let operand = <FunctionBuilder as HirExprLoweringVisitor>::lower_expr_value(&mut builder, &expr);
+
+    assert_eq!(operand, Some(MirOperand::Temp(MirTempId(0))));
+    assert!(builder.errors.is_empty());
+    assert_eq!(builder.temps.len(), 1);
+    assert!(matches!(
+        builder.blocks[0].statements.first().map(|stmt| &stmt.kind),
+        Some(MirStmtKind::Assign { place: MirPlace { base: MirPlaceBase::Temp(MirTempId(0)), .. }, value })
+            if matches!(value.kind, MirValueKind::Binary { op: MirBinOp::Add, .. })
+    ));
+}
