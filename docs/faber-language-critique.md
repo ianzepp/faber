@@ -1,18 +1,34 @@
-# Faber Language Critique After Grammar, Exempla, And Rivus
+# Faber Language Critique After Current Grammar And Active Compiler
 
 This note captures a broad language-level critique formed after reading:
 
+- `README.md`
 - `EBNF.md`
+- `explain/`
 - `examples/exempla/`
-- `../faber-archivum/self-hosting/rivus/`
+- the active root Rust workspace under `crates/`, especially `crates/radix`
 
-It is not a compiler bug report and not a verdict against the project. The goal is to name what Faber feels like, where it is strong, where it is weak, and what changed after looking beyond the clean examples into the self-hosted compiler tree.
+It deliberately excludes archived bootstrap and self-hosting material. Those
+trees are not part of this repository's current compiler authority, command
+surface, or CI contract.
+
+This is not a compiler bug report and not a verdict against the project. The
+goal is to name what Faber feels like, where it is strong, where it is weak, and
+what the current language surface implies.
 
 ## Short Version
 
-Faber is more serious and more capable than the clean examples alone suggest. It can clearly support real compiler-shaped software, not just toy snippets.
+Faber is no longer best described as a loose syntax experiment or target-language
+staging notation. The current repo presents a more disciplined language:
 
-But that stronger legitimacy changes the main criticism.
+- type-first declarations,
+- glyph-forward structural operators,
+- Latin behavioral vocabulary,
+- an active Radix compiler,
+- a Faber package/project CLI,
+- a validated MIR inspection branch,
+- a canonical Faber pretty-printer,
+- explicit target-support boundaries.
 
 The central problem is no longer:
 
@@ -20,19 +36,18 @@ The central problem is no longer:
 
 It is now more like:
 
-- can Faber maintain one canonical semantic center as the language, examples, targets, and compiler implementations evolve?
+- can Faber keep a small, canonical semantic center as the grammar, examples,
+  stdlib metadata, MIR, package tooling, and target backends evolve?
 
 That is the heart of the critique.
-
----
 
 ## How Faber Feels Versus Python And Rust
 
 ### One-line comparison
 
-- Python: just say it
-- Rust: prove it
-- Faber: state it clearly
+- Python: just say it.
+- Rust: prove it.
+- Faber: state it clearly.
 
 ### Slightly longer comparison
 
@@ -42,65 +57,73 @@ That is the heart of the critique.
 
 ### Python
 
-Python feels like a language that assumes shared human context. It is happy to lean on convention, library familiarity, and the reader's ability to interpolate intent.
+Python assumes shared human context. It is happy to lean on convention, library
+familiarity, and the reader's ability to infer intent.
 
 Strengths of the Python feel:
 
-- quick to improvise in
-- easy to use for glue code
-- culturally dense and expressive
-- low ceremony for common tasks
+- quick to improvise in,
+- easy to use for glue code,
+- culturally dense and expressive,
+- low ceremony for common tasks.
 
 Weaknesses of the Python feel:
 
-- meaning often depends on convention and context
-- hidden complexity can accumulate quietly
-- readability and correctness are often social achievements rather than syntactic ones
+- meaning often depends on convention and context,
+- hidden complexity can accumulate quietly,
+- readability and correctness are often social achievements rather than
+  syntactic ones.
 
 ### Rust
 
-Rust feels like a language that insists that semantic relationships matter. Ownership, borrowing, mutability, exhaustiveness, trait boundaries, and failure modes are pushed into the surface.
+Rust insists that semantic relationships matter. Ownership, borrowing,
+mutability, exhaustiveness, trait boundaries, and failure modes are pushed into
+the source.
 
 Strengths of the Rust feel:
 
-- hard to ignore important invariants
-- strong semantic pressure
-- explicit relationship to runtime behavior
-- high trust when code is correct
+- hard to ignore important invariants,
+- strong semantic pressure,
+- explicit relationship to runtime behavior,
+- high trust when code is correct.
 
 Weaknesses of the Rust feel:
 
-- symbolic density
-- high authoring friction
-- review burden is substantial even when code is good
+- symbolic density,
+- high authoring friction,
+- substantial review burden even when code is good.
 
 ### Faber
 
-Faber feels like an explicit review layer. The syntax tries to keep semantic categories visible while reducing punctuation noise and target-language-specific ceremony.
+Faber feels like an explicit review layer. The syntax tries to keep semantic
+categories visible while reducing target-language-specific ceremony.
 
 Examples of that feel:
 
-- `si ...`
-- `itera ex ... fixum item { ... }`
-- `custodi { ... }`
+- `si cond ∴ redde value`
+- `itera ex items fixum item { ... }`
 - `tempta ... cape ... demum`
-- `{ ... } ⇢ Type`
+- `Point { x = 10, y = 20 }`
+- `fixum lista<numerus> xs ← vacua`
+- `value ∷ textus`
 - `input ⇒ numerus vel 0`
 
 Strengths of the Faber feel:
 
-- regular structure
-- intent-forward syntax
-- relatively low symbol noise
-- good skimmability in small and medium examples
-- good reviewer-facing rhythm
+- regular structure,
+- intent-forward syntax,
+- relatively low punctuation noise,
+- good skimmability in small and medium examples,
+- good reviewer-facing rhythm,
+- clear separation between runtime conversion (`⇒`) and static type ascription
+  (`∷`).
 
 Weaknesses of the Faber feel:
 
-- less fluid than Python
-- less semantically forceful than Rust
-- can sit in an awkward middle layer
-- can look cleaner than the downstream reality actually is
+- less fluid than Python,
+- less semantically forceful than Rust,
+- can sit in an awkward middle layer,
+- can look cleaner than the downstream target/runtime reality actually is.
 
 ### The clearest summary
 
@@ -108,164 +131,73 @@ Weaknesses of the Faber feel:
 - Rust: I can prove what this does.
 - Faber: I can see what this means.
 
-That is the best concise description of the difference in feel.
+That remains the best concise description of the difference in feel.
 
----
+## What Has Improved In The Current Surface
 
-## Early Critique Before Looking At Rivus
+### 1. The construction/ascription split is much cleaner
 
-Before reading `../faber-archivum/self-hosting/rivus/`, the main concerns were:
+Older critiques of Faber had to contend with `⇢` doing too many jobs. The
+current language no longer has that problem in the same form.
 
-1. Faber might work best only in curated examples.
-2. The Latin vocabulary might be more ornamental than necessary.
-3. The language might be too semantically gentle for systems-language targets.
-4. There might be too much alias and syntax-surface pressure.
-5. The language might be strongest as a staging layer, but weak as a large-scale working language.
+The current split is clearer:
 
-Reading Rivus changed some of that and strengthened some of it.
+- typed construction uses the type before braces: `Point { x = 10 }`,
+- empty collections use typed declaration plus `vacua`,
+- static type ascription uses `∷`,
+- runtime conversion uses `⇒`.
 
----
+That removes a major source of visual and semantic confusion. In particular,
+static type ascription no longer fights the leftward binding arrow with a
+rightward cast arrow, and ordinary construction no longer overloads the same
+surface.
 
-## What Changed After Looking At Rivus
+### 2. Canonical forms are sharper
 
-### Criticisms that got weaker
+The current docs are more direct about canon:
 
-#### 1. "Maybe Faber only works in toy examples"
+- `∴` is canonical, while `ergo` remains accepted.
+- `∷` is the only postfix static type-ascription operator.
+- Old aliases such as `qua`, `innatum`, and `novum` are retired as conversion or
+  construction syntax.
+- `sponte` is a post-name declaration marker, not a nullable type marker.
+- Nullable value types use `T ∪ nihil`.
+- `ignotum` is an unknown/escape type, not nullability.
+- Package builds are Rust-backed today; other targets are file-emission
+  surfaces unless documented otherwise.
 
-This got weaker.
+This is a healthier language posture. It is not just adding features; it is also
+cutting old ambiguity.
 
-`../faber-archivum/self-hosting/rivus/` is a real compiler-shaped codebase written in Faber. It has:
+### 3. The active authority surface is clearer
 
-- AST definitions
-- lexer and parser phases
-- parser mutual-recursion control via a pactum seam
-- semantic analysis
-- module resolution
-- multiple codegen targets
-- validation surfaces
+The active compiler authority is Radix in the root Rust workspace. The user tool
+is Faber. The stdlib source is `stdlib/norma`. Runtime support lives in
+`crates/norma`. The grammar and explain corpus have clearer roles.
 
-That means Faber can carry substantial modular software, not just polished demo code.
+That matters because small languages are vulnerable to authority drift. Faber is
+in better shape when a reader can answer:
 
-#### 2. "The Latin is mostly decorative"
+- what is the grammar?
+- what is user-facing documentation?
+- what is compiler implementation?
+- what is package tooling?
+- what is historical material?
 
-This also got weaker.
+The current repo answers those questions more cleanly than older project shapes.
 
-The Latin still imposes a learning cost, but once the language is used across a real compiler tree, the vocabulary starts to feel less like branding and more like semantic namespace partitioning.
+### 4. MIR gives the language a better future execution story
 
-Examples from Rivus:
+The validated MIR inspection branch does not make MIR the production backend,
+and the Rust MIR probe is intentionally temporary. Still, MIR is important
+language infrastructure.
 
-- `sententia`
-- `expressia`
-- `resolvitor`
-- `morphologia`
-- `discretio`
-- `cura`
-- `custodi`
+It gives Faber a place to make control flow, storage, runtime calls, aggregate
+construction, nullable operations, and target-neutral execution shape explicit
+below typed HIR. That reduces pressure on target backends to independently
+rediscover language semantics.
 
-At that point the vocabulary is doing real conceptual work.
-
-The cost remains real, but the benefit is also more real than it first appears.
-
-### Criticisms that got stronger
-
-#### 1. Alias and surface sprawl
-
-This got much stronger.
-
-The grammar, examples, and compiler trees together show a language with many overlapping surfaces:
-
-- word forms and symbolic forms
-- old and new naming directions
-- user-facing syntax plus CLI annotation language plus stdlib morphology language
-- target-portable ideals plus target-specific capability realities
-- multiple compilers with different degrees of authority
-
-Any one of those is manageable. Taken together, they create a real governance problem.
-
-The threat is not that the grammar is unreadable. The threat is that the language becomes too easy to spread semantically across:
-
-- aliases
-- historical forms
-- examples that teach older subsets
-- different compiler truth surfaces
-- target-specific capability envelopes
-
-This is the strongest language-level criticism.
-
-#### 2. Faber can make hard programs look cleaner than they are
-
-This got stronger too.
-
-Originally this criticism mostly meant: Faber may hide the harshness of Rust, Zig, or other target-level semantics.
-
-After Rivus, there is a second layer:
-
-Faber can also make compiler architecture itself look calmer and more settled than it is.
-
-Rivus has real complexity:
-
-- giant files
-- capability matrices
-- manual host shims
-- partial target stories
-- evolving syntax eras
-- target divergence machinery
-
-The code is often readable, but readability can create a false impression of global simplicity.
-
-That is not a criticism of readability. It is a warning that readability can mask real architectural burden.
-
-#### 3. Target divergence is more serious than it first appears
-
-This got much stronger.
-
-The living language is not just one grammar. It is really something like:
-
-- a formal grammar in `EBNF.md`
-- a worked example corpus in `examples/exempla/`
-- a primary active compiler in `radix/crates/radix`
-- a self-hosted experimental compiler in `../faber-archivum/self-hosting/rivus`
-- multiple target backends with uneven support
-- capability validation and target policy surfaces
-
-That means portability is not merely a parsing or codegen problem. It becomes a governance problem.
-
-A language can claim one syntax and still have multiple lived truths:
-
-- what the grammar allows
-n- what the examples normalize
-- what the active compiler guarantees
-- what the experimental compiler still supports
-- what each target can honestly carry
-
-Faber is close enough to that line that this must be treated as a core design risk.
-
----
-
-## New Main Criticism: Semantic Governance
-
-This is the biggest update after reading Rivus.
-
-Faber's hardest problem is not syntax beauty and not expressiveness. It is semantic governance.
-
-The key questions are:
-
-- what syntax is canonical versus merely tolerated?
-- which compiler defines the public truth?
-- which examples are current and which are historical residue?
-- which target promises are real and which are aspirational?
-- which aliases stay and which should be cut?
-- which surfaces are pedagogical and which are contractual?
-
-A mainstream language gets some help here from ecosystem gravity. Faber does not.
-
-So the danger is not generic "custom language risk." It is more specific:
-
-Faber needs unusually strong canon discipline to avoid becoming a beautiful but drifting semantic federation.
-
-That is the new center of the critique.
-
----
+This strengthens Faber's claim to be more than a pretty source-to-Rust surface.
 
 ## Core Weaknesses In Faber
 
@@ -273,185 +205,205 @@ That is the new center of the critique.
 
 Faber is very good at making semantic roles visible.
 
-But that visibility can come at the cost of sharpness.
+But visibility can come at the cost of sharpness. A Faber program can look
+settled while still hiding important downstream facts:
 
-A Faber program can look semantically settled while still hiding important downstream facts:
+- runtime cost,
+- ownership consequences,
+- representation details,
+- target-specific semantics,
+- performance-sensitive structure,
+- runtime/HAL availability.
 
-- runtime cost
-- ownership consequences
-- representation details
-- target-specific semantics
-- performance-sensitive structure
-
-This is especially important when the value proposition points toward systems-language targets.
+This is especially important when the value proposition points toward executable
+programs, CLI tools, and eventually WASM or lower-level targets.
 
 ### 2. It is weaker at expressing concrete downstream truth than Rust
 
 Rust forces many realities into the source:
 
-- ownership
-- borrowing
-- exact failure forms
-- representation and trait boundaries
-- exhaustiveness and mutability distinctions
+- ownership,
+- borrowing,
+- exact failure forms,
+- representation and trait boundaries,
+- exhaustiveness and mutability distinctions.
 
-Faber can describe intent very well, but it does not force those truths to stay equally visible.
+Faber can describe intent very well, but it does not force all of those truths
+to stay equally visible.
 
-That makes it a better review layer in one sense, but a weaker semantic pressure system in another.
+That makes it a better review layer in one sense, but a weaker semantic pressure
+system in another.
 
 ### 3. It lives in an awkward middle layer
 
 Faber is:
 
-- less fluid than Python
-- less semantically forceful than Rust
+- less fluid than Python,
+- less semantically forceful than Rust.
 
-That gives it a strange tradeoff profile.
+That gives it a strange tradeoff profile. It can be too formal for quick
+scripting and too gentle for low-level truth.
 
-It can be too formal for quick scripting and too gentle for low-level truth.
-
-That does not make it useless. It just means its best role is narrower than a normal general-purpose language.
+That does not make it useless. It means its best role is narrower than a normal
+general-purpose language: clear CLI tools, typed transformation logic, package
+entrypoints, compiler-shaped code, and backend-aware programs where reviewable
+source is valuable.
 
 ### 4. The Latin vocabulary is both asset and tax
 
-The Latin does useful work as a semantic namespace, but it still costs real human adaptation effort.
+The Latin does useful work as a semantic namespace, but it still costs real
+human adaptation effort.
 
-Not every keyword carries equal intuitive value on first encounter. Some are excellent. Some are merely consistent.
+Some terms buy real clarity:
 
-So the fairest version is:
+- `functio`,
+- `genus`,
+- `pactum`,
+- `redde`,
+- `cape`,
+- `discerne`,
+- `custodi`.
+
+Others are learnable mainly by project convention. The fairest version is:
 
 - the Latin is not merely ornamental,
 - but some of its cognitive cost does not directly purchase semantic precision.
 
-### 5. The language wants regularity but still carries too much parallel surface
+### 5. The language still needs strong anti-sprawl discipline
 
-This includes things like:
+Faber has made progress by retiring old aliases and narrowing canonical syntax.
+That discipline needs to continue.
 
-- `⇢`, `qua`, `innatum`, `novum`
-- `⇒` plus named conversion shorthands
-- symbolic versus wordy variants
-- alternative range notations
-- compact one-line sugar versus block forms
+Surfaces to watch:
 
-A language optimized for learnability and regularity should be deeply suspicious of redundant parallel forms.
+- symbolic and word aliases (`∴`/`ergo`),
+- CLI annotations versus ordinary source syntax,
+- stdlib morphology metadata versus user syntax,
+- target-specific `@ verte` translation metadata,
+- package/build behavior versus single-file compiler behavior,
+- target support claims.
 
-Every tolerated alternative weakens the canonical center.
+A language optimized for learnability and regularity should be suspicious of
+parallel forms. Every tolerated alternative weakens the canonical center unless
+it has a durable reason to exist.
 
-### 6. Some constructs carry too much semantic load
+### 6. Target transparency is incomplete in practice
 
-`⇢` is the clearest example.
+The docs are honest that not all targets support all features. That honesty is
+good.
 
-Across docs and examples it is doing several jobs:
+But it still means Faber is not one simple portable thing. It is a source
+language with several backend realities:
 
-- compile-time cast
-- native collection construction
-- genus or struct instantiation
-- territory inherited from earlier terms like `innatum` and `novum`
+- Rust is the primary executable/package backend.
+- Faber is a canonical pretty-printer and round-trip target.
+- TypeScript and Go currently support file emission, not full package builds.
+- MIR is validated and inspectable, but not the default production backend.
+- Future WASM work remains a plan, not current support.
 
-That is elegant at one level, but it also risks becoming a semantic junk drawer.
+That is normal in language projects, but it weakens any claim that the language
+is one coherent cross-target truth in practice.
 
-If one surface operator does too many conceptually different things, local clarity suffers.
+### 7. Canon drift is especially dangerous for Faber
 
-### 7. Target transparency is incomplete in practice
+Because Faber's value depends heavily on readability, explicitness, and
+regularity, stale examples and mixed authority surfaces are especially damaging.
 
-The docs are honest that not all targets support all features. That honesty is good.
+If examples, grammar, explain docs, stdlib metadata, and compiler behavior drift
+apart, the project loses exactly the thing it is trying to build:
 
-But it still means the language is not one simple stable portable thing. It is a surface language with multiple backend realities.
+- machine-legible canon,
+- human-reviewable semantic clarity,
+- stable cross-surface understanding.
 
-That is common in language projects, but it weakens the strength of any claim that the language itself is one coherent cross-target truth.
+The project has made real cleanup progress, but that also raises the bar:
+current docs must stay current, and historical docs must stay clearly
+historical.
 
-### 8. Canon drift is more dangerous for Faber than for mainstream languages
+### 8. It may under-serve messy reality programming
 
-Because the language's value depends heavily on readability, explicitness, and regularity, stale examples and mixed authority surfaces are especially damaging.
-
-If examples, grammar, and compilers drift apart, the project loses exactly the thing it is trying to build:
-
-- machine-legible canon
-- human-reviewable semantic clarity
-- stable cross-surface understanding
-
-### 9. It may under-serve messy reality programming
-
-Python thrives in glue code and irregular practical seams.
-Rust thrives in high-constraint, high-trust engineering.
+Python thrives in glue code and irregular practical seams. Rust thrives in
+high-constraint, high-trust engineering.
 
 Faber may be least comfortable when the work is:
 
-- messy
-- target-specific
-- stateful in ugly ways
-- full of host interop detail
-- full of practical shortcuts that are hard to cleanly normalize
+- messy,
+- target-specific,
+- stateful in ugly ways,
+- full of host interop detail,
+- full of practical shortcuts that are hard to normalize cleanly.
 
-That does not mean it cannot express such code. It means the language may not be in its natural habitat there.
+That does not mean Faber cannot express such code. It means the language may not
+be in its natural habitat there.
 
----
+## What The Current Project Reveals About Faber's Design Philosophy
 
-## What Rivus Reveals About Faber's Design Philosophy
-
-Rivus makes a few things clearer.
-
-### 1. Faber is not merely a syntax experiment
-
-Rivus proves that the language can carry architectural structure. That is important.
-
-### 2. Faber is at its strongest as a semantic staging language
+### 1. Faber is strongest as reviewed semantic source
 
 The language feels best when used to describe:
 
-- control flow
-- transformation logic
-- moderate abstraction
-- compiler and analysis structure
-- reviewed intent before target-specific lowering
+- control flow,
+- transformation logic,
+- moderate abstraction,
+- compiler and analysis structure,
+- package entrypoints,
+- intent before target-specific lowering.
 
-### 3. The language project is broader than the grammar
+### 2. Faber is a governed language platform, not just a grammar
 
 The real language includes:
 
-- grammar
-- examples
-- compiler implementations
-- codegen conventions
-- capability validation
-- target support policy
+- grammar,
+- examples,
+- explain docs,
+- active compiler behavior,
+- stdlib metadata,
+- package tooling,
+- target support policy,
+- MIR and future execution planning.
 
-That makes it less like a pure notation and more like a governed language platform.
+That makes it less like a pure notation and more like a governed platform.
 
-### 4. Self-hosting raises the stakes
+### 3. The current active/historical split is a strength
 
-Once the language hosts a real compiler, the burden of authority becomes much higher.
+The README is right to separate current workspace authority from archived
+historical material. That split should remain strict.
 
-It is no longer enough for the syntax to be elegant. The project must decide what counts as living truth.
-
----
+Historical code can inform design judgment, but it should not define current
+language truth.
 
 ## Revised Position
 
 ### Earlier position
 
-Faber seemed elegant, interesting, and perhaps too gentle, too alias-prone, or too middle-layer to carry large-scale reality comfortably.
+Faber seemed elegant, interesting, and perhaps too gentle, too alias-prone, or
+too middle-layer to carry large-scale reality comfortably.
 
-### Revised position
+### Current position
 
-Faber is more substantial and more legitimate as a real language than that earlier framing gave it credit for.
+Faber is more substantial and more disciplined than that framing gave it credit
+for.
+
+The current language has improved by cutting overloaded construction/ascription
+syntax, sharpening canonical forms, clarifying compiler authority, and adding a
+validated MIR inspection layer.
 
 But that stronger legitimacy shifts the main danger.
 
-The real danger is no longer that it cannot scale. The real danger is that scaling it requires unusually strict control over:
+The real danger is no longer that Faber cannot express enough. The real danger
+is that scaling it requires unusually strict control over:
 
-- semantic scope
-- canonical forms
-- active authority surfaces
-- example freshness
-- target honesty
-- implementation truth
+- semantic scope,
+- canonical forms,
+- active authority surfaces,
+- example freshness,
+- target honesty,
+- implementation truth.
 
 In short:
 
-Faber is more real than a toy language critique would suggest, but exactly because it is more real, its main problem becomes governance rather than syntax.
-
----
+Faber is more real than a toy language critique would suggest, but exactly
+because it is more real, its main problem becomes governance rather than syntax.
 
 ## Condensed Critique
 
@@ -459,19 +411,22 @@ Faber is more real than a toy language critique would suggest, but exactly becau
 
 - It is only good for toy examples.
 - The Latin is mostly decorative.
+- The type/construction surface is inherently confused.
 
 ### Criticisms to strengthen
 
-- The language carries too many overlapping surfaces.
+- The language must aggressively avoid overlapping surfaces.
 - It can make complexity look tamer than it is.
 - Portability is less unified in practice than the surface language implies.
+- Canon drift is uniquely damaging because Faber's value depends on clarity.
 
-### Main new criticism
+### Main criticism
 
-The central challenge is semantic governance, not syntax design.
-
----
+The central challenge is semantic governance, not syntax beauty.
 
 ## Best One-Sentence Version
 
-Faber is more legitimate as a substantial language than the clean examples alone suggest, but that legitimacy shifts the main danger from "can it express enough?" to "can it keep one canonical truth as the language and its compilers evolve?"
+Faber is a serious review-oriented language surface with a clearer current
+canon than before, but its long-term strength depends on keeping one disciplined
+semantic truth as syntax, tooling, stdlib metadata, MIR, and target backends
+evolve.
