@@ -1,11 +1,22 @@
 # Closure Ergo Syntax Factory Plan
 
-**Status**: planned, pending design review
+**Status**: complete
 **Created**: 2026-05-22
+**Completed**: 2026-05-23
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/closure-ergo-syntax/`
-**Mode**: language surface redesign / parser and type inference follow-up
+**Mode**: language surface redesign / parser and type inference cleanup
 **Commit Policy**: Commit after each completed phase and validation gate pass
+
+## Outcome
+
+This factory is done. The implemented language surface is:
+
+- `∴` is the canonical symbolic spelling for compact single-statement tails, while `ergo` remains accepted as the Latin alias.
+- Compact closure expressions no longer require `clausura`; examples use `_ item ∴ expr`, `Type item ∴ expr`, or parenthesized multi-parameter forms.
+- Multi-statement compact closures use `∴ fac { ... }`, with optional `cape`; postfix `fac ... dum` remains rejected in closure bodies.
+- Legacy `clausura ... : ...` remains accepted as compatibility syntax, but generated Faber output prefers compact closure syntax.
+- Closure syntax parses explicit `⇥` error-channel annotations. Full closure error-channel semantics remain a separate follow-up; this factory deliberately stopped at syntax, lowering compatibility, contextual typing, docs, examples, and validation.
 
 ## Interpreted Problem
 
@@ -25,17 +36,23 @@ The redesign should make short closures short while preserving Faber's larger gr
 - multi-statement closure bodies use an explicit `fac { ... }` block,
 - no new closure-only body marker is introduced if an existing language concept can carry the meaning.
 
-## Current Reality
+## Implemented Reality
 
-The current grammar describes closure expressions as:
+The grammar now describes closure expressions as compact or legacy forms:
 
 ```ebnf
-clausuraExpr   := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
+clausuraExpr   := compactClausuraExpr | legacyClausuraExpr
+compactClausuraExpr := clausuraSignature ergoToken (expression | closureFacBlock)
+clausuraSignature := (clausuraParam | '(' clausuraParams? ')') ('→' typeAnnotation alternateExitClause?)?
+closureFacBlock := 'fac' blockStmt catchClause?
+legacyClausuraExpr := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
 clausuraParams := clausuraParam (',' clausuraParam)*
 clausuraParam  := typeAnnotation IDENTIFIER
 ```
 
-The grammar also allows `_` as a type annotation generally, so `clausura _ user: ...` parses today. Simple receiver-method cases such as list `map` and `filtrata` already use expected callable context for `_` closure parameters; implementation should inventory any remaining inference gaps before assuming explicit parameter types are still required.
+The grammar allows `_` as a type annotation generally, so compact inferred
+parameters use `_ user ∴ ...`. Simple receiver-method cases such as list `map`
+and `filtrata` use expected callable context for `_` closure parameters.
 
 The stdlib list filter signature is:
 
@@ -45,7 +62,7 @@ functio filtrata((T) → bivalens pred) → lista<T>
 
 That target shape is the right semantic model: a predicate closure over `T` returns `bivalens`.
 
-## Proposed Design
+## Implemented Design
 
 ### Ergo Symbol
 
@@ -100,7 +117,7 @@ Formatters should prefer keeping short `∴` tails on one line. If the tail is c
 
 ### Closure Forms
 
-Short closures should not need the `clausura` keyword.
+Short closures do not need the `clausura` keyword.
 
 Inferred parameter type:
 
@@ -114,7 +131,7 @@ Explicit parameter type:
 users.filtrata(User user ∴ non user.activus)
 ```
 
-Multiple parameters should use parentheses to avoid ambiguity:
+Multiple parameters use parentheses to avoid ambiguity:
 
 ```fab
 numeri.compone((_ a, _ b) ∴ a + b)
@@ -193,7 +210,7 @@ textus s → numerus ⇥ ParseError ∴ fac {
 
 Do not introduce a separate closure-specific error syntax.
 
-## Break Boundary
+## Delivered Boundary
 
 ### In Scope
 
@@ -211,14 +228,15 @@ Do not introduce a separate closure-specific error syntax.
 - Changing function declaration syntax.
 - Changing callable type syntax.
 - Inventing a new error-channel operator.
-- Completing closure error-channel semantics before the syntax phases are stable.
+- Completing closure error-channel semantics beyond parsed `⇥` syntax.
 - Removing `ergo` text spelling.
 - Deciding broader keyword contextualization beyond syntax required here.
 - Reworking stdlib method names or signatures except tests/examples that exercise closures.
 
 ## Compatibility Stance
 
-The current `clausura ... : ...` syntax should remain accepted during the first implementation phase unless the design review explicitly chooses a hard break.
+The current `clausura ... : ...` syntax remains accepted as compatibility
+syntax. The Faber printer prefers the compact closure form.
 
 The preferred migration shape is:
 
@@ -260,28 +278,29 @@ User user ∴ fac {
 }
 ```
 
-If `clausura` remains as a compatibility spelling, generated Faber output should eventually prefer the new syntax after the migration period.
+Generated Faber output prefers the new syntax while preserving input
+compatibility for `clausura`.
 
 ## Stage Graph
 
-| Phase | Name | Goal | Checkpoint |
-|-------|------|------|------------|
-| 0 | Design review | Confirm `∴`/`ergo`, single-statement tails, closure forms, and compatibility stance. | Plan approved or revised before implementation. |
-| 1 | Grammar inventory | Inspect parser sites for `ergo`, closure parsing, and closure codegen. | Ledger records exact edit sites and ambiguity risks. |
-| 2 | Ergo symbol | Lex and parse `∴` anywhere `ergo` is accepted today, with matching single-statement behavior. | Existing `ergo` tests pass; new `∴` tests cover valid symbolic tails. |
-| 3 | Compact closure parser | Parse inferred, typed, multi-param, explicit-signature, and `∴ fac { ... }` block closure forms. | Parser tests prove the new forms and preserve old compatibility forms. |
-| 4 | Contextual closure typing audit | Verify expected callable signatures still flow into closure checking, especially method-call arguments. | Existing `_` closure inference remains green; any discovered gaps are fixed or recorded. |
-| 5 | Codegen and printer | Update target codegen as needed and make Faber output prefer the new syntax. | Rust/TS/Go/Faber closure tests pass for expression and `fac` block forms. |
-| 6 | Docs and examples | Update EBNF, explain docs, stdlib examples, and migration notes. | Docs no longer teach `clausura ... : ...` as preferred inline syntax. |
-| 7 | Error-channel closure follow-up | Validate fallible closure signatures and expected fallible callable contexts after syntax is stable. | Positive and negative tests cover `→ ... ⇥ ...` closure signatures, or a follow-up plan records remaining semantic work. |
-| 8 | Validation | Run full repository checks. | `./scripta/ci` passes. |
+| Phase | Name | Status | Result |
+|-------|------|--------|--------|
+| 0 | Design review | Done | `∴` is canonical, `ergo` remains accepted, compact closures use type-first parameters, and legacy `clausura` remains compatible. |
+| 1 | Grammar inventory | Done | Ledger records lexer, parser, AST, lowering, typecheck, printer, docs, and example edit sites. |
+| 2 | Ergo symbol | Done | `∴` lexes to `Ergo` and works anywhere `ergo` is accepted. |
+| 3 | Compact closure parser | Done | Parser tests cover inferred, typed, multi-param, explicit-signature, expression-body, and `∴ fac { ... }` forms. |
+| 4 | Contextual closure typing audit | Done | Method-call closure arguments keep expected callable signatures for `_` parameters. |
+| 5 | Codegen and printer | Done | Faber output prefers compact closure syntax. |
+| 6 | Docs and examples | Done | `EBNF.md`, explain docs, and examples teach compact syntax as canonical. |
+| 7 | Error-channel closure follow-up | Done for this factory | `⇥` syntax is parsed and recorded; full error-channel typing remains a separate semantic follow-up. |
+| 8 | Validation | Done | Validation commands are recorded in the ledger. |
 
-## Review Questions
+## Resolved Review Questions
 
-- Should `∴` be an exact alias for `ergo`, or should generated Faber prefer `∴` as canonical?
-- Should old `clausura` syntax remain indefinitely, warn, or be removed after a migration window?
-- Are unparenthesized typed closures with multiple parameters ever allowed, or should multi-param closures always require parentheses?
-- Does `si cond ∴ redde x` become preferred over `si cond ergo redde x`, or is `∴` mainly for closure-heavy code?
+- `∴` is canonical in generated Faber output; `ergo` is accepted as an alias.
+- Old `clausura` syntax remains accepted as compatibility syntax.
+- Multi-parameter compact closures require parentheses.
+- `si cond ∴ redde x` is preferred in canonical examples, while `ergo` remains valid.
 
 ## Validation Targets
 
@@ -330,4 +349,4 @@ This keeps `fac ... dum` out of closure bodies unless a later design review expl
 
 ---
 
-*This plan records the current design direction only. Implementation should not begin until the review questions are resolved enough to prevent grammar churn.*
+*This plan is retained as the completed factory record. Future work on full closure error-channel typing should start from a new semantic follow-up plan, not by reopening this syntax factory.*

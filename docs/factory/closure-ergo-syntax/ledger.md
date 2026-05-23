@@ -1,5 +1,12 @@
 # Closure Ergo Syntax Ledger
 
+**Status**: complete
+
+This ledger records the completed syntax factory. The only remaining item is a
+separate semantic follow-up for full closure error-channel typing; the closure
+syntax, parser, compatibility path, contextual typing audit, printer output,
+docs, examples, and validation for this factory are complete.
+
 ## Implementation Notes
 
 - `∴` lexes to the existing `Ergo` token, so all current single-statement `ergo` tail sites accept the symbolic spelling without a second parser path.
