@@ -9,6 +9,7 @@ mod lower;
 mod nodes;
 mod rust_probe;
 mod validate;
+pub mod visit;
 
 pub use dump::dump_program;
 pub use lower::{dump_analyzed_unit, lower_analyzed_unit, MirError};

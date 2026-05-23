@@ -1,5 +1,6 @@
 use crate::hir::DefId;
 use crate::lexer::{Span, Symbol};
+use crate::mir::visit::{terminator_successors, MirVisitor};
 use crate::mir::*;
 use crate::semantic::{Primitive, Type, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -69,6 +70,27 @@ struct FunctionScope<'a> {
     values: FxHashMap<MirValueId, MirType>,
 }
 
+struct DuplicateFunctionFinder {
+    ids: FxHashSet<MirFunctionId>,
+    duplicates: Vec<(MirFunctionId, Span)>,
+}
+
+impl DuplicateFunctionFinder {
+    fn find(program: &MirProgram) -> Vec<(MirFunctionId, Span)> {
+        let mut finder = Self { ids: FxHashSet::default(), duplicates: Vec::new() };
+        finder.visit_program(program);
+        finder.duplicates
+    }
+}
+
+impl MirVisitor for DuplicateFunctionFinder {
+    fn visit_function(&mut self, function: &MirFunction) {
+        if !self.ids.insert(function.id) {
+            self.duplicates.push((function.id, function.span));
+        }
+    }
+}
+
 fn signature_from_function(function: &MirFunction) -> MirFunctionSignature {
     MirFunctionSignature {
         params: function.params.iter().map(|param| param.ty).collect(),
@@ -79,14 +101,15 @@ fn signature_from_function(function: &MirFunction) -> MirFunctionSignature {
 
 impl Validator<'_, '_> {
     fn validate_program(&mut self) {
-        let mut function_ids = FxHashSet::default();
-        let mut functions_by_id = FxHashMap::default();
-        for function in &self.program.functions {
-            if !function_ids.insert(function.id) {
-                self.error(function.span, format!("duplicate MIR function id f{}", function.id.0));
-            }
-            functions_by_id.insert(function.id, function);
+        for (id, span) in DuplicateFunctionFinder::find(self.program) {
+            self.error(span, format!("duplicate MIR function id f{}", id.0));
         }
+        let functions_by_id = self
+            .program
+            .functions
+            .iter()
+            .map(|function| (function.id, function))
+            .collect::<FxHashMap<_, _>>();
 
         for function in &self.program.functions {
             self.validate_function(function, functions_by_id.clone());
@@ -210,6 +233,10 @@ impl Validator<'_, '_> {
     }
 
     fn validate_terminator(&mut self, scope: &mut FunctionScope<'_>, terminator: &MirTerminator) {
+        for target in terminator_successors(&terminator.kind) {
+            self.require_block(scope, target, terminator.span);
+        }
+
         match &terminator.kind {
             MirTerminatorKind::Return(None) => {
                 if !self.is_vacuum(scope.function.return_ty) {
@@ -236,9 +263,7 @@ impl Validator<'_, '_> {
                     self.require_assignable(value_ty, error_ty, terminator.span, "return_error type mismatch");
                 }
             }
-            MirTerminatorKind::TryCall { destination, callee, args, ok_block, error_place, error_block } => {
-                self.require_block(scope, *ok_block, terminator.span);
-                self.require_block(scope, *error_block, terminator.span);
+            MirTerminatorKind::TryCall { destination, callee, args, error_place, .. } => {
                 let sig = self.validate_callee(scope, callee, terminator.span);
                 self.validate_call_args(scope, sig.as_ref(), args, terminator.span);
                 self.validate_optional_destination(
@@ -266,10 +291,8 @@ impl Validator<'_, '_> {
                     _ => {}
                 }
             }
-            MirTerminatorKind::Goto(target) => self.require_block(scope, *target, terminator.span),
-            MirTerminatorKind::Branch { condition, then_block, else_block } => {
-                self.require_block(scope, *then_block, terminator.span);
-                self.require_block(scope, *else_block, terminator.span);
+            MirTerminatorKind::Goto(_) => {}
+            MirTerminatorKind::Branch { condition, .. } => {
                 if let Some(condition_ty) = self.validate_operand(scope, condition, terminator.span) {
                     self.require_exact(
                         condition_ty,
@@ -279,12 +302,8 @@ impl Validator<'_, '_> {
                     );
                 }
             }
-            MirTerminatorKind::Switch { value, cases, default } => {
+            MirTerminatorKind::Switch { value, .. } => {
                 self.validate_operand(scope, value, terminator.span);
-                self.require_block(scope, *default, terminator.span);
-                for case in cases {
-                    self.require_block(scope, case.target, terminator.span);
-                }
             }
             MirTerminatorKind::Unreachable => {}
         }
