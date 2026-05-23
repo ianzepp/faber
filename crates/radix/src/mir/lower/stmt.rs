@@ -1,4 +1,5 @@
 use super::*;
+use crate::hir::visit::HirVisitor;
 
 impl HirVisitor for FunctionBuilder<'_> {
     fn visit_block(&mut self, block: &HirBlock) {
