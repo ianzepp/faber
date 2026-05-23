@@ -1,9 +1,10 @@
 use super::stmt;
 use super::types;
 use super::{CodeWriter, CodegenError, TsCodegen};
+use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{
     HirArrayElement, HirBinOp, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirIteraMode, HirLiteral,
-    HirObjectKey, HirOptionalChainKind, HirRangeKind, HirStmtKind, HirTransformKind, HirUnOp,
+    HirObjectKey, HirOptionalChainKind, HirRangeKind, HirTransformKind, HirUnOp,
 };
 use crate::semantic::{Primitive, Type, TypeTable};
 
@@ -894,131 +895,25 @@ fn push_ts_template_char(out: &mut String, ch: char) {
 }
 
 pub fn contains_await_in_block(block: &HirBlock) -> bool {
-    block.stmts.iter().any(contains_await_in_stmt)
-        || block
-            .expr
-            .as_ref()
-            .is_some_and(|expr| contains_await_in_expr(expr))
+    let mut visitor = AwaitDetector::default();
+    visitor.visit_block(block);
+    visitor.found
 }
 
-fn contains_await_in_stmt(stmt: &crate::hir::HirStmt) -> bool {
-    match &stmt.kind {
-        HirStmtKind::Local(local) => local.init.as_ref().is_some_and(contains_await_in_expr),
-        HirStmtKind::Expr(expr) => contains_await_in_expr(expr),
-        HirStmtKind::Ad(ad) => {
-            ad.args.iter().any(contains_await_in_expr)
-                || ad.body.as_ref().is_some_and(contains_await_in_block)
-                || ad.catch.as_ref().is_some_and(contains_await_in_block)
-        }
-        HirStmtKind::Redde(expr) => expr.as_ref().is_some_and(contains_await_in_expr),
-        HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => false,
-    }
+#[derive(Default)]
+struct AwaitDetector {
+    found: bool,
 }
 
-fn contains_await_in_expr(expr: &HirExpr) -> bool {
-    match &expr.kind {
-        HirExprKind::Cede(_) => true,
-        HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
-            contains_await_in_expr(lhs) || contains_await_in_expr(rhs)
+impl HirVisitor for AwaitDetector {
+    fn visit_expr(&mut self, expr: &HirExpr) {
+        if self.found {
+            return;
         }
-        HirExprKind::Unary(_, operand)
-        | HirExprKind::Ref(_, operand)
-        | HirExprKind::Deref(operand)
-        | HirExprKind::Panic(operand)
-        | HirExprKind::Throw(operand) => contains_await_in_expr(operand),
-        HirExprKind::Call(callee, args) | HirExprKind::MethodCall(callee, _, args) => {
-            contains_await_in_expr(callee) || args.iter().any(contains_await_in_expr)
+        if matches!(expr.kind, HirExprKind::Cede(_)) {
+            self.found = true;
+            return;
         }
-        HirExprKind::Field(object, _) => contains_await_in_expr(object),
-        HirExprKind::Index(object, index) => contains_await_in_expr(object) || contains_await_in_expr(index),
-        HirExprKind::OptionalChain(object, chain) => {
-            contains_await_in_expr(object)
-                || match chain {
-                    HirOptionalChainKind::Member(_) => false,
-                    HirOptionalChainKind::Index(index) => contains_await_in_expr(index),
-                    HirOptionalChainKind::Call(args) => args.iter().any(contains_await_in_expr),
-                }
-        }
-        HirExprKind::NonNull(object, chain) => {
-            contains_await_in_expr(object)
-                || match chain {
-                    crate::hir::HirNonNullKind::Member(_) => false,
-                    crate::hir::HirNonNullKind::Index(index) => contains_await_in_expr(index),
-                    crate::hir::HirNonNullKind::Call(args) => args.iter().any(contains_await_in_expr),
-                }
-        }
-        HirExprKind::Ab { source, filter, transforms } => {
-            contains_await_in_expr(source)
-                || filter.as_ref().is_some_and(|filter| match &filter.kind {
-                    HirCollectionFilterKind::Condition(cond) => contains_await_in_expr(cond),
-                    HirCollectionFilterKind::Property(_) => false,
-                })
-                || transforms.iter().any(|transform| {
-                    transform
-                        .arg
-                        .as_ref()
-                        .is_some_and(|arg| contains_await_in_expr(arg))
-                })
-        }
-        HirExprKind::Block(block) | HirExprKind::Loop(block) => contains_await_in_block(block),
-        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
-            contains_await_in_expr(cond)
-                || contains_await_in_block(then_block)
-                || then_catch
-                    .as_ref()
-                    .is_some_and(|catch| contains_await_in_block(&catch.body))
-                || else_block.as_ref().is_some_and(contains_await_in_block)
-        }
-        HirExprKind::Discerne(scrutinees, arms) => {
-            scrutinees.iter().any(contains_await_in_expr)
-                || arms.iter().any(|arm| {
-                    arm.guard.as_ref().is_some_and(contains_await_in_expr) || contains_await_in_expr(&arm.body)
-                })
-        }
-        HirExprKind::Dum(cond, block) => contains_await_in_expr(cond) || contains_await_in_block(block),
-        HirExprKind::Itera(_, _, _, iter, block) => contains_await_in_expr(iter) || contains_await_in_block(block),
-        HirExprKind::Intervallum { start, end, step, .. } => {
-            contains_await_in_expr(start)
-                || contains_await_in_expr(end)
-                || step.as_deref().is_some_and(contains_await_in_expr)
-        }
-        HirExprKind::Array(values) => values.iter().any(|value| match value {
-            HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => contains_await_in_expr(expr),
-        }),
-        HirExprKind::Tuple(values) | HirExprKind::Scribe(_, values) => values.iter().any(contains_await_in_expr),
-        HirExprKind::Scriptum(_, args) => args.iter().any(contains_await_in_expr),
-        HirExprKind::Adfirma(cond, msg) => {
-            contains_await_in_expr(cond) || msg.as_ref().is_some_and(|msg| contains_await_in_expr(msg))
-        }
-        HirExprKind::Struct(_, fields) => fields
-            .iter()
-            .any(|(_, value)| contains_await_in_expr(value)),
-        HirExprKind::Tempta { body, catch, finally } => {
-            contains_await_in_block(body)
-                || catch.as_ref().is_some_and(contains_await_in_block)
-                || finally.as_ref().is_some_and(contains_await_in_block)
-        }
-        HirExprKind::Handled { body, catch } => contains_await_in_block(body) || contains_await_in_block(&catch.body),
-        HirExprKind::Clausura(_, _, body) => contains_await_in_expr(body),
-        HirExprKind::Verte { source, entries, .. } => {
-            contains_await_in_expr(source)
-                || entries.as_ref().is_some_and(|entries| {
-                    entries.iter().any(|field| match &field.key {
-                        HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => {
-                            contains_await_in_expr(expr) || field.value.as_ref().is_some_and(contains_await_in_expr)
-                        }
-                        HirObjectKey::Ident(_) | HirObjectKey::String(_) => {
-                            field.value.as_ref().is_some_and(contains_await_in_expr)
-                        }
-                    })
-                })
-        }
-        HirExprKind::Conversio { source, fallback, .. } => {
-            contains_await_in_expr(source)
-                || fallback
-                    .as_ref()
-                    .is_some_and(|fb| contains_await_in_expr(fb))
-        }
-        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => false,
+        walk_expr(self, expr);
     }
 }
