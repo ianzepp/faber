@@ -33,7 +33,7 @@ pub use session::{Config, Session};
 pub use source::SourceFile;
 
 use crate::codegen::{self, Target};
-use crate::diagnostics::Diagnostic;
+use crate::diagnostics::{Diagnostic, DiagnosticPhase};
 use crate::hir::HirProgram;
 use crate::lexer;
 use crate::lexer::Interner;
@@ -64,6 +64,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
                 Diagnostic::error(
                     "runnable CLI code generation is only implemented for Rust in CLI framework Phase 04",
                 )
+                .with_phase(DiagnosticPhase::Codegen)
                 .with_code("CODEGEN002")
                 .with_file(name.to_owned()),
             );
@@ -75,6 +76,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
                 Diagnostic::error(
                     "CLI exitus code generation supports numeric literals, bindings, and args fields in Phase 03",
                 )
+                .with_phase(DiagnosticPhase::Codegen)
                 .with_code("CODEGEN004")
                 .with_file(name.to_owned()),
             );
@@ -84,6 +86,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
         if let Some(message) = phase03_cli_codegen_gap(cli_program) {
             analysis.diagnostics.push(
                 Diagnostic::error(message)
+                    .with_phase(DiagnosticPhase::Codegen)
                     .with_code("CODEGEN005")
                     .with_file(name.to_owned()),
             );
@@ -246,7 +249,11 @@ pub fn analyze_source_with_cli_program(
 
     let parser::ParseResult { program, mut interner, .. } = parse_result;
     let Some(program) = program else {
-        diagnostics.push(Diagnostic::error("successful parse result missing program").with_file(name.to_owned()));
+        diagnostics.push(
+            Diagnostic::error("successful parse result missing program")
+                .with_phase(DiagnosticPhase::Parse)
+                .with_file(name.to_owned()),
+        );
         return Err(diagnostics);
     };
 
@@ -297,7 +304,9 @@ pub fn analyze_source_with_cli_program(
             Some(hir) => hir,
             None => {
                 diagnostics.push(
-                    Diagnostic::error("successful semantic result missing lowered HIR").with_file(name.to_owned()),
+                    Diagnostic::error("successful semantic result missing lowered HIR")
+                        .with_phase(DiagnosticPhase::Lower)
+                        .with_file(name.to_owned()),
                 );
                 return Err(diagnostics);
             }
@@ -897,6 +906,7 @@ fn go_dynamic_externa_root(expr: &Expr, dynamic_externa: &GoDynamicExterna) -> O
 
 fn go_target_policy_diagnostic(file: &str, span: crate::lexer::Span, message: &str, help: &str) -> Diagnostic {
     Diagnostic::error(message)
+        .with_phase(DiagnosticPhase::Analysis)
         .with_code("TARGETGO001")
         .with_file(file)
         .with_span(span)
@@ -1330,6 +1340,7 @@ fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &
 
 fn rust_target_exception_diagnostic(file: &str, span: crate::lexer::Span, message: &str) -> Diagnostic {
     Diagnostic::error(message)
+        .with_phase(DiagnosticPhase::Analysis)
         .with_code("TARGET001")
         .with_file(file)
         .with_span(span)
@@ -1437,6 +1448,7 @@ fn scan_stmt_for_rust_warnings(stmt: &Stmt, file: &str, diagnostics: &mut Vec<Di
                     crate::semantic::WarningKind::TargetNoop,
                 ));
                 let mut diag = Diagnostic::warning("cura \"arena\" has no effect for Rust targets")
+                    .with_phase(DiagnosticPhase::Analysis)
                     .with_code(spec.code)
                     .with_file(file)
                     .with_span(stmt.span);

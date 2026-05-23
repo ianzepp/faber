@@ -64,13 +64,19 @@ fn cmd_lex_parse_hir_check_emit_succeed_on_valid_file() {
     cmd_parse(&args);
     cmd_hir(&args);
     cmd_mir(&args);
-    cmd_check(CheckCommand { input: args.clone(), package: false, permissive: false });
+    cmd_check(CheckCommand {
+        input: args.clone(),
+        package: false,
+        permissive: false,
+        diagnostic_mode: DiagnosticMode::Normal,
+    });
     cmd_emit(EmitCommand {
         input: args,
         package: false,
         target: crate::codegen::Target::Rust,
         format: false,
         linter: false,
+        diagnostic_mode: DiagnosticMode::Normal,
     });
 }
 
@@ -83,6 +89,7 @@ fn cmd_emit_supports_faber_target_flag() {
         target: crate::codegen::Target::Faber,
         format: false,
         linter: false,
+        diagnostic_mode: DiagnosticMode::Normal,
     });
 }
 
@@ -142,11 +149,58 @@ fn cli_parses_check_permissive_flag() {
     match cli.command {
         RadixCommand::Check(args) => {
             assert!(args.permissive);
+            assert!(!args.diagnostics);
             assert!(!args.package);
             assert_eq!(args.input, vec!["main.fab"]);
         }
         other => panic!("expected check, got {:?}", other),
     }
+}
+
+#[test]
+fn cli_parses_check_diagnostics_flag() {
+    let cli = RadixCli::try_parse_from(["radix", "check", "--diagnostics", "main.fab"]).expect("cli parse");
+    match cli.command {
+        RadixCommand::Check(args) => {
+            assert!(args.diagnostics);
+            assert!(!args.permissive);
+            assert!(!args.package);
+            assert_eq!(args.input, vec!["main.fab"]);
+        }
+        other => panic!("expected check, got {:?}", other),
+    }
+}
+
+#[test]
+fn diagnostics_check_reports_parse_record() {
+    let result = check_diagnostics_for_source("main.fab", "si verum tacet", false);
+
+    assert!(!result.success);
+    assert_eq!(result.diagnostics.len(), 1);
+    let output = crate::diagnostics::render_expanded(&result.diagnostics[0]);
+
+    assert!(output.contains("error[PARSE022] parse main.fab: expected block or 'ergo'"));
+    assert!(output.contains("phase: parse"));
+    assert!(output.contains("file: main.fab"));
+    assert!(output.contains("span: "));
+    assert!(output.contains("source: si verum tacet"));
+    assert!(output.contains("help: add a block or use 'ergo' form"));
+}
+
+#[test]
+fn diagnostics_check_reports_semantic_record() {
+    let result = check_diagnostics_for_source("main.fab", "missing", false);
+
+    assert!(!result.success);
+    assert_eq!(result.diagnostics.len(), 1);
+    let output = crate::diagnostics::render_expanded(&result.diagnostics[0]);
+
+    assert!(output.contains("error[SEM001] analysis main.fab: unknown identifier"));
+    assert!(output.contains("phase: analysis"));
+    assert!(output.contains("file: main.fab"));
+    assert!(output.contains("span: "));
+    assert!(output.contains("source: missing"));
+    assert!(output.contains("help: declare the variable before use"));
 }
 
 #[test]
@@ -167,11 +221,40 @@ fn cli_accepts_target_aliases() {
     match cli.command {
         RadixCommand::Emit(args) => {
             assert_eq!(args.target, CliTarget::Faber);
+            assert!(!args.diagnostics);
             assert!(!args.package);
             assert_eq!(args.input, vec!["main.fab"]);
         }
         other => panic!("expected emit, got {:?}", other),
     }
+}
+
+#[test]
+fn cli_parses_emit_diagnostics_flag() {
+    let cli = RadixCli::try_parse_from(["radix", "emit", "--diagnostics", "main.fab"]).expect("cli parse");
+    match cli.command {
+        RadixCommand::Emit(args) => {
+            assert!(args.diagnostics);
+            assert_eq!(args.target, CliTarget::Rust);
+            assert!(!args.package);
+            assert_eq!(args.input, vec!["main.fab"]);
+        }
+        other => panic!("expected emit, got {:?}", other),
+    }
+}
+
+#[test]
+fn diagnostics_emit_can_render_semantic_record() {
+    let result = compile_cli_source("main.fab", "missing", crate::codegen::Target::Rust);
+
+    assert!(!result.success());
+    assert_eq!(result.diagnostics.len(), 1);
+    let output = crate::diagnostics::render_expanded_diagnostics(&result.diagnostics);
+
+    assert!(output.contains("error[SEM001] analysis main.fab: unknown identifier"));
+    assert!(output.contains("phase: analysis"));
+    assert!(output.contains("source: missing"));
+    assert!(output.contains("help: declare the variable before use"));
 }
 
 #[test]

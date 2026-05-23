@@ -23,6 +23,7 @@ use super::catalog;
 use crate::lexer::{LexError, Span};
 use crate::parser::ParseError;
 use crate::semantic::SemanticError;
+use std::fmt;
 use std::path::Path;
 
 /// User-visible severity and compilation policy for a diagnostic.
@@ -38,6 +39,58 @@ pub enum Severity {
     Info,
 }
 
+/// Compiler phase that produced or normalized a diagnostic.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiagnosticPhase {
+    /// Filesystem or source-loading failure.
+    Io,
+
+    /// Lexer/tokenization failure.
+    Lex,
+
+    /// Parser/grammar failure.
+    Parse,
+
+    /// Name resolution failure.
+    Resolve,
+
+    /// AST-to-HIR lowering failure.
+    Lower,
+
+    /// Type checking failure.
+    Typecheck,
+
+    /// Coarse semantic analysis failure when no narrower pass is exposed.
+    Analysis,
+
+    /// MIR lowering, validation, or inspection failure.
+    Mir,
+
+    /// Target code generation failure.
+    Codegen,
+
+    /// CLI/tooling policy failure outside a compiler phase.
+    Tool,
+}
+
+impl fmt::Display for DiagnosticPhase {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
+            DiagnosticPhase::Io => "io",
+            DiagnosticPhase::Lex => "lex",
+            DiagnosticPhase::Parse => "parse",
+            DiagnosticPhase::Resolve => "resolve",
+            DiagnosticPhase::Lower => "lower",
+            DiagnosticPhase::Typecheck => "typecheck",
+            DiagnosticPhase::Analysis => "analysis",
+            DiagnosticPhase::Mir => "mir",
+            DiagnosticPhase::Codegen => "codegen",
+            DiagnosticPhase::Tool => "tool",
+        };
+        f.write_str(name)
+    }
+}
+
 /// Reportable compiler message after phase-specific errors are normalized.
 ///
 /// This is the transport contract between compiler phases and presentation
@@ -48,6 +101,9 @@ pub enum Severity {
 pub struct Diagnostic {
     /// Compilation policy and visual priority for the message.
     pub severity: Severity,
+
+    /// Compiler phase that owns the diagnostic.
+    pub phase: DiagnosticPhase,
 
     /// Human-readable problem statement without the diagnostic code prefix.
     pub message: String,
@@ -73,6 +129,7 @@ impl Diagnostic {
     pub fn error(message: impl Into<String>) -> Self {
         Self {
             severity: Severity::Error,
+            phase: DiagnosticPhase::Tool,
             message: message.into(),
             code: None,
             file: String::new(),
@@ -86,6 +143,7 @@ impl Diagnostic {
     pub fn warning(message: impl Into<String>) -> Self {
         Self {
             severity: Severity::Warning,
+            phase: DiagnosticPhase::Tool,
             message: message.into(),
             code: None,
             file: String::new(),
@@ -95,9 +153,21 @@ impl Diagnostic {
         }
     }
 
+    /// Attach the compiler phase that owns this diagnostic.
+    pub fn with_phase(mut self, phase: DiagnosticPhase) -> Self {
+        self.phase = phase;
+        self
+    }
+
     /// Attach a stable diagnostic code from the public catalog.
     pub fn with_code(mut self, code: &'static str) -> Self {
         self.code = Some(code);
+        self
+    }
+
+    /// Override severity when command policy intentionally downgrades a fault.
+    pub fn with_severity(mut self, severity: Severity) -> Self {
+        self.severity = severity;
         self
     }
 
@@ -132,7 +202,9 @@ impl Diagnostic {
 
     /// Convert a filesystem read failure into a path-scoped diagnostic.
     pub fn io_error(path: &Path, err: std::io::Error) -> Self {
-        Self::error(format!("cannot read '{}': {}", path.display(), err)).with_file(path.display().to_string())
+        Self::error(format!("cannot read '{}': {}", path.display(), err))
+            .with_phase(DiagnosticPhase::Io)
+            .with_file(path.display().to_string())
     }
 
     /// Normalize a lexer error using the diagnostic code catalog.
@@ -143,6 +215,7 @@ impl Diagnostic {
         let line = get_line_at_offset(source, err.span.start as usize);
         let spec = catalog::lex_spec(err.kind);
         Self::error(&err.message)
+            .with_phase(DiagnosticPhase::Lex)
             .with_code(spec.code)
             .with_file(file)
             .with_span(err.span)
@@ -159,6 +232,7 @@ impl Diagnostic {
         let line = get_line_at_offset(source, err.span.start as usize);
         let spec = catalog::parse_spec(err.kind);
         Self::error(&err.message)
+            .with_phase(DiagnosticPhase::Parse)
             .with_code(spec.code)
             .with_file(file)
             .with_span(err.span)
@@ -188,6 +262,7 @@ impl Diagnostic {
 
         Self {
             severity,
+            phase: DiagnosticPhase::Analysis,
             message: err.message.clone(),
             code: Some(spec.code),
             file: file.to_owned(),
@@ -199,7 +274,9 @@ impl Diagnostic {
 
     /// Create a backend diagnostic when generation fails outside source spans.
     pub fn codegen_error(message: &str) -> Self {
-        Self::error(format!("code generation failed: {}", message)).with_code("CODEGEN001")
+        Self::error(format!("code generation failed: {}", message))
+            .with_phase(DiagnosticPhase::Codegen)
+            .with_code("CODEGEN001")
     }
 }
 
