@@ -1,23 +1,34 @@
-//! Lexer module for Faber source code
+//! Lexical front end for Faber source text.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Transforms raw UTF-8 source text into a flat token stream with string
-//! interning and error collection. The lexer is a single-pass, error-resilient
-//! scanner that never panics on malformed input.
+//! This module is the compiler boundary between raw UTF-8 source and the token
+//! stream consumed by the parser. It owns source-position spans, token and
+//! literal representation, keyword spelling policy, Unicode identifier
+//! normalization, and lexical diagnostics. Later phases should not re-interpret
+//! raw source spelling when a token, span, or interned symbol already carries
+//! the contract they need.
 //!
-//! COMPILER PHASE: Lexing (first phase)
-//! INPUT: UTF-8 source text (`&str`)
-//! OUTPUT: Token stream + interned strings + lexer errors
+//! TOKENIZATION POLICY
+//! ===================
+//! - Lexing is single-pass and error-resilient: malformed input records a
+//!   diagnostic and scanning continues where the cursor can recover.
+//! - Spans are byte offsets into the original source; they preserve exact
+//!   source locations even when identifiers and strings are NFC-normalized for
+//!   symbol identity.
+//! - Keyword recognition is mode-aware. Normal source keywords are reserved,
+//!   while annotation and section names remain identifier-like after `@` and
+//!   `§` so metadata can use language-looking words deliberately.
+//! - The lexer does not own grammar recovery. It emits `Error` tokens and
+//!   structured [`LexError`] values; parser and diagnostic layers decide how to
+//!   present or recover from the surrounding syntax.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Error collection: Malformed tokens produce Error tokens and continue
-//!   scanning, enabling maximum error reporting in a single pass
-//! - String interning: All identifiers and string literals are deduplicated
-//!   via NFC-normalized Unicode to ensure semantic equivalence
-//! - Zero allocations in hot path: Token stream is pre-allocated, cursor
-//!   uses iterator cloning for lookahead
+//! INVARIANTS
+//! ==========
+//! - Every successful lex emits a terminal EOF token, even when errors were
+//!   collected earlier in the stream.
+//! - Tokens and symbols must travel with the [`Interner`] returned in the same
+//!   [`LexResult`]; symbol ids are local to one lexer instance.
+//! - Lexer errors are diagnostics, not panics. Invalid user source should not
+//!   crash this phase.
 
 mod cursor;
 mod keywords;
@@ -33,11 +44,12 @@ pub use token::{Span, Symbol, Token, TokenKind};
 // PUBLIC API
 // =============================================================================
 
-/// Lex source code into tokens.
+/// Lex one Faber source buffer into parser-ready tokens.
 ///
-/// WHY: Convenience wrapper for the common case where you want to lex an
-/// entire file in one call. Returns ownership of the interner because the
-/// parser needs it to resolve symbols.
+/// This is the convenience boundary for callers that do not need to configure
+/// scanner state directly. The returned [`LexResult`] keeps the token stream,
+/// collected diagnostics, and symbol table together because interned symbols
+/// are meaningful only against the interner that created them.
 pub fn lex(source: &str) -> LexResult {
     Lexer::new(source).lex()
 }
@@ -46,19 +58,24 @@ pub fn lex(source: &str) -> LexResult {
 // TYPES
 // =============================================================================
 
-/// Result of lexing, containing tokens, errors, and the string interner.
+/// Complete output of one lexer run.
 ///
-/// WHY: Bundles all lexer outputs together. Even when there are errors, the
-/// token stream is complete (with Error tokens) so the parser can attempt
-/// recovery.
+/// A result may contain errors and still carry a full token stream. That split
+/// is intentional: downstream phases can attempt syntax recovery while the
+/// diagnostics layer still reports precise lexical failures.
 pub struct LexResult {
+    /// Token stream in source order, always terminated by [`TokenKind::Eof`].
     pub tokens: Vec<Token>,
+
+    /// Lexical diagnostics collected while scanning.
     pub errors: Vec<LexError>,
+
+    /// Symbol table for identifiers, strings, and comments emitted above.
     pub interner: Interner,
 }
 
 impl LexResult {
-    /// Check if lexing completed without errors.
+    /// Return whether lexing produced no diagnostics.
     pub fn success(&self) -> bool {
         self.errors.is_empty()
     }
@@ -68,30 +85,39 @@ impl LexResult {
 // ERRORS
 // =============================================================================
 
-/// Lexer error with location and message.
+/// One lexical diagnostic with a source span and display-ready message.
 ///
-/// WHY: Errors are collected during lexing rather than immediately reported,
-/// allowing the compiler to show all lex errors in a single pass. Each error
-/// includes a span for precise diagnostics.
+/// The lexer records errors at the point where tokenization policy is violated,
+/// but it does not format multi-line reports or decide parse recovery. Those
+/// responsibilities belong to higher diagnostic layers.
 #[derive(Debug, Clone)]
 pub struct LexError {
+    /// Machine-readable class for recovery and diagnostics.
     pub kind: LexErrorKind,
+
+    /// Byte span in the original source that triggered the diagnostic.
     pub span: Span,
+
+    /// Human-readable diagnostic text owned by the lexer.
     pub message: String,
 }
 
-/// Categories of lexer errors.
+/// Lexical failure classes produced before parsing begins.
 ///
-/// WHY: Structured error kinds enable different recovery strategies and help
-/// distinguish syntactic errors (our problem) from encoding errors (user's).
+/// These variants describe tokenization failures only. Syntax-level decisions
+/// such as "unexpected token" or "missing expression" are intentionally not
+/// modeled here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LexErrorKind {
-    /// String literal missing closing quote
+    /// String literal reached newline or EOF before its closing delimiter.
     UnterminatedString,
-    /// Malformed numeric literal (e.g., `0x`, `1e`)
+
+    /// Numeric literal text could not be parsed under its declared radix/form.
     InvalidNumber,
-    /// Invalid escape sequence in string
+
+    /// Escape processing rejected a string escape sequence.
     InvalidEscape,
-    /// Character that cannot start a token
+
+    /// Character had no token meaning in the current lexer mode.
     UnexpectedCharacter,
 }

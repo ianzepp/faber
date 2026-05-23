@@ -1,38 +1,39 @@
-//! Recursive Descent Parser - Token Stream to AST Transformation
+//! Recursive-descent front end for Faber source.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module implements a hand-written recursive descent parser that transforms
-//! token streams into an Abstract Syntax Tree (AST). The parser uses predictive
-//! parsing with manual lookahead, maintaining a single-pass design that collects
-//! errors rather than panicking on malformed input.
-//!
-//! COMPILER PHASE: Parsing
-//! INPUT: Token stream from lexer (Vec<Token>) + interned string table
-//! OUTPUT: Abstract Syntax Tree (Program node) + collected parse errors
+//! This module is the boundary between lexer output and the syntax tree consumed
+//! by collection, resolution, lowering, typechecking, and backend analysis. It
+//! owns token navigation, node-id allocation, parse-error accumulation, and the
+//! recovery policy shared by the declaration, statement, expression, type, and
+//! pattern subparsers.
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Error recovery: Collect all errors, synchronize at statement boundaries
-//! - Never crash: Malformed input produces errors, not panics
-//! - Single pass: No backtracking, predictive lookahead only
-//! - Comment transparency: Comments are skipped automatically during token navigation
-//! - Type-first syntax: Enforces Faber's `type name` ordering (not `name: type`)
+//! The parser is hand-written and predictive because the language grammar has
+//! several contextual forms where good diagnostics and controlled recovery matter
+//! more than minimizing parser code. Submodules may use bounded lookahead or
+//! rollback for local ambiguities, but the public phase contract is still one
+//! forward pass from token stream to AST plus diagnostics.
 //!
-//! TRADE-OFFS
+//! INVARIANTS
 //! ==========
-//! - Manual recursion over parser combinators: Better error messages and recovery,
-//!   at the cost of more boilerplate code
-//! - Synchronization points: We skip to statement boundaries on errors, which may
-//!   miss nested errors within malformed statements
-//! - NodeId allocation: Sequential allocation is simple but makes parallel parsing
-//!   impossible (acceptable for single-file compilation units)
+//! - The token stream is expected to end in EOF and parser position never moves
+//!   beyond the stream.
+//! - Comments are syntactically transparent; navigation helpers skip them before
+//!   grammar code sees a current token.
+//! - Faber declaration syntax remains type-first (`textus nomen`), with `_`
+//!   used where inference is explicitly requested.
+//! - This phase only accepts syntax represented by the lexer and grammar. Legacy
+//!   or tempting surface forms should become diagnostics, not hidden aliases.
+//! - Node IDs are allocated monotonically in parse order for later compiler
+//!   phases; they are not stable source identifiers.
 //!
 //! ERROR HANDLING
 //! ==============
-//! The parser collects errors in a Vec and continues parsing after synchronization.
-//! Synchronization occurs at statement boundaries (keywords like functio, genus, si).
-//! This allows reporting multiple errors per file rather than stopping at the first.
+//! Lexer errors are terminal because there is no trustworthy token stream to
+//! consume. Parser errors are collected and recovery resumes at statement or
+//! block boundaries so one malformed construct does not erase the rest of the
+//! file from diagnostics. Recovery is deliberately coarse: it preserves useful
+//! following structure rather than pretending malformed subtrees are valid.
 
 mod decl;
 mod error;
@@ -50,13 +51,20 @@ use crate::syntax::*;
 // TYPES
 // =============================================================================
 
-/// Result of parsing a complete source file.
+/// Result of the parsing phase for one compilation unit.
 ///
-/// WHY: Bundles the AST, errors, and string interner together so callers receive
-/// all information needed for semantic analysis in a single structure.
+/// The interner is returned with the AST because every identifier and string
+/// literal in syntax refers to interned symbols. Callers should treat `program`
+/// as usable only when [`ParseResult::success`] is true; an AST may still be
+/// present when recoverable syntax errors were collected.
 pub struct ParseResult {
+    /// Syntax tree for the file when lexing produced a token stream.
     pub program: Option<Program>,
+
+    /// Lexing or parsing diagnostics accumulated for this phase.
     pub errors: Vec<ParseError>,
+
+    /// String table shared by syntax nodes and later compiler phases.
     pub interner: Interner,
 }
 
@@ -70,18 +78,11 @@ impl ParseResult {
     }
 }
 
-/// Internal parser state machine.
+/// Mutable state for one parser invocation.
 ///
-/// WHY: Encapsulates all mutable state required during parsing, including token
-/// position, error accumulation, and node ID generation. Keeping state centralized
-/// makes it easier to reason about parser behavior and prevents accidental state
-/// sharing between parse operations.
-///
-/// INVARIANTS
-/// ----------
-/// INV-1: `pos` never exceeds `tokens.len()`
-/// INV-2: `next_node_id` is monotonically increasing
-/// INV-3: Token stream always ends with EOF token
+/// Subparser modules extend this type instead of each owning token state. That
+/// keeps recovery, comment skipping, spans, identifiers, and node allocation
+/// consistent across the grammar.
 pub struct Parser {
     tokens: Vec<Token>,
     pos: usize,
@@ -94,13 +95,11 @@ pub struct Parser {
 // ENTRY POINT
 // =============================================================================
 
-/// Parse tokens into an Abstract Syntax Tree.
+/// Parse lexer output into a syntax tree and parser diagnostics.
 ///
-/// WHY: This is the primary entry point for the parsing phase. It handles lexer
-/// error propagation and constructs the parser state machine.
-///
-/// ERROR RECOVERY: If lexing failed, we propagate lexer errors as parse errors
-/// and return None for the program. This maintains the "collect all errors" principle.
+/// Lexing failure is represented as parser-phase output so the driver can report
+/// one diagnostic stream. Unlike ordinary parse errors, lexer errors stop AST
+/// construction because token recovery has already failed upstream.
 pub fn parse(lex_result: LexResult) -> ParseResult {
     // EDGE: Lexer errors are terminal - we can't parse without valid tokens
     if !lex_result.success() {
@@ -129,16 +128,14 @@ impl Parser {
         Self { tokens, pos: 0, errors: Vec::new(), next_node_id: 0, interner }
     }
 
-    /// Parse the entire program.
+    /// Parse a complete Faber source file.
     ///
     /// GRAMMAR:
     ///   program := directive* statement*
     ///
-    /// WHY: Entry point for top-level parsing. Directives (§ declarations) must
-    /// appear before statements, enforcing file structure conventions.
-    ///
-    /// ERROR RECOVERY: Uses synchronization after each failed statement/directive
-    /// to continue parsing and collect multiple errors.
+    /// File directives are only accepted before ordinary statements. Once the
+    /// parser enters the statement stream, a later `§` token is reported through
+    /// statement parsing rather than silently treated as a directive.
     pub fn parse_program(&mut self) -> ParseResult {
         let start = self.current_span();
         let mut directives = Vec::new();
@@ -184,8 +181,9 @@ impl Parser {
 
     /// Allocate a fresh node ID for AST construction.
     ///
-    /// WHY: Every AST node needs a unique identifier for semantic analysis passes.
-    /// Sequential allocation is simple and sufficient for single-threaded parsing.
+    /// Later compiler phases use node IDs to attach semantic facts to syntax.
+    /// Allocation is parse-order-local, so callers must not persist these IDs as
+    /// cross-run source identity.
     fn next_id(&mut self) -> NodeId {
         let id = self.next_node_id;
         self.next_node_id += 1;
@@ -321,10 +319,9 @@ impl Parser {
 
     /// Check whether a token can safely restart statement parsing after an error.
     ///
-    /// WHY: Recovery should stop at the same keyword-led boundaries the parser
-    /// already treats as statement starts, plus block closure. If this list
-    /// drifts from `parse_statement`, malformed input can erase valid following
-    /// structure.
+    /// This list is intentionally coupled to `parse_statement`: recovery should
+    /// stop at the same keyword-led forms that can legally begin a statement,
+    /// plus block closure and EOF. Drift here changes diagnostic reach.
     fn is_recovery_boundary(kind: &TokenKind) -> bool {
         matches!(
             kind,
@@ -372,14 +369,11 @@ impl Parser {
         )
     }
 
-    /// Synchronize after error - skip to next statement boundary.
+    /// Synchronize after an error by skipping to the next statement boundary.
     ///
-    /// WHY: Error recovery strategy. After encountering a malformed construct,
-    /// skip tokens until we reach a known statement start keyword. This prevents
-    /// cascading errors from a single syntax mistake.
-    ///
-    /// TRADE-OFF: May skip over nested errors within the malformed statement,
-    /// but allows parsing to continue and report subsequent errors.
+    /// Top-level recovery may consume `}` because there is no enclosing block to
+    /// protect. Block recovery can stop before `}` so the caller can close the
+    /// block normally and preserve the surrounding AST shape.
     fn synchronize(&mut self, stop_at_rbrace: bool) {
         if Self::is_recovery_boundary(&self.peek().kind)
             && (stop_at_rbrace || !matches!(self.peek().kind, TokenKind::RBrace))

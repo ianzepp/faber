@@ -1,27 +1,18 @@
-//! Parser Error Types and Classification
+//! Parse-error data contract for the compiler front end.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module defines the error types emitted during parsing. Error classification
-//! enables downstream tools (IDE integration, error reporting) to provide context-
-//! appropriate diagnostics and recovery suggestions.
+//! The parser reports syntax failures as lightweight diagnostics: a broad
+//! category, human-readable message, and source span. The category is used by
+//! tests and driver diagnostics; the message remains the precise user-facing
+//! explanation chosen at the failure site.
 //!
-//! COMPILER PHASE: Parsing
-//! INPUT: N/A (error type definitions only)
-//! OUTPUT: ParseError instances created throughout parser
-//!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Granular error kinds: Specific error types allow targeted error messages
-//! - Lexer compatibility: LexError passthrough maintains single error type across phases
-//! - Span tracking: Every error includes source location for IDE integration
-//!
-//! TRADE-OFFS
+//! INVARIANTS
 //! ==========
-//! - Many error kinds vs generic errors: We prefer specific kinds for better UX,
-//!   accepting the maintenance cost of updating this enum when grammar changes
-//! - String messages vs structured data: Messages are strings for simplicity,
-//!   sacrificing type-safe error construction for easier error creation
+//! - Lexer failures are converted to `LexError` so callers can handle one parse
+//!   result shape even when AST construction never begins.
+//! - Every parser-produced error carries the current token span at the point the
+//!   grammar contract failed.
+//! - Error kinds should remain semantic enough for diagnostics, but not so
+//!   granular that every grammar production needs a one-off enum variant.
 
 use crate::lexer::Span;
 
@@ -29,26 +20,28 @@ use crate::lexer::Span;
 // ERROR TYPES
 // =============================================================================
 
-/// A parse error with location and diagnostic information.
+/// Syntax diagnostic emitted while building an AST.
 ///
-/// WHY: Bundles error classification (kind), human-readable message, and source
-/// location into a single structure for error reporting and IDE integration.
+/// `message` is the display text selected by the parser branch that failed.
+/// `kind` is the machine-readable bucket, and `span` points to the token where
+/// parsing knew the construct could not satisfy the grammar.
 #[derive(Debug, Clone)]
 pub struct ParseError {
+    /// Broad diagnostic category for reporting and tests.
     pub kind: ParseErrorKind,
+
+    /// Human-readable diagnostic detail.
     pub message: String,
+
+    /// Source location attached to the offending or missing construct.
     pub span: Span,
 }
 
-/// Classification of parse errors by syntactic category.
+/// Parser diagnostic taxonomy.
 ///
-/// WHY: Specific error kinds enable:
-/// - Targeted error messages in diagnostic output
-/// - IDE features like quick-fixes specific to error type
-/// - Statistical analysis of common syntax errors
-///
-/// TRADE-OFF: Requires updating when grammar evolves, but provides better UX
-/// than generic "parse error" messages.
+/// Variants are intentionally grouped by the part of the grammar that failed.
+/// Add new variants when a category unlocks clearer recovery, tests, or user
+/// messaging; otherwise prefer an existing bucket with a precise message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParseErrorKind {
     // Lexer passthrough - allows treating lex/parse errors uniformly
@@ -59,33 +52,33 @@ pub enum ParseErrorKind {
     Unexpected,
 
     // Declaration errors - structural issues in top-level constructs
+    DuplicateModifier,
+    InvalidAnnotation,
     InvalidDeclaration,
-    MissingFunctionName,
-    MissingFunctionBody,
-    MissingClassName,
-    MissingClassBody,
+    InvalidModifier,
     InvalidParameter,
     InvalidTypeParameter,
-    InvalidModifier,
-    InvalidAnnotation,
-    DuplicateModifier,
+    MissingClassBody,
+    MissingClassName,
+    MissingFunctionBody,
+    MissingFunctionName,
 
     // Statement errors - control flow and block structure issues
-    InvalidStatement,
-    MissingCondition,
-    MissingBlock,
-    InvalidPattern,
     InvalidCasuArm,
     InvalidCasuValue,
+    InvalidPattern,
+    InvalidStatement,
+    MissingBlock,
+    MissingCondition,
 
     // Expression errors - malformed expressions and operators
+    InvalidAssignmentTarget,
+    InvalidCallArgument,
     InvalidExpression,
     InvalidLiteral,
+    InvalidMemberAccess,
     InvalidOperator,
     UnterminatedGroup,
-    InvalidCallArgument,
-    InvalidMemberAccess,
-    InvalidAssignmentTarget,
 
     // Type annotation errors
     InvalidType,

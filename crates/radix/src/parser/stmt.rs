@@ -1,36 +1,28 @@
-//! Control Flow and Statement Parsing
+//! Executable statement grammar for Faber blocks and entrypoints.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module handles parsing of Faber's control flow constructs (conditionals,
-//! loops, pattern matching), transfer statements (return, break, continue, throw),
-//! and special statement forms (try-catch, assertions, I/O, resource management).
-//!
-//! COMPILER PHASE: Parsing
-//! INPUT: Token stream (via Parser methods)
-//! OUTPUT: Statement AST nodes (StmtKind variants)
+//! This module owns the non-declaration statement forms that can appear inside
+//! blocks or at file scope: conditionals, loops, dispatch, transfer, diagnostics,
+//! entrypoints, resource scopes, endpoints, and destructuring statements. It
+//! shares `StmtKind` construction with `decl.rs`, but keeps executable grammar
+//! separate so declaration syntax and runtime control-flow syntax do not blur.
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Error attachment: Many statements support `cape` (catch) clauses for error handling
-//! - Expression-oriented: Statement bodies can be blocks or ergo (single stmt)
-//! - Pattern exhaustiveness: `discerne omnia` requires matching all variants
+//! Statement bodies deliberately use a small set of shapes: braced blocks for
+//! scoped bodies, `ergo` for single-statement bodies, and `fac { ... } cape ...`
+//! for structured error handling. The parser records surface intent and leaves
+//! reachability, exhaustiveness, ownership, and endpoint semantics to later
+//! phases.
 //!
-//! GRAMMAR COVERAGE
-//! ================
-//! This module implements parsers for:
-//! - Conditionals: si/sin/secus (if/else-if/else)
-//! - Loops: dum (while), itera (for), fac...dum (do-while)
-//! - Pattern matching: discerne (match), elige (switch)
-//! - Guards: custodi (multi-branch early return)
-//! - Transfers: redde (return), rumpe (break), perge (continue), iace (throw), mori (panic)
-//! - Error handling: tempta/cape/demum (try/catch/finally)
-//! - Assertions: adfirma (assert)
-//! - Diagnostics: nota/vide/mone/scribe (note/debug/warn/compat)
-//! - Entry points: incipit/incipiet (main/async main)
-//! - Resources: cura (resource management)
-//! - Endpoints: ad (HTTP endpoint definition)
-//! - Destructuring: ex (extract/destructure)
+//! INVARIANTS
+//! ==========
+//! - `sin` is the canonical else-if spelling; `secus si` is diagnosed instead
+//!   of being accepted as an alias.
+//! - `tempta` is no longer canonical; users are directed to `fac ... cape`.
+//! - `elige` is value dispatch, while `discerne` is pattern dispatch. Their AST
+//!   shapes stay separate for later exhaustiveness and codegen decisions.
+//! - Optional `cape` parsing is centralized so catch clauses attach consistently
+//!   to statements that support them.
 
 use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
@@ -41,16 +33,15 @@ use crate::syntax::*;
 // =============================================================================
 
 impl Parser {
-    /// Parse if statement.
+    /// Parse `si` / `sin` / `secus` branching.
     ///
     /// GRAMMAR:
     ///   si-stmt := 'si' expr if-body ['cape' ident block] ['secus' secus-clause | 'sin' si-stmt]
     ///   if-body := block | 'ergo' stmt
     ///
-    /// WHY: Faber supports multiple if-body styles for conciseness. Block style for
-    /// multi-statement bodies, 'ergo' for single statements.
-    ///
-    /// ERROR HANDLING: Optional 'cape' clause catches errors thrown in condition or body.
+    /// Branch bodies accept either a block or `ergo` single statement. `cape`
+    /// attaches to the branch body being parsed, which preserves error-handling
+    /// scope for nested `sin` chains.
     pub(super) fn parse_si_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Si, "expected 'si'")?;
 
@@ -90,7 +81,7 @@ impl Parser {
         Ok(SiStmt { cond, then, catch, else_ })
     }
 
-    /// Parse branch body (block or ergo statement).
+    /// Parse a statement body that can be braced or introduced by `ergo`.
     fn parse_ergo_body(&mut self) -> Result<IfBody, ParseError> {
         if self.check(&TokenKind::LBrace) {
             Ok(IfBody::Block(self.parse_block()?))
@@ -140,16 +131,15 @@ impl Parser {
         Ok(StmtKind::Dum(DumStmt { cond, body, catch }))
     }
 
-    /// Parse iteration loop (for-each).
+    /// Parse an `itera` loop and its ownership mode.
     ///
     /// GRAMMAR:
     ///   itera-stmt := 'itera' mode expr ('fixum'|'varia') ident if-body ['cape' ident block]
     ///   mode := 'ex' | 'de' | 'pro'
     ///
-    /// WHY: Ownership modes (ex/de/pro) control iteration semantics:
-    /// - 'ex' moves items out of collection
-    /// - 'de' borrows items immutably
-    /// - 'pro' enumerates (index/value pairs)
+    /// The parser records `ex`, `de`, or `pro` as source-level iteration intent.
+    /// Typechecking and lowering decide whether the chosen mode is valid for the
+    /// iterable expression.
     pub(super) fn parse_itera_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Itera, "expected 'itera'")?;
 
@@ -184,15 +174,16 @@ impl Parser {
     // PATTERN MATCHING AND DISPATCH
     // =============================================================================
 
-    /// Parse switch statement (value-based dispatch).
+    /// Parse value-based `elige` dispatch.
     ///
     /// GRAMMAR:
     ///   elige-stmt := 'elige' expr '{' casu-case* [ceterum-default] '}' ['cape' ident block]
     ///   casu-case := 'casu' expr if-body
     ///   ceterum-default := 'ceterum' if-body
     ///
-    /// WHY: Simple value-based dispatch without destructuring. Cases compared via
-    /// equality (not pattern matching). Use 'discerne' for pattern-based matching.
+    /// `elige` cases are expressions, not patterns. Keeping this separate from
+    /// `discerne` prevents destructuring-only syntax from leaking into value
+    /// dispatch.
     pub(super) fn parse_elige_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Elige, "expected 'elige'")?;
 
@@ -228,15 +219,14 @@ impl Parser {
         Ok(StmtKind::Elige(EligeStmt { expr, cases, default, catch }))
     }
 
-    /// Parse match statement (pattern-based dispatch).
+    /// Parse pattern-based `discerne` dispatch.
     ///
     /// GRAMMAR:
     ///   discerne-stmt := 'discerne' ['omnia'] expr (',' expr)* '{' arm* [default] '}'
     ///   arm := 'casu' pattern (',' pattern)* if-body
     ///
-    /// WHY: Pattern matching with destructuring and binding. 'omnia' requires
-    /// exhaustive matching (all variants covered). Supports multiple subjects
-    /// for tuple-like matching.
+    /// `omnia` is only recorded here; later phases own the exhaustive-coverage
+    /// check because they know the subject types and variant sets.
     pub(super) fn parse_discerne_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Discerne, "expected 'discerne'")?;
 
@@ -310,13 +300,14 @@ impl Parser {
         Ok(StmtKind::Custodi(CustodiStmt { clauses }))
     }
 
-    /// Parse do-while loop.
+    /// Parse `fac`, the canonical block form for do/try-style execution.
     ///
     /// GRAMMAR:
     ///   fac-stmt := 'fac' block ['cape' ident block] ['dum' expr]
     ///
-    /// WHY: Body executes at least once, optional while condition controls repetition.
-    /// Without 'dum' clause, executes exactly once (equivalent to bare block with error handling).
+    /// At statement level, a trailing `dum` turns `fac` into a do-while form.
+    /// Closure bodies call the shared construct with `allow_while = false` so
+    /// expression syntax cannot smuggle in a statement loop.
     pub(super) fn parse_fac_stmt(&mut self) -> Result<StmtKind, ParseError> {
         Ok(StmtKind::Fac(self.parse_fac_construct(true)?))
     }
@@ -401,13 +392,10 @@ impl Parser {
     // ERROR HANDLING
     // =============================================================================
 
-    /// Parse try-catch-finally statement.
+    /// Reject legacy `tempta` with the canonical replacement.
     ///
-    /// GRAMMAR:
-    ///   tempta-stmt := 'tempta' block ['cape' ident block] ['demum' block]
-    ///
-    /// WHY: Structured error handling. 'cape' binds error value, 'demum' runs
-    /// unconditionally (like finally). Both are optional.
+    /// The token remains recognized so users get a precise migration diagnostic
+    /// instead of a generic "expected expression" failure.
     pub(super) fn parse_tempta_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Tempta, "expected 'tempta'")?;
         Err(self.error(
@@ -553,13 +541,14 @@ impl Parser {
         Ok(StmtKind::Cura(CuraStmt { kind, mutability, ty, binding, body, catch }))
     }
 
-    /// Parse HTTP endpoint declaration.
+    /// Parse an HTTP endpoint declaration.
     ///
     /// GRAMMAR:
     ///   ad-stmt := 'ad' string '(' args ')' ['→' [type] 'pro' ident ['ut' ident]] [block] ['cape' ident block]
     ///
-    /// WHY: Declares HTTP endpoints for web services. Path string supports templates,
-    /// args bind to request parameters, optional binding captures response.
+    /// Endpoint parsing records route path, call-style arguments, optional
+    /// response binding, body, and catch clause. Package/runtime integration owns
+    /// verb routing and host framework semantics.
     pub(super) fn parse_ad_stmt(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Ad, "expected 'ad'")?;
 
@@ -656,19 +645,19 @@ impl Parser {
         Ok(Some(AdBinding { verb: EndpointVerb::Fit, ty, name, alias }))
     }
 
-    /// Parse expression statement
+    /// Parse a bare expression as a statement.
     pub(super) fn parse_expr_stmt(&mut self) -> Result<StmtKind, ParseError> {
         let expr = Box::new(self.parse_expression()?);
         Ok(StmtKind::Expr(ExprStmt { expr }))
     }
 
-    /// Try to parse optional catch clause.
+    /// Try to parse an optional `cape` clause.
     ///
     /// GRAMMAR:
     ///   cape-clause := 'cape' ident block
     ///
-    /// WHY: Many statements support optional error handling via 'cape'. This helper
-    /// is shared across statement parsers to maintain consistent syntax.
+    /// Centralizing this grammar keeps catch binding and body spans consistent
+    /// across branches, loops, resource scopes, endpoints, and `fac`.
     fn try_parse_cape_stmt(&mut self) -> Result<Option<CapeClause>, ParseError> {
         if !self.eat_keyword(TokenKind::Cape) {
             return Ok(None);

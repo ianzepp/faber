@@ -1,22 +1,22 @@
-//! AST visitor trait and walking functions
+//! Shared traversal helpers for the Faber AST.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Implements the visitor pattern for AST traversal. Provides default walking
-//! functions that recursively visit child nodes, allowing visitors to override
-//! specific visit methods for their use case.
+//! Visitors separate "what to do at a node" from the recursive mechanics of
+//! descending through syntax. That is useful for light analyses, diagnostics,
+//! indexing, and tooling that need source-shaped traversal without owning a
+//! full semantic pass.
 //!
-//! COMPILER PHASE: All phases (utility)
-//! INPUT: AST nodes
-//! OUTPUT: Visitor-specific side effects (type checking, linting, codegen)
+//! This module is intentionally conservative: the walkers visit the high-value
+//! child expressions, statements, identifiers, and type syntax currently needed
+//! by generic visitors. A compiler phase that relies on exhaustive semantics
+//! should audit the relevant AST variants instead of assuming these helpers
+//! encode every language rule.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Separation of concerns: Walking logic is separate from visitor logic
-//! - Default traversal: walk_* functions provide complete traversal, visitors
-//!   override only visit_* methods for nodes they care about
-//! - Flexible use: Supports type checking, linting, code generation, and
-//!   any other AST analysis that needs structured traversal
+//! INVARIANTS
+//! ==========
+//! - Visitor callbacks observe AST nodes in source order where the walker covers
+//!   that node family.
+//! - Calling a `walk_*` function continues traversal after custom visitor logic.
+//! - Traversal has no semantic side effects beyond what the visitor performs.
 
 use super::ast::*;
 
@@ -24,12 +24,11 @@ use super::ast::*;
 // VISITOR TRAIT
 // =============================================================================
 
-/// Visitor trait for traversing the AST.
+/// Callback surface for source-shaped AST traversal.
 ///
-/// WHY: Separates traversal logic from analysis logic. Implementers override
-/// visit_* methods for nodes they want to inspect, and the default walk_*
-/// implementations handle recursion. This avoids duplicating traversal code
-/// in every pass.
+/// Implementers override the callbacks they care about and usually call the
+/// matching `walk_*` helper to keep descending. Omitting the helper is a valid
+/// way to prune traversal for a subtree.
 ///
 /// USAGE:
 /// ```ignore
@@ -42,24 +41,30 @@ use super::ast::*;
 /// }
 /// ```
 pub trait Visitor: Sized {
+    /// Visit a complete parsed source unit.
     fn visit_program(&mut self, program: &Program) {
         walk_program(self, program);
     }
 
+    /// Visit one statement node.
     fn visit_stmt(&mut self, stmt: &Stmt) {
         walk_stmt(self, stmt);
     }
 
+    /// Visit one expression node.
     fn visit_expr(&mut self, expr: &Expr) {
         walk_expr(self, expr);
     }
 
+    /// Visit one written type expression.
     fn visit_type_expr(&mut self, ty: &TypeExpr) {
         walk_type_expr(self, ty);
     }
 
+    /// Visit an identifier occurrence or binding selected by a walker.
     fn visit_ident(&mut self, _ident: &Ident) {}
 
+    /// Visit a statement block.
     fn visit_block(&mut self, block: &BlockStmt) {
         walk_block(self, block);
     }
@@ -69,16 +74,20 @@ pub trait Visitor: Sized {
 // WALKING FUNCTIONS
 // =============================================================================
 //
-// WHY: These functions implement the recursive descent through the AST,
-// calling visit_* methods on child nodes. They're public so visitors can
-// call them explicitly to continue traversal after custom logic.
+// These functions are public so visitors can perform custom logic at a node and
+// then explicitly resume the shared traversal policy.
 
+/// Continue traversal through a parsed source unit.
 pub fn walk_program<V: Visitor>(visitor: &mut V, program: &Program) {
     for stmt in &program.stmts {
         visitor.visit_stmt(stmt);
     }
 }
 
+/// Continue traversal through statement children covered by the generic walker.
+///
+/// NOTE: This walker is useful for source-shaped analyses, but it intentionally
+/// does not claim semantic exhaustiveness for every statement variant.
 pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
     match &stmt.kind {
         StmtKind::Var(decl) => {
@@ -169,11 +178,15 @@ pub fn walk_stmt<V: Visitor>(visitor: &mut V, stmt: &Stmt) {
             visitor.visit_expr(&panic.value);
         }
         StmtKind::Tacet(_) => {}
-        // NOTE: Add other statement kinds as needed for specific visitors
+        // NOTE: Add other statement kinds as generic visitors need them.
         _ => {}
     }
 }
 
+/// Continue traversal through expression children covered by the generic walker.
+///
+/// NOTE: Some expression variants are intentionally left to specialized passes
+/// until a generic visitor needs a stable traversal contract for them.
 pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
     match &expr.kind {
         ExprKind::Ident(ident) => {
@@ -270,7 +283,7 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr) {
         ExprKind::Paren(inner) => {
             visitor.visit_expr(inner);
         }
-        // NOTE: Add other expression kinds as needed for specific visitors
+        // NOTE: Add other expression kinds as generic visitors need them.
         _ => {}
     }
 }
@@ -302,6 +315,7 @@ fn walk_binding_pattern<V: Visitor>(visitor: &mut V, pattern: &BindingPattern) {
     }
 }
 
+/// Continue traversal through written type syntax.
 pub fn walk_type_expr<V: Visitor>(visitor: &mut V, ty: &TypeExpr) {
     match &ty.kind {
         TypeExprKind::Infer => {}
@@ -328,6 +342,7 @@ pub fn walk_type_expr<V: Visitor>(visitor: &mut V, ty: &TypeExpr) {
     }
 }
 
+/// Continue traversal through statements in a block.
 pub fn walk_block<V: Visitor>(visitor: &mut V, block: &BlockStmt) {
     for stmt in &block.stmts {
         visitor.visit_stmt(stmt);

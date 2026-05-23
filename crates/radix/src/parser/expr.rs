@@ -1,47 +1,29 @@
-//! Expression Parsing with Precedence Climbing
+//! Expression grammar and precedence construction.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module implements expression parsing using precedence climbing (also known
-//! as Pratt parsing). Each precedence level has its own parsing function, and
-//! higher-precedence operators are handled by lower recursive calls.
-//!
-//! COMPILER PHASE: Parsing
-//! INPUT: Token stream (via Parser methods)
-//! OUTPUT: Expression AST nodes (Expr with ExprKind variants)
+//! Expressions are the densest recursive-descent surface in the parser. This
+//! module encodes precedence as a call chain from assignment down to primaries,
+//! then folds postfix operations in a loop so calls, indexing, member access,
+//! optional chaining, non-null chaining, and conversions all bind tighter than
+//! infix operators.
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Precedence hierarchy: Encoded structurally via function call chain
-//! - Left-to-right association: Binary operators associate left via while loops
-//! - Postfix operations: Member access, calls, indexing handled in single postfix phase
-//! - Prefix vs infix disambiguation: Lookahead determines if keywords are unary operators
+//! The parser prefers explicit grammar functions over a data-driven operator
+//! table. That makes the accepted syntax visible at the cost of boilerplate, and
+//! it keeps contextual Faber forms close to their diagnostics. Binary operators
+//! associate left through loops; assignment and ternary forms recurse on the
+//! right where the language expects right associativity.
 //!
-//! PRECEDENCE LEVELS (lowest to highest)
-//! ======================================
-//! 1. Assignment (=, ⊕, ⊖, etc.)
-//! 2. Ternary (? :, sic secus)
-//! 3. Logical OR (aut, vel)
-//! 4. Logical AND (et)
-//! 5. Equality (≡, ≠, est, non est)
-//! 6. Comparison (<, >, ≤, ≥, intra, inter)
-//! 7. Bitwise OR (∨)
-//! 8. Bitwise XOR (⊻)
-//! 9. Bitwise AND (∧)
-//! 10. Shift (≪, ≫)
-//! 11. Range (‥, …, ante, usque)
-//! 12. Additive (+, -)
-//! 13. Multiplicative (*, /, %)
-//! 14. Unary (-, ¬, non, nulla, etc.)
-//! 15. Postfix (calls, member access, indexing, casts)
-//! 16. Primary (literals, identifiers, arrays, objects, parenthesized)
-//!
-//! TRADE-OFFS
+//! INVARIANTS
 //! ==========
-//! - Manual precedence vs operator table: Explicit functions make precedence
-//!   clear in code but require more boilerplate
-//! - Postfix unification: All postfix operations handled together prevents
-//!   precedence issues but makes the function longer
+//! - No expression form may invent declaration syntax; constructors and casts
+//!   are parsed only through tokenized grammar surfaces.
+//! - Compact closures are the only expression form that uses speculative
+//!   rollback, and rollback restores both token position and node-id allocation.
+//! - `vacua` is recognized as a value-level empty collection marker; required
+//!   collection types are supplied by declaration/type contexts upstream.
+//! - Field separators in object-like expression syntax are canonical `=`, not
+//!   colon aliases.
 
 use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
@@ -52,10 +34,7 @@ use crate::syntax::*;
 // =============================================================================
 
 impl Parser {
-    /// Parse an expression.
-    ///
-    /// WHY: Entry point for expression parsing. Delegates to assignment level,
-    /// which is the lowest precedence operator.
+    /// Parse an expression from the lowest-precedence level.
     ///
     /// GRAMMAR:
     ///   expression := assignment
@@ -547,7 +526,7 @@ impl Parser {
         self.can_start_expression(kind) && !matches!(kind, TokenKind::LBrace)
     }
 
-    /// Parse postfix operations.
+    /// Parse postfix operations that bind tighter than every infix operator.
     ///
     /// GRAMMAR:
     ///   postfix := primary (call | member | index | cast | optional-chain | conversion)*
@@ -558,8 +537,9 @@ impl Parser {
     ///   optional-chain := '?.' ident | '?[' expr ']' | '?(' args ')'
     ///   conversion := '⇒' type [type-params] ['vel' fallback]
     ///
-    /// WHY: All postfix operations share the same precedence, so they're handled
-    /// in a single loop. This prevents precedence ambiguities like `a.b()`.
+    /// Keeping every postfix form in one loop preserves left-to-right chaining
+    /// (`a.b(c)[d]`) and prevents casts/conversions from accidentally binding at
+    /// a different level than calls or optional chaining.
     fn parse_postfix(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let mut expr = self.parse_primary()?;
@@ -704,7 +684,7 @@ impl Parser {
     // PRIMARY EXPRESSIONS
     // =============================================================================
 
-    /// Parse primary expressions (highest precedence).
+    /// Parse primary expressions, the atoms that postfix and infix forms compose.
     ///
     /// GRAMMAR:
     ///   primary := literal | ident | array | object | paren | closure | collection-dsl
@@ -714,8 +694,10 @@ impl Parser {
     ///   paren := '(' expr ')'
     ///   closure := 'clausura' params ['→' type] ('{' block '}' | ':' expr)
     ///
-    /// WHY: Primary expressions are the atoms of expression parsing. They can
-    /// stand alone or be composed via operators and postfix operations.
+    /// This is the only expression entry point that accepts literals, object and
+    /// array literals, builtin expression forms, `vacua`, and constructor-looking
+    /// object initialization. Anything that starts with a non-primary token must
+    /// be introduced by an earlier precedence layer.
     fn parse_primary(&mut self) -> Result<Expr, ParseError> {
         if let Some(expr) = self.try_parse_compact_clausura_expr()? {
             return Ok(expr);
@@ -919,6 +901,12 @@ impl Parser {
         Ok(Expr { id, kind: ExprKind::Clausura(ClausuraExpr { params, ret, err, body }), span })
     }
 
+    /// Speculatively parse the compact closure form without stealing ordinary expressions.
+    ///
+    /// Compact closure syntax overlaps with parenthesized expressions and
+    /// type-first expression starts. Failed speculation rolls back parser
+    /// position and node allocation unless `ergo` was consumed, in which case
+    /// the user clearly wrote a closure and should receive its real error.
     fn try_parse_compact_clausura_expr(&mut self) -> Result<Option<Expr>, ParseError> {
         if !self.can_start_compact_clausura() {
             return Ok(None);
@@ -1080,12 +1068,14 @@ impl Parser {
         Ok(Expr { id, kind: ExprKind::Ab(AbExpr { source, filter, transforms }), span })
     }
 
-    /// Parse argument list for function calls.
+    /// Parse a function-call argument list after `(` has been consumed.
     ///
     /// GRAMMAR:
     ///   args := [['sparge'] expr (',' ['sparge'] expr)*]
     ///
-    /// WHY: Arguments can use spread operator (sparge) to unpack arrays/objects.
+    /// Arguments can use `sparge` to unpack arrays or objects. The closing `)` is
+    /// left to the caller so this helper can be shared by normal and optional
+    /// call postfix parsing.
     pub(super) fn parse_argument_list(&mut self) -> Result<Vec<Argument>, ParseError> {
         let mut args = Vec::new();
 
@@ -1199,7 +1189,7 @@ impl Parser {
         Ok(args)
     }
 
-    /// Parse scriptum("template", args...)
+    /// Parse the `scriptum("template", args...)` formatting builtin.
     fn parse_scriptum_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Scriptum, "expected 'scriptum'")?;
@@ -1221,7 +1211,7 @@ impl Parser {
         Ok(Expr { id, kind: ExprKind::Scriptum(ScriptumExpr { template, args }), span })
     }
 
-    /// Parse lege / lineam
+    /// Parse `lege` and `lineam` input builtins.
     fn parse_lege_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         let line = if self.eat_keyword(TokenKind::Lineam) {
@@ -1236,8 +1226,7 @@ impl Parser {
         Ok(Expr { id, kind: ExprKind::Lege(LegeExpr { line, span }), span })
     }
 
-    /// Parse comptime expression: praefixum(expr)
-    /// Maps to Zig's `comptime` - forces compile-time evaluation of the expression.
+    /// Parse `praefixum(expr)`, the source-level compile-time evaluation marker.
     fn parse_praefixum_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Praefixum, "expected 'praefixum'")?;
@@ -1252,7 +1241,7 @@ impl Parser {
         Ok(Expr { id, kind: ExprKind::Praefixum(PraefixumExpr { body }), span })
     }
 
-    /// Parse regex literal: sed "pattern" [flags]
+    /// Parse regex literal syntax: `sed "pattern" [flags]`.
     fn parse_sed_expr(&mut self) -> Result<Expr, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Sed, "expected 'sed'")?;

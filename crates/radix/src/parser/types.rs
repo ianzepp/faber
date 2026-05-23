@@ -1,38 +1,26 @@
-//! Type Annotation Parsing
+//! Type-position grammar for declaration and signature parsing.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module handles parsing of type annotations used in variable declarations,
-//! function signatures, type aliases, and other type-bearing constructs. It supports
-//! nullable types, ownership modes, generic type parameters, function types, and arrays.
-//!
-//! COMPILER PHASE: Parsing
-//! INPUT: Token stream (via Parser methods)
-//! OUTPUT: TypeExpr AST nodes
+//! This module is the parser boundary for syntax that is known to be in type
+//! position: variable and field declarations, parameters, aliases, function
+//! signatures, casts, and annotation schemas. It does not decide whether a type
+//! exists or whether generic arity is valid; it only builds the source shape that
+//! later phases resolve.
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Type-first syntax: Types appear before names in all declarations
-//! - Modifier prefixes: Nullable (si), ownership (de/in) modify base types
-//! - Generic type parameters: Angle-bracket syntax like TypeScript/Rust
-//! - Function types: First-class function type syntax (A, B) → C
-//! - Array postfix: Array brackets [] applied postfix to base type
+//! Faber type syntax is explicit and conservative. Ownership modes are prefix
+//! markers (`de`, `in`), arrays are postfix `[]`, function types use arrow
+//! syntax, and nullable value slots are expressed by unioning with `nihil`.
+//! Optional declaration slots are not type suffixes; they are parsed as
+//! post-name `sponte` markers by declaration parsers.
 //!
-//! GRAMMAR COVERAGE
-//! ================
-//! - Nullable via union: T ∪ nihil (lowers to Option<T> in Phase 3)
-//! - Ownership modes: de Type (borrow), in Type (mutable borrow)
-//! - Named types: Ident or Ident<Type, Type>
-//! - Function types: (Type, Type) → Type
-//! - Array types: Type[] or Type[][]
-//! - Nil type: nihil (void/unit type)
-//!
-//! TRADE-OFFS
+//! INVARIANTS
 //! ==========
-//! - Prefix modifiers only: Nullable and ownership must appear before base type,
-//!   cannot mix with postfix array syntax (e.g., no Type[]? in TypeScript sense)
-//! - No tuple syntax: Function types handle multiple values, dedicated tuple
-//!   syntax deferred to avoid parsing ambiguity
+//! - There is no `Type?` grammar and no nullable prefix shorthand.
+//! - `ignotum` is just a named type at this layer, not a nullability marker.
+//! - `nihil` may appear as a type member because it is accepted in type position.
+//! - Union parsing flattens nested union ASTs when no member-level mode or legacy
+//!   nullable flag would be lost.
 
 use super::{ParseError, Parser};
 use crate::lexer::{Span, TokenKind};
@@ -43,10 +31,11 @@ use crate::syntax::*;
 // =============================================================================
 
 impl Parser {
-    /// Try to parse a type annotation (returns None if not a type).
+    /// Try to parse a type expression without requiring one.
     ///
-    /// WHY: Some contexts need to speculatively check for type annotations
-    /// without committing. Used internally for disambiguation.
+    /// This helper is intentionally conservative: it only enters type parsing on
+    /// tokens that can begin canonical type syntax. Callers that know they are in
+    /// type position should call `parse_type` and receive a diagnostic instead.
     #[allow(dead_code)]
     pub(super) fn try_parse_type(&mut self) -> Result<Option<TypeExpr>, ParseError> {
         // Check for type start (mode prefix or base: '_', ident, '(', or later ∪ handled inside parse_type)
@@ -63,7 +52,7 @@ impl Parser {
         }
     }
 
-    /// Parse a type annotation.
+    /// Parse a required type expression.
     ///
     /// GRAMMAR (Phase 2):
     ///   type := ['de'|'in'] (func-type | named-type | union-type) ('[]')*
@@ -71,12 +60,10 @@ impl Parser {
     ///   named-type := ident ['<' type-list '>']
     ///   union-type := type '∪' type ('∪' type)*
     ///
-    /// WHY: Post-Phase 2, nullable optionality is expressed via `T ∪ nihil` union
-    /// syntax in pure type positions. Declaration-level optionality uses `sponte`
-    /// after the name (see parse_param_list / parse_class_member).
-    ///
-    /// EDGE: 'nihil' is both a value literal and type name. In type position,
-    /// parsed as type name via keyword_ident. Unions are flat lists.
+    /// Nullable value types are represented in pure type syntax as `T ∪ nihil`.
+    /// Declaration-level optional slots are parsed outside this module as
+    /// `sponte` markers after the binding name. `nihil` is accepted here as a
+    /// keyword-backed type name because it also exists as a value literal.
     pub(super) fn parse_type(&mut self) -> Result<TypeExpr, ParseError> {
         let start = self.current_span();
 
@@ -142,7 +129,11 @@ impl Parser {
         self.parse_union_tail(core, start)
     }
 
-    /// After parsing a core type (named/func/array), consume any trailing `∪ T` chain.
+    /// Consume a trailing union chain after a core type.
+    ///
+    /// The parser flattens nested union members so later phases do not need to
+    /// distinguish `A ∪ (B ∪ C)` from `A ∪ B ∪ C`. Member-level mode/nullable
+    /// state is preserved by declining to flatten when it would change meaning.
     fn parse_union_tail(&mut self, first: TypeExpr, start: Span) -> Result<TypeExpr, ParseError> {
         if !self.eat(&TokenKind::Cup) {
             return Ok(first);
@@ -164,14 +155,13 @@ impl Parser {
         })
     }
 
-    /// Parse function type: (A, B) → C ⇥ E
+    /// Parse a function type: `(A, B) → C ⇥ E`.
     ///
     /// GRAMMAR:
     ///   func-type := '(' [type (',' type)*] ')' '→' type ['⇥' type]
     ///
-    /// WHY: First-class function types for callbacks, higher-order functions, and
-    /// interface method signatures. Parameter types separated by commas, return
-    /// type after arrow.
+    /// Function type syntax is only recognized after an opening parenthesis in a
+    /// known type position, avoiding ambiguity with parenthesized expressions.
     fn parse_func_type(&mut self) -> Result<FuncTypeExpr, ParseError> {
         self.expect(&TokenKind::LParen, "expected '('")?;
 

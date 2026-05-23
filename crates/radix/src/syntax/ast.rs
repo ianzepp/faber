@@ -1,31 +1,26 @@
-//! Abstract Syntax Tree node definitions
+//! Concrete syntax model for parsed Faber source.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Defines the complete AST structure for Faber programs. Each node carries
-//! its source span for error reporting and a unique ID for semantic analysis.
-//! The AST is an untyped, direct representation of the concrete syntax.
+//! This file defines the AST that the parser hands to the rest of `radix`.
+//! It is intentionally a source-shaped model: declarations, expressions, type
+//! syntax, annotations, and directives are recorded as the user wrote them, with
+//! spans and node IDs for later phases to attach diagnostics and side tables.
 //!
-//! COMPILER PHASE: Parsing (data structures)
-//! INPUT: Token stream (consumed by parser)
-//! OUTPUT: AST consumed by semantic analysis and HIR lowering
+//! The AST does not decide semantic meaning. Name resolution, inferred types,
+//! target compatibility, stdlib translation behavior, exhaustiveness, and data
+//! flow live in later compiler phases keyed by these nodes. Keeping the tree
+//! syntactic lets the parser preserve edge cases and lets semantic analysis
+//! reject bad programs with source-accurate context instead of losing grammar
+//! detail during parse.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Faithful to source: AST preserves syntactic structure, including optional
-//!   punctuation and formatting hints, for error messages and code formatting
-//! - NodeId assignment: Every statement and expression gets a unique ID for
-//!   def-use chains and type inference results
-//! - Span tracking: All nodes carry their source location for diagnostics
-//! - Annotation preservation: Annotations attach to declarations rather than
-//!   being stored separately, making them easier to process during lowering
-//!
-//! ORGANIZATION
-//! ============
-//! - Statements (Stmt, StmtKind): Top-level and block-level declarations
-//! - Expressions (Expr, ExprKind): Value-producing constructs
-//! - Types (TypeExpr): Type annotations in source
-//! - Annotations: Metadata for code generation and compiler hints
+//! INVARIANTS
+//! ==========
+//! - Every statement and expression parsed from source carries a [`NodeId`].
+//! - `span` fields are parse provenance for diagnostics and source mapping.
+//! - [`TypeExpr`] represents written type syntax, not a checked type.
+//! - Annotation nodes preserve metadata syntax; interpretation is owned by
+//!   lowering, package tooling, and backend-specific codegen.
+//! - Legacy compatibility fields remain explicit so callers do not guess when
+//!   grammar migrations are incomplete.
 
 use crate::lexer::{Span, Symbol, Token};
 
@@ -33,21 +28,29 @@ use crate::lexer::{Span, Symbol, Token};
 // CORE TYPES
 // =============================================================================
 
-/// Unique node identifier for statements and expressions.
+/// Parser-assigned identifier for statement and expression nodes.
 ///
-/// WHY: Assigned during parsing, used throughout semantic analysis to track
-/// type inference results, control flow, and definition sites. Stored as u32
-/// to keep nodes compact.
+/// `NodeId` is the rendezvous point between the syntax tree and later phase
+/// side tables such as inferred types, flow facts, and resolved definitions. It
+/// is not globally meaningful outside one parsed program/session, and it should
+/// not be serialized as a stable language artifact.
 pub type NodeId = u32;
 
-/// Root of the AST representing a complete Faber source file.
+/// Parsed contents of one Faber source unit.
 ///
-/// WHY: Directives (like `§ verte rust`) appear before the module body and
-/// affect compilation globally. Separating them simplifies processing.
+/// Directives are kept separate from ordinary statements because they configure
+/// source-unit behavior before semantic analysis walks the body. Package mode
+/// may assemble many `Program`s, but each value remains the parse result for one
+/// file-like source.
 #[derive(Debug)]
 pub struct Program {
+    /// File-scoped directives parsed before the statement body.
     pub directives: Vec<DirectiveDecl>,
+
+    /// Top-level declarations and executable statements in source order.
     pub stmts: Vec<Stmt>,
+
+    /// Source span covering the parsed unit.
     pub span: Span,
 }
 
@@ -57,14 +60,26 @@ pub struct Program {
 
 #[derive(Debug)]
 pub struct Stmt {
+    /// Stable handle used by later phases for statement-scoped facts.
     pub id: NodeId,
+
+    /// Grammar form of this statement.
     pub kind: StmtKind,
+
+    /// Source location for diagnostics.
     pub span: Span,
+
+    /// Metadata attached directly to this statement by the parser.
     pub annotations: Vec<Annotation>,
 }
 
 pub type AnnotatedStmt = Stmt;
 
+/// Top-level and block-level statement forms recognized by the parser.
+///
+/// Variants name grammar categories, not semantic classes. For example,
+/// `Import`, `Ad`, and `Incipit` still require package or lowering policy
+/// before they become module dependencies, endpoints, or entrypoints.
 #[derive(Debug)]
 pub enum StmtKind {
     /// Variable declaration: fixum/varia
@@ -139,13 +154,27 @@ pub enum StmtKind {
 
 #[derive(Debug)]
 pub struct VarDecl {
+    /// Declared binding policy from `fixum` or `varia`.
     pub mutability: Mutability,
+
+    /// Whether the initializer was marked for await-like binding behavior.
     pub is_await: bool,
+
+    /// Written type annotation, if present; inference is resolved later.
     pub ty: Option<TypeExpr>,
+
+    /// Identifier or destructuring pattern introduced by the declaration.
     pub binding: BindingPattern,
+
+    /// Optional initializer expression.
     pub init: Option<Box<Expr>>,
 }
 
+/// Binding target syntax used by declarations and destructuring forms.
+///
+/// Patterns only describe where names are introduced. They do not encode
+/// resolved field types, tuple/array lengths, or whether a source expression can
+/// actually be destructured; those are semantic checks.
 #[derive(Debug)]
 pub enum BindingPattern {
     Ident(Ident),
@@ -170,13 +199,28 @@ pub enum Mutability {
 
 #[derive(Debug)]
 pub struct FuncDecl {
+    /// Declared function name.
     pub name: Ident,
+
+    /// Generic parameters as written in source order.
     pub type_params: Vec<TypeParam>,
+
+    /// Parameter list, including ownership mode and optional defaults.
     pub params: Vec<Param>,
+
+    /// Function-level modifiers that affect CLI/runtime/lowering policy.
     pub modifiers: Vec<FuncModifier>,
+
+    /// Return type annotation. Absence does not imply `vacuum` until checked.
     pub ret: Option<TypeExpr>,
+
+    /// Declared error type for throwing functions, if present.
     pub err: Option<TypeExpr>,
+
+    /// Function body, absent for interface or external declarations.
     pub body: Option<BlockStmt>,
+
+    /// Annotations parsed as part of the declaration payload.
     pub annotations: Vec<Annotation>,
 }
 
@@ -188,26 +232,55 @@ pub struct TypeParam {
 
 #[derive(Debug)]
 pub struct Param {
-    pub sponte: bool,    // sponte — voluntary/optional param (replaces old `si` prefix)
-    pub fixus: bool,     // fixus — fixed after initialization
-    pub mode: ParamMode, // de/in/ex
-    pub rest: bool,      // ceteri
+    /// `sponte` marks a voluntary parameter slot; it is syntax, not nullability.
+    pub sponte: bool,
+
+    /// `fixus` marks a parameter fixed after initialization.
+    pub fixus: bool,
+
+    /// Ownership/borrowing mode from `de`, `in`, or `ex`.
+    pub mode: ParamMode,
+
+    /// `ceteri` rest parameter marker.
+    pub rest: bool,
+
+    /// Written parameter type.
     pub ty: TypeExpr,
+
+    /// Binding name introduced by the parameter.
     pub name: Ident,
-    pub alias: Option<Ident>, // ut NAME
+
+    /// Optional external alias introduced by `ut`.
+    pub alias: Option<Ident>,
+
+    /// Default expression, if the grammar supplied one.
     pub default: Option<Box<Expr>>,
+
+    /// Full parameter span for diagnostics.
     pub span: Span,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ParamMode {
+    /// Default value-passing mode when no ownership marker is written.
     #[default]
-    Owned, // (none) - take ownership
-    Ref,    // de - borrow
-    MutRef, // in - mutable borrow
-    Move,   // ex - explicit move
+    Owned,
+
+    /// `de`: shared borrow-like parameter mode.
+    Ref,
+
+    /// `in`: mutable borrow-like parameter mode.
+    MutRef,
+
+    /// `ex`: explicit move mode.
+    Move,
 }
 
+/// Function modifiers parsed from declaration syntax.
+///
+/// These values are still syntax-level metadata. Package command generation,
+/// CLI binding, runtime integration, and codegen decide which combinations are
+/// meaningful for a target.
 #[derive(Debug)]
 pub enum FuncModifier {
     Argumenta(Ident),
@@ -324,9 +397,16 @@ pub struct VariantField {
 
 #[derive(Debug)]
 pub struct ImportDecl {
+    /// Import specifier exactly as parsed from source.
     pub path: Symbol,
+
+    /// Source visibility marker; package resolution interprets its reach.
     pub visibility: Visibility,
+
+    /// Import binding shape.
     pub kind: ImportKind,
+
+    /// Span of the full import declaration.
     pub span: Span,
 }
 
@@ -336,6 +416,11 @@ pub enum Visibility {
     Public,
 }
 
+/// Parser-level import binding form.
+///
+/// The path may later resolve to a local module or a built-in library interface;
+/// that boundary is owned outside syntax so parsing does not special-case
+/// providers such as `norma`.
 #[derive(Debug)]
 pub enum ImportKind {
     Named { name: Ident, alias: Option<Ident> },
@@ -344,8 +429,13 @@ pub enum ImportKind {
 
 #[derive(Debug)]
 pub struct DirectiveDecl {
+    /// Directive name following the source directive marker.
     pub name: Ident,
+
+    /// Literal or identifier arguments preserved for later interpretation.
     pub args: Vec<DirectiveArg>,
+
+    /// Span of the complete directive.
     pub span: Span,
 }
 
@@ -357,9 +447,16 @@ pub enum DirectiveArg {
 
 #[derive(Debug)]
 pub struct ProbandumDecl {
+    /// Suite name as source text.
     pub name: Symbol,
+
+    /// Test-suite modifiers that later test lowering interprets.
     pub modifiers: Vec<ProbaModifier>,
+
+    /// Setup blocks, cases, and nested suites.
     pub body: ProbandumBody,
+
+    /// Span of the full suite declaration.
     pub span: Span,
 }
 
@@ -394,6 +491,10 @@ pub struct ProbaCase {
     pub span: Span,
 }
 
+/// Parsed test modifier taxonomy.
+///
+/// The AST preserves these modifiers as declared; scheduling behavior, target
+/// filtering, retries, and timing policy are owned by the test backend.
 #[derive(Debug, Clone)]
 pub enum ProbaModifier {
     Omitte(Symbol),
@@ -491,9 +592,16 @@ pub struct CeterumDefault {
 
 #[derive(Debug)]
 pub struct DiscerneStmt {
-    pub exhaustive: bool, // omnia
+    /// `omnia` marker requiring exhaustive semantic coverage.
+    pub exhaustive: bool,
+
+    /// Expressions being matched.
     pub subjects: Vec<Expr>,
+
+    /// Pattern arms in source order.
     pub arms: Vec<CasuArm>,
+
+    /// Optional fallback arm.
     pub default: Option<CeterumDefault>,
 }
 
@@ -504,6 +612,11 @@ pub struct CasuArm {
     pub span: Span,
 }
 
+/// Pattern syntax accepted inside `discerne`.
+///
+/// Patterns here identify grammar shape and bound names only. Variant
+/// resolution, literal compatibility, and exhaustiveness are checked after name
+/// and type information exist.
 #[derive(Debug)]
 pub enum Pattern {
     Wildcard(Span),
@@ -521,7 +634,10 @@ pub struct PathPattern {
 
 #[derive(Debug)]
 pub enum PatternBind {
-    Alias(Ident), // ut NAME
+    /// `ut NAME`: bind the matched value under an alias.
+    Alias(Ident),
+
+    /// Destructure and bind the listed names with the declared mutability.
     Bindings { mutability: Mutability, names: Vec<Ident> },
 }
 
@@ -610,9 +726,16 @@ pub enum ScribeKind {
 
 #[derive(Debug)]
 pub struct IncipitStmt {
-    pub is_async: bool, // incipiet vs incipit
+    /// Distinguishes `incipiet` from synchronous `incipit`.
+    pub is_async: bool,
+
+    /// Entrypoint body in either block or single-statement form.
     pub body: IfBody,
+
+    /// Optional argument binding exposed to the entrypoint body.
     pub args: Option<Ident>,
+
+    /// Optional exit expression supplied by the entrypoint declaration.
     pub exitus: Option<Box<Expr>>,
 }
 
@@ -666,10 +789,17 @@ pub struct AdBinding {
 
 #[derive(Debug, Clone, Copy)]
 pub enum EndpointVerb {
-    Fit,   // sync singular
-    Fiet,  // async singular
-    Fiunt, // sync plural
-    Fient, // async plural
+    /// `fit`: synchronous singular endpoint binding.
+    Fit,
+
+    /// `fiet`: asynchronous singular endpoint binding.
+    Fiet,
+
+    /// `fiunt`: synchronous plural endpoint binding.
+    Fiunt,
+
+    /// `fient`: asynchronous plural endpoint binding.
+    Fient,
 }
 
 // =============================================================================
@@ -678,11 +808,21 @@ pub enum EndpointVerb {
 
 #[derive(Debug)]
 pub struct Expr {
+    /// Stable handle used by later phases for expression-scoped facts.
     pub id: NodeId,
+
+    /// Grammar form of this expression.
     pub kind: ExprKind,
+
+    /// Source location for diagnostics.
     pub span: Span,
 }
 
+/// Value-producing source forms.
+///
+/// These variants encode parse shape, including sugared forms such as optional
+/// chains and collection DSL fragments. Lowering decides which forms normalize
+/// to shared HIR operations and which remain target-specific.
 #[derive(Debug)]
 pub enum ExprKind {
     /// Identifier
@@ -743,7 +883,10 @@ pub enum ExprKind {
 
 #[derive(Debug)]
 pub struct Ident {
+    /// Interned spelling of the identifier.
     pub name: Symbol,
+
+    /// Span of the identifier token.
     pub span: Span,
 }
 
@@ -1050,7 +1193,9 @@ pub struct ScriptumExpr {
 
 #[derive(Debug)]
 pub struct LegeExpr {
-    pub line: bool, // lineam
+    /// `lineam` marker for line-oriented input.
+    pub line: bool,
+
     pub span: Span,
 }
 
@@ -1061,9 +1206,9 @@ pub struct SedExpr {
     pub span: Span,
 }
 
-#[derive(Debug)]
 /// Comptime expression: praefixum(expr) - forces compile-time evaluation
 /// Maps to Zig's `comptime`
+#[derive(Debug)]
 pub struct PraefixumExpr {
     pub body: PraefixumBody,
 }
@@ -1080,18 +1225,42 @@ pub enum PraefixumBody {
 
 #[derive(Debug)]
 pub struct TypeExpr {
-    pub nullable: bool,         // si (legacy; always false after Phase 2; unions use Kind::Union)
-    pub mode: Option<TypeMode>, // de/in
+    /// Legacy `si` nullability marker.
+    ///
+    /// This field remains explicit for migration safety, but new nullable value
+    /// types are represented as [`TypeExprKind::Union`] with `nihil` as a
+    /// member.
+    pub nullable: bool,
+
+    /// Borrowing mode marker from `de` or `in`, if written in type position.
+    pub mode: Option<TypeMode>,
+
+    /// Syntactic form of the type expression.
     pub kind: TypeExprKind,
+
+    /// Span of the complete type expression.
     pub span: Span,
 }
 
+/// Borrowing mode written in type position.
+///
+/// This is syntax-level intent. Later phases decide whether the selected target
+/// or semantic context supports the mode.
 #[derive(Debug, Clone, Copy)]
 pub enum TypeMode {
-    Ref,    // de
-    MutRef, // in
+    /// `de`: shared reference-like mode.
+    Ref,
+
+    /// `in`: mutable reference-like mode.
+    MutRef,
 }
 
+/// Source-level type syntax.
+///
+/// This enum is deliberately not the compiler's checked type model. It preserves
+/// source spelling such as `_`, generic application, array syntax, function
+/// types, and inline unions so type checking can report errors against the
+/// syntax the user wrote.
 #[derive(Debug)]
 pub enum TypeExprKind {
     /// Inferred type marker: _
@@ -1119,10 +1288,19 @@ pub struct FuncTypeExpr {
 
 #[derive(Debug)]
 pub struct Annotation {
+    /// Parsed annotation family and payload.
     pub kind: AnnotationKind,
+
+    /// Span of the full annotation.
     pub span: Span,
 }
 
+/// Annotation taxonomy preserved by the parser.
+///
+/// An annotation may describe target translation, CLI/package surfaces, access
+/// control, async/cursor behavior, test selection, or raw metadata. Syntax keeps
+/// those families distinct without deciding whether a specific declaration may
+/// legally use them; that policy belongs to the consumer phase.
 #[derive(Debug)]
 pub enum AnnotationKind {
     /// Annotation as a statement with args
@@ -1167,7 +1345,10 @@ pub enum AnnotationKind {
 
 #[derive(Debug)]
 pub struct AnnotationStmt {
+    /// Raw annotation name for forms not modeled as structured annotations.
     pub name: Ident,
+
+    /// Token payload preserved for the eventual consumer.
     pub args: Vec<Token>,
 }
 
@@ -1183,14 +1364,26 @@ pub struct ImperiumAnnotation {
 
 #[derive(Debug)]
 pub struct TargetMapping {
+    /// Backend target named by the annotation, such as `rs` or `ts`.
     pub target: Ident,
+
+    /// Target-specific replacement text or symbol payload.
     pub value: Symbol,
+
+    /// Span of this mapping entry.
     pub span: Span,
 }
 
+/// Parsed `@ verte` mapping for target-specific lowering.
+///
+/// The syntax layer records either a direct replacement or a template. It does
+/// not expand placeholders or validate backend availability.
 #[derive(Debug)]
 pub struct VerteMapping {
+    /// Target language or backend selector.
     pub target: Ident,
+
+    /// Mapping payload.
     pub kind: VerteMappingKind,
 }
 
@@ -1202,22 +1395,48 @@ pub enum VerteMappingKind {
 
 #[derive(Debug)]
 pub struct OptioAnnotation {
+    /// Program binding populated from the option.
     pub binding: Ident,
+
+    /// Optional declared value type. Flags may omit this.
     pub ty: Option<TypeExpr>,
+
+    /// Short option spelling.
     pub short: Option<Symbol>,
+
+    /// Long option spelling.
     pub long: Option<Symbol>,
+
+    /// Whether the option is a boolean flag.
     pub flag: bool,
+
+    /// User-facing CLI help text, if supplied.
     pub description: Option<Symbol>,
+
+    /// Whether the option applies outside one command scope.
     pub global: bool,
+
+    /// Default value expression parsed from the annotation.
     pub default: Option<Box<Expr>>,
 }
 
 #[derive(Debug)]
 pub struct OperandusAnnotation {
+    /// Whether this positional operand captures the remaining arguments.
     pub rest: bool,
+
+    /// Declared operand type.
     pub ty: TypeExpr,
+
+    /// Program binding populated from the operand.
     pub binding: Ident,
+
+    /// User-facing CLI help text, if supplied.
     pub description: Option<Symbol>,
+
+    /// Whether the operand applies outside one command scope.
     pub global: bool,
+
+    /// Default value expression parsed from the annotation.
     pub default: Option<Box<Expr>>,
 }

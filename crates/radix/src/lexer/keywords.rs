@@ -1,76 +1,204 @@
-//! Keyword scope metadata.
+//! Keyword spelling registry for lexer and language-tool policy.
 //!
-//! WHY: The lexer currently reserves every normal-mode keyword globally. This
-//! registry records the intended ownership of each spelling before parser
-//! helpers and contextual migrations start consuming the metadata.
+//! The scanner's `match` table in `scan.rs` is the live tokenization surface.
+//! This registry is the richer contract around that surface: it records which
+//! spellings are current keywords, which are annotation or section names, which
+//! are intentionally contextual, and which spellings are aliases for migration
+//! or teaching purposes.
+//!
+//! WHY THIS EXISTS
+//! ===============
+//! Faber's front end is still moving some words from globally reserved tokens
+//! toward parser-owned or metadata-owned contexts. Keeping that intent in a
+//! structured registry lets diagnostics and explain output work from one
+//! taxonomy instead of rediscovering policy from a large scanner `match`.
+//!
+//! INVARIANTS
+//! ==========
+//! - `token_kind: Some(_)` means the current lexer can emit that token in at
+//!   least one source mode; `None` means the spelling is tracked metadata and
+//!   should lex as an identifier today.
+//! - `Alias` entries name their canonical spelling but may still lex as their
+//!   own token while migration diagnostics are developed.
+//! - Annotation and section spellings are registry entries, not normal-mode
+//!   reserved words, unless `scan.rs` explicitly promotes them.
+//! - This file describes policy; `scan.rs` remains authoritative for behavior.
 
 use super::token::TokenKind;
 
+/// Where a keyword spelling is valid or intended to be owned.
+///
+/// Scope is policy metadata, not automatic lexer behavior. It tells tools and
+/// parser work whether a spelling is globally reserved, context-owned,
+/// annotation-only, section-only, test-owned, or transitional.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeywordScope {
+    /// Reserved anywhere normal-mode keyword recognition runs.
     Global,
+
+    /// Intended for one or more parser contexts, even if currently lexed as a keyword.
     Contextual(&'static [KeywordOwner]),
+
+    /// Annotation name or annotation-owned metadata after `@`.
     Annotation,
+
+    /// Section marker payload after `§`.
     Section,
+
+    /// Test syntax surface owned by the test language layer.
     TestOwned,
+
+    /// Accepted spelling whose canonical replacement is named here.
     Alias { canonical: &'static str },
 }
 
+/// Parser or tooling surface that owns a contextual keyword spelling.
+///
+/// These owners let diagnostics describe why a word is special without turning
+/// every contextual use into a global language reservation forever.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeywordOwner {
+    /// Entrypoint-level modifier or command metadata.
     EntryModifier,
+
+    /// Function declaration modifier.
     FunctionModifier,
+
+    /// Class-like `genus` header syntax.
     GenusHeader,
+
+    /// Class-like `genus` member syntax.
     GenusMember,
+
+    /// Rest binding in patterns or parameters.
     RestPattern,
+
+    /// Spread expression syntax.
     SpreadExpression,
+
+    /// Annotation name position.
     AnnotationName,
+
+    /// Annotation argument or modifier position.
     AnnotationModifier,
+
+    /// Member name position where keyword-looking words may be accepted.
     MemberIdentifier,
+
+    /// Import visibility surface.
     ImportVisibility,
+
+    /// Type-parameter modifier surface.
     TypeParameter,
+
+    /// Parameter passing mode.
     ParameterMode,
+
+    /// Import or binding alias marker.
     AliasMarker,
+
+    /// Iteration mode keyword.
     IterationMode,
+
+    /// Endpoint binding syntax.
     EndpointBinding,
+
+    /// Collection query operator.
     CollectionQuery,
+
+    /// Predicate-style operator.
     PredicateOperator,
 }
 
+/// Keyword grouping used by diagnostics, explain data, and registry consumers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeywordCategory {
+    /// Declaration-introducing syntax.
     Declaration,
+
+    /// Declaration or behavior modifier.
     Modifier,
+
+    /// Branching, looping, or pattern-control syntax.
     ControlFlow,
+
+    /// Function or loop transfer syntax.
     Transfer,
+
+    /// Error and assertion syntax.
     ErrorHandling,
+
+    /// Async, generator, or closure-adjacent syntax.
     Async,
+
+    /// Built-in literal spelling.
     Literal,
+
+    /// Word operator.
     Operator,
+
+    /// Object, self, inheritance, or construction syntax.
     Object,
+
+    /// Type conversion or construction syntax.
     TypeOperation,
+
+    /// User-visible output helper.
     Output,
+
+    /// Program entrypoint surface.
     EntryPoint,
+
+    /// Resource-management syntax.
     Resource,
+
+    /// Endpoint binding syntax.
     Endpoint,
+
+    /// Miscellaneous language surface not yet split into a narrower category.
     Misc,
+
+    /// Range operator word.
     Range,
+
+    /// Collection query DSL.
     CollectionDsl,
+
+    /// Test declaration or test modifier syntax.
     Testing,
+
+    /// Nullability or predicate helper.
     Nullability,
+
+    /// Annotation metadata.
     Annotation,
+
+    /// Section metadata.
     Section,
 }
 
+/// Registry row for one known keyword or keyword-like spelling.
+///
+/// This is a public data contract for tools that need to explain or audit the
+/// language surface. It is not a generated lexer table: consumers must still
+/// check `token_kind` and scope before assuming a spelling is reserved.
 #[derive(Debug, Clone)]
 pub struct KeywordSpec {
+    /// Source spelling as users write it.
     pub text: &'static str,
+
+    /// Token emitted by the current lexer, or `None` for metadata-only entries.
     pub token_kind: Option<TokenKind>,
+
+    /// Ownership and reservation policy for this spelling.
     pub scope: KeywordScope,
+
+    /// Taxonomy bucket used by diagnostics and reference tooling.
     pub category: KeywordCategory,
 }
 
 impl KeywordSpec {
+    /// Return whether the live lexer currently emits a keyword token here.
     pub fn currently_lexes_as_keyword(&self) -> bool {
         self.token_kind.is_some()
     }
@@ -93,6 +221,7 @@ const COLLECTION_QUERY: &[KeywordOwner] = &[KeywordOwner::CollectionQuery];
 const PREDICATE_OPERATOR: &[KeywordOwner] = &[KeywordOwner::PredicateOperator];
 const ANNOTATION_MODIFIER: &[KeywordOwner] = &[KeywordOwner::AnnotationModifier];
 
+/// Complete registry of current, contextual, alias, annotation, and section spellings.
 pub static KEYWORD_SPECS: &[KeywordSpec] = &[
     KeywordSpec {
         text: "fixum",
@@ -841,10 +970,12 @@ pub static KEYWORD_SPECS: &[KeywordSpec] = &[
     KeywordSpec { text: "sectio", token_kind: None, scope: KeywordScope::Section, category: KeywordCategory::Section },
 ];
 
+/// Return the keyword spelling registry in deterministic declaration order.
 pub fn keyword_specs() -> &'static [KeywordSpec] {
     KEYWORD_SPECS
 }
 
+/// Look up registry metadata for an exact source spelling.
 pub fn lookup_keyword_spec(text: &str) -> Option<&'static KeywordSpec> {
     KEYWORD_SPECS.iter().find(|spec| spec.text == text)
 }

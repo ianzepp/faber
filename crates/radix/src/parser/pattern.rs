@@ -1,35 +1,25 @@
-//! Pattern Parsing for Match Expressions
+//! Pattern grammar for `discerne` arms.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module handles parsing of patterns used in match expressions (discerne).
-//! Patterns support literals, wildcards, identifiers, paths, and binding/aliasing.
-//!
-//! COMPILER PHASE: Parsing
-//! INPUT: Token stream (via Parser methods)
-//! OUTPUT: Pattern AST nodes
+//! Pattern parsing is deliberately narrower than expression parsing. It accepts
+//! the shapes that can appear after `casu` inside `discerne`: wildcards,
+//! literals, identifiers, qualified paths, aliases, and shallow binding lists.
+//! It does not parse arbitrary expressions or nested destructuring trees.
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Multiple separators: Patterns can be separated by commas or 'et' (and)
-//! - Binding variants: Patterns support aliasing (ut) and destructuring (fixum/varia)
-//! - Path patterns: Qualified names like `Result.Ok` for enum variant matching
-//! - Literal patterns: Direct matching against constants
+//! The parser records syntactic pattern intent and leaves type-aware matching,
+//! variant resolution, and exhaustiveness to later phases. This keeps the
+//! recursive-descent boundary simple while still preserving enough source shape
+//! for diagnostics and lowering.
 //!
-//! GRAMMAR COVERAGE
-//! ================
-//! - Wildcard: _ (matches anything, no binding)
-//! - Literal: integers, floats, strings, booleans, nil
-//! - Identifier: single name, optionally with binding
-//! - Path: qualified name (A.B.C), optionally with binding
-//! - Binding: 'ut' for alias, 'fixum'/'varia' for destructuring
-//!
-//! TRADE-OFFS
+//! INVARIANTS
 //! ==========
-//! - No nested destructuring: Patterns are shallow for parser simplicity, deep
-//!   destructuring deferred to semantic analysis
-//! - Lookahead for body detection: Checks for body-starting keywords to avoid
-//!   mis-parsing them as pattern separators
+//! - `,` and `et` separate patterns, but body-starting tokens stop the pattern
+//!   list so `ergo` and `{` remain statement-body syntax.
+//! - Pattern literals are parsed independently from expression literals because
+//!   this context accepts constants, not operators or calls.
+//! - `fixum` and `varia` in pattern binds describe captured binding mutability;
+//!   they are not declaration statements inside the arm head.
 
 use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
@@ -40,15 +30,13 @@ use crate::syntax::*;
 // =============================================================================
 
 impl Parser {
-    /// Parse comma/et-separated patterns.
+    /// Parse one or more arm-head patterns.
     ///
     /// GRAMMAR:
     ///   patterns := pattern (',' pattern | 'et' pattern)*
     ///
-    /// WHY: Match arms can match multiple patterns. Both comma and 'et' (and)
-    /// serve as separators for readability.
-    ///
-    /// EDGE: Must detect if-body start tokens to avoid consuming them as separators.
+    /// Both comma and `et` are accepted as pattern separators. The parser stops
+    /// before `{` or `ergo` so the arm body is not consumed as another pattern.
     pub(super) fn parse_patterns(&mut self) -> Result<Vec<Pattern>, ParseError> {
         let mut patterns = Vec::new();
 
@@ -70,14 +58,14 @@ impl Parser {
         Ok(patterns)
     }
 
-    /// Parse a single pattern.
+    /// Parse one pattern atom plus its optional binding suffix.
     ///
     /// GRAMMAR:
     ///   pattern := '_' | literal | ident [bind] | path bind
     ///   bind := 'ut' ident | ('fixum'|'varia') ident-list
     ///
-    /// WHY: Patterns support wildcard, literal matching, simple identifiers, and
-    /// qualified paths. Bindings allow capturing matched values or destructuring.
+    /// Qualified paths are kept syntactic here; later phases decide whether a
+    /// path names an enum variant, union variant, or invalid pattern target.
     fn parse_pattern(&mut self) -> Result<Pattern, ParseError> {
         // Wildcard pattern
         if let TokenKind::Underscore(_) = self.peek().kind {
@@ -117,14 +105,14 @@ impl Parser {
         Err(self.error(ParseErrorKind::InvalidPattern, "expected pattern"))
     }
 
-    /// Parse optional pattern binding.
+    /// Parse an optional binding suffix for a pattern.
     ///
     /// GRAMMAR:
     ///   bind := 'ut' ident | ('fixum'|'varia') ident (',' ident)*
     ///
-    /// WHY: Patterns can bind matched values in two ways:
-    /// - Alias: 'ut name' gives the whole match a new name
-    /// - Destructuring: 'fixum name1, name2' extracts fields/elements
+    /// `ut name` aliases the whole matched value. `fixum` and `varia` capture a
+    /// shallow list of names with the requested mutability; deeper shape checks
+    /// belong to semantic analysis.
     fn parse_pattern_bind(&mut self) -> Result<Option<PatternBind>, ParseError> {
         let bind = if self.eat_keyword(TokenKind::Ut) {
             let alias = self.parse_ident()?;
@@ -161,10 +149,10 @@ impl Parser {
         Ok(names)
     }
 
-    /// Try to parse a literal pattern.
+    /// Try to parse a literal pattern in arm-head context.
     ///
-    /// WHY: Literal patterns enable matching against constant values. Separated
-    /// from expression literal parsing because patterns have different context.
+    /// This intentionally stops at constants. Operators, calls, and object/array
+    /// expressions are not pattern syntax.
     fn try_parse_pattern_literal(&mut self) -> Option<Pattern> {
         match self.peek().kind {
             TokenKind::Integer(n) => {

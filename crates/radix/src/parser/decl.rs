@@ -1,35 +1,29 @@
-//! Declaration and Statement Parsing
+//! Declaration grammar for Faber's crate-facing syntax tree.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module handles parsing of Faber's top-level constructs: variable declarations,
-//! functions, classes, interfaces, enums, unions, imports, and test declarations.
-//! It also includes block statement parsing and annotations.
-//!
-//! COMPILER PHASE: Parsing
-//! INPUT: Token stream (via Parser methods)
-//! OUTPUT: Statement AST nodes (StmtKind variants)
+//! This module owns the parser surface for declarations and declaration-adjacent
+//! blocks: bindings, functions, class/interface shapes, algebraic data types,
+//! imports, directives, tests, annotations, and ordinary block bodies. It is the
+//! main grammar boundary between source-level declarations and AST contracts
+//! consumed by the collector and package CLI.
 //!
 //! DESIGN PHILOSOPHY
 //! =================
-//! - Type-first syntax: All declarations parse type before name (e.g., `textus name`)
-//! - Lookahead disambiguation: Uses peek_at(1) to distinguish typed vs untyped forms
-//! - Modifier parsing: Function modifiers (curata, errata, etc.) parsed as trailing syntax
-//! - Annotation support: @ annotations can prefix any declaration
+//! Declarations are intentionally explicit: types precede names, inferred locals
+//! require `_`, voluntary slots use post-name `sponte`, and canonical modifier
+//! ordering is enforced in the parser when later phases would otherwise receive
+//! ambiguous ASTs. Where legacy or transitional syntax is still recognized, the
+//! parser either normalizes it into the current AST contract or emits a targeted
+//! diagnostic instead of expanding the language silently.
 //!
-//! GRAMMAR COVERAGE
-//! ================
-//! This module implements parsers for these productions:
-//! - Variable declarations: fixum/varia with optional type and destructuring
-//! - Function declarations: functio with parameters, modifiers, return type
-//! - Class declarations: genus with inheritance and implementation
-//! - Interface declarations: pactum with method signatures
-//! - Type aliases: typus name = type
-//! - Enum declarations: ordo with integer/string values
-//! - Union declarations: discretio with tagged variants
-//! - Import declarations: importa ex with named/wildcard imports
-//! - Test declarations: probandum with nested structure
-//! - Directives: § compiler directives
+//! INVARIANTS
+//! ==========
+//! - `parse_statement` is the dispatcher for both top-level and nested statement
+//!   contexts; recovery boundaries in `mod.rs` must stay aligned with it.
+//! - `§` directives are file-scope only and are parsed before ordinary statements.
+//! - Function, parameter, field, and closure signatures delegate to `types.rs`
+//!   for type syntax; this file decides where type positions are legal.
+//! - Annotation parsers define the source contract for CLI/package metadata,
+//!   while unknown annotations remain statement annotations for later phases.
 
 use super::{ParseError, ParseErrorKind, Parser};
 use crate::lexer::TokenKind;
@@ -40,15 +34,15 @@ use crate::syntax::*;
 // =============================================================================
 
 impl Parser {
-    /// Parse a top-level or nested statement.
-    ///
-    /// WHY: Central dispatcher that routes to specific parsing functions based on
-    /// the leading keyword. This implements Faber's statement grammar.
+    /// Dispatch a top-level or nested statement by its leading token.
     ///
     /// GRAMMAR:
     ///   statement := declaration | control-flow | transfer | block | expr-stmt
     ///
-    /// ERROR RECOVERY: Returns error for invalid statements, caller handles synchronization.
+    /// This function is part of the parser's recovery contract. Any keyword added
+    /// here as a statement start should also be considered for
+    /// `Parser::is_recovery_boundary` so malformed input can resume at the new
+    /// construct instead of skipping it.
     pub(super) fn parse_statement(&mut self) -> Result<Stmt, ParseError> {
         let start = self.current_span();
         let id = self.next_id();
@@ -127,16 +121,14 @@ impl Parser {
     // VARIABLE DECLARATIONS
     // =============================================================================
 
-    /// Parse variable declaration.
+    /// Parse `fixum` and `varia` binding declarations.
     ///
     /// GRAMMAR:
     ///   var-decl := ('fixum' | 'varia') type pattern ['←' expr]
     ///
-    /// WHY: Inferred locals use an explicit `_` type marker (`fixum _ name ← value`),
-    /// keeping the declaration shape mechanical and avoiding type/name lookahead.
-    ///
-    /// EDGE: Array destructuring patterns like `[a, b, ceteri rest]` require
-    /// special handling for rest elements.
+    /// Simple bindings carry an explicit type slot, including `_` for inference.
+    /// Destructuring keeps its historical untyped shape because the binding
+    /// pattern itself owns the names and any rest element.
     fn parse_var_decl(&mut self) -> Result<StmtKind, ParseError> {
         let (mutability, is_await) = match self.peek().kind {
             TokenKind::Fixum => {
@@ -316,16 +308,17 @@ impl Parser {
         }))
     }
 
-    /// Parse parameter list including type parameters and regular parameters.
+    /// Parse type parameters followed by regular parameters.
     ///
     /// GRAMMAR:
     ///   param-list := type-param* (',' type-param)* regular-param* (',' regular-param)*
     ///   type-param := 'prae' 'typus' ident
     ///   regular-param := ['de'|'in'|'ex'] ['ceteri'] type ident [sponte] [fixus] ['ut' ident] ['vel' expr]
     ///
-    /// WHY: Type parameters must appear first, followed by regular parameters.
-    /// Regular parameters support ownership modes (de/in/ex), variadic (ceteri),
-    /// post-name voluntary (sponte) / fixed (fixus), aliases (ut), and defaults (vel).
+    /// Parameter order is part of the language contract: `prae typus` parameters
+    /// must precede value parameters, and value parameters remain type-first.
+    /// `sponte` and `fixus` are post-name markers so nullability and fixedness do
+    /// not become suffix syntax on the type expression.
     fn parse_param_list(&mut self) -> Result<(Vec<TypeParam>, Vec<Param>), ParseError> {
         let mut type_params = Vec::new();
         let mut params = Vec::new();
@@ -400,7 +393,7 @@ impl Parser {
         Ok((type_params, params))
     }
 
-    /// Parse function modifiers
+    /// Parse trailing function modifiers that affect call/runtime contracts.
     fn parse_func_modifiers(&mut self) -> Result<Vec<FuncModifier>, ParseError> {
         let mut modifiers = Vec::new();
 
@@ -446,18 +439,20 @@ impl Parser {
     // CLASS DECLARATIONS
     // =============================================================================
 
-    /// Parse class declaration.
+    /// Parse a concrete class declaration.
     ///
     /// GRAMMAR:
     ///   class-decl := 'genus' ident ['<' type-params '>'] ['sub' ident] ['implet' ident-list] '{' member* '}'
     ///
-    /// WHY: Classes support single inheritance (sub), multiple interface implementation
-    /// (implet), and both fields and methods as members.
+    /// Class headers are intentionally narrow: one optional `sub` parent and a
+    /// comma-separated `implet` list. Field and method parsing stays inside this
+    /// module because member syntax shares declaration markers with top-level
+    /// bindings and functions.
     fn parse_class_decl(&mut self) -> Result<StmtKind, ParseError> {
         self.parse_class_decl_inner(false)
     }
 
-    /// Parse abstract class declaration
+    /// Parse `abstractus genus ...` without introducing a second class grammar.
     fn parse_abstract_class_decl(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Abstractus, "expected 'abstractus'")?;
         self.parse_class_decl_inner(true)
@@ -507,7 +502,7 @@ impl Parser {
         }))
     }
 
-    /// Parse class member
+    /// Parse a class member, preserving annotations at the member boundary.
     fn parse_class_member(&mut self) -> Result<ClassMember, ParseError> {
         let start = self.current_span();
 
@@ -555,13 +550,15 @@ impl Parser {
     // INTERFACE DECLARATIONS
     // =============================================================================
 
-    /// Parse interface declaration.
+    /// Parse an interface declaration and its method signatures.
     ///
     /// GRAMMAR:
     ///   interface-decl := 'pactum' ident ['<' type-params '>'] '{' method-sig* '}'
     ///   method-sig := annotation* 'functio' ident '(' params ')' modifiers ['→' type]
     ///
-    /// WHY: Interfaces define method contracts without implementations.
+    /// Interface methods deliberately reuse function parameter and modifier
+    /// parsing, but they stop before bodies so the AST carries a contract rather
+    /// than an implementation placeholder.
     fn parse_interface_decl(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Pactum, "expected 'pactum'")?;
 
@@ -610,7 +607,7 @@ impl Parser {
         Ok(StmtKind::Interface(InterfaceDecl { name, type_params, methods }))
     }
 
-    /// Parse type alias
+    /// Parse a type alias declaration.
     fn parse_type_alias_decl(&mut self) -> Result<StmtKind, ParseError> {
         self.expect_keyword(TokenKind::Typus, "expected 'typus'")?;
         let name = self.parse_ident()?;
@@ -731,14 +728,15 @@ impl Parser {
     // IMPORT AND DIRECTIVE DECLARATIONS
     // =============================================================================
 
-    /// Parse import declaration.
+    /// Parse a source import declaration.
     ///
     /// GRAMMAR:
     ///   import-decl := 'importa' 'ex' string ['privata'|'publica'] import-kind
     ///   import-kind := ident ['ut' ident] | '*' 'ut' ident
     ///
-    /// WHY: Imports can be named (with optional alias) or wildcard. Visibility
-    /// controls re-export behavior.
+    /// The parser only records the import specifier, visibility, and binding
+    /// shape. Package and library resolution decide later whether the string
+    /// names a local module, stdlib interface, or invalid provider path.
     fn parse_import_decl(&mut self) -> Result<StmtKind, ParseError> {
         let start = self.current_span();
         self.expect_keyword(TokenKind::Importa, "expected 'importa'")?;
@@ -772,14 +770,15 @@ impl Parser {
         Ok(StmtKind::Import(ImportDecl { path, visibility, kind, span }))
     }
 
-    /// Parse directive declaration.
+    /// Parse a file-scope compiler directive.
     ///
     /// GRAMMAR:
     ///   directive := '§' ident arg*
     ///   arg := string | ident
     ///
-    /// WHY: Directives (§) provide compiler hints and configuration at file scope.
-    /// They must appear before statements.
+    /// Directives are intentionally shallow here: the parser records the directive
+    /// name and string/identifier arguments, while semantic validation of names
+    /// and arity belongs to the phase that consumes each directive.
     pub(super) fn parse_directive_decl(&mut self) -> Result<DirectiveDecl, ParseError> {
         let start = self.current_span();
         self.expect(&TokenKind::Section, "expected '§'")?;
@@ -946,7 +945,12 @@ impl Parser {
         }
     }
 
-    /// Parse annotations
+    /// Parse one or more declaration annotations.
+    ///
+    /// Known CLI/package annotations are parsed into structured AST variants so
+    /// `faber` can build command metadata without reparsing token payloads.
+    /// Unknown annotations remain token-backed statement annotations for later
+    /// target- or stdlib-specific consumers.
     fn parse_annotations(&mut self) -> Result<Vec<Annotation>, ParseError> {
         let mut annotations = Vec::new();
 
@@ -1198,13 +1202,13 @@ impl Parser {
     // BLOCK AND ANNOTATION PARSING
     // =============================================================================
 
-    /// Parse block statement.
+    /// Parse a statement block and recover within its brace boundary.
     ///
     /// GRAMMAR:
     ///   block := '{' statement* '}'
     ///
-    /// WHY: Blocks introduce new scopes and group statements. Error recovery
-    /// synchronizes within blocks to collect multiple statement errors.
+    /// Block recovery passes `stop_at_rbrace = true` so a bad inner statement can
+    /// be skipped without consuming the `}` that returns control to the caller.
     pub(super) fn parse_block(&mut self) -> Result<BlockStmt, ParseError> {
         let start = self.current_span();
         self.expect(&TokenKind::LBrace, "expected '{'")?;
@@ -1226,7 +1230,7 @@ impl Parser {
         Ok(BlockStmt { stmts, span })
     }
 
-    /// Try to parse optional type parameters: <T, U>
+    /// Try to parse generic declaration parameters: `<T, U>`.
     fn try_parse_type_params(&mut self) -> Result<Vec<TypeParam>, ParseError> {
         if !self.eat(&TokenKind::Lt) {
             return Ok(Vec::new());

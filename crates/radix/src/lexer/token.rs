@@ -1,54 +1,55 @@
-//! Token definitions and source span tracking
+//! Token and span data contracts shared after lexing.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Defines the token types produced by the lexer and the span type used
-//! throughout the compiler for error reporting and source mapping.
+//! This module is the stable data boundary between the lexer and parser. It
+//! defines compact byte spans, interned symbol handles, and the complete set of
+//! token kinds the parser can observe. Scanner policy lives in `scan.rs`;
+//! keyword taxonomy and alias metadata live in `keywords.rs`; this file keeps
+//! the transport representation explicit and cheap to clone.
 //!
-//! COMPILER PHASE: Lexing (data structures)
-//! INPUT: N/A (type definitions)
-//! OUTPUT: Token stream consumed by parser
+//! INVARIANTS
+//! ==========
+//! - Spans are byte offsets into the original UTF-8 source, not character
+//!   counts and not offsets into normalized strings.
+//! - `Symbol` values are indexes into the [`Interner`](super::Interner) that
+//!   came from the same lexer run.
+//! - Literal tokens carry parsed numeric values; source spelling is recovered
+//!   through spans when diagnostics or formatters need it.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Compact representation: Span uses u32 offsets (not usize) to keep tokens
-//!   small on 64-bit systems
-//! - Value-carrying tokens: Literals store their parsed values to avoid
-//!   re-parsing in later phases
-//! - Symbol indirection: Identifiers and strings reference interner symbols
-//!   rather than embedding strings
+//! COMPATIBILITY
+//! =============
+//! Some variants are reserved for parser or internal syntax surfaces even when
+//! no current source spelling produces them. Removing such variants is a
+//! language representation change, not just lexer cleanup.
 
 // =============================================================================
 // SOURCE SPANS
 // =============================================================================
 
-/// Source span tracking byte offsets in the original source.
+/// Half-open byte range in the original source buffer.
 ///
-/// WHY: Uses u32 instead of usize to keep spans compact. A 4GB source file
-/// limit is acceptable (enforced during file loading). This saves memory and
-/// makes tokens cache-friendly.
-///
-/// INVARIANTS:
-/// -----------
-/// INV-1: start <= end (enforced by Span::new in debug builds)
-/// INV-2: Offsets are UTF-8 character boundaries (guaranteed by cursor)
+/// Spans are the compiler's source-location currency. They intentionally point
+/// at original bytes rather than normalized interner strings so diagnostics can
+/// quote exactly what the user wrote.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Span {
+    /// Inclusive byte offset where the range begins.
     pub start: u32,
+
+    /// Exclusive byte offset where the range ends.
     pub end: u32,
 }
 
 impl Span {
-    /// Create a new span from byte offsets.
+    /// Create a span from cursor-derived byte offsets.
     pub fn new(start: u32, end: u32) -> Self {
         debug_assert!(start <= end, "invalid span: start > end");
         Self { start, end }
     }
 
-    /// Merge two spans into a larger span covering both.
+    /// Return the smallest span covering both inputs.
     ///
-    /// WHY: Used when building AST nodes that span multiple tokens (e.g., a
-    /// binary expression covers from the start of lhs to the end of rhs).
+    /// AST construction uses this to preserve source coverage for composite
+    /// syntax without retaining every child token at diagnostic time.
     pub fn merge(self, other: Span) -> Span {
         Span { start: self.start.min(other.start), end: self.end.max(other.end) }
     }
@@ -68,14 +69,17 @@ impl Span {
 // TOKENS
 // =============================================================================
 
-/// A token with its kind and source location.
+/// One lexical item paired with its original source location.
 ///
-/// WHY: Pairs the token kind (what it is) with its span (where it came from)
-/// for error reporting. This is the core data structure passed from lexer to
-/// parser.
+/// Tokens never borrow source text directly. Payload text moves through
+/// [`Symbol`] handles, and exact spelling remains available through the span
+/// and original source buffer.
 #[derive(Debug, Clone)]
 pub struct Token {
+    /// Classified token payload emitted by the scanner.
     pub kind: TokenKind,
+
+    /// Source bytes consumed to produce this token.
     pub span: Span,
 }
 
@@ -89,11 +93,11 @@ impl Token {
 // SYMBOLS
 // =============================================================================
 
-/// Interned string handle - cheap to copy, O(1) equality.
+/// Interned string handle local to one lexer result.
 ///
-/// WHY: Identifiers and string literals are duplicated frequently. Storing
-/// them as Symbol (just a u32 index) instead of String saves memory and makes
-/// comparisons fast.
+/// Symbols are cheap to copy and compare, but they are not globally meaningful.
+/// Resolve them only with the [`Interner`](super::Interner) that produced the
+/// token stream containing the symbol.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Symbol(pub u32);
 
@@ -101,13 +105,12 @@ pub struct Symbol(pub u32);
 // TOKEN KINDS
 // =============================================================================
 
-/// Token kinds - all possible token types in Faber.
+/// Complete token vocabulary visible to the parser.
 ///
-/// WHY: Large enum covering all Faber syntax. Literals carry their parsed
-/// values (Integer(i64), Float(f64)) to avoid re-parsing. Comments carry
-/// symbols so formatters can preserve them.
-///
-/// ORGANIZATION: Grouped by category with comment headers for readability.
+/// This enum is deliberately broad: it includes current source tokens, metadata
+/// tokens, error/recovery sentinels, and a small number of reserved internal
+/// variants. Keep spelling policy in scanner/keyword tables; keep this type as
+/// the parser-facing vocabulary.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     // === Identifiers and literals ===
@@ -346,10 +349,10 @@ pub enum TokenKind {
 }
 
 impl TokenKind {
-    /// Check if this token is a keyword.
+    /// Return whether this token kind is reserved-word syntax.
     ///
-    /// WHY: Used by parser for better error messages ("expected identifier,
-    /// found keyword 'si'") and by formatters to apply keyword-specific styling.
+    /// The parser and diagnostics use this to distinguish "identifier-like"
+    /// payloads from tokens that need keyword-specific messages or formatting.
     pub fn is_keyword(&self) -> bool {
         use TokenKind::*;
         matches!(
@@ -461,10 +464,9 @@ impl TokenKind {
         )
     }
 
-    /// Check if this token is a comment.
+    /// Return whether this token carries source comment text.
     ///
-    /// WHY: Parsers typically skip comments, but formatters need to preserve
-    /// them. This helper makes the distinction explicit.
+    /// Parsers may skip comments while tools such as formatters preserve them.
     pub fn is_comment(&self) -> bool {
         matches!(self, TokenKind::LineComment(_))
     }

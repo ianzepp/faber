@@ -1,22 +1,23 @@
-//! Span utilities for AST nodes
+//! Source-location access for syntax nodes.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Provides the Spanned trait for uniform access to source positions across
-//! different AST node types. This enables generic diagnostic reporting without
-//! type-specific position extraction.
+//! The lexer owns the concrete [`Span`] representation; syntax nodes only need
+//! a small shared contract for phases that report diagnostics or map compiler
+//! facts back to source. `Spanned` keeps that contract narrow so AST shape can
+//! evolve without forcing every caller to pattern match just to name a location.
 //!
-//! COMPILER PHASE: All phases (utility)
-//! INPUT: AST nodes implementing Spanned
-//! OUTPUT: Span values for error reporting and source mapping
+//! INVARIANT
+//! =========
+//! A span is diagnostic provenance. It should identify the source construct that
+//! produced a node, not encode semantic ownership, lifetime, or backend extent.
 
 use crate::lexer::Span;
 
-/// Trait for AST nodes that have source locations.
+/// Trait for syntax values that can report their source location.
 ///
-/// WHY: Enables writing generic diagnostic functions that work on any AST node
-/// without needing to pattern match on node types to extract spans. Also makes
-/// it explicit which types are located in source.
+/// Diagnostics use this trait when they only need provenance. More precise
+/// phase-specific ranges should be stored separately instead of overloading the
+/// AST's original parse span.
 pub trait Spanned {
+    /// Return the parse span associated with this value.
     fn span(&self) -> Span;
 }

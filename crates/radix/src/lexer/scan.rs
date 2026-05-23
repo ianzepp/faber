@@ -1,23 +1,29 @@
-//! Lexer state machine and token scanner
+//! Stateful scanner for Faber tokens.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Implements the core lexing state machine with mode-based keyword resolution.
-//! The scanner uses a cursor to read characters and builds tokens one at a time,
-//! collecting errors without panicking.
+//! This module turns the cursor and token definitions into the actual Phase 2
+//! lexer. It owns the tokenization state machine, line-scoped lexer modes,
+//! literal parsing, NFC string interning, and the lexical recovery boundary.
+//! Parser recovery starts after this module emits tokens; scanner recovery is
+//! limited to consuming enough source to produce the next plausible token.
 //!
-//! COMPILER PHASE: Lexing
-//! INPUT: Source string via Cursor
-//! OUTPUT: Token stream, string interner, error list
+//! TOKENIZATION POLICY
+//! ===================
+//! - Normal mode reserves language keywords. Annotation and section modes turn
+//!   words after `@` and `§` back into identifiers unless the scanner has an
+//!   explicit tokenization reason to do otherwise.
+//! - String, comment, and identifier payloads are interned after Unicode NFC
+//!   normalization; spans still point at the original, unnormalized bytes.
+//! - Numeric literals are parsed during lexing so later phases receive typed
+//!   values, but invalid numbers remain lexical diagnostics instead of panics.
+//! - Newlines are whitespace tokens only in the semantic sense: they reset
+//!   line-scoped modes and update line state, but are not emitted.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Mode-based scanning: Different keyword tables activate after `@` and `§`
-//!   to avoid treating annotation/section identifiers as reserved keywords
-//! - NFC normalization: All interned strings are Unicode NFC-normalized to
-//!   ensure `résumé` and `re\u0301sume\u0301` are the same symbol
-//! - Error resilience: Invalid characters become Error tokens, scanning continues
-//! - Hash comments: `#` comments extend to the end of the line
+//! ERROR STRATEGY
+//! ==============
+//! A malformed token emits a structured [`LexError`](super::LexError), often
+//! paired with `TokenKind::Error`, and scanning continues. The scanner does not
+//! synthesize missing syntax for the parser or reinterpret later bytes to hide
+//! an earlier lexical failure.
 
 use super::cursor::Cursor;
 use super::token::{Span, Symbol, Token, TokenKind};
@@ -25,55 +31,39 @@ use super::{LexError, LexErrorKind, LexResult};
 use rustc_hash::FxHashMap;
 use unicode_normalization::UnicodeNormalization;
 
-// =============================================================================
-// LEXER MODE
-// =============================================================================
-//
-// WHY: Faber has context-sensitive keywords. After `@`, identifiers like
-// `verte` are not reserved keywords but annotation names. After `§`, section
-// names are treated as identifiers. Modes track this context per-line.
-
-/// Lexer mode - determines which keyword table is active.
+/// Line-scoped keyword interpretation state.
 ///
-/// WHY: Prevents annotation and section names from conflicting with language
-/// keywords, allowing `@ verte` and `§ functio` to use otherwise-reserved words.
+/// Faber intentionally lets annotation and section metadata use words that
+/// would be reserved in ordinary source. The scanner tracks that context here
+/// instead of pushing it into the parser so tokenization remains deterministic.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LexerMode {
-    /// Normal mode - statement keywords active
+    /// Ordinary source: statement, expression, and declaration keywords apply.
     Normal,
-    /// Annotation mode - after `@` on current line
+
+    /// After `@` on the current line: annotation names are identifier-like.
     Annotation,
-    /// Section mode - after `§` on current line
+
+    /// After `§` on the current line: section names are identifier-like.
     Section,
 }
 
 impl LexerMode {
-    /// Check if mode should reset on newline.
-    ///
-    /// WHY: Annotation and section modes are line-scoped to avoid requiring
-    /// explicit mode resets and to make lexing order-independent.
+    /// Return whether this mode expires at the next newline.
     fn is_line_based(self) -> bool {
         matches!(self, Self::Annotation | Self::Section)
     }
 }
 
-// =============================================================================
-// STRING INTERNER
-// =============================================================================
-//
-// WHY: Identifiers and string literals are duplicated frequently. Interning
-// reduces memory (one copy per unique string) and makes equality checks O(1).
-
-/// String interner for symbols with NFC normalization.
+/// String interner for lexer-produced symbols.
 ///
-/// WHY: Unicode allows multiple representations of the same visual text (e.g.,
-/// é can be U+00E9 or U+0065 U+0301). NFC normalization ensures identifiers
-/// with the same semantic content get the same symbol, preventing confusing
-/// "different identifier" errors for visually identical names.
+/// The interner is part of the lexer contract, not a global table. Symbol ids
+/// are stable only inside one [`LexResult`](super::LexResult). All payload text
+/// is normalized to Unicode NFC before lookup so visually equivalent Faber
+/// identifiers and string payloads resolve to the same symbol.
 ///
-/// TRADE-OFF: Normalization costs CPU during lexing, but prevents subtle bugs
-/// and makes symbol equality checks correct. This is the right trade-off for
-/// a production compiler.
+/// TRADE-OFF: normalization adds scanner cost, but it prevents later semantic
+/// phases from having to reason about canonically equivalent spellings.
 pub struct Interner {
     map: FxHashMap<String, Symbol>,
     strings: Vec<String>,
@@ -84,11 +74,11 @@ impl Interner {
         Self { map: FxHashMap::default(), strings: Vec::new() }
     }
 
-    /// Intern a string, returning its symbol handle.
+    /// Intern source text and return its symbol handle.
     ///
-    /// WHY: Normalizes to NFC before interning to ensure semantic equivalence.
-    /// Uses FxHashMap for speed (strings are untrusted, but we're not defending
-    /// against DoS attacks in a compiler).
+    /// The returned handle resolves to the normalized spelling, not necessarily
+    /// the byte-exact spelling in source. Use token spans when diagnostics need
+    /// the original bytes.
     pub fn intern(&mut self, s: &str) -> Symbol {
         let normalized: String = s.nfc().collect();
         if let Some(&sym) = self.map.get(&normalized) {
@@ -100,7 +90,7 @@ impl Interner {
         sym
     }
 
-    /// Resolve a symbol to its string content.
+    /// Resolve a symbol back to its normalized string content.
     pub fn resolve(&self, sym: Symbol) -> &str {
         &self.strings[sym.0 as usize]
     }
@@ -116,11 +106,11 @@ impl Default for Interner {
 // LEXER STATE
 // =============================================================================
 
-/// Lexer for Faber source with mode tracking and error collection.
+/// Scanner state for one Faber source buffer.
 ///
-/// WHY: Maintains all mutable state for lexing in one place. Mode tracking
-/// enables context-sensitive keyword resolution. Error collection allows
-/// showing all lex errors in one pass.
+/// A lexer instance owns its cursor, token buffer, diagnostics, and interner so
+/// the output cannot accidentally mix symbols from another source. Construct a
+/// fresh lexer per source buffer.
 pub struct Lexer<'a> {
     cursor: Cursor<'a>,
     #[allow(dead_code)]
@@ -145,11 +135,11 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Lex the entire source into tokens.
+    /// Consume the source and return all lexer products together.
     ///
-    /// WHY: Consumes self and returns all results together. This ensures the
-    /// interner and tokens stay synchronized (you can't use symbols from a
-    /// different lexer instance).
+    /// The method always emits EOF after scanning the source, even if earlier
+    /// tokens produced diagnostics. This keeps parser entrypoints simple and
+    /// makes lexical failure non-fatal to syntax recovery.
     pub fn lex(mut self) -> LexResult {
         while !self.cursor.is_eof() {
             self.scan_token();
@@ -258,11 +248,11 @@ impl<'a> Lexer<'a> {
         self.interner.intern(text)
     }
 
-    /// Scan a single token from the current cursor position.
+    /// Scan one token or recoverable lexical error from the current position.
     ///
-    /// WHY: Core dispatch function. Reads one character, determines token kind,
-    /// delegates to specialized scanners for complex tokens (strings, numbers,
-    /// identifiers), and emits the token.
+    /// This is the scanner's dispatch boundary. Specialized scanners own
+    /// token-family policy, while this method owns mode reset, whitespace, and
+    /// fallback behavior for characters with no token meaning.
     fn scan_token(&mut self) {
         let start = self.cursor.pos();
 
@@ -270,16 +260,14 @@ impl<'a> Lexer<'a> {
             return;
         };
 
-        // Reset mode on newline for line-scoped modes
         if c == '\n' {
             self.current_line += 1;
             if self.mode.is_line_based() {
                 self.mode = LexerMode::Normal;
             }
-            return; // WHY: Newlines are whitespace in Faber, not tokens
+            return;
         }
 
-        // Whitespace - skip (except newline handled above)
         if matches!(c, ' ' | '\t' | '\r') {
             return;
         }
@@ -328,9 +316,7 @@ impl<'a> Lexer<'a> {
     // COMMENT SCANNERS
     // =========================================================================
 
-    /// Scan a hash comment starting with `#`.
-    ///
-    /// WHY: `#` is the only Faber source comment form.
+    /// Scan a hash comment, the only source comment form currently accepted.
     fn scan_hash_comment(&mut self, start: u32) {
         self.cursor.eat_while(|c| c != '\n');
 
@@ -344,7 +330,12 @@ impl<'a> Lexer<'a> {
     // STRING SCANNERS
     // =========================================================================
 
-    /// Scan a short string literal delimited by double quotes.
+    /// Scan a single-line string literal delimited by double quotes.
+    ///
+    /// Single-line strings recover at newline or EOF. Escape handling is
+    /// intentionally shallow here: the scanner skips a backslash plus the next
+    /// character so delimiter search stays correct, but it does not validate an
+    /// escape vocabulary.
     fn scan_string(&mut self, start: u32) {
         if self.cursor.peek() == Some('"') && self.cursor.peek_next() == Some('"') {
             self.cursor.advance();
@@ -365,7 +356,6 @@ impl<'a> Lexer<'a> {
                     break;
                 }
                 Some('\n') => {
-                    // WHY: Single-line strings can't contain newlines
                     self.emit_error(
                         LexErrorKind::UnterminatedString,
                         start,
@@ -374,7 +364,6 @@ impl<'a> Lexer<'a> {
                     break;
                 }
                 Some('\\') => {
-                    // WHY: Skip escaped character (escape processing happens in parser)
                     self.cursor.advance();
                     self.cursor.advance();
                 }
@@ -392,7 +381,10 @@ impl<'a> Lexer<'a> {
         self.emit_token(TokenKind::String(sym), start);
     }
 
-    /// Scan a block string literal delimited by ❝ and ❞.
+    /// Scan a block string literal delimited by `❝` and `❞`.
+    ///
+    /// Block strings may contain newlines, so this scanner also preserves the
+    /// lexer's line counter for downstream diagnostics.
     fn scan_block_string(&mut self, start: u32) {
         let mut terminated = false;
 
@@ -426,16 +418,12 @@ impl<'a> Lexer<'a> {
     // NUMBER SCANNER
     // =========================================================================
 
-    /// Scan a numeric literal (integer or float, various radixes).
+    /// Scan a numeric literal and store its parsed value in the token.
     ///
-    /// WHY: Supports hex (0x), binary (0b), octal (0o) prefixes, underscores
-    /// for readability (1_000_000), floats with exponents (1.5e10), and stores
-    /// parsed values in the token to avoid re-parsing in later phases.
-    ///
-    /// EDGE: Invalid numbers (e.g., `0x`, `1e`) emit errors but still create
-    /// tokens to avoid cascading parser errors.
+    /// Faber accepts decimal integers/floats, exponent forms, radix-prefixed
+    /// integers, and `_` separators. A `.` starts a float only when followed by
+    /// a digit, preserving member access and range tokens after integers.
     fn scan_number(&mut self, start: u32, first: char) {
-        // Check for radix prefix
         if first == '0' {
             match self.cursor.peek() {
                 Some('x') | Some('X') => {
@@ -457,10 +445,8 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        // Decimal number
         self.cursor.eat_while(|c| c.is_ascii_digit() || c == '_');
 
-        // WHY: Check for `.` followed by digit to distinguish floats from member access.
         let is_float = if self.cursor.peek() == Some('.') && self.cursor.peek_next().is_some_and(|c| c.is_ascii_digit())
         {
             self.cursor.advance(); // consume '.'
@@ -470,7 +456,6 @@ impl<'a> Lexer<'a> {
             false
         };
 
-        // Exponent
         let has_exp = if self.cursor.peek() == Some('e') || self.cursor.peek() == Some('E') {
             self.cursor.advance();
             if !self.cursor.eat('+') {
@@ -502,11 +487,11 @@ impl<'a> Lexer<'a> {
     // IDENTIFIER AND KEYWORD SCANNER
     // =========================================================================
 
-    /// Scan an identifier or keyword.
+    /// Scan a Unicode identifier and apply the active keyword policy.
     ///
-    /// WHY: Uses Unicode XID identifiers (allowing non-ASCII names like `ελληνικά`)
-    /// and dispatches to mode-specific keyword tables to handle context-sensitive
-    /// reserved words.
+    /// Identifier boundaries use Unicode XID rules plus `_`. The resulting text
+    /// is either resolved through the mode-specific keyword table or interned as
+    /// normalized identifier payload.
     fn scan_identifier(&mut self, start: u32) {
         self.cursor.eat_while(is_ident_continue);
 
@@ -524,18 +509,15 @@ impl<'a> Lexer<'a> {
 // IDENTIFIER PREDICATES
 // =============================================================================
 
-/// Check if character can start an identifier.
+/// Return whether a character can start a Faber identifier.
 ///
-/// WHY: Uses Unicode XID_Start (allowing Greek, Cyrillic, CJK, etc.) instead
-/// of ASCII-only to support international codebases. Underscore is allowed for
-/// convention (e.g., `_unused`).
+/// Faber follows Unicode XID start rules and additionally permits `_` for
+/// conventional unused bindings and internal-style names.
 fn is_ident_start(c: char) -> bool {
     unicode_ident::is_xid_start(c) || c == '_'
 }
 
-/// Check if character can continue an identifier.
-///
-/// WHY: XID_Continue includes digits (so `x1` is valid) and combining marks.
+/// Return whether a character can continue a Faber identifier.
 fn is_ident_continue(c: char) -> bool {
     unicode_ident::is_xid_continue(c) || c == '_'
 }
@@ -548,10 +530,12 @@ mod tests;
 // KEYWORD TABLES
 // =============================================================================
 
-/// Normal mode keywords - statements and expressions.
+/// Resolve ordinary-source keyword spellings, or intern identifier text.
 ///
-/// WHY: Main keyword table for Faber language. Returns keyword token for
-/// reserved words, otherwise interns the identifier.
+/// This table is the live tokenization surface for current normal-mode
+/// spelling. The richer registry in `keywords.rs` records ownership and alias
+/// policy for tools that need to reason about current versus transitional
+/// spelling.
 fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     match text {
         "_" => TokenKind::Underscore(interner.intern(text)),
@@ -709,10 +693,11 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     }
 }
 
-/// Annotation mode keywords - words after `@`.
+/// Resolve words after `@` as annotation payload identifiers.
 ///
-/// WHY: In annotation context, all identifiers are treated as names, not
-/// reserved keywords. This allows `@ verte` and `@ functio` without conflicts.
+/// Annotation semantics are handled after lexing. Keeping annotation names as
+/// identifiers lets the annotation layer own its taxonomy without expanding the
+/// global reserved-word surface.
 fn annotation_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     if text == "_" {
         TokenKind::Underscore(interner.intern(text))
@@ -721,9 +706,10 @@ fn annotation_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind
     }
 }
 
-/// Section mode keywords - words after `§`.
+/// Resolve words after `§` as section payload identifiers.
 ///
-/// WHY: Section names (like `§ functio`) are identifiers, not keywords.
+/// Section labels are metadata, not grammar keywords. This mirrors annotation
+/// mode and avoids reserving ordinary language words solely for section usage.
 fn section_keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
     if text == "_" {
         TokenKind::Underscore(interner.intern(text))
