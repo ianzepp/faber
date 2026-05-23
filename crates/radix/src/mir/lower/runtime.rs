@@ -177,4 +177,102 @@ impl FunctionBuilder<'_> {
             .interner
             .map(|interner| interner.resolve(method))
     }
+    pub(super) fn lower_mori(&mut self, value: &HirExpr, span: Span) -> Option<MirOperand> {
+        let value = self.lower_expr_value(value)?;
+        let numquam = MirType::semantic(self.types.primitive(Primitive::Numquam));
+        self.append_stmt(MirStmt {
+            kind: MirStmtKind::RuntimeCall {
+                destination: None,
+                call: crate::mir::MirRuntimeCall {
+                    intrinsic: crate::mir::MirIntrinsic::Panic,
+                    args: vec![value],
+                    return_ty: numquam,
+                },
+            },
+            span,
+        });
+        self.terminate_current(MirTerminatorKind::Unreachable, span);
+        None
+    }
+
+    pub(super) fn lower_scribe(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
+        let mut lowered_args = Vec::with_capacity(args.len());
+        for arg in args {
+            lowered_args.push(self.lower_expr_value(arg)?);
+        }
+        let ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind)), lowered_args, ty, expr.span))
+    }
+
+    pub(super) fn lower_scriptum(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
+        let mut lowered_args = Vec::with_capacity(args.len());
+        for arg in args {
+            lowered_args.push(self.lower_expr_value(arg)?);
+        }
+        let ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(MirIntrinsic::FormatString { template }, lowered_args, ty, expr.span))
+    }
+
+    pub(super) fn lower_conversio(
+        &mut self,
+        source: &HirExpr,
+        target: TypeId,
+        params: &[Symbol],
+        fallback: Option<&HirExpr>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let source = self.lower_expr_value(source)?;
+        let fallback = match fallback {
+            Some(fallback) => Some(self.lower_expr_value(fallback)?),
+            None => None,
+        };
+        let ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(
+            MirIntrinsic::Convert(MirConversion {
+                flavor: MirConversionFlavor::Runtime,
+                target_ty: MirType::semantic(target),
+                params: params.to_vec(),
+                fallback,
+            }),
+            vec![source],
+            ty,
+            expr.span,
+        ))
+    }
+    fn runtime_call_value(
+        &mut self,
+        intrinsic: MirIntrinsic,
+        args: Vec<MirOperand>,
+        return_ty: MirType,
+        span: Span,
+    ) -> MirOperand {
+        if self.is_vacuum(return_ty) {
+            self.append_stmt(MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: None,
+                    call: MirRuntimeCall { intrinsic, args, return_ty },
+                },
+                span,
+            });
+            return MirOperand::Constant(MirConstant::Unit);
+        }
+
+        let temp = self.push_temp(return_ty, span);
+        self.append_stmt(MirStmt {
+            kind: MirStmtKind::RuntimeCall {
+                destination: Some(MirPlace::temp(temp)),
+                call: MirRuntimeCall { intrinsic, args, return_ty },
+            },
+            span,
+        });
+        MirOperand::Temp(temp)
+    }
+}
+fn mir_diagnostic_kind(kind: HirScribeKind) -> MirDiagnosticKind {
+    match kind {
+        HirScribeKind::Nota => MirDiagnosticKind::Nota,
+        HirScribeKind::Vide => MirDiagnosticKind::Vide,
+        HirScribeKind::Mone => MirDiagnosticKind::Mone,
+        HirScribeKind::Scribe => MirDiagnosticKind::Scribe,
+    }
 }
