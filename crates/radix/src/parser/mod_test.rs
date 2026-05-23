@@ -513,6 +513,7 @@ fn parses_declaration_keywords_and_shapes() {
 importa ex "mod" publica Value ut Alias
 fixum numerus count ← 1
 varia [head, ceteri tail] ← values
+fixum { nomen ut n, aetas } ← persona
 @ futura
 functio mitte(prae typus T, de textus nomen sponte ut alias vel "anon", ex numerus item, ceteri T reliqua) curata allocator errata Error exitus 7 immutata iacit optiones Opts → textus {}
 typus Nomen = textus
@@ -527,7 +528,7 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
         .program
         .as_ref()
         .expect("parser should produce a program");
-    assert_eq!(program.stmts.len(), 7);
+    assert_eq!(program.stmts.len(), 8);
 
     let StmtKind::Import(import) = &program.stmts[0].kind else {
         panic!("expected import statement");
@@ -555,11 +556,22 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
     assert_eq!(elements.len(), 1);
     assert_eq!(symbol_name(&result, rest.as_ref().expect("rest binding").name), "tail");
 
-    let StmtKind::Func(func) = &program.stmts[3].kind else {
+    let StmtKind::Var(object_var) = &program.stmts[3].kind else {
+        panic!("expected object destructuring variable declaration");
+    };
+    let BindingPattern::Object { fields, rest, .. } = &object_var.binding else {
+        panic!("expected object binding pattern");
+    };
+    assert_eq!(fields.len(), 2);
+    assert_eq!(symbol_name(&result, fields[0].name.name), "nomen");
+    assert_eq!(symbol_name(&result, fields[0].alias.as_ref().expect("alias").name), "n");
+    assert!(rest.is_none());
+
+    let StmtKind::Func(func) = &program.stmts[4].kind else {
         panic!("expected function declaration");
     };
-    assert_eq!(program.stmts[3].annotations.len(), 1);
-    assert!(matches!(program.stmts[3].annotations[0].kind, AnnotationKind::Statement(_)));
+    assert_eq!(program.stmts[4].annotations.len(), 1);
+    assert!(matches!(program.stmts[4].annotations[0].kind, AnnotationKind::Statement(_)));
     assert_eq!(func.type_params.len(), 1);
     assert_eq!(func.params.len(), 3);
     assert!(func.body.is_some());
@@ -574,17 +586,17 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
     assert!(func.params[2].rest);
     assert_eq!(func.modifiers.len(), 6);
 
-    let StmtKind::TypeAlias(alias) = &program.stmts[4].kind else {
+    let StmtKind::TypeAlias(alias) = &program.stmts[5].kind else {
         panic!("expected type alias");
     };
     assert_eq!(symbol_name(&result, alias.name.name), "Nomen");
 
-    let StmtKind::Enum(enum_decl) = &program.stmts[5].kind else {
+    let StmtKind::Enum(enum_decl) = &program.stmts[6].kind else {
         panic!("expected enum declaration");
     };
     assert_eq!(enum_decl.members.len(), 3);
 
-    let StmtKind::Union(union_decl) = &program.stmts[6].kind else {
+    let StmtKind::Union(union_decl) = &program.stmts[7].kind else {
         panic!("expected union declaration");
     };
     assert_eq!(union_decl.type_params.len(), 1);
@@ -625,6 +637,11 @@ functio answer() → _ { redde 42 }
 fn bare_inferred_variable_declaration_requires_marker() {
     assert_parse_error_contains(r#"fixum name ← "Marcus""#, "expected");
     assert_parse_error_contains(r#"varia count ← 1"#, "expected");
+}
+
+#[test]
+fn object_destructuring_rejects_colon_rename() {
+    assert_parse_error_contains(r#"fixum { nomen: n } ← persona"#, "expected '}' after pattern");
 }
 
 #[test]

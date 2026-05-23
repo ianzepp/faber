@@ -1017,6 +1017,15 @@ fn define_binding_pattern(
                 define_symbol(resolver, rest.name, rest.span, SymbolKind::Local, mutable, errors);
             }
         }
+        BindingPattern::Object { fields, rest, .. } => {
+            for field in fields {
+                let binding = field.alias.as_ref().unwrap_or(&field.name);
+                define_symbol(resolver, binding.name, binding.span, SymbolKind::Local, mutable, errors);
+            }
+            if let Some(rest) = rest {
+                define_symbol(resolver, rest.name, rest.span, SymbolKind::Local, mutable, errors);
+            }
+        }
     }
 }
 

@@ -152,7 +152,7 @@ impl Parser {
 
         // Destructuring keeps the historical untyped pattern form; simple bindings
         // use an explicit type slot, with `_` meaning "infer from the initializer".
-        let ty = if self.check(&TokenKind::LBracket) {
+        let ty = if self.check(&TokenKind::LBracket) || self.check(&TokenKind::LBrace) {
             None
         } else {
             Some(self.parse_type()?)
@@ -174,6 +174,10 @@ impl Parser {
     fn parse_binding_pattern(&mut self) -> Result<BindingPattern, ParseError> {
         if let TokenKind::LBracket = self.peek().kind {
             return self.parse_array_binding_pattern();
+        }
+
+        if let TokenKind::LBrace = self.peek().kind {
+            return self.parse_object_binding_pattern();
         }
 
         if let TokenKind::Underscore(_) = self.peek().kind {
@@ -223,6 +227,40 @@ impl Parser {
         self.expect(&TokenKind::RBracket, "expected ']' after pattern")?;
         let span = start.merge(self.previous_span());
         Ok(BindingPattern::Array { elements, rest, span })
+    }
+
+    fn parse_object_binding_pattern(&mut self) -> Result<BindingPattern, ParseError> {
+        let start = self.current_span();
+        self.expect(&TokenKind::LBrace, "expected '{'")?;
+
+        let mut fields = Vec::new();
+        let mut rest = None;
+
+        while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
+            if self.eat_keyword(TokenKind::Ceteri) {
+                if rest.is_some() {
+                    return Err(self.error(ParseErrorKind::Expected, "rest pattern already specified"));
+                }
+                rest = Some(self.parse_ident()?);
+                break;
+            }
+
+            let name = self.parse_ident()?;
+            let alias = if self.eat_keyword(TokenKind::Ut) {
+                Some(self.parse_ident()?)
+            } else {
+                None
+            };
+            fields.push(ExField { name, alias });
+
+            if !self.eat(&TokenKind::Comma) {
+                break;
+            }
+        }
+
+        self.expect(&TokenKind::RBrace, "expected '}' after pattern")?;
+        let span = start.merge(self.previous_span());
+        Ok(BindingPattern::Object { fields, rest, span })
     }
 
     // =============================================================================

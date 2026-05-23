@@ -1854,6 +1854,27 @@ genus Point {
 }
 
 #[test]
+fn object_destructured_aliases_can_be_used_in_arithmetic() {
+    let session = session(Target::Rust);
+    let source = r#"functio totalis(Point point) → numerus {
+  fixum { x ut left, y } ← point
+  redde left + y
+}
+
+genus Point {
+  numerus x = 0
+  numerus y = 0
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(
+        result.success(),
+        "expected object destructuring aliases to compile, got {:?}",
+        result.diagnostics
+    );
+}
+
+#[test]
 fn array_destructured_vars_can_be_used_in_arithmetic() {
     let session = session(Target::Rust);
     let source = r#"incipit {

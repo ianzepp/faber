@@ -155,6 +155,11 @@ pub enum BindingPattern {
         rest: Option<Ident>,
         span: Span,
     },
+    Object {
+        fields: Vec<ExField>,
+        rest: Option<Ident>,
+        span: Span,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -291,6 +291,14 @@ fn walk_binding_pattern<V: Visitor>(visitor: &mut V, pattern: &BindingPattern) {
                 visitor.visit_ident(rest);
             }
         }
+        BindingPattern::Object { fields, rest, .. } => {
+            for field in fields {
+                visitor.visit_ident(field.alias.as_ref().unwrap_or(&field.name));
+            }
+            if let Some(rest) = rest {
+                visitor.visit_ident(rest);
+            }
+        }
     }
 }
 

@@ -75,6 +75,9 @@ pub fn lower_stmt_expanded(lowerer: &mut Lowerer, stmt: &Stmt) -> Vec<HirStmt> {
         StmtKind::Var(decl) if matches!(&decl.binding, crate::syntax::BindingPattern::Array { .. }) => {
             lowerer.lower_array_destructure_stmt(decl)
         }
+        StmtKind::Var(decl) if matches!(&decl.binding, crate::syntax::BindingPattern::Object { .. }) => {
+            lowerer.lower_object_destructure_stmt(decl)
+        }
         StmtKind::Ex(stmt) => lowerer.lower_ex_stmt(stmt),
         _ => vec![lower_stmt(lowerer, stmt)],
     }
@@ -127,6 +130,9 @@ impl<'a> Lowerer<'a> {
                 crate::syntax::BindingPattern::Array { .. } => {
                     self.error("nested array destructuring is not lowered yet");
                 }
+                crate::syntax::BindingPattern::Object { .. } => {
+                    self.error("nested object destructuring is not lowered yet");
+                }
             }
         }
 
@@ -148,6 +154,65 @@ impl<'a> Lowerer<'a> {
 
         if out.is_empty() {
             out.push(HirStmt { id: self.next_hir_id(), kind: HirStmtKind::Expr(self.lower_expr(init)), span });
+        }
+
+        out
+    }
+
+    fn lower_object_destructure_stmt(&mut self, decl: &crate::syntax::VarDecl) -> Vec<HirStmt> {
+        let Some(init) = &decl.init else {
+            self.error("object destructuring requires initializer");
+            return Vec::new();
+        };
+
+        let crate::syntax::BindingPattern::Object { fields, rest, .. } = &decl.binding else {
+            return Vec::new();
+        };
+
+        let mut out = Vec::new();
+        let mutable = decl.mutability == crate::syntax::Mutability::Mutable;
+
+        for field in fields {
+            let name = field
+                .alias
+                .as_ref()
+                .map(|ident| ident.name)
+                .unwrap_or(field.name.name);
+            let def_id = self.next_def_id();
+            self.bind_local(name, def_id);
+            let init_expr = HirExpr {
+                id: self.next_hir_id(),
+                kind: HirExprKind::Field(Box::new(self.lower_expr(init)), field.name.name),
+                ty: None,
+                span: field.name.span,
+            };
+            out.push(HirStmt {
+                id: self.next_hir_id(),
+                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                    def_id,
+                    name,
+                    ty: None,
+                    init: Some(init_expr),
+                    mutable,
+                }),
+                span: field.name.span,
+            });
+        }
+
+        if let Some(rest_ident) = rest {
+            let def_id = self.next_def_id();
+            self.bind_local(rest_ident.name, def_id);
+            out.push(HirStmt {
+                id: self.next_hir_id(),
+                kind: HirStmtKind::Local(crate::hir::HirLocal {
+                    def_id,
+                    name: rest_ident.name,
+                    ty: None,
+                    init: Some(self.lower_expr(init)),
+                    mutable,
+                }),
+                span: rest_ident.span,
+            });
         }
 
         out
@@ -220,6 +285,10 @@ impl<'a> Lowerer<'a> {
             }
             crate::syntax::BindingPattern::Array { span, .. } => {
                 self.error("array destructuring should be expanded before statement lowering");
+                HirStmtKind::Expr(error_expr(self, *span))
+            }
+            crate::syntax::BindingPattern::Object { span, .. } => {
+                self.error("object destructuring should be expanded before statement lowering");
                 HirStmtKind::Expr(error_expr(self, *span))
             }
         }
