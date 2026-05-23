@@ -424,11 +424,11 @@ impl super::FaberCodegen {
                             }
                             self.write_object_field(field, types, names, interner, w);
                         }
-                        w.write("} ⇢ ");
+                        w.write("} ∷ ");
                         w.write(&self.type_to_faber(*target, types, names, interner));
                     } else {
                         self.write_expr(source, types, names, interner, w);
-                        w.write(" ⇢ ");
+                        w.write(" ∷ ");
                         w.write(&self.type_to_faber(*target, types, names, interner));
                     }
                 }
@@ -441,16 +441,16 @@ impl super::FaberCodegen {
                             }
                             self.write_object_field(field, types, names, interner, w);
                         }
-                        w.write("} ⇢ ");
+                        w.write("} ∷ ");
                     } else {
                         self.write_expr(source, types, names, interner, w);
-                        w.write(" ⇢ ");
+                        w.write(" ∷ ");
                     }
                     w.write(&self.type_to_faber(*target, types, names, interner));
                 }
                 _ => {
                     self.write_expr(source, types, names, interner, w);
-                    w.write(" ⇢ ");
+                    w.write(" ∷ ");
                     w.write(&self.type_to_faber(*target, types, names, interner));
                 }
             },

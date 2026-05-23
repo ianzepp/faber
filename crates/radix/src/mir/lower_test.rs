@@ -692,7 +692,7 @@ functio lectio() → numerus {
     assert!(map_dump.contains("=> const int 1"));
     assert!(map_dump.contains("return _0[const string sym#"));
 
-    let set_dump = dump_source("functio setum() → copia<numerus> { redde [1, 2] ⇢ copia<numerus> }");
+    let set_dump = dump_source("functio setum() → copia<numerus> { redde [1, 2] ∷ copia<numerus> }");
     assert!(set_dump.contains("construct set"));
     assert!(set_dump.contains("[const int 1, const int 2]"));
 }
@@ -758,7 +758,7 @@ fn lowers_enum_variant_construction() {
         r#"
 discretio Eventus { Bonum { textus nuntius } }
 functio crea() → Eventus {
-    redde finge Bonum { nuntius = "ok" } ⇢ Eventus
+    redde finge Bonum { nuntius = "ok" } ∷ Eventus
 }
 "#,
     );

@@ -268,7 +268,7 @@ fn no_warning_on_verte_with_entries() {
                 !errors
                     .iter()
                     .any(|err| err.kind == SemanticErrorKind::Warning(WarningKind::UnnecessaryCast)),
-                "struct construction via ⇢ should not trigger unnecessary cast warning"
+                "struct construction through Verte should not trigger unnecessary cast warning"
             );
         }
     }

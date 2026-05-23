@@ -1,5 +1,5 @@
-# Instantiation expressions with ⇢ (formerly novum)
-# Creates new instances of genus types
+# Instantiation expressions
+# Typed constructors create new instances of genus types
 
 genus Point {
     numerus x

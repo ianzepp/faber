@@ -1,7 +1,7 @@
-# Native type construction with ⇢ (formerly innatum)
+# Native collection construction with typed values
 #
-# ⇢ constructs proper native instances of builtin types
-# Unlike ⇢ for type assertion, ⇢ from literal context creates the native representation
+# `vacua` uses the declared collection type to create the native representation.
+# `∷` remains available only when an existing expression needs explicit type ascription.
 #
 # Syntax:
 #   vacua with an explicit collection type → native empty collection
@@ -24,10 +24,10 @@ incipit {
     nota scores["alice"]  # 95
 
     # Non-empty lista
-    fixum _ nums ← [1, 2, 3] ⇢ lista<numerus>
+    fixum _ nums ← [1, 2, 3] ∷ lista<numerus>
     nota nums.primus()  # 1
 
-    # Why ⇢ is needed:
+    # Why an explicit type is needed:
     # Without an explicit type, vacua cannot choose a collection shape
     # varia _ broken ← vacua
     # broken["key"] ← 1  # Error: Map methods don't exist

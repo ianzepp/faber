@@ -166,7 +166,7 @@ fn lexer_interns_equivalent_unicode_forms_as_one_symbol() {
 fn lexes_operator_tokens_consistently() {
     // Post-clean-break: only canonical glyphs produce compound tokens.
     // Old ASCII multi-char forms (== != <= >= -> += etc) are rejected at lex time.
-    let result = lex("+ ⊕ - ⊖ * ⊛ / ⊘ % ⊻ ≡ ≠ ≤ ≥ → ⇥ ¬ !. ![ !( < ≤ > ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ⇢ ?. ?[ ?( ?? = ←");
+    let result = lex("+ ⊕ - ⊖ * ⊛ / ⊘ % ⊻ ≡ ≠ ≤ ≥ → ⇥ ¬ !. ![ !( < ≤ > ≥ ∧ ⊜ ∨ ⊚ ≪ ≫ ∷ ?. ?[ ?( ?? = ←");
     assert!(result.errors.is_empty());
 
     let kinds: Vec<TokenKind> = result.tokens.into_iter().map(|token| token.kind).collect();
@@ -308,9 +308,21 @@ fn lexes_conversio_glyph() {
 }
 
 #[test]
+fn rejects_retired_verte_arrow() {
+    let result = lex("x ⇢ textus");
+    assert!(
+        result
+            .errors
+            .iter()
+            .any(|err| err.kind == LexErrorKind::UnexpectedCharacter),
+        "retired ⇢ glyph should no longer lex as a type-ascription operator"
+    );
+}
+
+#[test]
 fn removed_verte_aliases_now_lex_as_identifiers() {
     // Post verte-alias-clean-break: qua/innatum/novum are ordinary identifiers in normal mode.
-    // Only the ⇢ glyph produces TokenKind::Verte.
+    // Only the ∷ glyph produces TokenKind::Verte.
     for word in &["qua", "innatum", "novum"] {
         let result = lex(&format!("x {} textus", word));
         assert!(result.errors.is_empty(), "failed for word: {}", word);

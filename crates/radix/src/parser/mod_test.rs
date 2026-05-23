@@ -762,7 +762,7 @@ genus Point {
 functio main() → numerus {
     fixum _ p ← Point { x = 10, y = 20 }
     fixum _ raw ← { x = 10, y = 20 }
-    fixum _ event ← finge Click { x = 1, y = 2 } ⇢ Event
+    fixum _ event ← finge Click { x = 1, y = 2 } ∷ Event
     redde p.x
 }
 "#,
@@ -823,7 +823,7 @@ functio main() → numerus {
 fn retired_colon_structural_forms_are_parse_errors() {
     assert_parse_error_contains(r#"genus Point { numerus x : 0 }"#, "expected");
     assert_parse_error_contains(r#"fixum _ point ← { x: 10 }"#, "expected");
-    assert_parse_error_contains(r#"fixum _ event ← finge Click { x: 1 } ⇢ Event"#, "expected '='");
+    assert_parse_error_contains(r#"fixum _ event ← finge Click { x: 1 } ∷ Event"#, "expected '='");
     assert_parse_error_contains(r#"fixum _ point ← Point { x: 10 }"#, "expected");
 }
 

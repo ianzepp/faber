@@ -203,7 +203,7 @@ pub enum TokenKind {
     Implet, // implements
 
     // === Keywords: Type operations ===
-    Verte,     // ⇢ — unified postfix type conversion / construction (qua/innatum/novum removed)
+    Verte,     // ∷ — postfix static type ascription (qua/innatum/novum removed)
     Conversio, // ⇒ — runtime value conversion
 
     // === Shift operators ===

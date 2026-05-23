@@ -25,7 +25,7 @@ The design should keep the boundary mechanical:
 
 - unused variables, functions, and imports,
 - unreachable code,
-- unnecessary `⇢` casts,
+- unnecessary `∷` casts,
 - explicit `ignotum` annotations,
 - shadowing as a hard error.
 

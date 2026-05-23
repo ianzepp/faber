@@ -24,8 +24,8 @@ genus Point {
     numerus y : 0
 }
 
-fixum _ p ← { x: 10, y: 20 } ⇢ Point
-fixum _ event ← finge Click { x: 10, y: 20 } ⇢ Event
+fixum _ p ← { x: 10, y: 20 } ∷ Point
+fixum _ event ← finge Click { x: 10, y: 20 } ∷ Event
 fixum { nomen: n } ← persona
 ```
 
@@ -60,7 +60,7 @@ genus Point {
 
 fixum _ p ← Point { x = 10, y = 20 }
 fixum _ raw ← { x = 10, y = 20 }
-fixum _ event ← finge Click { x = 10, y = 20 } ⇢ Event
+fixum _ event ← finge Click { x = 10, y = 20 } ∷ Event
 ```
 
 The important distinction is not whether the value expression is constant. It is whether the surrounding syntax is a structure definition rather than a runtime assignment statement.
@@ -135,7 +135,7 @@ This should become the canonical spelling for constructing a known genus value.
 The current shape:
 
 ```fab
-fixum _ p ← { x: 10, y: 20 } ⇢ Point
+fixum _ p ← { x: 10, y: 20 } ∷ Point
 ```
 
 should be replaced by the new structural equals form and, if needed during migration, parsed only long enough to produce a direct diagnostic and fix-it.
@@ -155,7 +155,7 @@ Whether this remains a general anonymous object value or only an intermediate st
 `finge` payloads also use equals because variant payload fields are structural definitions:
 
 ```fab
-fixum _ event ← finge Click { x = 10, y = 20 } ⇢ Event
+fixum _ event ← finge Click { x = 10, y = 20 } ∷ Event
 ```
 
 This plan does not require redesigning `finge` or event/variant typing. It only changes the payload field separator.
@@ -188,7 +188,7 @@ fixum tabula<textus, numerus> emptyCounts ← vacua
 This avoids both trailing conversion arrows and JavaScript-like generic constructor literals:
 
 ```fab
-fixum _ emptyNumbers ← [] ⇢ lista<numerus>
+fixum _ emptyNumbers ← [] ∷ lista<numerus>
 fixum _ emptyMap ← tabula<textus, numerus>{}
 ```
 
@@ -221,8 +221,8 @@ fixum _ xs ← [1, 2, 3]
 
 - Changing ternary syntax.
 - Reworking closure syntax beyond the existing legacy cleanup plan.
-- Deciding the final replacement for `⇢` in explicit cast/ascription positions.
-- Removing every use of `⇢`; this plan only removes cases where it was compensating for missing typed construction or typed empty values.
+- Redesigning explicit `∷` cast/ascription syntax beyond the canonical glyph switch.
+- Removing every use of `∷`; this plan only removes cases where it was compensating for missing typed construction or typed empty values.
 - Redesigning `finge` variant typing.
 - Adding nested destructuring if it is not already supported.
 - Changing callable type syntax, function declarations, or annotation syntax.
@@ -256,22 +256,22 @@ Any temporary support must be deliberately staged for removal and must not be do
 | Phase | Name | Goal | Checkpoint |
 |-------|------|------|------------|
 | 0 | Design confirmation | Confirm the four-symbol law: `←`, `=`, `ut`, and limited `:`. | Plan approved. |
-| 1 | Inventory | Find parser, lexer, AST/HIR, lowering, codegen, tests, examples, EBNF, and explain sites for colon field values, destructuring rename, empty collections, and `⇢` structural construction. | Ledger identifies exact edit sites and old syntax tests. |
+| 1 | Inventory | Find parser, lexer, AST/HIR, lowering, codegen, tests, examples, EBNF, and explain sites for colon field values, destructuring rename, empty collections, and trailing structural ascription. | Ledger identifies exact edit sites and old syntax tests. |
 | 2 | Structural equals parsing | Parse `=` in genus defaults, object literals, and `finge` payloads. | New field-value forms parse and preserve existing semantics. |
 | 3 | Typed construction | Add or enable `Type { field = expr }` construction for genus values. | `Point { x = 10, y = 20 }` typechecks and emits correctly. |
 | 4 | Destructuring rename | Parse and lower `{ source ut local }` destructuring aliases. | Positive and negative destructuring tests pass. |
 | 5 | Empty value expression | Add `vacua` for explicitly typed empty declarations. | Typed empty list/map cases pass; context-free `vacua` is rejected. |
 | 6 | Diagnostics and cleanup | Add migration diagnostics for old colon forms, then remove compatibility if clean-break timing allows. | Old forms fail with actionable diagnostics or are fully removed. |
-| 7 | Docs and examples | Update EBNF, explain docs, AGENTS examples, and `.fab` examples. | No active docs teach colon field values or `[] ⇢ lista<T>` as canonical empty syntax. |
+| 7 | Docs and examples | Update EBNF, explain docs, AGENTS examples, and `.fab` examples. | No active docs teach colon field values or `[] ∷ lista<T>` as canonical empty syntax. |
 | 8 | Validation | Run formatting, tests, lint, marker checks, and representative emits. | `./scripta/ci` or equivalent full gate passes. |
 
 ## Open Questions
 
-- Should `Point { x = 10 }` fully replace `{ x = 10 } ⇢ Point`, or should the latter remain as an explicit structural conversion form for unusual cases?
-- Should `finge Click { x = 10 } ⇢ Event` keep the trailing event type as the canonical spelling, or should a later variant plan introduce a qualified constructor form?
+- Should `Point { x = 10 }` fully replace `{ x = 10 } ∷ Point`, or should the latter remain as an explicit structural conversion form for unusual cases?
+- Should `finge Click { x = 10 } ∷ Event` keep the trailing event type as the canonical spelling, or should a later variant plan introduce a qualified constructor form?
 - Should `vacua` work in return positions when the function return type is known?
 - Should `vacua` work as a call argument when the parameter type is known?
-- Should explicit ascription/cast keep `⇢`, move to `∷`, or split into two operators later?
+- Should explicit ascription/cast stay as the single `∷` operator, or split into narrower operators later?
 - Should old colon field syntax be parsed for one release with diagnostics, or removed in the same implementation phase?
 
 ## Validation Matrix

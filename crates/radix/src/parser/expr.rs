@@ -533,7 +533,7 @@ impl Parser {
     ///   call := '(' args ')'
     ///   member := '.' ident
     ///   index := '[' expr ']'
-    ///   cast := '⇢' type   (qua/innatum/novum aliases removed; only glyph accepted)
+    ///   cast := '∷' type   (static type ascription; qua/innatum/novum aliases removed)
     ///   optional-chain := '?.' ident | '?[' expr ']' | '?(' args ')'
     ///   conversion := '⇒' type [type-params] ['vel' fallback]
     ///
@@ -648,7 +648,7 @@ impl Parser {
                     span,
                 };
             } else if self.check_keyword(TokenKind::Verte) {
-                // Unified type conversion via ⇢ (only accepted spelling post clean-break)
+                // Static type ascription via ∷ (only accepted spelling post clean-break)
                 self.advance();
                 let ty = self.parse_type()?;
                 let span = start.merge(self.previous_span());

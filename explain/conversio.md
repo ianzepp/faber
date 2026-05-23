@@ -6,7 +6,7 @@ canonical = true
 summary = "Converts a value with explicit runtime parsing or coercion semantics."
 syntax = "<expression> ⇒ <type> [vel <fallback>]"
 aliases = ["convert"]
-related = ["⇢"]
+related = ["∷"]
 +++
 
 `⇒` performs runtime conversion. Parsing may fail; provide `vel` when failure should fall back to a value instead of propagating the backend's failure behavior.

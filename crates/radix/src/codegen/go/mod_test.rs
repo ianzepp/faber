@@ -253,7 +253,7 @@ incipit {
   fixum _ alice ← {
     name = "Alice",
     address = Address { city = "Roma", state = "Italia" }
-  } ⇢ User
+  } ∷ User
 }"#,
     );
 
@@ -273,7 +273,7 @@ genus User {
 }
 
 incipit {
-  fixum _ bob ← {} ⇢ User
+  fixum _ bob ← {} ∷ User
   fixum _ city ← bob?.address?.city
   nota city
 }"#,
@@ -297,7 +297,7 @@ genus User {
 }
 
 incipit {
-  fixum _ alice ← {} ⇢ User
+  fixum _ alice ← {} ∷ User
   fixum _ state ← alice?.address?.state
   nota state
 }"#,
@@ -321,7 +321,7 @@ genus User {
 }
 
 incipit {
-  fixum _ bob ← {} ⇢ User
+  fixum _ bob ← {} ∷ User
   fixum _ city ← bob?.address?.city vel "Unknown"
   nota city
 }"#,
@@ -350,7 +350,7 @@ fn explicit_optional_local_initializers_wrap_pointer_values() {
 fn inferred_optional_nil_local_emits_typed_var() {
     let code = compile_go(
         r#"incipit {
-  varia _ maybe ← nihil ⇢ textus ∪ nihil
+  varia _ maybe ← nihil ∷ textus ∪ nihil
   nota maybe
 }"#,
     );
@@ -363,7 +363,7 @@ fn inferred_optional_nil_local_emits_typed_var() {
 fn ternary_optional_result_coerces_branches_once() {
     let code = compile_go(
         r#"incipit {
-  varia _ maybe ← nihil ⇢ textus ∪ nihil
+  varia _ maybe ← nihil ∷ textus ∪ nihil
   fixum _ result ← nonnihil maybe sic maybe secus "default"
   nota result
 }"#,
@@ -385,13 +385,13 @@ fn qua_primitive_and_array_conversions_emit_go_conversions() {
 
 incipit {
   fixum _ data ← 42
-  fixum _ asText ← data ⇢ textus
+  fixum _ asText ← data ∷ textus
   fixum _ input ← "100"
-  fixum _ asNum ← input ⇢ numerus
+  fixum _ asNum ← input ∷ numerus
   fixum _ value ← 1
-  fixum _ asBool ← value ⇢ bivalens
+  fixum _ asBool ← value ∷ bivalens
   fixum _ raw ← getData()
-  fixum _ items ← raw ⇢ lista<textus>
+  fixum _ items ← raw ∷ lista<textus>
   nota asText, asNum, asBool, items
 }"#,
     );
@@ -406,8 +406,8 @@ incipit {
 fn innatum_empty_and_nonempty_lists_emit_typed_slices() {
     let code = compile_go(
         r#"incipit {
-  fixum _ empty ← [] ⇢ lista<textus>
-  fixum _ nums ← [1, 2, 3] ⇢ lista<numerus>
+  fixum _ empty ← [] ∷ lista<textus>
+  fixum _ nums ← [1, 2, 3] ∷ lista<numerus>
   nota empty, nums
 }"#,
     );
@@ -493,7 +493,7 @@ fn returning_ego_and_chaining_uses_value_return_with_pointer_temps() {
 }
 
 incipit {
-  varia _ calc ← {} ⇢ Calculator
+  varia _ calc ← {} ∷ Calculator
   fixum _ result ← calc.setValue(5).double().getResult()
   nota result
 }"#,
@@ -515,8 +515,8 @@ fn finge_and_ordo_variants_emit_struct_values() {
 }
 
 incipit {
-  fixum Status s ← finge Active ⇢ Status
-  fixum Status e ← finge Click { x = 1, y = 2 } ⇢ Status
+  fixum Status s ← finge Active ∷ Status
+  fixum Status e ← finge Click { x = 1, y = 2 } ∷ Status
 }"#,
     );
 
@@ -529,7 +529,7 @@ incipit {
 fn translated_slice_helpers_emit_go_loops() {
     let code = compile_go(
         r#"incipit {
-  varia _ items ← [1, 2, 3] ⇢ lista<numerus>
+  varia _ items ← [1, 2, 3] ∷ lista<numerus>
   fixum _ first ← items.primus()
   fixum _ doubled ← items.mappata(clausura numerus x: x * 2)
   fixum _ evens ← items.filtrata(clausura numerus x: x % 2 ≡ 0)

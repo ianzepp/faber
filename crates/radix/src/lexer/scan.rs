@@ -176,7 +176,7 @@ impl<'a> Lexer<'a> {
             '⊘' => TokenKind::SlashEq,
             '⊜' => TokenKind::AmpEq,
             '⊚' => TokenKind::PipeEq,
-            '⇢' => TokenKind::Verte,
+            '∷' => TokenKind::Verte,
             '⇒' => TokenKind::Conversio,
             '∴' => TokenKind::Ergo,
             '∪' => TokenKind::Cup,
@@ -621,7 +621,7 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "sub" => TokenKind::Sub,
         "implet" => TokenKind::Implet,
 
-        // Type operations: only the ⇢ glyph produces Verte (postfix type conversion/construction).
+        // Type operations: only the ∷ glyph produces Verte (postfix static type ascription).
         // qua/innatum/novum are now ordinary identifiers (see verte-alias-clean-break).
 
         // Output

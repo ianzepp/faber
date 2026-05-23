@@ -771,10 +771,10 @@ pub enum HirExprKind {
     /// Await expression.
     Cede(Box<HirExpr>),
 
-    /// Unified type conversion / construction expression (via ⇢).
+    /// Static type-ascription expression (via ∷).
     ///
-    /// The type checker and codegen dispatch on the resolved target `TypeId` to
-    /// determine semantics: cast, native construction, or struct instantiation.
+    /// Typed constructors and object literals may still lower through this
+    /// internal carrier so backends can reuse target-shaped aggregate logic.
     Verte {
         source: Box<HirExpr>,
         target: TypeId,

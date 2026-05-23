@@ -696,8 +696,8 @@ fn compile_accepts_finge_variant_construction() {
 }
 
 incipit {
-  fixum Event e1 ← finge Click { x = 1, y = 2 } ⇢ Event
-  fixum Event e2 ← finge Quit ⇢ Event
+  fixum Event e1 ← finge Click { x = 1, y = 2 } ∷ Event
+  fixum Event e2 ← finge Quit ∷ Event
   nota e1
   nota e2
 }"#;
@@ -882,7 +882,7 @@ fn ignotum_receiver_method_calls_no_longer_leave_infer_type() {
 fixum ignotum process
 
 incipit {
-  fixum _ args = process.argv ⇢ lista<textus>
+  fixum _ args = process.argv ∷ lista<textus>
   nota args.longitudo()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -936,7 +936,7 @@ fn go_target_allows_externa_with_explicit_cast_contract() {
 functio argv() → ignotum
 
 incipit {
-  fixum _ args ← argv() ⇢ lista<textus>
+  fixum _ args ← argv() ∷ lista<textus>
   nota args.longitudo()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1350,7 +1350,7 @@ fn ego_field_access_no_longer_reports_non_struct_member_error() {
 }
 
 incipit {
-  fixum _ c = {} ⇢ Counter
+  fixum _ c = {} ∷ Counter
   nota c.inc()
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1395,7 +1395,7 @@ functio render(Drawable d) → vacuum {
 }
 
 incipit {
-  fixum _ c = {} ⇢ Circle
+  fixum _ c = {} ∷ Circle
   render(c)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1804,7 +1804,7 @@ fn ego_field_assignment_no_longer_reports_assignment_type_mismatch() {
 }
 
 incipit {
-  fixum _ c = {} ⇢ Circulus
+  fixum _ c = {} ∷ Circulus
   c.crescere(2)
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2166,7 +2166,7 @@ incipit {
 }
 
 incipit {
-  fixum _ u ← { } ⇢ User
+  fixum _ u ← { } ∷ User
 }"#;
     let default_result = compile(&session, "default.fab", bad_default);
     assert!(!default_result.success());
@@ -2264,7 +2264,7 @@ incipit {
 fn quidlibet_container_annotation_no_longer_reports_unknown_type() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum lista<quidlibet> docs ← [] ⇢ lista<quidlibet>
+  fixum lista<quidlibet> docs ← [] ∷ lista<quidlibet>
   nota docs
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2295,10 +2295,10 @@ fn verte_vel_no_longer_reports_invalid_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum _ data ← 42
-  fixum _ asText ← data ⇢ textus
+  fixum _ asText ← data ∷ textus
   fixum _ parsed ← "invalid" ⇒ numerus vel 0
-  fixum _ cache ← { alice = 95, bob = 87 } ⇢ tabula<textus, numerus>
-  fixum _ items ← [] ⇢ lista<textus>
+  fixum _ cache ← { alice = 95, bob = 87 } ∷ tabula<textus, numerus>
+  fixum _ items ← [] ∷ lista<textus>
   nota asText, parsed, cache, items
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2319,8 +2319,8 @@ fn rust_output_emits_verte_construction_and_coalesce_unwrap() {
     let source = r#"incipit {
   fixum textus ∪ nihil name ← nihil
   fixum _ display ← name vel "Anonymous"
-  fixum _ cache ← { alice = 95 } ⇢ tabula<textus, numerus>
-  fixum _ items ← [] ⇢ lista<textus>
+  fixum _ cache ← { alice = 95 } ∷ tabula<textus, numerus>
+  fixum _ items ← [] ∷ lista<textus>
   nota display, cache, items
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -2622,7 +2622,7 @@ fn verte_qua_still_emits_as_cast() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum _ n ← 42
-  fixum _ f ← n ⇢ fractus
+  fixum _ f ← n ∷ fractus
   nota f
 }"#;
     let result = compile(&session, "test.fab", source);

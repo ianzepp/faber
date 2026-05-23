@@ -26,7 +26,7 @@ incipit {
     nota "Max:", max
 
     # With nullish values
-    varia _ maybe ← nihil ⇢ textus ∪ nihil
+    varia _ maybe ← nihil ∷ textus ∪ nihil
     fixum _ result ← nonnihil maybe sic maybe secus "default"
     nota result  # "default"
 

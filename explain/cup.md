@@ -41,7 +41,7 @@ fixum numerus ∪ nihil maybeValue ← nihil
 **Declaration markers vs value unions**:
 
 - Use `sponte` *after the name* on parameters and genus fields to mark voluntary provision (`textus email sponte`).
-- Use `T ∪ nihil` *in type position* for return clauses, `typus` aliases, casts (`⇢`), and variable type annotations when the *value* may be `nihil`.
+- Use `T ∪ nihil` *in type position* for return clauses, `typus` aliases, casts (`∷`), and variable type annotations when the *value* may be `nihil`.
 - These are separate concerns: `sponte` controls obligation at the call/construction site; `∪ nihil` controls the domain of values the slot may hold.
 
 The old `si T` prefix and `T?` suffix forms are no longer accepted for nullability.

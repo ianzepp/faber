@@ -316,7 +316,7 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Cede(Box::new(expr))
     }
 
-    /// Lower unified type conversion (`⇢`) into target-driven HIR.
+    /// Lower static type ascription (`∷`) into target-driven HIR.
     ///
     /// The grammar exposes one conversion operator; later phases dispatch on
     /// the resolved target type rather than on a source keyword. Object literal
@@ -364,7 +364,7 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Array(elements)
     }
 
-    /// Lower object literals through the same conversion carrier as `⇢`.
+    /// Lower object literals through the same target-shape carrier as `∷`.
     ///
     /// HIR currently represents object construction as `Verte` with extracted
     /// entries. The map target is a best-effort syntax-derived shape used to

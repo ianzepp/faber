@@ -1,4 +1,4 @@
-# Type casting with ⇢ (verte): converts values between types
+# Static type ascription with ∷ (verte)
 
 functio getData() → lista<numerus> {
     redde [1, 2, 3]
@@ -15,39 +15,39 @@ functio getValue() → numerus {
 incipit {
     # Cast to string
     fixum _ data ← 42
-    fixum _ asText ← data ⇢ textus
+    fixum _ asText ← data ∷ textus
     nota asText
 
     # Cast to number
     fixum _ input ← "100"
-    fixum _ asNum ← input ⇢ numerus
+    fixum _ asNum ← input ∷ numerus
     nota asNum
 
     # Cast to boolean
     fixum _ value ← 1
-    fixum _ asBool ← value ⇢ bivalens
+    fixum _ asBool ← value ∷ bivalens
     nota asBool
 
     # Cast to nullable type
     fixum _ num ← 10
-    fixum _ maybe ← num ⇢ numerus ∪ nihil
+    fixum _ maybe ← num ∷ numerus ∪ nihil
     nota maybe
 
     # Cast to array type
     fixum _ raw ← getData()
-    fixum _ items ← raw ⇢ lista<textus>
+    fixum _ items ← raw ∷ lista<textus>
     nota items
 
     # Cast with member access
     fixum _ response ← getResponse()
-    fixum _ body ← response.body ⇢ textus
+    fixum _ body ← response.body ∷ textus
     nota body
 
     # Cast call result directly
-    fixum _ result ← getValue() ⇢ textus
+    fixum _ result ← getValue() ∷ textus
     nota result
 
     # Cast in parenthesized expression for chaining
-    fixum _ len ← (data ⇢ textus).length
+    fixum _ len ← (data ∷ textus).length
     nota len
 }

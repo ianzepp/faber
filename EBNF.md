@@ -373,23 +373,30 @@ range      := additive (('‥' | '…' | 'ante' | 'usque') additive ('per' addit
 additive   := multiplicative (('+' | '-') multiplicative)*
 multiplicative := unary (('*' | '/' | '%') unary)*
 unary      := ('-' | '¬' | 'non' | 'nulla' | 'nonnulla' | 'nihil' | 'nonnihil' | 'negativum' | 'positivum' | 'cede' | 'finge') unary | cast
-cast       := call ('⇢' typeAnnotation | conversio)*
+cast       := call ('∷' typeAnnotation | conversio)*
 conversio  := '⇒' typeAnnotation typeParams? ('vel' unary)?
 ```
 
-**Type-directed inhabitation (`⇢` / verte):**
+**Static type ascription (`∷` / verte):**
 
-The `⇢` glyph (U+21E2, "rightwards dashed arrow") makes a value inhabit the target type shape. The compiler dispatches on the target type:
+The `∷` glyph (U+2237, "proportion") explicitly ascribes a target type to an expression. Use it when the source expression already exists and the compiler needs a static target shape:
 
-- Primitive/alias → cast (no runtime effect): `data ⇢ textus` → TypeScript: `(data as string)`
-- Built-in collection → native construction: typed `vacua` values or explicit `⇢` inhabitation lower to native empty collections.
-- `genus` type → struct instantiation: `Point { x = 10 }` → native target struct construction.
+- Primitive/alias → cast (no runtime effect): `data ∷ textus` → TypeScript: `(data as string)`
+- Built-in collection → target-shaped collection value: `[1, 2, 3] ∷ lista<numerus>`
+- Variant expression → enum/interface target ascription: `finge Click { x = 10 } ∷ Event`
 
-Only the `⇢` glyph is accepted as the postfix type conversion/construction operator. The Latin forms `qua`, `innatum`, and `novum` were aliases and have been removed (see verte-alias-clean-break).
+Prefer typed construction for ordinary `genus` values and `vacua` for ordinary empty collection values:
+
+```fab
+fixum _ point ← Point { x = 10 }
+fixum lista<numerus> xs ← vacua
+```
+
+Only the `∷` glyph is accepted as the postfix static type-ascription operator. The Latin forms `qua`, `innatum`, and `novum` were aliases and have been removed (see verte-alias-clean-break).
 
 **Runtime conversion (`⇒` / conversio):**
 
-The `⇒` glyph (U+21D2, "rightwards double arrow") is the runtime value conversion operator. Unlike `⇢` (compile-time cast), this performs actual parsing/conversion that can fail:
+The `⇒` glyph (U+21D2, "rightwards double arrow") is the runtime value conversion operator. Unlike `∷` (compile-time cast), this performs actual parsing/conversion that can fail:
 
 - `"22" ⇒ numerus` → Rust: `"22".parse::<i64>().unwrap()`
 - `"bad" ⇒ numerus vel 0` → Rust: `"bad".parse::<i64>().unwrap_or(0)`
@@ -447,8 +454,8 @@ objectKey := IDENTIFIER | STRING | '[' expression ']'
 ### Special Expressions
 
 ```ebnf
-// verte (⇢) is postfix — parsed in the cast production above
-fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('⇢' IDENTIFIER)?
+// verte (∷) is postfix — parsed in the cast production above
+fingeExpr     := 'finge' IDENTIFIER ('{' fieldList '}')? ('∷' IDENTIFIER)?
 praefixumExpr := 'praefixum' (blockStmt | '(' expression ')')
 formatStringExpr := STRING '(' argumentList ')'                # canonical source form for string formatting
 scriptumExpr  := 'scriptum' '(' STRING (',' expression)* ')'   # explicit/desugared form
@@ -646,7 +653,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `vel`                         | nullish coalescing  |
 | **Objects**         | `ego`                         | this/self           |
 |                     | `finge`                       | construct variant   |
-| **Type Shape**      | `⇢` | compile-time type cast / native construction / instantiation |
+| **Type Shape**      | `∷` | static type ascription / compile-time cast |
 | **Type Conversion** | `⇒ target`                    | runtime value conversion |
 |                     | `⇒ numerus`                   | parse to integer    |
 |                     | `⇒ fractus`                   | parse to float      |

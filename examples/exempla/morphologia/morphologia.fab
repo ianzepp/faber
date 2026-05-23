@@ -7,7 +7,7 @@
 # Run with: cargo run -p faber -- build examples/exempla/morphologia/morphologia.fab
 
 incipit {
-    varia _ items ← [1, 2, 3, 4, 5] ⇢ numerus[]
+    varia _ items ← [1, 2, 3, 4, 5] ∷ numerus[]
 
     # ≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡
     # FILTER: filtr-

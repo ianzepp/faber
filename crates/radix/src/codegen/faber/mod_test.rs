@@ -543,8 +543,8 @@ fn emits_object_literal_fields_from_innatum_entries() {
     let output = gen.generate(&program, &types, &interner).expect("codegen");
     assert!(output.code.contains("nomen = \"Marcus\""));
     assert!(output.code.contains("activus = verum"));
-    // With unified Verte, map construction now emits `{...} ⇢ Type`
-    assert!(output.code.contains("⇢"));
+    // With the internal Verte carrier, map construction emits explicit ascription.
+    assert!(output.code.contains("∷"));
 }
 
 #[test]
