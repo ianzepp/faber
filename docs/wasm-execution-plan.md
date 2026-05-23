@@ -1,8 +1,10 @@
 # Faber WASM Execution Plan
 
-**Status**: Aspirational design direction captured (May 2026)
+**Status**: Aspirational design direction captured (May 2026); updated after MIR closeout
 
 This document records a possible future execution strategy for Faber as a first-class language, focused on WASM as the preferred long-term target. It is not a description of current compiler support: the active `radix-rs` target list is still `rust`, `go`, `ts`, and `faber`.
+
+The compiler now has a validated MIR inspection branch and a deliberately temporary MIR-to-Rust probe. That work is an important prerequisite for WASM because it proves a typed, execution-shaped compiler boundary below HIR, but it is not yet a WASM backend, ABI, runtime, package format, or user-facing target.
 
 ---
 
@@ -42,10 +44,17 @@ Key decisions:
 
 **Primary target**: WebAssembly (WASM).
 
+**Current enabling work**:
+- `radix mir` prints validated MIR for compiler-development inspection.
+- MIR lowering currently covers functions, locals, temporaries, primitive expressions, calls, control flow, alternate exits, structured local handlers, aggregate and option/null operations, selected runtime intrinsics, provider identity, and selected collection operations.
+- Successful MIR lowering runs through validation before it leaves the MIR layer.
+- A temporary MIR Rust probe proves that validated MIR can be consumed by an executable target-like emitter for a narrow primitive/control-flow subset.
+
 **Preferred path**:
 - Future product behavior: `faber build --target wasm <file.fab>` should produce a `.wasm` artifact with minimal manual steps.
 - The implementation may go through the existing high-quality Rust code generator in `radix-rs`, followed by `rustc` targeting `wasm32-wasip1`, `wasm32-wasip2`, or `wasm32-unknown-unknown`.
 - A thin Rust layer is acceptable provided it feels like a natural extension of the compiler toolchain rather than a hidden target language.
+- A future direct or lower-level WASM backend should start from validated MIR rather than from source-shaped HIR. The MIR layer is the right place to make control flow, storage, runtime calls, aggregate operations, and nullable behavior explicit before choosing a WASM ABI.
 
 **Rationale for WASM**:
 - Runs in the browser (enables web applications).
@@ -57,7 +66,7 @@ Key decisions:
 
 ## Technical Approach
 
-### Compilation Pipeline (Initial)
+### Compilation Pipeline (Current Conservative Path)
 
 1. `radix-rs` compiles Faber source to high-quality Rust (reusing the existing, most mature codegen backend).
 2. The Rust output is compiled with `rustc --target wasm32-wasip1`, `wasm32-wasip2`, or an equivalent Cloudflare-friendly target.
@@ -65,12 +74,33 @@ Key decisions:
 
 This approach maximizes reuse of the strongest existing compiler component while still delivering a first-class "Faber to WASM" user experience.
 
+This path remains the shortest product path because normal Rust output still uses the stable HIR-to-Rust backend. The MIR Rust probe is intentionally not a replacement for that backend.
+
+### Compilation Pipeline (MIR-Backed Path)
+
+The MIR closeout adds a more durable path for future lower targets:
+
+```text
+Source -> Lex -> Parse -> HIR -> Typecheck + Analysis -> Validated MIR -> WASM backend
+```
+
+For WASM, validated MIR should become the boundary where backend work begins. It already normalizes enough of the language to make the next design questions concrete:
+
+- how functions and `incipit` export into a WASM module,
+- how Faber primitives, strings, options, structs, enums, arrays, maps, and sets map to memory and ABI layout,
+- how runtime intrinsics import host functions,
+- how provider calls cross the host boundary,
+- how diagnostics and traps surface through a WASI or Worker host,
+- how source locations survive into debugging and observability.
+
+The missing work is not another syntax pass. It is a backend/runtime project: ABI, layout, runtime imports, host integration, packaging, and a validation harness.
+
 ### Runtime Requirements
 
 Faber will require a minimal WASM runtime to support:
 
 - Core language primitives and collections.
-- The Hardware Abstraction Layer defined in `radix/stdlib/norma/hal/` (`pactum solum`, `consolum`, `nuncius`/HTTP, `processus`, `tempus`, `crypta`, etc.).
+- The Hardware Abstraction Layer defined in `stdlib/norma/hal/` (`pactum solum`, `consolum`, `nuncius`/HTTP, `processus`, `tempus`, `crypta`, etc.).
 - Basic I/O, filesystem access (via WASI), and networking as needed for CLI tools and HTTP clients.
 
 The runtime should be kept as small as possible for the initial use cases (CLI tools + HTTP calls to Swarm).
@@ -131,10 +161,27 @@ This means the initial runtime and HAL implementation can be scoped to:
 
 Full coverage of the existing `norma` stdlib surface is not required upfront.
 
+MIR narrows the first implementation scope by separating language semantics from target emission. A WASM spike should begin with the validated MIR subset rather than the full source language:
+
+- exported functions and `incipit`,
+- primitive values and direct calls,
+- simple branches and loops,
+- strings and formatted diagnostics,
+- option/null operations,
+- small aggregate values,
+- the minimal runtime intrinsic imports needed for console, arguments, environment, time, random, JSON, and HTTP.
+
+Unsupported MIR shapes should fail closed with explicit diagnostics, matching the MIR Rust probe policy, instead of falling back through Rust silently or inventing partial WASM behavior.
+
 ---
 
 ## Open Questions and Future Work
 
+- Whether the first user-visible WASM support should be Rust-mediated or MIR-backed.
+- WASM ABI and memory layout for Faber primitives, strings, options, structs, enums, arrays, maps, and sets.
+- Export model for top-level functions, `incipit`, tests, and CLI entrypoints.
+- Runtime intrinsic import contract for diagnostics, formatting, conversions, collections, providers, and HAL calls.
+- Validation harness, likely Wasmtime or an equivalent host, for compiling and executing MIR-backed WASM fixtures.
 - Exact mechanism for the CLI launcher (custom host vs. thin wrapper binary).
 - How much of the HAL should be implemented in Rust (as part of the runtime) vs. in Faber itself.
 - Whether a more direct WASM codegen backend (bypassing Rust) becomes desirable later for performance or purity reasons.
@@ -148,6 +195,8 @@ Full coverage of the existing `norma` stdlib surface is not required upfront.
 
 - `explain/cli.md` — Current user reference for the declarative CLI annotation surface.
 - `explain/targets.md` — Current target compatibility entry; deeper target notes belong in `EBNF.md` or implementation plans.
+- `docs/factory/mir-layer/ledger.md` — Current MIR closeout record, including validated MIR scope, temporary MIR Rust probe, and lower-target prerequisites.
+- `docs/factory/mir-layer/phase-9.5-delivery.md` — MIR closeout and hardening delivery plan.
 
 ---
 
