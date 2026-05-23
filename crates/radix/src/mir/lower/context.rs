@@ -39,6 +39,20 @@ impl<'a> LoweringContextMaps<'a> {
     }
 }
 
+pub(super) fn struct_field_map(unit: &AnalyzedUnit) -> FxHashMap<DefId, Vec<&HirField>> {
+    // WHY: this map intentionally keeps borrowed field nodes for default
+    // initializer lowering. `HirVisitor::visit_item` cannot store those
+    // borrows with the unit lifetime, so this remains an explicit unit scan.
+    let mut structs = FxHashMap::default();
+    for item in &unit.hir.items {
+        let HirItemKind::Struct(strukt) = &item.kind else {
+            continue;
+        };
+        structs.insert(item.def_id, strukt.fields.iter().collect());
+    }
+    structs
+}
+
 impl<'a> HirVisitor for LoweringContextMaps<'a> {
     fn visit_item(&mut self, item: &HirItem) {
         match &item.kind {

@@ -21,7 +21,7 @@ mod context;
 mod expr;
 mod stmt;
 
-use context::LoweringContextMaps;
+use context::{struct_field_map, LoweringContextMaps};
 use expr::HirExprLoweringVisitor;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,17 +71,6 @@ struct MirLowerer<'a> {
     unit: &'a AnalyzedUnit,
     errors: Vec<MirError>,
     functions: Vec<MirFunction>,
-}
-
-fn struct_field_map(unit: &AnalyzedUnit) -> FxHashMap<DefId, Vec<&HirField>> {
-    let mut structs = FxHashMap::default();
-    for item in &unit.hir.items {
-        let HirItemKind::Struct(strukt) = &item.kind else {
-            continue;
-        };
-        structs.insert(item.def_id, strukt.fields.iter().collect());
-    }
-    structs
 }
 
 impl MirLowerer<'_> {
