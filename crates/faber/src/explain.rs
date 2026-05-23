@@ -43,31 +43,42 @@ pub static RAW_ENTRIES: &[RawEntry] = include!(concat!(env!("OUT_DIR"), "/explai
 pub struct Entry {
     /// Primary spelling or glyph shown to users.
     pub term: String,
+
     /// Broad reference kind used for grouping and display.
     pub kind: Kind,
+
     /// Human-readable topic bucket, such as `comparison` or `control-flow`.
     pub category: String,
+
     /// Whether this entry describes current canonical Faber syntax.
     pub canonical: bool,
+
     /// One-sentence summary used in lists and short renderings.
     pub summary: String,
+
     /// Compact syntax contract shown before the long description.
     pub syntax: String,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+
     /// Example snippets declared in front matter for structured consumers.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub examples: Vec<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+
     /// Alternate query terms that resolve to this entry without legacy status.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub aliases: Vec<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+
     /// Historical spellings or forms associated with this entry.
-    pub legacy: Vec<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    /// Canonical replacement term for non-canonical entries.
-    pub canonical_term: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub legacy: Vec<String>,
+
+    /// Canonical replacement term for non-canonical entries.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub canonical_term: Option<String>,
+
     /// Related terms, aliases, or legacy spellings for cross-reference output.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub related: Vec<String>,
+
     /// Markdown body after front matter.
     pub body: String,
 }
