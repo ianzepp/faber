@@ -15,7 +15,7 @@ The design should keep the boundary mechanical:
 
 - `check` answers whether the program is valid Faber.
 - `lint` critiques valid Faber for suspicious, stale, non-canonical, or mechanically weak forms.
-- `fmt` rewrites source into canonical layout without changing semantics.
+- `format` rewrites source into canonical layout without changing semantics.
 
 ## Current Reality
 
@@ -37,7 +37,7 @@ So Faber already has compiler-backed lint judgments. What it does not have is a 
 
 `crates/radix/src/codegen/faber/mod.rs` implements a canonical Faber pretty-printer backend. `radix emit -t faber` can normalize Faber output and is useful for round-trip tests.
 
-That backend is HIR-based and explicitly loses comments and original formatting. It is a good canonicalizer, but it should not become an in-place `faber fmt --write` formatter until formatting can preserve comments and trivia.
+That backend is HIR-based and explicitly loses comments and original formatting. It is a good canonicalizer, but it should not become an in-place `faber format --write` formatter until formatting can preserve comments and trivia.
 
 ## Tool Boundary
 
@@ -82,18 +82,18 @@ It should report named judgments over valid code:
 
 Lint findings should have stable slugs so users can configure, suppress, search, and track them.
 
-### `faber fmt`
+### `faber format`
 
-`fmt` is shape:
+`format` is shape:
 
 ```bash
-faber fmt --check
-faber fmt --write
+faber format --check
+faber format --write
 ```
 
 It should enforce canonical whitespace, indentation, brace style, line breaks, and canonical spelling preferences without changing program meaning.
 
-The first safe formatter should be token/CST-preserving. HIR pretty-print may support `fmt --canonical` or internal normalization, but not ordinary in-place formatting until comments survive.
+The first safe formatter should be token/CST-preserving. HIR pretty-print may support `format --canonical` or internal normalization, but not ordinary in-place formatting until comments survive.
 
 ## Lint Definition
 
@@ -235,7 +235,7 @@ The existing Faber codegen target should remain valuable as:
 
 - canonical output for generated Faber,
 - round-trip testing,
-- `fmt --canonical` experiments,
+- `format --canonical` experiments,
 - parser/codegen stabilization checks.
 
 It should not be the default in-place formatter until comment preservation is solved.
@@ -244,16 +244,16 @@ It should not be the default in-place formatter until comment preservation is so
 
 | Phase | Name | Goal | Checkpoint |
 |-------|------|------|------------|
-| 0 | Design confirmation | Confirm `check` / `lint` / `fmt` boundaries and `@ lint tacet` suppression. | Plan approved. |
+| 0 | Design confirmation | Confirm `check` / `lint` / `format` boundaries and `@ lint tacet` suppression. | Plan approved. |
 | 1 | Inventory | Audit existing warnings, diagnostic codes, lint tests, Faber pretty-printer, and CLI command surfaces. | Ledger maps current warnings to proposed slugs. |
 | 2 | Stable lint slugs | Add stable lint slug metadata to existing warnings. | Current lint warnings render with slugs. |
 | 3 | `faber lint` command | Add user-facing lint command over existing analysis. | `faber lint` reports warnings without requiring build output. |
 | 4 | Lint policy config | Add project-level `allow` / `warn` / `deny` policy. | Config can deny a warning or allow a warning by slug/category. |
 | 5 | Source suppression parser | Parse `@ lint tacet "slug"` annotations. | Suppression syntax parses but may not yet affect all scopes. |
 | 6 | Suppression semantics | Apply suppressions by annotated scope and report unused suppressions. | Local suppression works and stale suppressions warn. |
-| 7 | Formatter check mode | Add `faber fmt --check` using safe formatting infrastructure. | Check mode reports drift without rewriting. |
-| 8 | Formatter write mode | Add comment-preserving `faber fmt --write`. | Rewrites source while preserving comments and block strings. |
-| 9 | Docs and examples | Update README, explain entries, EBNF/spec commentary, and CLI help. | Users can distinguish check/lint/fmt and suppress lints deliberately. |
+| 7 | Formatter check mode | Add `faber format --check` using safe formatting infrastructure. | Check mode reports drift without rewriting. |
+| 8 | Formatter write mode | Add comment-preserving `faber format --write`. | Rewrites source while preserving comments and block strings. |
+| 9 | Docs and examples | Update README, explain entries, EBNF/spec commentary, and CLI help. | Users can distinguish check/lint/format and suppress lints deliberately. |
 
 ## Open Questions
 
@@ -262,7 +262,7 @@ It should not be the default in-place formatter until comment preservation is so
 - Should source-level suppression be available before project-level policy exists?
 - Should wildcard suppressions such as `"hygiene.*"` be allowed in the first implementation?
 - Should `@ lint tacet` attach to arbitrary statements, only declarations/blocks, or every AST node with annotations?
-- Should the formatter expose both `fmt --write` and `fmt --canonical` if the latter is HIR-based and comment-dropping?
+- Should the formatter expose both `format --write` and `format --canonical` if the latter is HIR-based and comment-dropping?
 - Should `legacy` lints become hard parser errors automatically after a migration window?
 
 ## First Useful Slice
@@ -272,7 +272,7 @@ The first useful implementation should not start with formatter rewriting. It sh
 1. assign stable slugs to existing warnings,
 2. add `faber lint`,
 3. add tests proving slugs are stable,
-4. document `check = truth`, `lint = judgment`, `fmt = shape`.
+4. document `check = truth`, `lint = judgment`, `format = shape`.
 
 `@ lint tacet` should come after slugs exist. Suppressing an unnamed warning is not mechanical.
 
