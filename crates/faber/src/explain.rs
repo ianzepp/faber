@@ -122,28 +122,18 @@ pub enum Kind {
 #[serde(deny_unknown_fields)]
 struct FrontMatter {
     term: String,
-
     kind: String,
-
     category: String,
-
     canonical: bool,
-
     summary: String,
-
     syntax: String,
-
     #[serde(default)]
     examples: Vec<String>,
-
     #[serde(default)]
     aliases: Vec<String>,
-
     #[serde(default)]
     legacy: Vec<String>,
-
     canonical_term: Option<String>,
-
     #[serde(default)]
     related: Vec<String>,
 }
