@@ -1,433 +1,238 @@
-# Radix Diagnostics Plan
+# Radix Diagnostics Mode Plan
 
-Internal delivery plan for improving `radix/crates/radix` diagnostics without attempting to make the `rivus` codebase pass semantic checking.
+**Status**: constrained delivery plan  
+**Updated**: 2026-05-23  
+**Scope**: add a developer-facing diagnostics reporting mode without rewriting
+all CLI output paths
 
-Last updated: 2026-04-10
+## Purpose
 
----
+Faber already has a diagnostics model, catalog, and renderer. The missing piece
+is a focused way to answer: "why did this source fail, and in which compiler
+phase?"
 
-## 1. Interpreted Problem
+This plan replaces the older broad diagnostics plan. The first deliverable is
+not a full `cargo check` clone, not a batch-reporting system, and not a parser
+message rewrite. It is a bounded diagnostics mode that exposes the structured
+information the compiler already has, then adds only the smallest model fields
+needed to make that mode useful.
 
-### Claimed problem
+## Current State
 
-Improve `radix-rs` diagnostics so they are genuinely useful when checking difficult codebases such as `../faber-archivum/self-hosting/rivus`.
+Current diagnostics infrastructure:
 
-### Inferred actual problem
+- `crates/radix/src/diagnostics/diagnostic.rs`
+- `crates/radix/src/diagnostics/catalog.rs`
+- `crates/radix/src/diagnostics/render.rs`
+- `crates/radix/src/driver/mod.rs`
 
-The main blocker is not only diagnostic correctness. `radix-rs` already has the start of a real diagnostics layer, but the CLI still emits too much ad hoc text and too little structured context:
+The existing `Diagnostic` model already carries:
 
-- single-file diagnostics are too sparse for fast triage
-- batch failures degrade into a wall of repeated messages
-- parser errors are too local to explain what construct the parser thought it was in
-- the existing diagnostics infrastructure is not yet the canonical CLI output path
+- severity,
+- stable code,
+- message,
+- file,
+- byte span,
+- captured source line,
+- help text.
 
-### Confidence
+The driver already normalizes lexer, parser, semantic, and selected backend
+failures into `Diagnostic` values. Some CLI/tool commands still print ad hoc
+messages directly, but fixing every output path is explicitly outside the first
+slice.
 
-High.
+## Product Decision
 
-### Non-goal
+Add an explicit diagnostics mode for compiler and language debugging.
 
-Do **not** try to make `rivus` pass in this effort. The target is diagnostic quality, not compatibility.
+Normal user output should remain clean. Diagnostics mode should intentionally be
+more verbose and more internal, because its job is debugging the compiler
+pipeline rather than presenting polished end-user help.
 
----
-
-## 2. Product Decision
-
-Treat diagnostics as a first-class compiler output contract.
-
-`radix-rs` should follow the same broad split that users expect from `cargo check` / `rustc`:
-
-1. each diagnostic is precise, contextual, and individually readable
-2. each run ends with a short aggregate summary
-
-The compiler should not dump a giant undifferentiated error wall and call that good enough.
-
----
-
-## 3. Current State
-
-### Existing strengths
-
-`radix-rs` already has a diagnostics subsystem:
-
-- [`radix/crates/radix/src/diagnostics/diagnostic.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/diagnostic.rs)
-- [`radix/crates/radix/src/diagnostics/render.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/render.rs)
-- [`radix/crates/radix/src/diagnostics/catalog.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/catalog.rs)
-
-The data model already supports:
-
-- severity
-- code
-- file
-- span
-- help text
-- one captured source line
-
-### Existing weaknesses
-
-The CLI still bypasses this in important paths:
-
-- [`radix/crates/radix/src/main.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/main.rs)
-
-Today the output often falls back to plain `eprintln!` strings such as:
-
-- `expected identifier`
-- `expected expression`
-- `name does not refer to a type`
-
-That is directionally correct, but weak for broad compatibility passes.
-
-### Evidence from rivus sweep
-
-A per-file `check` sweep across `../faber-archivum/self-hosting/rivus/**/*.fab` produced:
-
-- `total=137`
-- `failed=132`
-
-The messages were useful enough to prove broad incompatibility, but not useful enough to cluster failures quickly or identify the dominant grammar families with confidence.
-
----
-
-## 4. Design Goals
-
-The improved diagnostics system should:
-
-1. render precise line/column locations for human output
-2. show source snippets and highlight spans consistently
-3. distinguish single-file readability from batch-run readability
-4. support explicit output modes instead of one overloaded text stream
-5. preserve machine-readable extension paths later without forcing them first
-6. improve parser wording where it matters most, but only after transport and rendering are fixed
-
----
-
-## 5. Output Contract
-
-### Human mode
-
-Default mode should behave like a compact `rustc`-style diagnostic stream:
-
-- severity
-- diagnostic code when available
-- message
-- file, line, column
-- source snippet
-- underline / label
-- optional help / note
-
-Each diagnostic should stand on its own.
-
-### Short mode
-
-Short mode should produce one line per diagnostic:
+The mode should make phase ownership obvious:
 
 ```text
-error[PARSE012]: ../faber-archivum/self-hosting/rivus/foo.fab:12:8: expected identifier
-warning[SEM031]: ../faber-archivum/self-hosting/rivus/bar.fab:44:3: unused local
+error[PARSE022] parse src/main.fab:14:9 expected block or 'ergo'
+phase: parse
+span: 143..149
+source: si ready tacet
+help: use `{ ... }` for a block body or `ergo`/`∴` for a single statement
 ```
 
-This is for CI logs, filtering, and large sweeps.
+## First Deliverable
 
-### Session summary
+Add a diagnostics reporting mode for the most useful single-file paths:
 
-Every run should end with a concise summary, analogous to `cargo check`:
+- `radix check --diagnostics <file>`
+- `radix emit --diagnostics <file>`
+- `faber check --diagnostics <file>` if wiring through `faber` is cheap
 
-- files checked
-- files failed
-- total errors
-- total warnings
-- top error categories by count
+If `faber` wiring is not cheap, keep the first slice to `radix` and record the
+`faber` follow-up explicitly.
 
-Example shape:
+The first deliverable should:
 
-```text
-check failed: 132/137 files failed, 842 errors, 17 warnings
-top categories: expected identifier (211), expected expression (173), name does not refer to a type (146)
+1. Add a small CLI mode enum, such as `DiagnosticMode::{Normal, Diagnostics}`.
+2. Add a shared reporting helper for normalized `Diagnostic` values.
+3. Print the existing human diagnostic output in normal mode.
+4. Print expanded diagnostic records in diagnostics mode.
+5. Add a phase field to `Diagnostic` if phase cannot be inferred reliably from
+   the existing code/catalog.
+
+Do not add short mode, JSON mode, grouped summaries, batch suppression, or a
+large parser wording pass in this slice.
+
+## Diagnostics Mode Contract
+
+Diagnostics mode should print one expanded record per diagnostic.
+
+Required fields:
+
+- severity,
+- code when available,
+- phase,
+- message,
+- file,
+- byte span,
+- source line when available,
+- help text when available.
+
+Nice-to-have fields if trivial:
+
+- line and column,
+- end line and end column,
+- diagnostic kind/category.
+
+Line/column is useful, but it should not block the first slice if byte span and
+source line are already available. A follow-up can centralize byte-span to
+line/column mapping.
+
+## Phase Model
+
+Use a small explicit phase enum:
+
+```rust
+pub enum DiagnosticPhase {
+    Io,
+    Lex,
+    Parse,
+    Resolve,
+    Lower,
+    Typecheck,
+    Analysis,
+    Mir,
+    Codegen,
+    Tool,
+}
 ```
 
-### Batch behavior
+The exact names can follow existing module language. The important part is that
+diagnostics mode tells the reader where to look next.
 
-Batch mode should not invent a new narrative format. It should:
+Initial phase assignment can be coarse:
 
-1. emit normal diagnostics
-2. optionally suppress repetition in non-verbose mode
-3. finish with grouped counts and representative examples
+- lexer errors -> `Lex`
+- parser errors -> `Parse`
+- semantic errors -> `Analysis` unless a more precise phase is already known
+- MIR lowering/validation errors -> `Mir`
+- codegen errors -> `Codegen`
+- filesystem/tool errors -> `Io` or `Tool`
 
-In non-verbose mode, show:
+Do not block on perfectly splitting every semantic subphase. Coarse attribution
+is already better than no attribution.
 
-- grouped counts by code/message family
-- first few example files for each category
+## Implementation Boundaries
 
-In verbose mode, show full detail for every diagnostic.
+### In Scope
 
-### JSON mode
+- A diagnostics mode flag on the narrow command surface chosen for the first
+  slice.
+- A reporting helper that can render existing `Diagnostic` values in expanded
+  form.
+- A minimal `DiagnosticPhase` field or equivalent.
+- Tests/snapshots for one parse diagnostic and one semantic diagnostic in
+  diagnostics mode.
 
-Optional later.
+### Out Of Scope
 
-Do not make JSON the first milestone unless another tool is already waiting for it. The immediate need is stronger human triage.
+- Making old archived/self-hosting code compile.
+- Package-wide batch summaries.
+- Grouped top-category reports.
+- JSON output.
+- Rewriting all `eprintln!` call sites.
+- Rewording the parser catalog broadly.
+- Changing compiler phase behavior.
+- Full line/column redesign if the first slice can use byte spans.
 
----
+## Suggested Stage Graph
 
-## 6. Recommended Diagnostic Model Changes
+### Stage 1: Contract And Flag
 
-Extend `Diagnostic` to carry richer location and grouping data.
-
-### Required additions
-
-1. line
-2. column
-3. optional end_line
-4. optional end_column
-5. phase/category marker
-6. optional construct context
-
-### Why
-
-Current byte offsets and one captured line are not enough for:
-
-- batch summaries
-- precise short-mode formatting
-- clearer parser context
-
-### Notes
-
-This does not require redesigning the whole compiler. It requires moving more location knowledge into the canonical diagnostic object.
-
----
-
-## 7. Cargo Check Analogue
-
-The intended model is:
-
-1. compiler owns precise atomic diagnostics
-2. CLI owns session summary and presentation mode
-
-This mirrors `rustc` + `cargo check`:
-
-- `rustc` emits exact errors with spans and context
-- `cargo` provides run-level framing and a final summary
-
-`radix-rs` should do the same:
-
-- keep diagnostics atomic
-- add a short end-of-run aggregate
-- avoid giant prose reports
-
----
-
-## 8. Stage Graph
-
-### Stage A: Contract Freeze
-
-Scope:
-
-- define `human` and `short` output modes
-- define required fields for all diagnostics
-- define required fields for session summaries
+Add the CLI flag and mode enum for the selected commands. Keep normal behavior
+unchanged when the flag is absent.
 
 Exit criteria:
 
-- output contract written down
-- no ambiguity about what a CLI command must print
+- `radix check --diagnostics <file>` selects diagnostics mode.
+- Existing `radix check <file>` output remains unchanged.
 
-### Stage B: Diagnostic Model Upgrade
+### Stage 2: Expanded Renderer
 
-Scope:
-
-- extend `Diagnostic` with line/column and grouping fields
-- centralize span-to-line/column mapping
+Add a deterministic expanded renderer for `Diagnostic`.
 
 Exit criteria:
 
-- all diagnostics can render precise file:line:column locations
-- plain/short format no longer relies on byte offsets alone
+- The renderer prints severity, code, phase, file, span, message, source line,
+  and help.
+- It handles missing file/span/source/help without panicking.
 
-### Stage C: Renderer Upgrade
+### Stage 3: Phase Attribution
 
-Scope:
-
-- strengthen [`render.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/render.rs)
-- ensure human output uses the richer model consistently
-- bring plain rendering into parity with the contract
+Add minimal phase attribution at diagnostic construction points.
 
 Exit criteria:
 
-- parse, semantic, and IO diagnostics render in the same style
-- source snippet + location + help all appear consistently
+- Lex, parse, semantic, MIR, codegen, and IO/tool diagnostics have reasonable
+  phase values where they are already normalized.
+- Unknown or coarse phases are acceptable for the first slice if they are named
+  honestly.
 
-### Stage D: CLI Integration
+### Stage 4: Focused Verification
 
-Scope:
-
-- route `check`, `emit`, `build`, `parse`, and `hir` through shared reporting helpers
-- remove ad hoc `eprintln!` diagnostics where practical
-
-Exit criteria:
-
-- `main.rs` no longer defines its own competing diagnostic formats
-- compiler diagnostics flow through one reporting path
-
-### Stage E: Batch Summary
-
-Scope:
-
-- add grouped end-of-run summaries
-- add category counting and representative examples
-- keep full detail behind `--verbose`
+Add focused tests for diagnostics mode output.
 
 Exit criteria:
 
-- large runs are scannable
-- top failure families are obvious without reading every line
+- One parse failure snapshot proves phase/code/span/source/help output.
+- One semantic failure snapshot proves semantic diagnostics are routed through
+  the same expanded renderer.
+- Existing normal-mode tests still pass.
 
-### Stage F: Parser Message Improvement
+## Follow-Ups
 
-Scope:
+Only after the first slice lands, consider:
 
-- target the most common parse failures found in `rivus`
-- add construct-aware wording where possible
+- `--diagnostics=short` for one-line CI output.
+- `--diagnostics=json` for tooling.
+- line/column fields on `Diagnostic`.
+- package/batch summaries.
+- grouped counts by code/message family.
+- broader CLI output cleanup across `parse`, `hir`, `mir`, `emit`, `build`, and
+  `faber`.
+- parser wording improvements for high-frequency diagnostics.
 
-Examples:
-
-- instead of only `expected identifier`
-- prefer `expected identifier in genus field declaration`
-
-Exit criteria:
-
-- the top recurring parse errors become materially more specific
-
----
-
-## 9. Workstreams
-
-### Workstream 1: Diagnostic Core
-
-Primary files:
-
-- [`radix/crates/radix/src/diagnostics/diagnostic.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/diagnostic.rs)
-- [`radix/crates/radix/src/diagnostics/catalog.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/catalog.rs)
-
-Responsibilities:
-
-- richer diagnostic payload
-- stable codes/categories
-- grouping keys
-
-### Workstream 2: Rendering
-
-Primary file:
-
-- [`radix/crates/radix/src/diagnostics/render.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/diagnostics/render.rs)
-
-Responsibilities:
-
-- human formatting
-- short formatting
-- session summaries
-
-### Workstream 3: CLI Integration
-
-Primary file:
-
-- [`radix/crates/radix/src/main.rs`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/main.rs)
-
-Responsibilities:
-
-- mode selection
-- consistent command output
-- batch reporting hooks
-
-### Workstream 4: Parser Specificity
-
-Primary area:
-
-- [`radix/crates/radix/src/parser`](/Users/ianzepp/work/ianzepp/faber/radix/crates/radix/src/parser)
-
-Responsibilities:
-
-- improve high-frequency parse messages
-- add construct-aware context
-
----
-
-## 10. Verification Plan
-
-### Required tests
-
-1. single parse diagnostic snapshot
-2. single semantic diagnostic snapshot
-3. single IO diagnostic snapshot
-4. short-mode snapshot
-5. grouped batch summary snapshot
-
-### Test corpus
-
-Use:
-
-- small curated invalid Faber fixtures
-- a narrow `rivus` sample subset representing top failure categories
-
-Do **not** put the whole `rivus` tree in a normal unit-test path.
-
-### Manual verification
-
-Run a `rivus` sweep after each checkpoint and confirm:
-
-1. location fidelity improved
-2. category grouping is meaningful
-3. the top failure families are easier to identify
-
----
-
-## 11. Checkpoints
-
-### Checkpoint 1: Contract Freeze
-
-Pass if:
-
-- the human/short/session-summary contract is stable
-
-### Checkpoint 2: Foundation Merge
-
-Pass if:
-
-- line/column rendering works
-- CLI uses shared diagnostic reporting
-
-### Checkpoint 3: Batch Readability
-
-Pass if:
-
-- a `rivus` sweep ends with useful grouped summaries
-- repeated failures are no longer just a flat wall
-
-### Checkpoint 4: Parser Improvement
-
-Pass if:
-
-- the top recurring parse diagnostics are materially more specific
-
----
-
-## 12. Recommended First Issue
+## Recommended First Issue
 
 Implement:
 
-`Make radix-rs CLI diagnostics line/column aware and route check/build/emit through the shared diagnostics renderer.`
+`Add radix check --diagnostics for expanded phase-aware diagnostics on a single file.`
 
-Why this first:
+Acceptance criteria:
 
-- highest leverage
-- improves every command immediately
-- creates the foundation needed before batch summaries or parser message tuning
+- Normal `radix check <file>` behavior is unchanged.
+- `radix check --diagnostics <file>` prints expanded diagnostic records.
+- Expanded records include phase, severity, code, message, file, byte span,
+  source line, and help when available.
+- Tests cover at least one parse error and one semantic error.
 
----
-
-## 13. Explicit Non-Goals
-
-Do not fold these into the first pass:
-
-1. making `rivus` compile
-2. making `check` package-aware
-3. rewriting the entire parser wording surface at once
-4. adding a complex JSON diagnostics protocol before human output is good
+This keeps the work useful without turning it into a repo-wide output rewrite.
