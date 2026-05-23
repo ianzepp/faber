@@ -820,6 +820,14 @@ functio main() → numerus {
 }
 
 #[test]
+fn retired_colon_structural_forms_are_parse_errors() {
+    assert_parse_error_contains(r#"genus Point { numerus x : 0 }"#, "expected");
+    assert_parse_error_contains(r#"fixum _ point ← { x: 10 }"#, "expected");
+    assert_parse_error_contains(r#"fixum _ event ← finge Click { x: 1 } ⇢ Event"#, "expected '='");
+    assert_parse_error_contains(r#"fixum _ point ← Point { x: 10 }"#, "expected");
+}
+
+#[test]
 fn inline_union_types_parse_flat() {
     let result = parse_ok("typus Maybe = textus ∪ numerus ∪ nihil");
     let program = result.program.as_ref().expect("program");

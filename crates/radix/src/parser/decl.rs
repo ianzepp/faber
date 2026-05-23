@@ -538,7 +538,7 @@ impl Parser {
                 ));
             }
 
-            let init = if self.eat(&TokenKind::Eq) || self.eat(&TokenKind::Colon) {
+            let init = if self.eat(&TokenKind::Eq) {
                 Some(Box::new(self.parse_expression()?))
             } else {
                 None

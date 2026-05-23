@@ -205,7 +205,11 @@ impl<'a> TypeChecker<'a> {
 
         let resolved = self.resolve_type(expected);
         if self.is_infer(resolved) {
-            self.error(SemanticErrorKind::MissingTypeAnnotation, "vacua requires an explicit declared type", span);
+            self.error(
+                SemanticErrorKind::MissingTypeAnnotation,
+                "vacua requires an explicit declared type",
+                span,
+            );
             return self.error_type;
         }
 

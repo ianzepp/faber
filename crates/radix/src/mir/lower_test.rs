@@ -630,7 +630,7 @@ fn lowers_struct_construction_and_field_read() {
         r#"
 genus Persona { textus nomen numerus aetas }
 functio nomen() → textus {
-    fixum Persona p ← { nomen: "Ada", aetas: 36 } ⇢ Persona
+    fixum Persona p ← Persona { nomen = "Ada", aetas = 36 }
     redde p.nomen
 }
 "#,
@@ -647,9 +647,9 @@ functio nomen() → textus {
 fn lowers_struct_construction_field_defaults() {
     let dump = dump_source(
         r#"
-genus Persona { textus nomen numerus aetas: 0 }
+genus Persona { textus nomen numerus aetas = 0 }
 functio aetas() → numerus {
-    fixum Persona p ← { nomen: "Ada" } ⇢ Persona
+    fixum Persona p ← Persona { nomen = "Ada" }
     redde p.aetas
 }
 "#,
@@ -683,7 +683,7 @@ fn lowers_map_and_set_construction() {
     let map_dump = dump_source(
         r#"
 functio lectio() → numerus {
-    fixum tabula<textus, numerus> xs ← { a: 1, b: 2 }
+    fixum tabula<textus, numerus> xs ← { a = 1, b = 2 }
     redde xs["a"]
 }
 "#,
@@ -703,7 +703,7 @@ fn lowers_field_and_index_assignment_places() {
         r#"
 genus Persona { textus nomen numerus aetas }
 functio muta() → numerus {
-    varia Persona p ← { nomen: "Ada", aetas: 36 } ⇢ Persona
+    varia Persona p ← Persona { nomen = "Ada", aetas = 36 }
     p.aetas ← 37
     redde p.aetas
 }
@@ -758,7 +758,7 @@ fn lowers_enum_variant_construction() {
         r#"
 discretio Eventus { Bonum { textus nuntius } }
 functio crea() → Eventus {
-    redde finge Bonum { nuntius: "ok" } ⇢ Eventus
+    redde finge Bonum { nuntius = "ok" } ⇢ Eventus
 }
 "#,
     );
@@ -773,8 +773,8 @@ fn rejects_unsupported_map_spread_shape() {
     let unit = analyze(
         r#"
 functio malum() → tabula<textus, numerus> {
-    fixum tabula<textus, numerus> base ← { a: 1 }
-    redde { sparge base, b: 2 }
+    fixum tabula<textus, numerus> base ← { a = 1 }
+    redde { sparge base, b = 2 }
 }
 "#,
     );

@@ -696,7 +696,7 @@ fn compile_accepts_finge_variant_construction() {
 }
 
 incipit {
-  fixum Event e1 ← finge Click { x: 1, y: 2 } ⇢ Event
+  fixum Event e1 ← finge Click { x = 1, y = 2 } ⇢ Event
   fixum Event e2 ← finge Quit ⇢ Event
   nota e1
   nota e2
@@ -730,7 +730,7 @@ fn compile_accepts_array_and_ex_destructuring_bindings() {
   nota a
   nota b
 
-  fixum _ person ← { name: "Marcus", age: 1 }
+  fixum _ person ← { name = "Marcus", age = 1 }
   ex person fixum name
   nota name
 }"#;
@@ -958,7 +958,7 @@ incipit {
 fn ab_property_filter_no_longer_reports_unknown_identifier() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum _ users ← [{ activus: verum }]
+  fixum _ users ← [{ activus = verum }]
   fixum _ active ← ab users activus
   nota active
 }"#;
@@ -976,10 +976,10 @@ fn ab_pipeline_from_object_member_no_longer_leaves_infer_types() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum _ users ← [
-    { nomen: "Marcus", activus: verum, aetas: 25 },
-    { nomen: "Julia", activus: falsum, aetas: 30 }
+    { nomen = "Marcus", activus = verum, aetas = 25 },
+    { nomen = "Julia", activus = falsum, aetas = 30 }
   ]
-  fixum _ data ← { users: users }
+  fixum _ data ← { users = users }
   fixum _ active ← ab data.users activus
   nota active
 }"#;
@@ -1000,7 +1000,7 @@ fn ab_pipeline_from_object_member_no_longer_leaves_infer_types() {
 fn ex_object_varia_bindings_accept_same_type_reassignment() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum _ data ← { count: 100, active: verum }
+  fixum _ data ← { count = 100, active = verum }
   ex data varia count, active
   count ← 200
   active ← falsum
@@ -1342,7 +1342,7 @@ incipit {
 fn ego_field_access_no_longer_reports_non_struct_member_error() {
     let session = session(Target::Rust);
     let source = r#"genus Counter {
-  numerus count: 0
+  numerus count = 0
   functio inc() → numerus {
     ego.count = ego.count + 1
     redde ego.count
@@ -1410,10 +1410,10 @@ incipit {
 fn object_member_and_index_chains_no_longer_report_index_errors() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum _ config = { name: "test", value: 42 }
+  fixum _ config = { name = "test", value = 42 }
   nota config["name"]
 
-  fixum _ data = { items: ["first", "second"] }
+  fixum _ data = { items = ["first", "second"] }
   nota data.items[0]
 }"#;
     let result = compile(&session, "test.fab", source);
@@ -1797,7 +1797,7 @@ fn compile_lowers_probandum_nested_cases_without_lowering_errors() {
 fn ego_field_assignment_no_longer_reports_assignment_type_mismatch() {
     let session = session(Target::Rust);
     let source = r#"genus Circulus {
-  varia numerus diameter: 1
+  varia numerus diameter = 1
   functio crescere(numerus factor) → vacuum {
     ego.diameter = ego.diameter * factor
   }
@@ -1835,15 +1835,15 @@ fn typed_array_index_assignment_no_longer_reports_assignment_type_mismatch() {
 fn ex_destructured_object_fields_can_be_used_in_arithmetic() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  fixum _ point = { x: 4, y: 6 } ⇢ Point
+  fixum _ point = Point { x = 4, y = 6 }
   ex point fixum x, y
   fixum numerus sum = x + y
   nota sum
 }
 
 genus Point {
-  numerus x: 0
-  numerus y: 0
+  numerus x = 0
+  numerus y = 0
 }"#;
     let result = compile(&session, "test.fab", source);
 
@@ -2067,8 +2067,8 @@ incipit {
 fn optional_chain_no_longer_reports_lowering_stub() {
     let session = session(Target::Rust);
     let source = r#"genus User {
-  textus name: "Anon"
-  lista<numerus> nums: [1, 2, 3]
+  textus name = "Anon"
+  lista<numerus> nums = [1, 2, 3]
 }
 
 functio id(textus x) → textus {
@@ -2094,7 +2094,7 @@ incipit {
 fn rust_output_emits_option_map_and_and_then_for_optional_chain() {
     let session = session(Target::Rust);
     let source = r#"genus User {
-  textus name: "Anon"
+  textus name = "Anon"
 }
 
 functio id(textus x) → textus {
@@ -2152,7 +2152,7 @@ fn struct_construction_requires_fields_and_checks_defaults() {
 }
 
 incipit {
-  fixum _ u ← { email: "a@example.com" } ⇢ User
+  fixum _ u ← User { email = "a@example.com" }
 }"#;
     let missing_result = compile(&session, "missing.fab", missing);
     assert!(!missing_result.success());
@@ -2162,7 +2162,7 @@ incipit {
         .any(|d| d.message.contains("missing required struct field")));
 
     let bad_default = r#"genus User {
-  numerus score : "bad"
+  numerus score = "bad"
 }
 
 incipit {
@@ -2181,9 +2181,9 @@ fn ab_pipeline_no_longer_reports_lowering_stub() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum _ items ← [
-    { valor: 10, visibilis: verum },
-    { valor: 20, visibilis: falsum },
-    { valor: 30, visibilis: verum }
+    { valor = 10, visibilis = verum },
+    { valor = 20, visibilis = falsum },
+    { valor = 30, visibilis = verum }
   ]
   fixum _ nums ← [1, 2, 3, 4, 5]
   fixum _ visible ← ab items visibilis, prima 2
@@ -2202,9 +2202,9 @@ fn rust_output_emits_iterator_pipeline_for_ab_expr() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum _ items ← [
-    { valor: 10, visibilis: verum },
-    { valor: 20, visibilis: falsum },
-    { valor: 30, visibilis: verum }
+    { valor = 10, visibilis = verum },
+    { valor = 20, visibilis = falsum },
+    { valor = 30, visibilis = verum }
   ]
   fixum _ nums ← [1, 2, 3, 4, 5]
   fixum _ top ← ab items visibilis, prima 2
@@ -2227,7 +2227,7 @@ fn rust_output_emits_iterator_pipeline_for_ab_expr() {
 fn objectum_return_type_no_longer_reports_unknown_type() {
     let session = session(Target::Rust);
     let source = r#"functio getResponse() → objectum {
-  redde { body: "ok" }
+  redde { body = "ok" }
 }
 
 incipit {
@@ -2297,7 +2297,7 @@ fn verte_vel_no_longer_reports_invalid_cast() {
   fixum _ data ← 42
   fixum _ asText ← data ⇢ textus
   fixum _ parsed ← "invalid" ⇒ numerus vel 0
-  fixum _ cache ← { alice: 95, bob: 87 } ⇢ tabula<textus, numerus>
+  fixum _ cache ← { alice = 95, bob = 87 } ⇢ tabula<textus, numerus>
   fixum _ items ← [] ⇢ lista<textus>
   nota asText, parsed, cache, items
 }"#;
@@ -2319,7 +2319,7 @@ fn rust_output_emits_verte_construction_and_coalesce_unwrap() {
     let source = r#"incipit {
   fixum textus ∪ nihil name ← nihil
   fixum _ display ← name vel "Anonymous"
-  fixum _ cache ← { alice: 95 } ⇢ tabula<textus, numerus>
+  fixum _ cache ← { alice = 95 } ⇢ tabula<textus, numerus>
   fixum _ items ← [] ⇢ lista<textus>
   nota display, cache, items
 }"#;
@@ -2347,8 +2347,8 @@ fn rust_output_wraps_sponte_fields_in_verte_struct_literals() {
 }
 
 incipit {
-  fixum _ a ← { name: "Ada" } ⇢ User
-  fixum _ b ← { name: "Lin", email: "lin@example.com" } ⇢ User
+  fixum _ a ← User { name = "Ada" }
+  fixum _ b ← User { name = "Lin", email = "lin@example.com" }
   nota a.name
   nota b.name
 }"#;
@@ -2372,14 +2372,14 @@ fn rust_output_applies_nullable_field_defaults_in_verte_struct_literals() {
     let session = session(Target::Rust);
     let source = r#"genus User {
   textus name
-  textus nickname : "Anonymous"
-  textus ∪ nihil email : "Anonymous"
+  textus nickname = "Anonymous"
+  textus ∪ nihil email = "Anonymous"
 }
 
 incipit {
-  fixum _ a ← { name: "Ada" } ⇢ User
-  fixum _ b ← { name: "Lin", email: nihil } ⇢ User
-  fixum _ c ← { name: "Ken", email: "ken@example.com" } ⇢ User
+  fixum _ a ← User { name = "Ada" }
+  fixum _ b ← User { name = "Lin", email = nihil }
+  fixum _ c ← User { name = "Ken", email = "ken@example.com" }
 }"#;
     let result = compile(&session, "test.fab", source);
 

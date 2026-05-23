@@ -165,7 +165,7 @@ fn preserves_sponte_and_fixus_markers_on_hir_declarations() {
     let source = r#"functio invite(textus email sponte fixus vel "anon") → vacuum {}
 
 genus User {
-  textus nickname sponte fixus : "Anonymous"
+  textus nickname sponte fixus = "Anonymous"
 }"#;
 
     let (hir, interner) = lower_source(source);

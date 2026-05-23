@@ -1152,7 +1152,7 @@ impl Parser {
             } else {
                 // Identifier key (possibly shorthand)
                 let ident = self.parse_ident()?;
-                let value = if self.eat(&TokenKind::Eq) || self.eat(&TokenKind::Colon) {
+                let value = if self.eat(&TokenKind::Eq) {
                     Some(Box::new(self.parse_expression()?))
                 } else {
                     None // Shorthand
@@ -1171,11 +1171,11 @@ impl Parser {
 
     fn looks_like_typed_constructor_fields(&self) -> bool {
         matches!(self.peek_at(1).kind, TokenKind::Ident(_) | TokenKind::String(_))
-            && matches!(self.peek_at(2).kind, TokenKind::Eq | TokenKind::Colon)
+            && matches!(self.peek_at(2).kind, TokenKind::Eq)
     }
 
     fn expect_field_value_separator(&mut self) -> Result<(), ParseError> {
-        if self.eat(&TokenKind::Eq) || self.eat(&TokenKind::Colon) {
+        if self.eat(&TokenKind::Eq) {
             return Ok(());
         }
 

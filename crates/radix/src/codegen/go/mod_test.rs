@@ -98,7 +98,7 @@ fn ad_with_catch_is_rejected_for_go_targets() {
 fn nested_object_honors_enclosing_map_value_type() {
     let code = compile_go(
         r#"incipit {
-  fixum _ nested ← { outer: { inner: 1 } }
+  fixum _ nested ← { outer = { inner = 1 } }
   nota nested
 }"#,
     );
@@ -111,8 +111,8 @@ fn nested_object_honors_enclosing_map_value_type() {
 fn map_member_access_asserts_precise_types_when_map_values_are_any() {
     let code = compile_go(
         r#"incipit {
-  fixum _ nested ← { outer: { inner: { deep: "found" } } }
-  fixum _ data ← { items: ["first", "second", "third"] }
+  fixum _ nested ← { outer = { inner = { deep = "found" } } }
+  fixum _ data ← { items = ["first", "second", "third"] }
   nota nested.outer.inner.deep
   nota data.items[0]
 }"#,
@@ -128,7 +128,7 @@ fn map_member_access_asserts_precise_types_when_map_values_are_any() {
 fn optional_map_members_deref_pointer_maps_and_unknown_maps_explicitly() {
     let code = compile_go(
         r#"incipit {
-  fixum _ maybe ← { present: { value: 100 } }
+  fixum _ maybe ← { present = { value = 100 } }
   nota maybe?.present?.value
   fixum _ empty ← nihil
   nota empty?.missing
@@ -251,8 +251,8 @@ genus User {
 
 incipit {
   fixum _ alice ← {
-    name: "Alice",
-    address: { city: "Roma", state: "Italia" } ⇢ Address
+    name = "Alice",
+    address = Address { city = "Roma", state = "Italia" }
   } ⇢ User
 }"#,
     );
@@ -454,7 +454,7 @@ fn custodi_nested_guards_emit_statement_if_chain() {
 fn ego_fields_emit_self_access_in_methods() {
     let code = compile_go(
         r#"genus Counter {
-  numerus value: 0
+  numerus value = 0
 
   functio increment() {
     ego.value ← ego.value + 1
@@ -475,7 +475,7 @@ fn ego_fields_emit_self_access_in_methods() {
 fn returning_ego_and_chaining_uses_value_return_with_pointer_temps() {
     let code = compile_go(
         r#"genus Calculator {
-  numerus value: 0
+  numerus value = 0
 
   functio setValue(numerus n) → Calculator {
     ego.value ← n
@@ -516,7 +516,7 @@ fn finge_and_ordo_variants_emit_struct_values() {
 
 incipit {
   fixum Status s ← finge Active ⇢ Status
-  fixum Status e ← finge Click { x: 1, y: 2 } ⇢ Status
+  fixum Status e ← finge Click { x = 1, y = 2 } ⇢ Status
 }"#,
     );
 
@@ -556,9 +556,9 @@ fn ab_property_filters_and_transforms_emit_real_go_pipeline() {
     let code = compile_go(
         r#"incipit {
   fixum _ users ← [
-    { nomen: "Marcus", activus: verum },
-    { nomen: "Julia", activus: falsum },
-    { nomen: "Gaius", activus: verum }
+    { nomen = "Marcus", activus = verum },
+    { nomen = "Julia", activus = falsum },
+    { nomen = "Gaius", activus = verum }
   ]
   fixum _ nums ← [1, 2, 3, 4, 5]
   fixum _ active ← ab users activus
@@ -584,10 +584,10 @@ fn ab_member_source_pipeline_emits_filtered_slice() {
     let code = compile_go(
         r#"incipit {
   fixum _ users ← [
-    { nomen: "Marcus", activus: verum },
-    { nomen: "Julia", activus: falsum }
+    { nomen = "Marcus", activus = verum },
+    { nomen = "Julia", activus = falsum }
   ]
-  fixum _ data ← { users: users }
+  fixum _ data ← { users = users }
   fixum _ active ← ab data.users activus
   nota active
 }"#,
