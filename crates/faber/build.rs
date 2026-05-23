@@ -1,3 +1,9 @@
+//! Build-time embedding for the `faber explain` reference corpus.
+//!
+//! The runtime command should not depend on the source tree being present, so
+//! Markdown entries from `explain/` are converted into a deterministic Rust
+//! slice during the Cargo build.
+
 use std::env;
 use std::fs;
 use std::io;
@@ -18,6 +24,8 @@ fn main() {
         ),
     };
 
+    // The generated file is data only: parsing and validation stay in
+    // `explain.rs`, where diagnostics can refer back to the source filename.
     let mut generated = String::from("&[\n");
     for (filename, source) in entries {
         generated.push_str("    RawEntry {\n");
@@ -30,6 +38,10 @@ fn main() {
     fs::write(out_dir.join("explain_entries.rs"), generated).expect("write explain_entries.rs");
 }
 
+/// Read Markdown explain entries in deterministic filename order.
+///
+/// Missing corpora are accepted so partial source distributions can still build
+/// the crate, but malformed or unreadable files remain hard build failures.
 fn read_entries(explain_dir: &Path) -> io::Result<Vec<(String, String)>> {
     if !explain_dir.exists() {
         return Ok(Vec::new());

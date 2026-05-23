@@ -1,17 +1,45 @@
+//! Library import resolution for package compilation.
+//!
+//! `faber` treats built-in libraries as source-level interfaces under
+//! `stdlib/`, not as hard-coded compiler magic. The resolver translates an
+//! import specifier such as `norma/hal/solum` into the `.fab` interface that
+//! package loading can parse, typecheck, and wire into generated output.
+//!
+//! The current provider surface is intentionally small. `norma` is resolved
+//! from the repository stdlib today, while the data model already has enough
+//! shape for future package-backed providers without baking Rust runtime
+//! metadata into import resolution.
+
 use std::path::{Path, PathBuf};
 
+/// Origin class for a resolved library module.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
 pub(crate) enum LibraryProviderKind {
+    /// Built into this Faber distribution and backed by `stdlib/`.
     Builtin,
+
+    /// Reserved for package-managed libraries resolved outside the built-in stdlib.
     PackageDependency,
 }
 
+/// Resolved import target for a source-level library module.
+///
+/// The path points at the Faber interface source, not at generated Rust or a
+/// runtime artifact. Downstream package loading relies on that distinction so
+/// imported APIs go through the same parser and typechecker as local sources.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ResolvedLibraryModule {
+    /// Provider package name, such as `norma`.
     pub package: String,
+
+    /// Module path inside the provider, split on `/`.
     pub module_path: Vec<String>,
+
+    /// Source interface file consumed by package loading.
     pub interface_path: PathBuf,
+
+    /// Provider class used by diagnostics and future resolver routing.
     pub provider: LibraryProviderKind,
 }
 
@@ -30,36 +58,57 @@ impl ResolvedLibraryModule {
         }
     }
 
+    /// Return the terminal module segment expected to match named imports.
     pub(crate) fn module_name(&self) -> Option<&str> {
         self.module_path.last().map(String::as_str)
     }
 }
 
+/// Errors that mean a specifier selected a library provider but not a module.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum LibraryResolveError {
+    /// A built-in package was named, but no matching interface exists.
     UnknownBuiltinModule {
+        /// Original import specifier from source.
         specifier: String,
+
+        /// Built-in provider package selected by the specifier.
         package: String,
+
+        /// Known modules for corrective diagnostics.
         known_modules: Vec<String>,
     },
 }
 
+/// Resolver for built-in and package-backed Faber library imports.
+///
+/// `resolve` returns `Ok(None)` when the specifier does not belong to a known
+/// library provider. That lets package loading fall through to local import
+/// resolution without treating every unknown string as a library error.
 #[derive(Debug, Clone)]
 pub(crate) struct LibraryResolver {
     stdlib_root: PathBuf,
 }
 
 impl LibraryResolver {
+    /// Build a resolver rooted at an explicit `stdlib` directory.
     pub(crate) fn new(stdlib_root: impl Into<PathBuf>) -> Self {
         Self {
             stdlib_root: stdlib_root.into(),
         }
     }
 
+    /// Build a resolver for the workspace stdlib bundled with this crate.
     pub(crate) fn default() -> Self {
         Self::new(default_stdlib_root())
     }
 
+    /// Resolve a Faber import specifier to a library interface, if applicable.
+    ///
+    /// The resolver only claims specifiers whose first path segment is a known
+    /// provider. For `norma`, malformed paths and missing interface files are
+    /// reported as library diagnostics because the user clearly selected the
+    /// built-in provider and should see available module names.
     pub(crate) fn resolve(
         &self,
         specifier: &str,

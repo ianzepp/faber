@@ -14,6 +14,11 @@ use std::path::{Component, Path, PathBuf};
 
 const MANIFEST_FILE: &str = "faber.toml";
 
+/// Package entrypoints resolved from either `faber.toml` or legacy path input.
+///
+/// The compiler keeps package discovery separate from build layout discovery:
+/// this type describes the Faber source graph only, not the generated Cargo
+/// crate that may later be emitted under `target/faber/`.
 struct PackageSpec {
     source_root: PathBuf,
     entry: PathBuf,
@@ -22,26 +27,36 @@ struct PackageSpec {
 /// Layout for a package build: generated Rust crate under `target/faber/`,
 /// Cargo artifacts under sibling `target/debug/` and `target/release/`.
 ///
-/// This model is pure (path calculations only) and is the single source of truth
-/// for the Non-Negotiable Directory Contract.
+/// This model is path-only and is the single source of truth for the package
+/// build directory contract. Callers should derive all generated Cargo paths
+/// from it instead of rebuilding paths ad hoc.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
 pub struct BuildLayout {
-    /// Directory containing faber.toml (or the package root for legacy dir input)
+    /// Directory containing `faber.toml`, or the legacy package root when no
+    /// manifest exists.
     pub package_root: PathBuf,
-    /// `<package_root>/faber.toml` (may not exist for legacy direct-file cases)
+
+    /// Manifest path for manifest-backed packages; may not exist for legacy
+    /// direct-file or directory inputs.
     pub manifest_path: PathBuf,
-    /// `<package_root>/target/faber` — the generated Rust crate root
+
+    /// Root of the generated Rust crate.
     pub generated_crate_root: PathBuf,
-    /// `<package_root>/target/faber/Cargo.toml`
+
+    /// Cargo manifest written for the generated Rust crate.
     pub generated_cargo_manifest: PathBuf,
-    /// `<package_root>/target/faber/src/main.rs`
+
+    /// Rust entrypoint written from the assembled package code.
     pub generated_rust_entry: PathBuf,
-    /// `<package_root>/target` — passed as --target-dir to Cargo
+
+    /// Cargo target directory shared by generated build/test invocations.
     pub cargo_target_dir: PathBuf,
-    /// `<package_root>/target/debug/<binary-name>`
+
+    /// Expected debug binary path produced by Cargo.
     pub debug_binary: PathBuf,
-    /// `<package_root>/target/release/<binary-name>`
+
+    /// Expected release binary path produced by Cargo.
     pub release_binary: PathBuf,
 }
 
@@ -76,7 +91,6 @@ impl BuildLayout {
     /// Returns the sanitized name used for the generated binary and crate.
     #[allow(dead_code)]
     pub fn binary_name(&self) -> &str {
-        // Extract from debug path (always present and normalized)
         self.debug_binary
             .file_name()
             .and_then(|s| s.to_str())
@@ -86,7 +100,7 @@ impl BuildLayout {
 
 /// Sanitize a Faber package name into a valid Rust/Cargo crate and binary name.
 ///
-/// Rules (conservative, Cargo-compatible):
+/// The policy is intentionally conservative and Cargo-compatible:
 /// - lowercase ASCII letters and digits
 /// - keep `-` and `_`
 /// - other characters become `-`
@@ -121,37 +135,56 @@ pub fn sanitize_crate_name(name: &str) -> String {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FaberManifest {
+    /// Package identity used for generated crate metadata and binary naming.
     pub package: ManifestPackage,
+
+    /// Source-layout settings for package graph discovery.
     #[serde(default)]
     pub paths: ManifestPaths,
+
+    /// Build settings accepted by the current package compiler.
     #[serde(default)]
     pub build: ManifestBuild,
 }
 
+/// `[package]` metadata from `faber.toml`.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ManifestPackage {
+    /// Human-authored package name; sanitized before it becomes a Cargo name.
     pub name: String,
+
+    /// Package version copied into the generated Cargo manifest.
     #[serde(default = "default_version")]
     pub version: String,
+
+    /// Faber source edition, distinct from the generated Rust edition.
     #[serde(default = "default_edition")]
     pub edition: String,
 }
 
+/// `[paths]` metadata that anchors package source discovery.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ManifestPaths {
+    /// Directory containing package source files, relative to the manifest.
     #[serde(default = "default_source_path")]
     pub source: String,
+
+    /// Entry module path, relative to `source`.
     #[serde(default = "default_entry_path")]
     pub entry: String,
 }
 
+/// `[build]` metadata accepted by the package command surface.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ManifestBuild {
+    /// Backend target requested by the package.
     #[serde(default = "default_build_target")]
     pub target: String,
+
+    /// Package output kind; currently only binary crates are supported.
     #[serde(default = "default_build_kind")]
     pub kind: String,
 }
@@ -215,10 +248,20 @@ struct LibraryImportBinding {
 
 type PackageDiscoveryResult = Result<PackageSpec, Box<Diagnostic>>;
 
+/// Compile a package source graph into one backend output.
+///
+/// Package compilation currently targets Rust only because it must assemble
+/// multiple modules and generated CLI surfaces into a single crate-shaped
+/// backend result. Unsupported targets are reported as diagnostics instead of
+/// falling back to single-file compilation.
 pub fn compile_package(config: &Config, input: &Path) -> CompileResult {
     compile_package_internal(config, input, None)
 }
 
+/// Compile a package while forwarding a Rust test-selection policy to codegen.
+///
+/// This is used by the package test command path so module and entry code are
+/// generated under the same test filtering contract.
 pub fn compile_package_with_test_selection(
     config: &Config,
     input: &Path,
@@ -412,6 +455,11 @@ fn generate_rust_code_for_analysis(
     .map(|output| output.code)
 }
 
+/// Check every loaded package module and return diagnostics without codegen.
+///
+/// The checker mirrors package compilation discovery and CLI mount analysis so
+/// `faber check` reports the same import, manifest, and mounted-command policy
+/// errors that a package build would encounter.
 pub fn check_package(config: &Config, input: &Path) -> Vec<Diagnostic> {
     let spec = match discover_package(input) {
         Ok(spec) => spec,
@@ -519,6 +567,10 @@ fn library_resolver_from_config(config: &Config) -> LibraryResolver {
         .unwrap_or_else(LibraryResolver::default)
 }
 
+/// Read and deserialize a `faber.toml` manifest.
+///
+/// Unknown manifest fields are rejected by the manifest structs so spelling
+/// mistakes become diagnostics rather than silently ignored configuration.
 pub fn read_manifest(path: &Path) -> Result<FaberManifest, Box<Diagnostic>> {
     let source =
         fs::read_to_string(path).map_err(|err| Box::new(Diagnostic::io_error(path, err)))?;
@@ -591,11 +643,10 @@ fn validate_manifest(manifest: &FaberManifest, path: &Path) -> Result<(), Box<Di
 
 /// Discover a `BuildLayout` for the given input (directory, manifest file, or entry file).
 ///
-/// Mirrors the resolution rules of `discover_package` but additionally reads the package
-/// name from `faber.toml` when present (required for correct binary naming) and falls back
-/// to the directory name for legacy non-manifest cases.
-///
-/// This is the entry point tests and future build commands will use for the full layout.
+/// Mirrors the resolution rules of `discover_package`, then adds the package
+/// name needed for generated crate and binary paths. Manifest-backed packages
+/// use `package.name`; legacy non-manifest inputs fall back to their directory
+/// name so old direct-file workflows still have deterministic output paths.
 #[allow(dead_code)]
 pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic>> {
     let input = absolutize_path(input);
@@ -606,7 +657,6 @@ pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic
         )));
     }
 
-    // Case 1: explicit manifest file
     if input.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE) {
         let manifest = read_manifest(&input)?;
         let root = normalize_path(input.parent().unwrap_or_else(|| Path::new(".")));
@@ -614,7 +664,6 @@ pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic
         return Ok(BuildLayout::from_package_root(root, &name));
     }
 
-    // Case 2: directory
     if input.is_dir() {
         let root = normalize_path(&input);
         let manifest = root.join(MANIFEST_FILE);
@@ -622,7 +671,6 @@ pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic
             let m = read_manifest(&manifest)?;
             return Ok(BuildLayout::from_package_root(root, &m.package.name));
         }
-        // Legacy: no manifest, use directory name as package name
         let name = root
             .file_name()
             .and_then(|s| s.to_str())
@@ -631,7 +679,6 @@ pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic
         return Ok(BuildLayout::from_package_root(root, &name));
     }
 
-    // Case 3: entry file (main.fab or similar)
     let entry = normalize_path(&input);
     let root = entry
         .parent()
@@ -642,7 +689,6 @@ pub fn discover_build_layout(input: &Path) -> Result<BuildLayout, Box<Diagnostic
         let m = read_manifest(&manifest)?;
         return Ok(BuildLayout::from_package_root(root, &m.package.name));
     }
-    // Legacy fallback
     let name = root
         .file_name()
         .and_then(|s| s.to_str())
@@ -818,6 +864,9 @@ fn rename_library_interface(
 
     let start = interface_name_span.start as usize;
     let end = interface_name_span.end as usize;
+    // WHY: imported built-in interfaces are rebound to the user's module alias
+    // so ordinary package analysis can typecheck calls without a special
+    // library namespace in the parser or resolver.
     let mut renamed = String::with_capacity(source.len() + import.binding.len());
     renamed.push_str(&source[..start]);
     renamed.push_str(&import.binding);
@@ -1057,6 +1106,9 @@ fn parse_mount_annotation(
         .filter(|part| !part.is_empty())
         .map(str::to_owned)
         .collect::<Vec<_>>();
+    // Policy: mounted command prefixes are logical CLI paths, not filesystem
+    // paths, so absolute paths and empty segments are rejected at annotation
+    // parse time.
     if prefix.is_empty()
         || raw_path.starts_with('/')
         || raw_path.ends_with('/')
@@ -1369,6 +1421,11 @@ fn module_segments(source_root: &Path, file: &Path) -> Vec<String> {
     parts
 }
 
+/// Normalize lexical path components without consulting the filesystem.
+///
+/// Package compilation uses normalized paths as stable graph keys, but must not
+/// require `std::fs::canonicalize` because missing files should become compiler
+/// diagnostics rather than path-resolution panics.
 pub(crate) fn normalize_path(path: &Path) -> PathBuf {
     let mut normalized = PathBuf::new();
     for component in path.components() {
@@ -1383,6 +1440,12 @@ pub(crate) fn normalize_path(path: &Path) -> PathBuf {
     normalized
 }
 
+/// Convert a possibly relative path into the normalized form used for package
+/// graph keys.
+///
+/// This deliberately avoids filesystem canonicalization: package checks should
+/// be able to report diagnostics for paths that do not exist yet without
+/// requiring every parent directory to resolve through the OS.
 pub(crate) fn absolutize_path(path: &Path) -> PathBuf {
     if path.is_absolute() {
         return normalize_path(path);
@@ -1463,10 +1526,11 @@ impl ModuleNode {
     }
 }
 
-/// Generate a minimal, deterministic Cargo.toml for the emitted Rust crate.
+/// Generate a minimal, deterministic `Cargo.toml` for the emitted Rust crate.
 ///
-/// Edition is always "2021" for the generated backend (Faber source edition is
-/// independent). Name is the already-sanitized binary/crate name.
+/// The Rust edition is fixed at 2021 for backend output; Faber source edition
+/// is manifest metadata for the language frontend and does not imply a Rust
+/// edition. `binary_name` must already be sanitized for Cargo.
 fn generate_cargo_toml(meta: &FaberManifest, binary_name: &str) -> String {
     let version = if meta.package.version.trim().is_empty() {
         "0.1.0"
@@ -1508,11 +1572,9 @@ fn norma_runtime_path() -> PathBuf {
 
 /// Write the generated Rust crate tree under the layout's `target/faber/` directory.
 ///
-/// Creates `target/faber/src/`, writes `Cargo.toml` (derived from manifest when
-/// available) and `src/main.rs` (the assembled code from the compiler).
-///
-/// Overwrites the two generated files deliberately; does not touch other
-/// contents of `target/`.
+/// The generated crate owns exactly `target/faber/Cargo.toml` and
+/// `target/faber/src/main.rs`. Other files under `target/` are Cargo artifacts
+/// or user-adjacent build output and are intentionally left alone.
 #[allow(dead_code)]
 pub fn emit_generated_crate(
     layout: &BuildLayout,
@@ -1521,13 +1583,11 @@ pub fn emit_generated_crate(
 ) -> Result<PathBuf, Box<Diagnostic>> {
     use std::fs;
 
-    // Ensure src/ exists
     let src_dir = layout.generated_crate_root.join("src");
     if let Err(err) = fs::create_dir_all(&src_dir) {
         return Err(Box::new(Diagnostic::io_error(&src_dir, err)));
     }
 
-    // Cargo.toml
     let cargo_src = if let Some(m) = meta {
         generate_cargo_toml(m, layout.binary_name())
     } else {
@@ -1558,7 +1618,9 @@ norma = {{ path = "{norma_path}" }}
         )));
     }
 
-    // main.rs — prefix with a clear generated marker (keeps the original codegen header too)
+    // Policy: keep an outer generated marker even when backend codegen already
+    // writes its own header, because this file belongs to the package builder's
+    // generated crate contract.
     let final_code = format!(
         "// Generated by faber build — do not edit by hand.\n\
          // Crate layout: target/faber/  (see plan.md)\n\
@@ -1575,12 +1637,13 @@ norma = {{ path = "{norma_path}" }}
     Ok(layout.generated_crate_root.clone())
 }
 
-/// Invoke Cargo to build the generated crate and produce the final binary.
+/// Invoke Cargo to build the generated crate and return the expected binary path.
 ///
 /// Uses the layout's paths so that artifacts land in `<pkg>/target/debug/<name>`
 /// (sibling to `target/faber/`, never nested).
 ///
-/// Inherits Cargo's stdout/stderr for live progress and diagnostics.
+/// Cargo's stdout/stderr are inherited to preserve native compiler progress and
+/// diagnostics.
 #[allow(dead_code)]
 pub fn invoke_cargo_build(layout: &BuildLayout, release: bool) -> Result<PathBuf, Box<Diagnostic>> {
     use std::process::Command;
@@ -1618,29 +1681,14 @@ pub fn invoke_cargo_build(layout: &BuildLayout, release: bool) -> Result<PathBuf
 
 /// Invoke `cargo test` against the generated Rust crate.
 ///
-/// Uses the Non-Negotiable Directory Contract:
+/// Uses the package build directory contract:
 ///   --manifest-path <pkg>/target/faber/Cargo.toml
 ///   --target-dir <pkg>/target
 ///
-/// Cargo test output (including pass/fail/ignored counts and any test stdout)
-/// is inherited so the user sees the Rust harness report directly.
-/// Test failures are *not* turned into Diagnostic errors here; the ExitStatus
-/// is returned so `faber test` can forward the exact code (0 for pass, nonzero
-/// for fail) that Cargo test produced.
-///
-/// Invoke `cargo test` against the generated Rust crate (Phase 2+ ergonomics).
-///
-/// Uses the Non-Negotiable Directory Contract:
-///   --manifest-path <pkg>/target/faber/Cargo.toml
-///   --target-dir <pkg>/target
-///
-/// The optional `filter` (if present) is passed as the Rust test name filter
-/// (appears before the `--` separator).
-///
-/// `harness_args` are forwarded after `--` (e.g. --exact, --nocapture,
-/// --test-threads N, --ignored, --include-ignored).
-///
-/// Output is inherited; exit status from the harness is returned verbatim.
+/// The optional `filter` is passed before `--` as Cargo's Rust test name
+/// filter. `harness_args` are forwarded after `--`. Test failures are not
+/// converted into diagnostics; the harness exit status is returned verbatim so
+/// the CLI can preserve Cargo's semantics.
 #[allow(dead_code)]
 pub fn invoke_cargo_test(
     layout: &BuildLayout,
@@ -1680,6 +1728,12 @@ pub fn invoke_cargo_test(
 #[path = "package_test.rs"]
 mod tests;
 
+/// Execute the user-facing `faber build` command.
+///
+/// Package Rust builds emit a generated Cargo crate and then delegate binary
+/// production to Cargo. Direct-file builds and non-Rust targets keep the legacy
+/// single-output behavior so package ergonomics do not change unrelated command
+/// paths.
 pub fn cmd_build(command: radix::tool::BuildCommand) {
     use std::fs;
     use std::path::PathBuf;
@@ -1707,9 +1761,8 @@ pub fn cmd_build(command: radix::tool::BuildCommand) {
         std::process::exit(1);
     };
 
-    // Phase 2+: package builds emit a full generated Rust crate under target/faber/
-    // (with sibling target/debug|release for later Cargo). Non-package and
-    // non-Rust targets continue to use the legacy single-file writer.
+    // Package Rust builds own a generated crate under target/faber/ and let
+    // Cargo place artifacts in sibling debug/release directories.
     if is_package && command.target == radix::codegen::Target::Rust {
         let layout = match discover_build_layout(&input_path) {
             Ok(l) => l,
@@ -1725,7 +1778,6 @@ pub fn cmd_build(command: radix::tool::BuildCommand) {
         };
         match emit_generated_crate(&layout, &output_code(output), meta.as_ref()) {
             Ok(_crate_root) => {
-                // Phase 3/4: now invoke Cargo to produce the real binary (debug or release)
                 let binary_path = match invoke_cargo_build(&layout, command.release) {
                     Ok(p) => p,
                     Err(d) => {
@@ -1765,10 +1817,20 @@ pub fn cmd_build(command: radix::tool::BuildCommand) {
     println!("{}", output_path.display());
 }
 
+/// Decide whether an input path should enter package-mode command handling.
+///
+/// Directory and manifest inputs are package-shaped by default; direct `.fab`
+/// files remain eligible for legacy single-file commands unless the caller
+/// forces package mode.
 fn should_treat_as_package(path: &std::path::Path) -> bool {
     path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE)
 }
 
+/// CLI-argument variant of package-mode detection.
+///
+/// Standard-input builds (`-`) cannot be package builds because package
+/// discovery needs filesystem paths for imports, manifests, and generated
+/// layouts.
 pub fn should_treat_as_package_from_args(input: &[String]) -> bool {
     if input.is_empty() || input[0] == "-" {
         return false;
@@ -1777,6 +1839,11 @@ pub fn should_treat_as_package_from_args(input: &[String]) -> bool {
     path.is_dir() || path.file_name().and_then(|name| name.to_str()) == Some(MANIFEST_FILE)
 }
 
+/// Execute the package-aware `faber check` command.
+///
+/// The permissive mode intentionally downgrades only unresolved/import-driven
+/// semantic errors; manifest, I/O, parse, and package-policy errors remain
+/// fatal because they prevent reliable package graph construction.
 pub fn cmd_check_package(command: radix::tool::CheckCommand) {
     if command.input.is_empty() || command.input[0] == "-" {
         eprintln!("error: package checking requires a path input");
@@ -1822,6 +1889,10 @@ pub fn cmd_check_package(command: radix::tool::CheckCommand) {
     }
 }
 
+/// Execute package emission and print generated code to stdout.
+///
+/// Unlike `cmd_build`, this command does not materialize the generated Cargo
+/// crate. It is a compiler-inspection surface for the assembled backend output.
 pub fn cmd_emit_package(command: radix::tool::EmitCommand) {
     let result = compile_package_input(&command.input, command.package, command.target);
 

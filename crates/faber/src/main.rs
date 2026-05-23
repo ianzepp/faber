@@ -1,4 +1,9 @@
-//! User-facing Faber project tool (`faber` binary).
+//! User-facing Faber project and package tool (`faber` binary).
+//!
+//! This binary keeps package ergonomics in front of the lower-level `radix`
+//! developer CLI while preserving compatibility aliases for compiler pipeline
+//! inspection. Package-aware commands route through `crate::package`; direct
+//! compiler operations continue to delegate to `radix::tool`.
 
 mod library;
 mod package;
@@ -25,26 +30,37 @@ struct Cli {
 enum Command {
     /// Compile a file or package and write output to disk
     Build(radix::tool::BuildArgs),
+
     /// Show supported targets and current capability notes
     Targets,
+
     /// Run semantic analysis on a file or package
     Check(radix::tool::CheckArgs),
+
     /// Create a new Faber package (planned)
     Init(InitArgs),
+
     /// Explain a Faber glyph, keyword, or grammar term
     Explain(ExplainArgs),
+
     /// Build (if needed) and run a compiled package
     Run(RunArgs),
+
     /// Run package tests via the generated Rust test harness (Cargo-backed)
     Test(TestArgs),
+
     /// Tokenize source and output JSON (compatibility alias for `radix lex`)
     Lex(radix::tool::InputArgs),
+
     /// Parse source and output AST as JSON (compatibility alias for `radix parse`)
     Parse(radix::tool::InputArgs),
+
     /// Lower AST to HIR and output as JSON (compatibility alias for `radix hir`)
     Hir(radix::tool::InputArgs),
+
     /// Validate and output normalized CLI IR as JSON (compatibility alias for `radix cli-ir`)
     CliIr(radix::tool::InputArgs),
+
     /// Compile to target for stdout (compatibility alias for `radix emit`)
     Emit(radix::tool::EmitArgs),
 }
@@ -195,6 +211,7 @@ fn main() {
     }
 }
 
+/// Creates the minimal on-disk package shape expected by the package commands.
 fn cmd_init(args: InitArgs) {
     let root = args.path;
     let src = root.join("src");
@@ -236,6 +253,7 @@ fn cmd_init(args: InitArgs) {
     println!("{}", manifest.display());
 }
 
+/// Renders explain-corpus entries with CLI policies around mutually exclusive modes.
 fn cmd_explain(args: ExplainArgs) {
     let registry = match Registry::load() {
         Ok(registry) => registry,
@@ -324,14 +342,15 @@ fn cmd_explain(args: ExplainArgs) {
     }
 }
 
+/// Builds a package as Rust and forwards process exit semantics from the result binary.
 fn cmd_run(args: RunArgs) {
     use std::path::PathBuf;
     use std::process::Command;
 
     let input_path = PathBuf::from(&args.path);
 
-    // Always (re)build for the package at the given path.
-    // run is intended for packages; treat the input as package input.
+    // POLICY: `run` is package-scoped, so stale generated crates are never
+    // trusted over the current Faber sources.
     let config = radix::driver::Config::default().with_target(radix::codegen::Target::Rust);
     let result = package::compile_package(&config, &input_path);
 
@@ -348,7 +367,8 @@ fn cmd_run(args: RunArgs) {
         std::process::exit(1);
     };
 
-    // Discover layout (works for package or legacy entry)
+    // EDGE: legacy entry paths still need a build layout so existing examples
+    // remain runnable while package manifests become the preferred surface.
     let layout = match package::discover_build_layout(&input_path) {
         Ok(l) => l,
         Err(d) => {
@@ -384,7 +404,8 @@ fn cmd_run(args: RunArgs) {
         }
     };
 
-    // Now exec the binary, forwarding args and exit status
+    // CONTRACT: `faber run` behaves like the compiled program for callers that
+    // depend on argv forwarding and process status.
     let status = Command::new(&binary)
         .args(&args.args)
         .status()
@@ -400,6 +421,7 @@ fn cmd_run(args: RunArgs) {
     }
 }
 
+/// Builds the package test harness and maps Faber-level selectors to Cargo test flags.
 fn cmd_test(args: TestArgs) {
     use std::path::PathBuf;
 
@@ -418,7 +440,8 @@ fn cmd_test(args: TestArgs) {
         None
     };
 
-    // Treat as package (test is a package-level operation; mirrors cmd_run).
+    // POLICY: tests are package-scoped so generated harness metadata and source
+    // selection stay aligned.
     let config = radix::driver::Config::default().with_target(radix::codegen::Target::Rust);
     let result =
         package::compile_package_with_test_selection(&config, &input_path, test_selection.as_ref());
@@ -463,8 +486,8 @@ fn cmd_test(args: TestArgs) {
         std::process::exit(1);
     }
 
-    // Phase 2 ergonomics: build the filter + harness args list.
-    // Filter (positional) goes before `--`; the bools and --test-threads go after.
+    // CONTRACT: Cargo's harness expects the name filter before `--`; the
+    // remaining flags are passed through as test-harness arguments.
     let mut harness_args: Vec<String> = Vec::new();
     if args.exact {
         harness_args.push("--exact".to_string());
@@ -477,7 +500,7 @@ fn cmd_test(args: TestArgs) {
         harness_args.push(n.to_string());
     }
 
-    // Phase 3: ignored test support (mutual exclusion enforced by Clap)
+    // INVARIANT: clap enforces mutual exclusion before this command handler runs.
     if args.ignored {
         harness_args.push("--ignored".to_string());
     }

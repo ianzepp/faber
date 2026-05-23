@@ -1,6 +1,19 @@
+//! Terminal renderer for the embedded `faber explain` registry.
+//!
+//! The registry owns corpus parsing and validation; this module keeps the plain
+//! text presentation policy separate so CLI output can stay stable while the
+//! reference data model evolves. The format intentionally resembles a compact
+//! manual page: predictable headings, no terminal styling, and deterministic
+//! whitespace for tests and redirected output.
+
 use crate::explain::{Entry, Lookup, SearchHit};
 use std::fmt::Write;
 
+/// Render one resolved lookup result for terminal output.
+///
+/// The lookup provenance controls whether users see canonical documentation or
+/// an explicit legacy redirect. Alias hits render as the canonical entry because
+/// aliases are accepted current vocabulary rather than historical syntax.
 pub fn render_lookup_plain(lookup: &Lookup<'_>) -> String {
     match lookup {
         Lookup::Exact(entry) | Lookup::Alias { entry, .. } => render_canonical(entry),
@@ -10,6 +23,10 @@ pub fn render_lookup_plain(lookup: &Lookup<'_>) -> String {
     }
 }
 
+/// Render ranked search hits in a stable, tab-separated terminal format.
+///
+/// Search output is deliberately denser than lookup output: it is meant for
+/// scanning candidate entries, not replacing the full reference page.
 pub fn render_search(query: &str, hits: &[SearchHit<'_>]) -> String {
     let mut out = String::new();
     let _ = writeln!(out, "Search: {query}");
@@ -195,6 +212,8 @@ fn normalize_faber_block(block: &str) -> String {
         out.push_str(line);
         out.push('\n');
 
+        // EDGE: Examples are documentation snippets, so indentation should be
+        // repaired for display without treating unmatched braces as fatal.
         let opens = line.chars().filter(|ch| *ch == '{').count();
         let closes = line.chars().filter(|ch| *ch == '}').count();
         depth = depth.saturating_add(opens).saturating_sub(closes);
