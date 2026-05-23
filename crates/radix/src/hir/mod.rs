@@ -1,33 +1,33 @@
-//! High-level Intermediate Representation
+//! High-level intermediate representation for semantically resolved Faber.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! HIR provides a simplified, resolved representation of Faber programs after
-//! name resolution and before type checking. This intermediate form eliminates
-//! syntactic sugar and resolves all identifiers to definition IDs, making
-//! subsequent analysis passes (type checking, borrow checking) simpler.
+//! HIR is the compiler boundary where parsed syntax becomes a stable semantic
+//! model. Lowering consumes the AST after name resolution, carries `DefId`
+//! references for definitions and bindings, preserves source spans for later
+//! diagnostics, and normalizes constructs that later phases should not need to
+//! rediscover from grammar shape.
 //!
-//! COMPILER PHASE: HIR Lowering
-//! INPUT: AST (syntax::Program) with resolved names from the Resolver
-//! OUTPUT: HirProgram with resolved DefIds and desugared constructs
+//! This layer is still intentionally high-level. It records declarations,
+//! statements, expressions, handler structure, collection forms, and target
+//! type references, but it does not prove type correctness, choose MIR-level
+//! control-flow shape, or decide backend emission details. Typecheck, MIR, and
+//! codegen should be able to trust HIR identity and span invariants without
+//! treating HIR as already fully typed.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Name Resolution: All identifiers become DefId references, eliminating
-//!   the need for repeated symbol table lookups in later passes
-//! - Explicit Control Flow: Ergo return bodies become explicit
-//!   return statements for simpler control-flow analysis
-//! - Normalized Structure: Entry point code is separated from item declarations,
-//!   mirroring target language semantics (e.g., Rust's main function vs items)
-//! - Preserved Span Information: All nodes retain source location data for
-//!   error reporting in subsequent passes
+//! INVARIANTS
+//! ==========
+//! - `DefId` identifies declarations and bindings after resolution.
+//! - `HirId` identifies nodes that later analyses may annotate.
+//! - Spans remain attached to HIR nodes even when syntax is normalized.
+//! - Optional `TypeId` fields mean "not established yet" unless the field-level
+//!   contract says the type was already required by the source form.
+//! - Top-level executable source is represented as `HirProgram::entry`, separate
+//!   from item declarations, so package and backend code see one program shape.
 //!
-//! KEY TRANSFORMATIONS
-//! ===================
-//! 1. Names → DefIds: `functio salve()` → `HirItem { def_id: DefId(42), ... }`
-//! 2. Implicit returns: `si x ergo y` → `si x { redde y }`
-//! 3. Method normalization: `obj.method()` → `HirExprKind::MethodCall(obj, method, [])`
-//! 4. Entry point extraction: Top-level statements → `HirProgram::entry`
+//! PHASE BOUNDARY
+//! ==============
+//! HIR lowering owns syntax-to-semantics normalization. Typecheck owns inferred
+//! types and semantic validity. MIR/codegen own backend-shaped control flow,
+//! storage layout, and target-specific lowering.
 
 mod lower;
 mod nodes;

@@ -1,36 +1,30 @@
-//! Expression lowering
+//! Expression normalization for the AST-to-HIR boundary.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Transforms AST expressions into HIR expressions, resolving identifiers to
-//! DefIds and desugaring method calls. Each expression kind has a dedicated
-//! lowering function following Latin naming conventions.
+//! This module lowers parser expressions into HIR nodes that later phases can
+//! reason about without re-reading surface syntax. It preserves source spans and
+//! HIR node identity, resolves names that must already be in scope, normalizes
+//! syntactic sugar such as string-template calls and ternaries, and keeps
+//! target-sensitive constructs in explicit HIR shapes for typecheck and codegen.
 //!
-//! COMPILER PHASE: HIR Lowering (submodule)
-//! INPUT: AST expressions (syntax::Expr)
-//! OUTPUT: HIR expressions (HirExpr) with resolved DefIds
+//! INVARIANTS
+//! ==========
+//! - Every lowered expression receives a fresh HIR id and the original source
+//!   span that should anchor later diagnostics.
+//! - Lowering does not infer final expression types. The optional `ty` slot is
+//!   left for typecheck except where a target type is part of the syntax itself.
+//! - Unknown names or unsupported expression forms become diagnostics plus
+//!   `HirExprKind::Error`, allowing downstream passes to continue collecting
+//!   errors instead of crashing.
+//! - Surface conveniences are normalized only when the meaning is syntactic:
+//!   overload resolution, receiver typing, and backend legality remain later
+//!   phase responsibilities.
 //!
-//! WHY: Separates expression lowering logic from statement/declaration lowering,
-//! keeping the codebase modular and focused.
-//!
-//! METHOD CALL DESUGARING
-//! ======================
-//! `obj.method(args)` in AST becomes:
-//! - HirExprKind::MethodCall(obj, method, args) in HIR
-//!
-//! WHY: Distinguishes method calls from field access for type checker to look
-//! up method signatures on the receiver type.
-//!
-//! STUB CONSTRUCTS
-//! ===============
-//! Several Faber features lower to placeholder HIR nodes:
-//! - Non-null assertion (!) - Not yet supported, becomes Error
-//! - Collection pipelines (ab) - Needs dedicated HIR node
-//! - String interpolation (scriptum) - Lowered as Tuple placeholder
-//! - Object literals - Lowered as Tuple (needs dedicated HIR shape)
-//!
-//! WHY: Allows parser to accept syntax while deferring full implementation.
-//! Error nodes prevent crashes and allow continued analysis.
+//! BOUNDARIES
+//! ==========
+//! Nullable-sensitive forms (`?.`, non-null chains, `nihil` literals, and
+//! `ignotum`-adjacent conversions) are represented, not proven, here. This file
+//! records the operation and source structure; typecheck decides whether the
+//! operation is valid, and codegen decides how a valid operation is emitted.
 
 use super::Lowerer;
 use crate::hir::{
@@ -41,7 +35,13 @@ use crate::hir::{
 use crate::semantic::{InferVar, Primitive, Type, TypeId};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
 
-/// Lower an expression
+/// Lower one AST expression into the HIR expression contract.
+///
+/// The entry point owns the cross-cutting guarantees for this file: assign a
+/// fresh HIR id, preserve the AST span for diagnostics, leave final typing to
+/// typecheck, and recover unsupported forms as `Error` nodes after recording a
+/// diagnostic. Nested expression lowerers return only the kind so this wrapper
+/// remains the single place that stamps identity onto expression nodes.
 pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
     let id = lowerer.next_hir_id();
     let span = expr.span;
@@ -105,7 +105,11 @@ impl<'a> Lowerer<'a> {
         crate::hir::HirBlock { stmts: Vec::new(), expr: Some(Box::new(expr)), span: self.current_span }
     }
 
-    /// Lower identifier (nomen)
+    /// Resolve an expression identifier that must already name something.
+    ///
+    /// Pattern and declaration lowering allocate new bindings; expression
+    /// lowering only consumes resolver state. A missing name is therefore a
+    /// recoverable semantic error, not an opportunity to invent a binding.
     fn lower_nomen(&mut self, ident: &crate::syntax::Ident) -> HirExprKind {
         match self.lookup_name(ident.name) {
             Some(def_id) => HirExprKind::Path(def_id),
@@ -185,7 +189,11 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower call expression (vocare)
+    /// Normalize call syntax while preserving the semantic call boundary.
+    ///
+    /// String literals in callee position are Faber template application, and
+    /// member callees are kept as `MethodCall` so receiver typing can select the
+    /// method later. Ordinary calls retain an explicit callee expression.
     fn lower_vocare(&mut self, call: &crate::syntax::CallExpr) -> HirExprKind {
         let args = call
             .args
@@ -207,7 +215,12 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower member access (membrum)
+    /// Lower member access, including the enum-variant shorthand.
+    ///
+    /// If the left side is a known enum and the member names a known variant,
+    /// this is a path to the variant constructor rather than a field access.
+    /// Receiver-field legality remains a typecheck concern for every other
+    /// member expression.
     fn lower_membrum(&mut self, member: &crate::syntax::MemberExpr) -> HirExprKind {
         if let crate::syntax::ExprKind::Ident(base) = &member.object.kind {
             if let Some(base_def) = self.lookup_name(base.name) {
@@ -303,12 +316,13 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Cede(Box::new(expr))
     }
 
-    /// Lower unified type conversion (⇢)
+    /// Lower unified type conversion (`⇢`) into target-driven HIR.
     ///
-    /// WHY unified: Grammar is `expr ⇢ type`; codegen dispatches on target type. Latin aliases removed.
-    /// The codegen dispatches on the resolved target type, not the source keyword.
-    /// Object literal sources get their entries extracted for
-    /// struct/collection construction; everything else passes through as a cast.
+    /// The grammar exposes one conversion operator; later phases dispatch on
+    /// the resolved target type rather than on a source keyword. Object literal
+    /// sources are split into entries so struct and collection construction can
+    /// retain named fields without requiring a dedicated object-expression HIR
+    /// shape.
     fn lower_verte(&mut self, verte: &crate::syntax::VerteExpr) -> HirExprKind {
         let target = self.lower_type(&verte.ty);
         match &verte.expr.kind {
@@ -350,7 +364,12 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Array(elements)
     }
 
-    /// Lower object literal (objectum)
+    /// Lower object literals through the same conversion carrier as `⇢`.
+    ///
+    /// HIR currently represents object construction as `Verte` with extracted
+    /// entries. The map target is a best-effort syntax-derived shape used to
+    /// keep empty and heterogeneous objects typed enough for later analysis; it
+    /// is not a substitute for typecheck's final object or struct typing.
     fn lower_objectum(&mut self, obj: &crate::syntax::ObjectExpr) -> HirExprKind {
         let textus_ty = self.types.primitive(Primitive::Textus);
         let mut value_types = Vec::new();
@@ -397,6 +416,12 @@ impl<'a> Lowerer<'a> {
         HirObjectField { key, value }
     }
 
+    /// Estimate only the type information that is syntactically obvious.
+    ///
+    /// This helper exists for object-literal lowering, where HIR needs a target
+    /// carrier before typecheck has run. Anything that requires name resolution,
+    /// overload logic, flow analysis, or backend knowledge becomes a fresh infer
+    /// variable instead of being guessed in codegen later.
     fn guess_expr_type(&mut self, expr: &crate::syntax::Expr) -> crate::semantic::TypeId {
         match &expr.kind {
             crate::syntax::ExprKind::Literal(crate::syntax::Literal::Integer(_)) => {
@@ -449,6 +474,12 @@ impl<'a> Lowerer<'a> {
         }
     }
 
+    /// Lower variant-construction sugar into a constructor call plus optional cast.
+    ///
+    /// `finge` names must already resolve to variants or type-bearing cast
+    /// symbols. The lowerer records missing resolver information as diagnostics
+    /// because fabricating a constructor or target type here would hide the real
+    /// upstream symbol-table problem.
     fn lower_finge(&mut self, finge: &crate::syntax::FingeExpr) -> HirExprKind {
         let Some(variant_def_id) = self.resolver.lookup(finge.variant.name) else {
             self.error("unknown variant in finge expression");
@@ -502,7 +533,11 @@ impl<'a> Lowerer<'a> {
         call.kind
     }
 
-    /// Lower closure (clausura)
+    /// Lower closures with a temporary scope for their parameters.
+    ///
+    /// Parameter bindings are available while lowering the body and disappear
+    /// before the enclosing expression continues. Return type annotations remain
+    /// optional HIR metadata for typecheck to reconcile with the body.
     fn lower_clausura(&mut self, closure: &crate::syntax::ClausuraExpr) -> HirExprKind {
         let mut params = Vec::new();
         self.push_scope();
@@ -553,6 +588,11 @@ impl<'a> Lowerer<'a> {
         }
     }
 
+    /// Lower collection pipeline syntax without deciding collection semantics.
+    ///
+    /// Filters and transforms retain their source order and arguments. Whether
+    /// the source supports the requested operation, and what item/result types
+    /// flow through the pipeline, is deliberately left for typecheck.
     fn lower_ab(&mut self, ab: &crate::syntax::AbExpr) -> HirExprKind {
         let source = Box::new(lower_expr(self, &ab.source));
         let filter = ab.filter.as_ref().map(|filter| HirCollectionFilter {
@@ -582,6 +622,11 @@ impl<'a> Lowerer<'a> {
         HirExprKind::Ab { source, filter, transforms }
     }
 
+    /// Lower explicit conversion syntax and collect target-shape hints.
+    ///
+    /// Conversion hints are symbols, not resolved types. They preserve user
+    /// intent for downstream conversion analysis without forcing expression
+    /// lowering to know every target-specific coercion rule.
     fn lower_conversio(&mut self, conversio: &crate::syntax::ConversioExpr) -> HirExprKind {
         let source = lower_expr(self, &conversio.expr);
         let mut params = Vec::new();
@@ -658,6 +703,11 @@ fn lower_conversio_target_type(
     }
 }
 
+/// Extract a user-written conversion hint from a type expression.
+///
+/// Only bare named syntax contributes a hint. More complex type expressions are
+/// still lowered as target types, but they are not collapsed into a single
+/// symbol because that would lose the structure typecheck needs later.
 fn conversio_hint_symbol(ty: &crate::syntax::TypeExpr) -> Option<crate::lexer::Symbol> {
     match &ty.kind {
         crate::syntax::TypeExprKind::Named(ident, _) => Some(ident.name),

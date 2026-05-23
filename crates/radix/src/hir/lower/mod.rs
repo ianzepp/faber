@@ -1,58 +1,43 @@
-//! AST to HIR lowering
+//! Pass 3 AST-to-HIR lowering for compiler-friendly program structure.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Transforms the resolved AST into High-Level Intermediate Representation (HIR),
-//! desugaring syntax constructs and embedding resolved DefIds. Operates after
-//! name resolution (Pass 2) and before type checking (Pass 4).
+//! This module is the boundary between parsed, name-resolved syntax and the
+//! High-level Intermediate Representation consumed by type checking, analysis,
+//! and backend code generation. It preserves source spans and resolver `DefId`s
+//! where they already exist, creates synthetic ids for bindings that only become
+//! concrete during lowering, and normalizes entrypoint/declaration layout so
+//! later passes do not need to understand every surface syntax form.
 //!
-//! COMPILER PHASE: HIR Lowering (Pass 3)
-//! INPUT: AST with resolved names from Resolver
-//! OUTPUT: HirProgram with DefIds embedded; lowering errors
+//! HIR lowering is intentionally not a semantic pass. It resolves the shape of
+//! declarations, statements, local scopes, and desugared control-flow nodes, but
+//! leaves type compatibility, exhaustiveness, reachability, and most target
+//! legality to the semantic/typecheck passes that have the full HIR graph.
 //!
-//! WHY: HIR eliminates syntactic sugar (ergo bodies) and
-//! normalizes constructs (method calls, implicit returns) so later passes
-//! (type checking, borrow analysis) work with simpler structures.
+//! ERROR STRATEGY
+//! ==============
+//! Lowering reports structural problems and continues whenever possible. Invalid
+//! expressions become `HirExprKind::Error`, lowering-created bindings receive
+//! synthetic `DefId`s, and every produced node keeps the best source span known
+//! at that point. This lets later diagnostics report more than the first
+//! lowering issue without guessing about source locations.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Explicit Returns: ergo return syntax becomes explicit HirStmtKind::Redde
-//!   for simpler control-flow analysis
-//! - Method Normalization: `obj.method()` becomes HirExprKind::MethodCall,
-//!   distinguishing from field access for type checking
-//! - Synthetic DefIds: Loop bindings and catch blocks get fresh DefIds for
-//!   type checker to attach types
-//! - Error Recovery: Invalid constructs become HirExprKind::Error to allow
-//!   continued analysis rather than aborting
+//! INVARIANTS
+//! ==========
+//! - Top-level declarations lower into `HirProgram::items`; executable
+//!   top-level statements lower into an explicit or implicit entry block.
+//! - Resolver-owned names keep their resolver `DefId`; lowering-created locals,
+//!   catch bindings, pattern bindings, and CLI bindings receive synthetic ids.
+//! - The lowerer scope stack only tracks function/block-local names. Module and
+//!   item lookup stays with the resolver.
+//! - HIR construction preserves AST spans, falling back to the current lowering
+//!   span only for nodes synthesized from a larger source form.
 //!
-//! LOWERING SCOPES
-//! ===============
-//! The lowerer maintains its own scope stack (local_scopes) separate from the
-//! Resolver because:
-//! - Resolver scopes track global/module-level definitions
-//! - Lowerer scopes track function-local bindings (parameters, locals)
-//! - Synthetic DefIds for patterns need local tracking
-//!
-//! WHY: Function parameters and pattern bindings aren't in the global Resolver
-//! scope, so the lowerer creates and tracks them locally.
-//!
-//! ENTRY POINT HANDLING
-//! ====================
-//! Top-level statements are separated into:
-//! - HirProgram::items - Declarations (functio, gens, ordo, etc.)
-//! - HirProgram::entry - Executable statements (from incipit or implicit)
-//!
-//! WHY: Matches target language structure (Rust's items vs main function).
-//!
-//! NAMING CONVENTION
-//! =================
-//! Lowering functions use Latin names matching Faber keywords:
-//! - lower_functio() for function declarations
-//! - lower_gens() for class declarations (gens)
-//! - lower_ordo() for enum declarations (ordo)
-//!
-//! WHY: Makes it clear which AST construct is being lowered by reading the
-//! function name.
+//! MODULE SHAPE
+//! ============
+//! Declaration, statement, expression, pattern, and type lowering live in
+//! focused sibling modules because each owns a different compiler contract:
+//! declarations build item-level HIR, statements normalize executable flow,
+//! expressions preserve evaluation shape, patterns bind names, and types map
+//! parsed type syntax into the semantic type table.
 
 mod decl;
 mod expr;
@@ -69,39 +54,66 @@ use crate::semantic::{Primitive, Resolver, Type, TypeId, TypeTable};
 use crate::syntax::{PraeparaBlock, PraeparaKind, ProbaCase, ProbaModifier, ProbandumDecl, Program, Stmt, StmtKind};
 use rustc_hash::FxHashMap;
 
-/// Lowerer state for AST to HIR transformation
+/// Stateful coordinator for one AST-to-HIR lowering run.
+///
+/// A `Lowerer` borrows the resolver and type table for the duration of one
+/// program. The resolver remains the source of truth for item-level symbols,
+/// while this type owns per-run HIR ids, synthetic local `DefId`s, collected
+/// lowering diagnostics, local scopes, and optional CLI metadata that can shape
+/// generated entrypoint argument records.
 pub struct Lowerer<'a> {
-    /// Resolver for name resolution
+    /// Resolver produced by the previous compiler pass.
     resolver: &'a Resolver,
-    /// Type table for interning types
+
+    /// Shared semantic type table used when lowering type syntax and CLI records.
     types: &'a mut TypeTable,
-    /// Interner for resolving symbols
+
+    /// Symbol interner used for annotation and diagnostic-sensitive spelling.
     interner: &'a Interner,
-    /// Next HIR ID to assign
+
+    /// Next per-HIR-node id assigned during this lowering run.
     next_id: u32,
-    /// Next synthetic DefId to assign
+
+    /// Next synthetic definition id for bindings that did not exist in resolver output.
     next_def_id: u32,
-    /// Collected errors during lowering
+
+    /// Recoverable lowering diagnostics collected instead of aborting the pass.
     errors: Vec<LowerError>,
-    /// Current span for error reporting
+
+    /// Best source span for diagnostics emitted by helpers without a narrower span.
     current_span: Span,
-    /// Lowering-local scopes for parameters and local bindings
+
+    /// Stack of function/block-local bindings visible only during lowering.
     local_scopes: Vec<FxHashMap<Symbol, crate::hir::DefId>>,
+
     /// Current self type for lowering `ego` expressions inside methods.
     current_ego_struct: Option<crate::hir::DefId>,
+
     /// Validated CLI contract, when the entry point is a runnable CLI.
     cli_program: Option<&'a CliProgram>,
 }
 
-/// Lowering error
+/// Recoverable diagnostic emitted while converting resolved AST into HIR.
+///
+/// Lowering errors describe shape problems, unsupported constructs, or missing
+/// context discovered before type checking. They intentionally keep only a
+/// message and source span because richer semantic explanations belong to later
+/// passes once HIR and type information are available.
 #[derive(Debug, Clone)]
 pub struct LowerError {
+    /// Human-readable diagnostic text.
     pub message: String,
+
+    /// Source span associated with the problematic AST or synthesized node.
     pub span: Span,
 }
 
 impl<'a> Lowerer<'a> {
-    /// Create a new lowerer with the given resolver
+    /// Create a lowerer for one program.
+    ///
+    /// `cli_program` is optional because ordinary file compilation and package
+    /// CLI compilation share the same lowering pipeline. When present, it is
+    /// used only to type synthetic entrypoint/command argument records.
     pub fn new(
         resolver: &'a Resolver,
         types: &'a mut TypeTable,
@@ -122,7 +134,13 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower a program to HIR
+    /// Lower a complete resolved syntax program into HIR.
+    ///
+    /// The program boundary is where declaration and entrypoint partitioning is
+    /// established. Explicit `incipit` owns `HirProgram::entry`; otherwise
+    /// executable top-level statements become an implicit entry block, while
+    /// top-level declarations stay as items. Later passes can therefore treat
+    /// HIR like a target-language module with a separate runnable body.
     pub fn lower_program(&mut self, program: &Program) -> HirProgram {
         let mut items = Vec::new();
         let mut entry = None;
@@ -134,7 +152,8 @@ impl<'a> Lowerer<'a> {
 
             match &stmt.kind {
                 StmtKind::Incipit(entry_stmt) => {
-                    // Entry point gets special treatment
+                    // `incipit` introduces an entry-local scope and may synthesize
+                    // a CLI args local before the user-authored body statements.
                     self.push_scope();
                     let mut args_binding = None;
                     if let Some(args) = &entry_stmt.args {
@@ -192,26 +211,29 @@ impl<'a> Lowerer<'a> {
         HirProgram { items, entry }
     }
 
-    /// Take collected errors
+    /// Drain diagnostics accumulated during the lowering run.
     pub fn take_errors(&mut self) -> Vec<LowerError> {
         std::mem::take(&mut self.errors)
     }
 
-    /// Generate a fresh HIR ID
+    /// Allocate a per-node HIR id.
     fn next_hir_id(&mut self) -> HirId {
         let id = self.next_id;
         self.next_id += 1;
         HirId(id)
     }
 
-    /// Generate a fresh DefId (synthetic, for lowering only)
+    /// Allocate a synthetic `DefId` for a binding introduced during lowering.
     pub(super) fn next_def_id(&mut self) -> crate::hir::DefId {
         let id = self.next_def_id;
         self.next_def_id += 1;
         crate::hir::DefId(id)
     }
 
-    /// Resolve a DefId or generate a synthetic one
+    /// Resolve an item-level name, falling back to a synthetic id for recovery.
+    ///
+    /// A fallback here keeps malformed or partially resolved programs lowering
+    /// far enough for later passes to attach more diagnostics to the same HIR.
     pub(super) fn def_id_for(&mut self, name: Symbol) -> crate::hir::DefId {
         self.resolver
             .lookup(name)
@@ -259,6 +281,11 @@ impl<'a> Lowerer<'a> {
         self.types.array(textus)
     }
 
+    /// Build the synthetic argument record type for a mounted CLI command.
+    ///
+    /// A command function receives already-parsed CLI data as a record. Missing
+    /// CLI metadata falls back to `ignotum` so ordinary compilation does not
+    /// need a second lowering path.
     pub(super) fn command_args_type(&mut self, function: Symbol) -> TypeId {
         if let Some(cli) = self.cli_program {
             if let Some(command) = cli
@@ -282,6 +309,11 @@ impl<'a> Lowerer<'a> {
         self.types.primitive(Primitive::Ignotum)
     }
 
+    /// Translate validated CLI value metadata into a HIR-visible semantic type.
+    ///
+    /// Optionality here means "the parser may omit this value", not nullable
+    /// source syntax. Rest operands become arrays unless the CLI type is already
+    /// list-shaped.
     fn cli_value_type(&mut self, ty: &CliType, optional: bool, rest: bool) -> TypeId {
         let base = match ty {
             CliType::Textus | CliType::Ignotum => self.types.primitive(Primitive::Textus),
@@ -310,13 +342,16 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Record an error
+    /// Record a recoverable lowering diagnostic at the current source span.
     fn error(&mut self, message: impl Into<String>) {
         self.errors
             .push(LowerError { message: message.into(), span: self.current_span });
     }
 
-    /// Lower a statement to item declarations (top-level declarations)
+    /// Lower a top-level syntax statement when it represents one or more items.
+    ///
+    /// Non-item statements return an empty vector so `lower_program` can route
+    /// them into the explicit or implicit entry block.
     fn lower_stmt_items(&mut self, stmt: &Stmt) -> Vec<HirItem> {
         match &stmt.kind {
             StmtKind::Var(decl) => self.lower_varia(stmt, decl).into_iter().collect(),
@@ -345,6 +380,10 @@ impl<'a> Lowerer<'a> {
         suite_path: &[Symbol],
         out: &mut Vec<HirItem>,
     ) {
+        // Only `praepara ... omnia` setup/teardown blocks flow into nested
+        // suites. Local setup blocks are intentionally owned by the suite level
+        // where they were written so generated tests do not inherit more fixture
+        // work than the source requested.
         let mut combined_setup = inherited_setup.to_vec();
         for setup in &suite.body.setup {
             if setup.all {
@@ -377,6 +416,10 @@ impl<'a> Lowerer<'a> {
         let def_id = self.next_def_id();
         self.push_scope();
 
+        // Test cases become ordinary zero-argument HIR functions with metadata.
+        // Setup and teardown blocks are spliced into the function body here so
+        // typecheck and codegen can use the normal function path instead of a
+        // separate test-body AST model.
         let mut stmts = Vec::new();
         for setup in inherited_setup {
             if matches!(setup.kind, PraeparaKind::Praepara | PraeparaKind::Praeparabit) {
@@ -423,6 +466,7 @@ impl<'a> Lowerer<'a> {
         modifiers.iter().map(Self::lower_test_modifier).collect()
     }
 
+    /// Preserve test-selection metadata without interpreting harness policy.
     fn lower_test_modifier(modifier: &ProbaModifier) -> HirTestModifier {
         match modifier {
             ProbaModifier::Omitte(reason) => HirTestModifier::Omitte(*reason),
@@ -438,7 +482,11 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower a block body.
+    /// Lower either a brace block or single-statement `ergo` body to a block.
+    ///
+    /// Control-flow consumers downstream see one HIR block shape regardless of
+    /// whether source used Stroustrup braces or the compact single-statement
+    /// form.
     fn lower_ergo_body(&mut self, body: &crate::syntax::IfBody) -> HirBlock {
         match body {
             crate::syntax::IfBody::Block(block) => self.lower_block(block),
@@ -449,7 +497,7 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower a block statement
+    /// Lower a lexical block with its own local scope.
     fn lower_block(&mut self, block: &crate::syntax::BlockStmt) -> HirBlock {
         self.current_span = block.span;
         let mut stmts = Vec::new();
@@ -469,10 +517,10 @@ impl<'a> Lowerer<'a> {
     }
 }
 
-/// Lower AST to HIR
+/// Lower resolved AST to HIR without package CLI metadata.
 ///
-/// This is performed after name resolution, so the resolver
-/// is passed in to provide DefId mappings.
+/// This is the ordinary compiler entrypoint for sources whose entry arguments
+/// are the default `lista<textus>` shape rather than a validated CLI contract.
 pub fn lower(
     program: &Program,
     resolver: &Resolver,
@@ -482,6 +530,13 @@ pub fn lower(
     lower_with_cli(program, resolver, types, interner, None)
 }
 
+/// Lower resolved AST to HIR with an optional validated CLI contract.
+///
+/// Package CLI analysis runs before lowering and can provide record-shaped
+/// argument metadata for `incipit` and command functions. The HIR still carries
+/// ordinary locals and type ids; no CLI-specific semantic checks are performed
+/// here beyond translating the already validated contract into HIR-friendly
+/// binding types.
 pub fn lower_with_cli(
     program: &Program,
     resolver: &Resolver,

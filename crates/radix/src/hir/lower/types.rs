@@ -1,43 +1,42 @@
-//! Type lowering
+//! Type syntax lowering for the HIR boundary.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Transforms AST type expressions into interned TypeIds, resolving named types
-//! to DefIds and handling collection types (lista, tabula, copia) and modifiers
-//! (nullable ?, reference de/in).
+//! Parser type expressions carry surface spelling, spans, modifiers, and generic
+//! argument syntax. This module turns that syntax into interned semantic
+//! [`TypeId`] values that the resolver, typechecker, and code generators can
+//! compare cheaply and share consistently.
 //!
-//! COMPILER PHASE: HIR Lowering (submodule)
-//! INPUT: AST type expressions (syntax::TypeExpr)
-//! OUTPUT: TypeIds from TypeTable
+//! INVARIANTS
+//! ==========
+//! - Primitive and collection names are recognized by spelling before ordinary
+//!   symbol lookup so `textus`, `lista<T>`, and friends remain language types,
+//!   not user definitions.
+//! - Named user types must resolve to type-bearing symbols: structs, enums,
+//!   interfaces, aliases, or type parameters.
+//! - Nullable unions use the canonical `T ∪ nihil` boundary: `nihil` members
+//!   are stripped, the remaining members are deduplicated, and presence of
+//!   `nihil` wraps the result in `Option`.
+//! - `ignotum` is treated as an ordinary primitive/top type spelling here, not
+//!   as nullability sugar.
+//! - Syntax errors in type positions lower to `Type::Error` after recording a
+//!   diagnostic so later phases can continue without guessing.
 //!
-//! WHY: Type expressions in the AST are strings and syntax nodes; TypeIds are
-//! interned references suitable for efficient type checking and comparison.
-//!
-//! BUILTIN TYPES
-//! =============
-//! Primitive types (textus, numerus, etc.) are interned once during TypeTable
-//! construction and reused. Collection types (lista<T>, tabula<K,V>, copia<T>)
-//! are built from their element types.
-//!
-//! TYPE MODIFIERS
+//! MODIFIER ORDER
 //! ==============
-//! - Nullable (?): Wraps type in Option<T>
-//! - Reference (de/in): Wraps type in Ref(Immutable/Mutable, T)
-//!
-//! WHY: Applied after lowering base type to correctly handle `lista<T>?` as
-//! Option<Array<T>> rather than Array<Option<T>>.
-//!
-//! ERROR HANDLING
-//! ==============
-//! Unknown type names and incorrect collection arities return Type::Error
-//! rather than panicking, allowing continued analysis and error reporting.
+//! References (`de`/`in`) are applied to the lowered base type before the legacy
+//! nullable flag is applied. That preserves the AST contract exactly; newer
+//! source should prefer explicit union nullability where the grammar allows it.
 
 use super::Lowerer;
 use crate::semantic::{CollectionKind, FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeId};
 use crate::syntax::{Ident, TypeExpr, TypeExprKind};
 
 impl<'a> Lowerer<'a> {
-    /// Lower a type expression to TypeId
+    /// Lower a parser type expression into the interned semantic type table.
+    ///
+    /// This is the only HIR-lowering entry point that may turn type syntax into
+    /// reusable `TypeId`s. It preserves source span context for diagnostics,
+    /// normalizes nullable unions, and applies AST modifiers in parser order
+    /// without resolving type compatibility.
     pub fn lower_type(&mut self, ty: &TypeExpr) -> TypeId {
         self.current_span = ty.span;
 
@@ -67,12 +66,9 @@ impl<'a> Lowerer<'a> {
                     self.error("empty union type");
                     self.types.intern(Type::Error)
                 } else {
-                    // Phase 3 canonicalization per plan:
-                    // - Strip nihil members
-                    // - Deduplicate
-                    // - If nothing left → degenerate error (nihil ∪ nihil)
-                    // - 1 left → Option<T>
-                    // - >1 left → Option<Union<...>>
+                    // WHY: `T ∪ nihil` is the source spelling for nullable
+                    // value types. HIR stores that as Option<T> so typecheck
+                    // and codegen have one nullability shape to reason about.
                     let mut seen = std::collections::HashSet::new();
                     let mut cleaned: Vec<TypeId> = Vec::new();
                     let mut had_nihil = false;
@@ -126,6 +122,12 @@ impl<'a> Lowerer<'a> {
         ty_id
     }
 
+    /// Resolve a named type spelling before generic application.
+    ///
+    /// Primitive and collection names are language-owned spellings with fixed
+    /// arity rules. User names must resolve to symbols that actually denote
+    /// types; values, functions, and unresolved names become `Type::Error`
+    /// rather than leaking expression-level definitions into type syntax.
     fn lower_named_type(&mut self, name: &Ident, params: &[TypeExpr]) -> TypeId {
         self.current_span = name.span;
 

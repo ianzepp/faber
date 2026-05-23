@@ -1,22 +1,34 @@
-//! Statement lowering
+//! Statement lowering for executable HIR flow.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Transforms AST statements into HIR statements, handling control flow
-//! constructs (si, dum, itera, discerne) and desugaring ergo syntax.
+//! This file turns source-level executable statements into the smaller set of
+//! HIR statement and expression forms used by semantic analysis and codegen.
+//! It is deliberately conservative: statement lowering preserves source spans,
+//! creates synthetic locals for bindings introduced by control-flow forms, and
+//! represents unsupported or misplaced syntax as error nodes instead of
+//! deciding type legality early.
 //!
-//! COMPILER PHASE: HIR Lowering (submodule)
-//! INPUT: AST statements (syntax::Stmt)
-//! OUTPUT: HIR statements (HirStmt)
+//! CONTROL-FLOW MODEL
+//! ==================
+//! Most structured control flow is expression-shaped in HIR. `si`, `dum`,
+//! `itera`, `fac`, `elige`, and `discerne` therefore lower to expression
+//! statements whose inner `HirExprKind` carries the normalized flow. `redde`,
+//! `rumpe`, and `perge` remain statement kinds because later passes reason
+//! about them as control-transfer boundaries.
 //!
-//! CONTROL FLOW DESUGARING
-//! =======================
-//! - ergo: Single statement becomes block with one statement
-//! - custodi: Multiple clauses desugar to nested si expressions
-//! - discerne: Pattern matching with scope management for bindings
+//! EXPANSION POLICY
+//! ================
+//! A few source statements lower to multiple HIR statements before ordinary
+//! statement lowering sees them. Destructuring declarations and `ex` introduce
+//! several locals from one source span, so `lower_stmt_expanded` owns that
+//! fan-out and the single-statement lowerer treats any missed destructuring as a
+//! recoverable lowering error.
 //!
-//! WHY: Explicit returns and blocks simplify control-flow analysis in later
-//! passes (type checking doesn't need to handle multiple return syntaxes).
+//! ERROR STRATEGY
+//! ==============
+//! This pass checks statement shape assumptions only: required initializers for
+//! destructuring, pattern arity against `discerne` subjects, and cases that must
+//! be literals or enum variants. Type compatibility, exhaustiveness, loop
+//! placement legality, and target-specific lowering remain downstream.
 
 use super::{pattern, HirBlock, HirExpr, HirExprKind, HirStmt, HirStmtKind, Lowerer};
 use crate::hir::{HirCasuArm, HirLiteral, HirPattern, HirScribeKind};
@@ -27,7 +39,11 @@ fn error_expr(lowerer: &mut Lowerer, span: Span) -> HirExpr {
     HirExpr { id: lowerer.next_hir_id(), kind: HirExprKind::Error, ty: None, span }
 }
 
-/// Lower a statement
+/// Lower one source statement into one HIR statement.
+///
+/// This function assumes expansion-only forms have already gone through
+/// `lower_stmt_expanded`. If they appear here, lowering records a diagnostic and
+/// emits an error expression so the containing block can still be analyzed.
 pub fn lower_stmt(lowerer: &mut Lowerer, stmt: &Stmt) -> HirStmt {
     let id = lowerer.next_hir_id();
     let span = stmt.span;
@@ -69,7 +85,11 @@ pub fn lower_stmt(lowerer: &mut Lowerer, stmt: &Stmt) -> HirStmt {
     HirStmt { id, kind, span }
 }
 
-/// Lower a statement to one or more HIR statements.
+/// Lower a statement that may expand into several HIR statements.
+///
+/// Destructuring and `ex` are declaration-like fan-out operations: they bind
+/// locals and synthesize field/index reads before ordinary statement lowering.
+/// All other statements keep a one-to-one source-to-HIR statement relationship.
 pub fn lower_stmt_expanded(lowerer: &mut Lowerer, stmt: &Stmt) -> Vec<HirStmt> {
     match &stmt.kind {
         StmtKind::Var(decl) if matches!(&decl.binding, crate::syntax::BindingPattern::Array { .. }) => {
@@ -259,7 +279,7 @@ impl<'a> Lowerer<'a> {
         out
     }
 
-    /// Lower variable declaration statement
+    /// Lower a local variable declaration once destructuring has been expanded.
     fn lower_var_stmt(&mut self, decl: &crate::syntax::VarDecl) -> HirStmtKind {
         match &decl.binding {
             crate::syntax::BindingPattern::Ident(ident) => {
@@ -294,19 +314,19 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    /// Lower expression statement
+    /// Lower an expression statement without changing its evaluation shape.
     fn lower_expr_stmt(&mut self, expr: &crate::syntax::ExprStmt) -> HirStmtKind {
         let expr_hir = self.lower_expr(&expr.expr);
         HirStmtKind::Expr(expr_hir)
     }
 
-    /// Lower si (if) statement
+    /// Lower `si` as an expression statement.
     fn lower_si(&mut self, if_stmt: &crate::syntax::SiStmt) -> HirStmtKind {
         let expr = self.lower_si_expr(if_stmt);
         HirStmtKind::Expr(expr)
     }
 
-    /// Lower dum (while) statement
+    /// Lower `dum` as loop-like expression HIR, preserving any `cape` handler.
     fn lower_dum(&mut self, while_stmt: &crate::syntax::DumStmt) -> HirStmtKind {
         let cond = self.lower_expr(&while_stmt.cond);
         let body = self.lower_ergo_body(&while_stmt.body);
@@ -326,7 +346,7 @@ impl<'a> Lowerer<'a> {
         HirStmtKind::Expr(expr)
     }
 
-    /// Lower itera (for) statement
+    /// Lower `itera` with a synthetic binding local for the iteration variable.
     fn lower_itera(&mut self, iter_stmt: &crate::syntax::IteraStmt) -> HirStmtKind {
         let mode = match iter_stmt.mode {
             crate::syntax::IteraMode::Ex => crate::hir::HirIteraMode::Ex,
@@ -350,7 +370,7 @@ impl<'a> Lowerer<'a> {
         HirStmtKind::Expr(expr)
     }
 
-    /// Lower redde (return) statement
+    /// Lower `redde` as a control-transfer statement.
     fn lower_redde(&mut self, ret: &crate::syntax::ReddeStmt) -> HirStmtKind {
         let value = ret.value.as_ref().map(|e| self.lower_expr(e));
         HirStmtKind::Redde(value)
@@ -432,6 +452,8 @@ impl<'a> Lowerer<'a> {
         }
         let mut block = self.lower_ergo_body(&stmt.body);
         if let Some((name, span, def_id)) = args_binding {
+            // Entry arguments are source-visible locals, whether they are the
+            // default text array or a package CLI record.
             block.stmts.insert(
                 0,
                 HirStmt {
@@ -546,6 +568,8 @@ impl<'a> Lowerer<'a> {
             return HirStmtKind::Expr(error_expr(self, self.current_span));
         };
 
+        // `custodi` is a guard-chain surface form. HIR keeps only nested `si`
+        // expressions so later control-flow passes do not need a second model.
         let mut expr = HirExpr {
             id: self.next_hir_id(),
             kind: HirExprKind::Si {
@@ -667,6 +691,8 @@ impl<'a> Lowerer<'a> {
             self.current_span = arm.span;
             self.push_scope();
 
+            // Pattern lowering may bind names, so each arm receives its own
+            // scope before the arm body is lowered.
             let patterns = match arm.patterns.as_slice() {
                 [] => {
                     self.error("discerne casu requires a pattern");
@@ -793,6 +819,8 @@ impl<'a> Lowerer<'a> {
     fn lower_cape_clause_block(&mut self, catch: &crate::syntax::CapeClause) -> HirBlock {
         let cape = self.lower_cape_clause(catch);
         let mut body = cape.body;
+        // Block-shaped handlers need an explicit first local so downstream
+        // passes see the caught value through normal local-binding machinery.
         body.stmts.insert(
             0,
             HirStmt {
@@ -840,6 +868,8 @@ impl<'a> Lowerer<'a> {
         }
         let mut lowered_body = self.lower_block(body);
         if let Some((def_id, binding)) = binding_local {
+            // Endpoint body bindings are available to the body while lowering,
+            // then materialized as synthetic locals at the start of the block.
             lowered_body.stmts.insert(
                 0,
                 HirStmt {

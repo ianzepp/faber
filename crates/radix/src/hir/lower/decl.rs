@@ -1,28 +1,38 @@
-//! Declaration lowering
+//! Declaration lowering for item-shaped HIR.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Transforms AST declarations (functio, gens, ordo, etc.) into HIR items,
-//! resolving type references and creating DefIds for members.
+//! This file owns the item boundary of HIR lowering: top-level Faber
+//! declarations become `HirItem`s with stable names, resolver-backed or
+//! synthetic definition ids, lowered type annotations, and bodies normalized
+//! enough for type checking. Statement and expression lowering remain in their
+//! sibling modules; declarations coordinate those pieces because item shape,
+//! local parameter scope, and member ownership have to be established together.
 //!
-//! COMPILER PHASE: HIR Lowering (submodule)
-//! INPUT: AST declarations (syntax::FuncDecl, ClassDecl, etc.)
-//! OUTPUT: HIR items (HirFunction, HirStruct, etc.)
+//! INVARIANTS
+//! ==========
+//! - Top-level item names prefer resolver `DefId`s; missing resolver entries use
+//!   synthetic ids so lowering can keep producing diagnostics.
+//! - Function and method parameters are bound before bodies lower, because body
+//!   expressions resolve locals through the lowerer scope stack.
+//! - Type syntax is lowered into semantic type ids, but type compatibility and
+//!   interface conformance are deferred to later semantic/typecheck passes.
+//! - Declaration spans stay attached to the resulting HIR item, while fields,
+//!   variants, parameters, and synthesized locals keep their narrower spans.
 //!
-//! WHY: Separates declaration lowering from expression/statement lowering,
-//! keeping the codebase modular.
+//! ERROR STRATEGY
+//! ==============
+//! This pass reports declaration-shape errors, such as unsupported top-level
+//! bindings or missing base/interface names, then builds the best HIR it can.
+//! Extern top-level variables without source initializers deliberately receive a
+//! nil placeholder; ordinary top-level variables without initializers receive an
+//! error expression so downstream passes can continue from the declaration.
 //!
-//! MEMBER RESOLUTION
-//! =================
-//! - Struct fields: Lower types and initializers
-//! - Methods: Create fresh DefIds and lower function bodies with parameter scope
-//! - Enum variants: Register variant DefIds for pattern matching
-//!
-//! EXTENDS/IMPLEMENTS
-//! ==================
-//! Class inheritance (extends) and interface implementation (implements) are
-//! resolved by looking up names in the Resolver. Missing types emit errors
-//! but continue lowering to allow further analysis.
+//! MEMBER POLICY
+//! =============
+//! `gens` members are lowered in one pass so fields, methods, current `ego`
+//! context, modifier locals, and inherited/implemented type references stay on
+//! the same HIR struct. `ordo` and `discretio` both lower to enum-shaped HIR:
+//! plain `ordo` variants have no payload fields, while `discretio` preserves
+//! payload type information for later pattern and type analysis.
 
 use super::Lowerer;
 use crate::hir::{
@@ -59,7 +69,11 @@ impl<'a> Lowerer<'a> {
             })
     }
 
-    /// Lower varia/ficum declaration
+    /// Lower a top-level `varia`/`fixum` declaration into a const item.
+    ///
+    /// HIR currently represents top-level variables as item constants. This
+    /// method enforces the item-level identifier binding policy and preserves an
+    /// explicit error node when an initializer is required but missing.
     pub fn lower_varia(&mut self, stmt: &Stmt, decl: &VarDecl) -> Option<HirItem> {
         let (name, name_span) = match &decl.binding {
             crate::syntax::BindingPattern::Ident(ident) => (ident.name, ident.span),
@@ -75,6 +89,9 @@ impl<'a> Lowerer<'a> {
             Some(init) => self.lower_expr(init),
             None => {
                 if self.has_externa_annotation(stmt) {
+                    // Extern declarations promise a target-provided value; the
+                    // placeholder keeps HIR total without pretending source had
+                    // an initializer.
                     HirExpr {
                         id: self.next_hir_id(),
                         kind: HirExprKind::Literal(HirLiteral::Nil),
@@ -98,7 +115,12 @@ impl<'a> Lowerer<'a> {
         Some(item)
     }
 
-    /// Lower functio declaration
+    /// Lower a `functio` declaration into a function item.
+    ///
+    /// Parameter and modifier bindings are registered before the body lowers so
+    /// body expressions can resolve them as locals. CLI command argument
+    /// metadata, when present, is represented as a synthetic parameter rather
+    /// than a separate HIR concept.
     pub fn lower_functio(&mut self, stmt: &Stmt, decl: &FuncDecl) -> Option<HirItem> {
         let def_id = self.def_id_for(decl.name.name);
 
@@ -155,6 +177,9 @@ impl<'a> Lowerer<'a> {
         let body = decl.body.as_ref().map(|body| self.lower_block(body));
         self.pop_scope();
         let body = body.map(|mut body| {
+            // Function modifiers can bind values supplied by the runtime or
+            // generated CLI adapter. HIR models them as locals so later passes
+            // use the same name/type path as ordinary source bindings.
             for (def_id, name, span) in modifier_locals.into_iter().rev() {
                 body.stmts.insert(
                     0,
@@ -190,7 +215,12 @@ impl<'a> Lowerer<'a> {
         Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Function(func), span: stmt.span })
     }
 
-    /// Lower gens (class) declaration
+    /// Lower a `gens` declaration into struct-shaped HIR.
+    ///
+    /// `gens` lowering owns member scope setup because method bodies need both
+    /// ordinary parameter locals and the current `ego` struct context. Inherited
+    /// and implemented names are looked up here, but their semantic validity is
+    /// checked later.
     pub fn lower_gens(&mut self, stmt: &Stmt, decl: &ClassDecl) -> Option<HirItem> {
         let def_id = self.def_id_for(decl.name.name);
 
@@ -252,6 +282,9 @@ impl<'a> Lowerer<'a> {
                     self.pop_scope();
                     self.current_ego_struct = prev_ego;
                     let body = body.map(|mut body| {
+                        // Method modifiers follow the same synthetic-local
+                        // contract as function modifiers, but lower while the
+                        // current `ego` struct is still known.
                         for (def_id, name, span) in modifier_locals.into_iter().rev() {
                             body.stmts.insert(
                                 0,
@@ -328,7 +361,10 @@ impl<'a> Lowerer<'a> {
         Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Struct(struct_item), span: stmt.span })
     }
 
-    /// Lower ordo (enum) declaration
+    /// Lower an `ordo` declaration into enum-shaped HIR.
+    ///
+    /// Plain `ordo` variants carry names and `DefId`s only. Payload-bearing
+    /// variant fields are reserved for `discretio`.
     pub fn lower_ordo(&mut self, stmt: &Stmt, decl: &EnumDecl) -> Option<HirItem> {
         let def_id = self.def_id_for(decl.name.name);
 
@@ -348,7 +384,11 @@ impl<'a> Lowerer<'a> {
         Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Enum(enum_item), span: stmt.span })
     }
 
-    /// Lower discretio (union) declaration
+    /// Lower a `discretio` declaration into enum-shaped HIR with payload fields.
+    ///
+    /// This shares the HIR enum representation with `ordo` so pattern matching
+    /// and codegen can operate on one variant model while still preserving
+    /// payload type annotations for semantic analysis.
     pub fn lower_discretio(&mut self, stmt: &Stmt, decl: &UnionDecl) -> Option<HirItem> {
         let def_id = self.def_id_for(decl.name.name);
 
@@ -386,7 +426,11 @@ impl<'a> Lowerer<'a> {
         Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Enum(enum_item), span: stmt.span })
     }
 
-    /// Lower pactum (interface) declaration
+    /// Lower a `pactum` declaration into interface HIR.
+    ///
+    /// Method signatures are lowered without bodies. Compatibility between an
+    /// implementing `gens` and these signatures is intentionally left to later
+    /// passes that can compare fully lowered type information.
     pub fn lower_pactum(&mut self, stmt: &Stmt, decl: &InterfaceDecl) -> Option<HirItem> {
         let def_id = self.def_id_for(decl.name.name);
 
@@ -426,7 +470,7 @@ impl<'a> Lowerer<'a> {
         Some(HirItem { id: self.next_hir_id(), def_id, kind: HirItemKind::Interface(interface), span: stmt.span })
     }
 
-    /// Lower typus (type alias) declaration
+    /// Lower a `typus` declaration into a type-alias item.
     pub fn lower_typus(&mut self, stmt: &Stmt, decl: &TypeAliasDecl) -> Option<HirItem> {
         let def_id = self.def_id_for(decl.name.name);
         let ty = self.lower_type(&decl.ty);
@@ -439,7 +483,11 @@ impl<'a> Lowerer<'a> {
         })
     }
 
-    /// Lower importa (import) declaration
+    /// Lower an `importa` declaration into import HIR.
+    ///
+    /// Earlier collection/resolution records the names an import makes visible.
+    /// Lowering preserves that import contract and attaches HIR item ids without
+    /// deciding package or provider loading policy here.
     pub fn lower_importa(&mut self, stmt: &Stmt, decl: &ImportDecl) -> Option<HirItem> {
         let def_id = self.next_def_id();
 

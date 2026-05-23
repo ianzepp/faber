@@ -1,11 +1,37 @@
-//! Read-only HIR visitor trait and walking functions.
+//! Traversal contracts for HIR analyses and tree rewrites.
 //!
-//! WHY: Most post-lowering passes need the same recursive traversal over HIR.
-//! Keeping that traversal in one place reduces duplicated `match Hir*Kind`
-//! walkers and makes small analyses easier to test.
+//! This module centralizes the recursive shape of HIR so analysis passes do not
+//! each re-encode which child nodes belong to which construct. The default
+//! visitor methods are pre-order at the semantic boundary: declaration hooks
+//! fire when a definition is encountered, then walking proceeds into the
+//! lowered children in source/evaluation order where that order is meaningful.
+//!
+//! INVARIANTS
+//! ==========
+//! - Walkers visit HIR children, not type arena contents or symbol interner
+//!   data. `TypeId` and `Symbol` values are references into other compiler
+//!   state, not subtrees.
+//! - `visit_def` is called for definitions introduced by items, parameters,
+//!   locals, patterns, imports, methods, fields, handlers, and loop bindings.
+//! - Read-only and mutable walkers should preserve the same traversal shape.
+//! - Walkers do not perform semantic validation; they only expose traversal
+//!   order for passes that choose to validate, collect, or mutate.
+//!
+//! TRADE-OFFS
+//! ==========
+//! The walkers are intentionally explicit `match` statements instead of a macro
+//! or generated visitor. HIR changes are compiler phase changes, and reviewing
+//! traversal updates beside new variants is more valuable than hiding the shape
+//! behind abstraction.
 
 use super::nodes::*;
 
+/// Read-only visitor over HIR.
+///
+/// Override the narrowest hook needed by the analysis. Default implementations
+/// recursively walk children, so a pass can observe only expressions, only
+/// definitions, or only a specific declaration kind without duplicating the
+/// rest of the tree traversal.
 pub trait HirVisitor: Sized {
     fn visit_program(&mut self, program: &HirProgram) {
         walk_program(self, program);
@@ -79,9 +105,16 @@ pub trait HirVisitor: Sized {
         walk_object_field(self, field);
     }
 
+    /// Observe a definition introduced by the current subtree.
+    ///
+    /// This hook is intentionally lighter than visiting a declaration node:
+    /// locals, pattern bindings, handler bindings, imported aliases, and loop
+    /// variables also introduce `DefId` values and should be visible to passes
+    /// that build definition indexes.
     fn visit_def(&mut self, _def_id: DefId, _name: crate::lexer::Symbol) {}
 }
 
+/// Walk a whole HIR program in item order, then entry-block order.
 pub fn walk_program<V: HirVisitor>(visitor: &mut V, program: &HirProgram) {
     for item in &program.items {
         visitor.visit_item(item);
@@ -91,6 +124,10 @@ pub fn walk_program<V: HirVisitor>(visitor: &mut V, program: &HirProgram) {
     }
 }
 
+/// Walk a top-level item and any definitions it introduces.
+///
+/// Item-level definitions are reported before child signatures/bodies so
+/// definition collectors can see the outer declaration before nested bindings.
 pub fn walk_item<V: HirVisitor>(visitor: &mut V, item: &HirItem) {
     match &item.kind {
         HirItemKind::Function(function) => {
@@ -144,6 +181,7 @@ pub fn walk_item<V: HirVisitor>(visitor: &mut V, item: &HirItem) {
     }
 }
 
+/// Walk a function-like body, including generic parameters and CLI argument metadata.
 pub fn walk_function<V: HirVisitor>(visitor: &mut V, function: &HirFunction) {
     for type_param in &function.type_params {
         visitor.visit_type_param(type_param);
@@ -159,6 +197,7 @@ pub fn walk_function<V: HirVisitor>(visitor: &mut V, function: &HirFunction) {
     }
 }
 
+/// Walk a field declaration and optional initializer.
 pub fn walk_field<V: HirVisitor>(visitor: &mut V, field: &HirField) {
     visitor.visit_def(field.def_id, field.name);
     if let Some(init) = &field.init {
@@ -166,11 +205,13 @@ pub fn walk_field<V: HirVisitor>(visitor: &mut V, field: &HirField) {
     }
 }
 
+/// Walk a method as both a method definition and a function payload.
 pub fn walk_method<V: HirVisitor>(visitor: &mut V, method: &HirMethod) {
     visitor.visit_def(method.def_id, method.func.name);
     visitor.visit_function(&method.func);
 }
 
+/// Walk a block in execution order, with the tail expression last.
 pub fn walk_block<V: HirVisitor>(visitor: &mut V, block: &HirBlock) {
     for stmt in &block.stmts {
         visitor.visit_stmt(stmt);
@@ -180,6 +221,7 @@ pub fn walk_block<V: HirVisitor>(visitor: &mut V, block: &HirBlock) {
     }
 }
 
+/// Walk the child subtree of one statement.
 pub fn walk_stmt<V: HirVisitor>(visitor: &mut V, stmt: &HirStmt) {
     match &stmt.kind {
         HirStmtKind::Local(local) => visitor.visit_local(local),
@@ -194,6 +236,7 @@ pub fn walk_stmt<V: HirVisitor>(visitor: &mut V, stmt: &HirStmt) {
     }
 }
 
+/// Walk a local binding and initializer.
 pub fn walk_local<V: HirVisitor>(visitor: &mut V, local: &HirLocal) {
     visitor.visit_def(local.def_id, local.name);
     if let Some(init) = &local.init {
@@ -201,6 +244,7 @@ pub fn walk_local<V: HirVisitor>(visitor: &mut V, local: &HirLocal) {
     }
 }
 
+/// Walk an endpoint form's arguments and body/handler blocks.
 pub fn walk_ad<V: HirVisitor>(visitor: &mut V, ad: &HirAd) {
     for arg in &ad.args {
         visitor.visit_expr(arg);
@@ -213,6 +257,11 @@ pub fn walk_ad<V: HirVisitor>(visitor: &mut V, ad: &HirAd) {
     }
 }
 
+/// Walk an expression's child expressions, blocks, patterns, and introduced bindings.
+///
+/// Leaf values such as resolved paths, literals, and type references are not
+/// walked because they point into semantic side tables rather than owning HIR
+/// subtrees.
 pub fn walk_expr<V: HirVisitor>(visitor: &mut V, expr: &HirExpr) {
     match &expr.kind {
         HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
@@ -356,11 +405,13 @@ pub fn walk_expr<V: HirVisitor>(visitor: &mut V, expr: &HirExpr) {
     }
 }
 
+/// Walk a recoverable handler binding and body.
 pub fn walk_cape<V: HirVisitor>(visitor: &mut V, cape: &HirCape) {
     visitor.visit_def(cape.binding_def_id, cape.binding_name);
     visitor.visit_block(&cape.body);
 }
 
+/// Walk one pattern arm: patterns first, then guard, then body.
 pub fn walk_casu_arm<V: HirVisitor>(visitor: &mut V, arm: &HirCasuArm) {
     for pattern in &arm.patterns {
         visitor.visit_pattern(pattern);
@@ -371,6 +422,7 @@ pub fn walk_casu_arm<V: HirVisitor>(visitor: &mut V, arm: &HirCasuArm) {
     visitor.visit_expr(&arm.body);
 }
 
+/// Walk bindings introduced by a pattern.
 pub fn walk_pattern<V: HirVisitor>(visitor: &mut V, pattern: &HirPattern) {
     match pattern {
         HirPattern::Wildcard | HirPattern::Literal(_) => {}
@@ -387,6 +439,7 @@ pub fn walk_pattern<V: HirVisitor>(visitor: &mut V, pattern: &HirPattern) {
     }
 }
 
+/// Walk expressions owned by an object field key or value.
 pub fn walk_object_field<V: HirVisitor>(visitor: &mut V, field: &HirObjectField) {
     match &field.key {
         HirObjectKey::Ident(_) | HirObjectKey::String(_) => {}
@@ -397,6 +450,7 @@ pub fn walk_object_field<V: HirVisitor>(visitor: &mut V, field: &HirObjectField)
     }
 }
 
+/// Walk expression children of an optional-chain operation.
 pub fn walk_optional_chain<V: HirVisitor>(visitor: &mut V, chain: &HirOptionalChainKind) {
     match chain {
         HirOptionalChainKind::Member(_) => {}
@@ -409,6 +463,7 @@ pub fn walk_optional_chain<V: HirVisitor>(visitor: &mut V, chain: &HirOptionalCh
     }
 }
 
+/// Walk expression children of a non-null assertion operation.
 pub fn walk_non_null<V: HirVisitor>(visitor: &mut V, chain: &HirNonNullKind) {
     match chain {
         HirNonNullKind::Member(_) => {}
@@ -421,6 +476,7 @@ pub fn walk_non_null<V: HirVisitor>(visitor: &mut V, chain: &HirNonNullKind) {
     }
 }
 
+/// Walk expression children of a collection filter.
 pub fn walk_collection_filter<V: HirVisitor>(visitor: &mut V, filter: &HirCollectionFilter) {
     match &filter.kind {
         HirCollectionFilterKind::Condition(cond) => visitor.visit_expr(cond),
@@ -428,6 +484,12 @@ pub fn walk_collection_filter<V: HirVisitor>(visitor: &mut V, filter: &HirCollec
     }
 }
 
+/// Mutable visitor over HIR.
+///
+/// This mirrors [`HirVisitor`] but grants mutable access to nodes that own HIR
+/// children. Use it for normalization and repair passes that preserve node
+/// identity and tree shape contracts; rebuilding IDs or redefining semantic
+/// ownership belongs in lowering or a dedicated transformation phase.
 pub trait HirVisitorMut: Sized {
     fn visit_program_mut(&mut self, program: &mut HirProgram) {
         walk_program_mut(self, program);
@@ -501,9 +563,15 @@ pub trait HirVisitorMut: Sized {
         walk_object_field_mut(self, field);
     }
 
+    /// Observe a definition introduced by the current subtree.
+    ///
+    /// The hook receives copied identity/name data rather than mutable access
+    /// because changing definitions in place would invalidate resolver/typecheck
+    /// side tables.
     fn visit_def(&mut self, _def_id: DefId, _name: crate::lexer::Symbol) {}
 }
 
+/// Mutably walk a whole HIR program in item order, then entry-block order.
 pub fn walk_program_mut<V: HirVisitorMut>(visitor: &mut V, program: &mut HirProgram) {
     for item in &mut program.items {
         visitor.visit_item_mut(item);
@@ -513,6 +581,7 @@ pub fn walk_program_mut<V: HirVisitorMut>(visitor: &mut V, program: &mut HirProg
     }
 }
 
+/// Mutably walk a top-level item and any definitions it introduces.
 pub fn walk_item_mut<V: HirVisitorMut>(visitor: &mut V, item: &mut HirItem) {
     match &mut item.kind {
         HirItemKind::Function(function) => {
@@ -566,6 +635,7 @@ pub fn walk_item_mut<V: HirVisitorMut>(visitor: &mut V, item: &mut HirItem) {
     }
 }
 
+/// Mutably walk a function-like body.
 pub fn walk_function_mut<V: HirVisitorMut>(visitor: &mut V, function: &mut HirFunction) {
     for type_param in &mut function.type_params {
         visitor.visit_type_param_mut(type_param);
@@ -581,6 +651,7 @@ pub fn walk_function_mut<V: HirVisitorMut>(visitor: &mut V, function: &mut HirFu
     }
 }
 
+/// Mutably walk a field declaration and optional initializer.
 pub fn walk_field_mut<V: HirVisitorMut>(visitor: &mut V, field: &mut HirField) {
     visitor.visit_def(field.def_id, field.name);
     if let Some(init) = &mut field.init {
@@ -588,11 +659,13 @@ pub fn walk_field_mut<V: HirVisitorMut>(visitor: &mut V, field: &mut HirField) {
     }
 }
 
+/// Mutably walk a method as both a method definition and a function payload.
 pub fn walk_method_mut<V: HirVisitorMut>(visitor: &mut V, method: &mut HirMethod) {
     visitor.visit_def(method.def_id, method.func.name);
     visitor.visit_function_mut(&mut method.func);
 }
 
+/// Mutably walk a block in execution order.
 pub fn walk_block_mut<V: HirVisitorMut>(visitor: &mut V, block: &mut HirBlock) {
     for stmt in &mut block.stmts {
         visitor.visit_stmt_mut(stmt);
@@ -602,6 +675,7 @@ pub fn walk_block_mut<V: HirVisitorMut>(visitor: &mut V, block: &mut HirBlock) {
     }
 }
 
+/// Mutably walk the child subtree of one statement.
 pub fn walk_stmt_mut<V: HirVisitorMut>(visitor: &mut V, stmt: &mut HirStmt) {
     match &mut stmt.kind {
         HirStmtKind::Local(local) => visitor.visit_local_mut(local),
@@ -616,6 +690,7 @@ pub fn walk_stmt_mut<V: HirVisitorMut>(visitor: &mut V, stmt: &mut HirStmt) {
     }
 }
 
+/// Mutably walk a local binding and initializer.
 pub fn walk_local_mut<V: HirVisitorMut>(visitor: &mut V, local: &mut HirLocal) {
     visitor.visit_def(local.def_id, local.name);
     if let Some(init) = &mut local.init {
@@ -623,6 +698,7 @@ pub fn walk_local_mut<V: HirVisitorMut>(visitor: &mut V, local: &mut HirLocal) {
     }
 }
 
+/// Mutably walk an endpoint form's arguments and body/handler blocks.
 pub fn walk_ad_mut<V: HirVisitorMut>(visitor: &mut V, ad: &mut HirAd) {
     for arg in &mut ad.args {
         visitor.visit_expr_mut(arg);
@@ -635,6 +711,7 @@ pub fn walk_ad_mut<V: HirVisitorMut>(visitor: &mut V, ad: &mut HirAd) {
     }
 }
 
+/// Mutably walk an expression's child expressions, blocks, patterns, and bindings.
 pub fn walk_expr_mut<V: HirVisitorMut>(visitor: &mut V, expr: &mut HirExpr) {
     match &mut expr.kind {
         HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
@@ -778,11 +855,13 @@ pub fn walk_expr_mut<V: HirVisitorMut>(visitor: &mut V, expr: &mut HirExpr) {
     }
 }
 
+/// Mutably walk a recoverable handler binding and body.
 pub fn walk_cape_mut<V: HirVisitorMut>(visitor: &mut V, cape: &mut HirCape) {
     visitor.visit_def(cape.binding_def_id, cape.binding_name);
     visitor.visit_block_mut(&mut cape.body);
 }
 
+/// Mutably walk one pattern arm: patterns first, then guard, then body.
 pub fn walk_casu_arm_mut<V: HirVisitorMut>(visitor: &mut V, arm: &mut HirCasuArm) {
     for pattern in &mut arm.patterns {
         visitor.visit_pattern_mut(pattern);
@@ -793,6 +872,7 @@ pub fn walk_casu_arm_mut<V: HirVisitorMut>(visitor: &mut V, arm: &mut HirCasuArm
     visitor.visit_expr_mut(&mut arm.body);
 }
 
+/// Mutably walk bindings introduced by a pattern.
 pub fn walk_pattern_mut<V: HirVisitorMut>(visitor: &mut V, pattern: &mut HirPattern) {
     match pattern {
         HirPattern::Wildcard | HirPattern::Literal(_) => {}
@@ -809,6 +889,7 @@ pub fn walk_pattern_mut<V: HirVisitorMut>(visitor: &mut V, pattern: &mut HirPatt
     }
 }
 
+/// Mutably walk expressions owned by an object field key or value.
 pub fn walk_object_field_mut<V: HirVisitorMut>(visitor: &mut V, field: &mut HirObjectField) {
     match &mut field.key {
         HirObjectKey::Ident(_) | HirObjectKey::String(_) => {}
@@ -819,6 +900,7 @@ pub fn walk_object_field_mut<V: HirVisitorMut>(visitor: &mut V, field: &mut HirO
     }
 }
 
+/// Mutably walk expression children of an optional-chain operation.
 pub fn walk_optional_chain_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut HirOptionalChainKind) {
     match chain {
         HirOptionalChainKind::Member(_) => {}
@@ -831,6 +913,7 @@ pub fn walk_optional_chain_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut Hi
     }
 }
 
+/// Mutably walk expression children of a non-null assertion operation.
 pub fn walk_non_null_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut HirNonNullKind) {
     match chain {
         HirNonNullKind::Member(_) => {}
@@ -843,6 +926,7 @@ pub fn walk_non_null_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut HirNonNu
     }
 }
 
+/// Mutably walk expression children of a collection filter.
 pub fn walk_collection_filter_mut<V: HirVisitorMut>(visitor: &mut V, filter: &mut HirCollectionFilter) {
     match &mut filter.kind {
         HirCollectionFilterKind::Condition(cond) => visitor.visit_expr_mut(cond),
