@@ -20,7 +20,10 @@ struct SourceFile {
 
 fn source_files() -> Vec<SourceFile> {
     let mut files = Vec::new();
-    collect_rs_files(Path::new("src"), &mut files);
+    // Use CARGO_MANIFEST_DIR so the scanner works regardless of cwd when
+    // invoked via `cargo test -p radix --test hygiene` from workspace root.
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    collect_rs_files(&manifest.join("src"), &mut files);
     files
 }
 
