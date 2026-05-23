@@ -1,3 +1,23 @@
+//! Statement and block emission for the canonical Faber backend.
+//!
+//! This module reconstructs grammar-valid Faber statements from HIR. The goal
+//! is normalized source output that can be parsed again, not recovery of the
+//! user's exact source layout, comments, or spelling choices. Helpers here
+//! recognize HIR shapes that came from compact Faber syntax and rebuild the
+//! canonical form only when the shape is unambiguous.
+//!
+//! INVARIANTS
+//! ==========
+//! - Blocks preserve statement order and optional tail expressions.
+//! - Compact branch output is used only when a block is equivalent to returning
+//!   one expression.
+//! - `si`/`sin`/`secus` chains are reconstructed from nested conditional HIR
+//!   without changing branch semantics.
+//! - Expression-level constructs such as `fac`/`dum` loops and `discerne` arms
+//!   can reuse these block helpers without reintroducing source-layout trivia.
+//! - Catch blocks, `ad` bodies, and control statements are emitted as canonical
+//!   Faber syntax accepted by the parser.
+
 use super::CodeWriter;
 use crate::hir::{DefId, HirBlock, HirExpr, HirExprKind, HirStmt, HirStmtKind};
 use crate::lexer::{Interner, Symbol};
@@ -5,6 +25,11 @@ use crate::semantic::TypeTable;
 use rustc_hash::FxHashMap;
 
 impl super::FaberCodegen {
+    /// Recognize the normalized HIR shape for a `fac ... dum` loop.
+    ///
+    /// The parser represents this as a body followed by a final conditional
+    /// break on the negated loop condition. Re-emission only treats that as
+    /// `fac`/`dum` when the final block is exactly the synthetic `rumpe`.
     pub(super) fn as_fac_loop<'a>(&self, block: &'a HirBlock) -> Option<(&'a [HirStmt], &'a HirExpr)> {
         let last = block.stmts.last()?;
         let HirStmtKind::Expr(expr) = &last.kind else {
@@ -25,6 +50,11 @@ impl super::FaberCodegen {
         Some((&block.stmts[..block.stmts.len() - 1], inner))
     }
 
+    /// Return the expression represented by a single-expression return block.
+    ///
+    /// This is the gate for compact `ergo redde` and `sic ... secus ...`
+    /// output. Blocks with additional statements or mixed tail forms stay in
+    /// brace form to avoid changing control-flow meaning.
     pub(super) fn return_expr<'a>(&self, block: &'a HirBlock) -> Option<&'a HirExpr> {
         if block.stmts.is_empty() {
             return block.expr.as_deref();
@@ -37,6 +67,12 @@ impl super::FaberCodegen {
             _ => None,
         }
     }
+
+    /// Detect an else-block that is semantically a `sin` branch.
+    ///
+    /// HIR nests `else if` as an else block whose tail expression is another
+    /// conditional. The canonical Faber backend flattens that shape back into a
+    /// `sin` chain when there are no extra statements to preserve.
     pub(super) fn as_sin_branch<'a>(
         &self,
         block: &'a HirBlock,
@@ -52,6 +88,12 @@ impl super::FaberCodegen {
             None
         }
     }
+
+    /// Write a full `si`/`sin`/`secus` statement chain.
+    ///
+    /// The chain is syntactic normalization only: every `sin` comes from a
+    /// nested conditional else-tail, and any else-block that does not fit that
+    /// exact shape remains a terminal `secus` block.
     #[allow(clippy::too_many_arguments)]
     pub(super) fn write_si_chain(
         &self,
@@ -82,6 +124,11 @@ impl super::FaberCodegen {
         }
     }
 
+    /// Try to write a conditional expression as compact `sic ... secus ...`.
+    ///
+    /// Returns `false` when either branch needs block syntax. Callers then fall
+    /// back to the ordinary conditional form, which preserves grammar validity
+    /// without pretending arbitrary blocks are expressions.
     #[allow(clippy::too_many_arguments)]
     pub(super) fn write_sic_secus_chain(
         &self,
@@ -120,6 +167,7 @@ impl super::FaberCodegen {
         true
     }
 
+    /// Validate that a whole conditional chain can be rendered compactly.
     pub(super) fn can_write_sic_secus_chain(&self, then_block: &HirBlock, else_block: Option<&HirBlock>) -> bool {
         if self.return_expr(then_block).is_none() {
             return false;
@@ -136,6 +184,7 @@ impl super::FaberCodegen {
         self.return_expr(else_block).is_some()
     }
 
+    /// Write either compact `ergo redde` or a braced branch body.
     pub(super) fn write_si_branch_body(
         &self,
         block: &HirBlock,
@@ -154,6 +203,13 @@ impl super::FaberCodegen {
         w.indented(|w| self.write_block(block, types, names, interner, w));
         w.write("}");
     }
+
+    /// Write the catch side of `cape`.
+    ///
+    /// A leading local statement carries the caught error binding in HIR. When
+    /// no such binding exists, the canonical placeholder `_` keeps the output
+    /// grammar-valid while preserving that the catch body intentionally ignores
+    /// the error value.
     pub(super) fn write_cape_block(
         &self,
         block: &HirBlock,
@@ -183,6 +239,11 @@ impl super::FaberCodegen {
         w.write("}");
     }
 
+    /// Emit an `ad` body after removing synthetic binding setup statements.
+    ///
+    /// The `ad` header owns the resource binding in source syntax. HIR keeps
+    /// that binding in the body as locals as well, so the backend skips those
+    /// setup statements to avoid duplicating them in canonical output.
     pub(super) fn write_ad_block(
         &self,
         block: &HirBlock,
@@ -205,6 +266,12 @@ impl super::FaberCodegen {
             w.newline();
         }
     }
+
+    /// Emit a block's statements followed by its tail expression, if present.
+    ///
+    /// Tail expressions are preserved as expression statements in generated
+    /// Faber because this backend emits normalized source text, not lowered
+    /// target-language control flow.
     pub(super) fn write_block(
         &self,
         block: &HirBlock,
@@ -222,6 +289,11 @@ impl super::FaberCodegen {
         }
     }
 
+    /// Emit one canonical Faber statement.
+    ///
+    /// The statement surface here is intentionally direct: locals, resource
+    /// blocks, returns, loop controls, and expression statements are printed in
+    /// parser-valid Faber forms using HIR-owned semantic names and types.
     pub(super) fn write_stmt(
         &self,
         stmt: &HirStmt,

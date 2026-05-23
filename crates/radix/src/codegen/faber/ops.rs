@@ -1,6 +1,26 @@
+//! Operator spelling and precedence policy for canonical Faber output.
+//!
+//! The expression writer delegates operator decisions here so syntax validity is
+//! kept in one place. The numeric precedence table is not a parser table copy;
+//! it is the printer's contract for when child expressions need parentheses to
+//! remain parseable after HIR has normalized the original surface form.
+//!
+//! The backend emits canonical Faber operator spellings. That means source
+//! aliases and target-language conveniences are not preserved here. Assignment
+//! operators use Faber's compound glyphs when the HIR operator has a dedicated
+//! assignment spelling; otherwise the binary spelling is reused so output stays
+//! syntactically recognizable rather than inventing new tokens. Equal-precedence
+//! child expressions are parenthesized by the expression writer, which favors
+//! unambiguous reparsing over preserving associativity-derived minimality.
+
 use crate::hir::{HirExpr, HirExprKind};
 
 impl super::FaberCodegen {
+    /// Return the binding strength used by the pretty-printer.
+    ///
+    /// Lower numbers bind more weakly. The expression writer parenthesizes a
+    /// child when its precedence would otherwise be ambiguous under the current
+    /// parent expression.
     pub(super) fn expr_precedence(&self, expr: &HirExpr) -> u8 {
         match &expr.kind {
             HirExprKind::Assign(_, _) | HirExprKind::AssignOp(_, _, _) => 1,
@@ -16,6 +36,8 @@ impl super::FaberCodegen {
             _ => 14,
         }
     }
+
+    /// Canonical Faber spelling for unary operators.
     pub(super) fn unop_to_faber(&self, op: crate::hir::HirUnOp) -> &'static str {
         match op {
             crate::hir::HirUnOp::Neg => "-",
@@ -31,6 +53,12 @@ impl super::FaberCodegen {
             crate::hir::HirUnOp::IsFalse => "falsum ",
         }
     }
+
+    /// Canonical Faber spelling for compound assignment operators.
+    ///
+    /// Only operators with assignment glyphs get special spellings. Unsupported
+    /// compound forms fall back to the binary spelling so this table remains a
+    /// syntax policy surface rather than a semantic validator.
     pub(super) fn assignop_to_faber(&self, op: crate::hir::HirBinOp) -> &'static str {
         match op {
             crate::hir::HirBinOp::Add => "⊕",
@@ -42,6 +70,8 @@ impl super::FaberCodegen {
             _ => self.binop_to_faber(op),
         }
     }
+
+    /// Binding strength for canonical binary operator emission.
     pub(super) fn binop_precedence(&self, op: crate::hir::HirBinOp) -> u8 {
         match op {
             crate::hir::HirBinOp::Coalesce => 2,
@@ -67,6 +97,11 @@ impl super::FaberCodegen {
             crate::hir::HirBinOp::Mul | crate::hir::HirBinOp::Div | crate::hir::HirBinOp::Mod => 12,
         }
     }
+
+    /// Canonical Faber spelling for binary operators.
+    ///
+    /// Strict and non-strict equality currently share glyphs in canonical Faber
+    /// output because HIR has already carried the semantic distinction.
     pub(super) fn binop_to_faber(&self, op: crate::hir::HirBinOp) -> &'static str {
         match op {
             crate::hir::HirBinOp::Add => "+",

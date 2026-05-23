@@ -1,3 +1,30 @@
+//! Canonical Faber expression emission.
+//!
+//! This module is the expression half of the source-preserving Faber backend.
+//! It prints HIR back into canonical Faber expression text so the compiler can
+//! expose a normalized view of code after parsing, lowering, name resolution,
+//! and type analysis. The goal is not byte-for-byte reconstruction: comments,
+//! original whitespace, alternate spellings, and some syntactic sugar are
+//! already gone by the time this writer sees HIR.
+//!
+//! INVARIANTS
+//! ==========
+//! - Calls, method calls, fields, indexes, optional chains, and non-null chains
+//!   use the canonical postfix spellings accepted by the parser.
+//! - Blocks and control forms are emitted as Faber constructs, not translated
+//!   through another target backend.
+//! - Object and collection entries are delegated to the literal field writer so
+//!   literal and conversion forms share one field spelling policy.
+//! - Parentheses are a precedence handoff with `ops.rs`; this file asks for the
+//!   expression precedence and only adds grouping needed to keep reparsing valid.
+//!
+//! LIMITS
+//! ======
+//! Structured `cape` handlers are not reconstructed here yet, and diagnostic
+//! placeholder expressions lower to grammar-valid fallback text. Template and
+//! string payloads are written from interned text without claiming source escape
+//! preservation.
+
 use super::CodeWriter;
 use crate::hir::{DefId, HirArrayElement, HirExpr, HirExprKind};
 use crate::lexer::{Interner, Symbol};
@@ -5,6 +32,12 @@ use crate::semantic::{Type, TypeTable};
 use rustc_hash::FxHashMap;
 
 impl super::FaberCodegen {
+    /// Write an expression with enough parentheses to survive a Faber reparse.
+    ///
+    /// The `parent_prec` contract is shared with `expr_precedence` in `ops.rs`.
+    /// Sub-writers pass the binding strength of the surrounding operator or
+    /// postfix form; this writer canonicalizes grouping from HIR structure and
+    /// does not attempt to preserve original redundant parentheses.
     pub(super) fn write_expr_prec(
         &self,
         expr: &HirExpr,
@@ -36,6 +69,8 @@ impl super::FaberCodegen {
                 self.write_expr_prec(operand, 12, types, names, interner, w);
             }
             HirExprKind::Call(callee, args) => {
+                // Postfix expression forms bind tighter than every infix form
+                // currently emitted by this backend.
                 self.write_expr_prec(callee, 13, types, names, interner, w);
                 w.write("(");
                 for (idx, arg) in args.iter().enumerate() {
@@ -47,6 +82,8 @@ impl super::FaberCodegen {
                 w.write(")");
             }
             HirExprKind::MethodCall(receiver, name, args) => {
+                // Method calls keep the resolved receiver expression intact and
+                // print the parser's canonical dot-call spelling.
                 self.write_expr_prec(receiver, 13, types, names, interner, w);
                 w.write(".");
                 w.write(&self.symbol_to_string(*name, interner));
@@ -71,6 +108,8 @@ impl super::FaberCodegen {
                 w.write("]");
             }
             HirExprKind::OptionalChain(object, chain) => {
+                // Optional and non-null chains are source-level Faber forms, not
+                // desugared conditionals in this backend.
                 self.write_expr_prec(object, 13, types, names, interner, w);
                 match chain {
                     crate::hir::HirOptionalChainKind::Member(name) => {
@@ -260,6 +299,9 @@ impl super::FaberCodegen {
                 w.write("vacua");
             }
             HirExprKind::Struct(def_id, fields) => {
+                // Struct construction uses named `field = value` entries; map
+                // and conversion object fields remain in `literal.rs` because
+                // they also support strings, computed keys, and spreads.
                 w.write(&self.name_for_def(*def_id, names, interner));
                 w.write(" {");
                 if !fields.is_empty() {
@@ -413,6 +455,9 @@ impl super::FaberCodegen {
                 }
             },
             HirExprKind::Conversio { source, target, params, fallback } => {
+                // Conversion spelling is grammar-owned Faber syntax. The type
+                // writer may degrade unsupported target types, but this layer
+                // still preserves source/fallback expression structure.
                 self.write_expr_prec(source, 2, types, names, interner, w);
                 w.write(" ⇒ ");
                 w.write(&self.type_to_faber(*target, types, names, interner));

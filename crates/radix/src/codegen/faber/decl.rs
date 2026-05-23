@@ -1,3 +1,23 @@
+//! Declaration emission for the canonical Faber backend.
+//!
+//! This backend prints analyzed HIR back into canonical Faber declaration text.
+//! It is source-preserving in the semantic sense: declarations keep their
+//! language shape, names, types, annotations, imports, and declaration bodies
+//! where that information survives in HIR. It is not a pretty-printer for
+//! original source files; comments, author spacing, and non-canonical layout are
+//! intentionally not reconstructed.
+//!
+//! INVARIANTS
+//! ==========
+//! - Output uses canonical Faber declaration forms, including type-first
+//!   parameters and fields.
+//! - Synthetic test functions are rendered as `proba` declarations, not as
+//!   ordinary `functio` declarations.
+//! - Imports are normalized to the canonical `importa ex ... <visibility> ...`
+//!   shape accepted by the parser.
+//! - Missing semantic information is not guessed here; declaration codegen only
+//!   emits facts present in HIR and the type/name tables.
+
 use super::{CodeWriter, CodegenError};
 use crate::hir::{DefId, HirEnum, HirFunction, HirInterface, HirItem, HirItemKind, HirStruct, HirTestModifier};
 use crate::lexer::{Interner, Symbol};
@@ -5,6 +25,11 @@ use crate::semantic::TypeTable;
 use rustc_hash::FxHashMap;
 
 impl super::FaberCodegen {
+    /// Return whether a function is compiler-carried test syntax.
+    ///
+    /// `proba` lowers through HIR as a function with test metadata. Re-emission
+    /// must restore the user-facing test declaration so canonical Faber output
+    /// does not expose that internal representation.
     pub(super) fn is_synthetic_proba_function(
         &self,
         func: &HirFunction,
@@ -13,6 +38,12 @@ impl super::FaberCodegen {
     ) -> bool {
         func.test.is_some()
     }
+
+    /// Emit a top-level declaration in canonical Faber syntax.
+    ///
+    /// The match mirrors the declaration surface understood by HIR: functions,
+    /// type aliases, constants, imports, structs, enums, and interfaces. Each
+    /// arm writes normalized Faber rather than original source trivia.
     pub(super) fn generate_item(
         &self,
         item: &HirItem,
@@ -81,6 +112,12 @@ impl super::FaberCodegen {
         Ok(())
     }
 
+    /// Emit a function or method signature plus its optional body.
+    ///
+    /// Async and generator flags return to their canonical annotation tokens.
+    /// Parameter mode, optionality, result type, and error type are emitted from
+    /// semantic HIR, so this function should not invent defaults for missing
+    /// type information.
     pub(super) fn generate_function(
         &self,
         func: &HirFunction,
@@ -157,6 +194,7 @@ impl super::FaberCodegen {
         Ok(())
     }
 
+    /// Emit a synthetic HIR test function as a source-level `proba` block.
     pub(super) fn generate_proba_function(
         &self,
         func: &HirFunction,
@@ -165,6 +203,8 @@ impl super::FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) {
+        // HIR stores test modifiers separately from the function signature so
+        // the backend can recover canonical `proba "name" ... {}` syntax.
         w.write("proba ");
         if let Some(test) = &func.test {
             self.write_quoted_text(interner.resolve(test.name), w);
@@ -193,6 +233,8 @@ impl super::FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) -> Result<(), CodegenError> {
+        // Structs preserve their inheritance/interface relationships and
+        // member order, but not author layout inside the original declaration.
         w.write("genus ");
         w.write(&self.symbol_to_string(s.name, interner));
 
@@ -254,6 +296,8 @@ impl super::FaberCodegen {
     }
 
     fn write_test_modifier(&self, modifier: &HirTestModifier, interner: &Interner, w: &mut CodeWriter) {
+        // Test modifiers are emitted as the canonical surface tokens accepted
+        // after a `proba` name; no target-specific test runner syntax leaks out.
         match modifier {
             HirTestModifier::Omitte(reason) => {
                 w.write("omitte ");
@@ -304,6 +348,8 @@ impl super::FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) -> Result<(), CodegenError> {
+        // Enum variants are normalized to the block form that remains valid
+        // for both plain variants and variants carrying named fields.
         w.write("discretio ");
         w.write(&self.symbol_to_string(e.name, interner));
 
@@ -350,6 +396,8 @@ impl super::FaberCodegen {
         interner: &Interner,
         w: &mut CodeWriter,
     ) -> Result<(), CodegenError> {
+        // Interface methods are declarations only. Bodies belong to concrete
+        // functions and methods, so the backend emits signatures and effects.
         w.write("pactum ");
         w.write(&self.symbol_to_string(i.name, interner));
 
