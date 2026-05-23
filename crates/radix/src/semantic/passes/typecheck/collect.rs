@@ -1,6 +1,27 @@
+//! Declaration collection for the HIR typechecker.
+//!
+//! Typecheck needs a complete table of callable and aggregate contracts before
+//! it checks expression bodies. This file extracts those contracts from resolved
+//! HIR without validating bodies, so declaration order does not affect calls,
+//! method lookup, enum variant constructors, or interface checks.
+//!
+//! INVARIANTS
+//! ==========
+//! - Collected `TypeId`s are already lowered into the shared semantic type
+//!   table by earlier passes.
+//! - Function and method signatures preserve parameter modes, optional slots,
+//!   async/generator flags, and alternate-exit types for later call checking.
+//! - Struct fields record requiredness from `sponte` and initializers; struct
+//!   literal validation depends on that distinction.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Build the callable contract for a lowered function item or method.
+    ///
+    /// Missing return annotations are treated as `vacuum` at the signature
+    /// boundary. Body checking may still synthesize return flow internally, but
+    /// call sites need a concrete contract before any body is visited.
     pub(super) fn function_signature(&mut self, func: &HirFunction) -> FuncSig {
         let params = func
             .params
@@ -10,6 +31,11 @@ impl<'a> TypeChecker<'a> {
         let ret = func.ret_ty.unwrap_or_else(|| self.vacuum_type());
         FuncSig { params, ret, err: func.err_ty, is_async: func.is_async, is_generator: func.is_generator }
     }
+
+    /// Collect field and method contracts for a struct definition.
+    ///
+    /// Methods are stored as signatures rather than checked here so recursive
+    /// and forward calls see the same declaration table as ordinary functions.
     pub(super) fn collect_struct(&mut self, def_id: DefId, struct_item: &HirStruct) {
         let mut fields = FxHashMap::default();
         let mut methods = FxHashMap::default();
@@ -28,6 +54,13 @@ impl<'a> TypeChecker<'a> {
 
         self.structs.insert(def_id, StructInfo { fields, methods });
     }
+
+    /// Populate all top-level typecheck lookup tables before checking bodies.
+    ///
+    /// This pass is intentionally shallow. It records declarations that later
+    /// expression checks need, but leaves initializer, method body, and function
+    /// body validation to the main traversal so errors are reported with the
+    /// correct local scope and return/error context.
     pub(super) fn collect_items(&mut self, hir: &HirProgram) {
         for item in &hir.items {
             match &item.kind {

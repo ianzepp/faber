@@ -1,6 +1,34 @@
+//! Item-level typechecking for declarations that establish function bodies and
+//! global values.
+//!
+//! This file is the point where HIR items become checked bodies rather than
+//! collected signatures. Earlier typecheck setup has already registered
+//! callable, constant, struct, interface, and enum metadata; the routines here
+//! use those tables to validate the bodies and to write inferred declaration
+//! types back into both the HIR and the checker-side signature maps.
+//!
+//! INVARIANTS
+//! ==========
+//! - Function parameters and CLI argument bindings are scoped only to the
+//!   function body.
+//! - `current_return` tracks the normal return channel, while `current_error`
+//!   tracks the alternate-exit channel used by `iace`/catchable control flow.
+//! - Unannotated function returns are finalized from observed `redde` values,
+//!   falling back to `vacuum` only when no return expression is seen.
+//! - Struct field defaults are checked against their declared field types; they
+//!   do not create fresh field types.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Check a function body under its declared signature context.
+    ///
+    /// This temporarily installs the function's normal and alternate-exit
+    /// result types so nested `redde` and `iace` expressions validate against
+    /// the signature rather than against an enclosing body. When the normal
+    /// return type is omitted, the checker infers it from all `redde` sites and
+    /// updates the collected function signature so later calls see the same
+    /// resolved contract as the HIR.
     pub(super) fn check_function(&mut self, def_id: DefId, func: &mut HirFunction) {
         self.push_scope();
         for param in &func.params {
@@ -36,6 +64,13 @@ impl<'a> TypeChecker<'a> {
         self.inferred_return = prev_inferred;
         self.pop_scope();
     }
+
+    /// Check a constant initializer and record the resulting global type.
+    ///
+    /// Constants may either state their type or synthesize it from the
+    /// initializer. The HIR and `consts` table are kept in lockstep because path
+    /// lookup during the rest of typechecking reads from the table, while later
+    /// phases read the annotated HIR.
     pub(super) fn check_const(&mut self, def_id: DefId, const_item: &mut crate::hir::HirConst) {
         let value_ty = self.check_expr(&mut const_item.value);
 
@@ -54,6 +89,13 @@ impl<'a> TypeChecker<'a> {
         const_item.ty = Some(ty);
         self.consts.insert(def_id, ty);
     }
+
+    /// Dispatch item checking after the type metadata collection pass.
+    ///
+    /// Only items with executable or value-bearing bodies need work here.
+    /// Metadata-only declarations were already harvested into lookup tables, and
+    /// their structural contracts are enforced where expressions or patterns use
+    /// them.
     pub(super) fn check_item(&mut self, item: &mut HirItem) {
         match &mut item.kind {
             HirItemKind::Function(func) => self.check_function(item.def_id, func),

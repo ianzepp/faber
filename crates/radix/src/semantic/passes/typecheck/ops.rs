@@ -1,6 +1,33 @@
+//! Operator and assignment rules for HIR typechecking.
+//!
+//! The expression dispatcher delegates here when surface syntax has policy that
+//! is narrower than general assignment compatibility: arithmetic, text
+//! concatenation, equality, ordering, coalescing, boolean logic, bit operations,
+//! and assignment forms. These helpers both infer operand types and enforce the
+//! language's operator contracts.
+//!
+//! ERROR STRATEGY
+//! ==============
+//! Unknown operands may be unified with the strongest type implied by an
+//! operator, such as `numerus` for arithmetic or `bivalens` for logical
+//! negation. Concrete mismatches produce diagnostics and return the checker
+//! error type where the result cannot be trusted.
+//!
+//! NULLABILITY
+//! ===========
+//! `nihil` comparisons are intentionally accepted without forcing both sides to
+//! the same concrete type. Coalescing follows optional/`nihil` policy locally so
+//! it can return either an optional type or the fallback's concrete type without
+//! changing the global assignability relation.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Check numeric operands and return the widened numeric result type.
+    ///
+    /// Inferred operands are constrained to `numerus` before validation. A
+    /// concrete `fractus` on either side widens the result; otherwise arithmetic
+    /// remains `numerus`.
     pub(super) fn numeric_bin(&mut self, lhs: TypeId, rhs: TypeId, span: crate::lexer::Span) -> TypeId {
         let lhs_resolved = self.resolve_type(lhs);
         let rhs_resolved = self.resolve_type(rhs);
@@ -25,6 +52,11 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    /// Choose a shared result type for branch, match, and coalescing flows.
+    ///
+    /// The direction matters: if one side can be assigned to the other, the
+    /// destination type is preserved. Numeric peers use normal arithmetic
+    /// widening. All other incompatible flows are reported as type mismatches.
     pub(super) fn common_type(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span) -> TypeId {
         let left = self.resolve_type(a);
         let right = self.resolve_type(b);
@@ -40,6 +72,8 @@ impl<'a> TypeChecker<'a> {
         self.error(SemanticErrorKind::TypeMismatch, "incompatible types", span);
         self.error_type
     }
+
+    /// Check compound assignment while preserving the target lvalue type.
     pub(super) fn check_assign_op(&mut self, op: HirBinOp, target: &mut HirExpr, value: &mut HirExpr) -> TypeId {
         let target_ty = self.check_lvalue(target);
         let value_ty = self.check_expr(value);
@@ -61,6 +95,8 @@ impl<'a> TypeChecker<'a> {
         }
         target_ty
     }
+
+    /// Check simple assignment and constrain the value from the target context.
     pub(super) fn check_assign(&mut self, target: &mut HirExpr, value: &mut HirExpr) -> TypeId {
         let target_ty = self.check_lvalue(target);
         if target_ty == self.error_type {
@@ -71,6 +107,12 @@ impl<'a> TypeChecker<'a> {
         self.unify(value_ty, target_ty, value.span, "assignment type mismatch");
         target_ty
     }
+
+    /// Check unary operators and return the operator result type.
+    ///
+    /// Predicate-like unary forms (`est nihil`, sign tests, truth tests) return
+    /// `bivalens`. Conversion or narrowing is not performed here; these checks
+    /// only constrain what the operand must already be or can be inferred as.
     pub(super) fn check_unary(&mut self, op: crate::hir::HirUnOp, operand: &mut HirExpr) -> TypeId {
         let operand_ty = self.check_expr(operand);
         match op {
@@ -122,6 +164,13 @@ impl<'a> TypeChecker<'a> {
             crate::hir::HirUnOp::IsTrue | crate::hir::HirUnOp::IsFalse => self.bool_type(),
         }
     }
+
+    /// Check binary operators and return the expression result type.
+    ///
+    /// This is where call/access-independent control-flow values are shaped:
+    /// comparisons become `bivalens`, arithmetic widens numerically, text `+`
+    /// requires both operands to be `textus`, and coalescing encodes the local
+    /// optional/`nihil` result contract.
     pub(super) fn check_binary(&mut self, op: HirBinOp, lhs: &mut HirExpr, rhs: &mut HirExpr) -> TypeId {
         let lhs_ty = self.check_expr(lhs);
         let rhs_ty = self.check_expr(rhs);

@@ -1,6 +1,34 @@
+//! Inference-variable unification and substitution resolution.
+//!
+//! This file is the checker-local inference engine. `Type::Infer` nodes live in
+//! the shared [`TypeTable`], but their meaning is completed by the
+//! `TypeChecker` substitution map here. Any code that needs the current meaning
+//! of a type must resolve through `TypeChecker::resolve_type`, not by inspecting
+//! the table entry alone.
+//!
+//! ERROR RECOVERY
+//! ==============
+//! Unification reports hard type errors and returns the table-local error type
+//! when compatibility fails. The checker then keeps walking the HIR so one bad
+//! expression does not hide unrelated diagnostics. Unresolved inference
+//! variables are diagnosed later by finalization as missing annotations.
+//!
+//! INVARIANTS
+//! ==========
+//! - `InferVar` IDs are scoped to one `TypeChecker` run.
+//! - Substitutions may point at aliases or other inferred types; resolving must
+//!   chase both substitution and alias chains.
+//! - The occurs check prevents recursive inference substitutions from creating
+//!   an infinite semantic type.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Return whether `var` occurs inside `ty` after current substitutions.
+    ///
+    /// This is the guard that keeps `T = lista<T>`-style inference cycles out of
+    /// the type table. It walks structural type shapes because compound entries
+    /// are allocated in the shared arena rather than expanded inline.
     pub(super) fn occurs_in(&self, var: InferVar, ty: TypeId) -> bool {
         let resolved = self.resolve_type(ty);
         if let Some(found) = self.infer_var_of(resolved) {
@@ -20,6 +48,12 @@ impl<'a> TypeChecker<'a> {
             _ => false,
         }
     }
+
+    /// Bind an inference variable to a resolved type or merge with its old binding.
+    ///
+    /// Existing substitutions are unified rather than overwritten so multiple
+    /// constraints on the same inferred type converge through the normal
+    /// compatibility rules.
     pub(super) fn bind_infer(&mut self, var: InferVar, ty: TypeId, span: crate::lexer::Span, message: &str) -> TypeId {
         let resolved = self.resolve_type(ty);
         if let Some(existing) = self.substitutions.get(&var) {
@@ -34,6 +68,13 @@ impl<'a> TypeChecker<'a> {
         self.substitutions.insert(var, resolved);
         resolved
     }
+
+    /// Make two table-local types compatible and return the resulting type.
+    ///
+    /// This operation is intentionally broader than structural equality. It
+    /// resolves aliases and inference substitutions, binds fresh variables,
+    /// unifies compatible compound shapes, accepts the language's implicit
+    /// numeric/assignment flows, and records a type error for everything else.
     pub(super) fn unify(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span, message: &str) -> TypeId {
         let left = self.resolve_type(a);
         let right = self.resolve_type(b);
@@ -99,6 +140,9 @@ impl<'a> TypeChecker<'a> {
                     params: sig_a.params.clone(),
                     ret,
                     err,
+                    // Async/generator markers describe effects at the call
+                    // boundary; unifying compatible function values preserves
+                    // either effect instead of silently erasing it.
                     is_async: sig_a.is_async || sig_b.is_async,
                     is_generator: sig_a.is_generator || sig_b.is_generator,
                 });
@@ -113,15 +157,25 @@ impl<'a> TypeChecker<'a> {
         self.error(SemanticErrorKind::TypeMismatch, message, span);
         self.error_type
     }
+
+    /// Return whether a type still names an inference variable after resolution.
     pub(super) fn is_infer(&self, ty: TypeId) -> bool {
         self.infer_var_of(ty).is_some()
     }
+
+    /// Extract the inference variable token from a table entry if present.
     pub(super) fn infer_var_of(&self, ty: TypeId) -> Option<InferVar> {
         match self.types.get(ty) {
             Type::Infer(var) => Some(*var),
             _ => None,
         }
     }
+
+    /// Resolve checker-local substitutions and semantic aliases to a usable type.
+    ///
+    /// `TypeId` itself is only an arena index. For inferred or aliased types, the
+    /// current semantic meaning is the fixed point reached by following the
+    /// checker substitution map and `Type::Alias` entries.
     pub(super) fn resolve_type(&self, ty: TypeId) -> TypeId {
         let mut current = ty;
         loop {
@@ -137,6 +191,11 @@ impl<'a> TypeChecker<'a> {
             }
         }
     }
+
+    /// Allocate a fresh inference variable in the shared type table.
+    ///
+    /// The returned `TypeId` can be stored on HIR nodes immediately, but it is
+    /// only final when `substitutions` later resolves its `InferVar`.
     pub(super) fn fresh_infer(&mut self) -> TypeId {
         let var = InferVar(self.next_infer);
         self.next_infer += 1;

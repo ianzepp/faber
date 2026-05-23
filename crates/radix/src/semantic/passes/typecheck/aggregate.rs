@@ -1,6 +1,29 @@
+//! Aggregate literals, closures, tuples, and struct construction typing.
+//!
+//! This file covers expression shapes whose type often depends on surrounding
+//! context: object/struct fields, closures, tuples, arrays, and spread forms.
+//! The checker uses expected types when they are available, but still records
+//! a synthesized result so later HIR consumers see one canonical type per
+//! expression node.
+//!
+//! INFERENCE CONTRACT
+//! ==================
+//! Empty arrays use contextual element information when available and otherwise
+//! keep a fresh inference variable; non-empty arrays derive a common element
+//! type from their items. Spread elements are checked as collections first, then
+//! contribute their element type to the aggregate. Struct literals are closed
+//! over the collected struct definition: unknown fields, missing required
+//! fields, computed keys, and spreads are diagnostics, not codegen-time policy
+//! choices.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Validates object-field syntax against a known struct definition.
+    ///
+    /// This path is used by conversion/`verte` forms where fields are still in
+    /// object-field representation. Each supplied field is checked so bad field
+    /// names do not hide type errors in neighboring initializers.
     pub(super) fn check_struct_fields(
         &mut self,
         def_id: DefId,
@@ -64,6 +87,14 @@ impl<'a> TypeChecker<'a> {
             }
         }
     }
+    /// Checks a closure expression and returns its function type.
+    ///
+    /// Closures are both synthesized and expected-context driven. If an
+    /// expected function type exists, parameter and return positions use it as
+    /// context; otherwise the closure body and explicit annotations determine
+    /// the signature. Statement-bodied closures rely on `redde`/return tracking,
+    /// while expression bodies can be checked directly against the expected
+    /// return type.
     #[allow(clippy::ptr_arg)]
     pub(super) fn check_closure(
         &mut self,
@@ -139,7 +170,10 @@ impl<'a> TypeChecker<'a> {
         self.types.function(sig)
     }
 
-    /// Unified type conversion check — dispatches on the resolved target type to determine
+    /// Builds the tuple expression shape currently represented as a union.
+    ///
+    /// This preserves all item types for later checks without committing to a
+    /// backend tuple ABI in the semantic pass.
     pub(super) fn check_tuple(&mut self, items: &mut [HirExpr]) -> TypeId {
         let mut types = Vec::new();
         for item in items {
@@ -147,6 +181,11 @@ impl<'a> TypeChecker<'a> {
         }
         self.types.intern(Type::Union(types))
     }
+    /// Checks a lowered struct literal against its collected field table.
+    ///
+    /// Unknown fields and missing required fields are reported here. The result
+    /// type remains the declared struct when the definition exists so codegen
+    /// and later diagnostics can still operate on the intended shape.
     #[allow(clippy::ptr_arg)]
     pub(super) fn check_struct_literal(&mut self, def_id: DefId, fields: &mut Vec<(Symbol, HirExpr)>) -> TypeId {
         let field_types = match self.structs.get(&def_id) {
@@ -183,6 +222,11 @@ impl<'a> TypeChecker<'a> {
 
         self.types.intern(Type::Struct(def_id))
     }
+    /// Chooses a common array element type, flattening one side when spread
+    /// analysis has already proven it is an array.
+    ///
+    /// This keeps `[x, ...ys]` joins about element compatibility rather than
+    /// accidentally forming a union between an element and a whole list.
     pub(super) fn array_common_type(&mut self, a: TypeId, b: TypeId, span: crate::lexer::Span) -> TypeId {
         let a_resolved = self.resolve_type(a);
         let b_resolved = self.resolve_type(b);
@@ -201,6 +245,13 @@ impl<'a> TypeChecker<'a> {
 
         self.common_type(a, b, span)
     }
+    /// Checks an array literal and returns its list type.
+    ///
+    /// Expected array context supplies the element type for empty literals and
+    /// for each non-spread item. Without that context, non-empty arrays infer a
+    /// common element type from their checked items, while an empty literal gets
+    /// a fresh inference variable instead of defaulting to `ignotum` or a target
+    /// container shape.
     pub(super) fn check_array(
         &mut self,
         elements: &mut [HirArrayElement],

@@ -1,6 +1,38 @@
+//! Expression synthesis and expected-type propagation for HIR type checking.
+//!
+//! This file is the central dispatcher for expression typing after name
+//! resolution and HIR lowering have already chosen expression forms and
+//! `DefId`s. Most expressions synthesize a type from their children, while a
+//! smaller set accepts an expected type from declarations, arguments, closures,
+//! or control-flow joins. That expected context is advisory until the final
+//! `unify` at the bottom of `check_expr_with_expected`; helpers may use it
+//! earlier for constructs such as `vacua`, array literals, blocks, branches,
+//! and closures where syntax alone cannot recover the intended shape.
+//!
+//! ERROR STRATEGY
+//! ==============
+//! The checker keeps walking after local failures. Invalid lowered expressions
+//! and missing contextual type information return the shared error type so later
+//! phases can still attach diagnostics to neighboring code instead of losing the
+//! rest of the file. `ignotum` remains an explicit escape type handled by the
+//! specialized helpers; it is not used here as a silent replacement for missing
+//! collection or nullability information.
+//!
+//! BOUNDARY
+//! ========
+//! This pass records resolved expression types on HIR nodes. It does not choose
+//! target-specific lowering policy, library translation, or codegen fallbacks.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Type-checks an `ab` collection pipeline while preserving its source
+    /// collection shape unless a transform explicitly changes the result.
+    ///
+    /// `ab` is mostly a dataflow expression: filters must be valid conditions
+    /// and transform arguments must be checked, but target-specific pipeline
+    /// lowering remains a backend concern. The semantic commitment made here is
+    /// only the result type visible to surrounding Faber expressions.
     pub(super) fn check_ab(
         &mut self,
         source: &mut HirExpr,
@@ -34,6 +66,15 @@ impl<'a> TypeChecker<'a> {
             source_ty
         }
     }
+    /// Synthesizes an expression type, optionally using an expected type as
+    /// context for shape-sensitive expressions.
+    ///
+    /// The expected type is not a target annotation and does not bypass local
+    /// checking. It gives ambiguous forms enough information to type themselves,
+    /// then the synthesized result is unified with that expectation before the
+    /// node's final `expr.ty` is recorded. Recovery paths return `error_type`
+    /// after emitting diagnostics so callers can continue checking sibling
+    /// expressions with a stable sentinel.
     pub(super) fn check_expr_with_expected(&mut self, expr: &mut HirExpr, expected: Option<TypeId>) -> TypeId {
         let ty = match &mut expr.kind {
             HirExprKind::Path(def_id) => self.check_path(*def_id, expr.span),
@@ -193,6 +234,11 @@ impl<'a> TypeChecker<'a> {
         ty
     }
 
+    /// Checks the empty collection literal.
+    ///
+    /// `vacua` is deliberately expected-context driven: without an explicit
+    /// declared collection type the checker cannot know whether it is a list,
+    /// map, or set, and codegen must not guess that shape later.
     fn check_vacua(&mut self, expected: Option<TypeId>, span: crate::lexer::Span) -> TypeId {
         let Some(expected) = expected else {
             self.error(
@@ -222,6 +268,11 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    /// Synthesizes an expression type without contextual expectations.
+    ///
+    /// Callers should prefer `check_expr_with_expected` when a declaration,
+    /// function parameter, branch join, or enclosing aggregate already supplies
+    /// a meaningful target shape.
     pub(super) fn check_expr(&mut self, expr: &mut HirExpr) -> TypeId {
         self.check_expr_with_expected(expr, None)
     }

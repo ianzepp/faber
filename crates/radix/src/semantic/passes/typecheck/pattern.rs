@@ -1,6 +1,30 @@
+//! Pattern typing and binding for `discerne` arms.
+//!
+//! Patterns sit on the boundary between value typing and lexical binding. They
+//! do not synthesize an independent type; instead, every pattern is checked
+//! against the scrutinee or enum-field type supplied by the caller, and any
+//! bindings introduced by the pattern inherit that expected type. This keeps
+//! match arm bindings aligned with the value being destructured instead of
+//! creating a second inference problem inside the pattern tree.
+//!
+//! INVARIANTS
+//! ==========
+//! - Pattern bindings are immutable and scoped by the enclosing match arm.
+//! - Literal patterns must unify with the scrutinee type.
+//! - Variant patterns validate the enum parent when the scrutinee type is known
+//!   and validate arity against the collected variant field table.
+//! - Alias patterns bind the whole matched value before checking the nested
+//!   pattern, so `name @ Variant(...)`-style forms preserve both views.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Check a pattern against an expected scrutinee or field type.
+    ///
+    /// The caller owns scope setup. This function only inserts the bindings
+    /// introduced by the pattern and reports mismatches. Unknown variant metadata
+    /// is treated as a semantic error and checking continues where possible so a
+    /// bad arm can still expose additional type or arity diagnostics.
     pub(super) fn check_pattern(&mut self, pattern: &HirPattern, expected: TypeId, span: crate::lexer::Span) {
         match pattern {
             HirPattern::Wildcard => {}
@@ -11,6 +35,8 @@ impl<'a> TypeChecker<'a> {
                 self.insert_binding(*def_id, expected, false);
                 if let HirPattern::Variant(variant_def, patterns) = pattern.as_ref() {
                     if patterns.is_empty() {
+                        // Unit-variant aliases can validate the enum parent
+                        // without recursing into an empty destructuring shape.
                         let Some(parent) = self.variant_parent.get(variant_def).copied() else {
                             self.error(SemanticErrorKind::UndefinedVariable, "unknown variant", span);
                             return;

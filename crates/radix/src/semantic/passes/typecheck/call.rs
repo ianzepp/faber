@@ -1,6 +1,29 @@
+//! Function, constructor, and method call typing.
+//!
+//! Calls are where expression inference meets the callable shapes collected
+//! earlier in semantic analysis. This file accepts already-resolved HIR callees,
+//! validates argument arity and parameter compatibility, builds provisional
+//! function types for inference variables, and enforces the local rule that
+//! failable calls need an active local handler.
+//!
+//! INVARIANTS
+//! ==========
+//! - Known function signatures drive expected-type checking of each argument.
+//! - Infer-typed callees are unified with a synthesized function signature from
+//!   the actual arguments, allowing call sites to constrain unknown values.
+//! - `ignotum` callees and receivers keep checking their arguments but return
+//!   `ignotum` instead of manufacturing hard errors from an intentional escape.
+//! - Backend method translation and stdlib target names are not decided here;
+//!   this pass only establishes the semantic result type and diagnostics.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Builds a provisional function signature from actual arguments.
+    ///
+    /// This is an inference device, not a declaration model. All arguments are
+    /// checked first, then the callee's inference variable can be unified with a
+    /// callable type that reflects the use site.
     pub(super) fn build_call_signature(&mut self, args: &mut [HirExpr]) -> FuncSig {
         let params = args
             .iter_mut()
@@ -8,12 +31,20 @@ impl<'a> TypeChecker<'a> {
             .collect();
         FuncSig { params, ret: self.fresh_infer(), err: None, is_async: false, is_generator: false }
     }
+    /// Returns a callable signature only for resolved function-shaped types.
     pub(super) fn function_signature_from_type(&self, ty: TypeId) -> Option<FuncSig> {
         match self.types.get(self.resolve_type(ty)) {
             Type::Func(sig) => Some(sig.clone()),
             _ => None,
         }
     }
+    /// Checks a call when the callee type is already known by another access
+    /// form, such as optional chaining or non-null call chaining.
+    ///
+    /// Error recovery mirrors direct calls: known functions validate arguments,
+    /// inference variables become provisional functions, `ignotum` preserves the
+    /// escape hatch while still visiting arguments, and non-callables emit one
+    /// diagnostic before returning the shared error type.
     pub(super) fn check_call_from_type(
         &mut self,
         callee_ty: TypeId,
@@ -50,6 +81,12 @@ impl<'a> TypeChecker<'a> {
         self.error(SemanticErrorKind::NotCallable, "callee is not callable", span);
         self.error_type
     }
+    /// Accepts a single spread-array argument when it can satisfy every required
+    /// non-optional parameter in a fixed signature.
+    ///
+    /// The helper is intentionally conservative: optional parameters disable
+    /// this compatibility mode because a single array cannot describe which
+    /// trailing arguments were omitted.
     pub(super) fn check_spread_array_compat(
         &mut self,
         sig: &FuncSig,
@@ -70,6 +107,12 @@ impl<'a> TypeChecker<'a> {
         }
         true
     }
+    /// Validates argument count and parameter types for a known signature.
+    ///
+    /// Each ordinary argument is checked with its parameter type as expected
+    /// context, which lets aggregates, closures, and empty literals adopt the
+    /// shape required by the callee before the final mismatch diagnostic is
+    /// considered.
     pub(super) fn check_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {
         let required = sig.params.iter().filter(|param| !param.optional).count();
         let spread_compat =
@@ -86,6 +129,13 @@ impl<'a> TypeChecker<'a> {
             self.unify(arg_ty, param.ty, arg.span, "argument type mismatch");
         }
     }
+    /// Checks method-call syntax after the receiver has been synthesized.
+    ///
+    /// Declared/interface methods are preferred. The array branch preserves a
+    /// small built-in collection-method surface until stdlib-backed method
+    /// metadata covers all call shapes. Unknown interface members are hard
+    /// diagnostics; unknown concrete members recover with a fresh inference type
+    /// to avoid cascading failures from incomplete receiver information.
     pub(super) fn check_method_call(&mut self, receiver: &mut HirExpr, name: Symbol, args: &mut [HirExpr]) -> TypeId {
         let receiver_ty = self.check_expr(receiver);
         if let Some(sig) = self.lookup_method_signature(receiver_ty, name) {
@@ -143,6 +193,11 @@ impl<'a> TypeChecker<'a> {
         }
         self.fresh_infer()
     }
+    /// Checks direct call syntax, including enum variant construction.
+    ///
+    /// Variant calls are constructors whose result is the parent enum type.
+    /// Ordinary calls then follow the same signature/inference/`ignotum`
+    /// recovery contract as calls from precomputed callee types.
     pub(super) fn check_call(&mut self, callee: &mut HirExpr, args: &mut [HirExpr]) -> TypeId {
         if let HirExprKind::Path(def_id) = &callee.kind {
             if let Some(parent) = self.variant_parent.get(def_id).copied() {
@@ -188,6 +243,12 @@ impl<'a> TypeChecker<'a> {
         self.error_type
     }
 
+    /// Enforces local handling for functions that can produce alternate exits.
+    ///
+    /// A local error sink consumes the failable call after unifying the thrown
+    /// type with the handler's expectation. A function-level alternate-exit
+    /// declaration is not enough for an ordinary call expression; propagation
+    /// must be expressed by surrounding syntax instead of being inferred here.
     pub(super) fn reject_failable_call(&mut self, sig: &FuncSig, span: crate::lexer::Span) -> bool {
         let Some(err_ty) = sig.err else {
             return false;

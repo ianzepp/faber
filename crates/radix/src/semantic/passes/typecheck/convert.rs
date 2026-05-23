@@ -1,6 +1,22 @@
+//! Conversion, cast, and reference-shape checks.
+//!
+//! This file owns expression forms that intentionally change the apparent type
+//! of a value: dereference, runtime conversion (`conversio`), and typed
+//! conversion/constructor syntax (`verte`). The pass validates only the semantic
+//! contracts it can prove from HIR and the `TypeTable`; representation details,
+//! fallback coercions, and target-specific conversion code remain backend work.
+//!
+//! ERROR AND ESCAPE POLICY
+//! =======================
+//! Invalid operands emit diagnostics and return the shared error type where the
+//! expression cannot be trusted. Explicit targets are otherwise respected,
+//! including `ignotum` and union-like map values when the surrounding code has
+//! intentionally chosen an escape or broad shape.
+
 use super::*;
 
 impl<'a> TypeChecker<'a> {
+    /// Checks dereference syntax by requiring a reference-shaped operand.
     pub(super) fn check_deref(&mut self, expr: &mut HirExpr, span: crate::lexer::Span) -> TypeId {
         let expr_ty = self.check_expr(expr);
         match self.types.get(self.resolve_type(expr_ty)) {
@@ -11,7 +27,13 @@ impl<'a> TypeChecker<'a> {
             }
         }
     }
-    /// Check a runtime value conversion (conversio).
+    /// Checks a runtime value conversion (`conversio`).
+    ///
+    /// The source is always visited for diagnostics. The fallback expression is
+    /// checked too, but mismatches with the requested target are intentionally
+    /// not made fatal here yet because backend conversion code owns the runtime
+    /// fallback contract. This function therefore returns the declared target
+    /// type rather than inventing a common type between source and fallback.
     pub(super) fn check_conversio(
         &mut self,
         source: &mut HirExpr,
@@ -31,7 +53,13 @@ impl<'a> TypeChecker<'a> {
         target
     }
 
-    /// Validate struct field entries against the struct definition.
+    /// Checks `verte` typed conversion and construction forms.
+    ///
+    /// The resolved target type decides the validation mode: structs validate
+    /// fields, arrays validate element/spread element compatibility, maps
+    /// validate keys and values, and all other targets check the source while
+    /// trusting the explicit target. Inference targets are unified with the
+    /// source type because there is no concrete shape to validate yet.
     pub(super) fn check_verte(
         &mut self,
         source: &mut HirExpr,
@@ -41,18 +69,17 @@ impl<'a> TypeChecker<'a> {
     ) -> TypeId {
         let target_resolved = self.resolve_type(target);
 
-        // For infer-typed targets, unify with the source type
+        // WHY: an infer target carries no conversion shape, so the source use
+        // site is the only evidence available to constrain it.
         if self.is_infer(target_resolved) {
             let expr_ty = self.check_expr(source);
             return self.unify(expr_ty, target, source.span, "invalid cast");
         }
 
         match (self.types.get(target_resolved).clone(), entries) {
-            // Struct instantiation — validate field names and types
             (Type::Struct(def_id), Some(entries)) => {
                 self.check_struct_fields(def_id, entries, span);
             }
-            // Array construction — validate element types
             (Type::Array(elem_ty), _) => {
                 if let HirExprKind::Array(elements) = &mut source.kind {
                     for element in elements {
@@ -82,7 +109,6 @@ impl<'a> TypeChecker<'a> {
                     self.check_expr(source);
                 }
             }
-            // Map construction — validate key-value entry types
             (Type::Map(key_ty, value_ty), Some(entries)) => {
                 let mut inferred_values = Vec::new();
                 for field in entries {
@@ -121,6 +147,9 @@ impl<'a> TypeChecker<'a> {
                     let value_ty_actual = self.check_expr(value);
                     inferred_values.push(self.resolve_type(value_ty_actual));
                     let value_resolved = self.resolve_type(value_ty);
+                    // WHY: infer/ignotum/union value targets are already broad
+                    // enough to accept the entry while preserving the explicit
+                    // map shape. Narrow value targets still get normal unifies.
                     if !(self.is_infer(value_resolved)
                         || matches!(self.types.get(value_resolved), Type::Primitive(Primitive::Ignotum))
                         || matches!(self.types.get(value_resolved), Type::Union(_)))
@@ -137,7 +166,6 @@ impl<'a> TypeChecker<'a> {
                     return self.types.map(key_ty, inferred_value_ty);
                 }
             }
-            // Cast / other — check the source, trust the target type
             _ => {
                 self.check_expr(source);
             }
