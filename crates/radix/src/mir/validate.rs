@@ -91,6 +91,61 @@ impl MirVisitor for DuplicateFunctionFinder {
     }
 }
 
+struct FunctionShape {
+    locals: FxHashMap<MirLocalId, MirType>,
+    temps: FxHashMap<MirTempId, MirType>,
+    blocks: FxHashSet<MirBlockId>,
+    duplicate_param_locals: Vec<(MirLocalId, Span)>,
+    conflicting_locals: Vec<(MirLocalId, Span)>,
+    duplicate_temps: Vec<(MirTempId, Span)>,
+    duplicate_blocks: Vec<(MirBlockId, Span)>,
+}
+
+impl FunctionShape {
+    fn collect(function: &MirFunction) -> Self {
+        let mut shape = Self {
+            locals: FxHashMap::default(),
+            temps: FxHashMap::default(),
+            blocks: FxHashSet::default(),
+            duplicate_param_locals: Vec::new(),
+            conflicting_locals: Vec::new(),
+            duplicate_temps: Vec::new(),
+            duplicate_blocks: Vec::new(),
+        };
+        shape.visit_function(function);
+        shape
+    }
+}
+
+impl MirVisitor for FunctionShape {
+    fn visit_param(&mut self, param: &MirParam) {
+        if self.locals.insert(param.local, param.ty).is_some() {
+            self.duplicate_param_locals.push((param.local, param.span));
+        }
+    }
+
+    fn visit_local(&mut self, local: &MirLocal) {
+        match self.locals.insert(local.id, local.ty) {
+            Some(existing) if existing.semantic_id() != local.ty.semantic_id() => {
+                self.conflicting_locals.push((local.id, local.span));
+            }
+            _ => {}
+        }
+    }
+
+    fn visit_temp(&mut self, temp: &MirTemp) {
+        if self.temps.insert(temp.id, temp.ty).is_some() {
+            self.duplicate_temps.push((temp.id, temp.span));
+        }
+    }
+
+    fn visit_block(&mut self, block: &MirBlock) {
+        if !self.blocks.insert(block.id) {
+            self.duplicate_blocks.push((block.id, block.span));
+        }
+    }
+}
+
 fn signature_from_function(function: &MirFunction) -> MirFunctionSignature {
     MirFunctionSignature {
         params: function.params.iter().map(|param| param.ty).collect(),
@@ -121,59 +176,40 @@ impl Validator<'_, '_> {
         if let Some(error_ty) = function.error_ty {
             self.validate_mir_type(error_ty, function.span);
         }
-        let locals = self.collect_locals(function);
-        let temps = self.collect_temps(function);
-        let blocks = self.collect_blocks(function);
-        let mut scope =
-            FunctionScope { function, functions_by_id, locals, temps, blocks, values: FxHashMap::default() };
+        for param in &function.params {
+            self.validate_mir_type(param.ty, param.span);
+        }
+        for local in &function.locals {
+            self.validate_mir_type(local.ty, local.span);
+        }
+        for temp in &function.temps {
+            self.validate_mir_type(temp.ty, temp.span);
+        }
+        let shape = FunctionShape::collect(function);
+        for (id, span) in &shape.duplicate_param_locals {
+            self.error(*span, format!("duplicate MIR local id _{}", id.0));
+        }
+        for (id, span) in &shape.conflicting_locals {
+            self.error(*span, format!("duplicate MIR local id _{} has conflicting type", id.0));
+        }
+        for (id, span) in &shape.duplicate_temps {
+            self.error(*span, format!("duplicate MIR temp id %{}", id.0));
+        }
+        for (id, span) in &shape.duplicate_blocks {
+            self.error(*span, format!("duplicate MIR block id bb{}", id.0));
+        }
+        let mut scope = FunctionScope {
+            function,
+            functions_by_id,
+            locals: shape.locals,
+            temps: shape.temps,
+            blocks: shape.blocks,
+            values: FxHashMap::default(),
+        };
 
         for block in &function.blocks {
             self.validate_block(&mut scope, block);
         }
-    }
-
-    fn collect_locals(&mut self, function: &MirFunction) -> FxHashMap<MirLocalId, MirType> {
-        let mut locals = FxHashMap::default();
-        for param in &function.params {
-            self.validate_mir_type(param.ty, param.span);
-            if locals.insert(param.local, param.ty).is_some() {
-                self.error(param.span, format!("duplicate MIR local id _{}", param.local.0));
-            }
-        }
-        for local in &function.locals {
-            self.validate_mir_type(local.ty, local.span);
-            match locals.insert(local.id, local.ty) {
-                Some(existing) if existing.semantic_id() != local.ty.semantic_id() => {
-                    self.error(
-                        local.span,
-                        format!("duplicate MIR local id _{} has conflicting type", local.id.0),
-                    );
-                }
-                _ => {}
-            }
-        }
-        locals
-    }
-
-    fn collect_temps(&mut self, function: &MirFunction) -> FxHashMap<MirTempId, MirType> {
-        let mut temps = FxHashMap::default();
-        for temp in &function.temps {
-            self.validate_mir_type(temp.ty, temp.span);
-            if temps.insert(temp.id, temp.ty).is_some() {
-                self.error(temp.span, format!("duplicate MIR temp id %{}", temp.id.0));
-            }
-        }
-        temps
-    }
-
-    fn collect_blocks(&mut self, function: &MirFunction) -> FxHashSet<MirBlockId> {
-        let mut blocks = FxHashSet::default();
-        for block in &function.blocks {
-            if !blocks.insert(block.id) {
-                self.error(block.span, format!("duplicate MIR block id bb{}", block.id.0));
-            }
-        }
-        blocks
     }
 
     fn validate_block(&mut self, scope: &mut FunctionScope<'_>, block: &MirBlock) {
