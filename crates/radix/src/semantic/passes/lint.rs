@@ -32,6 +32,7 @@
 //! - Explicit ignotum annotation (disables type checking)
 //! - Shadowed variable (hard error, not warning)
 
+use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{
     HirBlock, HirExpr, HirExprKind, HirFunction, HirImport, HirItem, HirItemKind, HirLocal, HirProgram, HirStmt,
     HirStmtKind,
@@ -80,6 +81,7 @@ struct LintContext<'a> {
     imports: Vec<(crate::hir::DefId, Span)>,
     functions: Vec<(crate::hir::DefId, Span)>,
     scope: Vec<rustc_hash::FxHashMap<crate::lexer::Symbol, crate::hir::DefId>>,
+    in_loop: bool,
 }
 
 impl<'a> LintContext<'a> {
@@ -93,6 +95,7 @@ impl<'a> LintContext<'a> {
             imports: Vec::new(),
             functions: Vec::new(),
             scope: Vec::new(),
+            in_loop: false,
         }
     }
 
@@ -242,201 +245,10 @@ impl<'a> LintContext<'a> {
     }
 
     fn check_expr(&mut self, expr: &HirExpr, in_loop: bool) {
-        match &expr.kind {
-            HirExprKind::Path(def_id) => {
-                self.used.insert(*def_id);
-            }
-            HirExprKind::Binary(_, lhs, rhs) => {
-                self.check_expr(lhs, in_loop);
-                self.check_expr(rhs, in_loop);
-            }
-            HirExprKind::Unary(_, operand) => self.check_expr(operand, in_loop),
-            HirExprKind::Call(callee, args) => {
-                self.check_expr(callee, in_loop);
-                for arg in args {
-                    self.check_expr(arg, in_loop);
-                }
-            }
-            HirExprKind::MethodCall(receiver, _name, args) => {
-                self.check_expr(receiver, in_loop);
-                for arg in args {
-                    self.check_expr(arg, in_loop);
-                }
-            }
-            HirExprKind::Field(object, _) => self.check_expr(object, in_loop),
-            HirExprKind::Index(object, index) => {
-                self.check_expr(object, in_loop);
-                self.check_expr(index, in_loop);
-            }
-            HirExprKind::OptionalChain(object, chain) => {
-                self.check_expr(object, in_loop);
-                match chain {
-                    crate::hir::HirOptionalChainKind::Member(_) => {}
-                    crate::hir::HirOptionalChainKind::Index(index) => self.check_expr(index, in_loop),
-                    crate::hir::HirOptionalChainKind::Call(args) => {
-                        for arg in args {
-                            self.check_expr(arg, in_loop);
-                        }
-                    }
-                }
-            }
-            HirExprKind::NonNull(object, chain) => {
-                self.check_expr(object, in_loop);
-                match chain {
-                    crate::hir::HirNonNullKind::Member(_) => {}
-                    crate::hir::HirNonNullKind::Index(index) => self.check_expr(index, in_loop),
-                    crate::hir::HirNonNullKind::Call(args) => {
-                        for arg in args {
-                            self.check_expr(arg, in_loop);
-                        }
-                    }
-                }
-            }
-            HirExprKind::Ab { source, filter, transforms } => {
-                self.check_expr(source, in_loop);
-                if let Some(filter) = filter {
-                    if let crate::hir::HirCollectionFilterKind::Condition(cond) = &filter.kind {
-                        self.check_expr(cond, in_loop);
-                    }
-                }
-                for transform in transforms {
-                    if let Some(arg) = &transform.arg {
-                        self.check_expr(arg, in_loop);
-                    }
-                }
-            }
-            HirExprKind::Block(block) => self.check_block(block, in_loop),
-            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
-                self.check_expr(cond, in_loop);
-                self.check_block(then_block, in_loop);
-                if let Some(catch) = then_catch {
-                    self.check_block(&catch.body, in_loop);
-                }
-                if let Some(block) = else_block {
-                    self.check_block(block, in_loop);
-                }
-            }
-            HirExprKind::Discerne(scrutinees, arms) => {
-                for scrutinee in scrutinees {
-                    self.check_expr(scrutinee, in_loop);
-                }
-                for arm in arms {
-                    if let Some(guard) = &arm.guard {
-                        self.check_expr(guard, in_loop);
-                    }
-                    self.check_expr(&arm.body, in_loop);
-                }
-            }
-            HirExprKind::Loop(block) => self.check_block(block, true),
-            HirExprKind::Dum(cond, block) => {
-                self.check_expr(cond, in_loop);
-                self.check_block(block, true);
-            }
-            HirExprKind::Itera(_, _, _, iter, block) => {
-                self.check_expr(iter, in_loop);
-                self.check_block(block, true);
-            }
-            HirExprKind::Intervallum { start, end, step, .. } => {
-                self.check_expr(start, in_loop);
-                self.check_expr(end, in_loop);
-                if let Some(step) = step {
-                    self.check_expr(step, in_loop);
-                }
-            }
-            HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
-                self.check_expr(lhs, in_loop);
-                self.check_expr(rhs, in_loop);
-            }
-            HirExprKind::Array(elements) => {
-                for element in elements {
-                    match element {
-                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
-                            self.check_expr(expr, in_loop);
-                        }
-                    }
-                }
-            }
-            HirExprKind::Struct(_, fields) => {
-                for (_, value) in fields {
-                    self.check_expr(value, in_loop);
-                }
-            }
-            HirExprKind::Tuple(elements) => {
-                for element in elements {
-                    self.check_expr(element, in_loop);
-                }
-            }
-            HirExprKind::Scribe(_, elements) => {
-                for element in elements {
-                    self.check_expr(element, in_loop);
-                }
-            }
-            HirExprKind::Scriptum(_, args) => {
-                for arg in args {
-                    self.check_expr(arg, in_loop);
-                }
-            }
-            HirExprKind::Adfirma(cond, message) => {
-                self.check_expr(cond, in_loop);
-                if let Some(message) = message {
-                    self.check_expr(message, in_loop);
-                }
-            }
-            HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.check_expr(value, in_loop),
-            HirExprKind::Handled { body, catch } => {
-                self.check_block(body, in_loop);
-                self.check_block(&catch.body, in_loop);
-            }
-            HirExprKind::Tempta { body, catch, finally } => {
-                self.check_block(body, in_loop);
-                if let Some(catch) = catch {
-                    self.check_block(catch, in_loop);
-                }
-                if let Some(finally) = finally {
-                    self.check_block(finally, in_loop);
-                }
-            }
-            HirExprKind::Clausura(_, _, body) => self.check_expr(body, in_loop),
-            HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
-                self.check_expr(expr, in_loop)
-            }
-            HirExprKind::Verte { source, target, entries } => {
-                self.check_expr(source, in_loop);
-                // Warn when source type already matches target — the ⇢ cast is noise.
-                // Skip when entries are present: that's struct/map construction, not casting.
-                if entries.is_none() {
-                    if let Some(inner_ty) = source.ty {
-                        if self.types.equals(inner_ty, *target) {
-                            self.warnings.push((
-                                WarningKind::UnnecessaryCast,
-                                "unnecessary cast: type is already known".to_owned(),
-                                expr.span,
-                            ));
-                        }
-                    }
-                }
-                if let Some(entries) = entries {
-                    for field in entries {
-                        match &field.key {
-                            crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
-                                self.check_expr(expr, in_loop)
-                            }
-                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
-                        }
-                        if let Some(value) = &field.value {
-                            self.check_expr(value, in_loop);
-                        }
-                    }
-                }
-            }
-            HirExprKind::Conversio { source, fallback, .. } => {
-                self.check_expr(source, in_loop);
-                if let Some(fallback) = fallback {
-                    self.check_expr(fallback, in_loop);
-                }
-            }
-            HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
-        }
+        let previous = self.in_loop;
+        self.in_loop = in_loop;
+        self.visit_expr(expr);
+        self.in_loop = previous;
     }
 
     fn check_shadowing(&mut self, name: crate::lexer::Symbol, def_id: crate::hir::DefId, span: Span) {
@@ -475,6 +287,44 @@ impl<'a> LintContext<'a> {
                 "explicit ignotum annotation disables precise type-checking".to_owned(),
                 span,
             ));
+        }
+    }
+}
+
+impl HirVisitor for LintContext<'_> {
+    fn visit_block(&mut self, block: &HirBlock) {
+        self.check_block(block, self.in_loop);
+    }
+
+    fn visit_expr(&mut self, expr: &HirExpr) {
+        match &expr.kind {
+            HirExprKind::Path(def_id) => {
+                self.used.insert(*def_id);
+            }
+            HirExprKind::Loop(block) => self.check_block(block, true),
+            HirExprKind::Dum(cond, block) => {
+                self.visit_expr(cond);
+                self.check_block(block, true);
+            }
+            HirExprKind::Itera(_, _, _, iter, block) => {
+                self.visit_expr(iter);
+                self.check_block(block, true);
+            }
+            HirExprKind::Verte { source, target, entries } => {
+                if entries.is_none() {
+                    if let Some(inner_ty) = source.ty {
+                        if self.types.equals(inner_ty, *target) {
+                            self.warnings.push((
+                                WarningKind::UnnecessaryCast,
+                                "unnecessary cast: type is already known".to_owned(),
+                                expr.span,
+                            ));
+                        }
+                    }
+                }
+                walk_expr(self, expr);
+            }
+            _ => walk_expr(self, expr),
         }
     }
 }

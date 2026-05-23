@@ -27,46 +27,21 @@
 //! - Guard blindness: Treats guarded patterns as non-exhaustive
 //! - Enum-only: Only checks enum variant coverage, not integers or strings
 
-use crate::hir::{
-    DefId, HirBlock, HirCasuArm, HirExpr, HirExprKind, HirItemKind, HirPattern, HirProgram, HirStmt, HirStmtKind,
-};
+use crate::hir::visit::{walk_expr, HirVisitor};
+use crate::hir::{DefId, HirCasuArm, HirExpr, HirExprKind, HirItemKind, HirPattern, HirProgram};
 use crate::semantic::{SemanticError, SemanticErrorKind, Type, TypeId, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 /// Check pattern match exhaustiveness
 pub fn check(hir: &HirProgram, types: &TypeTable) -> Result<(), Vec<SemanticError>> {
-    let mut errors = Vec::new();
     let enum_variants = collect_enum_variants(hir);
+    let mut checker = ExhaustiveChecker { types, enum_variants, errors: Vec::new() };
+    checker.visit_program(hir);
 
-    for item in &hir.items {
-        match &item.kind {
-            HirItemKind::Function(func) => {
-                if let Some(body) = &func.body {
-                    check_block(body, types, &enum_variants, &mut errors);
-                }
-            }
-            HirItemKind::Struct(strukt) => {
-                for method in &strukt.methods {
-                    if let Some(body) = &method.func.body {
-                        check_block(body, types, &enum_variants, &mut errors);
-                    }
-                }
-            }
-            HirItemKind::Const(const_item) => {
-                check_expr(&const_item.value, types, &enum_variants, &mut errors);
-            }
-            _ => {}
-        }
-    }
-
-    if let Some(entry) = &hir.entry {
-        check_block(entry, types, &enum_variants, &mut errors);
-    }
-
-    if errors.is_empty() {
+    if checker.errors.is_empty() {
         Ok(())
     } else {
-        Err(errors)
+        Err(checker.errors)
     }
 }
 
@@ -81,238 +56,18 @@ fn collect_enum_variants(hir: &HirProgram) -> FxHashMap<DefId, Vec<DefId>> {
     map
 }
 
-fn check_block(
-    block: &HirBlock,
-    types: &TypeTable,
-    enum_variants: &FxHashMap<DefId, Vec<DefId>>,
-    errors: &mut Vec<SemanticError>,
-) {
-    for stmt in &block.stmts {
-        check_stmt(stmt, types, enum_variants, errors);
-    }
-    if let Some(expr) = &block.expr {
-        check_expr(expr, types, enum_variants, errors);
-    }
+struct ExhaustiveChecker<'a> {
+    types: &'a TypeTable,
+    enum_variants: FxHashMap<DefId, Vec<DefId>>,
+    errors: Vec<SemanticError>,
 }
 
-fn check_stmt(
-    stmt: &HirStmt,
-    types: &TypeTable,
-    enum_variants: &FxHashMap<DefId, Vec<DefId>>,
-    errors: &mut Vec<SemanticError>,
-) {
-    match &stmt.kind {
-        HirStmtKind::Local(local) => {
-            if let Some(init) = &local.init {
-                check_expr(init, types, enum_variants, errors);
-            }
+impl HirVisitor for ExhaustiveChecker<'_> {
+    fn visit_expr(&mut self, expr: &HirExpr) {
+        if let HirExprKind::Discerne(scrutinees, arms) = &expr.kind {
+            check_match(scrutinees, arms, self.types, &self.enum_variants, &mut self.errors);
         }
-        HirStmtKind::Expr(expr) => check_expr(expr, types, enum_variants, errors),
-        HirStmtKind::Ad(ad) => {
-            for arg in &ad.args {
-                check_expr(arg, types, enum_variants, errors);
-            }
-            if let Some(body) = &ad.body {
-                check_block(body, types, enum_variants, errors);
-            }
-            if let Some(catch) = &ad.catch {
-                check_block(catch, types, enum_variants, errors);
-            }
-        }
-        HirStmtKind::Redde(value) => {
-            if let Some(expr) = value {
-                check_expr(expr, types, enum_variants, errors);
-            }
-        }
-        HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
-    }
-}
-
-fn check_expr(
-    expr: &HirExpr,
-    types: &TypeTable,
-    enum_variants: &FxHashMap<DefId, Vec<DefId>>,
-    errors: &mut Vec<SemanticError>,
-) {
-    match &expr.kind {
-        HirExprKind::Binary(_, lhs, rhs) => {
-            check_expr(lhs, types, enum_variants, errors);
-            check_expr(rhs, types, enum_variants, errors);
-        }
-        HirExprKind::Unary(_, operand) => check_expr(operand, types, enum_variants, errors),
-        HirExprKind::Call(callee, args) => {
-            check_expr(callee, types, enum_variants, errors);
-            for arg in args {
-                check_expr(arg, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::MethodCall(receiver, _name, args) => {
-            check_expr(receiver, types, enum_variants, errors);
-            for arg in args {
-                check_expr(arg, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Field(object, _) => check_expr(object, types, enum_variants, errors),
-        HirExprKind::Index(object, index) => {
-            check_expr(object, types, enum_variants, errors);
-            check_expr(index, types, enum_variants, errors);
-        }
-        HirExprKind::OptionalChain(object, chain) => {
-            check_expr(object, types, enum_variants, errors);
-            match chain {
-                crate::hir::HirOptionalChainKind::Member(_) => {}
-                crate::hir::HirOptionalChainKind::Index(index) => check_expr(index, types, enum_variants, errors),
-                crate::hir::HirOptionalChainKind::Call(args) => {
-                    for arg in args {
-                        check_expr(arg, types, enum_variants, errors);
-                    }
-                }
-            }
-        }
-        HirExprKind::NonNull(object, chain) => {
-            check_expr(object, types, enum_variants, errors);
-            match chain {
-                crate::hir::HirNonNullKind::Member(_) => {}
-                crate::hir::HirNonNullKind::Index(index) => check_expr(index, types, enum_variants, errors),
-                crate::hir::HirNonNullKind::Call(args) => {
-                    for arg in args {
-                        check_expr(arg, types, enum_variants, errors);
-                    }
-                }
-            }
-        }
-        HirExprKind::Ab { source, filter, transforms } => {
-            check_expr(source, types, enum_variants, errors);
-            if let Some(filter) = filter {
-                if let crate::hir::HirCollectionFilterKind::Condition(cond) = &filter.kind {
-                    check_expr(cond, types, enum_variants, errors);
-                }
-            }
-            for transform in transforms {
-                if let Some(arg) = &transform.arg {
-                    check_expr(arg, types, enum_variants, errors);
-                }
-            }
-        }
-        HirExprKind::Block(block) => check_block(block, types, enum_variants, errors),
-        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
-            check_expr(cond, types, enum_variants, errors);
-            check_block(then_block, types, enum_variants, errors);
-            if let Some(catch) = then_catch {
-                check_block(&catch.body, types, enum_variants, errors);
-            }
-            if let Some(block) = else_block {
-                check_block(block, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Discerne(scrutinees, arms) => {
-            for scrutinee in scrutinees {
-                check_expr(scrutinee, types, enum_variants, errors);
-            }
-            check_match(scrutinees, arms, types, enum_variants, errors);
-            for arm in arms {
-                if let Some(guard) = &arm.guard {
-                    check_expr(guard, types, enum_variants, errors);
-                }
-                check_expr(&arm.body, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Loop(block) => check_block(block, types, enum_variants, errors),
-        HirExprKind::Dum(cond, block) => {
-            check_expr(cond, types, enum_variants, errors);
-            check_block(block, types, enum_variants, errors);
-        }
-        HirExprKind::Itera(_, _, _, iter, block) => {
-            check_expr(iter, types, enum_variants, errors);
-            check_block(block, types, enum_variants, errors);
-        }
-        HirExprKind::Intervallum { start, end, step, .. } => {
-            check_expr(start, types, enum_variants, errors);
-            check_expr(end, types, enum_variants, errors);
-            if let Some(step) = step {
-                check_expr(step, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
-            check_expr(lhs, types, enum_variants, errors);
-            check_expr(rhs, types, enum_variants, errors);
-        }
-        HirExprKind::Array(elements) => {
-            for element in elements {
-                match element {
-                    crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
-                        check_expr(expr, types, enum_variants, errors);
-                    }
-                }
-            }
-        }
-        HirExprKind::Struct(_, fields) => {
-            for (_, value) in fields {
-                check_expr(value, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Tuple(elements) => {
-            for element in elements {
-                check_expr(element, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Scribe(_, elements) => {
-            for element in elements {
-                check_expr(element, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Scriptum(_, args) => {
-            for arg in args {
-                check_expr(arg, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Adfirma(cond, message) => {
-            check_expr(cond, types, enum_variants, errors);
-            if let Some(message) = message {
-                check_expr(message, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Panic(value) | HirExprKind::Throw(value) => check_expr(value, types, enum_variants, errors),
-        HirExprKind::Handled { body, catch } => {
-            check_block(body, types, enum_variants, errors);
-            check_block(&catch.body, types, enum_variants, errors);
-        }
-        HirExprKind::Tempta { body, catch, finally } => {
-            check_block(body, types, enum_variants, errors);
-            if let Some(catch) = catch {
-                check_block(catch, types, enum_variants, errors);
-            }
-            if let Some(finally) = finally {
-                check_block(finally, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Clausura(_, _, body) => check_expr(body, types, enum_variants, errors),
-        HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => {
-            check_expr(expr, types, enum_variants, errors)
-        }
-        HirExprKind::Verte { source, entries, .. } => {
-            check_expr(source, types, enum_variants, errors);
-            if let Some(entries) = entries {
-                for field in entries {
-                    match &field.key {
-                        crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
-                            check_expr(expr, types, enum_variants, errors);
-                        }
-                        crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
-                    }
-                    if let Some(value) = &field.value {
-                        check_expr(value, types, enum_variants, errors);
-                    }
-                }
-            }
-        }
-        HirExprKind::Conversio { source, fallback, .. } => {
-            check_expr(source, types, enum_variants, errors);
-            if let Some(fallback) = fallback {
-                check_expr(fallback, types, enum_variants, errors);
-            }
-        }
-        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
+        walk_expr(self, expr);
     }
 }
 

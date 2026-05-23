@@ -51,6 +51,7 @@
 //!   field access chains (e.g., `x.y.z` → DefId for `x`)
 //! - Method calls: Borrows receiver based on method signature if available
 
+use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{
     DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirParamMode, HirProgram, HirStmt,
     HirStmtKind,
@@ -219,205 +220,7 @@ impl<'a> BorrowChecker<'a> {
     }
 
     fn check_expr(&mut self, expr: &HirExpr) {
-        match &expr.kind {
-            HirExprKind::Path(def_id) => self.read_use(*def_id, expr.span),
-            HirExprKind::Literal(_) => {}
-            HirExprKind::Binary(_, lhs, rhs) => {
-                self.check_expr(lhs);
-                self.check_expr(rhs);
-            }
-            HirExprKind::Unary(_, operand) => self.check_expr(operand),
-            HirExprKind::Call(callee, args) => {
-                self.check_expr(callee);
-                self.check_call_args(callee, args);
-            }
-            HirExprKind::MethodCall(receiver, _name, args) => {
-                self.check_expr(receiver);
-                for arg in args {
-                    self.check_expr(arg);
-                }
-            }
-            HirExprKind::Field(object, _) => self.check_expr(object),
-            HirExprKind::Index(object, index) => {
-                self.check_expr(object);
-                self.check_expr(index);
-            }
-            HirExprKind::OptionalChain(object, chain) => {
-                self.check_expr(object);
-                match chain {
-                    crate::hir::HirOptionalChainKind::Member(_) => {}
-                    crate::hir::HirOptionalChainKind::Index(index) => self.check_expr(index),
-                    crate::hir::HirOptionalChainKind::Call(args) => {
-                        for arg in args {
-                            self.check_expr(arg);
-                        }
-                    }
-                }
-            }
-            HirExprKind::NonNull(object, chain) => {
-                self.check_expr(object);
-                match chain {
-                    crate::hir::HirNonNullKind::Member(_) => {}
-                    crate::hir::HirNonNullKind::Index(index) => self.check_expr(index),
-                    crate::hir::HirNonNullKind::Call(args) => {
-                        for arg in args {
-                            self.check_expr(arg);
-                        }
-                    }
-                }
-            }
-            HirExprKind::Ab { source, filter, transforms } => {
-                self.check_expr(source);
-                if let Some(filter) = filter {
-                    if let crate::hir::HirCollectionFilterKind::Condition(cond) = &filter.kind {
-                        self.check_expr(cond);
-                    }
-                }
-                for transform in transforms {
-                    if let Some(arg) = &transform.arg {
-                        self.check_expr(arg);
-                    }
-                }
-            }
-            HirExprKind::Block(block) => self.check_block(block),
-            HirExprKind::Si { cond, then_block, then_catch, else_block } => {
-                self.check_expr(cond);
-                self.check_block(then_block);
-                if let Some(catch) = then_catch {
-                    self.check_block(&catch.body);
-                }
-                if let Some(block) = else_block {
-                    self.check_block(block);
-                }
-            }
-            HirExprKind::Discerne(scrutinees, arms) => {
-                for scrutinee in scrutinees {
-                    self.check_expr(scrutinee);
-                }
-                for arm in arms {
-                    self.push_scope();
-                    if let Some(guard) = &arm.guard {
-                        self.check_expr(guard);
-                    }
-                    self.check_expr(&arm.body);
-                    self.pop_scope();
-                }
-            }
-            HirExprKind::Loop(block) => self.check_block(block),
-            HirExprKind::Dum(cond, block) => {
-                self.check_expr(cond);
-                self.check_block(block);
-            }
-            HirExprKind::Itera(_, binding, _, iter, block) => {
-                self.check_expr(iter);
-                self.ensure_state(*binding);
-                self.check_block(block);
-            }
-            HirExprKind::Intervallum { start, end, step, .. } => {
-                self.check_expr(start);
-                self.check_expr(end);
-                if let Some(step) = step {
-                    self.check_expr(step);
-                }
-            }
-            HirExprKind::Assign(target, value) => {
-                self.check_lvalue(target);
-                self.check_expr(value);
-            }
-            HirExprKind::AssignOp(_, target, value) => {
-                self.check_lvalue(target);
-                self.check_expr(value);
-            }
-            HirExprKind::Array(elements) => {
-                for element in elements {
-                    match element {
-                        crate::hir::HirArrayElement::Expr(expr) | crate::hir::HirArrayElement::Spread(expr) => {
-                            self.check_expr(expr);
-                        }
-                    }
-                }
-            }
-            HirExprKind::Struct(_, fields) => {
-                for (_, value) in fields {
-                    self.check_expr(value);
-                }
-            }
-            HirExprKind::Tuple(elements) => {
-                for element in elements {
-                    self.check_expr(element);
-                }
-            }
-            HirExprKind::Scribe(_, elements) => {
-                for element in elements {
-                    self.check_expr(element);
-                }
-            }
-            HirExprKind::Scriptum(_, args) => {
-                for arg in args {
-                    self.check_expr(arg);
-                }
-            }
-            HirExprKind::Adfirma(cond, message) => {
-                self.check_expr(cond);
-                if let Some(message) = message {
-                    self.check_expr(message);
-                }
-            }
-            HirExprKind::Panic(value) | HirExprKind::Throw(value) => self.check_expr(value),
-            HirExprKind::Handled { body, catch } => {
-                self.check_block(body);
-                self.check_block(&catch.body);
-            }
-            HirExprKind::Tempta { body, catch, finally } => {
-                self.check_block(body);
-                if let Some(catch) = catch {
-                    self.check_block(catch);
-                }
-                if let Some(finally) = finally {
-                    self.check_block(finally);
-                }
-            }
-            HirExprKind::Clausura(params, _, body) => {
-                self.push_scope();
-                for param in params {
-                    self.ensure_state(param.def_id);
-                }
-                self.check_expr(body);
-                self.pop_scope();
-            }
-            HirExprKind::Cede(expr) => self.check_expr(expr),
-            HirExprKind::Verte { source, entries, .. } => {
-                self.check_expr(source);
-                if let Some(entries) = entries {
-                    for field in entries {
-                        match &field.key {
-                            crate::hir::HirObjectKey::Computed(expr) | crate::hir::HirObjectKey::Spread(expr) => {
-                                self.check_expr(expr)
-                            }
-                            crate::hir::HirObjectKey::Ident(_) | crate::hir::HirObjectKey::String(_) => {}
-                        }
-                        if let Some(value) = &field.value {
-                            self.check_expr(value);
-                        }
-                    }
-                }
-            }
-            HirExprKind::Conversio { source, fallback, .. } => {
-                self.check_expr(source);
-                if let Some(fallback) = fallback {
-                    self.check_expr(fallback);
-                }
-            }
-            HirExprKind::Ref(kind, inner) => match self.root_def_id(inner) {
-                Some(def_id) => match kind {
-                    crate::hir::HirRefKind::Shared => self.borrow_shared(def_id, expr.span),
-                    crate::hir::HirRefKind::Mutable => self.borrow_mut(def_id, expr.span),
-                },
-                None => self.check_expr(inner),
-            },
-            HirExprKind::Deref(expr) => self.check_expr(expr),
-            HirExprKind::Vacua | HirExprKind::Error => {}
-        }
+        self.visit_expr(expr);
     }
 
     fn check_call_args(&mut self, callee: &HirExpr, args: &[HirExpr]) {
@@ -659,6 +462,60 @@ impl<'a> BorrowChecker<'a> {
             }
         }
         self.errors.extend(warnings);
+    }
+}
+
+impl HirVisitor for BorrowChecker<'_> {
+    fn visit_block(&mut self, block: &HirBlock) {
+        self.check_block(block);
+    }
+
+    fn visit_expr(&mut self, expr: &HirExpr) {
+        match &expr.kind {
+            HirExprKind::Path(def_id) => self.read_use(*def_id, expr.span),
+            HirExprKind::Call(callee, args) => {
+                self.visit_expr(callee);
+                self.check_call_args(callee, args);
+            }
+            HirExprKind::Discerne(scrutinees, arms) => {
+                for scrutinee in scrutinees {
+                    self.visit_expr(scrutinee);
+                }
+                for arm in arms {
+                    self.push_scope();
+                    if let Some(guard) = &arm.guard {
+                        self.visit_expr(guard);
+                    }
+                    self.visit_expr(&arm.body);
+                    self.pop_scope();
+                }
+            }
+            HirExprKind::Itera(_, binding, _, iter, block) => {
+                self.visit_expr(iter);
+                self.ensure_state(*binding);
+                self.check_block(block);
+            }
+            HirExprKind::Assign(target, value) | HirExprKind::AssignOp(_, target, value) => {
+                self.check_lvalue(target);
+                self.visit_expr(value);
+            }
+            HirExprKind::Clausura(params, _, body) => {
+                self.push_scope();
+                for param in params {
+                    self.ensure_state(param.def_id);
+                }
+                self.visit_expr(body);
+                self.pop_scope();
+            }
+            HirExprKind::Ref(kind, inner) => match self.root_def_id(inner) {
+                Some(def_id) => match kind {
+                    crate::hir::HirRefKind::Shared => self.borrow_shared(def_id, expr.span),
+                    crate::hir::HirRefKind::Mutable => self.borrow_mut(def_id, expr.span),
+                },
+                None => self.visit_expr(inner),
+            },
+            _ => walk_expr(self, expr),
+        }
     }
 }
 
