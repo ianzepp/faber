@@ -1,6 +1,38 @@
+//! Rust-owned CLI support emission.
+//!
+//! This module writes the parser, help text, command dispatcher, argument
+//! structs, and exit handling that are embedded into generated Rust output for
+//! `@ cli` programs. The CLI model is analyzed before codegen, but the runtime
+//! mechanics here are target-specific: they depend on `std::env::args`,
+//! `std::process::exit`, Rust storage types, and direct calls into generated
+//! Rust functions.
+//!
+//! INVARIANTS
+//! ==========
+//! - Parse errors print to stderr and exit with code 2.
+//! - Help and version output exit with code 0.
+//! - Single-command mode emits one `CliArgs` parser consumed by `incipit`.
+//! - Subcommand mode emits one args struct/parser per command plus a root
+//!   dispatcher that never returns.
+//! - Defaults are lowered into Rust literals or strings at generation time;
+//!   missing non-flag options remain `Option<_>` until parsing fills them.
+//!
+//! WHY THIS IS RUST BACKEND OWNED
+//! ==============================
+//! Faber CLI declarations describe command shape, not a portable runtime API.
+//! Keeping this support code in the Rust backend lets other targets choose
+//! native process, argument, and exit behavior without carrying Rust-specific
+//! parser scaffolding through target-neutral HIR.
+
 use super::super::CodeWriter;
 use crate::cli::{CliDefault, CliExit, CliMode, CliOperand, CliOption, CliProgram, CliType};
 
+/// Emit generated parser/help/support functions for the selected CLI mode.
+///
+/// Single-command mode shares global and command-local options because the
+/// entry block receives one argument record. Subcommand mode keeps each command
+/// parser separate so dispatch can select a function before parsing
+/// command-local operands.
 pub(super) fn generate_cli_support(program: &CliProgram, w: &mut CodeWriter) {
     if program.mode == CliMode::Subcommand {
         generate_subcommand_cli_support(program, w);
@@ -33,6 +65,11 @@ pub(super) fn generate_command_dispatch(program: &CliProgram, w: &mut CodeWriter
     }
 }
 
+/// Emit the concrete Rust process-exit policy for a Faber CLI declaration.
+///
+/// Unsupported exit declarations fall back to success here because the driver
+/// reports a diagnostic before successful Rust CLI output is exposed; codegen
+/// still keeps this arm total for the generated program boundary it was given.
 pub(super) fn generate_cli_exit(exit: &CliExit, w: &mut CodeWriter) {
     match exit {
         CliExit::Fixed(code) => {
@@ -58,6 +95,10 @@ pub(super) fn generate_cli_exit(exit: &CliExit, w: &mut CodeWriter) {
     }
 }
 
+/// Stable generated type name for a subcommand's argument record.
+///
+/// The name is derived from the command path rather than the target function so
+/// aliases and mounted functions continue to share one parser contract.
 pub(super) fn command_args_struct_name(command: &crate::cli::CliCommand) -> String {
     let suffix = command
         .path
@@ -84,6 +125,9 @@ fn command_help_name(command: &crate::cli::CliCommand) -> String {
 }
 
 fn generate_subcommand_cli_support(program: &CliProgram, w: &mut CodeWriter) {
+    // Subcommand output is generated as a small Rust runtime: command-specific
+    // records first, shared parse/help support next, dispatcher last so `main`
+    // can jump into one non-returning entrypoint.
     for command in &program.commands {
         let options = program
             .global_options
@@ -465,6 +509,9 @@ fn generate_command_parser(
 }
 
 fn generate_dispatcher(program: &CliProgram, w: &mut CodeWriter) {
+    // Longest paths win so nested commands are tested before their prefixes.
+    // The parser has already accepted the command model; this dispatcher only
+    // chooses among concrete generated Rust calls.
     w.writeln("fn dispatch_cli_or_exit() -> ! {");
     w.indented(|w| {
         for option in &program.global_options {
@@ -674,6 +721,9 @@ fn generate_option_setter(option: &CliOption, label_expr: &str, inline_expr: &st
 }
 
 fn generate_operand_assignment(operands: &[&CliOperand], w: &mut CodeWriter) {
+    // Operand parsing is intentionally fail-fast because generated CLIs are the
+    // final user boundary. Optionality/defaults are reflected in storage before
+    // this point; after assignment, command functions receive concrete fields.
     w.writeln("let mut positional_iter = positional.into_iter();");
     let has_rest = operands.iter().any(|operand| operand.rest);
     for operand in operands {
@@ -779,6 +829,9 @@ fn rust_cli_storage_type(ty: &CliType, rest: bool) -> String {
 }
 
 fn rust_cli_type(ty: &CliType, optional: bool, rest: bool) -> String {
+    // This is the CLI-specific value policy, not the full Faber type mapper.
+    // CLI input enters as strings and lowers only to the scalar/list shapes
+    // accepted by the CLI declaration model.
     let base = match ty {
         CliType::Numerus | CliType::ListaNumerus => "i64",
         CliType::Fractus => "f64",

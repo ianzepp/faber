@@ -1,21 +1,30 @@
-//! Rust Statement Generation
+//! Rust statement emission inside generated function bodies.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Generates Rust statements (let bindings, expression statements, return, break,
-//! continue) from HIR, handling error wrapping for return statements in failable
-//! functions.
+//! This module owns the statement-level boundary between HIR control flow and
+//! Rust syntax. Declarations decide whether a function returns plain `T` or
+//! `Result<T, String>`; expression lowering decides how calls, throws, and
+//! target constructs render. Statement emission threads that context through
+//! local bindings, expression statements, explicit `redde`, loop control, and
+//! unsupported statement forms.
 //!
-//! COMPILER PHASE: Codegen (submodule)
-//! INPUT: HirStmt nodes
-//! OUTPUT: Rust statement source text
+//! INVARIANTS
+//! ==========
+//! - `redde` wraps values in `Ok(...)` only when the surrounding declaration is
+//!   failable and is not the generated entry context.
+//! - Expression statements and local initializers preserve the current error
+//!   propagation mode so failable calls can append `?` where expression
+//!   lowering permits it.
+//! - `ad` remains an explicit Rust backend error. This module does not invent a
+//!   target mapping for behavior the Rust backend cannot yet represent.
+//! - Entry contexts suppress Result propagation because entry throws are
+//!   rendered as panic paths by expression lowering.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Return wrapping: `redde expr` becomes `return Ok(expr)` in failable functions.
-//!   WHY: Failable functions return Result; explicit returns must wrap with Ok.
-//! - Control flow mapping: Direct translation of rumpe/perge to break/continue.
-//!   WHY: Faber's loop control flow maps 1:1 to Rust.
+//! TYPE CONTRACTS
+//! ==============
+//! Local annotations are emitted from the semantic type table. The local
+//! initializer helper only bridges Rust's `Option<T>` constructor syntax for
+//! source forms that are already known to target optional storage; it does not
+//! repair missing type information.
 
 use super::super::CodeWriter;
 use super::expr::{generate_expr, generate_expr_unwrapped};
@@ -24,16 +33,12 @@ use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
-/// Generate a Rust statement.
+/// Emit one Rust statement from HIR.
 ///
-/// TRANSFORMS:
-///   fixum numerus x = 5  -> let x: i64 = 5;
-///   varia textus s       -> let mut s: String;
-///   redde x              -> return Ok(x); (in failable fn) or return x;
-///   rumpe                -> break;
-///   perge                -> continue;
-///
-/// TARGET: Rust-specific Ok wrapping for return in failable functions.
+/// The three context flags are declaration-owned policy threaded through
+/// statement and expression emission: whether this function has a `Result`
+/// signature, whether the statement lives under the entry wrapper, and whether
+/// expression-level error propagation is temporarily disabled by a handled form.
 pub fn generate_stmt(
     codegen: &RustCodegen<'_>,
     stmt: &HirStmt,
@@ -52,12 +57,18 @@ pub fn generate_stmt(
             w.writeln(";");
         }
         HirStmtKind::Ad(_) => {
+            // `ad` has no Rust backend contract yet. Returning an explicit
+            // codegen error keeps unsupported syntax visible instead of
+            // producing misleading Rust.
             return Err(CodegenError { message: "ad is not supported for Rust codegen".to_owned() });
         }
         HirStmtKind::Redde(value) => {
             if let Some(expr) = value {
                 w.write("return ");
                 if in_failable_fn && !in_entry {
+                    // `redde` returns the success value of the generated
+                    // `Result`; expression lowering still decides whether any
+                    // nested failable calls need `?`.
                     w.write("Ok(");
                     generate_expr_unwrapped(
                         codegen,
@@ -82,6 +93,8 @@ pub fn generate_stmt(
                 }
                 w.writeln(";");
             } else if in_failable_fn && !in_entry {
+                // Bare `redde` from a failable function is the unit success
+                // path, matching `Result<(), String>`.
                 w.writeln("return Ok(());");
             } else {
                 w.writeln("return;");
@@ -109,6 +122,9 @@ fn generate_local(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // Mutability is the only local-binding policy owned here. Borrow modes,
+    // option shape, and collection details come from the type table through
+    // `type_to_rust`.
     w.write("let ");
     if local.mutable {
         w.write("mut ");
@@ -152,6 +168,9 @@ fn local_init_requires_some_wrapper(
         return false;
     }
 
+    // Expressions that may already produce `Option<T>` are left alone. Literal
+    // and constructed values need Rust's `Some(...)` wrapper to satisfy an
+    // optional local annotation.
     !matches!(
         &init.kind,
         HirExprKind::Literal(HirLiteral::Nil)

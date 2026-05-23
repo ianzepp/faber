@@ -1,3 +1,22 @@
+//! Optional access lowering for Faber nullable values.
+//!
+//! Nullable Faber types are represented through Rust `Option` at this boundary.
+//! Optional chaining maps to `as_ref().map(...)` or `and_then(...)`, while
+//! non-null assertions map to `expect(...)` before applying the requested
+//! member, index, or call. The emitted code is explicit about cloning because
+//! optional access returns owned values in the current HIR contracts. Binary
+//! coalescing is lowered in the sibling operator module because it is parsed as
+//! `HirBinOp::Coalesce`, but it shares the same `Option<T>` storage model.
+//!
+//! EDGE CASES
+//! ==========
+//! - Optional member and index access borrow the option, then clone the selected
+//!   value.
+//! - Optional call uses `and_then` with `Some(...)`; it does not infer or flatten
+//!   arbitrary user-returned nullable contracts beyond that shape.
+//! - Non-null assertions intentionally panic with a stable message if a value is
+//!   `None`.
+
 use super::*;
 
 #[allow(clippy::too_many_arguments)]

@@ -1,23 +1,34 @@
-//! Rust Declaration Generation
+//! Rust declaration emission for the backend item boundary.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Generates Rust item declarations (functions, structs, enums, traits, type aliases,
-//! constants) from HIR. Handles error propagation wrapping, reference mode translation,
-//! and async function generation.
+//! This module turns top-level HIR declarations into Rust items: functions,
+//! tests, structs, enums, traits, type aliases, and constants. Expression and
+//! statement lowering live in sibling modules; this file owns the declaration
+//! shape around them, including visibility, type parameters, function return
+//! contracts, receiver policy for interfaces, and where generated bodies are
+//! allowed to wrap values for Rust's `Result` type.
 //!
-//! COMPILER PHASE: Codegen (submodule)
-//! INPUT: HIR items (HirFunction, HirStruct, etc.)
-//! OUTPUT: Rust declaration source text
+//! INVARIANTS
+//! ==========
+//! - Failable functions are emitted as `Result<T, String>` according to the
+//!   precomputed failable set owned by [`RustCodegen`].
+//! - Faber tests become Rust `#[test]` functions with generated names so user
+//!   definitions and test entrypoints do not compete for one Rust symbol.
+//! - Faber has no declaration visibility modifiers today, so generated
+//!   structs, fields, traits, aliases, and constants are public at the Rust
+//!   item boundary.
+//! - Struct methods are emitted in inherent `impl` blocks. Interface methods
+//!   are emitted as trait items with an implicit `&self` receiver because the
+//!   HIR contract for pactum methods is receiver-oriented.
+//! - HIR import items are not emitted by these declaration helpers; the parent
+//!   Rust backend collects them for the generated prelude alongside helper-type
+//!   imports discovered from emitted Rust.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Failable functions return Result<T, String>.
-//!   WHY: Faber's `iace` requires error propagation; String is simple error type.
-//! - Reference modes map to Rust borrow syntax.
-//!   WHY: de -> &T, in -> &mut T, ex -> T (moved).
-//! - Async functions use `async fn`.
-//!   WHY: Direct mapping to Rust's async/await.
+//! TRADE-OFFS
+//! ==========
+//! Failable declarations use `String` as the error carrier. That keeps throw
+//! lowering and `?` propagation simple, but it is a backend policy, not a
+//! semantic recheck. Missing or wrong type information should be fixed before
+//! this module receives HIR.
 
 use super::super::CodeWriter;
 use super::types::type_to_rust;
@@ -25,14 +36,13 @@ use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::semantic::{Type, TypeId, TypeTable};
 
-/// Generate a Rust function declaration.
+/// Emit one Rust function item from a HIR function.
 ///
-/// TRANSFORMS:
-///   functio salve(textus n) -> fn salve(n: String)
-///   Failable function      -> fn f() -> Result<T, String>
-///   futura functio f()     -> async fn f()
-///
-/// TARGET: Rust-specific Result wrapping for failable functions.
+/// The declaration layer decides the Rust signature: async marker, generated
+/// test name, optional CLI argument type, type parameters, and `Result`
+/// wrapping for precomputed failable functions. Body emission is delegated to
+/// [`generate_block`] with the same failable context so `redde` and tail
+/// expressions can produce values matching the signature.
 pub fn generate_function(
     codegen: &RustCodegen<'_>,
     def_id: DefId,
@@ -54,6 +64,8 @@ pub fn generate_function_with_cli_args_type(
     let is_failable = codegen.is_failable_def(def_id);
     let is_test = func.test.is_some();
 
+    // Faber tests are compiled as Rust tests while preserving selection state
+    // through ignore reasons rather than deleting unselected tests from output.
     if is_test {
         w.writeln("#[test]");
         if let Some(reason) = codegen.test_ignore_reason(func) {
@@ -61,7 +73,8 @@ pub fn generate_function_with_cli_args_type(
         }
     }
 
-    // Async modifier
+    // Faber `@ futura` maps directly to `async fn`; the async return type
+    // remains part of the Rust function contract below.
     if func.is_async {
         w.write("async ");
     }
@@ -76,7 +89,8 @@ pub fn generate_function_with_cli_args_type(
         w.write(codegen.resolve_symbol(func.name));
     }
 
-    // Type parameters
+    // Type parameters are emitted unchanged after symbol resolution; trait
+    // bounds are not invented here.
     if !func.type_params.is_empty() {
         w.write("<");
         for (i, param) in func.type_params.iter().enumerate() {
@@ -88,7 +102,8 @@ pub fn generate_function_with_cli_args_type(
         w.write(">");
     }
 
-    // Parameters
+    // CLI-mounted functions get one synthetic argument slot supplied by the
+    // package CLI adapter. Ordinary functions use only HIR parameters.
     w.write("(");
     for (i, param) in func.params.iter().enumerate() {
         if i > 0 {
@@ -108,7 +123,8 @@ pub fn generate_function_with_cli_args_type(
     }
     w.write(")");
 
-    // Return type
+    // Failable status is a whole-function ABI decision: every explicit return
+    // and tail expression in the body must match this `Result` wrapper.
     if is_failable {
         w.write(" -> ");
         w.write("Result<");
@@ -123,7 +139,8 @@ pub fn generate_function_with_cli_args_type(
         w.write(&type_to_rust(codegen, ret_ty, types));
     }
 
-    // Body
+    // Declarations without bodies are emitted as Rust signatures, used by
+    // trait-like surfaces and imported interface stubs.
     if let Some(body) = &func.body {
         w.write(" ");
         generate_block(codegen, body, types, w, is_failable, false, true)?;
@@ -139,13 +156,12 @@ fn escape_ignore_reason(reason: &str) -> String {
     reason.replace('\\', r"\\").replace('"', "\\\"")
 }
 
-/// Generate a Rust struct declaration.
+/// Emit a Rust struct and any inherent methods declared on the Faber `genus`.
 ///
-/// TRANSFORMS:
-///   genus Person { textus name } -> pub struct Person { pub name: String }
-///
-/// TARGET: All fields are pub (Faber has no visibility modifiers).
-/// NOTE: Static fields are skipped (not supported in Rust structs).
+/// Instance fields become public Rust fields. Static fields are skipped here
+/// because they are not representable inside a Rust struct declaration; method
+/// and associated-item support must be added through a separate contract rather
+/// than hidden in field emission.
 pub fn generate_struct(
     codegen: &RustCodegen<'_>,
     s: &HirStruct,
@@ -217,13 +233,11 @@ fn type_is_option(type_id: TypeId, types: &TypeTable) -> bool {
     }
 }
 
-/// Generate a Rust enum declaration.
+/// Emit a Rust enum using struct-like variants for any variant payloads.
 ///
-/// TRANSFORMS:
-///   discretio Result { Ok { textus val }, Err { textus msg } }
-///   -> pub enum Result { Ok { val: String }, Err { msg: String } }
-///
-/// TARGET: Rust enum with struct-like variants (named fields).
+/// Faber enum fields are named in HIR, so the Rust backend preserves that
+/// shape instead of lowering to tuple variants. This keeps generated pattern
+/// syntax aligned with the source-level field names.
 pub fn generate_enum(
     codegen: &RustCodegen<'_>,
     e: &HirEnum,
@@ -268,12 +282,11 @@ pub fn generate_enum(
     Ok(())
 }
 
-/// Generate a Rust trait declaration.
+/// Emit a Rust trait for a Faber interface.
 ///
-/// TRANSFORMS:
-///   pactum Display { functio display() } -> pub trait Display { fn display(&self); }
-///
-/// TARGET: Rust trait with &self receiver (Faber interfaces always have implicit self).
+/// Interface methods receive an implicit immutable `&self` receiver. Static
+/// interface functions are not modeled by this HIR shape, so this function does
+/// not infer static methods from parameter lists or names.
 pub fn generate_trait(
     codegen: &RustCodegen<'_>,
     i: &HirInterface,
@@ -326,6 +339,8 @@ pub fn generate_type_alias(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Aliases intentionally render their resolved target type. Name retention
+    // is tracked by semantic definitions, not by emitting a Rust newtype here.
     w.write("pub type ");
     w.write(codegen.resolve_symbol(a.name));
     w.write(" = ");
@@ -341,6 +356,8 @@ pub fn generate_const(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // A missing const annotation type has already survived semantic analysis;
+    // this backend emits `()` rather than guessing from the initializer.
     w.write("pub const ");
     w.write(codegen.resolve_symbol(c.name));
     w.write(": ");
@@ -378,6 +395,9 @@ fn generate_block(
             if block_result.is_err() {
                 return;
             }
+            // Tail expressions carry the same Result contract as explicit
+            // `redde`; entry blocks are excluded because entry throws lower to
+            // panic paths instead of caller-visible propagation.
             if wrap_tail_ok && in_failable_fn && !in_entry {
                 w.write("Ok(");
                 block_result = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);

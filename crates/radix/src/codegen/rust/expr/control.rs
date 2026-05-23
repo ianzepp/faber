@@ -1,3 +1,25 @@
+//! Control-flow expression lowering for the Rust backend.
+//!
+//! Faber control expressions are emitted as direct Rust control constructs when
+//! their HIR shape already matches what this phase supports: `si` to `if`,
+//! `discerne` to `match`, `dum` to `while`, `itera` to `for`, and bare loops to
+//! `loop`. Branch bodies reuse block lowering so expression-valued tails remain
+//! visible to Rust where the surrounding context allows them.
+//!
+//! TEMPTA CONTRACT
+//! ===============
+//! `tempta` currently lowers as a scoped sequence: body, optional catch block,
+//! then optional finally block. When a catch exists, body emission suppresses
+//! `?` insertion so handled failure points do not propagate out through Rust
+//! syntax. This file does not claim full exception semantics; structured cape
+//! handler HIR is rejected by the dispatcher in `mod.rs`.
+//!
+//! OUTPUT POLICY
+//! =============
+//! Loops and branches preserve Rust's native value rules. This backend does not
+//! synthesize hidden accumulator variables or branch coercions for unsupported
+//! HIR shapes.
+
 use super::*;
 
 #[allow(clippy::too_many_arguments)]
@@ -12,6 +34,9 @@ pub(super) fn generate_tempta_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // WHY: A catch-bearing body is locally handled in Faber terms, so direct
+    // Rust `?` would skip the catch block. The current lowering suppresses
+    // propagation in that body and emits the catch/finally fragments in order.
     w.writeln("{");
     let mut tempta_result = Ok(());
     w.indented(|w| {

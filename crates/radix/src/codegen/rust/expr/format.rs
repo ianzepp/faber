@@ -1,5 +1,22 @@
+//! Formatting and string-template emission for the Rust backend.
+//!
+//! This module is the boundary between Faber's user-facing text forms and Rust
+//! formatting macros. It escapes Rust format braces, maps Faber `§` template
+//! holes to positional or sequential `{}` slots, and chooses display/debug
+//! formatting for `scribe` family calls from HIR type information.
+//!
+//! INVARIANTS
+//! ==========
+//! - Template conversion only rewrites formatting metacharacters; literal text
+//!   remains byte-for-byte except for Rust format escaping.
+//! - `scribe` output prefers `{}` for primitives and literal primitives, and
+//!   uses `{:?}` for composite or unknown values where Display is not promised.
+
 use super::*;
 pub(super) fn rust_format_template(template: &str) -> String {
+    // Faber templates use `§`/`§0` placeholders. Rust format strings use braces,
+    // so user-authored braces must be doubled before the template reaches
+    // `format!`.
     let mut out = String::with_capacity(template.len());
     let mut chars = template.chars().peekable();
     while let Some(ch) = chars.next() {
@@ -25,6 +42,7 @@ pub(super) fn rust_format_template(template: &str) -> String {
     out
 }
 pub(super) fn rust_scribe_format(expr: &HirExpr, types: &TypeTable) -> &'static str {
+    // Literal primitives can use Display even before type attribution is present.
     if matches!(
         expr.kind,
         HirExprKind::Literal(HirLiteral::String(_))

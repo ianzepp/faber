@@ -1,3 +1,21 @@
+//! Collection, tuple, and struct expression emission for the Rust backend.
+//!
+//! This module owns Faber collection construction policy after lowering has
+//! already decided the expression shape. It deliberately keeps Rust temporaries
+//! local to emitted blocks and names them from the HIR id so spread expansion,
+//! `ab` pipelines, and shared object-key emission remain deterministic without
+//! requiring a backend-wide name allocator.
+//!
+//! INVARIANTS
+//! ==========
+//! - Empty collection element/key/value types must arrive from earlier phases;
+//!   this backend does not infer missing type information.
+//! - Spread-bearing arrays are block expressions because Rust needs a mutable
+//!   accumulator; non-spread arrays stay compact `vec![...]` expressions.
+//! - Struct field omission is semantic, not cosmetic: omitted optional fields
+//!   become `None`, and omitted fields with initializers are emitted through the
+//!   same field-value wrapper path as provided fields.
+
 use super::*;
 use rustc_hash::FxHashSet;
 
@@ -14,6 +32,9 @@ pub(super) fn generate_ab_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // `ab` pipelines materialize once, then apply ordered terminal transforms.
+    // The explicit block keeps temporary names out of the caller's scope and
+    // preserves source order for filters before `first`/`last`/`sum`.
     let suffix = expr_id.0;
     let vec_name = format!("__faber_ab_vec_{}", suffix);
     let n_name = format!("__faber_ab_n_{}", suffix);
@@ -164,6 +185,8 @@ pub(super) fn generate_array_expr(
         .iter()
         .any(|element| matches!(element, HirArrayElement::Spread(_)))
     {
+        // Rust's `vec![...]` cannot interleave single elements and spreads, so
+        // spread arrays lower to a mutable accumulator and return that vector.
         let temp = format!("__faber_vec_{}", expr_id.0);
         w.writeln("{");
         let mut result = Ok(());
@@ -293,6 +316,9 @@ pub(super) fn generate_struct_field_value(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // Optional field wrapping is decided against the Rust storage type, not the
+    // source spelling. That keeps `T ∪ nihil` fields represented as `Option<T>`
+    // even when the user supplies a bare non-option expression.
     if codegen.struct_field_stores_option(def_id, name, types) && expr_requires_some_wrapper(value, types) {
         w.write("Some(");
         generate_struct_value_expr(
@@ -453,6 +479,9 @@ pub(super) fn write_object_map_key(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // Object keys are shared by literal maps and `verte` map construction. Bare
+    // identifier keys become text only when the target map key type says so;
+    // computed keys are already expressions and must not be stringified here.
     match key {
         HirObjectKey::Ident(key) | HirObjectKey::String(key) => {
             write_innatum_map_key(codegen, types, *key, key_ty, w);

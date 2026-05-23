@@ -1,4 +1,19 @@
+//! Block expression emission.
+//!
+//! Blocks are the common container used by control flow, loops, closures, and
+//! `tempta` fragments. This file deliberately keeps block lowering mechanical:
+//! statements are emitted in order, then the optional trailing expression is
+//! emitted without forcing a semicolon so Rust can preserve expression-valued
+//! blocks when the surrounding construct expects one.
+
 use super::*;
+
+/// Emit a Rust block while preserving the caller's propagation context.
+///
+/// Blocks do not decide whether failures propagate. They are context carriers:
+/// call sites such as `tempta`, entry generation, and failable function bodies
+/// choose the flags, and every statement or trailing expression observes the
+/// same policy unless a nested construct overrides it.
 pub(super) fn generate_block(
     codegen: &RustCodegen<'_>,
     block: &HirBlock,

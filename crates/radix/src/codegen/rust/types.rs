@@ -1,39 +1,42 @@
-//! Rust Type Generation
+//! Rust type rendering for semantic type identifiers.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Converts Faber type representations (TypeId) to Rust type syntax. Handles
-//! primitives, collections, references, structs, enums, traits, and function types.
+//! Codegen receives `TypeId` values that were already assigned by semantic
+//! analysis. This module renders those types as Rust syntax for declarations,
+//! local annotations, conversions, and generated helper code. It is intentionally
+//! a renderer over the existing type table: it resolves names and chooses Rust
+//! spellings, but it does not infer missing types or redo compatibility checks.
 //!
-//! COMPILER PHASE: Codegen (submodule)
-//! INPUT: TypeId from TypeTable
-//! OUTPUT: Rust type syntax string
-//!
-//! DESIGN PHILOSOPHY
+//! MAPPING CONTRACTS
 //! =================
-//! - Primitive mapping: Faber types map to closest Rust equivalents.
-//!   WHY: numerus -> i64, textus -> String, bivalens -> bool.
-//! - Collection mapping: lista -> Vec, tabula -> HashMap, copia -> HashSet.
-//!   WHY: Rust standard library collections are idiomatic.
-//! - Reference translation: de T -> &T, in T -> &mut T.
-//!   WHY: Direct mapping of Faber borrow modes to Rust references.
+//! - Faber primitives map to the Rust primitives and runtime types selected by
+//!   the backend (`textus` to `String`, `numerus` to `i64`, `valor` to
+//!   `norma::datum::Valor`, and so on).
+//! - Collections map to standard Rust containers: `lista` to `Vec`, `tabula`
+//!   to `HashMap`, and `copia` to `HashSet`. The enclosing Rust module is
+//!   responsible for importing collection names when emitted output needs them.
+//! - Nullable semantic types render as `Option<T>`. Voluntary declaration slots
+//!   that are represented as optional storage are handled by declaration and
+//!   statement emission around this type renderer.
+//! - Faber borrow modes render as Rust references: immutable `de` as `&T` and
+//!   mutable `in` as `&mut T`; owned `ex` has already become the inner type.
+//! - User types resolve through the codegen name catalog so generated Rust uses
+//!   collision-safe symbols.
+//!
+//! ESCAPE HATCHES
+//! ==============
+//! `ignotum` and non-empty ad-hoc unions render as `Box<dyn std::any::Any>`.
+//! That preserves an explicit dynamic boundary for constructs the Rust backend
+//! cannot model precisely as a static Rust type.
 
 use super::RustCodegen;
 use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
 
-/// Convert a Faber type to Rust syntax.
+/// Convert a semantic Faber type to Rust syntax.
 ///
-/// TRANSFORMS:
-///   numerus           -> i64
-///   textus            -> String
-///   lista<T>          -> Vec<T>
-///   tabula<K, V>      -> HashMap<K, V>
-///   de T              -> &T
-///   in T              -> &mut T
-///   T ∪ nihil        -> Option<T>
-///   futura functio    -> impl Future<Output = T>
-///
-/// TARGET: Rust-specific type mappings; ignotum -> Box<dyn Any>.
+/// Callers should pass only type identifiers that have already gone through the
+/// semantic pipeline. The returned string may mention Rust library types such
+/// as `HashMap`, `HashSet`, `Future`, `regex::Regex`, or
+/// `norma::datum::Valor`; import collection is handled outside this renderer.
 pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTable) -> String {
     let ty = types.get(type_id);
 
@@ -75,10 +78,16 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
         Type::Enum(def_id) => codegen.resolve_def(*def_id).to_owned(),
 
         Type::Interface(def_id) => {
+            // Interfaces lower to trait objects in type position. Call sites
+            // and declarations decide whether an additional reference or box is
+            // needed for a valid Rust value shape.
             format!("dyn {}", codegen.resolve_def(*def_id))
         }
 
         Type::Alias(def_id, resolved) => {
+            // Resolve the alias name for catalog consistency, then render the
+            // target type. Alias declarations themselves decide whether to
+            // expose a Rust `type` item.
             codegen.resolve_def(*def_id);
             type_to_rust(codegen, *resolved, types)
         }
@@ -112,9 +121,11 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
         Type::Infer(_) => "_".to_owned(),
 
         Type::Union(variants) => {
-            // Rust doesn't have ad-hoc union types, use enum or trait object
+            // Rust has no anonymous sum type equivalent for Faber ad-hoc
+            // unions. Empty unions can use the never type; other unions cross
+            // an explicit dynamic boundary.
             if variants.is_empty() {
-                "!".to_owned() // never type
+                "!".to_owned()
             } else {
                 "Box<dyn std::any::Any>".to_owned()
             }

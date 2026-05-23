@@ -1,22 +1,25 @@
-//! Rust Expression Generation
+//! Rust expression lowering for the Faber backend.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Generates Rust expressions from HIR, handling error propagation (`?` operator),
-//! async await (`.await`), reference creation (`&` and `&mut`), and control flow.
+//! This module is the expression boundary between typed HIR and emitted Rust
+//! source. It dispatches expression forms to focused submodules, but owns the
+//! cross-cutting context that makes Rust expression output valid: whether the
+//! current function can propagate failures, whether output is inside the entry
+//! point, and whether a local construct has suppressed propagation.
 //!
-//! COMPILER PHASE: Codegen (submodule)
-//! INPUT: HirExpr nodes
-//! OUTPUT: Rust expression source text
+//! PROPAGATION CONTEXT
+//! ===================
+//! - `in_failable_fn` means Rust `?` is syntactically legal for calls known to
+//!   return a fallible value.
+//! - `in_entry` prevents entrypoint code from growing an implicit fallible
+//!   return contract; throws and failable calls must stay entry-compatible.
+//! - `suppress_error_propagation` is a local override used by catch-like
+//!   constructs so a handled body does not leak `?` into the surrounding Rust.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Error propagation context: `?` operator inserted only in failable functions.
-//!   WHY: Rust requires `?` to appear only in functions returning Result/Option.
-//! - Suppress propagation in entry blocks: Entry code uses panic! for throws.
-//!   WHY: Faber's `incipit` has no error return type; crashes are appropriate.
-//! - Catch blocks suppress `?`: Errors are handled locally, not propagated.
-//!   WHY: `tempta { iace "err" } cape { ... }` should not add `?` to the throw.
+//! FAILURE POLICY
+//! ==============
+//! Unsupported or poisoned HIR fails closed at this boundary. Codegen should
+//! report an explicit [`CodegenError`] rather than guessing Rust for a surface
+//! that earlier phases have not made precise.
 
 use super::super::CodeWriter;
 use super::{CodegenError, RustCodegen};
@@ -50,18 +53,16 @@ use option::*;
 use pattern::*;
 use verte::*;
 
-/// Generate a Rust expression.
+/// Generate one Rust expression from typed HIR.
 ///
-/// TRANSFORMS:
-///   salve(n)           -> salve(n) or salve(n)? (if failable)
-///   iace "err"         -> return Err(String::from("err")) or panic!("err")
-///   obj.method()       -> obj.method() or obj.method()? (if failable)
-///   cede future_expr   -> future_expr.await
-///   de expr            -> &expr
-///   in expr            -> &mut expr
+/// The three context booleans are part of the backend contract, not formatting
+/// preferences. They are threaded through every nested expression so callees can
+/// decide whether `?`, entrypoint-compatible failure behavior, or catch-local
+/// suppression applies at the exact point where Rust syntax is emitted.
 ///
 /// TARGET: Rust-specific `?` operator for error propagation.
-/// EDGE: suppress_error_propagation=true in tempta catch blocks.
+/// EDGE: unsupported structured handler HIR and HIR error sentinels return
+/// diagnostics instead of best-effort Rust.
 pub fn generate_expr(
     codegen: &RustCodegen<'_>,
     expr: &HirExpr,
@@ -219,6 +220,8 @@ pub fn generate_expr(
             suppress_error_propagation,
         )?,
         HirExprKind::Si { then_catch: Some(_), .. } | HirExprKind::Handled { .. } => {
+            // Fail closed: these HIR surfaces carry structured handler
+            // semantics that this Rust backend slice does not yet lower.
             return Err(CodegenError {
                 message: "structured cape handlers are not emitted by Rust codegen in Phase 5C".to_owned(),
             });
@@ -415,6 +418,8 @@ pub fn generate_expr(
             generate_deref_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirExprKind::Error => {
+            // Error sentinels mean an earlier phase could not produce sound HIR.
+            // Emitting placeholder Rust here would hide the real diagnostic.
             return Err(CodegenError {
                 message: format!(
                     "cannot generate Rust for HIR error expression at span {}..{}",

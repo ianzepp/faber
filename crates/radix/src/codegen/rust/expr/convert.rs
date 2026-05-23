@@ -1,3 +1,21 @@
+//! Explicit conversion expression emission for the Rust backend.
+//!
+//! Faber's `conversio` surface is more policy-heavy than a plain Rust `as`.
+//! Text-to-number conversions use Rust parsing, text/number-to-bool conversions
+//! encode Faber truthiness, and only the remaining low-level primitive cases
+//! fall back to Rust casts. Optional fallbacks are emitted at the conversion
+//! site so lowering and typechecking can stay responsible for deciding whether
+//! such a fallback exists.
+//!
+//! ERROR POLICY
+//! ============
+//! - Parse conversions without a fallback emit `.unwrap()` and therefore keep
+//!   parse failure loud in generated Rust.
+//! - Parse conversions with a fallback emit `.unwrap_or(fallback)`.
+//! - Unsupported target-specific casts are not claimed here; the final `as`
+//!   branch is only the Rust backend escape hatch for cases already accepted by
+//!   earlier phases.
+
 use super::super::types::type_to_rust;
 use super::*;
 
@@ -13,6 +31,9 @@ pub(super) fn generate_conversio_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // The source type is advisory but important: text conversions get parsing
+    // and truthiness semantics, while other primitive conversions are emitted
+    // as formatting or casts only after the typechecker has accepted them.
     let target_resolved = types.get(target);
     let source_ty = source.ty.map(|t| types.get(t));
     match (source_ty, target_resolved) {
@@ -112,6 +133,8 @@ fn generate_parse_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // `conversio` fallbacks are value fallbacks, not diagnostics. Without one,
+    // the generated Rust intentionally preserves parse failure as a panic.
     generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write(".parse::<");
     w.write(target);

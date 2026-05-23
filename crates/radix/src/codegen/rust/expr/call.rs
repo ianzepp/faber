@@ -1,3 +1,23 @@
+//! Function, method, and stdlib-call lowering for Rust expressions.
+//!
+//! This module owns the backend's call-shape decisions. Ordinary calls and
+//! methods preserve their HIR names, selected stdlib collection methods are
+//! translated to native Rust collection APIs, and a small built-in `norma`
+//! module bridge rewrites module-like Faber receivers to runtime crate paths.
+//!
+//! PROPAGATION POLICY
+//! ==================
+//! A call receives `?` only when all of these are true:
+//! - the Rust backend failable prepass marked the callee or method name as
+//!   failable;
+//! - the current Rust function can legally use `?`;
+//! - codegen is not emitting the entrypoint; and
+//! - the surrounding construct has not suppressed propagation.
+//!
+//! The stdlib translation boundary is intentionally narrow. If a method is not
+//! one of the collection/runtime forms recognized here, this module falls back
+//! to direct Rust-style method emission instead of inventing target behavior.
+
 use super::*;
 
 #[allow(clippy::too_many_arguments)]
@@ -11,6 +31,8 @@ pub(super) fn generate_call_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    // Only direct path calls carry stable failable-def metadata here. Other
+    // callable shapes are emitted without speculative propagation.
     let is_failable_call = matches!(&callee.kind, HirExprKind::Path(def_id) if codegen.is_failable_def(*def_id));
     generate_expr(codegen, callee, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write("(");
@@ -115,6 +137,9 @@ fn try_generate_stdlib_method_call(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<bool, CodegenError> {
+    // TARGET: stdlib methods are recognized by receiver type, not by every
+    // method name globally. This keeps ordinary user methods free to share
+    // Latin names without being captured by the Rust backend.
     let Some(receiver_ty) = receiver.ty.map(|ty| types.get(ty)) else {
         return Ok(false);
     };

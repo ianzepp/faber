@@ -1,29 +1,39 @@
-//! Rust Code Generation
+//! Rust backend orchestration for `radix` code generation.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module implements Faber-to-Rust transpilation. It transforms HIR into
-//! idiomatic Rust source code, handling error propagation (Result<T, String>),
-//! reference modes (de/in/ex), and async/await desugaring.
+//! This module is the target boundary between analyzed Faber HIR and generated
+//! Rust source. It owns Rust backend construction, target dispatch entrypoints,
+//! generated-file framing, import collection, `incipit` entry emission, CLI
+//! attachment, and backend-wide state that declaration/expression/statement
+//! emitters need while walking HIR.
 //!
-//! COMPILER PHASE: Codegen
-//! INPUT: HirProgram (fully-analyzed HIR), TypeTable, Interner
-//! OUTPUT: RustOutput (compilable Rust source code)
+//! The backend does not redo semantic checking. It assumes earlier compiler
+//! phases have produced HIR, types, resolved definition ids, and diagnostics;
+//! this module validates that no recorded HIR errors cross public module
+//! generation boundaries and then translates the already-analyzed program into
+//! a [`RustOutput`] string.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Idiomatic Rust: Generate code that a Rust programmer would write.
-//!   WHY: Output should integrate seamlessly with existing Rust ecosystems.
-//! - Error propagation analysis: Automatically determine which functions return Result.
-//!   WHY: Faber's `iace` (throw) requires Result wrapper; propagate upward transitively.
-//! - Reference mode mapping: Translate de/in/ex to &T, &mut T, and owned T.
-//!   WHY: Faber's borrow semantics map directly to Rust's ownership system.
+//! INVARIANTS
+//! ==========
+//! - `NameCatalog` and failable-function state are precomputed before emission
+//!   so every sub-emitter sees one stable name and error-propagation policy.
+//! - Rust fallibility is represented as `Result<T, String>` for generated
+//!   functions that can throw or call throwing code.
+//! - `incipit` emits `fn main()` and is an output boundary: it executes entry
+//!   statements but does not itself become a failable function.
+//! - Imports are collected after body emission from explicit HIR imports plus
+//!   generated Rust surface requirements, then written before the body.
+//! - `module_mode` emits embeddable module code; normal mode emits a generated
+//!   file prelude with crate-level allowances.
 //!
 //! TRADE-OFFS
 //! ==========
-//! - All failable functions use String error type (simple but untyped).
-//! - Imports are collected post-codegen by scanning output text (avoids complex tracking).
-//! - Entry point `incipit` blocks never propagate errors (always use panic! for throws).
+//! `Result<T, String>` keeps throw lowering simple and target-local while the
+//! language error model is still untyped. Ownership and reference mapping are
+//! also Rust backend policy: Faber reference modes lower to Rust borrow/ownership
+//! forms in `types`, `decl`, and `expr` rather than being encoded as a
+//! target-neutral runtime abstraction. Import collection deliberately avoids a
+//! second mutable side channel through every emitter; the cost is that prelude
+//! imports depend on the generated Rust surface, not only the HIR type graph.
 
 mod cli;
 mod decl;
@@ -40,18 +50,20 @@ use crate::RustOutput;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeSet;
 
-// =============================================================================
-// CORE
-// =============================================================================
-//
-// The RustCodegen struct pre-computes name resolution and failable function
-// analysis during construction, then uses this information during generation.
-// This two-phase approach simplifies code generation logic.
-
+/// User-facing test filter requested by the package or CLI layer.
+///
+/// Selection is captured before Rust emission so ignored tests can be rendered
+/// with deterministic Rust `#[ignore = "..."]` reasons instead of leaving test
+/// filtering to Cargo runtime behavior.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct TestSelection {
+    /// Exact test name to keep, if one was requested.
     pub name: Option<String>,
+
+    /// Slash-joined suite path to keep, if one was requested.
     pub suite: Option<String>,
+
+    /// Metadata tag to keep, if one was requested.
     pub tag: Option<String>,
 }
 
@@ -69,15 +81,20 @@ pub(super) struct StructFieldInfo<'a> {
     pub(super) init: Option<&'a HirExpr>,
 }
 
-/// Rust code generator.
+/// Rust backend state shared by all Rust sub-emitters.
 ///
-/// WHY: Holds pre-analyzed state (names, failable functions) to enable correct
-/// error propagation and reference resolution during code generation.
+/// Construction precomputes the name catalog, failable-function closure, test
+/// selection state, and struct-field metadata before any Rust text is emitted.
+/// That makes emission mostly a deterministic HIR walk instead of a set of
+/// local guesses about names, `Result` wrapping, or omitted Faber fields.
 pub struct RustCodegen<'a> {
-    /// DefId -> Symbol map for all definitions plus symbol resolution.
+    /// Canonical names for symbols and definitions visible to generated Rust.
     names: NameCatalog<'a>,
 
-    /// Set of DefIds for functions that can throw (return Result)
+    /// Functions that lower to `Result<_, String>`.
+    ///
+    /// This is a transitive codegen policy computed from HIR calls and throws;
+    /// it is not a second semantic validation pass.
     failable_defs: FxHashSet<DefId>,
 
     /// Optional Faber test selection used to emit ignore reasons.
@@ -272,13 +289,14 @@ impl<'a> RustCodegen<'a> {
         Ok(())
     }
 
-    /// Transitively compute which functions can throw errors.
+    /// Transitively compute which functions use the Rust failable signature.
     ///
-    /// WHY: Functions that call throwing functions must propagate Result, but
-    /// this is a transitive property requiring fixed-point analysis. We compute
-    /// it upfront to avoid repeated traversals during codegen.
+    /// WHY: a function that calls a throwing function must be emitted with
+    /// `Result<_, String>` even when it does not contain `iace` directly. The
+    /// fixed-point analysis is precomputed once so declaration, statement, and
+    /// expression emitters agree on `?`, `Ok(...)`, and return signatures.
     ///
-    /// EDGE: `tempta` with catch block suppresses error propagation from body.
+    /// EDGE: `tempta` with a catch block suppresses propagation from its body.
     fn collect_failable_functions(&self, hir: &HirProgram) -> FxHashSet<DefId> {
         failable::collect_failable_functions(self, hir)
     }
@@ -375,16 +393,13 @@ fn normalize_import_path(path: &str) -> String {
     format!("crate::{}", segments.join("::"))
 }
 
-// =============================================================================
-// HELPERS
-// =============================================================================
-//
-// Import collection is done post-codegen by scanning the generated source text.
-// WHY: Simpler than tracking imports during traversal; Rust types are known ahead.
-
 /// Scan generated code for Rust types that require imports.
 ///
-/// WHY: HashMap/HashSet aren't in Rust prelude; auto-import them if used.
+/// WHY: this backend keeps import emission at the generated-output boundary.
+/// Explicit source imports are available from HIR, but helper types such as
+/// `HashMap`, `HashSet`, and `Future` arise from Rust lowering decisions in
+/// sub-emitters. Scanning the completed body keeps that target policy local
+/// without threading an import accumulator through every expression path.
 fn collect_prelude_imports(code: &str) -> BTreeSet<String> {
     let mut imports = BTreeSet::new();
     if code.contains("HashMap<") {
@@ -440,6 +455,11 @@ impl Codegen for RustCodegen<'_> {
 }
 
 impl RustCodegen<'_> {
+    /// Generate a complete Rust source file with Rust-owned CLI support.
+    ///
+    /// CLI lowering is target-owned because the parser, process exits, help
+    /// printing, and argument storage types are concrete Rust code rather than
+    /// target-neutral HIR constructs.
     pub fn generate_cli(
         &self,
         hir: &HirProgram,
@@ -458,6 +478,9 @@ impl RustCodegen<'_> {
     ) -> Result<RustOutput, CodegenError> {
         let mut body = CodeWriter::new();
 
+        // Item emission intentionally precedes the prelude. Imports include
+        // both source-level HIR imports and Rust helper types discovered from
+        // the generated body.
         for item in &hir.items {
             let cli_args_type_prefix = if module_mode { "crate::" } else { "" };
             self.generate_item(item, types, &mut body, cli_program, cli_args_type_prefix)?;
@@ -469,7 +492,9 @@ impl RustCodegen<'_> {
             body.newline();
         }
 
-        // Generate main if there's an entry point
+        // `incipit` is emitted as Rust `main`. It is a generated-output
+        // boundary, so statements run in entry context instead of inheriting
+        // the failable function model used for ordinary Faber functions.
         if let Some(entry) = &hir.entry {
             body.writeln("fn main() {");
             let mut entry_result = Ok(());
@@ -534,10 +559,20 @@ impl RustCodegen<'_> {
     }
 }
 
+/// Generate embeddable Rust module source for a checked HIR program.
+///
+/// Module generation skips the file-level generated prelude and `main`
+/// contract used by full executable output. Callers get a [`RustOutput`] whose
+/// `code` field is the complete generated module text.
 pub fn generate_module(hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<RustOutput, CodegenError> {
     generate_module_with_test_selection(hir, types, interner, None)
 }
 
+/// Generate module source while applying Faber test-selection metadata.
+///
+/// `reject_hir_errors` guards this public backend boundary from programs that
+/// earlier phases already marked erroneous; it does not rerun parsing,
+/// resolution, or semantic analysis.
 pub fn generate_module_with_test_selection(
     hir: &HirProgram,
     types: &TypeTable,
@@ -557,6 +592,11 @@ pub fn generate_module_with_cli(
     generate_module_with_cli_and_test_selection(hir, types, interner, cli_program, None)
 }
 
+/// Generate module source for package CLI commands.
+///
+/// Subcommand support can reference functions from mounted modules, so this
+/// path keeps CLI argument types addressable as `crate::...` while still using
+/// the same Rust backend item emitters as ordinary module generation.
 pub fn generate_module_with_cli_and_test_selection(
     hir: &HirProgram,
     types: &TypeTable,

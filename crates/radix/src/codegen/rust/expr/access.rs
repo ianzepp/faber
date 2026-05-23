@@ -1,3 +1,19 @@
+//! Field and index access lowering for Rust expressions.
+//!
+//! Plain field and collection indexing intentionally mirror Rust syntax. The
+//! notable exception is `textus`: Faber indexes text by character position,
+//! while Rust string indexing is byte-oriented and rejects direct `str[index]`
+//! access. Text indexing is therefore lowered through `.chars()` and returns an
+//! owned `String` for scalar access or range collection.
+//!
+//! EDGE CASES
+//! ==========
+//! - Out-of-range scalar `textus` access currently yields an empty string.
+//! - Text ranges use saturating length arithmetic and clamp a missing or zero
+//!   step to one.
+//! - Non-text index expressions stay direct Rust indexing and may panic exactly
+//!   as the generated Rust collection access would.
+
 use super::*;
 
 #[allow(clippy::too_many_arguments)]

@@ -1,3 +1,20 @@
+//! Operator expression emission for the Rust backend.
+//!
+//! Most operators are direct Rust token mappings, but this module also owns the
+//! semantic exceptions: nil checks against `None`, coalescing over `Option`,
+//! range membership expansion, and Faber predicate operators that Rust does not
+//! have as tokens. The string mapping helpers are therefore only safe for the
+//! simple cases that `generate_unary_expr` and `generate_binary_expr` do not
+//! intercept first.
+//!
+//! CAVEATS
+//! =======
+//! - Strict equality currently shares Rust equality with ordinary equality.
+//! - `??`, `intra`, and `inter` are marker spellings in the token maps; callers
+//!   must use the specialized branches rather than emitting them directly.
+//! - Assignment operators reuse binary token mapping, so only Rust-compatible
+//!   assignment forms should reach this backend path.
+
 use super::*;
 pub(super) fn unop_to_rust(op: HirUnOp) -> &'static str {
     match op {
@@ -139,6 +156,8 @@ pub(super) fn generate_binary_expr(
 ) -> Result<(), CodegenError> {
     match op {
         HirBinOp::Coalesce => {
+            // Coalescing preserves Option shape when the right side is also an
+            // Option; otherwise it unwraps with a plain fallback value.
             let lhs_ty = lhs.ty.map(|ty| resolve_type(ty, types));
             match lhs_ty {
                 Some(Type::Option(_)) => {
@@ -162,6 +181,9 @@ pub(super) fn generate_binary_expr(
             }
         }
         HirBinOp::InRange => {
+            // `intra` is half-open: lower <= value < upper. Non-tuple or
+            // malformed bounds have already lost their semantic shape, so the
+            // backend emits a deterministic false expression.
             if let HirExprKind::Tuple(bounds) = &rhs.kind {
                 if bounds.len() >= 2 {
                     if wrap {
@@ -201,6 +223,8 @@ pub(super) fn generate_binary_expr(
             }
         }
         HirBinOp::Between => {
+            // `inter` delegates to Rust range/container `contains`, borrowing
+            // the left operand to match the standard method signature.
             w.write("(");
             generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(").contains(&");

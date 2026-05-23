@@ -1,5 +1,25 @@
+//! Literal, assertion, panic, and throw emission for the Rust backend.
+//!
+//! Literals are intentionally emitted close to Rust's native surface: numbers
+//! are printed as numeric tokens, Faber strings become escaped Rust string
+//! literals, `nihil` becomes `None`, and regex literals construct
+//! `regex::Regex` values at runtime. This file does not validate regex syntax;
+//! it preserves the backend contract that invalid literals fail where the
+//! generated Rust constructs them.
+//!
+//! TARGET DETAILS
+//! ==============
+//! - Regex flags are filtered to the inline modifiers accepted by Rust regex.
+//! - Unknown regex flags are ignored rather than translated to unsupported
+//!   behavior.
+//! - `throw` becomes `Err(String)` only inside failable non-entry functions
+//!   where propagation has not been suppressed; otherwise it lowers to panic.
+
 use super::*;
 pub(super) fn apply_regex_flags(pattern: &str, flags: Option<&str>) -> String {
+    // Rust regex exposes flags as inline modifiers. The frontend may preserve
+    // broader source spellings, but this backend only emits modifiers the
+    // target engine accepts.
     let Some(flags) = flags else {
         return pattern.to_owned();
     };
@@ -16,6 +36,8 @@ pub(super) fn apply_regex_flags(pattern: &str, flags: Option<&str>) -> String {
     }
 }
 pub(super) fn write_rust_string_literal(text: &str, w: &mut CodeWriter) {
+    // Keep expression string escaping centralized so string and regex literal
+    // emission do not drift in their Rust literal policy.
     w.write("\"");
     for ch in text.chars() {
         match ch {
