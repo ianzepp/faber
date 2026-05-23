@@ -59,6 +59,7 @@ pub fn generate_expr(
         HirExprKind::Array(elements) => {
             generate_array_expr(codegen, expr, elements, types, w)?;
         }
+        HirExprKind::Vacua => generate_vacua_expr(codegen, expr, types, w),
         HirExprKind::Struct(def_id, fields) => generate_struct_expr(codegen, *def_id, fields, types, w)?,
         HirExprKind::Tuple(elements) => generate_tuple_expr(codegen, elements, types, w)?,
         HirExprKind::Scribe(kind, args) => generate_scribe_expr(codegen, *kind, args, types, w)?,
@@ -130,6 +131,29 @@ pub fn generate_expr(
         }
     }
     Ok(())
+}
+
+fn generate_vacua_expr(codegen: &GoCodegen<'_>, expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
+    match expr.ty.map(|ty| types.get(ty)) {
+        Some(Type::Map(key, value)) => {
+            w.write("make(map[");
+            w.write(&types::type_to_go(codegen, *key, types));
+            w.write("]");
+            w.write(&types::type_to_go(codegen, *value, types));
+            w.write(")");
+        }
+        Some(Type::Array(elem)) => {
+            w.write("make([]");
+            w.write(&types::type_to_go(codegen, *elem, types));
+            w.write(", 0)");
+        }
+        Some(Type::Set(elem)) => {
+            w.write("make(map[");
+            w.write(&types::type_to_go(codegen, *elem, types));
+            w.write("]struct{})");
+        }
+        _ => w.write("nil"),
+    }
 }
 
 pub(super) fn generate_expr_for_go_type(

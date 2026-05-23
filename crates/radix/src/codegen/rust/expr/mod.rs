@@ -301,6 +301,7 @@ pub fn generate_expr(
             in_entry,
             suppress_error_propagation,
         )?,
+        HirExprKind::Vacua => generate_vacua_expr(expr, types, w),
         HirExprKind::Struct(def_id, fields) => generate_struct_expr(
             codegen,
             *def_id,
@@ -423,6 +424,14 @@ pub fn generate_expr(
         }
     }
     Ok(())
+}
+
+fn generate_vacua_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
+    match expr.ty.map(|ty| types.get(ty)) {
+        Some(Type::Map(_, _)) => w.write("std::collections::HashMap::new()"),
+        Some(Type::Set(_)) => w.write("std::collections::HashSet::new()"),
+        Some(Type::Array(_)) | _ => w.write("Vec::new()"),
+    }
 }
 
 pub(super) fn generate_expr_unwrapped(

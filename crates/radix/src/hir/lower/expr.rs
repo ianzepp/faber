@@ -49,6 +49,7 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
 
     let kind = match &expr.kind {
         ExprKind::Literal(lit) => lower_literal(lowerer, lit),
+        ExprKind::Vacua(_) => HirExprKind::Vacua,
         ExprKind::Ident(ident) => lowerer.lower_nomen(ident),
         ExprKind::Binary(bin) => lowerer.lower_binarius(bin),
         ExprKind::Unary(unary) => lowerer.lower_unarius(unary),

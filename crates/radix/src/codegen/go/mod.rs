@@ -384,7 +384,7 @@ impl<'a> GoCodegen<'a> {
                 }
                 self.collect_expr_use_counts(counts, body);
             }
-            HirExprKind::Literal(_) | HirExprKind::Error => {}
+            HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
         }
     }
 
@@ -634,7 +634,7 @@ fn expr_contains_ad(expr: &HirExpr) -> bool {
                     .iter()
                     .any(|arm| arm.guard.as_ref().is_some_and(expr_contains_ad) || expr_contains_ad(&arm.body))
         }
-        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => false,
+        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => false,
     }
 }
 

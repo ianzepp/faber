@@ -312,7 +312,7 @@ fn check_expr(
                 check_expr(fallback, types, enum_variants, errors);
             }
         }
-        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
     }
 }
 

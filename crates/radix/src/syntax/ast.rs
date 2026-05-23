@@ -689,6 +689,8 @@ pub enum ExprKind {
     Ident(Ident),
     /// Literal value
     Literal(Literal),
+    /// Contextual empty value expression: vacua
+    Vacua(Span),
     /// Binary operation
     Binary(BinaryExpr),
     /// Unary operation

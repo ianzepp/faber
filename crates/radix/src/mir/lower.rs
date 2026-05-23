@@ -1936,6 +1936,7 @@ fn unsupported_expr_kind_name(kind: &HirExprKind) -> &'static str {
         HirExprKind::Error => "error expressions",
         HirExprKind::Path(_)
         | HirExprKind::Literal(_)
+        | HirExprKind::Vacua
         | HirExprKind::Binary(_, _, _)
         | HirExprKind::Unary(_, _)
         | HirExprKind::Call(_, _)

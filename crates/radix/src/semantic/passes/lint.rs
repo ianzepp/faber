@@ -435,7 +435,7 @@ impl<'a> LintContext<'a> {
                     self.check_expr(fallback, in_loop);
                 }
             }
-            HirExprKind::Literal(_) | HirExprKind::Error => {}
+            HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
         }
     }
 

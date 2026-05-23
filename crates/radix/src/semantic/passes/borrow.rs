@@ -416,7 +416,7 @@ impl<'a> BorrowChecker<'a> {
                 None => self.check_expr(inner),
             },
             HirExprKind::Deref(expr) => self.check_expr(expr),
-            HirExprKind::Error => {}
+            HirExprKind::Vacua | HirExprKind::Error => {}
         }
     }
 

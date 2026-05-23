@@ -361,6 +361,8 @@ pub enum HirExprKind {
     Path(DefId),
     /// Literal value
     Literal(HirLiteral),
+    /// Contextual empty value expression: vacua
+    Vacua,
     /// Binary operation
     Binary(HirBinOp, Box<HirExpr>, Box<HirExpr>),
     /// Unary operation

@@ -860,6 +860,7 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
         }
         ExprKind::Lege(_) => {}
         ExprKind::Sed(_) => {}
+        ExprKind::Vacua(_) => {}
         ExprKind::Praefixum(expr) => match &expr.body {
             crate::syntax::PraefixumBody::Block(block) => resolve_block(resolver, interner, block, errors),
             crate::syntax::PraefixumBody::Expr(expr) => resolve_expr(resolver, interner, expr, errors),

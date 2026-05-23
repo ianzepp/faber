@@ -38,6 +38,7 @@ impl<'a> TypeChecker<'a> {
         let ty = match &mut expr.kind {
             HirExprKind::Path(def_id) => self.check_path(*def_id, expr.span),
             HirExprKind::Literal(lit) => self.literal_type(lit),
+            HirExprKind::Vacua => self.check_vacua(expected, expr.span),
             HirExprKind::Binary(op, lhs, rhs) => self.check_binary(*op, lhs, rhs),
             HirExprKind::Unary(op, operand) => self.check_unary(*op, operand),
             HirExprKind::Call(callee, args) => self.check_call(callee, args),
@@ -191,6 +192,32 @@ impl<'a> TypeChecker<'a> {
         expr.ty = Some(self.resolve_type(ty));
         ty
     }
+
+    fn check_vacua(&mut self, expected: Option<TypeId>, span: crate::lexer::Span) -> TypeId {
+        let Some(expected) = expected else {
+            self.error(
+                SemanticErrorKind::MissingTypeAnnotation,
+                "vacua requires an explicit declared type",
+                span,
+            );
+            return self.error_type;
+        };
+
+        let resolved = self.resolve_type(expected);
+        if self.is_infer(resolved) {
+            self.error(SemanticErrorKind::MissingTypeAnnotation, "vacua requires an explicit declared type", span);
+            return self.error_type;
+        }
+
+        match self.types.get(resolved) {
+            Type::Array(_) | Type::Map(_, _) | Type::Set(_) => resolved,
+            _ => {
+                self.error(SemanticErrorKind::InvalidOperandTypes, "vacua requires a collection type", span);
+                self.error_type
+            }
+        }
+    }
+
     pub(super) fn check_expr(&mut self, expr: &mut HirExpr) -> TypeId {
         self.check_expr_with_expected(expr, None)
     }

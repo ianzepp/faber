@@ -781,7 +781,9 @@ impl Parser {
             // Identifier
             TokenKind::Ident(_) | TokenKind::Tag => {
                 let ident = self.parse_ident()?;
-                if self.check(&TokenKind::LBrace) && self.looks_like_typed_constructor_fields() {
+                if self.interner.resolve(ident.name) == "vacua" {
+                    ExprKind::Vacua(ident.span)
+                } else if self.check(&TokenKind::LBrace) && self.looks_like_typed_constructor_fields() {
                     let type_span = ident.span;
                     self.advance();
                     let fields = self.parse_object_fields()?;

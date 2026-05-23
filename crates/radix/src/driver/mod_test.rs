@@ -2001,6 +2001,40 @@ fn empty_array_and_spread_literals_no_longer_report_annotation_or_type_errors() 
 }
 
 #[test]
+fn typed_vacua_inhabits_declared_empty_collections() {
+    let session = session(Target::Rust);
+    let source = r#"functio empty_numbers() → lista<numerus> {
+  fixum lista<numerus> xs ← vacua
+  redde xs
+}
+
+functio empty_counts() → tabula<textus, numerus> {
+  fixum tabula<textus, numerus> counts ← vacua
+  redde counts
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(
+        result.success(),
+        "expected typed vacua collections to compile, got {:?}",
+        result.diagnostics
+    );
+}
+
+#[test]
+fn context_free_vacua_requires_declared_type() {
+    let session = session(Target::Rust);
+    let source = r#"functio empty() → vacuum {
+  fixum _ xs ← vacua
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.diagnostics.iter().any(|diagnostic| diagnostic
+        .message
+        .contains("vacua requires an explicit declared type")));
+}
+
+#[test]
 fn cursor_iteration_accumulator_from_empty_array_no_longer_reports_inference_error() {
     let session = session(Target::Rust);
     let source = r#"@ cursor

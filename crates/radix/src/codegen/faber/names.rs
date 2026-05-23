@@ -193,7 +193,7 @@ impl super::FaberCodegen {
                 }
                 self.collect_expr_names(names, body);
             }
-            HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+            HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
         }
     }
     pub(super) fn name_for_def(&self, def_id: DefId, names: &FxHashMap<DefId, Symbol>, interner: &Interner) -> String {

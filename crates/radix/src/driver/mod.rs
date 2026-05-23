@@ -841,7 +841,12 @@ fn scan_expr_for_go_unsupported_errors(
             PraefixumBody::Expr(expr) => scan_expr_for_go_unsupported_errors(expr, file, dynamic_externa, diagnostics),
         },
         ExprKind::Paren(expr) => scan_expr_for_go_unsupported_errors(expr, file, dynamic_externa, diagnostics),
-        ExprKind::Literal(_) | ExprKind::Ident(_) | ExprKind::Lege(_) | ExprKind::Sed(_) | ExprKind::Ego(_) => {}
+        ExprKind::Literal(_)
+        | ExprKind::Vacua(_)
+        | ExprKind::Ident(_)
+        | ExprKind::Lege(_)
+        | ExprKind::Sed(_)
+        | ExprKind::Ego(_) => {}
     }
 }
 
@@ -1296,7 +1301,12 @@ fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &
             PraefixumBody::Expr(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
         },
         ExprKind::Paren(expr) => scan_expr_for_rust_unsupported_errors(expr, file, diagnostics),
-        ExprKind::Literal(_) | ExprKind::Ident(_) | ExprKind::Lege(_) | ExprKind::Sed(_) | ExprKind::Ego(_) => {}
+        ExprKind::Literal(_)
+        | ExprKind::Vacua(_)
+        | ExprKind::Ident(_)
+        | ExprKind::Lege(_)
+        | ExprKind::Sed(_)
+        | ExprKind::Ego(_) => {}
     }
 }
 

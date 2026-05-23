@@ -296,6 +296,6 @@ fn visit_expr(expr: &HirExpr, suppressed: bool, deps: &mut FnDeps) {
             }
         }
         HirExprKind::Clausura(_, _, body) => visit_expr(body, suppressed, deps),
-        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
     }
 }

@@ -296,7 +296,7 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             HirExprKind::Cede(expr) | HirExprKind::Ref(_, expr) | HirExprKind::Deref(expr) => self.finalize_expr(expr),
-            HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+            HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
         }
     }
 

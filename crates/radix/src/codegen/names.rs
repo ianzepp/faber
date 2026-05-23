@@ -310,7 +310,7 @@ fn collect_expr_names(names: &mut FxHashMap<crate::hir::DefId, Symbol>, expr: &H
             }
             collect_expr_names(names, body);
         }
-        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => {}
+        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
     }
 }
 

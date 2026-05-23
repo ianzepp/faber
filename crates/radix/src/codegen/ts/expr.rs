@@ -147,6 +147,7 @@ pub fn generate_expr(
             }
             w.write("]");
         }
+        HirExprKind::Vacua => generate_vacua_expr(expr, types, w),
         HirExprKind::Struct(_, fields) => {
             w.write("{ ");
             for (idx, (name, value)) in fields.iter().enumerate() {
@@ -492,6 +493,14 @@ pub fn generate_expr(
         }
     }
     Ok(())
+}
+
+fn generate_vacua_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
+    match expr.ty.map(|ty| types.get(ty)) {
+        Some(Type::Map(_, _)) => w.write("new Map()"),
+        Some(Type::Set(_)) => w.write("new Set()"),
+        Some(Type::Array(_)) | _ => w.write("[]"),
+    }
 }
 
 fn try_generate_intrinsic_call(
@@ -1009,6 +1018,6 @@ fn contains_await_in_expr(expr: &HirExpr) -> bool {
                     .as_ref()
                     .is_some_and(|fb| contains_await_in_expr(fb))
         }
-        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Error => false,
+        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => false,
     }
 }

@@ -256,6 +256,9 @@ impl super::FaberCodegen {
                 }
                 w.write("]");
             }
+            HirExprKind::Vacua => {
+                w.write("vacua");
+            }
             HirExprKind::Struct(def_id, fields) => {
                 w.write(&self.name_for_def(*def_id, names, interner));
                 w.write(" {");
