@@ -267,7 +267,7 @@ impl super::FaberCodegen {
                                 w.newline();
                             }
                             w.write(&self.symbol_to_string(*name, interner));
-                            w.write(": ");
+                            w.write(" = ");
                             self.write_expr(value, types, names, interner, w);
                         }
                     });

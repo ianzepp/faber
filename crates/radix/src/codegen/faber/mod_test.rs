@@ -541,8 +541,8 @@ fn emits_object_literal_fields_from_innatum_entries() {
 
     let gen = FaberCodegen::new();
     let output = gen.generate(&program, &types, &interner).expect("codegen");
-    assert!(output.code.contains("nomen: \"Marcus\""));
-    assert!(output.code.contains("activus: verum"));
+    assert!(output.code.contains("nomen = \"Marcus\""));
+    assert!(output.code.contains("activus = verum"));
     // With unified Verte, map construction now emits `{...} ⇢ Type`
     assert!(output.code.contains("⇢"));
 }

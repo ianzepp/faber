@@ -233,7 +233,7 @@ impl super::FaberCodegen {
                 w.write(" ");
                 w.write(&self.symbol_to_string(field.name, interner));
                 if let Some(init) = &field.init {
-                    w.write(": ");
+                    w.write(" = ");
                     self.write_expr(init, types, names, interner, w);
                 }
                 w.newline();

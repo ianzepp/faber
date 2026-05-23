@@ -17,14 +17,14 @@ impl super::FaberCodegen {
             HirObjectKey::Ident(name) => {
                 w.write(&self.symbol_to_string(*name, interner));
                 if let Some(value) = &field.value {
-                    w.write(": ");
+                    w.write(" = ");
                     self.write_expr(value, types, names, interner, w);
                 }
             }
             HirObjectKey::String(name) => {
                 self.write_quoted_symbol(*name, interner, w);
                 if let Some(value) = &field.value {
-                    w.write(": ");
+                    w.write(" = ");
                     self.write_expr(value, types, names, interner, w);
                 }
             }
@@ -33,7 +33,7 @@ impl super::FaberCodegen {
                 self.write_expr(expr, types, names, interner, w);
                 w.write("]");
                 if let Some(value) = &field.value {
-                    w.write(": ");
+                    w.write(" = ");
                     self.write_expr(value, types, names, interner, w);
                 }
             }

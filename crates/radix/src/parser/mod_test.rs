@@ -2,8 +2,8 @@ use super::parse;
 use crate::lexer::lex;
 use crate::syntax::{
     AnnotationKind, BindingPattern, ClassMemberKind, ClausuraBody, CuraKind, ExprKind, IfBody, ImportKind, IteraMode,
-    Literal, Mutability, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind, SecusClause,
-    StmtKind, TypeExprKind,
+    Literal, Mutability, ObjectKey, ParamMode, Pattern, PatternBind, PraeparaKind, ProbaModifier, ScribeKind,
+    SecusClause, StmtKind, TypeExprKind,
 };
 
 fn parse_program(source: &str) -> super::ParseResult {
@@ -639,8 +639,8 @@ fn parses_class_interface_and_test_keywords() {
 abstractus genus Animal<T> sub Vivens implet Canens, Currens {
     @ futura
     functio canta(textus vox) → vacuum {}
-    generis textus nomen: "leo"
-    nexum numerus aetas: 3
+    generis textus nomen = "leo"
+    nexum numerus aetas = 3
 }
 
 pactum Canens<T> {
@@ -731,6 +731,75 @@ probandum "suite" tag "parser" {
             .any(|modifier| matches!(modifier, ProbaModifier::SolumIn(_))),
         "expected solumIn modifier"
     );
+}
+
+#[test]
+fn parses_structural_equals_fields_and_typed_construction() {
+    let result = parse_ok(
+        r#"
+genus Point {
+    numerus x = 0
+    numerus y = 0
+}
+
+functio main() → numerus {
+    fixum _ p ← Point { x = 10, y = 20 }
+    fixum _ raw ← { x = 10, y = 20 }
+    fixum _ event ← finge Click { x = 1, y = 2 } ⇢ Event
+    redde p.x
+}
+"#,
+    );
+
+    let program = result
+        .program
+        .as_ref()
+        .expect("parser should produce a program");
+    let StmtKind::Class(class) = &program.stmts[0].kind else {
+        panic!("expected class declaration");
+    };
+    let ClassMemberKind::Field(field) = &class.members[0].kind else {
+        panic!("expected field declaration");
+    };
+    assert!(field.init.is_some());
+
+    let StmtKind::Func(func) = &program.stmts[1].kind else {
+        panic!("expected function declaration");
+    };
+    let Some(body) = &func.body else {
+        panic!("expected function body");
+    };
+
+    let StmtKind::Var(typed_ctor) = &body.stmts[0].kind else {
+        panic!("expected typed constructor binding");
+    };
+    let Some(init) = typed_ctor.init.as_deref() else {
+        panic!("expected initializer");
+    };
+    assert!(matches!(init.kind, ExprKind::Verte(_)));
+
+    let StmtKind::Var(raw_object) = &body.stmts[1].kind else {
+        panic!("expected raw object binding");
+    };
+    let Some(init) = raw_object.init.as_deref() else {
+        panic!("expected initializer");
+    };
+    let ExprKind::Object(object) = &init.kind else {
+        panic!("expected object literal");
+    };
+    assert!(matches!(object.fields[0].key, ObjectKey::Ident(_)));
+    assert!(object.fields[0].value.is_some());
+
+    let StmtKind::Var(finge_var) = &body.stmts[2].kind else {
+        panic!("expected finge binding");
+    };
+    let Some(init) = finge_var.init.as_deref() else {
+        panic!("expected initializer");
+    };
+    let ExprKind::Finge(finge) = &init.kind else {
+        panic!("expected finge expression");
+    };
+    assert_eq!(finge.fields.len(), 2);
 }
 
 #[test]

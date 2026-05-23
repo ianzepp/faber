@@ -781,7 +781,26 @@ impl Parser {
             // Identifier
             TokenKind::Ident(_) | TokenKind::Tag => {
                 let ident = self.parse_ident()?;
-                ExprKind::Ident(ident)
+                if self.check(&TokenKind::LBrace) && self.looks_like_typed_constructor_fields() {
+                    let type_span = ident.span;
+                    self.advance();
+                    let fields = self.parse_object_fields()?;
+                    self.expect(&TokenKind::RBrace, "expected '}'")?;
+                    let object = Expr {
+                        id: self.next_id(),
+                        kind: ExprKind::Object(ObjectExpr { fields }),
+                        span: ident.span.merge(self.previous_span()),
+                    };
+                    let ty = TypeExpr {
+                        nullable: false,
+                        mode: None,
+                        kind: TypeExprKind::Named(ident, Vec::new()),
+                        span: type_span,
+                    };
+                    ExprKind::Verte(VerteExpr { expr: Box::new(object), ty })
+                } else {
+                    ExprKind::Ident(ident)
+                }
             }
 
             // Array literal
@@ -840,7 +859,7 @@ impl Parser {
             while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
                 let field_start = self.current_span();
                 let name = self.parse_ident()?;
-                self.expect(&TokenKind::Colon, "expected ':'")?;
+                self.expect_field_value_separator()?;
                 let value = Box::new(self.parse_expression()?);
                 let span = field_start.merge(self.previous_span());
                 fields.push(FingeFieldInit { name, value, span });
@@ -1115,7 +1134,7 @@ impl Parser {
             } else if let TokenKind::String(s) = self.peek().kind {
                 // String key
                 self.advance();
-                self.expect(&TokenKind::Colon, "expected ':'")?;
+                self.expect_field_value_separator()?;
                 let value = Some(Box::new(self.parse_expression()?));
                 let span = start.merge(self.previous_span());
                 fields.push(ObjectField { key: ObjectKey::String(s), value, span });
@@ -1124,14 +1143,14 @@ impl Parser {
                 self.advance();
                 let key_expr = Box::new(self.parse_expression()?);
                 self.expect(&TokenKind::RBracket, "expected ']'")?;
-                self.expect(&TokenKind::Colon, "expected ':'")?;
+                self.expect_field_value_separator()?;
                 let value = Some(Box::new(self.parse_expression()?));
                 let span = start.merge(self.previous_span());
                 fields.push(ObjectField { key: ObjectKey::Computed(key_expr), value, span });
             } else {
                 // Identifier key (possibly shorthand)
                 let ident = self.parse_ident()?;
-                let value = if self.eat(&TokenKind::Colon) {
+                let value = if self.eat(&TokenKind::Eq) || self.eat(&TokenKind::Colon) {
                     Some(Box::new(self.parse_expression()?))
                 } else {
                     None // Shorthand
@@ -1146,6 +1165,19 @@ impl Parser {
         }
 
         Ok(fields)
+    }
+
+    fn looks_like_typed_constructor_fields(&self) -> bool {
+        matches!(self.peek_at(1).kind, TokenKind::Ident(_) | TokenKind::String(_))
+            && matches!(self.peek_at(2).kind, TokenKind::Eq | TokenKind::Colon)
+    }
+
+    fn expect_field_value_separator(&mut self) -> Result<(), ParseError> {
+        if self.eat(&TokenKind::Eq) || self.eat(&TokenKind::Colon) {
+            return Ok(());
+        }
+
+        Err(self.error(ParseErrorKind::Expected, "expected '='"))
     }
 
     fn try_parse_type_args(&mut self) -> Result<Vec<TypeExpr>, ParseError> {
