@@ -1,5 +1,26 @@
+//! Literal, formatting, and console expression lowering for Go.
+//!
+//! This module owns expression forms that imply Go standard-library imports:
+//! `fmt` for formatted strings, printing, and panic text; `os` for stderr
+//! output; and `regexp` for regex literals. Import collection is handled by the
+//! wider Go backend, but the expression choices here are the reason those
+//! imports may be required.
+//!
+//! TARGET CONTRACTS
+//! ================
+//! - `scriptum` uses `fmt.Sprintf`; each `§` placeholder becomes `%v`, and
+//!   indexed placeholders become Go's one-based `%[n]v` form.
+//! - Literal percent signs are escaped before reaching `fmt`.
+//! - `scribe`-family output lowers to Go's line-printing functions; `mone`
+//!   writes to stderr.
+//! - String literals use Rust debug escaping for the generated Go string token.
+//! - Regex literals use `regexp.MustCompile`, so invalid generated patterns fail
+//!   at Go program initialization or execution time.
+//! - `nihil` lowers to Go `nil`.
+
 use super::*;
 use crate::hir::HirScribeKind;
+
 pub(super) fn render_scriptum_template(template: &str, _arg_count: usize) -> String {
     let mut rendered = String::with_capacity(template.len());
     let mut chars = template.chars().peekable();
@@ -83,6 +104,8 @@ pub(super) fn generate_literal(codegen: &GoCodegen<'_>, literal: &HirLiteral, w:
         HirLiteral::Float(v) => w.write(&v.to_string()),
         HirLiteral::String(sym) => w.write(&format!("{:?}", codegen.resolve_symbol(*sym))),
         HirLiteral::Regex(pattern, flags) => {
+            // EDGE: This is a direct Go regexp literal path. The backend
+            // does not pre-validate Go regexp syntax or escape raw backticks.
             w.write("regexp.MustCompile(`");
             w.write(codegen.resolve_symbol(*pattern));
             if let Some(flags) = flags {

@@ -1,4 +1,24 @@
+//! Member and index lowering for Go expressions.
+//!
+//! Faber fields are source-language names, while generated Go fields must be
+//! exported when structs cross helper boundaries. This file owns that naming
+//! bridge, the special `self` path used while emitting struct methods, and the
+//! places where map and dynamic `ignotum` access intentionally use Go runtime
+//! checks instead of pretending the value has a static shape.
+//!
+//! TARGET COMPROMISES
+//! ==================
+//! - Struct field access capitalizes source names to match generated exported
+//!   Go fields.
+//! - `length`/`longitudo` lower to `len` for arrays and `textus`.
+//! - `textus` indexing walks runes and returns `""` for scalar out-of-bounds
+//!   access; this avoids byte indexing but does not claim full grapheme
+//!   semantics.
+//! - Dynamic `ignotum` member access only succeeds for `map[string]any` and
+//!   otherwise returns `nil`.
+
 use super::*;
+
 pub(super) fn generate_field_expr(
     codegen: &GoCodegen<'_>,
     expr: &HirExpr,
@@ -10,6 +30,8 @@ pub(super) fn generate_field_expr(
     let field_name = codegen.resolve_symbol(field);
     if let HirExprKind::Path(def_id) = object.kind {
         if codegen.is_struct_def(def_id) {
+            // A struct definition path inside its own methods names the Go
+            // receiver, not a package-level value.
             w.write("self.");
             w.write(&capitalize(field_name));
             return Ok(());
@@ -30,6 +52,8 @@ pub(super) fn generate_field_expr(
         return write_map_member_expr(codegen, object, field_name, *value_ty, expr.ty, types, w);
     }
     if matches!(object_ty, Some(Type::Primitive(Primitive::Ignotum))) {
+        // Dynamic member access is deliberately narrow: only string-keyed
+        // dynamic maps participate, and all other runtime values produce nil.
         w.write("func() any { if m, ok := ");
         generate_expr(codegen, object, types, w)?;
         w.write(".(map[string]any); ok { return m[");
@@ -68,6 +92,8 @@ fn generate_textus_index_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Go strings index bytes. Faber `textus` indexing is expressed through
+    // runes here so common Unicode scalar values do not split into bytes.
     match &index.kind {
         HirExprKind::Intervallum { start, end, step, kind } => {
             w.write("func() string { __faber_runes := []rune(");
@@ -111,6 +137,9 @@ pub(super) fn write_map_member_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Dot-like map member access is sugar for a string key. If the map carries
+    // `ignotum` values and semantic analysis knows a narrower result, assert at
+    // the boundary so later Go operations see the intended static type.
     generate_expr(codegen, object, types, w)?;
     w.write("[");
     w.write(&format!("{:?}", field_name));

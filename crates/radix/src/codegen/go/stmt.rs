@@ -1,3 +1,25 @@
+//! Statement and block emission for the Go backend.
+//!
+//! Statement codegen owns Go control-flow shape: blocks, local declarations,
+//! explicit returns, loops, `ad` statements, and statement-position `discerne`.
+//! Expression codegen still renders expression values; this file decides when a
+//! Faber expression must become a Go statement, a block tail return, or a
+//! fail-closed codegen error because the statement form has no Phase 9 Go
+//! representation.
+//!
+//! CONTRACTS
+//! =========
+//! - Tail expressions become `return` only in value/function block helpers that
+//!   receive an expected result type.
+//! - Entry-point blocks are emitted without braces because `mod.rs` owns the
+//!   surrounding `func main()`.
+//! - Local `nil` initialization uses `var` with the best available type because
+//!   Go cannot infer a type from `nil`.
+//! - Unsupported structured `cape` handlers, mixed pattern shapes, and missing
+//!   variant metadata return [`CodegenError`] instead of emitting guessed Go.
+//! - `ad` statements preserve catch/body control flow around a generated
+//!   `radixAd` call, but the actual dispatch implementation is a backend stub.
+
 use super::expr::generate_expr_for_go_type;
 use super::types::type_to_go;
 use super::{expr::generate_expr, CodeWriter, CodegenError, GoCodegen};
@@ -5,6 +27,8 @@ use crate::hir::{HirBlock, HirExprKind, HirPattern, HirStmt, HirStmtKind};
 use crate::semantic::TypeTable;
 
 fn nil_init_type(expr: &crate::hir::HirExpr) -> Option<crate::semantic::TypeId> {
+    // `nil` cannot stand alone in Go short declarations. Conversions around
+    // nil carry the target type needed to write a typed `var x T = nil`.
     match &expr.kind {
         HirExprKind::Literal(crate::hir::HirLiteral::Nil) => expr.ty,
         HirExprKind::Verte { source, target, .. }
@@ -33,6 +57,9 @@ pub(super) fn generate_prefixed_block<P>(
 where
     P: FnOnce(&mut CodeWriter) -> Result<(), CodegenError>,
 {
+    // This helper is the shared "block with optional synthetic leading
+    // statements" path. It is used for catch bindings, `ad` result bindings,
+    // and value blocks that must turn a tail expression into `return`.
     w.writeln("{");
     let mut result = Ok(());
     let mut prelude = Some(prelude);
@@ -86,6 +113,8 @@ pub(super) fn generate_value_block(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // A value block has a known result type, so optional wrapping and nil
+    // handling are delegated through expression emission for that Go type.
     generate_prefixed_block(codegen, block, types, w, 0, Some(result_ty), |_| Ok(()))
 }
 
@@ -115,6 +144,8 @@ fn generate_stmt_block(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Statement-position blocks keep tail expressions as expression statements.
+    // Function/method blocks use declaration helpers when tails must return.
     w.writeln("{");
     let mut result = Ok(());
     w.indented(|w| {
@@ -144,7 +175,7 @@ pub fn generate_stmt(
     match &stmt.kind {
         HirStmtKind::Local(local) => {
             // WHY: Go uses := for short variable declarations with inferred types,
-            // and var for explicit types without initializers.
+            // and var for explicit types without initializers or nil values.
             if let Some(init) = &local.init {
                 let name = codegen.resolve_symbol(local.name);
                 let nil_init_ty = nil_init_type(init);
@@ -215,6 +246,10 @@ fn generate_ad_stmt(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // `ad` has statement-level control flow even though Go has no backend
+    // transport here. Calls target the generated `radixAd` stub; caught errors
+    // enter the catch block, uncaught errors panic, and successful results bind
+    // into the optional body.
     let binding_ty = ad
         .binding
         .as_ref()
@@ -283,6 +318,9 @@ pub(super) fn generate_error_binding_block(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Lowered catch blocks begin with a local binding when the source named the
+    // error. Consume that synthetic first statement and reintroduce it from the
+    // Go error expression so the rest of the block emits normally.
     let Some(crate::hir::HirStmt { kind: HirStmtKind::Local(local), .. }) = block.stmts.first() else {
         return generate_block(codegen, block, types, w, |_| {});
     };
@@ -306,6 +344,9 @@ fn generate_ad_body_block(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Successful `ad` bodies can start with compiler-lowered locals for the
+    // result binding and optional alias. Replace those locals with assignments
+    // from `__radixResult` so the generated body has one source of truth.
     let Some(binding) = &ad.binding else {
         return generate_block(codegen, block, types, w, |_| {});
     };
@@ -351,6 +392,9 @@ fn generate_expr_stmt(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Some Faber expressions become Go statements when their result is not
+    // consumed. Keep these rewrites here so expression emission can stay focused
+    // on value contexts.
     match &expr.kind {
         HirExprKind::Block(block) => {
             generate_stmt_block(codegen, block, types, w)?;
@@ -464,6 +508,9 @@ fn generate_discerne_stmt(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Go has separate convenient forms for value switches and type switches.
+    // Variant patterns select the type-switch path; literal/wildcard/binding
+    // patterns use an ordinary value switch.
     if scrutinees.len() != 1 {
         return Err(CodegenError {
             message: "multi-scrutinee discerne is not yet supported for Go codegen".to_owned(),
@@ -599,6 +646,9 @@ fn generate_variant_discerne_stmt(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Variant enums lower to concrete structs behind an interface. Matching is
+    // therefore a Go type switch, with `__radixCase` introduced only when an arm
+    // needs access to the concrete variant value.
     let needs_case_binding = arms
         .iter()
         .flat_map(|arm| arm.patterns.iter())
@@ -710,6 +760,9 @@ fn write_variant_field_bindings(
     bindings: &[HirPattern],
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Variant field metadata is collected before emission. If it is missing or
+    // too short, the backend stops instead of guessing field names or silently
+    // dropping bindings.
     let Some(fields) = codegen.variant_fields(def_id) else {
         return Err(CodegenError {
             message: format!("missing variant field metadata for {}", codegen.resolve_def(def_id)),

@@ -1,4 +1,23 @@
+//! Function and method-call lowering for the Go backend.
+//!
+//! Calls are the densest interop point between Faber semantics and Go surface
+//! syntax. This file handles variant constructors before ordinary call syntax,
+//! recovers tuple-like spread calls when semantic types make that safe, maps
+//! builtin intrinsics to Go runtime functions, and translates selected stdlib
+//! collection methods into Go slices.
+//!
+//! INVARIANTS
+//! ==========
+//! - Receiver shape is explicit: struct-definition paths become `self`, and
+//!   non-addressable struct values are copied into a temporary so pointer
+//!   receiver methods can still be called.
+//! - Method translations only fire when receiver type and arity match known
+//!   contracts; otherwise emission falls back to a capitalized Go method call.
+//! - Spread-call recovery is type-driven and only applies to one array argument
+//!   feeding a multi-parameter function.
+
 use super::*;
+
 pub(super) fn generate_call_expr(
     codegen: &GoCodegen<'_>,
     callee: &HirExpr,
@@ -8,6 +27,8 @@ pub(super) fn generate_call_expr(
 ) -> Result<(), CodegenError> {
     if let HirExprKind::Path(def_id) = callee.kind {
         if codegen.is_variant_def(def_id) {
+            // Variant names in callee position construct tagged values rather
+            // than call ordinary Go functions.
             return generate_variant_constructor(codegen, def_id, args, types, w);
         }
     }
@@ -62,6 +83,8 @@ pub(super) fn write_method_receiver(
 ) -> Result<(), CodegenError> {
     if let HirExprKind::Path(def_id) = receiver.kind {
         if codegen.is_struct_def(def_id) {
+            // Inside generated methods, a Faber struct path denotes the active
+            // receiver value.
             w.write("self");
             return Ok(());
         }
@@ -71,6 +94,9 @@ pub(super) fn write_method_receiver(
         .ty
         .map(|ty| normalize_receiver_type(types.get(ty), types));
     if matches!(receiver_ty, Some(Type::Struct(_))) && !receiver_is_addressable(receiver) {
+        // Go pointer receiver methods require an addressable receiver. For
+        // computed structs, materialize a local copy and call through its
+        // address instead of changing method signatures.
         let go_ty = expr_return_type(receiver, types, codegen);
         w.write("func() *");
         w.write(&go_ty);
@@ -101,6 +127,9 @@ pub(super) fn try_generate_translated_method_call(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
+    // These translations are stdlib/runtime contracts, not general method
+    // dispatch. Keep them guarded by receiver kind and arity so unknown methods
+    // still lower through the normal Go receiver path.
     let method_name = codegen.resolve_symbol(method);
     let receiver_type = receiver
         .ty
@@ -231,6 +260,9 @@ pub(super) fn try_generate_spread_call_recovery(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
+    // Parser/HIR may present a spread-like call as one array argument. When the
+    // callee type proves a fixed multi-parameter function, recover the intended
+    // positional call by indexing the array.
     let Some(callee_ty) = callee.ty else {
         return Ok(false);
     };
@@ -268,6 +300,9 @@ pub(super) fn try_generate_intrinsic_call(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
+    // Intrinsics are target shims for compiler-known functions. They are kept
+    // here instead of in ordinary name resolution because their Go spellings may
+    // include packages or pre-bound arguments such as stderr.
     let HirExprKind::Path(def_id) = callee.kind else {
         return Ok(false);
     };

@@ -1,5 +1,28 @@
+//! Collection and aggregate expression lowering for the Go backend.
+//!
+//! This module owns expression forms whose Go representation depends on both
+//! the HIR shape and the resolved Faber type: structs, tuples, arrays, maps,
+//! and the current `ab` collection pipeline. The code generator writes Go
+//! expressions directly, so the contracts here are deliberately conservative:
+//! known aggregate types are emitted with their target shape, spread support is
+//! lowered only where Go can model it cleanly, and missing semantic type data
+//! remains visible instead of being guessed late in codegen.
+//!
+//! TARGET CONTRACTS
+//! ================
+//! - Struct fields are emitted as exported Go field names and `sponte` fields
+//!   are wrapped as pointers at construction time.
+//! - Tuples are represented as `[]any` because Go has no tuple value type.
+//! - Array spread lowers through an immediately invoked function that appends
+//!   elements in source order.
+//! - Object spread is not merged into Go struct or map literals here; unsupported
+//!   spread entries are skipped rather than claiming partial merge semantics.
+//! - Ident and string object keys are emitted as string keys for maps; computed
+//!   keys keep their expression form.
+
 use super::*;
 use crate::hir::HirObjectKey;
+
 pub(super) fn generate_struct_expr(
     codegen: &GoCodegen<'_>,
     def_id: crate::hir::DefId,
@@ -16,6 +39,8 @@ pub(super) fn generate_struct_expr(
         w.write(&capitalize(codegen.resolve_symbol(*name)));
         w.write(": ");
         if let Some(field_ty) = codegen.struct_field_type(def_id, *name) {
+            // WHY: Faber `sponte` fields are nullable declaration slots; Go
+            // represents that optionality as a pointer to the concrete field type.
             if codegen.struct_field_is_sponte(def_id, *name) {
                 generate_option_wrapped_expr(codegen, value, field_ty, types, w)?;
             } else {
@@ -66,6 +91,8 @@ pub(super) fn generate_array_expr(
         .iter()
         .any(|element| matches!(element, HirArrayElement::Spread(_)))
     {
+        // WHY: Go composite literals cannot contain spread elements, so an IIFE
+        // preserves source ordering while letting append expand spread operands.
         w.write("func() []");
         w.write(&elem_ty);
         w.write(" { acc := []");
@@ -115,6 +142,8 @@ pub(super) fn generate_typed_array_expr(
         .iter()
         .any(|element| matches!(element, HirArrayElement::Spread(_)))
     {
+        // WHY: Typed literals need the same spread policy as inferred arrays,
+        // but scalar elements are converted to the declared element type first.
         w.write("func() []");
         w.write(&elem_go_ty);
         w.write(" { acc := []");
@@ -319,6 +348,8 @@ pub(super) fn generate_map_literal(
                     w.write(&format!("{:?}", codegen.resolve_symbol(*name)));
                 }
                 HirObjectKey::Computed(expr) => generate_expr(codegen, expr, types, w)?,
+                // EDGE: Map spread has no Go literal equivalent in this path.
+                // Earlier phases must lower or reject real spread semantics.
                 HirObjectKey::Spread(_) => continue,
             }
             w.write(": ");

@@ -1,5 +1,25 @@
+//! Conversion expression lowering for the Go backend.
+//!
+//! Faber exposes explicit conversion forms, target-directed `verte` lowering,
+//! and a few backend escape hatches for values that are already target-shaped.
+//! This module keeps those policies in one place so other expression emitters
+//! can ask for "this value as this Go type" without duplicating parse, pointer,
+//! and assertion rules.
+//!
+//! TARGET CONTRACTS
+//! ================
+//! - Text conversion uses `fmt.Sprint`, matching Go's broad display conversion.
+//! - Numeric conversions parse the display form with `strconv`; when no Faber
+//!   fallback is supplied, parse errors currently yield Go's zero value.
+//! - Boolean conversion is type-directed where possible and falls back to
+//!   `strconv.ParseBool(fmt.Sprint(value))` for unknown shapes.
+//! - Option targets wrap concrete values with the Go pointer option convention.
+//! - Interface, enum, and unknown target conversions use Go type assertions as
+//!   an explicit target escape hatch rather than inventing structural coercion.
+
 use super::*;
 use crate::hir::HirObjectKey;
+
 pub(super) fn generate_value_conversion(
     _codegen: &GoCodegen<'_>,
     value_expr: &str,
@@ -59,6 +79,8 @@ pub(super) fn generate_bool_conversion_expr(
             w.write(" != nil)");
         }
         _ => {
+            // EDGE: Unknown values use Go's parser rather than Faber truthiness.
+            // Parse failures keep the current zero-value false behavior.
             w.write("func() bool { v, _ := strconv.ParseBool(fmt.Sprint(");
             generate_expr(codegen, source, types, w)?;
             w.write(")); return v }()");
@@ -113,6 +135,8 @@ pub(super) fn generate_verte_expr(
                         HirObjectKey::Ident(name) | HirObjectKey::String(name) => {
                             w.write(&capitalize(codegen.resolve_symbol(*name)));
                         }
+                        // EDGE: Computed keys and spread cannot address Go struct
+                        // fields in a composite literal, so they are not emitted.
                         HirObjectKey::Computed(_) | HirObjectKey::Spread(_) => continue,
                     }
                     w.write(": ");
@@ -165,6 +189,9 @@ pub(super) fn generate_verte_expr(
             generate_bool_conversion_expr(codegen, source, types, w)?;
         }
         Type::Enum(_) | Type::Interface(_) if variant_value_expr(source, codegen) => {
+            // WHY: Variant constructors already produce the concrete Go value
+            // that satisfies the enum/interface representation; asserting again
+            // would be redundant and can reject valid concrete construction.
             generate_expr(codegen, source, types, w)?;
         }
         Type::Enum(_) | Type::Interface(_) => {

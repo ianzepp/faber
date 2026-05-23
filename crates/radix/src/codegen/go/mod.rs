@@ -1,29 +1,34 @@
-//! Go Code Generation
+//! Go backend orchestration for HIR-to-Go emission.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! This module implements Faber-to-Go transpilation. It transforms HIR into
-//! idiomatic Go source code, mapping Faber's error semantics to Go's multi-return
-//! (T, error) convention and Faber's structs/enums to Go structs and interfaces.
+//! This module owns the outer shape of generated Go files: backend-wide name
+//! lookup, metadata catalogs that downstream expression/statement emitters need,
+//! declaration ordering, package/import emission, and optional `main` entry
+//! emission. It receives analyzed HIR and a [`TypeTable`]; semantic validation
+//! remains an earlier compiler phase, while this backend either emits Go for the
+//! HIR shape it understands or returns a codegen error for unsupported surfaces.
 //!
-//! COMPILER PHASE: Codegen
-//! INPUT: HirProgram (fully-analyzed HIR), TypeTable, Interner
-//! OUTPUT: GoOutput (compilable Go source code)
+//! CONTRACTS
+//! =========
+//! - Input is HIR after collection, resolution, lowering, typecheck, and
+//!   analysis; this backend does not redo those checks.
+//! - [`NameCatalog`] is the only name source used by the Go backend so
+//!   declaration, expression, and statement emitters agree on symbol spelling.
+//! - Backend metadata catalogs are collected once before emission. Statement
+//!   paths that require complete variant binding metadata fail closed, while
+//!   expression constructors stay deterministic when metadata is absent.
+//! - Package and import output is synthesized after the body is generated so
+//!   imports reflect the helper packages that actually appear in emitted code.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Idiomatic Go: Generate code that a Go programmer would write.
-//!   WHY: Output should integrate seamlessly with existing Go ecosystems.
-//! - Multi-return errors: Faber's `iace` (throw) maps to Go's (T, error) returns.
-//!   WHY: Go lacks exceptions; error values are the idiomatic pattern.
-//! - No borrow analysis: Go is garbage-collected, so de/in/ex modes are no-ops.
-//!   WHY: Go uses pointers for mutability, not Rust-style borrows.
-//!
-//! TRADE-OFFS
-//! ==========
+//! TARGET COMPROMISES
+//! ==================
 //! - Enums map to interfaces + concrete struct variants (Go lacks sum types).
-//! - Generics use Go 1.18+ type parameters where possible.
-//! - Optional types map to pointers (*T).
+//! - Generics use Go 1.18+ type parameters with `any` constraints.
+//! - Optional values map to pointers (`*T`) and `nil`.
+//! - Faber borrow modes are not represented because Go has no equivalent
+//!   ownership/lifetime surface.
+//! - Direct Go codegen has a generated `ad` stub that returns an error, while
+//!   normal driver diagnostics currently reject `ad` for Go targets before
+//!   successful output is exposed.
 
 mod decl;
 mod expr;
@@ -42,11 +47,31 @@ use std::collections::BTreeSet;
 type StructFieldTypes = FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>;
 type StructSponteFields = FxHashMap<DefId, FxHashMap<Symbol, bool>>;
 
+/// Shared context for all Go backend emitters.
+///
+/// The struct deliberately keeps codegen-only metadata beside the canonical
+/// name catalog. Expression and statement emission need access to declaration
+/// facts that are awkward to recover locally in Go, such as variant field order
+/// for type-switch bindings and `sponte` field status for pointer optional
+/// initialization. These catalogs are derived from HIR only; they are not a
+/// substitute for semantic analysis.
 pub struct GoCodegen<'a> {
+    /// Canonical spelling for symbols and definitions in generated Go.
     names: NameCatalog<'a>,
+
+    /// Path-reference counts used to suppress Go's unused-variable errors.
     use_counts: FxHashMap<DefId, usize>,
+
+    /// Variant definition id to source-order field names for constructors and
+    /// `discerne` bindings.
     variant_fields: FxHashMap<DefId, Vec<Symbol>>,
+
+    /// Struct definition id to declared field types, used by object literals
+    /// and optional field access where Go needs concrete pointer shape.
     struct_fields: StructFieldTypes,
+
+    /// Struct definition id to per-field `sponte` flags so emitters know which
+    /// fields are represented as pointers in Go struct values.
     struct_sponte_fields: StructSponteFields,
 }
 
@@ -79,6 +104,10 @@ impl<'a> GoCodegen<'a> {
         self.use_counts.get(&def_id).copied().unwrap_or(0) > 0
     }
 
+    /// Return the source-order field catalog for a generated variant struct.
+    ///
+    /// Constructors and variant `discerne` arms depend on this order to map
+    /// positional Faber variant bindings onto exported Go struct fields.
     pub(super) fn variant_fields(&self, def_id: DefId) -> Option<&[Symbol]> {
         self.variant_fields.get(&def_id).map(Vec::as_slice)
     }
@@ -91,12 +120,19 @@ impl<'a> GoCodegen<'a> {
         self.struct_fields.contains_key(&def_id)
     }
 
+    /// Return the declared type for a struct field when the emitter must choose
+    /// between a plain value and a pointer optional.
     pub(super) fn struct_field_type(&self, def_id: DefId, field: Symbol) -> Option<crate::semantic::TypeId> {
         self.struct_fields
             .get(&def_id)
             .and_then(|fields| fields.get(&field).copied())
     }
 
+    /// Report whether a struct field was declared `sponte`.
+    ///
+    /// Missing metadata defaults to `false` for compatibility with non-struct
+    /// paths. Call sites that require the field's concrete type must query
+    /// [`Self::struct_field_type`] separately.
     pub(super) fn struct_field_is_sponte(&self, def_id: DefId, field: Symbol) -> bool {
         self.struct_sponte_fields
             .get(&def_id)
@@ -216,6 +252,10 @@ impl Codegen for GoCodegen<'_> {
 }
 
 fn collect_imports(code: &str) -> BTreeSet<&'static str> {
+    // Go imports are emitted from actual generated references, not from source
+    // imports. That keeps helper imports deterministic while stdlib Faber
+    // imports remain a declaration-layer concern until the backend grows real
+    // package/module output.
     let mut imports = BTreeSet::new();
     if code.contains("fmt.") {
         imports.insert("fmt");

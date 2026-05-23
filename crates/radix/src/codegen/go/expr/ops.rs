@@ -1,5 +1,26 @@
+//! Operator expression lowering for the Go backend.
+//!
+//! Most Faber operators map directly to Go infix or prefix syntax, but the
+//! exceptions are important target contracts: strict equality is only as strict
+//! as Go comparability, coalescing has custom lowering, integer division may be
+//! promoted for fractional results, and nil checks are only meaningful for
+//! pointer-capable option shapes.
+//!
+//! TARGET CONTRACTS
+//! ================
+//! - `==`, strict equality, and identity-style equality all emit Go equality.
+//! - `??` is not emitted through the operator table in normal expression
+//!   lowering; it is routed to the coalesce helper.
+//! - Numeric division promotes both integer operands to `float64` only when the
+//!   resolved result type is fractional.
+//! - Range and between tokens share a table entry for composite lowering paths;
+//!   this file does not expand range endpoints by itself.
+//! - Null tests on non-option, non-unknown, non-param values fail closed to
+//!   constant `false` or `true` instead of generating invalid Go comparisons.
+
 use super::*;
 use crate::hir::{HirBinOp, HirUnOp};
+
 pub(super) fn binary_op_to_go(op: HirBinOp) -> &'static str {
     use HirBinOp::*;
     match op {
@@ -16,7 +37,9 @@ pub(super) fn binary_op_to_go(op: HirBinOp) -> &'static str {
         GtEq => ">=",
         And => "&&",
         Or => "||",
-        Coalesce => "||", // WHY: Go has no ?? — || is the closest for booleans
+        // Fallback table value only; generate_binary_expr routes real coalesce
+        // expressions through generate_coalesce_expr before this is used.
+        Coalesce => "||",
         BitAnd => "&",
         BitOr => "|",
         BitXor => "^",
@@ -54,6 +77,8 @@ pub(super) fn generate_binary_expr(
             Some(Type::Primitive(Primitive::Numerus))
         )
     {
+        // WHY: Go integer division would truncate before assignment; when
+        // Faber has already resolved a fractional result, promote both sides.
         w.write("(float64(");
         generate_expr(codegen, lhs, types, w)?;
         w.write(") / float64(");

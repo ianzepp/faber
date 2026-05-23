@@ -1,5 +1,25 @@
+//! Optional-value lowering for Go expressions.
+//!
+//! Faber optionals lower to Go pointers. This file owns the pointer contract at
+//! expression boundaries: wrapping non-optional values, preserving expressions
+//! that already produce native option pointers, coalescing through nil checks,
+//! and lowering optional/non-null chains for fields, indexes, and calls.
+//!
+//! INVARIANTS
+//! ==========
+//! - `nil` is the empty optional value.
+//! - Non-optional expressions assigned to an optional target are wrapped by
+//!   taking the address of a local temporary.
+//! - Optional chains return `nil` on absent values, failed dynamic map checks,
+//!   missing map keys, or out-of-range indexes.
+//! - Non-null chains are assertions by omission: this backend emits direct Go
+//!   access and lets Go panic if the value is invalid.
+
 use super::*;
+
 pub(super) fn expr_is_native_option_value(expr: &HirExpr, types: &TypeTable) -> bool {
+    // These expression forms already emit a pointer-shaped optional when their
+    // semantic type is `Option`; wrapping them again would create **T.
     if !matches!(
         expr.ty
             .map(|ty| normalize_receiver_type(types.get(ty), types)),
@@ -32,6 +52,9 @@ pub(super) fn generate_coalesce_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // `a ?? b` is a nil check against the pointer representation. If the whole
+    // expression still returns an option, keep the pointer; otherwise deref the
+    // present value before falling through to the fallback.
     match lhs
         .ty
         .map(|ty| normalize_receiver_type(types.get(ty), types))
@@ -76,6 +99,8 @@ pub(super) fn field_type_is_option(
     field: crate::lexer::Symbol,
     types: &TypeTable,
 ) -> bool {
+    // Sponte fields and explicit option-typed fields both use pointer-shaped Go
+    // storage, so optional chaining must not add another address layer.
     match normalize_receiver_type(types.get(object_ty), types) {
         Type::Struct(def_id) => {
             codegen.struct_field_is_sponte(*def_id, field)
@@ -110,6 +135,9 @@ pub(super) fn generate_optional_chain_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Optional chain lowering is intentionally local and fail-soft: each step
+    // checks the Go shape it needs and returns nil when the value is absent or
+    // dynamic access cannot be proven.
     let ret_ty = expr_return_type(expr, types, codegen);
     w.write("func() ");
     w.write(&ret_ty);
@@ -270,7 +298,8 @@ pub(super) fn generate_non_null_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    // WHY: Go has no non-null assertion; emit plain access.
+    // WHY: Go has no non-null assertion. Emit plain access so invalid values
+    // fail at the same point a hand-written Go dereference or lookup would.
     generate_expr(codegen, object, types, w)?;
     match chain {
         crate::hir::HirNonNullKind::Member(field) => {
@@ -314,6 +343,8 @@ pub(super) fn generate_option_wrapped_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // Only wrap plain values. Nil literals and expressions that already produce
+    // the native pointer optional representation are emitted unchanged.
     if matches!(expr.kind, HirExprKind::Literal(HirLiteral::Nil)) || expr_is_native_option_value(expr, types) {
         return generate_expr(codegen, expr, types, w);
     }

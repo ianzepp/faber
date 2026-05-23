@@ -1,3 +1,23 @@
+//! Go expression dispatcher for lowered HIR.
+//!
+//! This module is the routing boundary between semantic HIR and the Go backend's
+//! expression emitters. It keeps the broad expression taxonomy visible in one
+//! place while delegating target-specific compromises to focused submodules:
+//! access, calls, control forms, collection literals, conversions, options, and
+//! variants.
+//!
+//! INVARIANTS
+//! ==========
+//! - Every emitted expression must be syntactically valid Go at the call site.
+//!   When Faber needs statement-only Go forms, helper modules wrap them in
+//!   immediately invoked functions.
+//! - Unsupported or poisoned HIR should fail closed with a codegen diagnostic
+//!   instead of fabricating target code with unclear semantics; existing
+//!   placeholders such as expression-position `discerne` remain visible TODOs.
+//! - Missing type information should be handled by earlier phases; this layer
+//!   only uses conservative fallbacks where Go requires a concrete expression
+//!   shape.
+
 use super::stmt;
 use super::types;
 use super::{CodeWriter, CodegenError, GoCodegen};
@@ -30,6 +50,9 @@ pub fn generate_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    // This match is the Go backend's expression support matrix. A branch that
+    // cannot preserve Faber semantics should return an error rather than emit
+    // a placeholder that later phases or users might mistake for supported Go.
     match &expr.kind {
         HirExprKind::Path(def_id) => {
             if codegen.is_variant_def(*def_id) {
