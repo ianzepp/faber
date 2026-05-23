@@ -243,6 +243,25 @@ faber build
 faber test
 ```
 
+## Registry Policy Note
+
+There is no public Faber package namespace today. Registry design is deliberately future work.
+
+Two publication models remain plausible:
+
+- **GitHub-first publication**: packages publish from their own GitHub repositories, similar in spirit to Homebrew taps. Faber records repository URLs, refs, and checksums in `requirit.lock`.
+- **Central registry publication**: packages publish into a Faber-owned or Faber-governed registry, closer to crates.io or npm.
+
+The GitHub-first model is simpler and avoids operating a marketplace before an ecosystem exists. The central registry model gives better search, namespace governance, availability, and checksum policy, but it also creates name-squatting and abandoned-package problems.
+
+If Faber ever supports a central registry, short names are reserved by policy:
+
+> Package names of four characters or fewer require explicit pre-approval before registration.
+
+This rule is intentionally forward-looking. It exists to prevent users from claiming scarce short names and then leaving them unused. Approval criteria should be defined before any central registry launches, but likely include active maintenance intent, ecosystem importance, avoiding confusion with core Faber or `norma` names, and a recovery policy for abandoned reserved names.
+
+This policy does not need to apply to GitHub-first dependencies, because repository ownership already supplies an external namespace and source identity.
+
 ## Stage Graph
 
 | Phase | Name | Goal | Checkpoint |
@@ -267,6 +286,8 @@ faber test
 - Should feature/capability selection live in `requirit.toml`, source annotations, or both?
 - Should package dependency resolution happen before parsing imports, or should imports drive `faber tidy` updates after parsing?
 - How should target-specific runtime dependencies be represented without leaking Cargo, npm, or Go module concepts into Faber manifests?
+- Should Faber prefer GitHub-first package publication, a central registry, or both?
+- If a central registry exists, what concrete approval and reclamation policy should govern package names of four characters or fewer?
 
 ## First Useful Slice
 
