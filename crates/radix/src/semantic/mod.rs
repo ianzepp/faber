@@ -1,46 +1,36 @@
-//! Semantic analysis
+//! Semantic orchestration for resolved, typed compiler state.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Implements multi-pass semantic analysis transforming the AST into a typed,
-//! validated HIR suitable for code generation. Each pass depends on the results
-//! of previous passes, ensuring early errors prevent cascading failures.
+//! This module is the boundary between parsed syntax and the HIR consumed by
+//! backend-independent analysis and code generation. It owns the semantic pass
+//! order, the shared resolver and type table, and the policy that decides when a
+//! partially analyzed program is too compromised to lower further.
 //!
-//! COMPILER PHASE: Semantic
-//! INPUT: AST (syntax::Program) from parser
-//! OUTPUT: HirProgram with type annotations and semantic errors
-//!
-//! MULTI-PASS PIPELINE
-//! ===================
-//! The analysis runs in this order:
-//! 1. Collect - Gather all top-level declarations into symbol table
-//! 2. Resolve - Resolve all name references to DefIds
-//! 3. Lower - Transform AST into HIR with resolved names
-//! 4. Typecheck - Bidirectional type inference and checking
-//! 5. Borrow - Ownership/borrowing analysis (Rust target only)
-//! 6. Exhaustive - Pattern match exhaustiveness checking
-//! 7. Lint - Warnings and best practice suggestions
-//!
-//! WHY: Multi-pass design allows each pass to assume invariants from prior
-//! passes (e.g., type checker assumes all names are resolved). Early exit on
-//! errors prevents cascading failures and confusing error messages.
-//!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Fail Fast: Collection and resolution errors stop the pipeline before
-//!   lowering, avoiding complex error recovery in later passes
-//! - Error Collection: Each pass collects all errors rather than stopping at
-//!   the first, providing complete diagnostic information
-//! - Target-Specific Analysis: Borrow checking only runs for Rust target,
-//!   avoiding false positives for permissive targets like Faber pretty-print
-//! - Configurable Passes: PassConfig allows disabling analysis for faster
-//!   development iteration or target-specific needs
+//! PASS ORDER
+//! ==========
+//! - Collect top-level declarations into the resolver and seed type metadata.
+//! - Resolve AST names against that resolver.
+//! - Lower the resolved AST into HIR.
+//! - Typecheck the HIR using the resolver and shared [`TypeTable`].
+//! - Run configured non-typecheck analyses over HIR: borrow analysis,
+//!   exhaustiveness, and linting.
 //!
 //! ERROR HANDLING
 //! ==============
-//! Errors are collected into SemanticResult, which distinguishes hard errors
-//! (prevent codegen) from warnings (informational). The success() method checks
-//! for hard errors only, allowing compilation to proceed with warnings.
+//! Collection, resolution, and HIR lowering errors stop the pipeline before
+//! later passes would have to interpret invalid inputs. Typecheck and later
+//! analyses collect diagnostics into one [`SemanticResult`]. Warnings flow
+//! through the same vector as errors, but [`SemanticResult::success`] treats
+//! [`SemanticErrorKind::Warning`] as non-fatal.
+//!
+//! INVARIANTS
+//! ==========
+//! - HIR lowering sits after AST resolve and before HIR typecheck.
+//! - The resolver is the definition identity source for names created before
+//!   lowering.
+//! - The type table is shared across passes so `TypeId` values remain valid for
+//!   the whole semantic result.
+//! - Target-specific policy is expressed through [`PassConfig`]; this module
+//!   only runs the passes that configuration enables.
 
 mod error;
 pub mod passes;
@@ -58,7 +48,12 @@ use crate::hir::HirProgram;
 use crate::lexer::Interner;
 use crate::syntax::Program;
 
-/// Semantic analysis result
+/// Final semantic product for a parsed program.
+///
+/// `hir` is absent when an earlier hard diagnostic made downstream phases
+/// unreliable. `types` is still returned so diagnostic consumers can inspect
+/// whatever type state earlier passes established, and `errors` contains both
+/// fatal diagnostics and non-fatal warnings.
 pub struct SemanticResult {
     pub hir: Option<HirProgram>,
     pub types: TypeTable,
@@ -66,12 +61,22 @@ pub struct SemanticResult {
 }
 
 impl SemanticResult {
+    /// Return whether this result is usable by later compiler stages.
+    ///
+    /// Warnings are intentionally non-fatal here; callers that want stricter
+    /// policy must inspect `errors` themselves.
     pub fn success(&self) -> bool {
         self.hir.is_some() && !self.errors.iter().any(|err| err.is_error())
     }
 }
 
-/// Configuration for semantic passes
+/// Target and caller policy for optional semantic analyses.
+///
+/// Collection, name resolution, lowering, and typechecking are always part of
+/// semantic analysis. These flags cover later HIR analyses whose value depends
+/// on the target or caller: Rust enables borrow analysis, while other current
+/// targets keep exhaustiveness and lint checks without enforcing Rust ownership
+/// rules.
 pub struct PassConfig {
     pub borrow_analysis: bool,
     pub exhaustiveness: bool,
@@ -89,11 +94,16 @@ impl PassConfig {
     }
 }
 
-/// Run semantic analysis on a program
+/// Run semantic analysis on a parsed program without CLI mount context.
 pub fn analyze(program: &Program, config: &PassConfig, interner: &Interner) -> SemanticResult {
     analyze_with_cli(program, config, interner, None)
 }
 
+/// Run the semantic pipeline, optionally validating mounted CLI declarations.
+///
+/// CLI metadata participates during HIR lowering because command mounts depend
+/// on resolved declarations but become HIR-level entrypoint metadata for later
+/// code generation.
 pub fn analyze_with_cli(
     program: &Program,
     config: &PassConfig,
@@ -104,53 +114,51 @@ pub fn analyze_with_cli(
     let mut types = TypeTable::new();
     let mut resolver = Resolver::new();
 
-    // Pass 1: Collect declarations
+    // Establish the AST-level symbol graph before any pass tries to bind names.
     if let Err(e) = passes::collect::collect(program, &mut resolver, &mut types) {
         errors.extend(e);
     }
 
-    // Pass 2: Resolve names
+    // Resolve still runs after collection errors so users see as many name
+    // diagnostics as possible before the hard stop at the AST/HIR boundary.
     if let Err(e) = passes::resolve::resolve(program, &mut resolver, interner, &mut types) {
         errors.extend(e);
     }
 
-    // Early exit if resolution failed
+    // HIR lowering assumes definition identities are coherent; stop before
+    // converting syntax when the AST-level contract is already broken.
     if !errors.is_empty() {
         return SemanticResult { hir: None, types, errors };
     }
 
-    // Pass 3: Lower to HIR
     let (mut hir, lower_errors) = crate::hir::lower_with_cli(program, &resolver, &mut types, interner, cli_program);
 
-    // Add lowering errors
     for err in lower_errors {
         errors.push(SemanticError::new(SemanticErrorKind::LoweringError, err.message, err.span));
     }
 
+    // Typecheck and later analyses assume HIR nodes carry the required semantic
+    // attachments; lowering diagnostics are therefore fatal for this pipeline.
     if !errors.is_empty() {
         return SemanticResult { hir: None, types, errors };
     }
 
-    // Pass 4: Type checking
     if let Err(e) = passes::typecheck::typecheck(&mut hir, &resolver, &mut types) {
         errors.extend(e);
     }
 
-    // Pass 5: Borrow analysis (conditional)
     if config.borrow_analysis {
         if let Err(e) = passes::borrow::analyze(&hir, &resolver, &types) {
             errors.extend(e);
         }
     }
 
-    // Pass 6: Exhaustiveness checking (conditional)
     if config.exhaustiveness {
         if let Err(e) = passes::exhaustive::check(&hir, &types) {
             errors.extend(e);
         }
     }
 
-    // Pass 7: Linting (conditional)
     if config.lint {
         if let Err(e) = passes::lint::lint(&hir, &resolver, &types) {
             errors.extend(e);

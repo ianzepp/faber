@@ -1,55 +1,37 @@
-//! Pass 5: Borrow checking
+//! Rust-target borrow and parameter-mode analysis for typed HIR.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Validates ownership and borrowing rules for safe memory management when
-//! targeting Rust. Tracks move semantics, shared/mutable borrows, and parameter
-//! passing modes (de/in/ex) to ensure generated Rust code compiles without
-//! lifetime errors.
+//! This pass is the semantic bridge between Faber's `de`/`in`/`ex` parameter
+//! policy and the ownership surface that Rust code generation must respect. It
+//! runs after lowering and typechecking have assigned `DefId`s and expression
+//! `TypeId`s, and it is currently enabled only by Rust `PassConfig`
+//! orchestration. Other targets may still compile the same HIR without this
+//! Rust-specific ownership approximation.
 //!
-//! COMPILER PHASE: Semantic (Pass 5, Rust target only)
-//! INPUT: Typed HIR with DefIds and TypeIds
-//! OUTPUT: Borrowing errors (use-after-move, borrow conflicts); mode lints
+//! The checker deliberately models the simple, target-facing invariants that
+//! Faber can diagnose before codegen: moved values cannot be reused, active
+//! shared borrows block mutable borrows and moves, active mutable borrows block
+//! reads and writes, and `de` parameters cannot be assigned through. More
+//! precise lifetime reasoning remains Rust's job; this pass should prevent
+//! obvious invalid Rust while avoiding false positives for patterns rustc can
+//! prove safe.
 //!
-//! WHY: Faber's de/in/ex parameter modes map directly to Rust's &/&mut/move,
-//! but users may write invalid borrow patterns. This pass catches errors early
-//! rather than emitting invalid Rust code that fails at rustc compile time.
-//!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Simplified Borrow Model: Tracks basic ownership (moved/borrowed) without
-//!   full lifetime analysis, relying on Rust's borrow checker for complex cases
-//! - Scope-Based Borrows: Borrows are tracked per lexical scope and released
-//!   on scope exit, matching Rust's non-lexical-lifetimes behavior
-//! - Mode Validation: de → in/ex promotions are errors (immutable → mutable);
-//!   unused in/ex parameters generate warnings (should be de)
-//! - Optimistic Checking: Allows borderline cases that rustc would accept,
-//!   avoiding false positives on complex lifetime patterns
-//!
-//! BORROW STATES
-//! =============
-//! Each variable tracks:
-//! - moved: bool - Value has been moved out (cannot use again)
-//! - shared: u32 - Count of active shared borrows
-//! - mutable: bool - Active mutable borrow exists
+//! ERROR STRATEGY
+//! ==============
+//! - Ownership violations are emitted as semantic errors.
+//! - Parameter-mode suggestions are emitted as semantic warnings.
+//! - The pass returns all findings together so the semantic driver can apply
+//!   the repository-wide warning/error policy through `SemanticErrorKind`.
 //!
 //! INVARIANTS
 //! ==========
-//! INV-1: Cannot move value that is borrowed (shared > 0 || mutable)
-//! INV-2: Cannot mutably borrow if any borrows exist (shared > 0 || mutable)
-//! INV-3: Cannot use value after move (moved == true)
-//! INV-4: Cannot assign to de parameter (immutable borrow)
-//!
-//! PARAMETER MODE LINTS
-//! ====================
-//! - `in` param never mutated → suggest `de` (shared borrow sufficient)
-//! - `ex` param never consumed → suggest `de` (move not required)
-//!
-//! EDGE CASES
-//! ==========
-//! - Field/index projections: root_def_id() extracts the base variable from
-//!   field access chains (e.g., `x.y.z` → DefId for `x`)
-//! - Method calls: Borrows receiver based on method signature if available
+//! - Borrow state is keyed by root `DefId`; field, index, and deref
+//!   projections borrow or move the base value.
+//! - Borrow lifetimes are scope approximations: borrows are registered in the
+//!   current `BorrowScope` and released when that HIR block scope exits.
+//! - The `TypeTable` is consulted only for callee signatures, because argument
+//!   modes determine whether a call reads, mutably borrows, or moves an input.
+//! - Warnings produced here remain non-fatal unless the semantic driver or
+//!   diagnostic consumer treats warning-kind diagnostics as errors.
 
 use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{
@@ -59,7 +41,13 @@ use crate::hir::{
 use crate::semantic::{ParamMode, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable, WarningKind};
 use rustc_hash::FxHashMap;
 
-/// Analyze borrowing and ownership
+/// Validate Rust-facing ownership rules and parameter-mode usage.
+///
+/// `resolver` is accepted for pass-shape symmetry with the semantic pipeline,
+/// but this checker relies on lowered `DefId`s and `TypeTable` function
+/// signatures rather than name lookup. Returning `Err` does not mean every
+/// diagnostic is fatal: warning-kind diagnostics for unused `in`/`ex` modes are
+/// returned through the same collection path as ownership errors.
 pub fn analyze(hir: &HirProgram, _resolver: &Resolver, types: &TypeTable) -> Result<(), Vec<SemanticError>> {
     let mut checker = BorrowChecker::new(types);
     checker.check_program(hir);
@@ -71,6 +59,11 @@ pub fn analyze(hir: &HirProgram, _resolver: &Resolver, types: &TypeTable) -> Res
     }
 }
 
+/// Per-definition ownership state tracked at the root value level.
+///
+/// The pass intentionally does not model partial moves or field-granular
+/// borrowing. Projections collapse through `root_def_id`, which keeps the
+/// pre-codegen check conservative and aligned with the current HIR surface.
 #[derive(Clone, Copy, Default)]
 struct BorrowState {
     moved: bool,
@@ -89,6 +82,8 @@ struct BorrowScope {
 }
 
 struct BorrowChecker<'a> {
+    /// Semantic type table produced before analysis; call signatures determine
+    /// whether each argument is read, borrowed, or moved.
     types: &'a TypeTable,
     states: FxHashMap<DefId, BorrowState>,
     scopes: Vec<BorrowScope>,
@@ -96,6 +91,10 @@ struct BorrowChecker<'a> {
     errors: Vec<SemanticError>,
 }
 
+/// Usage summary for one function parameter after traversing its body.
+///
+/// This is policy state rather than ownership state: it decides whether the
+/// declared Faber mode is stronger than the function actually needs.
 #[derive(Clone, Copy)]
 struct ParamUsage {
     mode: HirParamMode,

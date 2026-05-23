@@ -1,60 +1,73 @@
-//! Scope and symbol table
+//! Lexical scope tree and definition identity registry.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Implements lexical scoping and symbol resolution for name binding. The
-//! Resolver maintains a stack of scopes and a flat table of symbols (DefId → Symbol),
-//! enabling efficient name lookup and definition tracking.
+//! Name binding in Radix has two related responsibilities: find the closest
+//! visible declaration for a source name, and preserve stable [`DefId`] metadata
+//! once that declaration has been found. This module keeps those concerns
+//! separate. Scopes store name-to-definition bindings for lexical lookup, while
+//! the resolver's symbol table stores the metadata later passes need after the
+//! original scope may no longer be current.
 //!
-//! COMPILER PHASE: Semantic (used in Passes 1-2)
-//! INPUT: Symbol names from AST
-//! OUTPUT: DefId mappings for name resolution
+//! PASS ROLE
+//! =========
+//! Collection defines top-level symbols into the global scope. Resolution then
+//! enters and exits lexical scopes while binding local names, parameters, and
+//! references. HIR lowering and later HIR analyses consume the resulting
+//! definition identities instead of re-resolving source names.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Separate Scope Tree and Symbol Table: Scopes contain name → DefId mappings;
-//!   symbols table contains DefId → Symbol metadata. This allows efficient
-//!   lookups without duplicating symbol information.
-//! - Lexical Scope Stack: Scopes nest (Global > Module > Function > Block);
-//!   lookups search parent scopes until found or Global reached
-//! - Scope Kinds: Distinguishes scope types (Function, Loop) for control-flow
-//!   validation (e.g., break only in Loop scopes)
+//! CONTROL-FLOW CONTEXT
+//! ====================
+//! Scope kinds are semantic context markers as well as lookup containers.
+//! `in_loop` deliberately stops at a function boundary so `break` and
+//! `continue` inside nested functions do not inherit an enclosing loop.
 //!
 //! INVARIANTS
 //! ==========
-//! INV-1: Every DefId in a scope's symbols map has corresponding Symbol in symbols table
-//! INV-2: Scopes form a tree with Global as root
-//! INV-3: current_scope is always a valid ScopeId in scopes vector
-//!
-//! SCOPE KINDS
-//! ===========
-//! - Global: Module-level scope for top-level declarations
-//! - Function: Function scope; stops break/continue/return validation
-//! - Block: Lexical block scope for local bindings
-//! - Loop: Loop scope; allows break/continue
-//! - Match: Pattern match scope for arm bindings
+//! - `ScopeId` indexes `Resolver::scopes`; the global scope is always `0`.
+//! - Each scope parent points to an earlier scope, forming a tree rooted at
+//!   global.
+//! - Every `DefId` stored in a scope's symbol map has corresponding metadata in
+//!   `Resolver::symbols`.
+//! - `current_scope` always points at a valid scope and never exits past global.
 
 use super::types::TypeId;
 use crate::hir::DefId;
 use crate::lexer::{Span, Symbol as LexSymbol};
 use rustc_hash::FxHashMap;
 
-/// Scope ID
+/// Stable index into the resolver's scope arena.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ScopeId(pub u32);
 
-/// Scope kind
+/// Semantic role for a lexical scope.
+///
+/// The role is used both for name-binding shape and for context-sensitive
+/// validation such as loop-only control flow.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScopeKind {
+    /// Root scope for declarations visible at compilation-unit level.
     Global,
+
+    /// Reserved module boundary for package/import-aware resolution.
     Module,
+
+    /// Function body boundary; loop checks do not search past it.
     Function,
+
+    /// Ordinary lexical block for local bindings.
     Block,
+
+    /// Loop body where `break` and `continue` are valid.
     Loop,
+
+    /// Pattern-match arm scope for bindings introduced by a case.
     Match,
 }
 
-/// A scope containing symbols
+/// One lexical lookup frame.
+///
+/// `symbols` maps source-level interned names to definition identities. The
+/// heavier symbol metadata lives in [`Resolver`] so callers can retain a
+/// `DefId` after leaving the scope where it was declared.
 #[derive(Debug)]
 pub struct Scope {
     pub id: ScopeId,
@@ -69,7 +82,12 @@ impl Scope {
     }
 }
 
-/// Symbol information
+/// Metadata attached to one definition identity.
+///
+/// Symbols are the resolver's long-lived contract with HIR lowering and later
+/// semantic passes: once a source name has been resolved to a `DefId`, this
+/// record carries the declaration kind, optional type, mutability, and source
+/// span needed for diagnostics.
 #[derive(Debug)]
 pub struct Symbol {
     pub def_id: DefId,
@@ -80,7 +98,11 @@ pub struct Symbol {
     pub span: Span,
 }
 
-/// Kind of symbol
+/// Declaration category for a resolved definition.
+///
+/// These categories are semantic rather than syntactic; for example, methods
+/// and free functions share callable behavior later, but keeping distinct
+/// symbol kinds preserves enough provenance for member lookup and diagnostics.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolKind {
     Local,
@@ -97,7 +119,11 @@ pub enum SymbolKind {
     Module,
 }
 
-/// Name resolver - manages scopes and symbol definitions
+/// Mutable name-resolution state shared by collection, resolution, and HIR lowering.
+///
+/// The resolver behaves like a stack while walking syntax, but stores scopes in
+/// an arena so `ScopeId` and `DefId` values remain stable after traversal moves
+/// elsewhere.
 pub struct Resolver {
     scopes: Vec<Scope>,
     symbols: FxHashMap<DefId, Symbol>,
@@ -106,19 +132,23 @@ pub struct Resolver {
 }
 
 impl Resolver {
+    /// Build a resolver with an empty global scope.
     pub fn new() -> Self {
         let global = Scope::new(ScopeId(0), None, ScopeKind::Global);
         Self { scopes: vec![global], symbols: FxHashMap::default(), current_scope: ScopeId(0), next_def_id: 0 }
     }
 
-    /// Create a new DefId
+    /// Allocate a fresh definition identity.
+    ///
+    /// Allocation is separate from [`Self::define`] so passes can prepare symbol
+    /// records before inserting them into the current lexical scope.
     pub fn fresh_def_id(&mut self) -> DefId {
         let id = DefId(self.next_def_id);
         self.next_def_id += 1;
         id
     }
 
-    /// Enter a new scope
+    /// Enter a child scope and make it current until [`Self::exit_scope`].
     pub fn enter_scope(&mut self, kind: ScopeKind) -> ScopeId {
         let id = ScopeId(self.scopes.len() as u32);
         let scope = Scope::new(id, Some(self.current_scope), kind);
@@ -127,14 +157,18 @@ impl Resolver {
         id
     }
 
-    /// Exit the current scope
+    /// Exit the current scope, staying at global if there is no parent.
     pub fn exit_scope(&mut self) {
         if let Some(parent) = self.scopes[self.current_scope.0 as usize].parent {
             self.current_scope = parent;
         }
     }
 
-    /// Define a symbol in the current scope
+    /// Define a symbol in the current scope.
+    ///
+    /// Duplicate names are rejected only within the current lexical frame;
+    /// shadowing outer scopes remains representable and is handled by pass
+    /// policy when it wants to warn.
     pub fn define(&mut self, symbol: Symbol) -> Result<DefId, LexSymbol> {
         let scope = &mut self.scopes[self.current_scope.0 as usize];
 
@@ -148,7 +182,7 @@ impl Resolver {
         Ok(def_id)
     }
 
-    /// Look up a symbol by name
+    /// Look up the nearest visible definition for a source name.
     pub fn lookup(&self, name: LexSymbol) -> Option<DefId> {
         let mut scope_id = Some(self.current_scope);
 
@@ -163,22 +197,22 @@ impl Resolver {
         None
     }
 
-    /// Get symbol information by DefId
+    /// Get symbol metadata by definition identity.
     pub fn get_symbol(&self, def_id: DefId) -> Option<&Symbol> {
         self.symbols.get(&def_id)
     }
 
-    /// Get mutable symbol information
+    /// Get mutable symbol metadata by definition identity.
     pub fn get_symbol_mut(&mut self, def_id: DefId) -> Option<&mut Symbol> {
         self.symbols.get_mut(&def_id)
     }
 
-    /// Get current scope
+    /// Return the current lexical scope.
     pub fn current(&self) -> &Scope {
         &self.scopes[self.current_scope.0 as usize]
     }
 
-    /// Check if we're in a loop
+    /// Return whether the current context is inside a loop in this function.
     pub fn in_loop(&self) -> bool {
         let mut scope_id = Some(self.current_scope);
 
@@ -188,7 +222,7 @@ impl Resolver {
                 return true;
             }
             if scope.kind == ScopeKind::Function {
-                return false; // Don't look past function boundary
+                return false;
             }
             scope_id = scope.parent;
         }
@@ -196,7 +230,7 @@ impl Resolver {
         false
     }
 
-    /// Check if we're in a function
+    /// Return whether the current context is inside a function scope.
     pub fn in_function(&self) -> bool {
         let mut scope_id = Some(self.current_scope);
 

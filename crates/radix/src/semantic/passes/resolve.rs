@@ -1,45 +1,47 @@
-//! Pass 2: Name resolution
+//! AST name resolution and type-alias lowering for the semantic front end.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Resolves all identifier references to their definitions (DefIds) and builds
-//! nested scopes for block-level bindings. Validates that all names are defined
-//! and detects control-flow errors (break/continue outside loops).
+//! `resolve` is the second AST-phase semantic pass. It runs after
+//! [`collect`](super::collect) has populated the resolver with top-level
+//! declaration identities and before HIR lowering tries to encode semantic
+//! identities into lowered nodes. This pass validates lexical availability of
+//! names and types, creates nested scopes for local bindings, checks
+//! return/loop-control placement, and resolves type aliases into the shared
+//! [`TypeTable`].
 //!
-//! COMPILER PHASE: Semantic (Pass 2)
-//! INPUT: AST with collected top-level definitions from Pass 1
-//! OUTPUT: Resolver with complete scope hierarchy; resolution errors
+//! BOUNDARY
+//! ========
+//! The pass is deliberately pre-HIR and non-inferential. It can prove that a
+//! name exists and that a type name refers to a type-like symbol, but it does
+//! not assign expression types, validate assignability, run borrow checks, or
+//! decide target-specific warning policy. Those responsibilities belong to HIR
+//! lowering, typecheck, and later analysis passes.
 //!
-//! WHY: Name resolution must happen before lowering to HIR so that DefIds can
-//! be embedded in HirExpr::Path nodes. Type alias resolution requires special
-//! handling to avoid cycles (aliases may reference other aliases).
-//!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Lexical Scoping: Scopes nest (function > block > loop > match) and lookups
-//!   search outward to parent scopes
-//! - Early Binding: Variables are bound in scopes as they are encountered,
-//!   allowing shadowing detection in later passes
-//! - Control Flow Validation: Checks that return/break/continue appear in
-//!   valid contexts (function/loop) during resolution
-//! - Type Alias Fixpoint: Iteratively resolves type aliases until all are
-//!   resolved or a cycle is detected
-//!
-//! TYPE ALIAS RESOLUTION
-//! =====================
-//! Type aliases may reference other aliases, requiring fixpoint iteration:
-//! 1. Collect all alias declarations
-//! 2. Try to lower each alias type expression
-//! 3. If unresolved dependency, defer to next iteration
-//! 4. Repeat until all resolved or no progress (cycle detected)
-//!
-//! WHY: Avoids cycle detection complexity; failed iteration indicates cycle.
-//!
-//! EDGE CASES
+//! INVARIANTS
 //! ==========
-//! - Return outside function: Detected during statement resolution
-//! - Binding patterns: Array destructuring creates multiple scope bindings
-//! - Imports: Register the imported name (or alias) in current scope
+//! - Global declarations already exist in the resolver when this pass starts.
+//! - Scopes are entered around functions, blocks, loops, matches, and module-ish
+//!   declaration bodies so lookup follows lexical containment.
+//! - Variable declarations resolve their annotation and initializer before the
+//!   declared binding enters the current scope; parameter and pattern bindings
+//!   enter the scope that owns the body they make available.
+//! - `redde`, `rumpe`, and `perge` placement is checked from the scope stack.
+//! - Type aliases are the only AST type expressions lowered here; their
+//!   resulting `TypeId`s are stored on resolver symbols for later HIR/typecheck
+//!   use.
+//!
+//! TYPE-ALIAS FIXPOINT
+//! ===================
+//! Aliases can reference earlier or later aliases, so this file lowers them
+//! with a small fixed-point loop. An alias whose dependency is not yet typed is
+//! deferred; an iteration with no progress reports the remaining aliases as a
+//! circular dependency. This keeps cycle handling local to the one pre-HIR type
+//! lowering responsibility resolve owns.
+//!
+//! ERROR STRATEGY
+//! ==============
+//! Resolution accumulates hard semantic errors and lets the driver stop before
+//! HIR lowering. Warnings are not produced here; warning/error policy for
+//! target-sensitive analysis is handled by the later HIR passes and driver.
 
 use crate::hir::DefId;
 use crate::lexer::Interner;
@@ -52,7 +54,12 @@ use crate::syntax::{
     PatternBind, ProbandumDecl, Program, SiStmt, Stmt, StmtKind, TypeExpr, TypeExprKind,
 };
 
-/// Resolve all names in the program
+/// Resolve AST-level names and type aliases after declaration collection.
+///
+/// The resulting resolver contains the lexical scope tree and any type-alias
+/// `TypeId`s needed by lowering/typecheck. Errors are accumulated so a single
+/// source file can report several undefined names, invalid control-flow forms,
+/// or alias cycles in one compiler run.
 pub fn resolve(
     program: &Program,
     resolver: &mut Resolver,
@@ -62,6 +69,8 @@ pub fn resolve(
     let mut errors = Vec::new();
     let mut aliases = Vec::new();
 
+    // Gather alias declarations before resolving bodies so later alias lowering
+    // can run against the full set of collected symbols.
     for stmt in &program.stmts {
         if let StmtKind::TypeAlias(decl) = &stmt.kind {
             let Some(def_id) = resolver.lookup(decl.name.name) else {
@@ -1071,6 +1080,9 @@ fn resolve_alias_types(
 ) {
     let mut pending: Vec<&AliasEntry<'_>> = aliases.iter().collect();
 
+    // Alias symbols must carry concrete TypeIds before HIR/typecheck consume
+    // them. A simple fixed point is enough because unresolved aliases are the
+    // only recoverable dependency failure from `lower_type_expr`.
     while !pending.is_empty() {
         let mut next_pending = Vec::new();
         let mut progress = false;
@@ -1119,6 +1131,9 @@ fn lower_type_expr(
     interner: &Interner,
     types: &mut TypeTable,
 ) -> Result<TypeId, TypeLowerError> {
+    // This is intentionally narrower than full typechecking: it interns the
+    // declared shape of a type expression so aliases have stable TypeIds, but
+    // assignability and expression typing remain HIR-phase responsibilities.
     let mut ty_id = match &ty.kind {
         TypeExprKind::Infer => types.intern(Type::Infer(crate::semantic::InferVar(ty.span.start))),
         TypeExprKind::Named(name, params) => lower_named_type(name, params, resolver, interner, types)?,

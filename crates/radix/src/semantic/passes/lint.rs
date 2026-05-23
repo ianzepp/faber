@@ -1,36 +1,29 @@
-//! Pass 7: Linting
+//! Final semantic lint pass over typed HIR.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Detects code quality issues and suspicious patterns that are not errors
-//! but may indicate bugs or suboptimal code. Emits warnings without preventing
-//! compilation.
+//! Linting is the last non-codegen semantic pass. It runs after collection,
+//! resolution, lowering, typechecking, and any target-enabled borrow and
+//! exhaustiveness checks. Its job is to turn fully resolved HIR identity and
+//! `TypeTable` facts into user-facing diagnostics for suspicious but often
+//! recoverable code: unused declarations, unreachable statements, redundant
+//! casts, and explicit `ignotum` annotations.
 //!
-//! COMPILER PHASE: Semantic (Pass 7, final)
-//! INPUT: Fully analyzed HIR with types and borrow information
-//! OUTPUT: Warnings for unused bindings, unnecessary casts, unreachable code
+//! The pass is target-configurable through `PassConfig`. When enabled, it
+//! returns both warning-kind diagnostics and hard semantic errors through the
+//! same vector because the semantic result owns final severity policy. In
+//! particular, shadowing is intentionally a hard error here: resolved `DefId`s
+//! make the program unambiguous to the compiler, but the source remains
+//! misleading enough that the language rejects it.
 //!
-//! WHY: Catches common mistakes (unused variables, shadowing) and provides
-//! actionable feedback to improve code quality without forcing corrections.
-//!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Usage Tracking: Collects all definitions and tracks DefId references to
-//!   detect unused bindings (variables, functions, imports)
-//! - Shadowing as Error: Unlike warnings, shadowing is a hard error (from issue
-//!   triage) to prevent confusion with similarly named variables
-//! - Explicit Ignotum Warning: Warns on manual `ignotum` annotations since they
-//!   disable type checking, which is usually unintentional
-//! - Unreachable Code Detection: Tracks whether statements can be reached after
-//!   return/break/continue
-//!
-//! LINTS
-//! =====
-//! - Unused variable/function/import
-//! - Unreachable code after return/break/continue
-//! - Unnecessary cast (target type equals source type)
-//! - Explicit ignotum annotation (disables type checking)
-//! - Shadowed variable (hard error, not warning)
+//! INVARIANTS
+//! ==========
+//! - Usage is tracked by `DefId`, never by spelling, so imports, functions, and
+//!   locals follow the resolver's identity model.
+//! - Scope shadowing checks use a lightweight lexical stack local to this pass;
+//!   they do not mutate resolver scopes or type information.
+//! - The `TypeTable` is read-only and used only where lint policy needs type
+//!   facts, such as redundant `verte` casts or explicit `ignotum` annotations.
+//! - Warnings produced here should not block compilation unless the surrounding
+//!   diagnostic policy promotes warning-kind diagnostics.
 
 use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{
@@ -41,7 +34,11 @@ use crate::lexer::Span;
 use crate::semantic::{error::WarningKind, Primitive, Resolver, SemanticError, SemanticErrorKind, Type, TypeTable};
 use rustc_hash::FxHashSet;
 
-/// Run lint checks
+/// Run the target-enabled semantic lint suite.
+///
+/// The returned `Err` vector is a diagnostic carrier, not a guarantee that
+/// every finding is fatal. Warning-kind diagnostics are wrapped as
+/// `SemanticErrorKind::Warning`, while shadowing remains a hard semantic error.
 pub fn lint(hir: &HirProgram, _resolver: &Resolver, types: &TypeTable) -> Result<(), Vec<SemanticError>> {
     let mut warnings = Vec::new();
 
@@ -73,6 +70,8 @@ pub fn lint(hir: &HirProgram, _resolver: &Resolver, types: &TypeTable) -> Result
 }
 
 struct LintContext<'a> {
+    /// Read-only semantic type facts for lints that need more than identity,
+    /// such as redundant casts and explicit `ignotum` annotations.
     types: &'a TypeTable,
     warnings: Vec<(WarningKind, String, Span)>,
     errors: Vec<SemanticError>,

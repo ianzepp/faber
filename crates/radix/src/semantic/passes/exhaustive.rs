@@ -1,38 +1,45 @@
-//! Pass 6: Exhaustiveness checking
+//! Exhaustiveness analysis for typed `discerne` expressions.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Verifies that discerne (match) expressions cover all possible values of the
-//! scrutinee type, preventing runtime match failures for enum variants.
+//! This pass runs after typechecking has annotated HIR expressions and after
+//! the optional Rust borrow pass in the default Rust pipeline. It is target
+//! configurable through `PassConfig`, but its contract is target-neutral:
+//! single-scrutinee enum matches should either cover every known variant or
+//! provide an unguarded catchall arm.
 //!
-//! COMPILER PHASE: Semantic (Pass 6)
-//! INPUT: Typed HIR with pattern match expressions
-//! OUTPUT: Exhaustiveness errors for incomplete matches; unreachable pattern warnings
+//! The pass depends on two earlier semantic products. Lowering provides HIR
+//! pattern structure with variant `DefId`s, while the `TypeTable` identifies
+//! the scrutinee's enum definition even through aliases, references, and
+//! applied generic types. No name resolution happens here.
 //!
-//! WHY: Pattern matching on enums must be exhaustive to prevent runtime panics.
-//! Catching missing cases at compile time provides safety and better error
-//! messages than runtime failures.
+//! ERROR STRATEGY
+//! ==============
+//! - Missing enum coverage is emitted as `NonExhaustiveMatch`.
+//! - Duplicate variant arms and arms after a catchall are emitted as semantic
+//!   diagnostics using their dedicated pattern kinds.
+//! - Multi-scrutinee matches, untyped scrutinees, and non-enum scrutinees are
+//!   skipped instead of guessed; missing type information is owned by an
+//!   earlier pass, not recovered here.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Conservative Checking: Requires wildcard or complete variant coverage;
-//!   does not analyze guard conditions (assumes guards may fail)
-//! - Duplicate Detection: Warns on unreachable patterns after catchall
-//! - Guarded Patterns: Patterns with guards are not considered exhaustive
-//!   (guard might fail), so a catchall is still required
-//!
-//! LIMITATIONS
-//! ===========
-//! - No constructor analysis: Does not check literal ranges or nested patterns
-//! - Guard blindness: Treats guarded patterns as non-exhaustive
-//! - Enum-only: Only checks enum variant coverage, not integers or strings
+//! INVARIANTS
+//! ==========
+//! - Guarded arms never contribute to exhaustiveness because their guard may
+//!   evaluate to false at runtime.
+//! - Catchall detection is structural and unguarded: wildcard and binding
+//!   patterns close coverage for the current single-scrutinee match.
+//! - Variant coverage is collected by enum definition `DefId`, not by textual
+//!   variant name, so later codegen can rely on resolved identity.
 
 use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{DefId, HirCasuArm, HirExpr, HirExprKind, HirItemKind, HirPattern, HirProgram};
 use crate::semantic::{SemanticError, SemanticErrorKind, Type, TypeId, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-/// Check pattern match exhaustiveness
+/// Check target-enabled `discerne` coverage and pattern reachability.
+///
+/// The current findings are hard semantic diagnostics: missing enum coverage,
+/// duplicate variant arms, and arms made unreachable by a previous catchall.
+/// The semantic driver appends them to the shared result stream and decides
+/// success by `SemanticError::is_error`.
 pub fn check(hir: &HirProgram, types: &TypeTable) -> Result<(), Vec<SemanticError>> {
     let enum_variants = collect_enum_variants(hir);
     let mut checker = ExhaustiveChecker { types, enum_variants, errors: Vec::new() };
@@ -56,6 +63,11 @@ fn collect_enum_variants(hir: &HirProgram) -> FxHashMap<DefId, Vec<DefId>> {
     map
 }
 
+/// Visitor state for a single exhaustiveness run.
+///
+/// `enum_variants` is captured before expression traversal so each match check
+/// can stay local: resolve the scrutinee's enum definition through the type
+/// table, then compare arm patterns with the known variant set.
 struct ExhaustiveChecker<'a> {
     types: &'a TypeTable,
     enum_variants: FxHashMap<DefId, Vec<DefId>>,

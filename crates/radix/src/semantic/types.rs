@@ -1,67 +1,60 @@
-//! Type system
+//! Semantic type model and shared type table.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! Implements the semantic type system with type interning, assignability
-//! checking, and support for primitives, collections, functions, and user-defined
-//! types (structs, enums, interfaces).
+//! This module defines the compiler's semantic type vocabulary after parsing
+//! has turned source type syntax into compiler data. The [`TypeTable`] is the
+//! shared store passed through collection, resolution, lowering, typecheck, and
+//! later analyses so every `TypeId` in a semantic result points into one table.
 //!
-//! COMPILER PHASE: Semantic (used in all passes after collection)
-//! INPUT: Type expressions from AST
-//! OUTPUT: Interned TypeIds for type checking
+//! TYPE TABLE ROLE
+//! ===============
+//! `TypeId` is an arena index, not a globally canonical type identity. Primitive
+//! types are pre-seeded for stable access, while compound types are appended as
+//! passes discover or synthesize them. Equality and assignability therefore use
+//! structural comparison through the table rather than assuming matching IDs
+//! for equivalent compound types.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Type Interning: Types are stored in a vec and referenced by TypeId (u32),
-//!   enabling cheap equality checks and small memory footprint
-//! - Pre-Interned Primitives: Common types (textus, numerus, etc.) are interned
-//!   once during TypeTable::new() and retrieved via primitive() method
-//! - Structural Types: Collections (Array, Map, Set) are built compositionally
-//!   from element/key/value types
-//! - Inference Variables: Type::Infer represents unknown types during checking;
-//!   unified to concrete types or reported as errors
+//! NULLABILITY AND ESCAPES
+//! =======================
+//! Nullable value types are represented as `Option(T)` or `Union([... Nihil])`
+//! depending on the source construct and lowering path. `ignotum` is separate:
+//! it is an escape hatch for unknown values, not the nullable marker.
 //!
 //! ASSIGNABILITY
 //! =============
-//! The assignable(from, to) method checks whether a value of type `from` can
-//! be used where type `to` is expected:
-//! - Exact match: textus assignable to textus
-//! - nil assignable to Option<T>: nil becomes Some(nil) or None
-//! - T assignable to Option<T>: value becomes Some(value)
-//! - numerus assignable to fractus: integer widening
-//! - Any assignable to ignotum: unknown sink (values flow in, not out)
-//!
-//! WHY: Allows implicit conversions (int → float) and nil-safety (nil → Option)
-//! without explicit casts, reducing boilerplate.
-//!
-//! IGNOTUM TYPE
-//! ============
-//! `ignotum` is an unknown/any type that acts as a type-checking escape hatch:
-//! - Values can flow INTO ignotum (any assignable to ignotum)
-//! - Values cannot flow OUT of ignotum without explicit cast
-//!
-//! WHY: Provides flexibility for interop or prototyping while preventing
-//! unsound type assumptions (ignotum assignable to nothing without cast).
+//! Assignment is intentionally more permissive than equality. It allows
+//! numerus-to-fractus widening, values flowing into optional destinations, union
+//! membership checks, and values flowing into `ignotum`. It does not allow
+//! `ignotum` to flow out into a concrete type without an explicit narrowing or
+//! cast elsewhere.
 
 use crate::hir::DefId;
 use crate::lexer::Symbol as LexSymbol;
 use rustc_hash::FxHashMap;
 
-/// Type ID - reference into type table
+/// Arena index into a [`TypeTable`].
+///
+/// A `TypeId` is meaningful only with the table that created it. Do not compare
+/// IDs from different tables.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TypeId(pub u32);
 
-/// Type table for interning types
+/// Per-analysis storage for semantic types.
+///
+/// The table preloads primitives so passes can cheaply request well-known
+/// built-ins, then appends compound and inferred types as semantic information
+/// becomes available. It deliberately exposes structural [`Self::equals`] and
+/// [`Self::assignable`] helpers so callers do not need to know whether two
+/// equivalent shapes were allocated at the same index.
 pub struct TypeTable {
     types: Vec<Type>,
     primitives: FxHashMap<Primitive, TypeId>,
 }
 
 impl TypeTable {
+    /// Build a type table with all primitive types available by name.
     pub fn new() -> Self {
         let mut table = Self { types: Vec::new(), primitives: FxHashMap::default() };
 
-        // Pre-intern primitives
         for prim in [
             Primitive::Textus,
             Primitive::Numerus,
@@ -82,55 +75,54 @@ impl TypeTable {
         table
     }
 
-    /// Intern a type and return its ID
+    /// Store a type in this table and return its local `TypeId`.
     pub fn intern(&mut self, ty: Type) -> TypeId {
-        // Simple linear search for now - could use hash map for dedup
         let id = TypeId(self.types.len() as u32);
         self.types.push(ty);
         id
     }
 
-    /// Get type by ID
+    /// Get a semantic type by table-local ID.
     pub fn get(&self, id: TypeId) -> &Type {
         &self.types[id.0 as usize]
     }
 
-    /// Get primitive type ID
+    /// Get the preloaded ID for a primitive type.
     pub fn primitive(&self, prim: Primitive) -> TypeId {
         self.primitives[&prim]
     }
 
-    /// Create an Option<T> type
+    /// Allocate `T ∪ nihil` as an optional type.
     pub fn option(&mut self, inner: TypeId) -> TypeId {
         self.intern(Type::Option(inner))
     }
 
-    /// Create a reference type
+    /// Allocate a semantic reference type.
     pub fn reference(&mut self, mutability: Mutability, inner: TypeId) -> TypeId {
         self.intern(Type::Ref(mutability, inner))
     }
 
-    /// Create an array type
+    /// Allocate a `lista<T>` semantic collection.
     pub fn array(&mut self, element: TypeId) -> TypeId {
         self.intern(Type::Array(element))
     }
 
-    /// Create a map type
+    /// Allocate a `tabula<K, V>` semantic collection.
     pub fn map(&mut self, key: TypeId, value: TypeId) -> TypeId {
         self.intern(Type::Map(key, value))
     }
 
-    /// Create a set type
+    /// Allocate a `copia<T>` semantic collection.
     pub fn set(&mut self, element: TypeId) -> TypeId {
         self.intern(Type::Set(element))
     }
 
-    /// Create a function type
+    /// Allocate a function signature type.
     pub fn function(&mut self, sig: FuncSig) -> TypeId {
         self.intern(Type::Func(sig))
     }
 
-    /// Check if two types are equal
+    /// Return whether two table-local type IDs describe the same semantic shape.
     pub fn equals(&self, a: TypeId, b: TypeId) -> bool {
         if a == b {
             return true;
@@ -197,7 +189,12 @@ impl TypeTable {
         }
     }
 
-    /// Check if `from` is assignable to `to`
+    /// Return whether a value of type `from` can be used where `to` is expected.
+    ///
+    /// This is a semantic compatibility relation, not identity. It encodes the
+    /// language's implicit widening and optional/union acceptance rules while
+    /// keeping `ignotum` one-way: concrete values may flow into it, but unknown
+    /// values do not silently become concrete.
     pub fn assignable(&self, from: TypeId, to: TypeId) -> bool {
         if self.equals(from, to) {
             return true;
@@ -207,7 +204,7 @@ impl TypeTable {
         let to_ty = self.get(to);
 
         match (from_ty, to_ty) {
-            // ignotum is an unknown sink: values can flow into it, but not out without cast/narrowing.
+            // `ignotum` is an unknown sink: values can flow into it, but not out without cast/narrowing.
             (Type::Primitive(Primitive::Ignotum), _) => false,
 
             // Union source is assignable when every member can flow into destination.
@@ -216,19 +213,16 @@ impl TypeTable {
             // Destination union accepts any source that can flow into at least one member.
             (_, Type::Union(to_types)) => to_types.iter().any(|member| self.assignable(from, *member)),
 
-            // nil is assignable to Option<T>
+            // `nihil` can satisfy optional destinations without inventing a concrete inner value.
             (Type::Primitive(Primitive::Nihil), Type::Option(_)) => true,
 
-            // Option<S> is assignable to Option<T> if S is assignable to T
             (Type::Option(from_inner), Type::Option(to_inner)) => self.assignable(*from_inner, *to_inner),
 
-            // T is assignable to Option<T>
             (_, Type::Option(inner)) => self.assignable(from, *inner),
 
-            // numerus is assignable to fractus (widening)
+            // Numeric widening is implicit; narrowing remains an explicit operation.
             (Type::Primitive(Primitive::Numerus), Type::Primitive(Primitive::Fractus)) => true,
 
-            // Any type is assignable to ignotum
             (_, Type::Primitive(Primitive::Ignotum)) => true,
 
             _ => false,
@@ -242,78 +236,108 @@ impl Default for TypeTable {
     }
 }
 
-/// Semantic type
+/// Semantic type shapes understood by Radix after parsing.
+///
+/// Variants encode compiler meaning rather than one-to-one source spelling.
+/// For example, collection names lower into structural collection variants,
+/// and user-defined declarations are represented by `DefId` handles into the
+/// resolver's symbol table.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    /// Primitive type
+    /// Built-in scalar or special type.
     Primitive(Primitive),
 
-    /// Array type: lista<T>
+    /// `lista<T>` collection.
     Array(TypeId),
 
-    /// Map type: tabula<K, V>
+    /// `tabula<K, V>` collection.
     Map(TypeId, TypeId),
 
     /// Structural record type used for compiler-synthesized contracts.
     Record(FxHashMap<LexSymbol, TypeId>),
 
-    /// Set type: copia<T>
+    /// `copia<T>` collection.
     Set(TypeId),
 
-    /// Optional type: T ∪ nihil
+    /// Optional value type written as `T ∪ nihil` in Faber type positions.
     Option(TypeId),
 
-    /// Reference type: de T / in T
+    /// Reference type used by parameter-passing and borrow analysis.
     Ref(Mutability, TypeId),
 
-    /// Struct type
+    /// User-defined struct declaration.
     Struct(DefId),
 
-    /// Enum type
+    /// User-defined enum declaration.
     Enum(DefId),
 
-    /// Interface type
+    /// User-defined interface declaration.
     Interface(DefId),
 
-    /// Type alias (resolved)
+    /// Resolved type alias retaining the alias declaration identity.
     Alias(DefId, TypeId),
 
-    /// Function type
+    /// Callable signature.
     Func(FuncSig),
 
-    /// Type parameter (unbound)
+    /// Generic type parameter that has not been substituted.
     Param(LexSymbol),
 
-    /// Generic instantiation
+    /// Generic type applied to concrete type arguments.
     Applied(TypeId, Vec<TypeId>),
 
-    /// Inference variable
+    /// Placeholder introduced during type inference.
     Infer(InferVar),
 
-    /// Union type
+    /// Explicit union of possible value types.
     Union(Vec<TypeId>),
 
-    /// Error type (for recovery)
+    /// Recovery sentinel used after an earlier type error.
     Error,
 }
 
-/// Primitive types
+/// Built-in primitive and special semantic types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Primitive {
-    Textus,   // string
-    Numerus,  // integer
-    Fractus,  // float
-    Bivalens, // boolean
-    Nihil,    // null
-    Vacuum,   // void
-    Numquam,  // never
-    Ignotum,  // unknown
-    Octeti,   // bytes
-    Regex,    // regex literal
-    Valor,    // canonical dynamic data value for data formats (maps to norma::datum::Valor)
+    /// Text/string value.
+    Textus,
+
+    /// Integer number.
+    Numerus,
+
+    /// Floating-point number.
+    Fractus,
+
+    /// Boolean truth value.
+    Bivalens,
+
+    /// Null value; nullable slots are modeled with option/union types.
+    Nihil,
+
+    /// No returned value.
+    Vacuum,
+
+    /// Never-returning control-flow type.
+    Numquam,
+
+    /// Unknown escape type for interop or intentionally unchecked values.
+    Ignotum,
+
+    /// Raw byte buffer.
+    Octeti,
+
+    /// Regular-expression literal value.
+    Regex,
+
+    /// Canonical dynamic data value for data formats, backed by `norma::datum::Valor`.
+    Valor,
 }
 
 impl Primitive {
+    /// Resolve a source-level primitive spelling to its semantic primitive.
+    ///
+    /// `objectum` and `quidlibet` remain accepted aliases for the unknown
+    /// escape type; they do not introduce separate semantic types.
     pub fn from_name(name: &str) -> Option<Self> {
         match name {
             "textus" => Some(Self::Textus),
@@ -333,6 +357,7 @@ impl Primitive {
     }
 }
 
+/// Source-level collection families with fixed generic arity.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CollectionKind {
     Lista,
@@ -341,6 +366,7 @@ pub enum CollectionKind {
 }
 
 impl CollectionKind {
+    /// Resolve a Faber collection type name.
     pub fn from_name(name: &str) -> Option<Self> {
         match name {
             "lista" => Some(Self::Lista),
@@ -350,6 +376,7 @@ impl CollectionKind {
         }
     }
 
+    /// Number of type arguments required by this collection family.
     pub fn arity(self) -> usize {
         match self {
             Self::Lista | Self::Copia => 1,
@@ -357,6 +384,7 @@ impl CollectionKind {
         }
     }
 
+    /// Diagnostic text for incorrect generic arity.
     pub fn arity_error(self) -> &'static str {
         match self {
             Self::Lista => "lista requires one type parameter",
@@ -365,6 +393,7 @@ impl CollectionKind {
         }
     }
 
+    /// Lower collection type arguments into the corresponding semantic type.
     pub fn lower(self, types: &mut TypeTable, params: &[TypeId]) -> TypeId {
         debug_assert_eq!(params.len(), self.arity());
         match self {
@@ -375,14 +404,18 @@ impl CollectionKind {
     }
 }
 
-/// Mutability for references
+/// Mutability carried by semantic reference types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mutability {
     Immutable,
     Mutable,
 }
 
-/// Function signature
+/// Semantic callable contract.
+///
+/// The signature captures parameter passing modes, return type, optional error
+/// type, and async/generator modifiers so backends and analyses can reason
+/// about calls without re-reading syntax annotations.
 #[derive(Debug, Clone, PartialEq)]
 pub struct FuncSig {
     pub params: Vec<ParamType>,
@@ -392,7 +425,7 @@ pub struct FuncSig {
     pub is_generator: bool,
 }
 
-/// Parameter type info
+/// Type and passing policy for one function parameter.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ParamType {
     pub ty: TypeId,
@@ -400,7 +433,7 @@ pub struct ParamType {
     pub optional: bool,
 }
 
-/// Parameter passing mode
+/// Parameter ownership/borrowing mode as seen by semantic analysis.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParamMode {
     Owned,
@@ -409,7 +442,7 @@ pub enum ParamMode {
     Move,
 }
 
-/// Inference variable
+/// Identifier for a type inference placeholder.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InferVar(pub u32);
 

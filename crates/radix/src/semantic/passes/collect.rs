@@ -1,39 +1,38 @@
-//! Pass 1: Collect declarations
+//! AST declaration collection for the semantic front end.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! First pass of semantic analysis that scans the AST and registers all
-//! top-level declarations in the symbol table. Creates DefIds for named items
-//! without analyzing bodies or resolving references.
+//! `collect` is the first semantic pass after parsing. It performs a shallow
+//! scan of top-level AST statements and reserves [`DefId`](crate::hir::DefId)
+//! entries in the resolver for declarations that later phases must be able to
+//! reference. It intentionally does not inspect function bodies, lower type
+//! expressions, or infer values; its job is to make forward references possible
+//! and make duplicate top-level names unambiguous before resolution starts.
 //!
-//! COMPILER PHASE: Semantic (Pass 1)
-//! INPUT: AST (syntax::Program) from parser
-//! OUTPUT: Populated Resolver symbol table with DefIds; errors for duplicates
-//!
-//! WHY: Forward references are allowed in Faber (unlike C), so declarations
-//! must be collected before resolution. This enables `functio a() { b() }` to
-//! reference `functio b()` defined later in the file.
-//!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Shallow Scan: Only processes top-level declarations; function bodies are
-//!   analyzed in the resolve pass after all names are available
-//! - Duplicate Detection: Immediately detects duplicate definitions at the
-//!   global scope, preventing ambiguous references in later passes
-//! - Variant Registration: Enum and union variants are registered as separate
-//!   definitions, enabling pattern matching resolution
-//!
-//! EDGE CASES
+//! INVARIANTS
 //! ==========
-//! - Top-level variables: Must have identifier bindings (not patterns) since
-//!   they become module-level constants
-//! - Imports: Register the bound name (alias if provided, otherwise original
-//!   name) for subsequent resolution
+//! - The input is still parser AST; HIR does not exist yet.
+//! - Every accepted top-level declaration receives exactly one resolver symbol.
+//! - Duplicate names in the current resolver scope are hard semantic errors.
+//! - Enum and union variants are registered as named symbols so pattern
+//!   resolution can validate variant spelling without typechecking.
+//! - Imported names bind the user-visible name: an alias when present, otherwise
+//!   the imported name itself.
+//!
+//! ERROR STRATEGY
+//! ==============
+//! The pass accumulates duplicate-definition and invalid-top-level-binding
+//! diagnostics instead of stopping at the first failure. Later semantic phases
+//! should not run after collect errors because ambiguous or missing `DefId`s
+//! would make name resolution unreliable.
 
 use crate::semantic::{Resolver, SemanticError, SemanticErrorKind, Symbol, SymbolKind, TypeTable};
 use crate::syntax::{Program, StmtKind};
 
-/// Collect all declarations from the program
+/// Register top-level AST declarations in the resolver before name resolution.
+///
+/// This pass establishes the global symbol set that makes same-file forward
+/// references legal. The `TypeTable` parameter is intentionally unused here:
+/// collect creates identities, while resolve/typecheck are responsible for
+/// lowering type expressions and assigning type information to symbols.
 pub fn collect(program: &Program, resolver: &mut Resolver, _types: &mut TypeTable) -> Result<(), Vec<SemanticError>> {
     let mut errors = Vec::new();
 
@@ -100,6 +99,9 @@ fn define_import_symbol(
     name: crate::lexer::Symbol,
     span: crate::lexer::Span,
 ) {
+    // Package assembly can pre-seed module imports. Re-collecting the same
+    // module binding should remain idempotent, while user declarations still
+    // collide normally through `define_symbol`.
     if let Some(existing) = resolver.lookup(name) {
         if matches!(resolver.get_symbol(existing), Some(symbol) if symbol.kind == SymbolKind::Module) {
             return;
