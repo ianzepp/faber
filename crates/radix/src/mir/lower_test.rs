@@ -872,3 +872,44 @@ fn rejects_assignment_targets_that_are_not_places() {
         .message
         .contains("assignment target that is not an addressable place"));
 }
+
+#[test]
+fn function_builder_hir_visitor_lowers_statement_blocks() {
+    use crate::hir::{HirBlock, HirExpr, HirExprKind, HirId, HirLiteral, HirStmt, HirStmtKind};
+    use crate::semantic::{Primitive, TypeTable};
+
+    let types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let span = crate::lexer::Span::default();
+    let mut builder = FunctionBuilder::new(&types);
+    let entry = builder.fresh_block(span);
+    builder.switch_to(entry);
+
+    let block = HirBlock {
+        stmts: vec![HirStmt {
+            id: HirId(0),
+            kind: HirStmtKind::Redde(Some(HirExpr {
+                id: HirId(1),
+                kind: HirExprKind::Literal(HirLiteral::Int(1)),
+                ty: Some(numerus),
+                span,
+            })),
+            span,
+        }],
+        expr: None,
+        span,
+    };
+
+    <FunctionBuilder as HirVisitor>::visit_block(&mut builder, &block);
+
+    assert!(builder.errors.is_empty());
+    assert_eq!(builder.temps.len(), 1);
+    assert_eq!(builder.blocks[0].statements.len(), 1);
+    assert!(matches!(
+        builder.blocks[0]
+            .terminator
+            .as_ref()
+            .map(|terminator| &terminator.kind),
+        Some(MirTerminatorKind::Return(Some(MirOperand::Temp(MirTempId(0)))))
+    ));
+}

@@ -400,45 +400,9 @@ impl<'a> FunctionBuilder<'a> {
     fn lower_body(&mut self, body: &HirBlock) -> Vec<MirBlock> {
         let entry = self.fresh_block(body.span);
         self.switch_to(entry);
-        self.lower_block_statement(body);
+        self.visit_block(body);
         self.terminate_open_current(MirTerminatorKind::Return(None), body.span);
         self.finish_blocks()
-    }
-
-    fn lower_stmt(&mut self, stmt: &HirStmt) {
-        if !self.current_is_open() {
-            self.errors
-                .push(MirError::unsupported(stmt.span, "statement after a MIR terminator"));
-            return;
-        }
-
-        match &stmt.kind {
-            HirStmtKind::Local(local) => self.lower_local(local, stmt.span),
-            HirStmtKind::Expr(expr) => {
-                if matches!(expr.kind, HirExprKind::Assign(_, _)) {
-                    self.lower_assignment_expr(expr);
-                } else {
-                    let _ = self.lower_expr(expr);
-                }
-            }
-            HirStmtKind::Redde(Some(expr)) => {
-                if let Some(value) = self.lower_return_expr(expr) {
-                    self.terminate_current(MirTerminatorKind::Return(Some(value)), stmt.span);
-                }
-            }
-            HirStmtKind::Redde(None) => {
-                self.terminate_current(MirTerminatorKind::Return(None), stmt.span);
-            }
-            HirStmtKind::Ad(_) => self.errors.push(MirError::unsupported(
-                stmt.span,
-                "ad provider blocks before effectful MIR lowering",
-            )),
-            HirStmtKind::Rumpe => self.lower_rumpe(stmt.span),
-            HirStmtKind::Perge => self.lower_perge(stmt.span),
-            HirStmtKind::Tacet => self
-                .errors
-                .push(MirError::unsupported(stmt.span, "tacet before statement-level MIR lowering")),
-        }
     }
 
     fn lower_local(&mut self, local: &HirLocal, span: Span) {
@@ -698,12 +662,12 @@ impl<'a> FunctionBuilder<'a> {
 
         self.handlers
             .push(HandlerContext { error_place: MirPlace::local(handler_local), error_block: handler_id });
-        self.lower_block_statement(body);
+        self.visit_block(body);
         self.handlers.pop();
         let body_reaches = self.terminate_open_current(MirTerminatorKind::Goto(after_id), span);
 
         self.switch_to(handler_id);
-        self.lower_block_statement(&catch.body);
+        self.visit_block(&catch.body);
         let handler_reaches = self.terminate_open_current(MirTerminatorKind::Goto(after_id), catch.span);
 
         if body_reaches || handler_reaches {
@@ -737,7 +701,7 @@ impl<'a> FunctionBuilder<'a> {
     fn lower_block_expr(&mut self, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {
         let ty = self.expr_ty(expr)?;
         if self.is_vacuum(ty) {
-            self.lower_block_statement(block);
+            self.visit_block(block);
             return Some(MirOperand::Constant(MirConstant::Unit));
         }
 
@@ -1345,21 +1309,6 @@ impl<'a> FunctionBuilder<'a> {
         Some(MirOperand::Temp(destination))
     }
 
-    fn lower_block_statement(&mut self, block: &HirBlock) {
-        for stmt in &block.stmts {
-            if !self.current_is_open() {
-                break;
-            }
-            self.lower_stmt(stmt);
-        }
-
-        if let Some(expr) = &block.expr {
-            if self.current_is_open() {
-                let _ = self.lower_expr(expr);
-            }
-        }
-    }
-
     fn lower_block_to_destination(
         &mut self,
         block: &HirBlock,
@@ -1371,7 +1320,7 @@ impl<'a> FunctionBuilder<'a> {
             if !self.current_is_open() {
                 return Some(());
             }
-            self.lower_stmt(stmt);
+            self.visit_stmt(stmt);
         }
 
         if !self.current_is_open() {
@@ -1429,12 +1378,12 @@ impl<'a> FunctionBuilder<'a> {
         );
 
         self.switch_to(then_id);
-        self.lower_block_statement(then_block);
+        self.visit_block(then_block);
         let then_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
 
         let else_reaches = if let Some(block) = else_block {
             self.switch_to(else_id);
-            self.lower_block_statement(block);
+            self.visit_block(block);
             self.terminate_open_current(MirTerminatorKind::Goto(join_id), span)
         } else {
             true
@@ -1501,17 +1450,17 @@ impl<'a> FunctionBuilder<'a> {
         );
 
         self.switch_to(then_id);
-        self.lower_block_statement(then_block);
+        self.visit_block(then_block);
         self.handlers.pop();
         let then_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
 
         self.switch_to(handler_id);
-        self.lower_block_statement(&catch.body);
+        self.visit_block(&catch.body);
         let handler_reaches = self.terminate_open_current(MirTerminatorKind::Goto(join_id), catch.span);
 
         let else_reaches = if let Some(block) = else_block {
             self.switch_to(else_id);
-            self.lower_block_statement(block);
+            self.visit_block(block);
             self.terminate_open_current(MirTerminatorKind::Goto(join_id), span)
         } else {
             true
@@ -1587,7 +1536,7 @@ impl<'a> FunctionBuilder<'a> {
         self.loops
             .push(LoopContext { perge_target: cond_id, rumpe_target: after_id });
         self.switch_to(body_id);
-        self.lower_block_statement(body);
+        self.visit_block(body);
         self.loops.pop();
         self.terminate_open_current(MirTerminatorKind::Goto(cond_id), span);
 
@@ -1867,6 +1816,61 @@ impl<'a> FunctionBuilder<'a> {
                 Type::Alias(_, inner) => ty = *inner,
                 other => return other,
             }
+        }
+    }
+}
+
+impl HirVisitor for FunctionBuilder<'_> {
+    fn visit_block(&mut self, block: &HirBlock) {
+        for stmt in &block.stmts {
+            if !self.current_is_open() {
+                break;
+            }
+            self.visit_stmt(stmt);
+        }
+
+        if let Some(expr) = &block.expr {
+            if self.current_is_open() {
+                self.visit_expr(expr);
+            }
+        }
+    }
+
+    fn visit_stmt(&mut self, stmt: &HirStmt) {
+        if !self.current_is_open() {
+            self.errors
+                .push(MirError::unsupported(stmt.span, "statement after a MIR terminator"));
+            return;
+        }
+
+        match &stmt.kind {
+            HirStmtKind::Local(local) => self.lower_local(local, stmt.span),
+            HirStmtKind::Expr(expr) => self.visit_expr(expr),
+            HirStmtKind::Redde(Some(expr)) => {
+                if let Some(value) = self.lower_return_expr(expr) {
+                    self.terminate_current(MirTerminatorKind::Return(Some(value)), stmt.span);
+                }
+            }
+            HirStmtKind::Redde(None) => {
+                self.terminate_current(MirTerminatorKind::Return(None), stmt.span);
+            }
+            HirStmtKind::Ad(_) => self.errors.push(MirError::unsupported(
+                stmt.span,
+                "ad provider blocks before effectful MIR lowering",
+            )),
+            HirStmtKind::Rumpe => self.lower_rumpe(stmt.span),
+            HirStmtKind::Perge => self.lower_perge(stmt.span),
+            HirStmtKind::Tacet => self
+                .errors
+                .push(MirError::unsupported(stmt.span, "tacet before statement-level MIR lowering")),
+        }
+    }
+
+    fn visit_expr(&mut self, expr: &HirExpr) {
+        if matches!(expr.kind, HirExprKind::Assign(_, _)) {
+            self.lower_assignment_expr(expr);
+        } else {
+            let _ = self.lower_expr(expr);
         }
     }
 }
