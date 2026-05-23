@@ -27,6 +27,7 @@ use std::collections::{BTreeMap, BTreeSet};
 pub struct RawEntry {
     /// Source filename relative to the explain corpus.
     pub filename: &'static str,
+
     /// Complete Markdown source, including TOML front matter.
     pub source: &'static str,
 }
@@ -87,35 +88,62 @@ pub struct Entry {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Kind {
+    /// Reserved word or structural language form.
     Keyword,
+
+    /// Symbolic or word operator.
     Operator,
+
+    /// Metadata marker that modifies declarations or target behavior.
     Annotation,
+
+    /// Literal value syntax.
     Literal,
+
+    /// Built-in or documented type name.
     Type,
+
+    /// Declaration or behavior modifier.
     Modifier,
+
+    /// Non-canonical historical syntax kept for migration guidance.
     Legacy,
+
+    /// Reference topic that explains a language idea rather than one token.
     Concept,
 }
 
-/// TOML front matter schema for explain/*.md entries (delimited by +++).
-/// Unknown fields are rejected via deny_unknown_fields.
-/// All list fields default to empty; canonical_term is optional.
+/// TOML front matter contract for one `explain/*.md` document.
+///
+/// The schema is deliberately strict because these files are a compiled-in
+/// reference corpus, not user input. Unknown keys usually mean stale docs or a
+/// typo in the source of truth, so serde rejects them instead of ignoring them.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct FrontMatter {
     term: String,
+
     kind: String,
+
     category: String,
+
     canonical: bool,
+
     summary: String,
+
     syntax: String,
+
     #[serde(default)]
     examples: Vec<String>,
+
     #[serde(default)]
     aliases: Vec<String>,
+
     #[serde(default)]
     legacy: Vec<String>,
+
     canonical_term: Option<String>,
+
     #[serde(default)]
     related: Vec<String>,
 }
@@ -127,14 +155,27 @@ struct FrontMatter {
 /// show both old and replacement terms.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Lookup<'a> {
+    /// Query matched the canonical term exactly.
     Exact(&'a Entry),
+
+    /// Query matched an accepted alternate name for a canonical entry.
     Alias {
+        /// Original user query that matched the alias index.
         query: String,
+
+        /// Canonical entry reached through the alias.
         entry: &'a Entry,
     },
+
+    /// Query matched non-canonical syntax and carries the replacement entry.
     Legacy {
+        /// Original user query that matched a legacy term or alias.
         query: String,
+
+        /// Legacy entry explaining the old syntax.
         entry: &'a Entry,
+
+        /// Canonical entry users should write instead.
         canonical: &'a Entry,
     },
 }
@@ -148,6 +189,7 @@ pub enum Lookup<'a> {
 pub struct SearchHit<'a> {
     /// Entry to display for this hit, usually canonicalized from legacy matches.
     pub entry: &'a Entry,
+
     /// Relative match quality; lower values sort first.
     pub score: u8,
 }
@@ -578,7 +620,9 @@ fn first_faber_example(body: &str) -> Option<&str> {
 }
 
 fn parse_entry(filename: &str, source: &str) -> Result<Entry, ExplainError> {
-    // Require opening +++ on its own first line (TOML front matter).
+    // The delimiter must be unambiguous because these documents are embedded
+    // at build time; accepting old YAML-style front matter would let the corpus
+    // drift from the format the parser actually validates.
     let mut line_iter = source.lines();
     if line_iter.next() != Some("+++") {
         return Err(ExplainError::new(format!(
