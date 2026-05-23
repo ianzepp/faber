@@ -1,7 +1,33 @@
+//! Control-flow and alternate-exit lowering for MIR functions.
+//!
+//! This module turns expression-level control constructs into explicit MIR
+//! blocks and terminators. It owns the contracts for `si`, `dum`, `rumpe`,
+//! `perge`, `iace`, and `cape`: each construct either wires concrete CFG edges
+//! or reports an unsupported lowering diagnostic. Value-producing control flow
+//! writes into a destination place so branch arms join through storage rather
+//! than through an implicit expression stack.
+//!
+//! ERROR HANDLING
+//! ==============
+//! Local `cape` handlers are modeled as a stack of handler contexts. `iace` and
+//! failable calls assign the error value into the active handler place and jump
+//! to its handler block. Without a local handler, `iace` can only lower for
+//! functions with a declared alternate-exit type; otherwise it fails closed.
+//!
+//! CFG INVARIANTS
+//! ==============
+//! - Branch and loop helpers create all successor blocks before terminating the
+//!   current block.
+//! - Reachable arms jump to an explicit join block.
+//! - Unreachable joins are sealed with `Unreachable` so MIR validation sees a
+//!   terminator on every block.
+
 use super::*;
 use crate::hir::visit::HirVisitor;
 
 impl FunctionBuilder<'_> {
+    /// Lower `iace` either to the innermost active `cape` handler or to a
+    /// function-level alternate return.
     pub(super) fn lower_iace(&mut self, value: &HirExpr, span: Span) -> Option<MirOperand> {
         if let Some(handler) = self.handlers.last().cloned() {
             let error_ty = self.expr_ty(value)?;
@@ -23,6 +49,10 @@ impl FunctionBuilder<'_> {
         None
     }
 
+    /// Lower a handled expression when the handler is statement-like.
+    ///
+    /// Expression-valued handlers are intentionally rejected until MIR has a
+    /// value-join representation for handler results.
     pub(super) fn lower_handled_expr(
         &mut self,
         body: &HirBlock,
@@ -79,6 +109,11 @@ impl FunctionBuilder<'_> {
         }
     }
 
+    /// Lower any expression into an already-chosen destination place.
+    ///
+    /// This is the join-point contract for expression-valued blocks and `si`:
+    /// complex control forms assign their eventual value into `destination`,
+    /// while ordinary expressions lower to an operand and are assigned once.
     pub(super) fn lower_expr_to_destination(
         &mut self,
         expr: &HirExpr,
@@ -105,6 +140,11 @@ impl FunctionBuilder<'_> {
         }
     }
 
+    /// Lower a HIR block used as an expression.
+    ///
+    /// Non-`vacuum` blocks allocate a temp and route the tail expression into
+    /// it. Blocks with no tail expression are only valid when the expected MIR
+    /// type is `vacuum`.
     pub(super) fn lower_block_expr(&mut self, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {
         let ty = self.expr_ty(expr)?;
         if self.is_vacuum(ty) {
@@ -117,6 +157,11 @@ impl FunctionBuilder<'_> {
         Some(MirOperand::Temp(temp))
     }
 
+    /// Lower `si` in expression position.
+    ///
+    /// `vacuum` branches are statement-like. Value-producing branches require
+    /// a `secus` block and share a temp destination so the two arms join through
+    /// ordinary MIR storage.
     pub(super) fn lower_si_expr(
         &mut self,
         cond: &HirExpr,
@@ -144,6 +189,11 @@ impl FunctionBuilder<'_> {
         Some(MirOperand::Temp(temp))
     }
 
+    /// Lower `dum` in expression position.
+    ///
+    /// Loops currently have a statement-like MIR contract: they may produce
+    /// `vacuum`, but a non-`vacuum` loop result is rejected until the language
+    /// has a defined value-yielding loop model.
     pub(super) fn lower_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {
         let ty = self.expr_ty(expr)?;
         if !self.is_vacuum(ty) {
@@ -155,6 +205,12 @@ impl FunctionBuilder<'_> {
         self.lower_dum(cond, block, expr.span);
         Some(MirOperand::Constant(MirConstant::Unit))
     }
+
+    /// Lower a block into a destination place, preserving early terminators.
+    ///
+    /// Statement prefixes are emitted first. If they leave the current block
+    /// sealed, no tail assignment is generated; otherwise the tail expression
+    /// supplies the destination value.
     pub(super) fn lower_block_to_destination(
         &mut self,
         block: &HirBlock,
@@ -188,6 +244,10 @@ impl FunctionBuilder<'_> {
         self.lower_expr_to_destination(expr, destination, ty)
     }
 
+    /// Lower `si` when its result is used only for control effects.
+    ///
+    /// The helper creates an explicit branch and an explicit join even when no
+    /// `secus` block exists; the missing else arm simply reaches the join.
     pub(super) fn lower_si_statement(
         &mut self,
         cond: &HirExpr,
@@ -319,6 +379,10 @@ impl FunctionBuilder<'_> {
         }
     }
 
+    /// Lower expression-valued `si` into an existing destination.
+    ///
+    /// A missing `secus` branch is rejected because MIR has no implicit default
+    /// value for an expression result.
     pub(super) fn lower_si_to_destination(
         &mut self,
         cond: &HirExpr,
@@ -361,6 +425,10 @@ impl FunctionBuilder<'_> {
         Some(())
     }
 
+    /// Lower `dum` into condition, body, and after blocks.
+    ///
+    /// `perge` jumps back to the condition block and `rumpe` jumps to the after
+    /// block through the loop context pushed while lowering the body.
     pub(super) fn lower_dum(&mut self, cond: &HirExpr, body: &HirBlock, span: Span) {
         let cond_id = self.fresh_block(cond.span);
         let body_id = self.fresh_block(body.span);
@@ -389,6 +457,7 @@ impl FunctionBuilder<'_> {
         self.switch_to(after_id);
     }
 
+    /// Lower `rumpe` to the active loop's exit edge.
     pub(super) fn lower_rumpe(&mut self, span: Span) {
         let Some(context) = self.loops.last().copied() else {
             self.errors
@@ -398,6 +467,7 @@ impl FunctionBuilder<'_> {
         self.terminate_current(MirTerminatorKind::Goto(context.rumpe_target), span);
     }
 
+    /// Lower `perge` to the active loop's condition edge.
     pub(super) fn lower_perge(&mut self, span: Span) {
         let Some(context) = self.loops.last().copied() else {
             self.errors

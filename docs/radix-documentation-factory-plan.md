@@ -45,9 +45,9 @@ Rules to enforce in every phase:
 - Target Repo: `/Users/ianzepp/work/ianzepp/faber`.
 - Target Tree: `crates/radix`.
 - Delivery Spec Directory: `docs/radix-docs-factory/`.
-- Current Phase: phase 6 pending.
-- Completed Phases: phases 1-5.
-- Pending Phases: phases 6-10 below.
+- Current Phase: phase 7 pending.
+- Completed Phases: phases 1-6.
+- Pending Phases: phases 7-10 below.
 - Checkpoint Policy: each phase must have a focused diff, `cargo fmt --check`,
   `cargo test -p radix`, and `git diff --check` passing before commit.
 - Commit Policy: commit after each completed phase.

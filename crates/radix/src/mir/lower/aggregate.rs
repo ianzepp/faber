@@ -1,6 +1,24 @@
+//! Aggregate construction lowering for typed HIR expressions.
+//!
+//! This module owns the bridge from high-level aggregate syntax to MIR
+//! `Construct` statements. It handles tuple, array, set, map, struct, and enum
+//! variant construction only when semantic lowering has already provided the
+//! target type and a supported source shape. Missing type information is treated
+//! as an upstream semantic bug and unsupported object forms fail closed with a
+//! `MirError`.
+//!
+//! INVARIANTS
+//! ==========
+//! - Every aggregate construction writes through a fresh MIR temp.
+//! - Struct and map object literals preserve their distinct named/keyed field
+//!   contracts.
+//! - Enum variant payloads use named fields only when the HIR context proves
+//!   the variant field names and arity match the lowered operands.
+
 use super::*;
 
 impl FunctionBuilder<'_> {
+    /// Lower a tuple literal into an ordered MIR aggregate temp.
     pub(super) fn lower_tuple(&mut self, items: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut fields = Vec::with_capacity(items.len());
         for item in items {
@@ -10,6 +28,11 @@ impl FunctionBuilder<'_> {
         Some(self.construct_temp(MirAggregateKind::Tuple, MirAggregateFields::Ordered(fields), ty, expr.span))
     }
 
+    /// Lower an array-like literal into the requested aggregate kind.
+    ///
+    /// The same ordered-field path is used for arrays and set casts from array
+    /// syntax; the caller decides which MIR aggregate kind the target type
+    /// requires.
     pub(super) fn lower_array(
         &mut self,
         elements: &[HirArrayElement],
@@ -36,6 +59,7 @@ impl FunctionBuilder<'_> {
         Some(fields)
     }
 
+    /// Lower a struct literal whose target definition is already known.
     pub(super) fn lower_struct_literal(
         &mut self,
         def_id: DefId,
@@ -55,6 +79,12 @@ impl FunctionBuilder<'_> {
         ))
     }
 
+    /// Lower a `verte` aggregate conversion.
+    ///
+    /// This is not a general cast path. It accepts only the HIR source shapes
+    /// that can be represented as aggregate construction: object entries for
+    /// structs/maps, array syntax for arrays/sets, and direct variant calls for
+    /// enum payloads.
     pub(super) fn lower_verte(
         &mut self,
         source: &HirExpr,

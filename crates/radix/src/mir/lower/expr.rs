@@ -1,6 +1,36 @@
+//! Expression dispatch for HIR-to-MIR lowering.
+//!
+//! This module is the expression-facing boundary of the function builder. It
+//! maps the HIR expression taxonomy onto narrower lowering routines that own
+//! particular MIR contracts: value creation, addressable-place projection,
+//! control-flow construction, aggregate construction, and runtime/intrinsic
+//! calls. The dispatch is deliberately explicit so unsupported HIR shapes stay
+//! visible as diagnostics instead of being silently approximated in MIR.
+//!
+//! ERROR STRATEGY
+//! ==============
+//! MIR lowering only consumes HIR that semantic analysis has already typed and
+//! resolved. When a shape is not represented in MIR yet, or when required type
+//! information is absent, this layer records a `MirError` and returns `None`.
+//! That fail-closed behavior prevents later codegen from guessing about
+//! upstream semantic facts.
+
 use super::*;
 
+/// Visitor contract for lowering a HIR expression when the caller needs a MIR
+/// operand.
+///
+/// The default dispatcher encodes the supported expression set for this MIR
+/// phase. Implementors may return places, temps, constants, or runtime values,
+/// but they must report unsupported forms through `MirError` rather than
+/// manufacturing placeholder MIR.
 pub(super) trait HirExprLoweringVisitor {
+    /// Lower a typed HIR expression into the operand form expected by MIR users.
+    ///
+    /// Control-producing expressions may still terminate or switch the current
+    /// block as part of producing their operand. Callers must therefore treat a
+    /// `None` result as both "no value" and "current CFG state may have been
+    /// intentionally sealed after a diagnostic."
     fn lower_expr_value(&mut self, expr: &HirExpr) -> Option<MirOperand> {
         match &expr.kind {
             HirExprKind::Path(def_id) => self.visit_path_expr(*def_id, expr),

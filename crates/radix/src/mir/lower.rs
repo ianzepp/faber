@@ -1,3 +1,37 @@
+//! HIR-to-MIR lowering orchestration for the compiler-developer MIR surface.
+//!
+//! This module is the boundary between a fully analyzed HIR unit and the
+//! execution-shaped MIR model used by MIR dumps, validation, and temporary MIR
+//! probes. It deliberately depends on [`AnalyzedUnit`] rather than raw HIR so
+//! lowering can preserve semantic identity, resolved definitions, inferred
+//! types, entry metadata, and the interner without rebuilding semantic context.
+//!
+//! ERROR STRATEGY
+//! ==============
+//! MIR lowering is fail-closed infrastructure. Unsupported HIR surfaces, missing
+//! semantic types, sealed-block misuse, and post-lowering validation failures are
+//! reported as [`MirError`] values; they are not guessed around in order to emit
+//! partial MIR. This keeps developer-facing MIR inspection honest while the MIR
+//! subset grows toward the full language.
+//!
+//! ORCHESTRATION
+//! =============
+//! [`MirLowerer`] owns whole-program order: reject unsupported CLI-package entry
+//! shapes, collect context maps, lower supported top-level items, synthesize the
+//! primitive entry function when allowed, and hand the complete program to
+//! validation. [`FunctionBuilder`] owns one function body at a time, including
+//! local bindings, temporaries, open basic blocks, loop/handler stacks, and
+//! value numbering.
+//!
+//! INVARIANTS
+//! ==========
+//! - Every emitted block is finalized with exactly one terminator before the
+//!   program reaches validation.
+//! - MIR types are copied from semantic `TypeId`s; missing HIR type information
+//!   is a lowering error, not a codegen fallback.
+//! - Unsupported features remain explicit diagnostics so later MIR work can add
+//!   support without inheriting silent behavior.
+
 use crate::driver::AnalyzedUnit;
 use crate::hir::visit::HirVisitor;
 use crate::hir::{
@@ -30,6 +64,12 @@ use context::{struct_field_map, LoweringContextMaps};
 use expr::HirExprLoweringVisitor;
 use item::ItemLoweringPass;
 
+/// Developer-facing MIR lowering diagnostic.
+///
+/// MIR lowering errors describe gaps between the typed HIR surface and the MIR
+/// subset currently implemented. They intentionally keep only a span and message
+/// because the caller is a compiler inspection/probe surface, not the primary
+/// user diagnostic renderer.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MirError {
     pub message: String,
@@ -50,6 +90,11 @@ impl MirError {
     }
 }
 
+/// Lower a semantically analyzed HIR unit into a validated MIR program.
+///
+/// The returned program has already passed MIR validation. Lowering failures and
+/// validation failures share the same error type so callers can treat the MIR
+/// pipeline as one fail-closed developer command.
 pub fn lower_analyzed_unit(unit: &AnalyzedUnit) -> Result<MirProgram, Vec<MirError>> {
     let mut lowerer = MirLowerer { unit, errors: Vec::new(), functions: Vec::new() };
     lowerer.lower();
@@ -69,6 +114,10 @@ pub fn lower_analyzed_unit(unit: &AnalyzedUnit) -> Result<MirProgram, Vec<MirErr
     }
 }
 
+/// Lower and render a deterministic MIR dump for compiler inspection.
+///
+/// This helper exists so `radix mir` can expose one operation without letting
+/// dump rendering bypass validation.
 pub fn dump_analyzed_unit(unit: &AnalyzedUnit) -> Result<String, Vec<MirError>> {
     lower_analyzed_unit(unit).map(|program| dump_program(&program))
 }
@@ -80,6 +129,11 @@ struct MirLowerer<'a> {
 }
 
 impl MirLowerer<'_> {
+    /// Run the whole-unit lowering sequence before MIR validation.
+    ///
+    /// Whole-unit maps are collected up front because function bodies need
+    /// signatures, enum variant metadata, provider imports, and validation
+    /// tables that may be declared later in source order.
     fn lower(&mut self) {
         if self.unit.cli_program.is_some() {
             self.errors.push(MirError::unsupported(
@@ -103,6 +157,13 @@ impl MirLowerer<'_> {
         }
     }
 
+    /// Lower one HIR function item into one MIR function.
+    ///
+    /// Function lowering is intentionally type-strict: parameters, locals, the
+    /// return type, and alternate-exit type must already be present on HIR. The
+    /// builder may still emit local lowering errors, but this wrapper preserves
+    /// source-order accounting for the function while the whole-unit pipeline
+    /// decides whether validation is allowed to run.
     fn lower_function(
         &mut self,
         item: &HirItem,
@@ -146,10 +207,20 @@ impl MirLowerer<'_> {
         });
     }
 
+    /// Rebuild validation context from the analyzed unit for the final handoff.
+    ///
+    /// The validation maps are derived from immutable HIR/type data rather than
+    /// from partially lowered functions, so validation checks the MIR against the
+    /// same semantic source of truth as lowering.
     fn validation_context(&self) -> MirValidationContext<'_> {
         LoweringContextMaps::collect(self.unit).validation
     }
 
+    /// Lower the synthetic top-level entry block accepted by the current MIR subset.
+    ///
+    /// Non-empty entry bodies remain unsupported here because top-level entry
+    /// semantics still need a fuller statement and runtime policy before they
+    /// can be represented faithfully in MIR.
     fn lower_entry(&mut self, entry: &HirBlock) {
         if !entry_is_empty(entry) {
             self.errors.push(MirError::unsupported(
@@ -206,6 +277,12 @@ struct ProviderImport {
     item: Symbol,
 }
 
+/// Immutable whole-unit facts needed while lowering one function body.
+///
+/// This context is intentionally cloned into each [`FunctionBuilder`] instead of
+/// letting builders mutate global lowering state. Per-function lowering can then
+/// accumulate local errors and CFG state while still resolving function errors,
+/// aggregate fields, enum payload names, and provider imports consistently.
 struct FunctionBuilderContext<'a> {
     interner: Option<&'a Interner>,
     function_errors: FxHashMap<DefId, MirType>,
@@ -229,6 +306,13 @@ impl FunctionBuilderContext<'_> {
     }
 }
 
+/// Stateful builder for one MIR function.
+///
+/// The builder translates typed HIR body structure into MIR locals, temporaries,
+/// values, and basic blocks. Its mutable state models the current CFG frontier:
+/// `current` is `None` after a terminator, `loops` records `perge`/`rumpe`
+/// targets, and `handlers` records active alternate-exit handlers. Any attempt
+/// to keep emitting after a block is sealed becomes a lowering error.
 struct FunctionBuilder<'a> {
     types: &'a TypeTable,
     error_ty: Option<MirType>,

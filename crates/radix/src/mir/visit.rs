@@ -1,12 +1,25 @@
-//! Read-only MIR visitor trait plus CFG edge helpers.
+//! Read-only MIR visitor traits plus CFG edge helpers.
 //!
 //! WHY: MIR is stored as functions containing ordered blocks, statements, and
 //! terminators. Structural walks should follow that storage order; CFG walks
 //! should use explicit successor helpers so loops and shared targets do not
 //! cause accidental recursive revisits.
+//!
+//! TRAVERSAL CONTRACT
+//! ==================
+//! Visitors walk the tree-shaped storage view, not the control-flow graph.
+//! `visit_function` visits params, locals, temps, then blocks in vector order;
+//! `visit_block` visits statements before the terminator. Branch targets are
+//! not recursively followed by terminator visitors. CFG consumers should call
+//! `terminator_successors` and manage reachability, deduplication, and worklists
+//! themselves.
 
 use super::nodes::*;
 
+/// Infallible read-only visitor over MIR storage order.
+///
+/// Override the methods where a pass needs to observe a node. The default
+/// methods walk children but do not maintain CFG state or revisit target blocks.
 pub trait MirVisitor: Sized {
     fn visit_program(&mut self, program: &MirProgram) {
         walk_program(self, program);
@@ -67,6 +80,11 @@ pub trait MirVisitor: Sized {
     }
 }
 
+/// Fallible read-only visitor over MIR storage order.
+///
+/// The first returned error aborts traversal. This is useful for probes or
+/// emitters that stop at the first unsupported MIR shape, while validators that
+/// collect many diagnostics should usually keep their own error vector instead.
 pub trait FallibleMirVisitor: Sized {
     type Error;
 
@@ -135,12 +153,14 @@ pub trait FallibleMirVisitor: Sized {
     }
 }
 
+/// Walk all functions in program storage order.
 pub fn walk_program<V: MirVisitor>(visitor: &mut V, program: &MirProgram) {
     for function in &program.functions {
         visitor.visit_function(function);
     }
 }
 
+/// Fallibly walk all functions in program storage order.
 pub fn try_walk_program<V: FallibleMirVisitor>(visitor: &mut V, program: &MirProgram) -> Result<(), V::Error> {
     for function in &program.functions {
         visitor.visit_function(function)?;
@@ -148,6 +168,7 @@ pub fn try_walk_program<V: FallibleMirVisitor>(visitor: &mut V, program: &MirPro
     Ok(())
 }
 
+/// Walk a function's declarations and blocks in deterministic storage order.
 pub fn walk_function<V: MirVisitor>(visitor: &mut V, function: &MirFunction) {
     for param in &function.params {
         visitor.visit_param(param);
@@ -163,6 +184,7 @@ pub fn walk_function<V: MirVisitor>(visitor: &mut V, function: &MirFunction) {
     }
 }
 
+/// Fallibly walk a function's declarations and blocks in deterministic storage order.
 pub fn try_walk_function<V: FallibleMirVisitor>(visitor: &mut V, function: &MirFunction) -> Result<(), V::Error> {
     for param in &function.params {
         visitor.visit_param(param)?;
@@ -179,6 +201,7 @@ pub fn try_walk_function<V: FallibleMirVisitor>(visitor: &mut V, function: &MirF
     Ok(())
 }
 
+/// Walk straight-line statements before the block terminator.
 pub fn walk_block<V: MirVisitor>(visitor: &mut V, block: &MirBlock) {
     for stmt in &block.statements {
         visitor.visit_stmt(stmt);
@@ -186,6 +209,7 @@ pub fn walk_block<V: MirVisitor>(visitor: &mut V, block: &MirBlock) {
     visitor.visit_terminator(&block.terminator);
 }
 
+/// Fallibly walk straight-line statements before the block terminator.
 pub fn try_walk_block<V: FallibleMirVisitor>(visitor: &mut V, block: &MirBlock) -> Result<(), V::Error> {
     for stmt in &block.statements {
         visitor.visit_stmt(stmt)?;
@@ -193,6 +217,7 @@ pub fn try_walk_block<V: FallibleMirVisitor>(visitor: &mut V, block: &MirBlock) 
     visitor.visit_terminator(&block.terminator)
 }
 
+/// Walk the children of one statement without crossing block boundaries.
 pub fn walk_stmt<V: MirVisitor>(visitor: &mut V, stmt: &MirStmt) {
     match &stmt.kind {
         MirStmtKind::Assign { place, value } => {
@@ -221,6 +246,7 @@ pub fn walk_stmt<V: MirVisitor>(visitor: &mut V, stmt: &MirStmt) {
     }
 }
 
+/// Fallibly walk the children of one statement without crossing block boundaries.
 pub fn try_walk_stmt<V: FallibleMirVisitor>(visitor: &mut V, stmt: &MirStmt) -> Result<(), V::Error> {
     match &stmt.kind {
         MirStmtKind::Assign { place, value } => {
@@ -250,6 +276,7 @@ pub fn try_walk_stmt<V: FallibleMirVisitor>(visitor: &mut V, stmt: &MirStmt) -> 
     }
 }
 
+/// Walk operands and places owned by a terminator, but not successor blocks.
 pub fn walk_terminator<V: MirVisitor>(visitor: &mut V, terminator: &MirTerminator) {
     match &terminator.kind {
         MirTerminatorKind::Return(Some(value)) | MirTerminatorKind::ReturnError(value) => {
@@ -275,6 +302,7 @@ pub fn walk_terminator<V: MirVisitor>(visitor: &mut V, terminator: &MirTerminato
     }
 }
 
+/// Fallibly walk operands and places owned by a terminator, but not successor blocks.
 pub fn try_walk_terminator<V: FallibleMirVisitor>(visitor: &mut V, terminator: &MirTerminator) -> Result<(), V::Error> {
     match &terminator.kind {
         MirTerminatorKind::Return(Some(value)) | MirTerminatorKind::ReturnError(value) => visitor.visit_operand(value),
@@ -501,6 +529,10 @@ pub fn try_walk_option_chain_link<V: FallibleMirVisitor>(
     }
 }
 
+/// Return explicit CFG successors for a terminator.
+///
+/// The order matches the terminator's source order: success then error for
+/// `TryCall`, then/else for branches, cases then default for switches.
 pub fn terminator_successors(kind: &MirTerminatorKind) -> Vec<MirBlockId> {
     match kind {
         MirTerminatorKind::TryCall { ok_block, error_block, .. } => vec![*ok_block, *error_block],

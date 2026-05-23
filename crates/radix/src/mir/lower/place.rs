@@ -1,6 +1,23 @@
+//! Place and projection lowering for addressable MIR operands.
+//!
+//! This module decides when a HIR expression can be represented as a `MirPlace`
+//! and when a value must first be materialized into a temporary. Field and index
+//! access preserve addressability whenever the base resolves to a local, temp,
+//! or nested projection; constants and value operands are assigned into temps so
+//! later projections still have a stable MIR base.
+//!
+//! NULLABILITY
+//! ===========
+//! Optional chaining and non-null access are lowered as MIR option operations.
+//! This file does not infer nullability: it consumes the expression type
+//! assigned by semantic typechecking and reports missing type information
+//! through the shared lowering error path.
+
 use super::*;
 
 impl FunctionBuilder<'_> {
+    /// Lower field access into a projected place when the receiver can be made
+    /// addressable.
     pub(super) fn lower_field(
         &mut self,
         object: &HirExpr,
@@ -12,6 +29,8 @@ impl FunctionBuilder<'_> {
         Some(MirOperand::Place(place))
     }
 
+    /// Lower index access into a projected place, keeping the index as a MIR
+    /// operand because it may itself require computation.
     pub(super) fn lower_index(&mut self, object: &HirExpr, index: &HirExpr, _expr: &HirExpr) -> Option<MirOperand> {
         let mut place = self.lower_projectable_place(object)?;
         let index = self.lower_expr_value(index)?;
@@ -60,6 +79,10 @@ impl FunctionBuilder<'_> {
         }
     }
 
+    /// Lower an optional-chain expression into an option runtime value.
+    ///
+    /// The base and chain link remain explicit so later codegen can preserve
+    /// short-circuit semantics instead of seeing a plain field or call.
     pub(super) fn lower_optional_chain(
         &mut self,
         object: &HirExpr,
@@ -90,6 +113,8 @@ impl FunctionBuilder<'_> {
         }
     }
 
+    /// Lower non-null member/index access by asserting the base option into a
+    /// temp-backed place before applying the requested projection.
     pub(super) fn lower_non_null(
         &mut self,
         object: &HirExpr,

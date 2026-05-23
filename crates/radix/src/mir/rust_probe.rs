@@ -1,3 +1,25 @@
+//! Temporary Rust emitter for MIR pipeline probes.
+//!
+//! This file exists to make MIR executable enough for compiler-development
+//! experiments while the production Rust backend still emits from typed HIR.
+//! The probe accepts already-validated MIR, lowers a small supported subset to
+//! Rust, and rejects unsupported shapes explicitly instead of pretending to be a
+//! complete backend.
+//!
+//! LIMITATIONS
+//! ===========
+//! - Supported types are primitives plus aliases over supported primitives.
+//! - Supported control flow is implemented as a loop over block enum variants.
+//! - Runtime calls, aggregates, options, projections, switches, and alternate
+//!   exits are mostly rejected until the real MIR backend design exists.
+//! - Output names are synthetic and deterministic, not user-facing ABI.
+//!
+//! WHY
+//! ===
+//! Keeping this as a probe avoids coupling backend policy to an incomplete MIR
+//! surface. Each unsupported error is a visible boundary for future backend
+//! work rather than an implicit lossy lowering.
+
 use crate::codegen::CodeWriter;
 use crate::lexer::Interner;
 use crate::mir::visit::FallibleMirVisitor;
@@ -5,6 +27,10 @@ use crate::mir::*;
 use crate::semantic::{Primitive, Type, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+/// Error reported when the temporary MIR Rust probe cannot emit a shape.
+///
+/// Unsupported errors are expected for much of MIR today. They mean the probe
+/// lacks coverage, not necessarily that the MIR program failed validation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MirRustProbeError {
     pub message: String,
@@ -26,7 +52,9 @@ impl std::error::Error for MirRustProbeError {}
 
 /// Emit deliberately temporary Rust from already-validated MIR.
 ///
-/// TARGET: Phase 9 MIR Rust probe. This is not the permanent Rust backend surface.
+/// TARGET: Phase 9 MIR Rust probe. This is not the permanent Rust backend
+/// surface, and callers should validate MIR before invoking it so unsupported
+/// probe shapes are not mixed with malformed MIR diagnostics.
 pub fn emit_rust_probe(
     program: &MirProgram,
     types: &TypeTable,
@@ -39,7 +67,9 @@ struct RustProbe<'a> {
     program: &'a MirProgram,
     types: &'a TypeTable,
     interner: &'a Interner,
+    /// Direct-call lookup for callees lowered into this MIR program.
     functions_by_id: FxHashMap<MirFunctionId, &'a MirFunction>,
+    /// Semantic-call lookup for `DefId` callees that correspond to MIR functions.
     functions_by_def: FxHashMap<crate::hir::DefId, &'a MirFunction>,
 }
 
@@ -47,6 +77,7 @@ struct FunctionProbe<'a, 'p> {
     probe: &'p RustProbe<'a>,
     function: &'a MirFunction,
     w: &'p mut CodeWriter,
+    /// Statement-defined value expressions available later in the same block.
     value_exprs: FxHashMap<MirValueId, String>,
 }
 
@@ -140,6 +171,8 @@ impl<'a> RustProbe<'a> {
                 self.default_value(temp.ty)?
             ));
         }
+        // MIR block IDs are lowered to an explicit dispatch loop so the probe
+        // can preserve CFG edges without relying on Rust labels or gotos.
         w.writeln("loop {");
         w.indent();
         w.writeln("match __faber_block {");

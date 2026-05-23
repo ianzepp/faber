@@ -1,3 +1,19 @@
+//! Deterministic MIR text rendering.
+//!
+//! The dump format is an inspection and regression surface for the MIR model,
+//! not a parser contract. It renders IDs, type IDs, layout IDs, blocks,
+//! statements, terminators, runtime intrinsics, aggregates, and option
+//! operations in stable storage order so `radix mir` output is comparable across
+//! runs. Symbol names are deliberately rendered as symbol IDs because this layer
+//! does not own interner presentation policy.
+//!
+//! INVARIANTS
+//! ==========
+//! - Rendering follows MIR vector order; no sorting is applied by the dumper.
+//! - Numeric IDs are printed in their MIR namespace (`f`, `bb`, `_`, `%`, `v`).
+//! - The dump should expose structure and type identity without implying that
+//!   it is valid target code.
+
 use crate::mir::visit::MirVisitor;
 use crate::mir::{
     MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp, MirBlock, MirBlockId, MirCallee,
@@ -7,6 +23,11 @@ use crate::mir::{
     MirStmtKind, MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp, MirValue, MirValueId, MirValueKind,
 };
 
+/// Render a MIR program into deterministic, human-readable inspection text.
+///
+/// This is the public dump boundary used by developer commands and tests. It
+/// accepts already-built MIR and does not validate it; callers that need
+/// structural guarantees should run `validate_program` before dumping.
 pub fn dump_program(program: &MirProgram) -> String {
     let mut dumper = MirDumper { out: String::new(), function_count: 0 };
     dumper.visit_program(program);

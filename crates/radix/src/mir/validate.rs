@@ -1,3 +1,25 @@
+//! MIR validation before inspection and backend experiments.
+//!
+//! Validation checks that MIR is well-formed relative to the semantic type
+//! table and the auxiliary signature/field metadata supplied by the lowerer or
+//! caller. It catches duplicate IDs, missing local/temp/block/value references,
+//! invalid CFG targets, unresolved/error recovery types, call arity/type
+//! mismatches, destination typing, aggregate shape mismatches, projection
+//! metadata gaps, option-operation contracts, and runtime intrinsic policies.
+//!
+//! ERROR STRATEGY
+//! ==============
+//! Validation accumulates all errors it can find and returns them as one vector.
+//! It never repairs MIR and it does not guess missing type metadata; a missing
+//! field table or failable-call signature is a producer bug that should remain
+//! visible to the caller.
+//!
+//! LIMITS
+//! ======
+//! This pass verifies MIR shape below typed HIR. It is not a full semantic
+//! analyzer, borrow checker, or reachability analysis, and it currently tracks
+//! statement-defined `MirValueId`s within each block rather than globally.
+
 use crate::hir::DefId;
 use crate::lexer::{Span, Symbol};
 use crate::mir::visit::{terminator_successors, MirVisitor};
@@ -5,6 +27,10 @@ use crate::mir::*;
 use crate::semantic::{Primitive, Type, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+/// Validation diagnostic for malformed MIR.
+///
+/// Spans are carried from the offending MIR node so callers can tie structural
+/// failures back to the source region that produced the bad representation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MirValidationError {
     pub message: String,
@@ -17,6 +43,11 @@ impl MirValidationError {
     }
 }
 
+/// Known callable signature used by MIR validation.
+///
+/// Direct MIR functions can derive this from their parameter locals and return
+/// type. External or not-yet-lowered callees are supplied through
+/// `MirValidationContext::functions`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MirFunctionSignature {
     pub params: Vec<MirType>,
@@ -24,6 +55,11 @@ pub struct MirFunctionSignature {
     pub error_ty: Option<MirType>,
 }
 
+/// Metadata needed to validate MIR against the semantic world it was lowered from.
+///
+/// `types` is authoritative for assignability and primitive IDs. Function and
+/// field maps bridge MIR references back to HIR/semantic declarations where MIR
+/// only carries `DefId`s and symbols.
 pub struct MirValidationContext<'a> {
     pub types: &'a TypeTable,
     pub functions: FxHashMap<DefId, MirFunctionSignature>,
@@ -42,6 +78,11 @@ impl<'a> MirValidationContext<'a> {
     }
 }
 
+/// Validate one MIR program and collect all structural/type-contract errors.
+///
+/// Validation is deliberately caller-supplied-context driven: MIR carries stable
+/// references, while the context provides the semantic type table and signature
+/// metadata needed to prove those references are coherent.
 pub fn validate_program(
     program: &MirProgram,
     context: &MirValidationContext<'_>,
@@ -67,6 +108,8 @@ struct FunctionScope<'a> {
     locals: FxHashMap<MirLocalId, MirType>,
     temps: FxHashMap<MirTempId, MirType>,
     blocks: FxHashSet<MirBlockId>,
+    /// Values are statement-local products in block order; clearing them per
+    /// block prevents accidental cross-block SSA assumptions in this early MIR.
     values: FxHashMap<MirValueId, MirType>,
 }
 
@@ -172,6 +215,9 @@ impl Validator<'_, '_> {
     }
 
     fn validate_function(&mut self, function: &MirFunction, functions_by_id: FxHashMap<MirFunctionId, &MirFunction>) {
+        // First prove declaration shape, then validate executable block bodies
+        // against maps built from that shape. This keeps later diagnostics about
+        // bad uses from being polluted by partially collected declarations.
         self.validate_mir_type(function.return_ty, function.span);
         if let Some(error_ty) = function.error_ty {
             self.validate_mir_type(error_ty, function.span);

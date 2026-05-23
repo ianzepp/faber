@@ -1,6 +1,30 @@
+//! Runtime and intrinsic call lowering.
+//!
+//! This module is the MIR boundary for operations that are not plain local
+//! function calls or primitive expressions. Provider imports, collection
+//! methods, diagnostic output, string formatting, conversions, and panic all
+//! lower to explicit MIR runtime/intrinsic calls. Ordinary direct calls stay as
+//! definition calls, while enum variant calls are redirected to aggregate
+//! construction.
+//!
+//! BOUNDARIES
+//! ==========
+//! - Indirect calls are not guessed into MIR callable values; they fail closed.
+//! - Collection methods are recognized only through resolved receiver type,
+//!   method name, and arity.
+//! - Failable function calls require an active local `cape` handler so the MIR
+//!   can encode both success and error CFG edges.
+//! - Runtime calls with `vacuum` return type emit no destination; value-returning
+//!   calls allocate a temp and return that temp as the expression operand.
+
 use super::*;
 
 impl FunctionBuilder<'_> {
+    /// Lower a method call into a provider or collection intrinsic.
+    ///
+    /// Provider method calls are recognized when the receiver path resolves to a
+    /// provider import. Collection methods are deliberately name/type/arity
+    /// gated so unsupported methods do not masquerade as generic runtime calls.
     pub(super) fn lower_method_call(
         &mut self,
         receiver: &HirExpr,
@@ -43,6 +67,12 @@ impl FunctionBuilder<'_> {
         Some(self.runtime_call_value(MirIntrinsic::Collection(op), lowered_args, ty, expr.span))
     }
 
+    /// Lower a direct call, enum variant constructor, or locally handled
+    /// failable call.
+    ///
+    /// Only path callees are supported in this MIR phase. Callable values and
+    /// other indirect forms remain unsupported until MIR has a representation
+    /// for dynamic call targets.
     pub(super) fn lower_call(&mut self, callee: &HirExpr, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let HirExprKind::Path(def_id) = &callee.kind else {
             self.errors.push(MirError::unsupported(
@@ -140,6 +170,8 @@ impl FunctionBuilder<'_> {
         Some(MirOperand::Temp(destination))
     }
 
+    /// Resolve a HIR method call into the small set of collection intrinsics
+    /// currently represented in MIR.
     fn collection_method_op(
         &mut self,
         receiver: &HirExpr,
@@ -177,6 +209,9 @@ impl FunctionBuilder<'_> {
             .interner
             .map(|interner| interner.resolve(method))
     }
+
+    /// Lower `mori`/panic into a runtime call followed by an unreachable
+    /// terminator.
     pub(super) fn lower_mori(&mut self, value: &HirExpr, span: Span) -> Option<MirOperand> {
         let value = self.lower_expr_value(value)?;
         let numquam = MirType::semantic(self.types.primitive(Primitive::Numquam));
@@ -195,6 +230,7 @@ impl FunctionBuilder<'_> {
         None
     }
 
+    /// Lower diagnostic output expressions to diagnostic intrinsics.
     pub(super) fn lower_scribe(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut lowered_args = Vec::with_capacity(args.len());
         for arg in args {
@@ -204,6 +240,7 @@ impl FunctionBuilder<'_> {
         Some(self.runtime_call_value(MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind)), lowered_args, ty, expr.span))
     }
 
+    /// Lower a string-template application to a format-string intrinsic.
     pub(super) fn lower_scriptum(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut lowered_args = Vec::with_capacity(args.len());
         for arg in args {
@@ -213,6 +250,10 @@ impl FunctionBuilder<'_> {
         Some(self.runtime_call_value(MirIntrinsic::FormatString { template }, lowered_args, ty, expr.span))
     }
 
+    /// Lower runtime conversions, including optional fallback expressions.
+    ///
+    /// Aggregate `verte` construction is handled in `aggregate.rs`; this path
+    /// represents conversion work that remains a runtime intrinsic.
     pub(super) fn lower_conversio(
         &mut self,
         source: &HirExpr,
@@ -239,6 +280,13 @@ impl FunctionBuilder<'_> {
             expr.span,
         ))
     }
+
+    /// Emit a runtime call and return the operand shape promised by its return
+    /// type.
+    ///
+    /// This keeps runtime-call lowering consistent across providers,
+    /// diagnostics, formatting, and conversions: `vacuum` calls are statements,
+    /// while value calls allocate one destination temp.
     fn runtime_call_value(
         &mut self,
         intrinsic: MirIntrinsic,
@@ -268,6 +316,7 @@ impl FunctionBuilder<'_> {
         MirOperand::Temp(temp)
     }
 }
+
 fn mir_diagnostic_kind(kind: HirScribeKind) -> MirDiagnosticKind {
     match kind {
         HirScribeKind::Nota => MirDiagnosticKind::Nota,
