@@ -19,10 +19,12 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 mod context;
 mod expr;
+mod item;
 mod stmt;
 
 use context::{struct_field_map, LoweringContextMaps};
 use expr::HirExprLoweringVisitor;
+use item::ItemLoweringPass;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MirError {
@@ -90,32 +92,10 @@ impl MirLowerer<'_> {
         let unit = self.unit;
         let context_maps = LoweringContextMaps::collect(unit);
         let struct_fields = struct_field_map(unit);
-        for item in &unit.hir.items {
-            self.lower_item(item, &context_maps, &struct_fields);
-        }
+        ItemLoweringPass::new(self, &context_maps, &struct_fields).lower_items();
 
         if let Some(entry) = &self.unit.hir.entry {
             self.lower_entry(entry);
-        }
-    }
-
-    fn lower_item(
-        &mut self,
-        item: &HirItem,
-        context_maps: &LoweringContextMaps<'_>,
-        struct_fields: &FxHashMap<DefId, Vec<&HirField>>,
-    ) {
-        match &item.kind {
-            HirItemKind::Function(function) => self.lower_function(item, function, context_maps, struct_fields),
-            HirItemKind::Struct(_)
-            | HirItemKind::Enum(_)
-            | HirItemKind::Interface(_)
-            | HirItemKind::TypeAlias(_)
-            | HirItemKind::Import(_) => {}
-            other => self.errors.push(MirError::unsupported(
-                item.span,
-                format!("top-level {}", hir_item_kind_name(other)),
-            )),
         }
     }
 
