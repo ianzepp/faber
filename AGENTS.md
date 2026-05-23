@@ -60,7 +60,7 @@ How it works:
 
 ## Grammar Rules
 
-- Empty collections need explicit types: `[] ⇢ lista<T>`, `{} ⇢ tabula<K,V>`.
+- Empty collections need explicit declared types with `vacua`: `fixum lista<T> xs ← vacua`, `fixum tabula<K,V> xs ← vacua`.
 - Missing type info in codegen is an upstream bug, not a reason to guess in codegen.
 - Prefer `∴ redde` for single-expression returns: `si cond ∴ redde x`.
 - Use Stroustrup brace style.

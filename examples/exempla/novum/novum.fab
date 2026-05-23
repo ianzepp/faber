@@ -8,17 +8,17 @@ genus Point {
 
 genus Person {
     textus name
-    numerus age: 0
+    numerus age = 0
 }
 
 incipit {
     # Instantiate with all fields
-    fixum _ p1 ← { x: 10, y: 20 } ⇢ Point
+    fixum _ p1 ← Point { x = 10, y = 20 }
     nota p1.x
     nota p1.y
 
     # With default value
-    fixum _ person ← { name: "Marcus" } ⇢ Person
+    fixum _ person ← Person { name = "Marcus" }
     nota person.name
     nota person.age
 }

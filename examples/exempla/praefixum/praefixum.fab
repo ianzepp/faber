@@ -25,10 +25,10 @@ incipit {
 
     # Compile-time block
     fixum _ STATUS_CODES ← praefixum({
-        ok: 200,
-        created: 201,
-        notFound: 404,
-        error: 500
+        ok = 200,
+        created = 201,
+        notFound = 404,
+        error = 500
     })
 
     nota "OK code:", STATUS_CODES.ok

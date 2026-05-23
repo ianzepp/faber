@@ -69,7 +69,7 @@ clausuraParam  := typeAnnotation IDENTIFIER
 ```ebnf
 genusDecl    := 'abstractus'? 'genus' IDENTIFIER typeParams? ('sub' IDENTIFIER)? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
 genusMember  := annotation* (fieldDecl | methodDecl)
-fieldDecl    := 'generis'? 'nexum'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? (':' expression)?
+fieldDecl    := 'generis'? 'nexum'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? ('=' expression)?
 methodDecl   := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
 annotation   := '@' IDENTIFIER+ | stdlibAnnotation
 ```
@@ -382,8 +382,8 @@ conversio  := '⇒' typeAnnotation typeParams? ('vel' unary)?
 The `⇢` glyph (U+21E2, "rightwards dashed arrow") makes a value inhabit the target type shape. The compiler dispatches on the target type:
 
 - Primitive/alias → cast (no runtime effect): `data ⇢ textus` → TypeScript: `(data as string)`
-- Built-in collection → native construction: `[] ⇢ lista<T>` → typed empty array, `{} ⇢ tabula<K,V>` → `new Map<K,V>()`
-- `genus` type → struct instantiation: `{ x: 10 } ⇢ Point` → `Point { x: 10 }`
+- Built-in collection → native construction: typed `vacua` values or explicit `⇢` inhabitation lower to native empty collections.
+- `genus` type → struct instantiation: `Point { x = 10 }` → native target struct construction.
 
 Only the `⇢` glyph is accepted as the postfix type conversion/construction operator. The Latin forms `qua`, `innatum`, and `novum` were aliases and have been removed (see verte-alias-clean-break).
 
@@ -432,8 +432,14 @@ Text slices accept the full range form, including `per`.
 ```ebnf
 primary := IDENTIFIER | NUMBER | STRING
          | 'ego' | 'verum' | 'falsum' | 'nihil'
-         | arrayLiteral | objectLiteral
+         | 'vacua' | arrayLiteral | objectLiteral | typedConstructor
          | '(' expression ')'
+arrayLiteral := '[' argumentList? ']'
+objectLiteral := '{' (objectField (',' objectField)*)? '}'
+typedConstructor := typeAnnotation '{' fieldList? '}'
+fieldList := objectField (',' objectField)*
+objectField := ('sparge' expression) | (objectKey '=' expression) | IDENTIFIER
+objectKey := IDENTIFIER | STRING | '[' expression ']'
 ```
 
 `STRING` includes short strings delimited by `"` and block strings delimited by `❝` and `❞`.
@@ -456,7 +462,7 @@ regexLiteral  := 'sed' STRING IDENTIFIER?
 
 ```ebnf
 objectPattern  := '{' patternProperty (',' patternProperty)* '}'
-patternProperty := 'ceteri'? IDENTIFIER (':' IDENTIFIER)?
+patternProperty := 'ceteri'? IDENTIFIER ('ut' IDENTIFIER)?
 arrayPattern   := '[' arrayPatternElement (',' arrayPatternElement)* ']'
 arrayPatternElement := '_' | 'ceteri'? IDENTIFIER
 ```

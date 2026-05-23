@@ -14,7 +14,7 @@ Declares a concrete type with type-first fields and methods.
 ```fab
 genus Persona {
     textus nomen
-    numerus aetas: 0
+    numerus aetas = 0
 
     functio salve() → textus {
         redde "Salve, §!"(ego.nomen)

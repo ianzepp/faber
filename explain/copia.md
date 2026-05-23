@@ -12,7 +12,7 @@ related = ["lista", "tabula", "inter"]
 Use `copia<T>` for unique values.
 
 ```fab
-fixum _ names ← [] ⇢ copia<textus>
+fixum copia<textus> names ← vacua
 si "Marcus" inter names {
     scribe "present"
 }

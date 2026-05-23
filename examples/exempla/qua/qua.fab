@@ -5,7 +5,7 @@ functio getData() → lista<numerus> {
 }
 
 functio getResponse() → objectum {
-    redde { body: "body" }
+    redde { body = "body" }
 }
 
 functio getValue() → numerus {

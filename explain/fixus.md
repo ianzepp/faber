@@ -4,7 +4,7 @@ kind = "keyword"
 category = "declaration"
 canonical = true
 summary = "Records that a declaration slot (field or parameter) is intended to be immutable after its initial value is set."
-syntax = "<type> <name> [sponte] fixus [ : default | vel default ]"
+syntax = "<type> <name> [sponte] fixus [= default | vel default]"
 examples = ["examples/exempla/functio/optionalis.fab"]
 aliases = ["fixed", "late-init", "one-time"]
 related = ["sponte", "fixum", "varia", "genus"]
@@ -19,7 +19,7 @@ Records post-initialization immutability intent on a declared slot.
 textus id fixus
 
 # Optional + fixed: may be omitted at construction; once set (by default or value) it is fixed
-textus nickname sponte fixus : "Anonymous"
+textus nickname sponte fixus = "Anonymous"
 
 # Parameter that is fixed after the call receives it
 functio register(textus token fixus) → vacuum

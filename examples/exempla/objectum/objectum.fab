@@ -6,27 +6,27 @@ incipit {
     nota empty
 
     # Simple object with numeric values
-    fixum _ point ← { x: 10, y: 20 }
+    fixum _ point ← { x = 10, y = 20 }
     nota point
 
     # String keys
     fixum _ value ← 42
-    fixum _ withStringKey ← { "key": value }
+    fixum _ withStringKey ← { "key" = value }
     nota withStringKey
 
     # Properties from variables
     fixum _ name ← "Marcus"
     fixum _ age ← 30
-    fixum _ person ← { name: name, age: age }
+    fixum _ person ← { name = name, age = age }
     nota person
 
     # Nested objects
-    fixum _ nested ← { outer: { inner: 1 } }
+    fixum _ nested ← { outer = { inner = 1 } }
     nota nested
 
     # Spread operator
-    fixum _ base ← { a: 1, b: 2 }
+    fixum _ base ← { a = 1, b = 2 }
     nota base
-    fixum _ extended ← { sparge base, c: 3 }
+    fixum _ extended ← { sparge base, c = 3 }
     nota extended
 }

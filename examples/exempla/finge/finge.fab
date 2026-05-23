@@ -25,13 +25,13 @@ incipit {
     fixum Status s2 ← finge Pending ⇢ Status
 
     # Payload variants with explicit type
-    fixum Event e1 ← finge Click { x: 100, y: 200 } ⇢ Event
-    fixum Event e2 ← finge Keypress { key: "Enter" } ⇢ Event
+    fixum Event e1 ← finge Click { x = 100, y = 200 } ⇢ Event
+    fixum Event e2 ← finge Keypress { key = "Enter" } ⇢ Event
     fixum Event e3 ← finge Quit ⇢ Event
 
     # Result variants
-    fixum Result r1 ← finge Success { message: "Operation completed" } ⇢ Result
-    fixum Result r2 ← finge Failure { error: "Something went wrong" } ⇢ Result
+    fixum Result r1 ← finge Success { message = "Operation completed" } ⇢ Result
+    fixum Result r2 ← finge Failure { error = "Something went wrong" } ⇢ Result
 
     nota "Finge expressions created"
 }

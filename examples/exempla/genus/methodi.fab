@@ -6,8 +6,8 @@
 # }
 
 genus Rectangle {
-    numerus width: 1
-    numerus height: 1
+    numerus width = 1
+    numerus height = 1
 
     functio area() → numerus {
         redde ego.width * ego.height
@@ -23,7 +23,7 @@ genus Rectangle {
 }
 
 genus Counter {
-    numerus count: 0
+    numerus count = 0
 
     functio increment() {
         ego.count ← ego.count + 1
@@ -36,17 +36,17 @@ genus Counter {
 
 incipit {
     # Methods that return values
-    fixum _ rect ← {
-        width: 10,
-        height: 5
-    } ⇢ Rectangle
+    fixum _ rect ← Rectangle {
+        width = 10,
+        height = 5
+    }
 
     nota rect.area()
     nota rect.perimeter()
     nota rect.isSquare()
 
     # Methods that modify state
-    varia _ counter ← {} ⇢ Counter
+    varia _ counter ← Counter {}
 
     nota counter.getValue()
 

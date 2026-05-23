@@ -9,10 +9,10 @@ aliases = ["map", "dictionary"]
 related = ["lista", "copia", "⇢", "itera"]
 +++
 
-Use `tabula<K,V>` for key/value maps. Empty map literals need an explicit target type through `⇢`.
+Use `tabula<K,V>` for key/value maps. Empty maps use `vacua` with an explicit declared type.
 
 ```fab
-fixum _ scores ← {} ⇢ tabula<textus, numerus>
+fixum tabula<textus, numerus> scores ← vacua
 itera de scores fixum name {
     scribe name
 }

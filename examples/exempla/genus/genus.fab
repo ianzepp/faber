@@ -2,7 +2,7 @@
 #
 # genus <Name> {
 #     <type> <property>
-#     <type> <property>: <default>
+#     <type> <property> = <default>
 # }
 
 genus Punctum {
@@ -12,35 +12,35 @@ genus Punctum {
 
 genus Persona {
     textus nomen
-    numerus aetas: 0
-    bivalens activus: verum
+    numerus aetas = 0
+    bivalens activus = verum
 }
 
 incipit {
     # Instantiate with all required fields
-    fixum _ p ← {
-        x: 10,
-        y: 20
-    } ⇢ Punctum
+    fixum _ p ← Punctum {
+        x = 10,
+        y = 20
+    }
 
     nota p.x
     nota p.y
 
     # Instantiate with required + optional defaults
-    fixum _ marcus ← {
-        nomen: "Marcus"
-    } ⇢ Persona
+    fixum _ marcus ← Persona {
+        nomen = "Marcus"
+    }
 
     nota marcus.nomen
     nota marcus.aetas
     nota marcus.activus
 
     # Override defaults
-    fixum _ julia ← {
-        nomen: "Julia",
-        aetas: 25,
-        activus: falsum
-    } ⇢ Persona
+    fixum _ julia ← Persona {
+        nomen = "Julia",
+        aetas = 25,
+        activus = falsum
+    }
 
     nota julia.nomen
     nota julia.aetas

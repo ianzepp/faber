@@ -13,6 +13,6 @@ Use `objectum` for open object-shaped data at dynamic boundaries, then cast or c
 
 ```fab
 functio response() → objectum {
-    redde { status: 200 }
+    redde { status = 200 }
 }
 ```

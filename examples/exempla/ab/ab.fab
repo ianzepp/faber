@@ -4,16 +4,16 @@
 incipit {
     # Sample data - users with boolean properties
     fixum _ users ← [
-        { nomen: "Marcus", activus: verum, aetas: 25 },
-        { nomen: "Julia", activus: falsum, aetas: 30 },
-        { nomen: "Gaius", activus: verum, aetas: 17 }
+        { nomen = "Marcus", activus = verum, aetas = 25 },
+        { nomen = "Julia", activus = falsum, aetas = 30 },
+        { nomen = "Gaius", activus = verum, aetas = 17 }
     ]
 
     fixum _ items ← [
-        { valor: 10, visibilis: verum },
-        { valor: 20, visibilis: falsum },
-        { valor: 30, visibilis: verum },
-        { valor: 40, visibilis: verum }
+        { valor = 10, visibilis = verum },
+        { valor = 20, visibilis = falsum },
+        { valor = 30, visibilis = verum },
+        { valor = 40, visibilis = verum }
     ]
 
     # Boolean property shorthand - filter where property is true
@@ -34,9 +34,9 @@ incipit {
 
     # Filter with summa transform (sum of results)
     fixum _ prices ← [
-        { pretium: 100, validum: verum },
-        { pretium: 200, validum: verum },
-        { pretium: 50, validum: falsum }
+        { pretium = 100, validum = verum },
+        { pretium = 200, validum = verum },
+        { pretium = 50, validum = falsum }
     ]
     fixum _ validPrices ← ab prices validum
     nota validPrices
@@ -55,7 +55,7 @@ incipit {
     nota sumFirst
 
     # Complex source - member expression
-    fixum _ data ← { users: users }
+    fixum _ data ← { users = users }
     fixum _ dataActive ← ab data.users activus
     nota dataActive
 }

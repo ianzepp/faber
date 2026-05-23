@@ -8,7 +8,7 @@ pactum Drawable {
 }
 
 genus Circle implet Drawable {
-    numerus radius: 10
+    numerus radius = 10
 
     functio draw() {
         nota "Drawing circle with radius:", ego.radius
@@ -16,7 +16,7 @@ genus Circle implet Drawable {
 }
 
 genus Square implet Drawable {
-    numerus side: 5
+    numerus side = 5
 
     functio draw() {
         nota "Drawing square with side:", ego.side
@@ -24,8 +24,8 @@ genus Square implet Drawable {
 }
 
 incipit {
-    fixum _ circle ← { radius: 25 } ⇢ Circle
-    fixum _ square ← { side: 15 } ⇢ Square
+    fixum _ circle ← Circle { radius = 25 }
+    fixum _ square ← Square { side = 15 }
 
     circle.draw()
     square.draw()

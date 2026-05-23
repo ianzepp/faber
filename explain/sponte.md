@@ -4,7 +4,7 @@ kind = "keyword"
 category = "declaration"
 canonical = true
 summary = "Marks a named declaration slot (parameter or genus field) as voluntary — the caller or provider may omit the value."
-syntax = "<type> <name> sponte [fixus] [ : default | vel default ]"
+syntax = "<type> <name> sponte [fixus] [= default | vel default]"
 examples = ["examples/exempla/functio/optionalis.fab", "examples/exempla/optionalis/optionalis.fab"]
 aliases = ["optional", "voluntary"]
 related = ["fixus", "vel", "nihil", "∪", "functio", "genus"]
@@ -25,7 +25,7 @@ functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) 
 genus User {
     textus name
     textus email sponte
-    numerus score sponte fixus : 0
+    numerus score sponte fixus = 0
 }
 ```
 

@@ -13,7 +13,7 @@ functio multiply(numerus x, numerus y) → numerus {
 }
 
 genus Calculator {
-    numerus value: 0
+    numerus value = 0
 
     functio setValue(numerus n) → Calculator {
         ego.value ← n
@@ -43,12 +43,12 @@ incipit {
     nota product  # 30
 
     # Method call on object
-    varia _ calc ← {} ⇢ Calculator
+    varia _ calc ← Calculator {}
     calc.setValue(10)
     nota calc.getResult()  # 10
 
     # Chained method calls
-    varia _ calc2 ← {} ⇢ Calculator
+    varia _ calc2 ← Calculator {}
     fixum _ result ← calc2.setValue(5).double().double().getResult()
     nota result  # 20
 

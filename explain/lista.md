@@ -9,10 +9,10 @@ aliases = ["array", "list"]
 related = ["tabula", "copia", "⇢", "itera"]
 +++
 
-Use `lista<T>` for ordered collections. Empty list literals need an explicit target type through `⇢`.
+Use `lista<T>` for ordered collections. Empty lists use `vacua` with an explicit declared type.
 
 ```fab
-fixum _ numbers ← [] ⇢ lista<numerus>
+fixum lista<numerus> numbers ← vacua
 itera ex numbers fixum n {
     scribe n
 }

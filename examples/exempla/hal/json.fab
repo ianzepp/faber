@@ -10,7 +10,7 @@ incipit {
 
     # Serialize objects
     consolum.fundeLineam("--- Serialization ---")
-    fixum _ obj ← { "name": "Alice", "age": 30, "active": verum }
+    fixum _ obj ← { "name" = "Alice", "age" = 30, "active" = verum }
     fixum _ compact ← json.solve(obj)
     consolum.fundeLineam("Compact: §"(compact))
 
@@ -37,7 +37,7 @@ incipit {
 
     # Value extraction with defaults
     consolum.fundeLineam("\n--- Value Extraction ---")
-    fixum _ data ← { "name": "Bob", "count": 42 }
+    fixum _ data ← { "name" = "Bob", "count" = 42 }
     fixum _ name ← json.cape(data, "name")
     fixum _ count ← json.cape(data, "count")
     consolum.fundeLineam("name: §"(json.utTextus(name, "unknown")))
@@ -45,7 +45,7 @@ incipit {
 
     # Path access for nested data
     consolum.fundeLineam("\n--- Path Access ---")
-    fixum _ nested ← { "user": { "profile": { "email": "alice@example.com" } } }
+    fixum _ nested ← { "user" = { "profile" = { "email" = "alice@example.com" } } }
     fixum _ email ← json.capeVia(nested, "user.profile.email")
     consolum.fundeLineam("email: §"(email))
 
