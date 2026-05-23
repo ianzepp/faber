@@ -571,8 +571,8 @@ Implemented artifacts:
 - `radix mir` lowers list/array literals, including `sparge` spread elements, to ordered aggregate construction.
 - `radix mir` lowers object-to-struct construction to named aggregate fields, including omitted fields with HIR-backed defaults.
 - `radix mir` lowers object-to-map construction to keyed aggregate entries.
-- `radix mir` lowers set construction from array-like `⇢ copia<T>` sources to ordered set aggregates.
-- `radix mir` lowers enum variant construction through `finge ... ⇢ Enum` to enum-variant aggregate construction.
+- `radix mir` lowers set construction from array-like `∷ copia<T>` sources to ordered set aggregates.
+- `radix mir` lowers enum variant construction through `finge ... ∷ Enum` to enum-variant aggregate construction.
 - Top-level type metadata items (`genus`, `discretio`, `pactum`, aliases, imports) no longer block MIR lowering.
 - Field reads and index reads lower to MIR place projections.
 - Field and index assignments lower for addressable local-backed places.

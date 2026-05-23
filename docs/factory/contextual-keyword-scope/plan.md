@@ -213,7 +213,7 @@ Potential cleanup backlog after context support exists:
 - `sed` if regex literals become a typed construction form
 - `ab`, `ubi`, `prima`, `ultima`, `summa` if the collection DSL is demoted to stdlib methods
 - `ante`, `usque`, `intra`, `inter` if glyph range/membership forms become canonical
-- `qua`, `innatum`, `novum` if `⇢` becomes the only compile-time cast spelling
+- `qua`, `innatum`, `novum` now that `∷` is the only compile-time cast/ascription spelling
 - `nulla`, `nonnulla`, `nonnihil`, `negativum`, `positivum` if convenience predicates are cut
 
 Those are not part of this implementation factory. They are a follow-up language-design backlog unlocked by a real contextual mechanism.

@@ -352,7 +352,7 @@ fn expected_filename(term: &str, legacy: bool) -> String {
             "⊖" => "minus-eq",
             "⊘" => "slash-eq",
             "⊛" => "star-eq",
-            "⇢" => "verte",
+            "∷" => "ascription",
             "⇒" => "conversio",
             "∧" => "amp",
             "∨" => "pipe",

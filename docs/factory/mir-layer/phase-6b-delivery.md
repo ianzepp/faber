@@ -64,10 +64,10 @@ genus Persona {
 }
 
 functio nomen() → textus {
-    fixum Persona p ← {
-        nomen: "Ada",
-        aetas: 36
-    } ⇢ Persona
+    fixum Persona p ← Persona {
+        nomen = "Ada",
+        aetas = 36
+    }
     redde p.nomen
 }
 ```

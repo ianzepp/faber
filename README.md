@@ -446,7 +446,7 @@ varia numerus count ← 0
 functio greet(textus name) → textus { ... }
 si ready ∴ redde value
 fixum _ n ← raw ⇒ numerus vel 0
-fixum _ x ← value ⇢ textus
+fixum _ x ← value ∷ textus
 functio maybe() → textus ∪ nihil { ... }
 ```
 
@@ -487,7 +487,7 @@ Faber uses glyphs where the symbol is structural:
 - `∴` for therefore or compact body.
 - `≡` and `≠` for equality.
 - `∪` for inline union types.
-- `⇢` for type-directed inhabitation.
+- `∷` for static type ascription.
 - `⇒` for runtime conversion.
 
 Faber uses Latin words where the construct has behavioral or grammatical shape:
@@ -535,15 +535,15 @@ There are two important arrows:
 ```fab
 fixum _ parsed ← "42" ⇒ numerus
 fixum _ safe ← input ⇒ numerus vel 0
-fixum _ text ← value ⇢ textus
+fixum _ text ← value ∷ textus
 ```
 
 Use `⇒` for runtime conversion, especially parsing or coercion that may need a
 fallback.
 
-Use `⇢` for type-directed inhabitation. It is postfix and target-type driven.
-Prefer ordinary typed construction and `vacua` where they say the same thing
-more directly:
+Use `∷` for explicit static type ascription. It is postfix and target-type
+driven. Prefer ordinary typed construction and `vacua` where they say the same
+thing more directly:
 
 ```fab
 fixum lista<numerus> xs ← vacua
