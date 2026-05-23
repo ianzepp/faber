@@ -1456,6 +1456,55 @@ fn compact_inferred_closure_argument_uses_expected_method_signature() {
 }
 
 #[test]
+fn compact_fac_closure_body_typechecks_with_redde() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum _ predicate ← numerus n → bivalens ∴ fac {
+    redde n > 1
+  }
+  nota predicate(2)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success(), "{:?}", result.diagnostics);
+}
+
+#[test]
+fn compact_fac_closure_cape_body_typechecks_with_redde() {
+    let session = session(Target::Faber);
+    let source = r#"functio parseFlag(textus value) → bivalens ⇥ textus {
+  si value ≡ "bad" ergo iace "bad"
+  redde verum
+}
+
+incipit {
+  fixum _ predicate ← textus value → bivalens ∴ fac {
+    redde parseFlag(value)
+  } cape err {
+    redde falsum
+  }
+  nota predicate("bad")
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success(), "{:?}", result.diagnostics);
+}
+
+#[test]
+fn legacy_block_closure_body_typechecks_with_redde() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum _ predicate ← clausura numerus n → bivalens {
+    redde n > 1
+  }
+  nota predicate(2)
+}"#;
+    let result = compile(&session, "test.fab", source);
+
+    assert!(result.success(), "{:?}", result.diagnostics);
+}
+
+#[test]
 fn faber_output_prefers_compact_closure_syntax() {
     let session = session(Target::Faber);
     let source = r#"incipit {

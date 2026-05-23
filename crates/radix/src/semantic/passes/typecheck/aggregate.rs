@@ -89,13 +89,35 @@ impl<'a> TypeChecker<'a> {
             .as_ref()
             .map(|ty| **ty)
             .or_else(|| expected_sig.as_ref().map(|sig| sig.ret));
-        let body_ty = self.check_expr_with_expected(body, expected_ret);
+
+        let prev_return = self.current_return;
+        let prev_inferred = self.inferred_return;
+        self.current_return = expected_ret;
+        self.inferred_return = None;
+
+        let body_uses_statement_returns = matches!(
+            body.kind,
+            HirExprKind::Block(_) | HirExprKind::Handled { .. } | HirExprKind::Loop(_)
+        );
+
+        let body_ty = if body_uses_statement_returns {
+            self.check_expr(body)
+        } else {
+            self.check_expr_with_expected(body, expected_ret)
+        };
+        let inferred_return = self.inferred_return.take();
+
+        self.current_return = prev_return;
+        self.inferred_return = prev_inferred;
+
         let ret_ty = match ret {
             Some(ty) => {
-                self.unify(body_ty, *ty, body.span, "closure return type mismatch");
+                if !body_uses_statement_returns {
+                    self.unify(body_ty, *ty, body.span, "closure return type mismatch");
+                }
                 *ty
             }
-            None => body_ty,
+            None => expected_ret.or(inferred_return).unwrap_or(body_ty),
         };
 
         self.pop_scope();
