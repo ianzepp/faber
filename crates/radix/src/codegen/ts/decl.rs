@@ -1,9 +1,40 @@
+//! TypeScript declaration emission for top-level and member HIR items.
+//!
+//! This file owns the shape of generated TypeScript declarations: functions,
+//! classes, interfaces, discriminated-union enums, aliases, constants, and
+//! imports. Expression and statement bodies are delegated to sibling modules so
+//! declaration code can concentrate on signatures, member layout, and the
+//! target-level compromises needed to represent Faber constructs in TypeScript.
+//!
+//! GENERATED-CODE TRADE-OFFS
+//! =========================
+//! The backend emits readable, direct TypeScript rather than a runtime-heavy
+//! encoding. For example, Faber enum variants lower to tagged object unions,
+//! optional parameters use TypeScript's `?` syntax, and imports are printed as
+//! ES module bindings when they still matter after stdlib lowering. These
+//! choices preserve the checked program's shape without pretending TypeScript
+//! can enforce every semantic guarantee Radix already verified.
+//!
+//! INVARIANTS
+//! ==========
+//! - `TypeTable` entries are expected to come from semantic typechecking; this
+//!   module translates those types but does not repair missing information.
+//! - Name spelling goes through `TsCodegen` so declarations and references use
+//!   one target name policy.
+//! - Built-in stdlib imports that lower to native TypeScript facilities are
+//!   intentionally elided here instead of becoming unresolved module imports.
+
 use super::stmt::generate_block;
 use super::types::type_to_ts;
 use super::{expr::generate_expr, CodeWriter, CodegenError, TsCodegen};
 use crate::hir::*;
 use crate::semantic::TypeTable;
 
+/// Emits a TypeScript function declaration or signature from a HIR function.
+///
+/// Body-less functions are preserved as declarations because interface-like or
+/// external surfaces may describe callable contracts without carrying a body in
+/// the current compilation unit.
 pub fn generate_function(
     codegen: &TsCodegen<'_>,
     func: &HirFunction,
@@ -31,6 +62,11 @@ pub fn generate_function(
     Ok(())
 }
 
+/// Emits a HIR struct as a TypeScript class declaration.
+///
+/// Faber receiver analysis has already decided whether methods are instance or
+/// static members. This emitter reflects that decision directly and leaves
+/// object-layout validity to earlier semantic passes.
 pub fn generate_class(
     codegen: &TsCodegen<'_>,
     strukt: &HirStruct,
@@ -103,6 +139,10 @@ pub fn generate_class(
     Ok(())
 }
 
+/// Emits a structural interface with method signatures.
+///
+/// Interfaces carry only contracts, so method bodies are deliberately absent
+/// and optional parameters are translated into TypeScript's parameter syntax.
 pub fn generate_interface(
     codegen: &TsCodegen<'_>,
     interface: &HirInterface,
@@ -140,6 +180,10 @@ pub fn generate_interface(
     Ok(())
 }
 
+/// Emits a Faber enum as a tagged TypeScript object union.
+///
+/// TypeScript has native `enum`, but tagged unions preserve payload shape and
+/// line up with the exhaustiveness information Radix computes before codegen.
 pub fn generate_enum(
     codegen: &TsCodegen<'_>,
     enum_item: &HirEnum,
@@ -168,6 +212,7 @@ pub fn generate_enum(
     Ok(())
 }
 
+/// Emits a named TypeScript alias for a checked HIR type alias.
 pub fn generate_type_alias(
     codegen: &TsCodegen<'_>,
     alias: &HirTypeAlias,
@@ -182,6 +227,10 @@ pub fn generate_type_alias(
     Ok(())
 }
 
+/// Emits a top-level constant declaration.
+///
+/// The initializer is generated through expression codegen so target-specific
+/// intrinsics and collection forms stay centralized with expression policy.
 pub fn generate_const(
     codegen: &TsCodegen<'_>,
     constant: &HirConst,
@@ -200,6 +249,12 @@ pub fn generate_const(
     Ok(())
 }
 
+/// Emits an ES module import when the import still has a TypeScript artifact.
+///
+/// Some `norma` modules are source-level contracts whose operations lower to
+/// native JavaScript/TypeScript constructs. Those imports are elided here so the
+/// generated file does not reference modules that the target runtime does not
+/// need to load.
 pub fn generate_import(codegen: &TsCodegen<'_>, import: &HirImport, w: &mut CodeWriter) -> Result<(), CodegenError> {
     let path = codegen.resolve_symbol(import.path);
     if matches!(path, "norma/mathesis" | "norma/tempus") {

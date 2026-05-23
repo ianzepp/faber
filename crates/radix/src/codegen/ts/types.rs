@@ -1,6 +1,30 @@
+//! Type translation from Radix semantic types to TypeScript annotations.
+//!
+//! This module is deliberately narrow: it maps [`TypeTable`] entries produced by
+//! semantic analysis into printable TypeScript type syntax. It does not infer,
+//! normalize, or validate source-language types. By the time codegen reaches
+//! this file, unresolved inference variables, invalid assignments, and nullable
+//! misuse should already have been reported by semantic passes.
+//!
+//! TARGET-SPECIFIC COMPROMISES
+//! ===========================
+//! TypeScript is both a useful annotation language and a structurally looser
+//! target than Faber. Precise Faber concepts are preserved where the target has
+//! a direct shape, such as arrays, `Set`, option-as-`null`, function signatures,
+//! discriminated user definitions, and `unknown` for `ignotum`. Where the
+//! backend lacks a runtime or declaration shape today, it chooses explicit
+//! escape hatches like `Record<string, unknown>` or `any` rather than implying a
+//! stronger guarantee than generated JavaScript can uphold.
+
 use super::TsCodegen;
 use crate::semantic::{Primitive, Type, TypeId, TypeTable};
 
+/// Converts one semantic type id into TypeScript annotation syntax.
+///
+/// This function assumes the id belongs to the provided `TypeTable`. Error and
+/// unresolved-inference cases degrade to `unknown` so diagnostics can remain
+/// attached to earlier semantic phases instead of causing codegen panics or
+/// inventing target types.
 pub fn type_to_ts(codegen: &TsCodegen<'_>, type_id: TypeId, types: &TypeTable) -> String {
     match types.get(type_id) {
         Type::Primitive(prim) => primitive_to_ts(*prim),
@@ -59,6 +83,11 @@ pub fn type_to_ts(codegen: &TsCodegen<'_>, type_id: TypeId, types: &TypeTable) -
     }
 }
 
+/// Maps Faber primitive types to their closest TypeScript surface types.
+///
+/// `valor` intentionally lowers to `any` until the TypeScript runtime has a
+/// richer value representation. Keeping that compromise local makes later
+/// runtime-backed tightening easier to audit.
 fn primitive_to_ts(prim: Primitive) -> String {
     match prim {
         Primitive::Textus => "string",

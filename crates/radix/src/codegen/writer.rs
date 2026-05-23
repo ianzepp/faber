@@ -1,35 +1,30 @@
-//! Indentation-aware code writer for target languages
+//! Scoped, line-aware text writer for codegen backends.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! CodeWriter manages string accumulation with automatic indentation tracking.
-//! All codegen backends use this to emit properly formatted source code.
+//! Backends emit target source incrementally while walking HIR. This helper is
+//! the shared formatting boundary: it owns indentation state, line-start
+//! detection, and the small scoped APIs that keep block-shaped output from
+//! scattering manual whitespace bookkeeping through every target module.
 //!
-//! COMPILER PHASE: Codegen (helper utility)
-//! INPUT: Strings and formatting commands (indent, dedent, write)
-//! OUTPUT: Properly indented source code string
+//! The writer deliberately stays text-oriented. It does not understand target
+//! syntax, comments, or tokens; backend modules still decide what to write. Its
+//! only policy is when indentation is inserted and how nested formatting scopes
+//! are balanced.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Stateful indentation: Tracks current indent level and applies it automatically
-//!   to every new line. This eliminates manual indentation management in backend code.
-//!
-//! - Line-aware writing: Only applies indentation after newlines, avoiding spurious
-//!   whitespace in the middle of expressions.
-//!
-//! - Zero-copy finish: Consumes self to return the final string, preventing
-//!   accidental continued writes after finalization.
+//! INVARIANTS
+//! ==========
+//! - Indentation is emitted only before the first non-newline character on a
+//!   line.
+//! - `indent` and `dedent` affect future line starts, not text already written
+//!   on the current line.
+//! - Scoped helpers restore indentation depth after their closure returns.
+//! - Finalization consumes the writer so no later writes can silently diverge
+//!   from the returned source string.
 
 /// Indentation-aware code writer.
 ///
-/// WHY: Codegen backends emit complex nested structures (functions, classes,
-/// blocks). Manual indentation is error-prone; this writer automates it by
-/// tracking indent depth and inserting whitespace after every newline.
-///
-/// INVARIANTS:
-/// ----------
-/// INV-1: Indentation is only applied at the start of a new line (after '\n')
-/// INV-2: indent/dedent calls affect future lines, not the current line
+/// The struct is intentionally small and backend-agnostic. It provides enough
+/// structure for Rust, TypeScript, Go, Faber, and the temporary MIR Rust probe
+/// to share formatting mechanics without coupling them to one target's syntax.
 pub struct CodeWriter {
     buffer: String,
     indent: usize,
@@ -38,28 +33,27 @@ pub struct CodeWriter {
 }
 
 impl CodeWriter {
+    /// Create an empty writer using four-space indentation.
     pub fn new() -> Self {
         Self { buffer: String::new(), indent: 0, indent_str: "    ", at_line_start: true }
     }
 
-    /// Get the generated code.
-    ///
-    /// WHY: Consumes self to prevent accidental writes after finalization.
+    /// Finish emission and return the accumulated source text.
     pub fn finish(self) -> String {
         self.buffer
     }
 
-    /// Write a string, applying indentation to new lines.
+    /// Write text while applying indentation at each line start.
     ///
-    /// WHY: Character-by-character iteration ensures we detect every newline
-    /// and apply indentation immediately, maintaining INV-1.
+    /// Newlines do not themselves receive indentation. The next non-newline
+    /// character triggers the pending indentation, which avoids trailing spaces
+    /// on intentionally blank lines.
     pub fn write(&mut self, s: &str) {
         for c in s.chars() {
             if c == '\n' {
                 self.buffer.push('\n');
                 self.at_line_start = true;
             } else {
-                // WHY: Apply pending indentation before first non-newline character
                 if self.at_line_start {
                     for _ in 0..self.indent {
                         self.buffer.push_str(self.indent_str);
@@ -71,10 +65,7 @@ impl CodeWriter {
         }
     }
 
-    /// Write a formatted string.
-    ///
-    /// WHY: Convenience wrapper for format!() arguments, avoiding repeated
-    /// format!() calls at call sites.
+    /// Write preformatted [`std::fmt::Arguments`] through the same line policy.
     pub fn writef(&mut self, args: std::fmt::Arguments<'_>) {
         let s = format!("{}", args);
         self.write(&s);
@@ -98,17 +89,19 @@ impl CodeWriter {
 
     /// Decrease indentation for subsequent lines.
     ///
-    /// WHY: Saturates at zero to prevent underflow from mismatched indent/dedent pairs.
+    /// Saturation keeps formatting helpers from underflowing after a mismatched
+    /// manual `dedent`. Structural correctness still belongs to the caller; the
+    /// writer only guarantees it will not panic while recovering.
     pub fn dedent(&mut self) {
         if self.indent > 0 {
             self.indent -= 1;
         }
     }
 
-    /// Write with temporary indent increase.
+    /// Run a closure with one extra indentation level.
     ///
-    /// WHY: Scoped indentation ensures indent/dedent pairs are always balanced,
-    /// even when early returns or errors occur inside the closure.
+    /// This is the preferred API for nested emission because it makes the
+    /// formatting scope local to the code that writes the nested body.
     pub fn indented<F>(&mut self, f: F)
     where
         F: FnOnce(&mut Self),
@@ -118,10 +111,11 @@ impl CodeWriter {
         self.dedent();
     }
 
-    /// Write a block with braces.
+    /// Write a brace-delimited block with a scoped indented body.
     ///
-    /// WHY: Common pattern in Rust/C-like targets. Combines brace writing with
-    /// automatic indentation management.
+    /// The helper is intentionally punctuation-only: it fits Rust, TypeScript,
+    /// and Go-style blocks, while targets with different delimiters can compose
+    /// `writeln`, `indented`, and `write` directly.
     pub fn block<F>(&mut self, f: F)
     where
         F: FnOnce(&mut Self),
@@ -138,10 +132,11 @@ impl Default for CodeWriter {
     }
 }
 
-/// Macro for formatted writing.
+/// Formatted-writing shorthand for [`CodeWriter`].
 ///
-/// WHY: Provides ergonomic write!()-style syntax for CodeWriter, matching
-/// standard Rust formatting conventions.
+/// Backend code uses this macro at call sites where standard `write!` syntax
+/// reads better than constructing `format_args!` manually, while still routing
+/// through [`CodeWriter::write`] for line-start indentation.
 #[macro_export]
 macro_rules! write_code {
     ($w:expr, $($arg:tt)*) => {

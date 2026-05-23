@@ -1,3 +1,26 @@
+//! TypeScript backend orchestration for typed Radix HIR.
+//!
+//! This module is the target boundary between Radix's checked, compiler-facing
+//! HIR and generated TypeScript text. It owns target-wide name resolution,
+//! item dispatch, and entry-block wrapping; declaration, statement, expression,
+//! and type details stay in sibling modules so target policy remains easy to
+//! audit by surface area.
+//!
+//! CODEGEN CONTRACT
+//! ================
+//! The TypeScript backend assumes parsing, name resolution, lowering, and
+//! semantic typechecking have already accepted the program. It may choose a
+//! TypeScript representation that is looser than Faber's source semantics, but
+//! it should not rely on TypeScript to catch language rules that Radix has
+//! already proven or rejected earlier in the pipeline.
+//!
+//! TARGET POLICY
+//! =============
+//! Generated output is intentionally plain TypeScript: stable names, direct
+//! declarations, lightweight IIFEs for top-level entry code, and no formatter
+//! dependency. This keeps backend behavior deterministic for compiler tests and
+//! leaves idiomatic cleanup to downstream tooling when users want it.
+
 mod decl;
 mod expr;
 mod stmt;
@@ -14,18 +37,31 @@ pub struct TsCodegen<'a> {
 }
 
 impl<'a> TsCodegen<'a> {
+    /// Builds the target name catalog used by every TypeScript emission pass.
+    ///
+    /// The catalog is constructed from HIR rather than lazily during printing so
+    /// declaration, expression, and type emission all share the same spelling
+    /// decisions. That keeps cross-file helpers from inventing target names
+    /// independently.
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
         Self { names: NameCatalog::new(hir, interner) }
     }
 
+    /// Resolves a source symbol into the spelling selected for TypeScript text.
     pub(super) fn resolve_symbol(&self, sym: Symbol) -> &str {
         self.names.resolve_symbol(sym)
     }
 
+    /// Resolves a semantic definition id into its target declaration name.
     pub(super) fn resolve_def(&self, def_id: DefId) -> &str {
         self.names.resolve_def(def_id)
     }
 
+    /// Dispatches one top-level HIR item to the declaration emitter.
+    ///
+    /// Item-specific formatting lives in `decl` so this module can remain the
+    /// backend's phase coordinator instead of accumulating every TypeScript
+    /// surface form in one file.
     fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
         match &item.kind {
             HirItemKind::Function(func) => decl::generate_function(self, func, types, w)?,
@@ -43,6 +79,12 @@ impl<'a> TsCodegen<'a> {
 impl Codegen for TsCodegen<'_> {
     type Output = TypeScriptOutput;
 
+    /// Emits a complete TypeScript compilation unit from checked HIR.
+    ///
+    /// Top-level declarations are emitted first, followed by the optional entry
+    /// block. Entry code is wrapped in an IIFE so Faber's package entry can
+    /// contain statements without becoming ambient TypeScript; the wrapper is
+    /// marked `async` only when the lowered block actually contains `await`.
     fn generate(
         &self,
         hir: &HirProgram,

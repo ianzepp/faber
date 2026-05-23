@@ -1,3 +1,32 @@
+//! Expression emission for the TypeScript backend.
+//!
+//! This file is the expression half of the HIR-to-TypeScript boundary. It
+//! assumes semantic analysis has already resolved names, assigned HIR types,
+//! and rejected source programs that cannot be represented safely. The emitter's
+//! job is therefore not to re-typecheck Faber, but to use those types when
+//! choosing TypeScript spellings for expressions and standard-library calls.
+//!
+//! LOWERING POLICY
+//! ===============
+//! Expressions are emitted directly when TypeScript has a matching expression
+//! form. Faber constructs that carry statement-like control flow, such as block
+//! expressions, `si` branches, loops, assertions, and `tempta`, are wrapped in
+//! IIFEs so they can still appear where HIR expects an expression value. The
+//! statement emitter owns block layout; this module only decides when an
+//! expression needs that block machinery.
+//!
+//! TARGET TRADE-OFFS
+//! =================
+//! - `nihil` becomes `null`, while optional access uses TypeScript optional
+//!   chaining and null checks use loose `== null`/`!= null` intentionally so
+//!   both JavaScript nullish sentinels behave as Faber optional values.
+//! - `lista`, `textus`, and map-like stdlib calls are translated only when the
+//!   receiver type proves the target surface. Unknown methods fall back to
+//!   direct property calls instead of guessing a collection protocol.
+//! - Unsupported HIR nodes return `CodegenError`; generated TypeScript should
+//!   not silently stand in for compiler states that earlier phases failed to
+//!   normalize.
+
 use super::stmt;
 use super::types;
 use super::{CodeWriter, CodegenError, TsCodegen};
@@ -8,6 +37,13 @@ use crate::hir::{
 };
 use crate::semantic::{Primitive, Type, TypeTable};
 
+/// Emits one typed HIR expression as TypeScript expression text.
+///
+/// The caller supplies the shared [`TypeTable`] so expression emission can
+/// choose target-specific spellings for collections, option-like accesses,
+/// casts, and empty literals without duplicating type reconstruction. Errors
+/// are reserved for HIR surfaces this backend does not yet support; ordinary
+/// source diagnostics should have been produced before codegen.
 pub fn generate_expr(
     codegen: &TsCodegen<'_>,
     expr: &HirExpr,
@@ -496,6 +532,11 @@ pub fn generate_expr(
     Ok(())
 }
 
+/// Emits an explicitly typed empty collection literal.
+///
+/// HIR must carry the destination type for `vacua`; when it does not, the
+/// backend falls back to an array literal instead of inventing semantic type
+/// information during codegen.
 fn generate_vacua_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
     match expr.ty.map(|ty| types.get(ty)) {
         Some(Type::Map(_, _)) => w.write("new Map()"),
@@ -516,6 +557,9 @@ fn try_generate_intrinsic_call(
         return Ok(false);
     };
     let name = codegen.resolve_def(def_id);
+    // Stdlib intrinsics are name-based because these prelude functions do not
+    // carry receiver types. Keep the table small and explicit so accidental
+    // user functions do not inherit runtime behavior by shape alone.
     let mapped = match name {
         "scribe" => Some("console.log"),
         "vide" => Some("console.debug"),
@@ -578,6 +622,9 @@ fn try_generate_translated_method_call(
     }
 
     if is_tabula {
+        // TypeScript records cover today's map-like lowering for keyed access
+        // and enumeration. This deliberately avoids `Map` methods until the
+        // target type and empty-map literal policy are unified.
         match method_name {
             "pone" if args.len() == 2 => {
                 w.write("(");
@@ -823,6 +870,9 @@ fn generate_scriptum_expr(
             index.push(chars.next().expect("peeked digit"));
         }
 
+        // Missing template arguments stay visible as `undefined`; this keeps
+        // codegen total for malformed templates without manufacturing a source
+        // diagnostic after semantic analysis has already run.
         let arg_index = if index.is_empty() {
             let current = auto_index;
             auto_index += 1;
@@ -894,6 +944,12 @@ fn push_ts_template_char(out: &mut String, ch: char) {
     }
 }
 
+/// Returns whether a block contains `cede` and therefore needs an async wrapper.
+///
+/// TypeScript only permits `await` inside async functions or modules with
+/// top-level await. The backend wraps package entry blocks in an IIFE for
+/// statement isolation, so it uses this scan to make that wrapper `async` only
+/// when the HIR actually requires it.
 pub fn contains_await_in_block(block: &HirBlock) -> bool {
     let mut visitor = AwaitDetector::default();
     visitor.visit_block(block);

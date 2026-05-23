@@ -1,33 +1,26 @@
-//! Code generation from HIR to target languages
+//! Shared code generation boundary for HIR-backed target emitters.
 //!
-//! ARCHITECTURE OVERVIEW
-//! =====================
-//! The codegen module transforms HIR (High-level Intermediate Representation) into
-//! executable source code for target languages. This is the final phase of the
-//! compilation pipeline.
+//! Codegen is the last HIR-facing compiler phase. Semantic analysis has already
+//! produced a typed [`HirProgram`] and [`TypeTable`]; this module selects a
+//! backend, rejects poisoned HIR that still contains recovery error nodes, and
+//! returns the target-specific source artifact consumed by callers in `radix`
+//! and the user-facing `faber` package builder.
 //!
-//! COMPILER PHASE: Codegen
-//! INPUT: HirProgram (semantic analysis output), TypeTable, Interner
-//! OUTPUT: Target-specific source code (Rust, Faber pretty-print, or future targets)
+//! The per-target backends own language mapping policy. The shared layer owns
+//! only contracts that every backend must obey: a common dispatch surface,
+//! a single codegen error type, access to semantic types, and fail-closed
+//! handling for HIR that semantic recovery could not make safe to emit.
 //!
-//! DESIGN PHILOSOPHY
-//! =================
-//! - Target abstraction: Each backend implements the `Codegen` trait, allowing
-//!   uniform access regardless of target language. New backends can be added
-//!   without modifying the driver logic.
-//!
-//! - Multi-target support: Different backends handle language-specific quirks
-//!   (Rust's Result wrapping for failable functions, Faber's Latin keywords, etc.)
-//!   through specialized transforms.
-//!
-//! - Error propagation: Failable functions (those that contain `iace` / throw
-//!   expressions) are detected during Rust codegen and emit Result<T, String>
-//!   signatures with automatic `?` operator insertion.
-//!
-//! BACKENDS
-//! ========
-//! - Rust: Full compilation to executable Rust code
-//! - Faber: Canonical pretty-printing for formatting and round-tripping
+//! INVARIANTS
+//! ==========
+//! - Backends receive HIR only after [`reject_hir_errors`] proves that recovery
+//!   expressions are absent.
+//! - The shared [`Codegen`] trait does not prescribe formatting, naming, or
+//!   runtime strategy; those are backend policies.
+//! - [`CodegenError`] marks an emission boundary problem, not a replacement for
+//!   semantic diagnostics that should have been collected earlier.
+//! - Target dispatch is explicit so adding a backend must also choose its
+//!   public [`crate::Output`] variant.
 
 pub mod faber;
 pub mod go;
@@ -42,31 +35,34 @@ use crate::hir::HirProgram;
 use crate::lexer::Interner;
 use crate::semantic::TypeTable;
 
-// =============================================================================
-// TYPES
-// =============================================================================
-//
-// Core types for target specification and error handling.
-
-/// Compilation target language.
+/// Compilation target selected after analysis and before backend dispatch.
 ///
-/// WHY: Target enumeration allows the driver to select backends without
-/// hardcoding backend names throughout the codebase.
+/// This enum is the public routing surface for drivers. Each variant commits to
+/// a concrete backend module and a matching [`crate::Output`] payload shape.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Target {
+    /// Native Rust source, used for package builds and executable output.
     Rust,
+
+    /// Canonical Faber pretty-printer output for source-formatting workflows.
     Faber,
+
+    /// TypeScript source for JavaScript ecosystem targets.
     TypeScript,
+
+    /// Go source for experiments in a second systems/runtime target.
     Go,
 }
 
-/// Code generation error.
+/// Backend emission error after semantic analysis has completed.
 ///
-/// WHY: Codegen errors are distinct from semantic errors because they occur
-/// after all semantic analysis passes. They typically indicate unimplemented
-/// features or internal compiler bugs rather than user code errors.
+/// Codegen errors are intentionally narrower than semantic diagnostics. They
+/// represent target gaps, unsupported lowering combinations, or internal
+/// pipeline violations discovered while emitting source. User-facing type and
+/// name errors should be reported before this boundary whenever possible.
 #[derive(Debug)]
 pub struct CodegenError {
+    /// Human-readable emission failure suitable for CLI diagnostic wrapping.
     pub message: String,
 }
 
@@ -78,29 +74,25 @@ impl std::fmt::Display for CodegenError {
 
 impl std::error::Error for CodegenError {}
 
-// =============================================================================
-// CORE
-// =============================================================================
-//
-// Main codegen trait and dispatch logic.
-
-/// Code generation trait for different targets.
+/// Target backend contract for HIR-to-source emission.
 ///
-/// WHY: This trait enables target-agnostic driver code. Each backend provides
-/// its own implementation with target-specific transforms and conventions.
+/// Implementors receive the same semantic inputs: HIR for structure, the
+/// [`TypeTable`] for resolved type decisions, and the [`Interner`] for
+/// recovering source symbols. The output type stays associated so specialized
+/// backends can return richer artifacts, while the public [`generate`] router
+/// wraps those artifacts into [`crate::Output`].
 pub trait Codegen {
     type Output;
 
     fn generate(&self, hir: &HirProgram, types: &TypeTable, interner: &Interner) -> Result<Self::Output, CodegenError>;
 }
 
-/// Generate code for the specified target.
+/// Dispatch HIR to the selected target backend.
 ///
-/// WHY: This function provides a unified entry point for all codegen backends,
-/// dispatching to the appropriate implementation based on the target enum.
-///
-/// TRANSFORMS: Delegates to target-specific generators that handle language
-/// quirks (e.g., Rust Result wrapping, Faber Latin keywords).
+/// The shared entrypoint rejects HIR recovery artifacts before backend code can
+/// accidentally print placeholders into generated source. After that guard, all
+/// language-specific choices are delegated to the backend selected by
+/// [`Target`].
 pub fn generate(
     target: Target,
     hir: &HirProgram,
@@ -143,6 +135,12 @@ pub fn generate_rust_cli(
     rust::RustCodegen::new(hir, interner).generate_cli(hir, types, cli_program)
 }
 
+/// Reject semantically poisoned HIR before target emission begins.
+///
+/// HIR error expressions are recovery sentinels, not source constructs. Keeping
+/// this guard at the codegen boundary lets parser/typechecker recovery collect
+/// diagnostics earlier while still preventing downstream backends from turning
+/// incomplete compiler state into misleading target code.
 pub(super) fn reject_hir_errors(hir: &HirProgram) -> Result<(), CodegenError> {
     if let Some(span) = find_error_expr_in_program(hir) {
         return Err(CodegenError {
