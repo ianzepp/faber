@@ -31,6 +31,7 @@
 
 mod lower;
 mod nodes;
+pub mod visit;
 
 pub use lower::{lower, lower_with_cli, LowerError};
 pub use nodes::{

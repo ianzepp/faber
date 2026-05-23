@@ -746,9 +746,8 @@ fn write_variant_binding_pattern(
             w.writeln(&field_name_to_go(codegen.resolve_symbol(field)));
             Ok(())
         }
-        HirPattern::Alias(_, alias, inner) => {
+        HirPattern::Alias(_, _alias, inner) => {
             write_variant_binding_pattern(codegen, inner, field, w)?;
-            let _ = alias;
             Ok(())
         }
         other => Err(CodegenError {

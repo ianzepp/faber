@@ -577,7 +577,7 @@ impl Parser {
             // Full preservation into AST/HIR + Clone hygiene deferred; annotations on methods
             // carry linking meaning (externa, futura) but are not yet represented on InterfaceMethod.
             if self.check(&TokenKind::At) {
-                let _ = self.parse_annotations()?;
+                self.parse_annotations()?;
             }
             let start = self.current_span();
 
