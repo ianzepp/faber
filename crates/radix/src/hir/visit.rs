@@ -427,3 +427,425 @@ pub fn walk_collection_filter<V: HirVisitor>(visitor: &mut V, filter: &HirCollec
         HirCollectionFilterKind::Property(_) => {}
     }
 }
+
+pub trait HirVisitorMut: Sized {
+    fn visit_program_mut(&mut self, program: &mut HirProgram) {
+        walk_program_mut(self, program);
+    }
+
+    fn visit_item_mut(&mut self, item: &mut HirItem) {
+        walk_item_mut(self, item);
+    }
+
+    fn visit_function_mut(&mut self, function: &mut HirFunction) {
+        walk_function_mut(self, function);
+    }
+
+    fn visit_type_param_mut(&mut self, type_param: &mut HirTypeParam) {
+        self.visit_def(type_param.def_id, type_param.name);
+    }
+
+    fn visit_param_mut(&mut self, param: &mut HirParam) {
+        self.visit_def(param.def_id, param.name);
+    }
+
+    fn visit_field_mut(&mut self, field: &mut HirField) {
+        walk_field_mut(self, field);
+    }
+
+    fn visit_method_mut(&mut self, method: &mut HirMethod) {
+        walk_method_mut(self, method);
+    }
+
+    fn visit_variant_mut(&mut self, variant: &mut HirVariant) {
+        self.visit_def(variant.def_id, variant.name);
+    }
+
+    fn visit_import_item_mut(&mut self, item: &mut HirImportItem) {
+        self.visit_def(item.def_id, item.alias.unwrap_or(item.name));
+    }
+
+    fn visit_block_mut(&mut self, block: &mut HirBlock) {
+        walk_block_mut(self, block);
+    }
+
+    fn visit_stmt_mut(&mut self, stmt: &mut HirStmt) {
+        walk_stmt_mut(self, stmt);
+    }
+
+    fn visit_local_mut(&mut self, local: &mut HirLocal) {
+        walk_local_mut(self, local);
+    }
+
+    fn visit_ad_mut(&mut self, ad: &mut HirAd) {
+        walk_ad_mut(self, ad);
+    }
+
+    fn visit_expr_mut(&mut self, expr: &mut HirExpr) {
+        walk_expr_mut(self, expr);
+    }
+
+    fn visit_cape_mut(&mut self, cape: &mut HirCape) {
+        walk_cape_mut(self, cape);
+    }
+
+    fn visit_casu_arm_mut(&mut self, arm: &mut HirCasuArm) {
+        walk_casu_arm_mut(self, arm);
+    }
+
+    fn visit_pattern_mut(&mut self, pattern: &mut HirPattern) {
+        walk_pattern_mut(self, pattern);
+    }
+
+    fn visit_object_field_mut(&mut self, field: &mut HirObjectField) {
+        walk_object_field_mut(self, field);
+    }
+
+    fn visit_def(&mut self, _def_id: DefId, _name: crate::lexer::Symbol) {}
+}
+
+pub fn walk_program_mut<V: HirVisitorMut>(visitor: &mut V, program: &mut HirProgram) {
+    for item in &mut program.items {
+        visitor.visit_item_mut(item);
+    }
+    if let Some(entry) = &mut program.entry {
+        visitor.visit_block_mut(entry);
+    }
+}
+
+pub fn walk_item_mut<V: HirVisitorMut>(visitor: &mut V, item: &mut HirItem) {
+    match &mut item.kind {
+        HirItemKind::Function(function) => {
+            visitor.visit_def(item.def_id, function.name);
+            visitor.visit_function_mut(function);
+        }
+        HirItemKind::Struct(strukt) => {
+            visitor.visit_def(item.def_id, strukt.name);
+            for type_param in &mut strukt.type_params {
+                visitor.visit_type_param_mut(type_param);
+            }
+            for field in &mut strukt.fields {
+                visitor.visit_field_mut(field);
+            }
+            for method in &mut strukt.methods {
+                visitor.visit_method_mut(method);
+            }
+        }
+        HirItemKind::Enum(enum_item) => {
+            visitor.visit_def(item.def_id, enum_item.name);
+            for type_param in &mut enum_item.type_params {
+                visitor.visit_type_param_mut(type_param);
+            }
+            for variant in &mut enum_item.variants {
+                visitor.visit_variant_mut(variant);
+            }
+        }
+        HirItemKind::Interface(interface) => {
+            visitor.visit_def(item.def_id, interface.name);
+            for type_param in &mut interface.type_params {
+                visitor.visit_type_param_mut(type_param);
+            }
+            for method in &mut interface.methods {
+                for param in &mut method.params {
+                    visitor.visit_param_mut(param);
+                }
+            }
+        }
+        HirItemKind::TypeAlias(alias) => {
+            visitor.visit_def(item.def_id, alias.name);
+        }
+        HirItemKind::Const(const_item) => {
+            visitor.visit_def(item.def_id, const_item.name);
+            visitor.visit_expr_mut(&mut const_item.value);
+        }
+        HirItemKind::Import(import) => {
+            for item in &mut import.items {
+                visitor.visit_import_item_mut(item);
+            }
+        }
+    }
+}
+
+pub fn walk_function_mut<V: HirVisitorMut>(visitor: &mut V, function: &mut HirFunction) {
+    for type_param in &mut function.type_params {
+        visitor.visit_type_param_mut(type_param);
+    }
+    for param in &mut function.params {
+        visitor.visit_param_mut(param);
+    }
+    if let Some(param) = &mut function.cli_args {
+        visitor.visit_param_mut(param);
+    }
+    if let Some(body) = &mut function.body {
+        visitor.visit_block_mut(body);
+    }
+}
+
+pub fn walk_field_mut<V: HirVisitorMut>(visitor: &mut V, field: &mut HirField) {
+    visitor.visit_def(field.def_id, field.name);
+    if let Some(init) = &mut field.init {
+        visitor.visit_expr_mut(init);
+    }
+}
+
+pub fn walk_method_mut<V: HirVisitorMut>(visitor: &mut V, method: &mut HirMethod) {
+    visitor.visit_def(method.def_id, method.func.name);
+    visitor.visit_function_mut(&mut method.func);
+}
+
+pub fn walk_block_mut<V: HirVisitorMut>(visitor: &mut V, block: &mut HirBlock) {
+    for stmt in &mut block.stmts {
+        visitor.visit_stmt_mut(stmt);
+    }
+    if let Some(expr) = &mut block.expr {
+        visitor.visit_expr_mut(expr);
+    }
+}
+
+pub fn walk_stmt_mut<V: HirVisitorMut>(visitor: &mut V, stmt: &mut HirStmt) {
+    match &mut stmt.kind {
+        HirStmtKind::Local(local) => visitor.visit_local_mut(local),
+        HirStmtKind::Expr(expr) => visitor.visit_expr_mut(expr),
+        HirStmtKind::Ad(ad) => visitor.visit_ad_mut(ad),
+        HirStmtKind::Redde(value) => {
+            if let Some(expr) = value {
+                visitor.visit_expr_mut(expr);
+            }
+        }
+        HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
+    }
+}
+
+pub fn walk_local_mut<V: HirVisitorMut>(visitor: &mut V, local: &mut HirLocal) {
+    visitor.visit_def(local.def_id, local.name);
+    if let Some(init) = &mut local.init {
+        visitor.visit_expr_mut(init);
+    }
+}
+
+pub fn walk_ad_mut<V: HirVisitorMut>(visitor: &mut V, ad: &mut HirAd) {
+    for arg in &mut ad.args {
+        visitor.visit_expr_mut(arg);
+    }
+    if let Some(body) = &mut ad.body {
+        visitor.visit_block_mut(body);
+    }
+    if let Some(catch) = &mut ad.catch {
+        visitor.visit_block_mut(catch);
+    }
+}
+
+pub fn walk_expr_mut<V: HirVisitorMut>(visitor: &mut V, expr: &mut HirExpr) {
+    match &mut expr.kind {
+        HirExprKind::Path(_) | HirExprKind::Literal(_) | HirExprKind::Vacua | HirExprKind::Error => {}
+        HirExprKind::Binary(_, lhs, rhs) | HirExprKind::Assign(lhs, rhs) | HirExprKind::AssignOp(_, lhs, rhs) => {
+            visitor.visit_expr_mut(lhs);
+            visitor.visit_expr_mut(rhs);
+        }
+        HirExprKind::Unary(_, operand)
+        | HirExprKind::Cede(operand)
+        | HirExprKind::Ref(_, operand)
+        | HirExprKind::Deref(operand)
+        | HirExprKind::Panic(operand)
+        | HirExprKind::Throw(operand) => visitor.visit_expr_mut(operand),
+        HirExprKind::Call(callee, args) => {
+            visitor.visit_expr_mut(callee);
+            for arg in args {
+                visitor.visit_expr_mut(arg);
+            }
+        }
+        HirExprKind::MethodCall(receiver, _, args) => {
+            visitor.visit_expr_mut(receiver);
+            for arg in args {
+                visitor.visit_expr_mut(arg);
+            }
+        }
+        HirExprKind::Field(object, _) => visitor.visit_expr_mut(object),
+        HirExprKind::Index(object, index) => {
+            visitor.visit_expr_mut(object);
+            visitor.visit_expr_mut(index);
+        }
+        HirExprKind::OptionalChain(object, chain) => {
+            visitor.visit_expr_mut(object);
+            walk_optional_chain_mut(visitor, chain);
+        }
+        HirExprKind::NonNull(object, chain) => {
+            visitor.visit_expr_mut(object);
+            walk_non_null_mut(visitor, chain);
+        }
+        HirExprKind::Ab { source, filter, transforms } => {
+            visitor.visit_expr_mut(source);
+            if let Some(filter) = filter {
+                walk_collection_filter_mut(visitor, filter);
+            }
+            for transform in transforms {
+                if let Some(arg) = &mut transform.arg {
+                    visitor.visit_expr_mut(arg);
+                }
+            }
+        }
+        HirExprKind::Block(block) | HirExprKind::Loop(block) => visitor.visit_block_mut(block),
+        HirExprKind::Si { cond, then_block, then_catch, else_block } => {
+            visitor.visit_expr_mut(cond);
+            visitor.visit_block_mut(then_block);
+            if let Some(catch) = then_catch {
+                visitor.visit_cape_mut(catch);
+            }
+            if let Some(else_block) = else_block {
+                visitor.visit_block_mut(else_block);
+            }
+        }
+        HirExprKind::Discerne(scrutinees, arms) => {
+            for scrutinee in scrutinees {
+                visitor.visit_expr_mut(scrutinee);
+            }
+            for arm in arms {
+                visitor.visit_casu_arm_mut(arm);
+            }
+        }
+        HirExprKind::Dum(cond, block) => {
+            visitor.visit_expr_mut(cond);
+            visitor.visit_block_mut(block);
+        }
+        HirExprKind::Itera(_, def_id, name, iter, block) => {
+            visitor.visit_def(*def_id, *name);
+            visitor.visit_expr_mut(iter);
+            visitor.visit_block_mut(block);
+        }
+        HirExprKind::Intervallum { start, end, step, .. } => {
+            visitor.visit_expr_mut(start);
+            visitor.visit_expr_mut(end);
+            if let Some(step) = step {
+                visitor.visit_expr_mut(step);
+            }
+        }
+        HirExprKind::Array(elements) => {
+            for element in elements {
+                match element {
+                    HirArrayElement::Expr(expr) | HirArrayElement::Spread(expr) => visitor.visit_expr_mut(expr),
+                }
+            }
+        }
+        HirExprKind::Struct(_, fields) => {
+            for (_, value) in fields {
+                visitor.visit_expr_mut(value);
+            }
+        }
+        HirExprKind::Tuple(elements) | HirExprKind::Scribe(_, elements) | HirExprKind::Scriptum(_, elements) => {
+            for element in elements {
+                visitor.visit_expr_mut(element);
+            }
+        }
+        HirExprKind::Adfirma(cond, message) => {
+            visitor.visit_expr_mut(cond);
+            if let Some(message) = message {
+                visitor.visit_expr_mut(message);
+            }
+        }
+        HirExprKind::Handled { body, catch } => {
+            visitor.visit_block_mut(body);
+            visitor.visit_cape_mut(catch);
+        }
+        HirExprKind::Tempta { body, catch, finally } => {
+            visitor.visit_block_mut(body);
+            if let Some(catch) = catch {
+                visitor.visit_block_mut(catch);
+            }
+            if let Some(finally) = finally {
+                visitor.visit_block_mut(finally);
+            }
+        }
+        HirExprKind::Clausura(params, _, body) => {
+            for param in params {
+                visitor.visit_param_mut(param);
+            }
+            visitor.visit_expr_mut(body);
+        }
+        HirExprKind::Verte { source, entries, .. } => {
+            visitor.visit_expr_mut(source);
+            if let Some(entries) = entries {
+                for field in entries {
+                    visitor.visit_object_field_mut(field);
+                }
+            }
+        }
+        HirExprKind::Conversio { source, fallback, .. } => {
+            visitor.visit_expr_mut(source);
+            if let Some(fallback) = fallback {
+                visitor.visit_expr_mut(fallback);
+            }
+        }
+    }
+}
+
+pub fn walk_cape_mut<V: HirVisitorMut>(visitor: &mut V, cape: &mut HirCape) {
+    visitor.visit_def(cape.binding_def_id, cape.binding_name);
+    visitor.visit_block_mut(&mut cape.body);
+}
+
+pub fn walk_casu_arm_mut<V: HirVisitorMut>(visitor: &mut V, arm: &mut HirCasuArm) {
+    for pattern in &mut arm.patterns {
+        visitor.visit_pattern_mut(pattern);
+    }
+    if let Some(guard) = &mut arm.guard {
+        visitor.visit_expr_mut(guard);
+    }
+    visitor.visit_expr_mut(&mut arm.body);
+}
+
+pub fn walk_pattern_mut<V: HirVisitorMut>(visitor: &mut V, pattern: &mut HirPattern) {
+    match pattern {
+        HirPattern::Wildcard | HirPattern::Literal(_) => {}
+        HirPattern::Binding(def_id, name) => visitor.visit_def(*def_id, *name),
+        HirPattern::Alias(def_id, name, pattern) => {
+            visitor.visit_def(*def_id, *name);
+            visitor.visit_pattern_mut(pattern);
+        }
+        HirPattern::Variant(_, patterns) => {
+            for pattern in patterns {
+                visitor.visit_pattern_mut(pattern);
+            }
+        }
+    }
+}
+
+pub fn walk_object_field_mut<V: HirVisitorMut>(visitor: &mut V, field: &mut HirObjectField) {
+    match &mut field.key {
+        HirObjectKey::Ident(_) | HirObjectKey::String(_) => {}
+        HirObjectKey::Computed(expr) | HirObjectKey::Spread(expr) => visitor.visit_expr_mut(expr),
+    }
+    if let Some(value) = &mut field.value {
+        visitor.visit_expr_mut(value);
+    }
+}
+
+pub fn walk_optional_chain_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut HirOptionalChainKind) {
+    match chain {
+        HirOptionalChainKind::Member(_) => {}
+        HirOptionalChainKind::Index(index) => visitor.visit_expr_mut(index),
+        HirOptionalChainKind::Call(args) => {
+            for arg in args {
+                visitor.visit_expr_mut(arg);
+            }
+        }
+    }
+}
+
+pub fn walk_non_null_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut HirNonNullKind) {
+    match chain {
+        HirNonNullKind::Member(_) => {}
+        HirNonNullKind::Index(index) => visitor.visit_expr_mut(index),
+        HirNonNullKind::Call(args) => {
+            for arg in args {
+                visitor.visit_expr_mut(arg);
+            }
+        }
+    }
+}
+
+pub fn walk_collection_filter_mut<V: HirVisitorMut>(visitor: &mut V, filter: &mut HirCollectionFilter) {
+    match &mut filter.kind {
+        HirCollectionFilterKind::Condition(cond) => visitor.visit_expr_mut(cond),
+        HirCollectionFilterKind::Property(_) => {}
+    }
+}
