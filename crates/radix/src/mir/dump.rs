@@ -1,60 +1,87 @@
+use crate::mir::visit::MirVisitor;
 use crate::mir::{
-    MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp, MirBlockId, MirCallee,
-    MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor, MirDiagnosticKind, MirFunctionId, MirIntrinsic,
-    MirKeyValueOperand, MirLocalId, MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode,
-    MirPlace, MirPlaceBase, MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmtKind, MirTempId,
-    MirTerminatorKind, MirType, MirUnOp, MirValue, MirValueId, MirValueKind,
+    MirAggregate, MirAggregateFields, MirAggregateItem, MirAggregateKind, MirBinOp, MirBlock, MirBlockId, MirCallee,
+    MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor, MirDiagnosticKind, MirFunction, MirFunctionId,
+    MirIntrinsic, MirKeyValueOperand, MirLocalId, MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp,
+    MirOptionUnwrapMode, MirPlace, MirPlaceBase, MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmt,
+    MirStmtKind, MirTempId, MirTerminator, MirTerminatorKind, MirType, MirUnOp, MirValue, MirValueId, MirValueKind,
 };
 
 pub fn dump_program(program: &MirProgram) -> String {
-    let mut out = String::new();
-    for (index, function) in program.functions.iter().enumerate() {
-        if index > 0 {
-            out.push('\n');
+    let mut dumper = MirDumper { out: String::new(), function_count: 0 };
+    dumper.visit_program(program);
+    dumper.out
+}
+
+struct MirDumper {
+    out: String,
+    function_count: usize,
+}
+
+impl MirVisitor for MirDumper {
+    fn visit_function(&mut self, function: &MirFunction) {
+        if self.function_count > 0 {
+            self.out.push('\n');
         }
+        self.function_count += 1;
+
         let error_ty = function
             .error_ty
             .map(|error_ty| format!(" ⇥ {}", ty(error_ty)))
             .unwrap_or_default();
-        out.push_str(&format!(
+        self.out.push_str(&format!(
             "function {} -> {}{} {{\n",
             function_id(function.id),
             ty(function.return_ty),
             error_ty
         ));
         if !function.params.is_empty() {
-            out.push_str("  params:\n");
+            self.out.push_str("  params:\n");
             for param in &function.params {
-                out.push_str(&format!("    {}: {}\n", local_id(param.local), ty(param.ty)));
+                self.out
+                    .push_str(&format!("    {}: {}\n", local_id(param.local), ty(param.ty)));
             }
         }
         if !function.locals.is_empty() {
-            out.push_str("  locals:\n");
+            self.out.push_str("  locals:\n");
             for local in &function.locals {
                 let mutability = if local.mutable { "var" } else { "let" };
-                out.push_str(&format!("    {} {}: {}\n", mutability, local_id(local.id), ty(local.ty)));
+                self.out
+                    .push_str(&format!("    {} {}: {}\n", mutability, local_id(local.id), ty(local.ty)));
             }
         }
         if !function.temps.is_empty() {
-            out.push_str("  temps:\n");
+            self.out.push_str("  temps:\n");
             for temp in &function.temps {
-                out.push_str(&format!("    {}: {}\n", temp_id(temp.id), ty(temp.ty)));
+                self.out
+                    .push_str(&format!("    {}: {}\n", temp_id(temp.id), ty(temp.ty)));
             }
         }
         for block in &function.blocks {
-            out.push_str(&format!("  {}:\n", block_id(block.id)));
-            for stmt in &block.statements {
-                out.push_str("    ");
-                out.push_str(&stmt_kind(&stmt.kind));
-                out.push('\n');
-            }
-            out.push_str("    ");
-            out.push_str(&terminator_kind(&block.terminator.kind));
-            out.push('\n');
+            self.visit_block(block);
         }
-        out.push_str("}\n");
+        self.out.push_str("}\n");
     }
-    out
+
+    fn visit_block(&mut self, block: &MirBlock) {
+        self.out.push_str(&format!("  {}:\n", block_id(block.id)));
+        for stmt in &block.statements {
+            self.visit_stmt(stmt);
+        }
+        self.visit_terminator(&block.terminator);
+    }
+
+    fn visit_stmt(&mut self, stmt: &MirStmt) {
+        self.out.push_str("    ");
+        self.out.push_str(&stmt_kind(&stmt.kind));
+        self.out.push('\n');
+    }
+
+    fn visit_terminator(&mut self, terminator: &MirTerminator) {
+        self.out.push_str("    ");
+        self.out.push_str(&terminator_kind(&terminator.kind));
+        self.out.push('\n');
+    }
 }
 
 fn stmt_kind(kind: &MirStmtKind) -> String {
