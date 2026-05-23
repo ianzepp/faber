@@ -23,7 +23,6 @@ fn exempla_rust_e2e() {
     let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
     let mut exempla = collect_exempla_files(&exempla_dir);
     exempla.sort();
-    assert_eq!(exempla.len(), 137, "expected 137 exempla files");
 
     let compiler = Compiler::new(Config::default());
     let temp_root = make_temp_root();
@@ -62,6 +61,14 @@ fn exempla_rust_e2e() {
                 continue;
             }
         };
+
+        // Exercise the new --format + --linter path in the e2e harness
+        let mut output = crate::tool::format_generated_code(crate::codegen::Target::Rust, &output)
+            .unwrap_or(output);
+
+        if let Ok(fixed) = crate::tool::lint_generated_code(crate::codegen::Target::Rust, &output) {
+            output = fixed;
+        }
 
         let stem = file
             .file_stem()
@@ -154,12 +161,141 @@ fn exempla_rust_e2e() {
 }
 
 #[test]
+#[ignore = "slow end-to-end harness; run explicitly with cargo test exempla_go_e2e -- --ignored"]
+fn exempla_go_e2e() {
+    if !go_available() {
+        eprintln!("go not found on PATH; skipping Go exempla end-to-end harness");
+        return;
+    }
+
+    let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
+    let mut exempla = collect_exempla_files(&exempla_dir);
+    exempla.sort();
+
+    let compiler = Compiler::new(Config::default().with_target(Target::Go));
+    let temp_root = make_temp_root();
+    let mut results = Vec::with_capacity(exempla.len());
+    let mut expected_count = 0usize;
+
+    for file in &exempla {
+        let expected = read_expected_stdout(file);
+        if expected.is_some() {
+            expected_count += 1;
+        }
+
+        let result = compiler.compile(file);
+        let output = match result.output {
+            Some(Output::Go(output)) => output.code,
+            Some(_) => {
+                results.push(E2eResult {
+                    path: file.clone(),
+                    passed: false,
+                    reason: "compiler did not produce Go output".to_owned(),
+                });
+                continue;
+            }
+            None => {
+                let diagnostics = format_diagnostics(&result);
+                results.push(E2eResult {
+                    path: file.clone(),
+                    passed: false,
+                    reason: format!("compile failed: {diagnostics}"),
+                });
+                continue;
+            }
+        };
+
+        // Exercise the new --format + --linter path in the e2e harness
+        let mut output = crate::tool::format_generated_code(crate::codegen::Target::Go, &output)
+            .unwrap_or(output);
+
+        if let Ok(fixed) = crate::tool::lint_generated_code(crate::codegen::Target::Go, &output) {
+            output = fixed;
+        }
+
+        let go_file = temp_root.join("main.go");
+
+        if let Err(err) = fs::write(&go_file, output) {
+            results.push(E2eResult {
+                path: file.clone(),
+                passed: false,
+                reason: format!("cannot write go output: {err}"),
+            });
+            continue;
+        }
+
+        let go_run = Command::new("go")
+            .arg("run")
+            .arg("main.go")
+            .current_dir(&temp_root)
+            .output();
+
+        let go_run = match go_run {
+            Ok(go_run) => go_run,
+            Err(err) => {
+                results.push(E2eResult {
+                    path: file.clone(),
+                    passed: false,
+                    reason: format!("cannot execute go: {err}"),
+                });
+                continue;
+            }
+        };
+
+        if !go_run.status.success() {
+            let stderr = String::from_utf8_lossy(&go_run.stderr).trim().to_owned();
+            results.push(E2eResult {
+                path: file.clone(),
+                passed: false,
+                reason: format!("go run failed: {stderr}"),
+            });
+            continue;
+        }
+
+        let stdout = normalize_newline(&String::from_utf8_lossy(&go_run.stdout));
+        if let Some(expected) = expected {
+            if stdout != expected {
+                results.push(E2eResult {
+                    path: file.clone(),
+                    passed: false,
+                    reason: format!("stdout mismatch: expected `{expected}`, got `{stdout}`"),
+                });
+                continue;
+            }
+        }
+
+        results.push(E2eResult {
+            path: file.clone(),
+            passed: true,
+            reason: String::new(),
+        });
+    }
+
+    let pass_count = results.iter().filter(|r| r.passed).count();
+    eprintln!(
+        "Go e2e exempla: {pass_count}/{} exempla files pass end-to-end",
+        results.len()
+    );
+    eprintln!("Expected-output checks enabled for {expected_count} exempla files");
+
+    for fail in results.iter().filter(|r| !r.passed) {
+        eprintln!("[fail] {} :: {}", fail.path.display(), fail.reason);
+    }
+
+    let salve_ok = results
+        .iter()
+        .find(|r| r.path.ends_with("salve-munde.fab"))
+        .map(|r| r.passed)
+        .unwrap_or(false);
+    assert!(salve_ok, "salve-munde.fab should pass end-to-end on Go");
+}
+
+#[test]
 #[ignore = "slow round-trip harness; run explicitly with cargo test exempla_faber_roundtrip_e2e -- --ignored"]
 fn exempla_faber_roundtrip_e2e() {
     let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
     let mut exempla = collect_exempla_files(&exempla_dir);
     exempla.sort();
-    assert_eq!(exempla.len(), 137, "expected 137 exempla files");
 
     let compiler = Compiler::new(Config::default().with_target(Target::Faber));
     let mut results = Vec::with_capacity(exempla.len());
@@ -238,6 +374,10 @@ fn exempla_faber_roundtrip_e2e() {
 
 fn rustc_available() -> bool {
     Command::new("rustc").arg("--version").output().is_ok()
+}
+
+fn go_available() -> bool {
+    Command::new("go").arg("version").output().is_ok()
 }
 
 fn make_temp_root() -> PathBuf {

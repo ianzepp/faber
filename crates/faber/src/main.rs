@@ -146,6 +146,8 @@ fn main() {
             package: args.package,
             release: args.release,
             target: args.target.into(),
+            format: args.format,
+            linter: args.linter,
         }),
         Command::Targets => tool::cmd_targets(),
         Command::Check(args) => {
@@ -177,12 +179,16 @@ fn main() {
                     input: args.input,
                     package: args.package,
                     target: args.target.into(),
+                    format: args.format,
+                    linter: args.linter,
                 });
             } else {
                 tool::cmd_emit(EmitCommand {
                     input: args.input,
                     package: args.package,
                     target: args.target.into(),
+                    format: args.format,
+                    linter: args.linter,
                 });
             }
         }

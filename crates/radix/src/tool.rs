@@ -124,6 +124,15 @@ pub struct EmitArgs {
     #[arg(long)]
     pub package: bool,
 
+    /// Run the target language's formatter on the emitted code (requires the formatter to be installed: rustfmt, gofmt, prettier, etc.)
+    #[arg(long)]
+    pub format: bool,
+
+    /// Run a linter and auto-fix issues where possible.
+    /// This is independent of --format; use both flags if you want formatting + linting.
+    #[arg(long)]
+    pub linter: bool,
+
     /// Input file or package path, or '-' / omitted for stdin
     pub input: Vec<String>,
 }
@@ -146,6 +155,15 @@ pub struct BuildArgs {
     #[arg(long)]
     pub release: bool,
 
+    /// Run the target language's formatter on the emitted code before writing files
+    #[arg(long)]
+    pub format: bool,
+
+    /// Run a linter and auto-fix issues where possible before writing files.
+    /// This is independent of --format; use both flags if you want formatting + linting.
+    #[arg(long)]
+    pub linter: bool,
+
     /// Input file or package path
     pub input: String,
 }
@@ -162,6 +180,8 @@ pub struct EmitCommand {
     pub input: Vec<String>,
     pub package: bool,
     pub target: crate::codegen::Target,
+    pub format: bool,
+    pub linter: bool,
 }
 
 #[derive(Debug)]
@@ -171,6 +191,8 @@ pub struct BuildCommand {
     pub package: bool,
     pub release: bool,
     pub target: crate::codegen::Target,
+    pub format: bool,
+    pub linter: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, ValueEnum)]
@@ -647,7 +669,27 @@ pub fn cmd_emit(command: EmitCommand) {
         std::process::exit(1);
     };
 
-    println!("{}", output_code(output));
+    let mut code = output_code(output);
+
+    if command.format {
+        match format_generated_code(command.target, &code) {
+            Ok(formatted) => code = formatted,
+            Err(err) => {
+                eprintln!("warning: formatting failed: {err}");
+            }
+        }
+    }
+
+    if command.linter {
+        match lint_generated_code(command.target, &code) {
+            Ok(fixed) => code = fixed,
+            Err(err) => {
+                eprintln!("warning: linter failed: {err}");
+            }
+        }
+    }
+
+    println!("{}", code);
 }
 
 pub fn cmd_build(command: BuildCommand) {
@@ -676,7 +718,25 @@ pub fn cmd_build(command: BuildCommand) {
         });
     }
 
-    let code = output_code(output);
+    let mut code = output_code(output);
+
+    if command.format {
+        match format_generated_code(command.target, &code) {
+            Ok(formatted) => code = formatted,
+            Err(err) => {
+                eprintln!("warning: formatting failed: {err}");
+            }
+        }
+    }
+
+    if command.linter {
+        match lint_generated_code(command.target, &code) {
+            Ok(fixed) => code = fixed,
+            Err(err) => {
+                eprintln!("warning: linter failed: {err}");
+            }
+        }
+    }
 
     fs::write(&output_path, code).unwrap_or_else(|err| {
         eprintln!("error: failed to write '{}': {}", output_path.display(), err);
@@ -831,6 +891,141 @@ pub fn output_code(output: crate::Output) -> String {
         crate::Output::TypeScript(out) => out.code,
         crate::Output::Go(out) => out.code,
     }
+}
+
+/// Run the appropriate formatter for the generated code, if available.
+///
+/// Returns the formatted code on success, or an error message if the formatter
+/// could not be executed or failed.
+pub fn format_generated_code(target: crate::codegen::Target, code: &str) -> Result<String, String> {
+    match target {
+        crate::codegen::Target::Rust => run_formatter("rustfmt", &["--edition", "2021"], code),
+        crate::codegen::Target::Go => run_formatter("gofmt", &[], code),
+        crate::codegen::Target::TypeScript => {
+            // Try prettier first (most common), fall back to deno fmt if available
+            if let Ok(formatted) = run_formatter("prettier", &["--parser", "typescript"], code) {
+                return Ok(formatted);
+            }
+            run_formatter("deno", &["fmt", "--ext", "ts", "-"], code)
+        }
+        crate::codegen::Target::Faber => {
+            // The Faber emitter is already the pretty-printer.
+            // In the future we can hook a dedicated `faber fmt` here if one is added.
+            Ok(code.to_string())
+        }
+    }
+}
+
+/// Run a linter with auto-fix on the generated code where possible.
+///
+/// This is intentionally best-effort. If the linter is not installed or fails,
+/// we return an error and the caller can decide to keep the original code.
+pub fn lint_generated_code(target: crate::codegen::Target, code: &str) -> Result<String, String> {
+    match target {
+        crate::codegen::Target::Rust => lint_rust_code(code),
+        crate::codegen::Target::Go => {
+            // Go has limited auto-fix linters. For now we can run `golangci-lint --fix` if present,
+            // but a simple first version is to just return the code (or run gofmt again).
+            // Future: implement proper golangci-lint support.
+            Ok(code.to_string())
+        }
+        crate::codegen::Target::TypeScript => {
+            // Try biome or eslint --fix
+            if let Ok(fixed) = run_formatter("biome", &["check", "--apply", "--stdin-file-path", "main.ts"], code) {
+                return Ok(fixed);
+            }
+            run_formatter("eslint", &["--fix-dry-run", "--stdin", "--stdin-filename", "main.ts", "--format", "json"], code)
+                .map(|_| code.to_string()) // eslint --fix-dry-run doesn't rewrite; real --fix needs files
+        }
+        crate::codegen::Target::Faber => Ok(code.to_string()),
+    }
+}
+
+/// Rust-specific linter using a temporary Cargo project + clippy --fix.
+/// This is the most powerful auto-fix we can currently offer.
+fn lint_rust_code(code: &str) -> Result<String, String> {
+    use std::fs;
+    use std::process::Command;
+
+    // Create a unique temp directory (similar to make_temp_root)
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let temp_dir = std::env::temp_dir().join(format!("radix-lint-{}", nanos));
+    let src_dir = temp_dir.join("src");
+
+    fs::create_dir_all(&src_dir).map_err(|e| format!("failed to create temp src dir: {e}"))?;
+
+    let main_rs = src_dir.join("main.rs");
+    fs::write(&main_rs, code).map_err(|e| format!("failed to write temp main.rs: {e}"))?;
+
+    let cargo_toml = temp_dir.join("Cargo.toml");
+    fs::write(
+        &cargo_toml,
+        "[package]\nname = \"lint-target\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    )
+    .map_err(|e| format!("failed to write Cargo.toml: {e}"))?;
+
+    // Run cargo clippy --fix (best effort)
+    let status = Command::new("cargo")
+        .args([
+            "clippy",
+            "--fix",
+            "--allow-dirty",
+            "--allow-staged",
+            "--allow-no-vcs",
+            "--quiet",
+            "--",
+            "-D",
+            "warnings",
+        ])
+        .current_dir(&temp_dir)
+        .status();
+
+    // Clean up temp dir (ignore errors)
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    match status {
+        Ok(s) if s.success() => {
+            let fixed = fs::read_to_string(&main_rs).map_err(|e| format!("failed to read fixed code: {e}"))?;
+            Ok(fixed)
+        }
+        Ok(s) => Err(format!("cargo clippy --fix exited with status {s}")),
+        Err(e) => Err(format!("failed to run cargo clippy: {e} (is clippy installed?)")),
+    }
+}
+
+/// Helper to invoke an external formatter via stdin/stdout.
+fn run_formatter(cmd: &str, args: &[&str], input: &str) -> Result<String, String> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new(cmd)
+        .args(args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("could not spawn {cmd}: {e} (is it installed?)"))?;
+
+    {
+        let mut stdin = child.stdin.take().ok_or_else(|| "failed to open stdin".to_string())?;
+        stdin
+            .write_all(input.as_bytes())
+            .map_err(|e| format!("failed to write to {cmd} stdin: {e}"))?;
+    }
+
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("failed to wait for {cmd}: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("{cmd} failed: {}", stderr.trim()));
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
 fn annotation_json(annotations: &[crate::syntax::Annotation]) -> String {
