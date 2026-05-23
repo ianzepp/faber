@@ -161,3 +161,26 @@ fn terminator_successors_reports_cfg_edges_without_operands() {
 
     assert_eq!(terminator_successors(&MirTerminatorKind::Return(None)), Vec::new());
 }
+
+#[derive(Default)]
+struct StopAfterFirstBlock {
+    blocks: usize,
+}
+
+impl FallibleMirVisitor for StopAfterFirstBlock {
+    type Error = &'static str;
+
+    fn visit_block(&mut self, _block: &MirBlock) -> Result<(), Self::Error> {
+        self.blocks += 1;
+        Err("stop")
+    }
+}
+
+#[test]
+fn fallible_visitor_short_circuits_on_error() {
+    let mut visitor = StopAfterFirstBlock::default();
+    let result = visitor.visit_program(&sample_program());
+
+    assert_eq!(result, Err("stop"));
+    assert_eq!(visitor.blocks, 1);
+}

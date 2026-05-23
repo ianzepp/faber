@@ -1,4 +1,5 @@
 use crate::driver::AnalyzedUnit;
+use crate::hir::visit::HirVisitor;
 use crate::hir::{
     DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirExpr, HirExprKind, HirField, HirFunction, HirItem,
     HirItemKind, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
@@ -66,6 +67,113 @@ struct MirLowerer<'a> {
     functions: Vec<MirFunction>,
 }
 
+struct LoweringContextMaps<'a> {
+    function_errors: FxHashMap<DefId, MirType>,
+    variant_parents: FxHashMap<DefId, DefId>,
+    variant_fields: FxHashMap<DefId, Vec<Symbol>>,
+    provider_imports: FxHashMap<DefId, ProviderImport>,
+    validation: MirValidationContext<'a>,
+}
+
+impl<'a> LoweringContextMaps<'a> {
+    fn collect(unit: &'a AnalyzedUnit) -> Self {
+        let mut maps = Self {
+            function_errors: FxHashMap::default(),
+            variant_parents: FxHashMap::default(),
+            variant_fields: FxHashMap::default(),
+            provider_imports: FxHashMap::default(),
+            validation: MirValidationContext::new(&unit.types),
+        };
+        maps.visit_program(&unit.hir);
+        maps
+    }
+
+    fn builder_context(
+        &self,
+        interner: &'a Interner,
+        structs: FxHashMap<DefId, Vec<&'a HirField>>,
+    ) -> FunctionBuilderContext<'a> {
+        FunctionBuilderContext {
+            interner: Some(interner),
+            function_errors: self.function_errors.clone(),
+            structs,
+            variant_parents: self.variant_parents.clone(),
+            variant_fields: self.variant_fields.clone(),
+            provider_imports: self.provider_imports.clone(),
+        }
+    }
+}
+
+impl<'a> HirVisitor for LoweringContextMaps<'a> {
+    fn visit_item(&mut self, item: &HirItem) {
+        match &item.kind {
+            HirItemKind::Function(function) => {
+                if let Some(err_ty) = function.err_ty {
+                    self.function_errors
+                        .insert(item.def_id, MirType::semantic(err_ty));
+                }
+                if let Some(return_ty) = function.ret_ty {
+                    self.validation.functions.insert(
+                        item.def_id,
+                        MirFunctionSignature {
+                            params: function
+                                .params
+                                .iter()
+                                .map(|param| MirType::semantic(param.ty))
+                                .collect(),
+                            return_ty: MirType::semantic(return_ty),
+                            error_ty: function.err_ty.map(MirType::semantic),
+                        },
+                    );
+                }
+            }
+            HirItemKind::Struct(strukt) => {
+                let mut fields = FxHashMap::default();
+                for field in &strukt.fields {
+                    if !field.is_static {
+                        fields.insert(field.name, MirType::semantic(field.ty));
+                    }
+                }
+                self.validation.struct_fields.insert(item.def_id, fields);
+            }
+            HirItemKind::Enum(enum_item) => {
+                for variant in &enum_item.variants {
+                    self.variant_parents.insert(variant.def_id, item.def_id);
+                    self.variant_fields
+                        .insert(variant.def_id, variant.fields.iter().map(|field| field.name).collect());
+                    let mut fields = FxHashMap::default();
+                    for field in &variant.fields {
+                        fields.insert(field.name, MirType::semantic(field.ty));
+                    }
+                    self.validation
+                        .variant_fields
+                        .insert(variant.def_id, fields);
+                }
+            }
+            HirItemKind::Import(import) => {
+                for import_item in &import.items {
+                    self.provider_imports.insert(
+                        import_item.def_id,
+                        ProviderImport { module: vec![import.path], item: import_item.name },
+                    );
+                }
+            }
+            HirItemKind::Interface(_) | HirItemKind::TypeAlias(_) | HirItemKind::Const(_) => {}
+        }
+    }
+}
+
+fn struct_field_map(unit: &AnalyzedUnit) -> FxHashMap<DefId, Vec<&HirField>> {
+    let mut structs = FxHashMap::default();
+    for item in &unit.hir.items {
+        let HirItemKind::Struct(strukt) = &item.kind else {
+            continue;
+        };
+        structs.insert(item.def_id, strukt.fields.iter().collect());
+    }
+    structs
+}
+
 impl MirLowerer<'_> {
     fn lower(&mut self) {
         if self.unit.cli_program.is_some() {
@@ -80,8 +188,11 @@ impl MirLowerer<'_> {
             return;
         }
 
-        for item in &self.unit.hir.items {
-            self.lower_item(item);
+        let unit = self.unit;
+        let context_maps = LoweringContextMaps::collect(unit);
+        let struct_fields = struct_field_map(unit);
+        for item in &unit.hir.items {
+            self.lower_item(item, &context_maps, &struct_fields);
         }
 
         if let Some(entry) = &self.unit.hir.entry {
@@ -89,9 +200,14 @@ impl MirLowerer<'_> {
         }
     }
 
-    fn lower_item(&mut self, item: &HirItem) {
+    fn lower_item(
+        &mut self,
+        item: &HirItem,
+        context_maps: &LoweringContextMaps<'_>,
+        struct_fields: &FxHashMap<DefId, Vec<&HirField>>,
+    ) {
         match &item.kind {
-            HirItemKind::Function(function) => self.lower_function(item, function),
+            HirItemKind::Function(function) => self.lower_function(item, function, context_maps, struct_fields),
             HirItemKind::Struct(_)
             | HirItemKind::Enum(_)
             | HirItemKind::Interface(_)
@@ -104,7 +220,13 @@ impl MirLowerer<'_> {
         }
     }
 
-    fn lower_function(&mut self, item: &HirItem, function: &HirFunction) {
+    fn lower_function(
+        &mut self,
+        item: &HirItem,
+        function: &HirFunction,
+        context_maps: &LoweringContextMaps<'_>,
+        struct_fields: &FxHashMap<DefId, Vec<&HirField>>,
+    ) {
         let Some(return_ty) = function.ret_ty else {
             self.errors
                 .push(MirError::missing_type(item.span, "function return type"));
@@ -112,14 +234,7 @@ impl MirLowerer<'_> {
         };
 
         let error_ty = function.err_ty.map(MirType::semantic);
-        let context = FunctionBuilderContext {
-            interner: Some(&self.unit.interner),
-            function_errors: self.function_error_map(),
-            structs: self.struct_field_map(),
-            variant_parents: self.variant_parent_map(),
-            variant_fields: self.variant_field_map(),
-            provider_imports: self.provider_import_map(),
-        };
+        let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
         let (params, locals, temps, blocks, errors) = {
             let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context);
             for param in &function.params {
@@ -148,114 +263,8 @@ impl MirLowerer<'_> {
         });
     }
 
-    fn function_error_map(&self) -> FxHashMap<DefId, MirType> {
-        let mut errors = FxHashMap::default();
-        for item in &self.unit.hir.items {
-            let HirItemKind::Function(function) = &item.kind else {
-                continue;
-            };
-            if let Some(err_ty) = function.err_ty {
-                errors.insert(item.def_id, MirType::semantic(err_ty));
-            }
-        }
-        errors
-    }
-
-    fn struct_field_map(&self) -> FxHashMap<DefId, Vec<&HirField>> {
-        let mut structs = FxHashMap::default();
-        for item in &self.unit.hir.items {
-            let HirItemKind::Struct(strukt) = &item.kind else {
-                continue;
-            };
-            structs.insert(item.def_id, strukt.fields.iter().collect());
-        }
-        structs
-    }
-
-    fn variant_parent_map(&self) -> FxHashMap<DefId, DefId> {
-        let mut parents = FxHashMap::default();
-        for item in &self.unit.hir.items {
-            let HirItemKind::Enum(enum_item) = &item.kind else {
-                continue;
-            };
-            for variant in &enum_item.variants {
-                parents.insert(variant.def_id, item.def_id);
-            }
-        }
-        parents
-    }
-
-    fn variant_field_map(&self) -> FxHashMap<DefId, Vec<crate::lexer::Symbol>> {
-        let mut fields = FxHashMap::default();
-        for item in &self.unit.hir.items {
-            let HirItemKind::Enum(enum_item) = &item.kind else {
-                continue;
-            };
-            for variant in &enum_item.variants {
-                fields.insert(variant.def_id, variant.fields.iter().map(|field| field.name).collect());
-            }
-        }
-        fields
-    }
-
-    fn provider_import_map(&self) -> FxHashMap<DefId, ProviderImport> {
-        let mut providers = FxHashMap::default();
-        for item in &self.unit.hir.items {
-            let HirItemKind::Import(import) = &item.kind else {
-                continue;
-            };
-            for import_item in &import.items {
-                providers.insert(
-                    import_item.def_id,
-                    ProviderImport { module: vec![import.path], item: import_item.name },
-                );
-            }
-        }
-        providers
-    }
-
     fn validation_context(&self) -> MirValidationContext<'_> {
-        let mut context = MirValidationContext::new(&self.unit.types);
-        for item in &self.unit.hir.items {
-            match &item.kind {
-                HirItemKind::Function(function) => {
-                    if let Some(return_ty) = function.ret_ty {
-                        context.functions.insert(
-                            item.def_id,
-                            MirFunctionSignature {
-                                params: function
-                                    .params
-                                    .iter()
-                                    .map(|param| MirType::semantic(param.ty))
-                                    .collect(),
-                                return_ty: MirType::semantic(return_ty),
-                                error_ty: function.err_ty.map(MirType::semantic),
-                            },
-                        );
-                    }
-                }
-                HirItemKind::Struct(strukt) => {
-                    let mut fields = FxHashMap::default();
-                    for field in &strukt.fields {
-                        if !field.is_static {
-                            fields.insert(field.name, MirType::semantic(field.ty));
-                        }
-                    }
-                    context.struct_fields.insert(item.def_id, fields);
-                }
-                HirItemKind::Enum(enum_item) => {
-                    for variant in &enum_item.variants {
-                        let mut fields = FxHashMap::default();
-                        for field in &variant.fields {
-                            fields.insert(field.name, MirType::semantic(field.ty));
-                        }
-                        context.variant_fields.insert(variant.def_id, fields);
-                    }
-                }
-                _ => {}
-            }
-        }
-        context
+        LoweringContextMaps::collect(self.unit).validation
     }
 
     fn lower_entry(&mut self, entry: &HirBlock) {
