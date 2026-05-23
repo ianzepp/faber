@@ -6,14 +6,14 @@ canonical = true
 summary = "Returns a value from a function."
 syntax = "redde <expression>"
 aliases = ["return"]
-related = ["→", "⇥", "ergo", "iace", "tacet"]
+related = ["→", "⇥", "∴", "iace", "tacet"]
 +++
 
 Returns a value from a function.
 
 ```fab
 functio parse(textus input) → numerus ⇥ textus {
-    si input ≡ "" ergo iace "empty"
+    si input ≡ "" ∴ iace "empty"
     redde 42
 }
 ```

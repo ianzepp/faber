@@ -146,8 +146,8 @@ Full coverage of the existing `norma` stdlib surface is not required upfront.
 
 ## Related Documents
 
-- `docs/grammatica/cli.md` — Aspirational design for the declarative CLI annotation surface (the primary way the author expects to write CLI tools in Faber).
-- `docs/grammatica/targets.md` — Existing (older) target compatibility notes.
+- `explain/cli.md` — Current user reference for the declarative CLI annotation surface.
+- `explain/targets.md` — Current target compatibility entry; deeper target notes belong in `EBNF.md` or implementation plans.
 
 ---
 

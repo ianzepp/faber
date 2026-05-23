@@ -19,7 +19,9 @@ examples/
 └── exempla/            # example .fab programs
 
 docs/
-└── grammatica/         # language documentation
+└── ...                 # delivery plans, release notes, and design history
+explain/                # embedded faber explain reference corpus
+EBNF.md                 # formal grammar and spec commentary
 
 scripta/                # shell helper scripts
 ```
@@ -60,7 +62,7 @@ How it works:
 
 - Empty collections need explicit types: `[] ⇢ lista<T>`, `{} ⇢ tabula<K,V>`.
 - Missing type info in codegen is an upstream bug, not a reason to guess in codegen.
-- Prefer `ergo redde` for single-expression returns: `si cond ergo redde x`.
+- Prefer `∴ redde` for single-expression returns: `si cond ∴ redde x`.
 - Use Stroustrup brace style.
 
 ## Commands
@@ -116,7 +118,7 @@ functio greet(name: textus): textus
 itera ex # itera ex items fixum item { }
 itera de # itera de obj fixum key { }
 cura # cura "arena" fixum _ alloc { }
-tempta...cape # tempta { } cape err { }
+fac/cape # fac { } cape err { }
 dum # dum cond { }
 si # si cond { }
 elige # elige val { casu case { } }
@@ -141,7 +143,7 @@ functio stream() → datum
 Use string-template application for formatted strings:
 
 ```fab
-fixum _ greeting = "Hello, §!"(name)
+fixum _ greeting ← "Hello, §!"(name)
 ```
 
 ## Primitive Types

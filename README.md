@@ -16,7 +16,8 @@ The active surface is intentionally narrow: the compiler library, two CLI binari
 | [`stdlib/norma`](stdlib/norma) | Faber standard library definitions with `@ verte` translation metadata |
 | [`hosts/macos-arm64`](hosts/macos-arm64) | Placeholder host runtime for future Faber-produced Wasm components on macOS arm64 |
 | [`examples/exempla`](examples/exempla) | Example Faber programs |
-| [`docs/grammatica`](docs/grammatica) | Language documentation |
+| [`EBNF.md`](EBNF.md) | Formal grammar and spec commentary |
+| [`docs`](docs) | Delivery plans, release notes, and design history |
 | [`scripta`](scripta) | Shell helper scripts |
 
 ## Quick Start
@@ -81,10 +82,14 @@ target = "rust"
 kind = "bin"
 ```
 
-Run `cargo run -p faber -- init hello` to create a starter package. See
-[`docs/grammatica/manifest.md`](docs/grammatica/manifest.md) for the current manifest contract.
+Run `cargo run -p faber -- init hello` to create a starter package. The embedded
+explain entries cover the current package and test contracts:
 
-[`docs/grammatica/test.md`](docs/grammatica/test.md) covers `proba`, `probandum`, and `faber test`.
+```bash
+cargo run -p faber -- explain manifest
+cargo run -p faber -- explain proba
+cargo run -p faber -- explain probandum
+```
 
 ## CLI Roles (v0.35)
 
@@ -135,7 +140,7 @@ numerus aetas
 functio salve(textus name) → textus
 ```
 
-Use [`EBNF.md`](EBNF.md) as the formal grammar source, and [`docs/grammatica`](docs/grammatica) for prose explanations.
+Use [`EBNF.md`](EBNF.md) as the formal grammar and spec-commentary source. Use `faber explain <term>` or the Markdown files in [`explain`](explain) for user-facing reference text.
 
 ## Archive Note
 

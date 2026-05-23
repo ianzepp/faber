@@ -22,7 +22,6 @@ cd "$(dirname "$0")/.."
 surfaces=(
   AGENTS.md
   EBNF.md
-  docs/grammatica
   explain
   examples
   stdlib

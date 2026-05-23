@@ -5,12 +5,12 @@ category = "bitwise"
 canonical = true
 summary = "Shifts the left value right by a number of bits."
 syntax = "<expression> ≫ <expression>"
-aliases = [">>"]
+aliases = ["right shift"]
 related = ["≪"]
 +++
 
 Shifts the left value right by a number of bits.
 
 ```fab
-fixum _ shifted = 16 ≫ 2
+fixum _ shifted ← 16 ≫ 2
 ```

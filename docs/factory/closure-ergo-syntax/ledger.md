@@ -15,7 +15,7 @@
 - AST / visitors / preflight scans: `crates/radix/src/syntax/ast.rs`, `crates/radix/src/syntax/visit.rs`, `crates/radix/src/driver/mod.rs`
 - Lowering and typecheck: `crates/radix/src/hir/lower/expr.rs`, `crates/radix/src/hir/lower/stmt.rs`, `crates/radix/src/semantic/passes/typecheck/call.rs`
 - Faber printer: `crates/radix/src/codegen/faber/expr.rs`
-- Docs and examples: `EBNF.md`, `docs/grammatica/functiones.md`, `docs/grammatica/regimen.md`, `docs/grammatica/importa.md`, `examples/exempla/clausa/clausa.fab`, `examples/exempla/morphologia/morphologia.fab`
+- Docs and examples: `EBNF.md`, `explain/clausura.md`, `explain/therefore.md`, `examples/exempla/clausa/clausa.fab`, `examples/exempla/morphologia/morphologia.fab`
 
 ## Validation
 

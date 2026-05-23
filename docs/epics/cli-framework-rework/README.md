@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Turn the declarative CLI surface described in `docs/grammatica/cli.md` from an aspirational and historical design into an implemented `radix-rs` compiler capability.
+Turn the declarative CLI surface described in the former Grammatica notes into an implemented `radix-rs` compiler capability. The current user reference lives in `explain/cli.md`, `explain/optio.md`, and `explain/operandus.md`.
 
 Phases 1-5 are implemented in the active `radix-rs` compiler. Phase 6 was deferred into future target/runtime
 strategy work, and Phase 7 closes the initial effort with docs, examples, and tests.

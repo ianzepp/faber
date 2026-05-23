@@ -318,6 +318,8 @@ fn expected_legacy_canonical(term: &str) -> &'static str {
         "->" => "→",
         "===" => "est",
         "!==" => "non est",
+        "demum" => "fac",
+        "tempta" => "fac",
         other => panic!("unexpected legacy term {other:?}"),
     }
 }
@@ -332,10 +334,13 @@ fn expected_filename(term: &str, legacy: bool) -> String {
             "->" => "arrow",
             "===" => "est",
             "!==" => "non-est",
+            "demum" => "demum",
+            "tempta" => "tempta",
             other => panic!("unexpected legacy term {other:?}"),
         }
     } else {
         match term {
+            "=" => "equals",
             "≡" => "eq-eq",
             "≠" => "bang-eq",
             "≤" => "lt-eq",
@@ -368,6 +373,7 @@ fn expected_filename(term: &str, legacy: bool) -> String {
             "⊚" => "pipe-eq",
             "@" => "at",
             "§" => "section",
+            "∴" => "therefore",
             "non est" => "non-est",
             "solum_in" => "solum-in",
             other => other,

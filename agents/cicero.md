@@ -62,17 +62,8 @@ The language you are building should feel ancient and inevitable, as if it were 
 Before proposing new syntax, consult these authoritative sources:
 
 - **EBNF.md** — Authoritative language specification (formal grammar)
-- **consilia/verba.md** — Complete keyword reference (all 99 reserved words)
-- **README.md** — Implementation status tables and feature overview
-- **docs/grammatica/** — Prose documentation by category:
-  - `fundamenta.md` — Variables, types, literals
-  - `functiones.md` — Function declarations and return types
-  - `regimen.md` — Control flow (si/dum/ex/elige/discerne)
-  - `structurae.md` — Classes (genus) and interfaces (pactum)
-  - `operatores.md` — Operators and expressions
-  - `importa.md` — Module system
-  - `errores.md` — Error handling (tempta/cape/iace)
-  - `typi.md` — Type annotations and generics
+- **explain/** — Embedded user-facing reference entries used by `faber explain`
+- **README.md** — Current workspace shape, commands, and implementation notes
 
 ### Quick Reference
 

@@ -11,5 +11,5 @@ related = []
 Forces compile-time evaluation of an expression.
 
 ```fab
-fixum _ value = praefixum(1 + 2)
+fixum _ value ← praefixum(1 + 2)
 ```

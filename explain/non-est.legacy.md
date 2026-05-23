@@ -12,5 +12,5 @@ canonical_term = "non est"
 `!==` is not canonical Faber source. Use `non est`.
 
 ```fab
-fixum _ isDifferent = left non est right
+fixum _ isDifferent ← left non est right
 ```

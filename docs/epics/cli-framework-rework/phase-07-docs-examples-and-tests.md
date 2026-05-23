@@ -2,11 +2,11 @@
 
 ## Goal
 
-Move `docs/grammatica/cli.md` from aspiration to accurate user documentation now that Phases 1-5 are implemented.
+Move the old CLI design notes into accurate `explain/` entries now that Phases 1-5 are implemented.
 
 ## Scope
 
-- Update `docs/grammatica/cli.md` to distinguish shipped behavior from remaining plans.
+- Update `explain/cli.md`, `explain/optio.md`, and `explain/operandus.md` to distinguish shipped behavior from remaining plans.
 - Promote working examples under `examples/exempla/cli`.
 - Add compiler tests for parsing, validation, diagnostics, and generated output.
 - Add end-to-end tests for executable CLI behavior.

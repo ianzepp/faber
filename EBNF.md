@@ -2,6 +2,8 @@
 
 Formal grammar for the Faber programming language. The active implementation is the root Rust workspace: `crates/faber` for package/project tooling and `crates/radix` for the compiler pipeline.
 
+Documentation contract: this file is the canonical grammar and spec-commentary surface. The embedded `explain/` corpus is the canonical user-facing reference used by `faber explain`. Do not recreate a separate prose grammar surface in `docs/`.
+
 ---
 
 ## Program Structure
@@ -14,7 +16,7 @@ statement   := directiveDecl | importDecl | varDecl | funcDecl | genusDecl | pac
              | eligeStmt | discerneStmt | guardStmt | curaStmt | facBlockStmt
              | returnStmt | breakStmt | continueStmt | noopStmt | throwStmt
              | assertStmt | outputStmt | adStmt | incipitStmt
-             | extractStmt
+             | incipietStmt | extractStmt
              | probandumDecl | probaStmt | blockStmt | exprStmt
 blockStmt   := '{' statement* '}'
 ```
@@ -41,10 +43,10 @@ funcDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClaus
 paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? ('ut' IDENTIFIER)? ('vel' expression)?
-funcModifier := 'curata' IDENTIFIER ('ut' IDENTIFIER)? | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
+funcModifier := 'argumenta' IDENTIFIER | 'curata' IDENTIFIER ('ut' IDENTIFIER)? | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
 returnClause := '→' typeAnnotation alternateExitClause?
 alternateExitClause := '⇥' typeAnnotation
-ergoToken      := 'ergo' | '∴'
+ergoToken      := '∴' | 'ergo'
 clausuraExpr   := compactClausuraExpr | legacyClausuraExpr
 compactClausuraExpr := clausuraSignature ergoToken (expression | closureFacBlock)
 clausuraSignature := (clausuraParam | '(' clausuraParams? ')') ('→' typeAnnotation alternateExitClause?)?
@@ -59,6 +61,8 @@ clausuraParam  := typeAnnotation IDENTIFIER
 - Post-name markers: `sponte` (voluntary/optional provision), `fixus` (fixed after first assignment); canonical order `sponte fixus`
 - `ceteri` marks rest parameter
 - `curata NAME ('ut' LOCAL)?` declares a Zig allocator requirement; `LOCAL` is the function-body alias
+- `∴` is the canonical compact therefore marker; Latin `ergo` is accepted with the same semantics.
+- Compact closure block bodies must use `fac { ... }`; a closure-local `fac` body may attach `cape`, but cannot use postfix `dum`.
 
 ### Classes
 
@@ -75,7 +79,7 @@ annotation   := '@' IDENTIFIER+ | stdlibAnnotation
 ```ebnf
 annotation       := '@' IDENTIFIER+ | stdlibAnnotation | cliAnnotation
 stdlibAnnotation := innatumAnnotation | subsidiaAnnotation | radixAnnotation | verteAnnotation | externaAnnotation
-cliAnnotation    := imperiumAnnotation | optioAnnotation | operandusAnnotation | cliAnnotationSimple
+cliAnnotation    := cliProgramAnnotation | imperiumAnnotation | optioAnnotation | operandusAnnotation | cliAnnotationSimple
 
 innatumAnnotation  := '@' 'innatum' targetMapping (',' targetMapping)*
 subsidiaAnnotation := '@' 'subsidia' targetMapping (',' targetMapping)*
@@ -83,10 +87,13 @@ radixAnnotation    := '@' 'radix' IDENTIFIER (',' IDENTIFIER)*
 verteAnnotation    := '@' 'verte' IDENTIFIER (STRING | '(' IDENTIFIER (',' IDENTIFIER)* ')' '→' STRING)
 externaAnnotation  := '@' 'externa'
 
-imperiumAnnotation := '@' 'imperium' | '@' 'cli'
-optioAnnotation    := '@' 'optio' IDENTIFIER ('brevis' STRING)? ('longum' STRING)?
-                      ('bivalens')? ('descriptio' STRING)?
-operandusAnnotation := '@' 'operandus' ('ceteri')? IDENTIFIER IDENTIFIER ('descriptio' STRING)?
+cliProgramAnnotation := '@' 'cli' STRING
+imperiumAnnotation := '@' 'imperium' STRING
+optioAnnotation    := '@' 'optio' IDENTIFIER optioModifier*
+optioModifier      := 'brevis' STRING | 'longum' STRING | 'typus' typeAnnotation
+                    | 'descriptio' STRING | 'ubique' | 'vel' expression
+operandusAnnotation := '@' 'operandus' ('ceteri')? typeAnnotation IDENTIFIER operandusModifier*
+operandusModifier  := 'descriptio' STRING | 'ubique' | 'vel' expression
 cliAnnotationSimple := '@' 'futura' | '@' 'cursor' | '@' 'tag' | '@' 'solum' | '@' 'omitte'
                       | '@' 'metior' | '@' 'publica' | '@' 'protecta' | '@' 'privata'
 
@@ -98,11 +105,12 @@ targetMapping := IDENTIFIER STRING
 - `@ radix` declares morphological stem and valid verb forms
 - `@ verte` defines codegen transformation (method name or template)
 - `@ externa` marks declarations as externally provided (no initializer/body required)
-- `@ imperium` / `@ cli` marks a function as a CLI command entry point
-- `@ optio` defines a CLI flag option
-- `@ operandus` defines a CLI positional argument
-- `@ futura` marks function as async (equivalent to `futura` modifier)
-- `@ cursor` marks function as generator (equivalent to `cursor` modifier)
+- `@ cli "NAME"` marks an `incipit` entry as a CLI program
+- `@ imperium "NAME"` marks a function as a CLI command entry point
+- `@ optio NAME ...` defines a CLI option; use `typus bivalens` for boolean flags
+- `@ operandus [ceteri] TYPE NAME ...` defines a CLI positional argument
+- `@ futura` marks a function as async
+- `@ cursor` marks a function as generator
 - `@ publica`, `@ protecta`, and `@ privata` are still parsed as annotations, but the active `radix-rs` contract does not treat them as a stable genus member-visibility model
 
 - `sub` = extends, `implet` = implements
@@ -262,7 +270,7 @@ elseArm    := (blockStmt | ergoToken statement) catchClause?
 ```
 
 - `si` = if, `sin` = else-if, `secus` = else
-- `ergo`/`∴` for one-liners, including `ergo redde`, `∴ iace`, `ergo mori`, and `∴ tacet`
+- `∴`/`ergo` for one-statement bodies, including `∴ redde`, `∴ iace`, `∴ mori`, and `∴ tacet`
 - `tacet` for explicit no-op (from musical notation: "it is silent")
 
 ### Loops
@@ -369,9 +377,9 @@ cast       := call ('⇢' typeAnnotation | conversio)*
 conversio  := '⇒' typeAnnotation typeParams? ('vel' unary)?
 ```
 
-**Type conversion (`⇢` / verte) — compile-time cast:**
+**Type-directed inhabitation (`⇢` / verte):**
 
-The `⇢` glyph (U+21E2, "rightwards dashed arrow") is the unified type conversion operator. The compiler dispatches on the target type:
+The `⇢` glyph (U+21E2, "rightwards dashed arrow") makes a value inhabit the target type shape. The compiler dispatches on the target type:
 
 - Primitive/alias → cast (no runtime effect): `data ⇢ textus` → TypeScript: `(data as string)`
 - Built-in collection → native construction: `[] ⇢ lista<T>` → typed empty array, `{} ⇢ tabula<K,V>` → `new Map<K,V>()`
@@ -494,8 +502,8 @@ praeparaBlock := ('praepara' | 'praeparabit' | 'postpara' | 'postparabit') 'omni
 ## CLI Framework
 
 ```ebnf
-cliDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
-cliAnnotation := '@' ('imperium' | 'cli' | 'optio' | 'operandus')
+cliDecl       := annotation* (incipitStmt | funcDecl)
+cliAnnotation := cliProgramAnnotation | imperiumAnnotation | optioAnnotation | operandusAnnotation
 ```
 
 Faber supports building CLI applications with automatic argument parsing and help generation.
@@ -503,8 +511,9 @@ Faber supports building CLI applications with automatic argument parsing and hel
 ### CLI Entry Point
 
 ```fab
-@ imperium
-functio main() {
+@ cli "faber"
+@ optio verbose longum "verbose" typus bivalens
+incipit argumenta args {
     # CLI framework automatically parses arguments
 }
 ```
@@ -512,17 +521,11 @@ functio main() {
 ### CLI Options and Arguments
 
 ```fab
-@ imperium
-functio deploy(
-    @ optio target brevis "t" longum "target" descriptio "Deployment target"
-    textus target,
-
-    @ optio verbose brevis "v" longum "verbose" bivalens descriptio "Enable verbose output"
-    bivalens verbose,
-
-    @ operandus textus file descriptio "File to deploy"
-    textus file
-) {
+@ imperium "deploy"
+@ optio target brevis "t" longum "target" typus textus descriptio "Deployment target"
+@ optio verbose brevis "v" longum "verbose" typus bivalens descriptio "Enable verbose output"
+@ operandus textus file descriptio "File to deploy"
+functio deploy() argumenta args {
     # Arguments automatically parsed and passed
 }
 ```
@@ -536,7 +539,7 @@ adStmt        := 'ad' STRING '(' argumentList ')' adBinding? blockStmt? catchCla
 adBinding     := '→' typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
 ```
 
-**Note:** `ad` statement is parsed but codegen is not yet implemented. See `consilia/futura/ad.md`.
+**Note:** `ad` statement is parsed but codegen is not yet implemented.
 
 ---
 
@@ -569,7 +572,9 @@ dslVerb       := 'prima' | 'ultima' | 'summa'
 facBlockStmt := 'fac' blockStmt catchClause? ('dum' expression)?
 ```
 
-- Creates scope, optionally with catch or do-while
+- `fac { ... }` executes the scoped block once.
+- `fac { ... } cape err { ... }` is the canonical local recoverable-error boundary.
+- `fac { ... } dum condition` is the post-test loop form; postfix `dum` attaches only to `fac`, not arbitrary preceding blocks.
 
 ---
 
@@ -624,8 +629,9 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `iacit`                       | throws modifier     |
 |                     | `mori`                        | panic               |
 |                     | `adfirma`                     | assert              |
-| **Async**           | `futura`                      | async modifier      |
-|                     | `cede`                        | await               |
+| **Async**           | `@ futura`                    | async annotation    |
+|                     | `@ cursor`                    | generator annotation |
+|                     | `cede`                        | await/yield by context |
 | **Boolean**         | `verum`                       | true                |
 |                     | `falsum`                      | false               |
 |                     | `et`                          | and                 |
@@ -634,7 +640,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `vel`                         | nullish coalescing  |
 | **Objects**         | `ego`                         | this/self           |
 |                     | `finge`                       | construct variant   |
-| **Type Cast**       | `⇢` | compile-time type cast / native construction / instantiation |
+| **Type Shape**      | `⇢` | compile-time type cast / native construction / instantiation |
 | **Type Conversion** | `⇒ target`                    | runtime value conversion |
 |                     | `⇒ numerus`                   | parse to integer    |
 |                     | `⇒ fractus`                   | parse to float      |

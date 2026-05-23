@@ -6,7 +6,7 @@ canonical = true
 summary = "Asserts that a condition is true at runtime."
 syntax = "adfirma <expression> [, <message>]"
 aliases = ["assert"]
-related = ["proba", "tempta"]
+related = ["proba", "fac", "cape"]
 +++
 
 Asserts that a condition is true at runtime.

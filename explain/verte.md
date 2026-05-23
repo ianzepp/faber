@@ -3,14 +3,15 @@ term = "⇢"
 kind = "operator"
 category = "conversion"
 canonical = true
-summary = "Converts a value to a target type or target-specific representation."
+summary = "Makes a value inhabit a target type shape through type-directed cast, construction, or native realization."
 syntax = "<expression> ⇢ <type>"
 aliases = ["verte", "cast"]
 related = ["⇒"]
 +++
 
-Converts a value to a target type or target-specific representation.
+`⇢` is a compile-time type-directed inhabitation operator. The target type determines the mode: primitive or alias casts, empty native collection construction, or `genus` instantiation from object-shaped data.
 
 ```fab
-fixum numerus n = "42" ⇢ numerus
+fixum _ emptyNumbers ← [] ⇢ lista<numerus>
+fixum _ point ← { x: 10, y: 20 } ⇢ Point
 ```

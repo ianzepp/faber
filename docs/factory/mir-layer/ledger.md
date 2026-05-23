@@ -448,7 +448,7 @@ Status: complete.
 
 Implemented artifacts:
 
-- `EBNF.md` and `docs/grammatica/errores.md` now describe structured `cape` attachment and reject `tempta` as legacy syntax.
+- `EBNF.md` and `explain/cape.md` now describe structured `cape` attachment and reject `tempta` as legacy syntax.
 - `secus { ... } cape err { ... }` now parses as an arm-scoped handler.
 - Bare `{ ... } cape err { ... }` remains rejected.
 - Parser diagnostics reject `tempta` with a migration note to `fac { ... } cape`.

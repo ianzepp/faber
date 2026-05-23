@@ -11,5 +11,5 @@ related = ["!.", "!("]
 Performs a non-null indexed access.
 
 ```fab
-fixum _ first = items![0]
+fixum _ first ← items![0]
 ```

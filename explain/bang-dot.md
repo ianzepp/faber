@@ -11,5 +11,5 @@ related = ["![", "!("]
 Performs a non-null member access.
 
 ```fab
-fixum _ name = person!.nomen
+fixum _ name ← person!.nomen
 ```

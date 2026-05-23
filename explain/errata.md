@@ -5,7 +5,7 @@ category = "function"
 canonical = true
 summary = "Marks a function parameter or binding as carrying an error value."
 syntax = "functio <name>(...) errata <ident> → <type>"
-related = ["tempta", "cape", "iace"]
+related = ["⇥", "cape", "iace"]
 +++
 
 Marks a function parameter or binding as carrying an error value.

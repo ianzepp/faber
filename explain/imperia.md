@@ -8,7 +8,7 @@ syntax = "@ imperia <path>"
 related = ["cli", "imperium"]
 +++
 
-Marks a module as a mounted command tree.
+Generic metadata for a mounted command tree. The active parser keeps `@ imperia` as a generic annotation; command lowering currently centers on structured `@ cli`, `@ imperium`, `@ optio`, and `@ operandus`.
 
 ```fab
 @ imperia "jobs" ex jobsModulum

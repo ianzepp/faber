@@ -37,7 +37,7 @@ Relevant files already exist:
 - `crates/faber/src/main.rs`
 - `crates/radix/src/parser/decl.rs`
 - `crates/radix/src/codegen/rust/`
-- `docs/grammatica/test.md`
+- `explain/proba.md` and `explain/probandum.md`
 
 Known blockers at plan creation:
 

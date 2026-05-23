@@ -9,10 +9,15 @@ aliases = ["class", "struct"]
 related = ["pactum", "abstractus", "implet", "sub"]
 +++
 
-Declares a concrete type with fields and methods.
+Declares a concrete type with type-first fields and methods.
 
 ```fab
 genus Persona {
-fixum textus nomen
+    textus nomen
+    numerus aetas: 0
+
+    functio salve() → textus {
+        redde "Salve, §!"(ego.nomen)
+    }
 }
 ```

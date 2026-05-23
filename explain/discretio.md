@@ -13,7 +13,7 @@ Declares a tagged union with variant payloads.
 
 ```fab
 discretio Resultatus<T> {
-Ok { T valor },
-Err { textus nuntius }
+    Ok { T valor },
+    Err { textus nuntius }
 }
 ```

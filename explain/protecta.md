@@ -3,13 +3,13 @@ term = "protecta"
 kind = "keyword"
 category = "modifier"
 canonical = true
-summary = "Marks a declaration or annotation as protected."
+summary = "Parsed visibility annotation without a stable active member-visibility contract."
 syntax = "@ protecta"
 aliases = ["protected"]
 related = ["publica", "privata"]
 +++
 
-Marks a declaration or annotation as protected.
+`@ protecta` is parsed as annotation metadata, but the active compiler does not yet expose a stable protected-member visibility model.
 
 ```fab
 @ protecta

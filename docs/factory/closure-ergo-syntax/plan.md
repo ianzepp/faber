@@ -272,7 +272,7 @@ If `clausura` remains as a compatibility spelling, generated Faber output should
 | 3 | Compact closure parser | Parse inferred, typed, multi-param, explicit-signature, and `∴ fac { ... }` block closure forms. | Parser tests prove the new forms and preserve old compatibility forms. |
 | 4 | Contextual closure typing audit | Verify expected callable signatures still flow into closure checking, especially method-call arguments. | Existing `_` closure inference remains green; any discovered gaps are fixed or recorded. |
 | 5 | Codegen and printer | Update target codegen as needed and make Faber output prefer the new syntax. | Rust/TS/Go/Faber closure tests pass for expression and `fac` block forms. |
-| 6 | Docs and examples | Update EBNF, grammatica docs, stdlib examples, and migration notes. | Docs no longer teach `clausura ... : ...` as preferred inline syntax. |
+| 6 | Docs and examples | Update EBNF, explain docs, stdlib examples, and migration notes. | Docs no longer teach `clausura ... : ...` as preferred inline syntax. |
 | 7 | Error-channel closure follow-up | Validate fallible closure signatures and expected fallible callable contexts after syntax is stable. | Positive and negative tests cover `→ ... ⇥ ...` closure signatures, or a follow-up plan records remaining semantic work. |
 | 8 | Validation | Run full repository checks. | `./scripta/ci` passes. |
 

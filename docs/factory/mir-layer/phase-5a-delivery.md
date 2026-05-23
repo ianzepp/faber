@@ -80,7 +80,7 @@ The invalid example should fail because `iace` has no declared alternate-exit pa
 9. Typecheck `HirExprKind::Throw` against the current alternate-exit type.
 10. Add diagnostics for `iace` without `⇥ Error`.
 11. Add diagnostics for failable calls used as plain values until caller handling is defined.
-12. Update `EBNF.md` and `docs/grammatica/functiones.md`.
+12. Update `EBNF.md` and `explain/functio.md`.
 
 ## Checkpoints
 

@@ -42,11 +42,19 @@ projects:
     deploy: none
     status: active
 
-  - name: grammatica
-    path: docs/grammatica
+  - name: explain
+    path: explain
     type: documentation
     language: markdown
-    description: Prose language documentation and tutorials.
+    description: Embedded user-facing reference corpus for faber explain.
+    deploy: none
+    status: active
+
+  - name: ebnf
+    path: EBNF.md
+    type: documentation
+    language: markdown
+    description: Formal grammar and spec commentary for the active language surface.
     deploy: none
     status: active
 

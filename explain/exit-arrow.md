@@ -14,7 +14,7 @@ Use `⇥` after a normal `→` return type to declare the type carried by recove
 
 ```fab
 functio divide(numerus a, numerus b) → numerus ⇥ textus {
-    si b ≡ 0 ergo iace "division by zero"
+    si b ≡ 0 ∴ iace "division by zero"
     redde a / b
 }
 ```

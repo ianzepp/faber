@@ -11,5 +11,5 @@ related = ["ab"]
 Filters a collection pipeline by predicate-like property.
 
 ```fab
-fixum _ names = ab users ubi activus, prima
+fixum _ names ← ab users ubi activus, prima
 ```

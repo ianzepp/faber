@@ -8,11 +8,12 @@ syntax = "@ futura"
 related = ["cursor", "cede"]
 +++
 
-Marks a function as asynchronous.
+Marks a function as asynchronous. `@ futura` is an annotation on the declaration, not a post-function modifier.
 
 ```fab
 @ futura
 functio fetchData() → textus {
-redde "data"
+    fixum _ data ← cede loadData()
+    redde data
 }
 ```

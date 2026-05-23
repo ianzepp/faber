@@ -15,7 +15,7 @@ Use `→` after a parameter list when a declaration or closure spells out its no
 
 ```fab
 functio duplica(numerus n) → numerus ⇥ textus {
-    si n < 0 ergo iace "negative"
+    si n < 0 ∴ iace "negative"
     redde n * 2
 }
 ```

@@ -7,7 +7,7 @@ summary = "Groups early-exit guard checks before the main body of a function."
 syntax = "custodi <block>"
 examples = ["examples/exempla/custodi/custodi.fab"]
 aliases = ["guard"]
-related = ["si", "ergo", "redde"]
+related = ["si", "∴", "redde"]
 +++
 
 Use `custodi` to place validation and early returns at the top of a function.

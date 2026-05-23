@@ -11,5 +11,5 @@ related = ["ubi", "prima", "ultima", "summa"]
 Starts a collection pipeline expression.
 
 ```fab
-fixum _ names = ab users activus, prima
+fixum _ names ← ab users activus, prima
 ```

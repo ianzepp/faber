@@ -12,5 +12,5 @@ canonical_term = "est"
 `===` is not canonical Faber source. Use `est`.
 
 ```fab
-fixum _ isSame = left est right
+fixum _ isSame ← left est right
 ```

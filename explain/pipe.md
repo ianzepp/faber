@@ -12,5 +12,5 @@ related = ["∧", "⊻", "¬"]
 Combines two expressions with logical or.
 
 ```fab
-fixum _ either = falsum ∨ verum
+fixum _ either ← falsum ∨ verum
 ```

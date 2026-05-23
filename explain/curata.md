@@ -8,7 +8,7 @@ syntax = "functio <name>(...) curata <required> [ut <local>] → <type>"
 related = ["cura", "arena"]
 +++
 
-Marks a function as requiring a Zig allocator binding. The optional `ut` alias sets the local name visible inside the function body.
+Marks a function as requiring a Zig allocator binding. The optional `ut` alias sets the local name visible inside the function body; non-Zig targets may ignore allocator threading.
 
 ```fab
 functio greet(textus name) curata alloc ut a → textus {

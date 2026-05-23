@@ -9,8 +9,12 @@ aliases = ["await", "yield"]
 related = ["futura", "cursor"]
 +++
 
-Awaits a promise or yields a value depending on context.
+Awaits a promise or yields a value depending on context. This dual meaning is known design debt until the morphologia/conjugation model settles.
 
 ```fab
-fixum _ data = cede fetchData()
+@ futura
+functio load() → textus {
+    fixum _ data ← cede fetchData()
+    redde data
+}
 ```
