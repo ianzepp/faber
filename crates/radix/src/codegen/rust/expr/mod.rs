@@ -8,11 +8,11 @@
 //!
 //! PROPAGATION CONTEXT
 //! ===================
-//! - `in_failable_fn` means Rust `?` is syntactically legal for calls known to
-//!   return a fallible value.
-//! - `in_entry` prevents entrypoint code from growing an implicit fallible
+//! - `can_propagate_failure` means Rust `?` is syntactically legal for calls
+//!   known to return a fallible value.
+//! - `inside_entrypoint` prevents entrypoint code from growing an implicit fallible
 //!   return contract; throws and failable calls must stay entry-compatible.
-//! - `suppress_error_propagation` is a local override used by catch-like
+//! - `propagation_suppressed` is a local override used by catch-like
 //!   constructs so a handled body does not leak `?` into the surrounding Rust.
 //!
 //! FAILURE POLICY
@@ -53,6 +53,91 @@ use ops::*;
 use option::*;
 use pattern::*;
 use verte::*;
+
+#[derive(Clone, Copy)]
+pub(super) struct ExprEmitPolicy {
+    pub(super) can_propagate_failure: bool,
+    pub(super) inside_entrypoint: bool,
+    pub(super) propagation_suppressed: bool,
+}
+
+impl ExprEmitPolicy {
+    pub(super) fn new(can_propagate_failure: bool, inside_entrypoint: bool, propagation_suppressed: bool) -> Self {
+        Self { can_propagate_failure, inside_entrypoint, propagation_suppressed }
+    }
+
+    pub(super) fn permits_question_mark(self) -> bool {
+        self.can_propagate_failure && !self.inside_entrypoint && !self.propagation_suppressed
+    }
+}
+
+pub(super) struct ExprEmitter<'a, 'cg> {
+    pub(super) codegen: &'a RustCodegen<'cg>,
+    pub(super) types: &'a TypeTable,
+    pub(super) writer: &'a mut CodeWriter,
+    pub(super) policy: ExprEmitPolicy,
+}
+
+impl<'a, 'cg> ExprEmitter<'a, 'cg> {
+    pub(super) fn new(
+        codegen: &'a RustCodegen<'cg>,
+        types: &'a TypeTable,
+        writer: &'a mut CodeWriter,
+        policy: ExprEmitPolicy,
+    ) -> Self {
+        Self { codegen, types, writer, policy }
+    }
+
+    pub(super) fn expr(&mut self, expr: &HirExpr) -> Result<(), CodegenError> {
+        generate_expr(
+            self.codegen,
+            expr,
+            self.types,
+            self.writer,
+            self.policy.can_propagate_failure,
+            self.policy.inside_entrypoint,
+            self.policy.propagation_suppressed,
+        )
+    }
+
+    pub(super) fn expr_unwrapped(&mut self, expr: &HirExpr) -> Result<(), CodegenError> {
+        generate_expr_unwrapped(
+            self.codegen,
+            expr,
+            self.types,
+            self.writer,
+            self.policy.can_propagate_failure,
+            self.policy.inside_entrypoint,
+            self.policy.propagation_suppressed,
+        )
+    }
+
+    pub(super) fn expr_as_type(&mut self, expr: &HirExpr, target_ty: TypeId) -> Result<(), CodegenError> {
+        generate_expr_as_type(
+            self.codegen,
+            expr,
+            target_ty,
+            self.types,
+            self.writer,
+            self.policy.can_propagate_failure,
+            self.policy.inside_entrypoint,
+            self.policy.propagation_suppressed,
+        )
+    }
+
+    pub(super) fn expr_as_optional_target(&mut self, expr: &HirExpr, value_ty: TypeId) -> Result<(), CodegenError> {
+        generate_expr_as_optional_target(
+            self.codegen,
+            expr,
+            value_ty,
+            self.types,
+            self.writer,
+            self.policy.can_propagate_failure,
+            self.policy.inside_entrypoint,
+            self.policy.propagation_suppressed,
+        )
+    }
+}
 
 /// Generate one Rust expression from typed HIR.
 ///
@@ -124,29 +209,22 @@ pub fn generate_expr(
             )?;
         }
         HirExprKind::Call(callee, args) => {
-            generate_call_expr(
+            let mut emitter = ExprEmitter::new(
                 codegen,
-                callee,
-                args,
                 types,
                 w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+                ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+            );
+            generate_call_expr(&mut emitter, callee, args)?;
         }
         HirExprKind::MethodCall(receiver, method, args) => {
-            generate_method_call_expr(
+            let mut emitter = ExprEmitter::new(
                 codegen,
-                receiver,
-                *method,
-                args,
                 types,
                 w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+                ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+            );
+            generate_method_call_expr(&mut emitter, receiver, *method, args)?;
         }
         HirExprKind::Field(obj, field) => {
             generate_field_expr(

@@ -4,16 +4,16 @@ use super::*;
 
 #[allow(clippy::too_many_arguments)]
 pub(super) fn try_generate_stdlib_method_call(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     receiver: &HirExpr,
     method: Symbol,
     args: &[HirCallArg],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<bool, CodegenError> {
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let w = &mut *emitter.writer;
+    let policy = emitter.policy;
+
     // TARGET: stdlib methods are recognized by receiver type, not by every
     // method name globally. This keeps ordinary user methods free to share
     // Latin names without being captured by the Rust backend.
@@ -31,9 +31,9 @@ pub(super) fn try_generate_stdlib_method_call(
             args,
             types,
             w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
+            policy.can_propagate_failure,
+            policy.inside_entrypoint,
+            policy.propagation_suppressed,
         ),
         Type::Primitive(Primitive::Textus) => generate_textus_method(
             codegen,
@@ -42,9 +42,9 @@ pub(super) fn try_generate_stdlib_method_call(
             args,
             types,
             w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
+            policy.can_propagate_failure,
+            policy.inside_entrypoint,
+            policy.propagation_suppressed,
         ),
         Type::Map(key_ty, value_ty) => generate_tabula_method(
             codegen,
@@ -55,9 +55,9 @@ pub(super) fn try_generate_stdlib_method_call(
             args,
             types,
             w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
+            policy.can_propagate_failure,
+            policy.inside_entrypoint,
+            policy.propagation_suppressed,
         ),
         _ => Ok(false),
     }

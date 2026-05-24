@@ -27,186 +27,97 @@ use args::*;
 use runtime::*;
 use stdlib::*;
 
-#[allow(clippy::too_many_arguments)]
 pub(super) fn generate_call_expr(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     callee: &HirExpr,
     args: &[HirCallArg],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     // Only direct path calls carry stable failable-def metadata here. Other
     // callable shapes are emitted without speculative propagation.
     if let HirExprKind::Path(def_id) = callee.kind {
-        if let Some(variant) = codegen.variant_info(def_id) {
-            return generate_variant_constructor_expr(
-                codegen,
-                def_id,
-                variant,
-                args,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            );
+        if let Some(variant) = emitter.codegen.variant_info(def_id) {
+            return generate_variant_constructor_expr(emitter, def_id, variant, args);
         }
     }
 
-    let is_failable_call = matches!(&callee.kind, HirExprKind::Path(def_id) if codegen.is_failable_def(*def_id));
-    generate_expr(codegen, callee, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write("(");
-    if let Some(spread) = direct_spread_call_arity(codegen, callee, args) {
-        generate_spread_call_args(
-            codegen,
-            &args[0].expr,
-            spread,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?;
+    let is_failable_call =
+        matches!(&callee.kind, HirExprKind::Path(def_id) if emitter.codegen.is_failable_def(*def_id));
+    emitter.expr(callee)?;
+    emitter.writer.write("(");
+    if let Some(spread) = direct_spread_call_arity(emitter.codegen, callee, args) {
+        generate_spread_call_args(emitter, &args[0].expr, spread)?;
     } else if let HirExprKind::Path(def_id) = callee.kind {
-        if let Some(params) = codegen.function_params(def_id) {
-            generate_direct_call_args_with_optional_params(
-                codegen,
-                params,
-                args,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
-        } else if let Some(target_tys) = call_arg_target_types(callee, types) {
-            generate_call_args_with_target_types(
-                codegen,
-                &target_tys,
-                args,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+        if let Some(params) = emitter.codegen.function_params(def_id) {
+            generate_direct_call_args_with_optional_params(emitter, params, args)?;
+        } else if let Some(target_tys) = call_arg_target_types(callee, emitter.types) {
+            generate_call_args_with_target_types(emitter, &target_tys, args)?;
         } else {
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
-                    w.write(", ");
+                    emitter.writer.write(", ");
                 }
-                generate_call_arg_expr(
-                    codegen,
-                    &arg.expr,
-                    None,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                )?;
+                generate_call_arg_expr(emitter, &arg.expr, None)?;
             }
         }
     } else {
         for (i, arg) in args.iter().enumerate() {
             if i > 0 {
-                w.write(", ");
+                emitter.writer.write(", ");
             }
-            generate_call_arg_expr(
-                codegen,
-                &arg.expr,
-                None,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_call_arg_expr(emitter, &arg.expr, None)?;
         }
     }
-    w.write(")");
-    if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
-        w.write("?");
+    emitter.writer.write(")");
+    if is_failable_call && emitter.policy.permits_question_mark() {
+        emitter.writer.write("?");
     }
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_variant_constructor_expr(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
     variant: &super::super::VariantInfo,
     args: &[HirCallArg],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write(codegen.resolve_def(variant.enum_def));
-    w.write("::");
-    w.write(codegen.resolve_def(def_id));
+    emitter
+        .writer
+        .write(emitter.codegen.resolve_def(variant.enum_def));
+    emitter.writer.write("::");
+    emitter.writer.write(emitter.codegen.resolve_def(def_id));
 
     if variant.fields.is_empty() {
         return Ok(());
     }
 
-    w.write(" { ");
+    emitter.writer.write(" { ");
     for (idx, field) in variant.fields.iter().enumerate() {
         if idx > 0 {
-            w.write(", ");
+            emitter.writer.write(", ");
         }
-        w.write(codegen.resolve_symbol(*field));
-        w.write(": ");
+        emitter.writer.write(emitter.codegen.resolve_symbol(*field));
+        emitter.writer.write(": ");
         let arg = args
             .iter()
             .find(|arg| arg.name == Some(*field))
             .or_else(|| args.get(idx));
         if let Some(arg) = arg {
-            generate_call_arg_expr(
-                codegen,
-                &arg.expr,
-                None,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_call_arg_expr(emitter, &arg.expr, None)?;
         } else {
-            w.write("Default::default()");
+            emitter.writer.write("Default::default()");
         }
     }
-    w.write(" }");
+    emitter.writer.write(" }");
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 pub(super) fn generate_method_call_expr(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     receiver: &HirExpr,
     method: Symbol,
     args: &[HirCallArg],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if try_generate_stdlib_method_call(
-        codegen,
-        receiver,
-        method,
-        args,
-        types,
-        w,
-        in_failable_fn,
-        in_entry,
-        suppress_error_propagation,
-    )? {
+    if try_generate_stdlib_method_call(emitter, receiver, method, args)? {
         return Ok(());
     }
 
@@ -214,66 +125,42 @@ pub(super) fn generate_method_call_expr(
     // WHY: Built-in pactum imports typecheck as module-like values in Faber,
     // but Rust links them as functions in the norma runtime crate.
     if let HirExprKind::Path(def_id) = &receiver.kind {
-        let recv_name = codegen.resolve_def(*def_id);
+        let recv_name = emitter.codegen.resolve_def(*def_id);
         if let Some(runtime_module) = norma_runtime_module_path(recv_name) {
-            w.write(runtime_module);
-            w.write("::");
-            w.write(&norma_runtime_method_name(codegen.resolve_symbol(method)));
-            w.write("(");
+            emitter.writer.write(runtime_module);
+            emitter.writer.write("::");
+            emitter
+                .writer
+                .write(&norma_runtime_method_name(emitter.codegen.resolve_symbol(method)));
+            emitter.writer.write("(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
-                    w.write(", ");
+                    emitter.writer.write(", ");
                 }
-                generate_call_arg_expr(
-                    codegen,
-                    &arg.expr,
-                    None,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                )?;
+                generate_call_arg_expr(emitter, &arg.expr, None)?;
             }
-            w.write(")");
-            if codegen.is_failable_method_name(method) && in_failable_fn && !in_entry && !suppress_error_propagation {
-                w.write("?");
+            emitter.writer.write(")");
+            if emitter.codegen.is_failable_method_name(method) && emitter.policy.permits_question_mark() {
+                emitter.writer.write("?");
             }
             return Ok(());
         }
     }
 
-    let is_failable_call = codegen.is_failable_method_name(method);
-    generate_expr(
-        codegen,
-        receiver,
-        types,
-        w,
-        in_failable_fn,
-        in_entry,
-        suppress_error_propagation,
-    )?;
-    w.write(".");
-    w.write(codegen.resolve_symbol(method));
-    w.write("(");
+    let is_failable_call = emitter.codegen.is_failable_method_name(method);
+    emitter.expr(receiver)?;
+    emitter.writer.write(".");
+    emitter.writer.write(emitter.codegen.resolve_symbol(method));
+    emitter.writer.write("(");
     for (i, arg) in args.iter().enumerate() {
         if i > 0 {
-            w.write(", ");
+            emitter.writer.write(", ");
         }
-        generate_call_arg_expr(
-            codegen,
-            &arg.expr,
-            None,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?;
+        generate_call_arg_expr(emitter, &arg.expr, None)?;
     }
-    w.write(")");
-    if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
-        w.write("?");
+    emitter.writer.write(")");
+    if is_failable_call && emitter.policy.permits_question_mark() {
+        emitter.writer.write("?");
     }
     Ok(())
 }
