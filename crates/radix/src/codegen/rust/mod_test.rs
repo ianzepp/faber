@@ -364,6 +364,32 @@ incipit {
 }
 
 #[test]
+fn clones_owned_path_arguments_for_function_calls() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio total(lista<numerus> nums) → numerus {
+    redde 0
+}
+
+incipit {
+    fixum _ numbers ← [1, 2, 3]
+    nota total(numbers)
+    nota total(numbers)
+    nota total([4, 5, 6])
+}
+"#;
+
+    let result = compiler.compile_str("call-arg-clone.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("total(numbers.clone())"));
+    assert!(rust.code.contains("total(vec![4, 5, 6])"));
+    assert!(!rust.code.contains("total(vec![4, 5, 6].clone())"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

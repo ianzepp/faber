@@ -40,7 +40,7 @@ pub(super) fn generate_call_expr(
         if i > 0 {
             w.write(", ");
         }
-        generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        generate_call_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
     w.write(")");
     if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
@@ -89,7 +89,7 @@ pub(super) fn generate_method_call_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                generate_call_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
             w.write(")");
             if codegen.is_failable_method_name(method) && in_failable_fn && !in_entry && !suppress_error_propagation {
@@ -116,13 +116,43 @@ pub(super) fn generate_method_call_expr(
         if i > 0 {
             w.write(", ");
         }
-        generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        generate_call_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
     w.write(")");
     if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
         w.write("?");
     }
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_call_arg_expr(
+    codegen: &RustCodegen<'_>,
+    arg: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if call_arg_clones_owned_path(arg, types) {
+        w.write(".clone()");
+    }
+    Ok(())
+}
+
+fn call_arg_clones_owned_path(arg: &HirExpr, types: &TypeTable) -> bool {
+    if !matches!(arg.kind, HirExprKind::Path(_)) {
+        return false;
+    }
+
+    arg.ty.is_some_and(|ty| {
+        matches!(
+            resolve_type(ty, types),
+            Type::Array(_) | Type::Map(_, _) | Type::Option(_) | Type::Primitive(Primitive::Textus)
+        )
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
