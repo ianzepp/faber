@@ -72,100 +72,115 @@ pub(super) fn generate_unary_expr(
     suppress_error_propagation: bool,
     wrap: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_unary_expr_with_emitter(&mut emitter, op, operand, wrap)
+}
+
+fn generate_unary_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    op: HirUnOp,
+    operand: &HirExpr,
+    wrap: bool,
+) -> Result<(), CodegenError> {
     match op {
         HirUnOp::IsNull | HirUnOp::IsNil => {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
             if operand
                 .ty
-                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+                .is_some_and(|ty| type_id_is_faber_value(ty, emitter.types))
             {
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" == FaberValue::Nihil");
+                emitter.expr(operand)?;
+                emitter.writer.write(" == FaberValue::Nihil");
             } else {
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" == None");
+                emitter.expr(operand)?;
+                emitter.writer.write(" == None");
             }
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         HirUnOp::IsNotNull | HirUnOp::IsNotNil => {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
             if operand
                 .ty
-                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+                .is_some_and(|ty| type_id_is_faber_value(ty, emitter.types))
             {
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" != FaberValue::Nihil");
+                emitter.expr(operand)?;
+                emitter.writer.write(" != FaberValue::Nihil");
             } else {
-                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(" != None");
+                emitter.expr(operand)?;
+                emitter.writer.write(" != None");
             }
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         HirUnOp::IsNeg => {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
-            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" < 0");
+            emitter.expr(operand)?;
+            emitter.writer.write(" < 0");
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         HirUnOp::IsPos => {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
-            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" > 0");
+            emitter.expr(operand)?;
+            emitter.writer.write(" > 0");
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         HirUnOp::IsTrue => {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
-            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emitter.expr(operand)?;
             if operand
                 .ty
-                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+                .is_some_and(|ty| type_id_is_faber_value(ty, emitter.types))
             {
-                w.write(" == FaberValue::from(true)");
+                emitter.writer.write(" == FaberValue::from(true)");
             } else {
-                w.write(" == true");
+                emitter.writer.write(" == true");
             }
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         HirUnOp::IsFalse => {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
-            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emitter.expr(operand)?;
             if operand
                 .ty
-                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+                .is_some_and(|ty| type_id_is_faber_value(ty, emitter.types))
             {
-                w.write(" == FaberValue::from(false)");
+                emitter.writer.write(" == FaberValue::from(false)");
             } else {
-                w.write(" == false");
+                emitter.writer.write(" == false");
             }
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         _ => {
-            w.write(unop_to_rust(op));
-            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emitter.writer.write(unop_to_rust(op));
+            emitter.expr(operand)?;
         }
     }
 
@@ -185,37 +200,54 @@ pub(super) fn generate_binary_expr(
     suppress_error_propagation: bool,
     wrap: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_binary_expr_with_emitter(&mut emitter, op, lhs, rhs, result_ty, wrap)
+}
+
+fn generate_binary_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    op: HirBinOp,
+    lhs: &HirExpr,
+    rhs: &HirExpr,
+    result_ty: Option<TypeId>,
+    wrap: bool,
+) -> Result<(), CodegenError> {
     match op {
-        HirBinOp::Add if is_text_expr(lhs, types) && is_text_expr(rhs, types) => {
-            w.write("format!(\"{}{}\", ");
-            generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(", ");
-            generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(")");
+        HirBinOp::Add if is_text_expr(lhs, emitter.types) && is_text_expr(rhs, emitter.types) => {
+            emitter.writer.write("format!(\"{}{}\", ");
+            emitter.expr(lhs)?;
+            emitter.writer.write(", ");
+            emitter.expr(rhs)?;
+            emitter.writer.write(")");
         }
         HirBinOp::Coalesce => {
             // Coalescing preserves Option shape when the right side is also an
             // Option; otherwise it unwraps with a plain fallback value.
-            let lhs_ty = lhs.ty.map(|ty| resolve_type(ty, types));
+            let lhs_ty = lhs.ty.map(|ty| resolve_type(ty, emitter.types));
             match lhs_ty {
                 Some(Type::Option(_)) => {
-                    w.write("(");
-                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    w.write(").clone()");
-                    let rhs_ty = rhs.ty.map(|ty| resolve_type(ty, types));
+                    emitter.writer.write("(");
+                    emitter.expr(lhs)?;
+                    emitter.writer.write(").clone()");
+                    let rhs_ty = rhs.ty.map(|ty| resolve_type(ty, emitter.types));
                     if matches!(rhs_ty, Some(Type::Option(_))) {
-                        w.write(".or(");
+                        emitter.writer.write(".or(");
                     } else {
-                        w.write(".unwrap_or(");
+                        emitter.writer.write(".unwrap_or(");
                     }
-                    generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    w.write(")");
+                    emitter.expr(rhs)?;
+                    emitter.writer.write(")");
                 }
                 Some(Type::Primitive(Primitive::Nihil)) => {
-                    generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    emitter.expr(rhs)?;
                 }
                 _ => {
-                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    emitter.expr(lhs)?;
                 }
             }
         }
@@ -226,63 +258,47 @@ pub(super) fn generate_binary_expr(
             if let HirExprKind::Tuple(bounds) = &rhs.kind {
                 if bounds.len() >= 2 {
                     if wrap {
-                        w.write("(");
+                        emitter.writer.write("(");
                     }
-                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    w.write(" >= ");
-                    generate_expr(
-                        codegen,
-                        &bounds[0],
-                        types,
-                        w,
-                        in_failable_fn,
-                        in_entry,
-                        suppress_error_propagation,
-                    )?;
-                    w.write(" && ");
-                    generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                    w.write(" < ");
-                    generate_expr(
-                        codegen,
-                        &bounds[1],
-                        types,
-                        w,
-                        in_failable_fn,
-                        in_entry,
-                        suppress_error_propagation,
-                    )?;
+                    emitter.expr(lhs)?;
+                    emitter.writer.write(" >= ");
+                    emitter.expr(&bounds[0])?;
+                    emitter.writer.write(" && ");
+                    emitter.expr(lhs)?;
+                    emitter.writer.write(" < ");
+                    emitter.expr(&bounds[1])?;
                     if wrap {
-                        w.write(")");
+                        emitter.writer.write(")");
                     }
                 } else {
-                    w.write("false");
+                    emitter.writer.write("false");
                 }
             } else {
-                w.write("false");
+                emitter.writer.write("false");
             }
         }
         HirBinOp::Between => {
             // `inter` delegates to Rust range/container `contains`, borrowing
             // the left operand to match the standard method signature.
-            w.write("(");
-            generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(").contains(&");
-            generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(")");
+            emitter.writer.write("(");
+            emitter.expr(rhs)?;
+            emitter.writer.write(").contains(&");
+            emitter.expr(lhs)?;
+            emitter.writer.write(")");
         }
         HirBinOp::Add | HirBinOp::Sub | HirBinOp::Mul | HirBinOp::Div | HirBinOp::Mod
-            if binary_result_is_fractus(result_ty, types) =>
+            if binary_result_is_fractus(result_ty, emitter.types) =>
         {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
-            generate_fractus_operand(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" ");
-            w.write(binop_to_rust(op));
-            w.write(" ");
-            generate_fractus_operand(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_fractus_operand_with_emitter(emitter, lhs)?;
+            emitter.writer.write(" ");
+            emitter.writer.write(binop_to_rust(op));
+            emitter.writer.write(" ");
+            generate_fractus_operand_with_emitter(emitter, rhs)?;
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         HirBinOp::Eq
@@ -291,47 +307,31 @@ pub(super) fn generate_binary_expr(
         | HirBinOp::StrictNotEq
         | HirBinOp::Is
         | HirBinOp::IsNot
-            if binary_has_faber_value_operand(lhs, rhs, types) =>
+            if binary_has_faber_value_operand(lhs, rhs, emitter.types) =>
         {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
-            generate_binary_faber_value_operand(
-                codegen,
-                lhs,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
-            w.write(" ");
-            w.write(binop_to_rust(op));
-            w.write(" ");
-            generate_binary_faber_value_operand(
-                codegen,
-                rhs,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_binary_faber_value_operand_with_emitter(emitter, lhs)?;
+            emitter.writer.write(" ");
+            emitter.writer.write(binop_to_rust(op));
+            emitter.writer.write(" ");
+            generate_binary_faber_value_operand_with_emitter(emitter, rhs)?;
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
         _ => {
             if wrap {
-                w.write("(");
+                emitter.writer.write("(");
             }
-            generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" ");
-            w.write(binop_to_rust(op));
-            w.write(" ");
-            generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emitter.expr(lhs)?;
+            emitter.writer.write(" ");
+            emitter.writer.write(binop_to_rust(op));
+            emitter.writer.write(" ");
+            emitter.expr(rhs)?;
             if wrap {
-                w.write(")");
+                emitter.writer.write(")");
             }
         }
     }
@@ -340,23 +340,18 @@ pub(super) fn generate_binary_expr(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_fractus_operand(
-    codegen: &RustCodegen<'_>,
+fn generate_fractus_operand_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if expr_is_numerus(expr, types) {
-        w.write("(");
-        generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(" as f64)");
+    if expr_is_numerus(expr, emitter.types) {
+        emitter.writer.write("(");
+        emitter.expr(expr)?;
+        emitter.writer.write(" as f64)");
         return Ok(());
     }
 
-    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.expr(expr)
 }
 
 fn binary_result_is_fractus(result_ty: Option<TypeId>, types: &TypeTable) -> bool {
@@ -369,20 +364,18 @@ fn binary_has_faber_value_operand(lhs: &HirExpr, rhs: &HirExpr, types: &TypeTabl
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_binary_faber_value_operand(
-    codegen: &RustCodegen<'_>,
+fn generate_binary_faber_value_operand_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if expr.ty.is_some_and(|ty| type_id_is_faber_value(ty, types)) {
-        return generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+    if expr
+        .ty
+        .is_some_and(|ty| type_id_is_faber_value(ty, emitter.types))
+    {
+        return emitter.expr(expr);
     }
 
-    generate_expr_as_faber_value(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    generate_expr_as_faber_value_with_emitter(emitter, expr)
 }
 
 fn expr_is_numerus(expr: &HirExpr, types: &TypeTable) -> bool {
@@ -401,66 +394,55 @@ pub(super) fn generate_assign_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_assign_expr_with_emitter(&mut emitter, target, value)
+}
+
+fn generate_assign_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    target: &HirExpr,
+    value: &HirExpr,
+) -> Result<(), CodegenError> {
     if let HirExprKind::Index(object, index) = &target.kind {
-        if matches!(object.ty.map(|ty| resolve_type(ty, types)), Some(Type::Map(_, _))) {
-            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(".insert(");
-            generate_expr_unwrapped(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(", ");
-            match object.ty.map(|ty| resolve_type(ty, types)) {
+        if matches!(object.ty.map(|ty| resolve_type(ty, emitter.types)), Some(Type::Map(_, _))) {
+            emitter.expr(object)?;
+            emitter.writer.write(".insert(");
+            emitter.expr_unwrapped(index)?;
+            emitter.writer.write(", ");
+            match object.ty.map(|ty| resolve_type(ty, emitter.types)) {
                 Some(Type::Map(_, value_ty)) => {
-                    generate_expr_as_type(
-                        codegen,
-                        value,
-                        value_ty,
-                        types,
-                        w,
-                        in_failable_fn,
-                        in_entry,
-                        suppress_error_propagation,
-                    )?;
+                    emitter.expr_as_type(value, value_ty)?;
                 }
                 _ => {
-                    generate_expr_unwrapped(
-                        codegen,
-                        value,
-                        types,
-                        w,
-                        in_failable_fn,
-                        in_entry,
-                        suppress_error_propagation,
-                    )?;
+                    emitter.expr_unwrapped(value)?;
                 }
             }
-            w.write(")");
+            emitter.writer.write(")");
             return Ok(());
         }
     }
 
     let target_ty = match &target.kind {
-        HirExprKind::Path(def_id) => codegen
+        HirExprKind::Path(def_id) => emitter
+            .codegen
             .binding_type(*def_id)
-            .or_else(|| codegen.binding_type_by_generated_name(*def_id))
+            .or_else(|| emitter.codegen.binding_type_by_generated_name(*def_id))
             .or(target.ty),
         _ => target.ty,
     };
 
-    generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(" = ");
+    emitter.expr(target)?;
+    emitter.writer.write(" = ");
 
     if let Some(target_ty) = target_ty {
-        generate_expr_as_type(
-            codegen,
-            value,
-            target_ty,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )
+        emitter.expr_as_type(value, target_ty)
     } else {
-        generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+        emitter.expr_unwrapped(value)
     }
 }
 
@@ -476,23 +458,54 @@ pub(super) fn generate_assign_op_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if matches!(op, HirBinOp::Add) && is_text_expr(target, types) && is_text_expr(value, types) {
-        generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(".push_str(&");
-        generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(")");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_assign_op_expr_with_emitter(&mut emitter, op, target, value)
+}
+
+fn generate_assign_op_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    op: HirBinOp,
+    target: &HirExpr,
+    value: &HirExpr,
+) -> Result<(), CodegenError> {
+    if matches!(op, HirBinOp::Add) && is_text_expr(target, emitter.types) && is_text_expr(value, emitter.types) {
+        emitter.expr(target)?;
+        emitter.writer.write(".push_str(&");
+        emitter.expr_unwrapped(value)?;
+        emitter.writer.write(")");
         return Ok(());
     }
 
-    generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(" ");
-    w.write(binop_to_rust(op));
-    w.write("= ");
-    generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.expr(target)?;
+    emitter.writer.write(" ");
+    emitter.writer.write(binop_to_rust(op));
+    emitter.writer.write("= ");
+    emitter.expr_unwrapped(value)
 }
 
 fn is_text_expr(expr: &HirExpr, types: &TypeTable) -> bool {
     expr.ty
         .map(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Textus)))
         .unwrap_or(false)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_expr_as_faber_value_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    expr: &HirExpr,
+) -> Result<(), CodegenError> {
+    if matches!(expr.kind, HirExprKind::Literal(HirLiteral::Nil)) {
+        emitter.writer.write("FaberValue::Nihil");
+        return Ok(());
+    }
+
+    emitter.writer.write("FaberValue::from(");
+    emitter.expr_unwrapped(expr)?;
+    emitter.writer.write(")");
+    Ok(())
 }
