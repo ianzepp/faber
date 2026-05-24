@@ -531,6 +531,30 @@ fn generate_lista_method(
             )?;
             w.write(" as usize).cloned()");
         }
+        "primus" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".first().cloned()");
+        }
+        "ultimus" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".last().cloned()");
+        }
         "remove" if args.is_empty() => {
             generate_expr(
                 codegen,

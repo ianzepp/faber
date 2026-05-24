@@ -313,6 +313,18 @@ pub(super) fn generate_assign_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    if let HirExprKind::Index(object, index) = &target.kind {
+        if matches!(object.ty.map(|ty| resolve_type(ty, types)), Some(Type::Map(_, _))) {
+            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(".insert(");
+            generate_expr_unwrapped(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(", ");
+            generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(")");
+            return Ok(());
+        }
+    }
+
     generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write(" = ");
     generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)

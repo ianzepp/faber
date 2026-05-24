@@ -443,6 +443,34 @@ incipit {
 }
 
 #[test]
+fn emits_typed_map_literals_assignments_and_primus() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    varia tabula<textus, numerus> cache ← vacua
+    cache["foo"] ← 42
+    fixum tabula<textus, numerus> scores ← { alice = 95, bob = 87 }
+    fixum _ nums ← [1, 2, 3] ∷ lista<numerus>
+    nota cache["foo"], scores["alice"], nums.primus()
+}
+"#;
+
+    let result = compiler.compile_str("innatum-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("std::collections::HashMap::<String, i64>::new()"));
+    assert!(rust.code.contains(r#"cache.insert("foo".to_string(), 42)"#));
+    assert!(rust.code.contains(r#".insert("alice".to_string(), 95)"#));
+    assert!(rust.code.contains("nums.first().cloned()"));
+    assert!(!rust.code.contains("Box<dyn std::any::Any>"));
+    assert!(!rust.code.contains(".primus()"));
+}
+
+#[test]
 fn emits_usize_cast_for_lista_indexing() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

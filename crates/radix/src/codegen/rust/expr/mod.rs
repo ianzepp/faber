@@ -382,7 +382,7 @@ pub fn generate_expr(
             codegen,
             expr.id,
             source,
-            *target,
+            expr.ty.unwrap_or(*target),
             entries.as_deref(),
             types,
             w,
