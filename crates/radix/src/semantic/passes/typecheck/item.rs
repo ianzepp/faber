@@ -31,7 +31,11 @@ impl<'a> TypeChecker<'a> {
     /// resolved contract as the HIR.
     pub(super) fn check_function(&mut self, def_id: DefId, func: &mut HirFunction) {
         self.push_scope();
-        for param in &func.params {
+        for param in &mut func.params {
+            if let Some(default) = &mut param.default {
+                let default_ty = self.check_expr_with_expected(default, Some(param.ty));
+                self.unify(default_ty, param.ty, default.span, "parameter default type mismatch");
+            }
             let mutable = matches!(param.mode, HirParamMode::MutRef);
             self.insert_binding(param.def_id, param.ty, mutable);
         }

@@ -90,6 +90,7 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
                     optional: false,
                     sponte: false,
                     fixus: false,
+                    default: None,
                     span: span(),
                 }],
                 ret_ty: Some(numerus),
@@ -348,6 +349,51 @@ incipit {
     assert!(rust.code.contains("(items).get((10) as usize).cloned()"));
     assert!(!rust.code.contains("(alice).as_ref()"));
     assert!(!rust.code.contains("(items).as_ref()"));
+}
+
+#[test]
+fn emits_optional_parameters_with_defaults_at_direct_call_sites() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio greet(textus nomen, textus titulus sponte) → textus {
+    si titulus est nihil {
+        redde nomen
+    }
+    redde "§ §"(titulus, nomen)
+}
+
+functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) → numerus {
+    redde pagina + per_pagina
+}
+
+incipit {
+    nota greet("Marcus")
+    nota greet("Marcus", "Dominus")
+    nota paginate()
+    nota paginate(5)
+    nota paginate(5, 25)
+}
+"#;
+
+    let result = compiler.compile_str("optional-params-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("fn greet(nomen: String, titulus: Option<String>) -> String"));
+    assert!(rust
+        .code
+        .contains("fn paginate(pagina: i64, per_pagina: i64) -> i64"));
+    assert!(rust.code.contains(r#"greet("Marcus".to_string(), None)"#));
+    assert!(rust
+        .code
+        .contains(r#"greet("Marcus".to_string(), Some("Dominus".to_string()))"#));
+    assert!(rust.code.contains("paginate(1, 10)"));
+    assert!(rust.code.contains("paginate(5, 10)"));
+    assert!(rust.code.contains("paginate(5, 25)"));
+    assert!(rust.code.contains("(titulus).clone().unwrap()"));
 }
 
 #[test]
@@ -1195,6 +1241,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
                 optional: false,
                 sponte: false,
                 fixus: false,
+                default: None,
                 span: span(),
             }],
             None,
@@ -1824,6 +1871,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                         optional: false,
                         sponte: false,
                         fixus: false,
+                        default: None,
                         span: span(),
                     }],
                     None,

@@ -242,6 +242,9 @@ pub struct HirParam {
     /// (from argument, default, or initializer).
     pub fixus: bool,
 
+    /// Optional source-level default supplied with `vel`.
+    pub default: Option<HirExpr>,
+
     /// Source span for diagnostics about this binding.
     pub span: Span,
 }

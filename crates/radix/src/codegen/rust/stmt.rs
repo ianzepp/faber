@@ -173,6 +173,12 @@ fn generate_return_value_expr(
         return Ok(());
     }
 
+    if return_value_requires_option_unwrap(codegen, expr) {
+        generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(".clone().unwrap()");
+        return Ok(());
+    }
+
     generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
 }
 
@@ -201,6 +207,13 @@ fn return_value_may_already_produce_option(codegen: &RustCodegen<'_>, expr: &Hir
         | HirExprKind::NonNull(_, _) => expr
             .ty
             .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Option(_) | Type::Primitive(Primitive::Nihil))),
+        _ => false,
+    }
+}
+
+fn return_value_requires_option_unwrap(codegen: &RustCodegen<'_>, expr: &HirExpr) -> bool {
+    match &expr.kind {
+        HirExprKind::Path(def_id) => codegen.binding_stores_option(*def_id),
         _ => false,
     }
 }

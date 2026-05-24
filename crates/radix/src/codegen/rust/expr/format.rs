@@ -96,10 +96,30 @@ pub(super) fn generate_scribe_expr(
     w.write("\"");
     for arg in args {
         w.write(", ");
-        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        generate_format_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
     w.write(")");
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_format_arg_expr(
+    codegen: &RustCodegen<'_>,
+    arg: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if matches!(arg.kind, HirExprKind::Path(def_id) if codegen.binding_stores_option(def_id)) {
+        w.write("(");
+        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(").clone().unwrap()");
+        return Ok(());
+    }
+
+    generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -118,7 +138,7 @@ pub(super) fn generate_scriptum_expr(
     w.write("\"");
     for arg in args {
         w.write(", ");
-        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        generate_format_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
     w.write(")");
     Ok(())

@@ -143,6 +143,10 @@ impl<'a> Lowerer<'a> {
                 optional: is_optional,
                 sponte: param.sponte,
                 fixus: param.fixus,
+                default: param
+                    .default
+                    .as_deref()
+                    .map(|default| self.lower_expr(default)),
                 span: param.span,
             });
         }
@@ -156,6 +160,7 @@ impl<'a> Lowerer<'a> {
                 optional: false,
                 sponte: false,
                 fixus: false,
+                default: None,
                 span: ident.span,
             }
         });
@@ -262,6 +267,10 @@ impl<'a> Lowerer<'a> {
                             optional: is_optional,
                             sponte: param.sponte,
                             fixus: param.fixus,
+                            default: param
+                                .default
+                                .as_deref()
+                                .map(|default| self.lower_expr(default)),
                             span: param.span,
                         });
                     }
@@ -456,6 +465,10 @@ impl<'a> Lowerer<'a> {
                         optional: param.sponte || param.default.is_some(),
                         sponte: param.sponte,
                         fixus: param.fixus,
+                        default: param
+                            .default
+                            .as_deref()
+                            .map(|default| self.lower_expr(default)),
                         span: param.span,
                     })
                     .collect(),

@@ -557,6 +557,7 @@ impl<'a> Lowerer<'a> {
                 optional: false,
                 sponte: false,
                 fixus: false,
+                default: None,
                 span: param.span,
             });
             self.bind_local(param.name.name, def_id);

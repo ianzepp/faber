@@ -88,6 +88,13 @@ pub(super) struct StructFieldInfo<'a> {
     pub(super) init: Option<&'a HirExpr>,
 }
 
+#[derive(Clone, Copy)]
+pub(super) struct FunctionParamInfo<'a> {
+    pub(super) def_id: DefId,
+    pub(super) optional: bool,
+    pub(super) default: Option<&'a HirExpr>,
+}
+
 /// Rust backend state shared by all Rust sub-emitters.
 ///
 /// Construction precomputes the name catalog, failable-function closure, test
@@ -132,8 +139,11 @@ pub struct RustCodegen<'a> {
     /// storage type is the target contract we need.
     binding_types: RefCell<FxHashMap<DefId, TypeId>>,
 
-    /// DefId -> function parameter count for direct-call spread expansion.
-    function_param_counts: FxHashMap<DefId, usize>,
+    /// DefId -> function parameter metadata for direct-call argument recovery.
+    function_params: FxHashMap<DefId, Vec<FunctionParamInfo<'a>>>,
+
+    /// Parameter definitions whose Rust storage type is `Option<T>`.
+    option_param_defs: FxHashSet<DefId>,
 
     /// Variant DefId -> parent enum and payload field names.
     ///
@@ -162,7 +172,8 @@ impl<'a> RustCodegen<'a> {
             current_return_ty: Cell::new(None),
             current_self_def: Cell::new(None),
             binding_types: RefCell::new(FxHashMap::default()),
-            function_param_counts: FxHashMap::default(),
+            function_params: FxHashMap::default(),
+            option_param_defs: FxHashSet::default(),
             variant_info: FxHashMap::default(),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
@@ -174,7 +185,8 @@ impl<'a> RustCodegen<'a> {
                 .any(|item| matches!(&item.kind, HirItemKind::Function(func) if func.test.as_ref().is_some_and(|test| test.modifiers.iter().any(|modifier| matches!(modifier, HirTestModifier::Solum))))),
         });
         codegen.struct_fields = codegen.collect_struct_fields(hir);
-        codegen.function_param_counts = codegen.collect_function_param_counts(hir);
+        codegen.function_params = codegen.collect_function_params(hir);
+        codegen.option_param_defs = codegen.collect_option_param_defs();
         codegen.variant_info = codegen.collect_variant_info(hir);
         codegen
     }
@@ -241,7 +253,15 @@ impl<'a> RustCodegen<'a> {
     }
 
     pub(super) fn function_param_count(&self, def_id: DefId) -> Option<usize> {
-        self.function_param_counts.get(&def_id).copied()
+        self.function_params.get(&def_id).map(Vec::len)
+    }
+
+    pub(super) fn function_params(&self, def_id: DefId) -> Option<&[FunctionParamInfo<'a>]> {
+        self.function_params.get(&def_id).map(Vec::as_slice)
+    }
+
+    pub(super) fn binding_stores_option(&self, def_id: DefId) -> bool {
+        self.option_param_defs.contains(&def_id)
     }
 
     pub(super) fn test_ignore_reason(&self, func: &HirFunction) -> Option<String> {
@@ -401,22 +421,31 @@ impl<'a> RustCodegen<'a> {
         fields
     }
 
-    fn collect_function_param_counts(&self, hir: &HirProgram) -> FxHashMap<DefId, usize> {
-        let mut counts = FxHashMap::default();
+    fn collect_function_params(&self, hir: &'a HirProgram) -> FxHashMap<DefId, Vec<FunctionParamInfo<'a>>> {
+        let mut params = FxHashMap::default();
         for item in &hir.items {
             match &item.kind {
                 HirItemKind::Function(func) => {
-                    counts.insert(item.def_id, func.params.len());
+                    params.insert(item.def_id, function_param_info(func));
                 }
                 HirItemKind::Struct(strukt) => {
                     for method in &strukt.methods {
-                        counts.insert(method.def_id, method.func.params.len());
+                        params.insert(method.def_id, function_param_info(&method.func));
                     }
                 }
                 _ => {}
             }
         }
-        counts
+        params
+    }
+
+    fn collect_option_param_defs(&self) -> FxHashSet<DefId> {
+        self.function_params
+            .values()
+            .flat_map(|params| params.iter())
+            .filter(|param| param.optional && param.default.is_none())
+            .map(|param| param.def_id)
+            .collect()
     }
 
     fn collect_variant_info(&self, hir: &HirProgram) -> FxHashMap<DefId, VariantInfo> {
@@ -500,6 +529,17 @@ impl<'a> RustCodegen<'a> {
         fields.sort_by(|a, b| self.resolve_symbol(a.name).cmp(self.resolve_symbol(b.name)));
         fields
     }
+}
+
+fn function_param_info(func: &HirFunction) -> Vec<FunctionParamInfo<'_>> {
+    func.params
+        .iter()
+        .map(|param| FunctionParamInfo {
+            def_id: param.def_id,
+            optional: param.optional,
+            default: param.default.as_ref(),
+        })
+        .collect()
 }
 
 fn itera_binding_type(mode: crate::hir::HirIteraMode, iter_ty: Option<TypeId>, types: &TypeTable) -> Option<TypeId> {

@@ -128,7 +128,13 @@ fn generate_function_inner(
         }
         w.write(codegen.resolve_symbol(param.name));
         w.write(": ");
-        w.write(&type_to_rust(codegen, param.ty, types));
+        if param.optional && param.default.is_none() {
+            w.write("Option<");
+            w.write(&type_to_rust(codegen, param.ty, types));
+            w.write(">");
+        } else {
+            w.write(&type_to_rust(codegen, param.ty, types));
+        }
     }
     if let Some(param) = &func.cli_args {
         if !func.params.is_empty() {

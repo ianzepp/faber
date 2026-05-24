@@ -51,6 +51,9 @@ pub trait HirVisitor: Sized {
 
     fn visit_param(&mut self, param: &HirParam) {
         self.visit_def(param.def_id, param.name);
+        if let Some(default) = &param.default {
+            self.visit_expr(default);
+        }
     }
 
     fn visit_field(&mut self, field: &HirField) {
@@ -490,6 +493,9 @@ pub trait HirVisitorMut: Sized {
 
     fn visit_param_mut(&mut self, param: &mut HirParam) {
         self.visit_def(param.def_id, param.name);
+        if let Some(default) = &mut param.default {
+            self.visit_expr_mut(default);
+        }
     }
 
     fn visit_field_mut(&mut self, field: &mut HirField) {

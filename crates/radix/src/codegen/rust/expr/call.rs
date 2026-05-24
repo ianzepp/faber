@@ -63,6 +63,37 @@ pub(super) fn generate_call_expr(
             in_entry,
             suppress_error_propagation,
         )?;
+    } else if let HirExprKind::Path(def_id) = callee.kind {
+        if let Some(params) = codegen
+            .function_params(def_id)
+            .filter(|params| params.iter().any(|param| param.optional))
+        {
+            generate_direct_call_args_with_optional_params(
+                codegen,
+                params,
+                args,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+        } else {
+            for (i, arg) in args.iter().enumerate() {
+                if i > 0 {
+                    w.write(", ");
+                }
+                generate_call_arg_expr(
+                    codegen,
+                    &arg.expr,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
+            }
+        }
     } else {
         for (i, arg) in args.iter().enumerate() {
             if i > 0 {
@@ -82,6 +113,58 @@ pub(super) fn generate_call_expr(
     w.write(")");
     if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
         w.write("?");
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_direct_call_args_with_optional_params(
+    codegen: &RustCodegen<'_>,
+    params: &[super::super::FunctionParamInfo<'_>],
+    args: &[HirCallArg],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    for (idx, param) in params.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+
+        if let Some(arg) = args.get(idx) {
+            if param.optional
+                && param.default.is_none()
+                && !matches!(arg.expr.kind, HirExprKind::Literal(HirLiteral::Nil))
+            {
+                w.write("Some(");
+                generate_call_arg_expr(
+                    codegen,
+                    &arg.expr,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
+                w.write(")");
+            } else {
+                generate_call_arg_expr(
+                    codegen,
+                    &arg.expr,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
+            }
+        } else if let Some(default) = param.default {
+            generate_expr(codegen, default, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        } else if param.optional {
+            w.write("None");
+        }
     }
     Ok(())
 }
