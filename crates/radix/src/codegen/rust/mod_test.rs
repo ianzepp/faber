@@ -127,6 +127,37 @@ fn emits_rust_function_and_entry_via_codegen_dispatch() {
 }
 
 #[test]
+fn emits_text_concatenation_without_invalid_string_add() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio greet(textus name) → textus {
+    redde "Hello, " + name
+}
+
+incipit {
+    varia textus s ← "hello"
+    s ⊕ " world"
+    varia numerus n ← 1
+    n ⊕ 2
+    nota greet(s)
+}
+"#;
+
+    let result = compiler.compile_str("string-concat.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("format!(\"{}{}\", \"Hello, \".to_string(), name)"));
+    assert!(rust.code.contains("s.push_str(&\" world\".to_string())"));
+    assert!(rust.code.contains("n += 2"));
+    assert!(!rust.code.contains("+ name"));
+    assert!(!rust.code.contains("+= \" world\".to_string()"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

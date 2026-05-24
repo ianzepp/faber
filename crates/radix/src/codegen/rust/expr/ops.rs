@@ -155,6 +155,13 @@ pub(super) fn generate_binary_expr(
     wrap: bool,
 ) -> Result<(), CodegenError> {
     match op {
+        HirBinOp::Add if is_text_expr(lhs, types) && is_text_expr(rhs, types) => {
+            w.write("format!(\"{}{}\", ");
+            generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(", ");
+            generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(")");
+        }
         HirBinOp::Coalesce => {
             // Coalescing preserves Option shape when the right side is also an
             // Option; otherwise it unwraps with a plain fallback value.
@@ -277,9 +284,23 @@ pub(super) fn generate_assign_op_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    if matches!(op, HirBinOp::Add) && is_text_expr(target, types) && is_text_expr(value, types) {
+        generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(".push_str(&");
+        generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(")");
+        return Ok(());
+    }
+
     generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write(" ");
     w.write(binop_to_rust(op));
     w.write("= ");
     generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+fn is_text_expr(expr: &HirExpr, types: &TypeTable) -> bool {
+    expr.ty
+        .map(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Textus)))
+        .unwrap_or(false)
 }

@@ -24,7 +24,7 @@ impl<'a> TypeChecker<'a> {
     /// immutability but still return their declared type so the right-hand side
     /// can be checked. Field and index lvalues reuse the normal access rules.
     pub(super) fn check_lvalue(&mut self, target: &mut HirExpr) -> TypeId {
-        match &mut target.kind {
+        let ty = match &mut target.kind {
             HirExprKind::Path(def_id) => {
                 if let Some(binding) = self.lookup_binding(*def_id) {
                     if !binding.mutable {
@@ -34,20 +34,18 @@ impl<'a> TypeChecker<'a> {
                             target.span,
                         );
                     }
-                    return binding.ty;
-                }
-
-                if let Some(ty) = self.consts.get(def_id).copied() {
+                    binding.ty
+                } else if let Some(ty) = self.consts.get(def_id).copied() {
                     self.error(SemanticErrorKind::ImmutableAssignment, "assignment to constant", target.span);
-                    return ty;
+                    ty
+                } else {
+                    self.error(
+                        SemanticErrorKind::InvalidAssignmentTarget,
+                        "invalid assignment target",
+                        target.span,
+                    );
+                    self.error_type
                 }
-
-                self.error(
-                    SemanticErrorKind::InvalidAssignmentTarget,
-                    "invalid assignment target",
-                    target.span,
-                );
-                self.error_type
             }
             HirExprKind::Field(object, name) => self.check_field(object, *name),
             HirExprKind::Index(object, index) => self.check_index(object, index),
@@ -59,7 +57,9 @@ impl<'a> TypeChecker<'a> {
                 );
                 self.error_type
             }
-        }
+        };
+        target.ty = Some(self.resolve_type(ty));
+        ty
     }
     /// Computes the result of indexing an already-typed object with an
     /// already-typed index expression.
