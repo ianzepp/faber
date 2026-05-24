@@ -20,8 +20,9 @@
 - The Rust e2e harness now uses `ad/ad.fab` as explicit expected-failure metadata and asserts the full corpus state.
 - Generated Rust linting reads fixed `src/main.rs` before deleting the temporary Cargo project and captures clippy stderr for focused diagnostics.
 - Drifted status docs were updated with the live `99/100`, `100` exempla, and `37` relocated fixture counts.
+- Rust backend type-shape predicates are centralized in `crates/radix/src/codegen/rust/type_shape.rs` with helper-level alias, optional, nil, and dynamic-value tests.
 
-Remaining high-priority cleanup still includes centralized optional-shape emission and centralized dynamic `FaberValue` coercion.
+Remaining high-priority cleanup still includes centralizing optional target-expression emission and dynamic `FaberValue` coercion call paths.
 
 ## Highest Priority Cleanup And Correctness Risks
 

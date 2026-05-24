@@ -17,6 +17,7 @@
 //! - Non-null assertions intentionally panic with a stable message if a value is
 //!   `None`.
 
+use super::super::type_shape::{resolve_type, type_id_is_option};
 use super::*;
 
 #[allow(clippy::too_many_arguments)]
@@ -265,14 +266,6 @@ fn optional_chain_inner_type(expr: &HirExpr, types: &TypeTable) -> Option<TypeId
 
 fn expr_type_is_option(expr: &HirExpr, types: &TypeTable) -> bool {
     expr.ty.is_some_and(|ty| type_id_is_option(ty, types))
-}
-
-fn type_id_is_option(type_id: TypeId, types: &TypeTable) -> bool {
-    match types.get(type_id) {
-        Type::Option(_) => true,
-        Type::Alias(_, resolved) => type_id_is_option(*resolved, types),
-        _ => false,
-    }
 }
 
 #[allow(clippy::too_many_arguments)]

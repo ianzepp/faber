@@ -31,6 +31,7 @@
 //! this module receives HIR.
 
 use super::super::CodeWriter;
+use super::type_shape::{resolve_type, type_id_is_option};
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::visit::{walk_expr, HirVisitor};
@@ -293,7 +294,7 @@ pub fn generate_struct(
                 w.write(codegen.resolve_symbol(field.name));
                 w.write(": ");
                 let ty_str = type_to_rust(codegen, field.ty, types);
-                if field.sponte && !type_is_option(field.ty, types) {
+                if field.sponte && !type_id_is_option(field.ty, types) {
                     // sponte (voluntary declaration) represented as Option<T> in Rust for
                     // partial construction support; fixus has no target immutability effect here.
                     w.write(&format!("Option<{}>", ty_str));
@@ -431,21 +432,6 @@ fn assignment_target_starts_at_self(expr: &HirExpr, self_def: DefId) -> bool {
         HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {
             assignment_target_starts_at_self(object, self_def)
         }
-        _ => false,
-    }
-}
-
-fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
-    match types.get(type_id) {
-        Type::Alias(_, resolved) => resolve_type(*resolved, types),
-        other => other.clone(),
-    }
-}
-
-fn type_is_option(type_id: TypeId, types: &TypeTable) -> bool {
-    match types.get(type_id) {
-        Type::Option(_) => true,
-        Type::Alias(_, resolved) => type_is_option(*resolved, types),
         _ => false,
     }
 }

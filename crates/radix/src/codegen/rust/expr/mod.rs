@@ -22,6 +22,7 @@
 //! that earlier phases have not made precise.
 
 use super::super::CodeWriter;
+use super::type_shape::{resolve_type, type_id_is_faber_value};
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::lexer::Symbol;
@@ -477,21 +478,6 @@ pub(super) fn generate_expr_unwrapped(
             false,
         ),
         _ => generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation),
-    }
-}
-
-fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
-    match types.get(type_id) {
-        Type::Alias(_, resolved) => resolve_type(*resolved, types),
-        ty => ty.clone(),
-    }
-}
-
-fn type_id_is_faber_value(type_id: TypeId, types: &TypeTable) -> bool {
-    match resolve_type(type_id, types) {
-        Type::Primitive(Primitive::Ignotum) => true,
-        Type::Union(variants) => !variants.is_empty(),
-        _ => false,
     }
 }
 

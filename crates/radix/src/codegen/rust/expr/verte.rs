@@ -16,6 +16,7 @@
 //!   escape hatch. Text targets use formatting because `as String` is not a
 //!   Rust conversion.
 
+use super::super::type_shape::{resolve_type, type_id_is_faber_value};
 use super::super::types::type_to_rust;
 use super::*;
 
@@ -458,12 +459,4 @@ fn generate_verte_value_expr(
     }
 
     generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
-}
-
-fn type_id_is_faber_value(type_id: TypeId, types: &TypeTable) -> bool {
-    match resolve_type(type_id, types) {
-        Type::Primitive(Primitive::Ignotum) => true,
-        Type::Union(variants) => !variants.is_empty(),
-        _ => false,
-    }
 }

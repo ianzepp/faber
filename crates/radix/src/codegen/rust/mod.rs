@@ -40,6 +40,7 @@ mod decl;
 mod expr;
 mod failable;
 mod stmt;
+mod type_shape;
 mod types;
 
 use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
@@ -570,7 +571,7 @@ impl<'a> RustCodegen<'a> {
     /// Returns true when the Rust storage type for this field is `Option<_>`.
     pub(super) fn struct_field_stores_option(&self, def_id: DefId, field: Symbol, types: &TypeTable) -> bool {
         self.struct_field_info(def_id, field)
-            .is_some_and(|info| info.sponte || type_id_is_option(info.ty, types))
+            .is_some_and(|info| info.sponte || type_shape::type_id_is_option(info.ty, types))
     }
 
     pub(super) fn sorted_struct_omittable_fields(&self, def_id: DefId) -> Vec<StructFieldInfo<'a>> {
@@ -608,24 +609,13 @@ fn function_param_info(func: &HirFunction) -> Vec<FunctionParamInfo<'_>> {
 
 fn itera_binding_type(mode: crate::hir::HirIteraMode, iter_ty: Option<TypeId>, types: &TypeTable) -> Option<TypeId> {
     let iter_ty = iter_ty?;
-    match (mode, resolve_type_id(iter_ty, types)) {
+    match (mode, type_shape::resolve_type(iter_ty, types)) {
         (crate::hir::HirIteraMode::Ex, Type::Array(inner)) => Some(inner),
         (crate::hir::HirIteraMode::De, Type::Array(_)) | (crate::hir::HirIteraMode::Pro, _) => {
             Some(types.primitive(crate::semantic::Primitive::Numerus))
         }
         (crate::hir::HirIteraMode::De, Type::Map(key, _)) => Some(key),
         _ => None,
-    }
-}
-
-fn type_id_is_option(type_id: TypeId, types: &TypeTable) -> bool {
-    matches!(resolve_type_id(type_id, types), Type::Option(_))
-}
-
-fn resolve_type_id(type_id: TypeId, types: &TypeTable) -> Type {
-    match types.get(type_id) {
-        Type::Alias(_, resolved) => resolve_type_id(*resolved, types),
-        ty => ty.clone(),
     }
 }
 

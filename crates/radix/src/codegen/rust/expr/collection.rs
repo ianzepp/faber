@@ -16,6 +16,7 @@
 //!   become `None`, and omitted fields with initializers are emitted through the
 //!   same field-value wrapper path as provided fields.
 
+use super::super::type_shape::{option_inner_or_self, resolve_type, type_id_is_faber_value, type_is_option_or_nihil};
 use super::*;
 use rustc_hash::FxHashSet;
 
@@ -115,14 +116,6 @@ pub(super) fn generate_array_expr(
         w.write("]");
     }
     Ok(())
-}
-
-fn type_id_is_faber_value(type_id: TypeId, types: &TypeTable) -> bool {
-    match resolve_type(type_id, types) {
-        Type::Primitive(Primitive::Ignotum) => true,
-        Type::Union(variants) => !variants.is_empty(),
-        _ => false,
-    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -328,14 +321,6 @@ fn expr_requires_some_wrapper(expr: &HirExpr, types: &TypeTable) -> bool {
     }
 }
 
-fn type_is_option_or_nihil(type_id: TypeId, types: &TypeTable) -> bool {
-    match types.get(type_id) {
-        Type::Option(_) | Type::Primitive(Primitive::Nihil) => true,
-        Type::Alias(_, resolved) => type_is_option_or_nihil(*resolved, types),
-        _ => false,
-    }
-}
-
 #[allow(clippy::too_many_arguments)]
 fn generate_struct_value_expr(
     codegen: &RustCodegen<'_>,
@@ -387,14 +372,6 @@ fn struct_field_value_is_textus(codegen: &RustCodegen<'_>, def_id: DefId, name: 
         _ => field.ty,
     };
     matches!(types.get(value_type), Type::Primitive(Primitive::Textus))
-}
-
-fn option_inner_or_self(type_id: TypeId, types: &TypeTable) -> TypeId {
-    match types.get(type_id) {
-        Type::Option(inner) => *inner,
-        Type::Alias(_, resolved) => option_inner_or_self(*resolved, types),
-        _ => type_id,
-    }
 }
 
 #[allow(clippy::too_many_arguments)]

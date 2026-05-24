@@ -28,6 +28,7 @@
 
 use super::super::CodeWriter;
 use super::expr::{generate_expr, generate_expr_unwrapped};
+use super::type_shape::{resolve_type, type_id_is_option, type_is_option_or_nihil};
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
@@ -228,14 +229,12 @@ fn return_value_may_already_produce_option(codegen: &RustCodegen<'_>, expr: &Hir
         HirExprKind::Path(def_id) => codegen
             .binding_type(*def_id)
             .or(expr.ty)
-            .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Option(_) | Type::Primitive(Primitive::Nihil))),
+            .is_some_and(|ty| type_is_option_or_nihil(ty, types)),
         HirExprKind::Call(_, _)
         | HirExprKind::MethodCall(_, _, _)
         | HirExprKind::Field(_, _)
         | HirExprKind::Index(_, _)
-        | HirExprKind::NonNull(_, _) => expr
-            .ty
-            .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Option(_) | Type::Primitive(Primitive::Nihil))),
+        | HirExprKind::NonNull(_, _) => expr.ty.is_some_and(|ty| type_is_option_or_nihil(ty, types)),
         _ => false,
     }
 }
@@ -255,21 +254,6 @@ fn local_init_clones_indexed_owned_value(local: &HirLocal, init: &HirExpr, types
     local
         .ty
         .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Array(_) | Type::Primitive(Primitive::Textus)))
-}
-
-fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
-    match types.get(type_id) {
-        Type::Alias(_, resolved) => resolve_type(*resolved, types),
-        ty => ty.clone(),
-    }
-}
-
-fn type_id_is_option(type_id: TypeId, types: &TypeTable) -> bool {
-    match types.get(type_id) {
-        Type::Option(_) => true,
-        Type::Alias(_, resolved) => type_id_is_option(*resolved, types),
-        _ => false,
-    }
 }
 
 fn local_init_requires_some_wrapper(
