@@ -11,13 +11,19 @@ incipit {
     fixum _ add ← (numerus a, numerus b) → numerus ∴ a + b
     nota add(3, 4)
 
-    # Lambda with array map
+    # Lambda with array iteration
     fixum _ numbers ← [1, 2, 3]
-    fixum _ doubled ← numbers.map(numerus x ∴ x * 2)
+    varia lista<numerus> doubled ← vacua
+    # Lambda with conditional collection
+    fixum _ isEven ← numerus x → bivalens ∴ x % 2 ≡ 0
+    varia lista<numerus> evens ← vacua
+    itera ex numbers fixum n {
+        doubled.appende(double(n))
+        si isEven(n) {
+            evens.appende(n)
+        }
+    }
     nota doubled
-
-    # Lambda with array filter
-    fixum _ evens ← numbers.filter(numerus x ∴ x % 2 ≡ 0)
     nota evens
 
     # Lambda stored and reused
