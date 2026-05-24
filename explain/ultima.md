@@ -1,15 +1,15 @@
 +++
 term = "ultima"
-kind = "keyword"
+kind = "concept"
 category = "collection"
 canonical = true
-summary = "Selects the last matching item from a collection pipeline."
-syntax = "ultima [<expression>]"
-related = ["prima", "summa"]
+summary = "Returns the last N elements from a list."
+syntax = "<lista>.ultima(<n>)"
+related = ["prima", "summa", "lista"]
 +++
 
-Selects the last matching item from a collection pipeline.
+Returns the last N elements from a list.
 
 ```fab
-fixum _ last ← ab users ultima
+fixum _ last ← numbers.ultima(2)
 ```

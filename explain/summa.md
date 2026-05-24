@@ -1,15 +1,15 @@
 +++
 term = "summa"
-kind = "keyword"
+kind = "concept"
 category = "collection"
 canonical = true
-summary = "Reduces a collection pipeline to a sum."
-syntax = "summa [<expression>]"
-related = ["prima", "ultima"]
+summary = "Returns the sum of numeric list elements."
+syntax = "<lista>.summa()"
+related = ["prima", "ultima", "lista"]
 +++
 
-Reduces a collection pipeline to a sum.
+Returns the sum of numeric list elements.
 
 ```fab
-fixum _ total ← ab numbers summa
+fixum _ total ← numbers.summa()
 ```

@@ -145,9 +145,6 @@ pub fn generate_expr(
         HirExprKind::Intervallum { start, end, step, .. } => {
             generate_range_expr(codegen, start, end, step.as_deref(), types, w)?;
         }
-        HirExprKind::Ab { source, filter, transforms } => {
-            generate_ab_expr(codegen, expr, source, filter.as_ref(), transforms, types, w)?;
-        }
         HirExprKind::Adfirma(cond, message) => generate_assert_expr(codegen, cond, message.as_deref(), types, w)?,
         HirExprKind::Error => {
             return Err(CodegenError { message: "cannot emit Go for error expression".to_owned() });

@@ -244,13 +244,6 @@ pub enum TokenKind {
     Intra, // within
     Inter, // between
 
-    // === Keywords: Collection DSL ===
-    Ab,     // from (collection query)
-    Ubi,    // where
-    Prima,  // first
-    Ultima, // last
-    Summa,  // sum
-
     // === Keywords: Testing ===
     Praepara,    // before each
     Praeparabit, // before all
@@ -449,11 +442,6 @@ impl TokenKind {
                 | Per
                 | Intra
                 | Inter
-                | Ab
-                | Ubi
-                | Prima
-                | Ultima
-                | Summa
                 | Nulla
                 | Nonnulla
                 | Nonnihil

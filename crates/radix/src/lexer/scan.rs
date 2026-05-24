@@ -658,13 +658,6 @@ fn keyword_or_ident(text: &str, interner: &mut Interner) -> TokenKind {
         "intra" => TokenKind::Intra,
         "inter" => TokenKind::Inter,
 
-        // Collection DSL
-        "ab" => TokenKind::Ab,
-        "ubi" => TokenKind::Ubi,
-        "prima" => TokenKind::Prima,
-        "ultima" => TokenKind::Ultima,
-        "summa" => TokenKind::Summa,
-
         // Testing
         "praepara" => TokenKind::Praepara,
         "praeparabit" => TokenKind::Praeparabit,

@@ -161,11 +161,11 @@ Legend:
 | `per` | `Per` | backlog | - | range step | no | no | yes | yes | - | yes |
 | `intra` | `Intra` | backlog | - | range membership operator | no | no | yes | no | - | yes |
 | `inter` | `Inter` | backlog | - | between operator/member identifiers | no | no | yes | no | - | yes |
-| `ab` | `Ab` | backlog | - | collection query expression | no | no | yes | no | - | yes |
-| `ubi` | `Ubi` | backlog | - | collection query filter | no | no | no | yes | - | yes |
-| `prima` | `Prima` | backlog | - | collection query terminal | no | no | no | yes | - | yes |
-| `ultima` | `Ultima` | backlog | - | collection query terminal | no | no | no | yes | - | yes |
-| `summa` | `Summa` | backlog | - | collection query terminal | no | no | no | yes | - | yes |
+| `ab` | - | retired | 2026-05-24 | removed collection query expression; now ordinary identifier spelling | no | no | no | no | - | no |
+| `ubi` | - | retired | 2026-05-24 | removed collection query filter; now ordinary identifier spelling | no | no | no | no | - | no |
+| `prima` | - | retired | 2026-05-24 | collection method name, not query terminal keyword | no | no | no | no | - | no |
+| `ultima` | - | retired | 2026-05-24 | collection method name, not query terminal keyword | no | no | no | no | - | no |
+| `summa` | - | retired | 2026-05-24 | collection method name, not query terminal keyword | no | no | no | no | - | no |
 | `nulla` | `Nulla` | backlog | - | predicate unary operator | no | no | yes | no | - | yes |
 | `nonnulla` | `Nonnulla` | backlog | - | predicate unary operator | no | no | yes | no | - | yes |
 | `nonnihil` | `Nonnihil` | backlog | - | predicate unary operator | no | no | yes | no | - | yes |
@@ -204,4 +204,3 @@ These words are explicitly out of scope for this contextual keyword migration ex
 `scribe` remains a current compatibility spelling for neutral diagnostic output and should be represented as an alias of canonical `nota`.
 
 The old compile-time cast spellings `qua`, `innatum`, and `novum` no longer appear in `keyword_or_ident()` and currently lex as identifiers. They should not be restored as keywords by this migration. If future docs need a removed-alias registry, it should be separate from current active keyword behavior.
-

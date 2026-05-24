@@ -689,7 +689,7 @@ fn scan_expr_for_go_unsupported_errors(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     use crate::syntax::{
-        ArrayElement, ClausuraBody, CollectionFilterKind, ExprKind, NonNullKind, ObjectKey, OptionalChainKind,
+        ArrayElement, ClausuraBody, ExprKind, NonNullKind, ObjectKey, OptionalChainKind,
         PraefixumBody,
     };
 
@@ -808,22 +808,6 @@ fn scan_expr_for_go_unsupported_errors(
         ExprKind::Scriptum(scriptum) => {
             for arg in &scriptum.args {
                 scan_expr_for_go_unsupported_errors(arg, file, dynamic_externa, diagnostics);
-            }
-        }
-        ExprKind::Ab(ab) => {
-            scan_expr_for_go_unsupported_errors(&ab.source, file, dynamic_externa, diagnostics);
-            if let Some(filter) = &ab.filter {
-                match &filter.kind {
-                    CollectionFilterKind::Condition(pred) => {
-                        scan_expr_for_go_unsupported_errors(pred, file, dynamic_externa, diagnostics);
-                    }
-                    CollectionFilterKind::Property(_) => {}
-                }
-            }
-            for transform in &ab.transforms {
-                if let Some(arg) = &transform.arg {
-                    scan_expr_for_go_unsupported_errors(arg, file, dynamic_externa, diagnostics);
-                }
             }
         }
         ExprKind::Clausura(clausura) => match &clausura.body {
@@ -1194,7 +1178,7 @@ fn scan_else_for_rust_unsupported_errors(clause: &SecusClause, file: &str, diagn
 
 fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &mut Vec<Diagnostic>) {
     use crate::syntax::{
-        ArrayElement, ClausuraBody, CollectionFilterKind, ExprKind, NonNullKind, ObjectKey, OptionalChainKind,
+        ArrayElement, ClausuraBody, ExprKind, NonNullKind, ObjectKey, OptionalChainKind,
         PraefixumBody,
     };
 
@@ -1273,22 +1257,6 @@ fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &
         ExprKind::Scriptum(scriptum) => {
             for arg in &scriptum.args {
                 scan_expr_for_rust_unsupported_errors(arg, file, diagnostics);
-            }
-        }
-        ExprKind::Ab(ab) => {
-            scan_expr_for_rust_unsupported_errors(&ab.source, file, diagnostics);
-            if let Some(filter) = &ab.filter {
-                match &filter.kind {
-                    CollectionFilterKind::Condition(pred) => {
-                        scan_expr_for_rust_unsupported_errors(pred, file, diagnostics);
-                    }
-                    CollectionFilterKind::Property(_) => {}
-                }
-            }
-            for transform in &ab.transforms {
-                if let Some(arg) = &transform.arg {
-                    scan_expr_for_rust_unsupported_errors(arg, file, diagnostics);
-                }
             }
         }
         ExprKind::Clausura(clausura) => match &clausura.body {

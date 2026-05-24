@@ -955,7 +955,7 @@ incipit {
 }
 
 #[test]
-fn ab_property_filter_no_longer_reports_unknown_identifier() {
+fn retired_ab_pipeline_is_not_active_rust_syntax() {
     let session = session(Target::Rust);
     let source = r#"incipit {
   fixum _ users ← [{ activus = verum }]
@@ -964,36 +964,8 @@ fn ab_property_filter_no_longer_reports_unknown_identifier() {
 }"#;
     let result = compile(&session, "test.fab", source);
 
-    assert!(result.success());
-    assert!(result
-        .diagnostics
-        .iter()
-        .all(|d| !d.message.contains("unknown identifier")));
-}
-
-#[test]
-fn ab_pipeline_from_object_member_no_longer_leaves_infer_types() {
-    let session = session(Target::Rust);
-    let source = r#"incipit {
-  fixum _ users ← [
-    { nomen = "Marcus", activus = verum, aetas = 25 },
-    { nomen = "Julia", activus = falsum, aetas = 30 }
-  ]
-  fixum _ data ← { users = users }
-  fixum _ active ← ab data.users activus
-  nota active
-}"#;
-    let result = compile(&session, "test.fab", source);
-
-    assert!(result.success());
-    assert!(result
-        .diagnostics
-        .iter()
-        .all(|d| !d.message.contains("cannot infer variable type")));
-    assert!(result
-        .diagnostics
-        .iter()
-        .all(|d| !d.message.contains("cannot infer expression type")));
+    assert!(!result.success());
+    assert!(result.output.is_none());
 }
 
 #[test]
@@ -2174,53 +2146,6 @@ incipit {
         .diagnostics
         .iter()
         .any(|d| d.message.contains("field default type mismatch")));
-}
-
-#[test]
-fn ab_pipeline_no_longer_reports_lowering_stub() {
-    let session = session(Target::Rust);
-    let source = r#"incipit {
-  fixum _ items ← [
-    { valor = 10, visibilis = verum },
-    { valor = 20, visibilis = falsum },
-    { valor = 30, visibilis = verum }
-  ]
-  fixum _ nums ← [1, 2, 3, 4, 5]
-  fixum _ visible ← ab items visibilis, prima 2
-  fixum _ sumFirst ← ab nums, prima 3, summa
-  nota visible, sumFirst
-}"#;
-    let result = compile(&session, "test.fab", source);
-
-    assert!(result.diagnostics.iter().all(|d| !d
-        .message
-        .contains("STUB: collection pipeline lowering requires dedicated HIR node")));
-}
-
-#[test]
-fn rust_output_emits_iterator_pipeline_for_ab_expr() {
-    let session = session(Target::Rust);
-    let source = r#"incipit {
-  fixum _ items ← [
-    { valor = 10, visibilis = verum },
-    { valor = 20, visibilis = falsum },
-    { valor = 30, visibilis = verum }
-  ]
-  fixum _ nums ← [1, 2, 3, 4, 5]
-  fixum _ top ← ab items visibilis, prima 2
-  fixum _ total ← ab nums, prima 3, summa
-  nota top, total
-}"#;
-    let result = compile(&session, "test.fab", source);
-
-    assert!(result.success());
-    let Some(crate::Output::Rust(output)) = result.output else {
-        panic!("expected Rust output");
-    };
-    assert!(output.code.contains(".iter()"));
-    assert!(output.code.contains(".filter("));
-    assert!(output.code.contains(".take("));
-    assert!(output.code.contains(".sum::<i64>()"));
 }
 
 #[test]

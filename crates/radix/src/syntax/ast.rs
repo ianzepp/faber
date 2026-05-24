@@ -863,8 +863,6 @@ pub enum ExprKind {
     Object(ObjectExpr),
     /// Range: x‥y, x…y, x ante y, x usque y
     Intervallum(IntervallumExpr),
-    /// Collection DSL: ab
-    Ab(AbExpr),
     /// Runtime value conversion: ⇒ target
     Conversio(ConversioExpr),
     /// Interpolated script: scriptum
@@ -1136,39 +1134,6 @@ pub struct IntervallumExpr {
 pub enum RangeKind {
     Exclusive, // ‥ or ante
     Inclusive, // … or usque
-}
-
-#[derive(Debug)]
-pub struct AbExpr {
-    pub source: Box<Expr>,
-    pub filter: Option<CollectionFilter>,
-    pub transforms: Vec<CollectionTransform>,
-}
-
-#[derive(Debug)]
-pub struct CollectionFilter {
-    pub negated: bool,
-    pub kind: CollectionFilterKind,
-}
-
-#[derive(Debug)]
-pub enum CollectionFilterKind {
-    Condition(Box<Expr>), // ubi EXPR
-    Property(Ident),      // IDENT (boolean property)
-}
-
-#[derive(Debug)]
-pub struct CollectionTransform {
-    pub kind: TransformKind,
-    pub arg: Option<Box<Expr>>,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum TransformKind {
-    First, // prima
-    Last,  // ultima
-    Sum,   // summa
 }
 
 #[derive(Debug)]

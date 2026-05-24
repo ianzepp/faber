@@ -1,9 +1,9 @@
 //! Collection and aggregate expression lowering for the Go backend.
 //!
 //! This module owns expression forms whose Go representation depends on both
-//! the HIR shape and the resolved Faber type: structs, tuples, arrays, maps,
-//! and the current `ab` collection pipeline. The code generator writes Go
-//! expressions directly, so the contracts here are deliberately conservative:
+//! the HIR shape and the resolved Faber type: structs, tuples, arrays, and
+//! maps. The code generator writes Go expressions directly, so the contracts
+//! here are deliberately conservative:
 //! known aggregate types are emitted with their target shape, spread support is
 //! lowered only where Go can model it cleanly, and missing semantic type data
 //! remains visible instead of being guessed late in codegen.
@@ -178,149 +178,6 @@ pub(super) fn generate_typed_array_expr(
         generate_expr_for_go_type(codegen, expr, elem_ty, types, w)?;
     }
     w.write("}");
-    Ok(())
-}
-pub(super) fn generate_ab_filter(
-    codegen: &GoCodegen<'_>,
-    filter: &crate::hir::HirCollectionFilter,
-    source_ty: crate::semantic::TypeId,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
-    w.write("filtered := make(");
-    w.write(&types::type_to_go(codegen, source_ty, types));
-    w.write(", 0, len(current)); for _, value := range current { if ");
-
-    if filter.negated {
-        w.write("!(");
-    }
-    generate_ab_filter_predicate(codegen, &filter.kind, w)?;
-    if filter.negated {
-        w.write(")");
-    }
-
-    w.write(" { filtered = append(filtered, value) } }; current = filtered; ");
-    Ok(())
-}
-
-pub(super) fn generate_ab_filter_predicate(
-    codegen: &GoCodegen<'_>,
-    kind: &crate::hir::HirCollectionFilterKind,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
-    match kind {
-        crate::hir::HirCollectionFilterKind::Property(name) => {
-            let field_name = codegen.resolve_symbol(*name);
-            w.write("func() bool { m, ok := any(value).(map[string]any); if !ok { return false }; raw, ok := m[");
-            w.write(&format!("{:?}", field_name));
-            w.write("]; if !ok { return false }; typed, ok := raw.(bool); return ok && typed }()");
-        }
-        crate::hir::HirCollectionFilterKind::Condition(_) => {
-            return Err(CodegenError { message: "Go ab condition filters are not implemented yet".to_owned() });
-        }
-    }
-    Ok(())
-}
-pub(super) fn generate_ab_expr(
-    codegen: &GoCodegen<'_>,
-    expr: &HirExpr,
-    source: &HirExpr,
-    filter: Option<&crate::hir::HirCollectionFilter>,
-    transforms: &[crate::hir::HirCollectionTransform],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-) -> Result<(), CodegenError> {
-    let Some(source_ty) = source.ty else {
-        return Err(CodegenError { message: "ab source missing Go type".to_owned() });
-    };
-    let ret_ty = expr_return_type(expr, types, codegen);
-    w.write("func() ");
-    w.write(&ret_ty);
-    w.write(" { current := ");
-    generate_expr_for_go_type(codegen, source, source_ty, types, w)?;
-    w.write("; ");
-
-    if let Some(filter) = filter {
-        generate_ab_filter(codegen, filter, source_ty, types, w)?;
-    }
-
-    let mut terminal_sum = false;
-    for (idx, transform) in transforms.iter().enumerate() {
-        if terminal_sum {
-            break;
-        }
-
-        match transform.kind {
-            crate::hir::HirTransformKind::First => {
-                let limit_name = format!("__radixAbFirst{}", idx);
-                let clamp_name = format!("__radixAbFirstClamped{}", idx);
-                w.write(&limit_name);
-                w.write(" := ");
-                if let Some(arg) = &transform.arg {
-                    generate_expr(codegen, arg, types, w)?;
-                } else {
-                    w.write("1");
-                }
-                w.write("; ");
-                w.write(&clamp_name);
-                w.write(" := ");
-                w.write(&limit_name);
-                w.write("; if ");
-                w.write(&clamp_name);
-                w.write(" < 0 { ");
-                w.write(&clamp_name);
-                w.write(" = 0 }; if ");
-                w.write(&clamp_name);
-                w.write(" > len(current) { ");
-                w.write(&clamp_name);
-                w.write(" = len(current) }; current = current[:");
-                w.write(&clamp_name);
-                w.write("]; ");
-            }
-            crate::hir::HirTransformKind::Last => {
-                let limit_name = format!("__radixAbLast{}", idx);
-                let clamp_name = format!("__radixAbLastClamped{}", idx);
-                w.write(&limit_name);
-                w.write(" := ");
-                if let Some(arg) = &transform.arg {
-                    generate_expr(codegen, arg, types, w)?;
-                } else {
-                    w.write("1");
-                }
-                w.write("; ");
-                w.write(&clamp_name);
-                w.write(" := ");
-                w.write(&limit_name);
-                w.write("; if ");
-                w.write(&clamp_name);
-                w.write(" < 0 { ");
-                w.write(&clamp_name);
-                w.write(" = 0 }; if ");
-                w.write(&clamp_name);
-                w.write(" > len(current) { ");
-                w.write(&clamp_name);
-                w.write(" = len(current) }; current = current[len(current)-");
-                w.write(&clamp_name);
-                w.write(":]; ");
-            }
-            crate::hir::HirTransformKind::Sum => {
-                let value_name = format!("__radixAbValue{}", idx);
-                w.write("var total ");
-                w.write(&ret_ty);
-                w.write("; for _, ");
-                w.write(&value_name);
-                w.write(" := range current { total += ");
-                w.write(&value_name);
-                w.write(" }; return total");
-                terminal_sum = true;
-            }
-        }
-    }
-
-    if !terminal_sum {
-        w.write("return current");
-    }
-    w.write(" }()");
     Ok(())
 }
 pub(super) fn generate_map_literal(

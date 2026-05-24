@@ -835,22 +835,6 @@ fn resolve_expr(resolver: &mut Resolver, interner: &Interner, expr: &Expr, error
                 resolve_expr(resolver, interner, step, errors);
             }
         }
-        ExprKind::Ab(expr) => {
-            resolve_expr(resolver, interner, &expr.source, errors);
-            if let Some(filter) = &expr.filter {
-                match &filter.kind {
-                    crate::syntax::CollectionFilterKind::Condition(expr) => {
-                        resolve_expr(resolver, interner, expr, errors)
-                    }
-                    crate::syntax::CollectionFilterKind::Property(_ident) => {}
-                }
-            }
-            for transform in &expr.transforms {
-                if let Some(arg) = &transform.arg {
-                    resolve_expr(resolver, interner, arg, errors);
-                }
-            }
-        }
         ExprKind::Conversio(expr) => {
             resolve_expr(resolver, interner, &expr.expr, errors);
             // WHY: The runtime conversion target is a real type expression.

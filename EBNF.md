@@ -556,26 +556,17 @@ adBinding     := '→' typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
 
 ---
 
-## Collection DSL
+## Collection Operations
 
-```ebnf
-abExpr        := 'ab' expression filter? (',' dslTransform)*
-filter        := 'non'? ('ubi' condition | IDENTIFIER)
-dslTransforms := dslTransform (',' dslTransform)*
-dslTransform  := dslVerb expression?
-dslVerb       := 'prima' | 'ultima' | 'summa'
-```
+The former `ab` collection pipeline DSL is retired. Collection filtering,
+slicing, and aggregation are expressed through ordinary `lista`/`tabula`
+library methods and closures instead of a grammar-level query expression.
 
-`ab` is the sole collection DSL entry point. Filter is optional, allowing direct transforms:
-
-- `ab users activus` - filter by boolean property
-- `ab users ubi aetas ≥ 18` - filter by condition
-- `ab items prima 5` - direct transform (no filter)
-- `ab items prima 10, ultima 3` - chained transforms
+`prima`, `ultima`, and `summa` are ordinary method names when provided by the
+collection library; they are not transform keywords. `ubi` is not active
+collection syntax.
 
 `ex` is used for iteration (`itera ex items fixum x`) and imports (`importa ex "path"`).
-
-**Note:** In the active `radix-rs` compiler, collection DSL transforms (`prima`, `ultima`, `summa`) are covered for TypeScript and Rust, and the exempla-backed Go subset also supports boolean-property filtering plus these transforms. Broader target support still varies by backend.
 
 ---
 
@@ -597,7 +588,6 @@ Not all Faber features are supported across all compilation targets. Some featur
 
 ### TypeScript-Only Features
 
-- Collection DSL transforms (`prima`, `ultima`, `summa`, `ordina`, etc.)
 - Some runtime stdlib functions
 
 ### Planned Manual-Memory Features

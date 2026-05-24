@@ -103,9 +103,6 @@ pub enum KeywordOwner {
     /// Endpoint binding syntax.
     EndpointBinding,
 
-    /// Collection query operator.
-    CollectionQuery,
-
     /// Predicate-style operator.
     PredicateOperator,
 }
@@ -161,9 +158,6 @@ pub enum KeywordCategory {
     /// Range operator word.
     Range,
 
-    /// Collection query DSL.
-    CollectionDsl,
-
     /// Test declaration or test modifier syntax.
     Testing,
 
@@ -217,7 +211,6 @@ const PARAMETER_MODE: &[KeywordOwner] = &[KeywordOwner::ParameterMode, KeywordOw
 const ALIAS_MARKER: &[KeywordOwner] = &[KeywordOwner::AliasMarker];
 const ITERATION_MODE: &[KeywordOwner] = &[KeywordOwner::IterationMode, KeywordOwner::EndpointBinding];
 const SPREAD_EXPRESSION: &[KeywordOwner] = &[KeywordOwner::SpreadExpression];
-const COLLECTION_QUERY: &[KeywordOwner] = &[KeywordOwner::CollectionQuery];
 const PREDICATE_OPERATOR: &[KeywordOwner] = &[KeywordOwner::PredicateOperator];
 const ANNOTATION_MODIFIER: &[KeywordOwner] = &[KeywordOwner::AnnotationModifier];
 
@@ -762,36 +755,6 @@ pub static KEYWORD_SPECS: &[KeywordSpec] = &[
         token_kind: Some(TokenKind::Inter),
         scope: KeywordScope::Global,
         category: KeywordCategory::Range,
-    },
-    KeywordSpec {
-        text: "ab",
-        token_kind: Some(TokenKind::Ab),
-        scope: KeywordScope::Global,
-        category: KeywordCategory::CollectionDsl,
-    },
-    KeywordSpec {
-        text: "ubi",
-        token_kind: Some(TokenKind::Ubi),
-        scope: KeywordScope::Contextual(COLLECTION_QUERY),
-        category: KeywordCategory::CollectionDsl,
-    },
-    KeywordSpec {
-        text: "prima",
-        token_kind: Some(TokenKind::Prima),
-        scope: KeywordScope::Contextual(COLLECTION_QUERY),
-        category: KeywordCategory::CollectionDsl,
-    },
-    KeywordSpec {
-        text: "ultima",
-        token_kind: Some(TokenKind::Ultima),
-        scope: KeywordScope::Contextual(COLLECTION_QUERY),
-        category: KeywordCategory::CollectionDsl,
-    },
-    KeywordSpec {
-        text: "summa",
-        token_kind: Some(TokenKind::Summa),
-        scope: KeywordScope::Contextual(COLLECTION_QUERY),
-        category: KeywordCategory::CollectionDsl,
     },
     KeywordSpec {
         text: "praepara",

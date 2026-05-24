@@ -28,9 +28,8 @@
 
 use super::Lowerer;
 use crate::hir::{
-    HirArrayElement, HirBinOp, HirCollectionFilter, HirCollectionFilterKind, HirCollectionTransform, HirExpr,
-    HirExprKind, HirLiteral, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind, HirTransformKind,
-    HirUnOp,
+    HirArrayElement, HirBinOp, HirExpr, HirExprKind, HirLiteral, HirNonNullKind, HirObjectField, HirObjectKey,
+    HirOptionalChainKind, HirUnOp,
 };
 use crate::semantic::{InferVar, Primitive, Type, TypeId};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
@@ -67,7 +66,6 @@ pub fn lower_expr(lowerer: &mut Lowerer, expr: &Expr) -> HirExpr {
         ExprKind::Finge(finge) => lowerer.lower_finge(finge),
         ExprKind::Clausura(closure) => lowerer.lower_clausura(closure),
         ExprKind::Intervallum(range) => lowerer.lower_intervallum(range),
-        ExprKind::Ab(ab) => lowerer.lower_ab(ab),
         ExprKind::Conversio(conversio) => lowerer.lower_conversio(conversio),
         ExprKind::Scriptum(scriptum) => lowerer.lower_scriptum(scriptum),
         ExprKind::Sed(sed) => lowerer.lower_sed(sed),
@@ -586,40 +584,6 @@ impl<'a> Lowerer<'a> {
                 crate::syntax::RangeKind::Inclusive => crate::hir::HirRangeKind::Inclusive,
             },
         }
-    }
-
-    /// Lower collection pipeline syntax without deciding collection semantics.
-    ///
-    /// Filters and transforms retain their source order and arguments. Whether
-    /// the source supports the requested operation, and what item/result types
-    /// flow through the pipeline, is deliberately left for typecheck.
-    fn lower_ab(&mut self, ab: &crate::syntax::AbExpr) -> HirExprKind {
-        let source = Box::new(lower_expr(self, &ab.source));
-        let filter = ab.filter.as_ref().map(|filter| HirCollectionFilter {
-            negated: filter.negated,
-            kind: match &filter.kind {
-                crate::syntax::CollectionFilterKind::Condition(expr) => {
-                    HirCollectionFilterKind::Condition(Box::new(lower_expr(self, expr)))
-                }
-                crate::syntax::CollectionFilterKind::Property(ident) => HirCollectionFilterKind::Property(ident.name),
-            },
-        });
-        let transforms = ab
-            .transforms
-            .iter()
-            .map(|transform| HirCollectionTransform {
-                kind: match transform.kind {
-                    crate::syntax::TransformKind::First => HirTransformKind::First,
-                    crate::syntax::TransformKind::Last => HirTransformKind::Last,
-                    crate::syntax::TransformKind::Sum => HirTransformKind::Sum,
-                },
-                arg: transform
-                    .arg
-                    .as_ref()
-                    .map(|arg| Box::new(lower_expr(self, arg))),
-            })
-            .collect();
-        HirExprKind::Ab { source, filter, transforms }
     }
 
     /// Lower explicit conversion syntax and collect target-shape hints.

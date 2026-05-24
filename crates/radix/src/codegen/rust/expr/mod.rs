@@ -182,18 +182,6 @@ pub fn generate_expr(
             in_entry,
             suppress_error_propagation,
         )?,
-        HirExprKind::Ab { source, filter, transforms } => generate_ab_expr(
-            codegen,
-            expr.id,
-            source,
-            filter.as_ref(),
-            transforms,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
         HirExprKind::Block(block) => {
             generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }

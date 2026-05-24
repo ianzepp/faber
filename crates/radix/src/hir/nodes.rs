@@ -687,13 +687,6 @@ pub enum HirExprKind {
     /// Non-null assertion for member, index, or call access.
     NonNull(Box<HirExpr>, HirNonNullKind),
 
-    /// Collection pipeline DSL (`ab`).
-    Ab {
-        source: Box<HirExpr>,
-        filter: Option<HirCollectionFilter>,
-        transforms: Vec<HirCollectionTransform>,
-    },
-
     /// Block expression.
     Block(HirBlock),
 
@@ -880,44 +873,6 @@ pub enum HirNonNullKind {
 
     /// Assert then call.
     Call(Vec<HirExpr>),
-}
-
-/// Optional filter attached to an `ab` collection pipeline.
-#[derive(Debug)]
-pub struct HirCollectionFilter {
-    /// Whether the filter predicate is negated.
-    pub negated: bool,
-
-    /// Predicate shape.
-    pub kind: HirCollectionFilterKind,
-}
-
-/// Predicate shape for a collection filter.
-#[derive(Debug)]
-pub enum HirCollectionFilterKind {
-    /// Full predicate expression.
-    Condition(Box<HirExpr>),
-
-    /// Property truthiness shorthand.
-    Property(Symbol),
-}
-
-/// Collection pipeline transform.
-#[derive(Debug)]
-pub struct HirCollectionTransform {
-    /// Transform operation.
-    pub kind: HirTransformKind,
-
-    /// Optional argument expression accepted by the transform.
-    pub arg: Option<Box<HirExpr>>,
-}
-
-/// Built-in collection transform taxonomy.
-#[derive(Debug, Clone, Copy)]
-pub enum HirTransformKind {
-    First,
-    Last,
-    Sum,
 }
 
 /// Iteration source mode lowered from `itera` syntax.

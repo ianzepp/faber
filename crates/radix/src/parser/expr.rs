@@ -506,7 +506,6 @@ impl Parser {
                 | TokenKind::LBrace
                 | TokenKind::Scriptum
                 | TokenKind::Clausura
-                | TokenKind::Ab
                 | TokenKind::Praefixum
                 | TokenKind::Sed
                 | TokenKind::Lege
@@ -816,12 +815,6 @@ impl Parser {
                 return self.parse_clausura_expr();
             }
 
-            // Collection DSL
-            TokenKind::Ab => {
-                self.advance();
-                return self.parse_ab_expr();
-            }
-
             _ => {
                 return Err(self.error(ParseErrorKind::InvalidExpression, "expected expression"));
             }
@@ -1010,63 +1003,6 @@ impl Parser {
     // =============================================================================
     // SPECIAL EXPRESSION FORMS
     // =============================================================================
-
-    /// Parse collection DSL expression.
-    ///
-    /// GRAMMAR:
-    ///   ab-expr := 'ab' source [filter] (',' transform)*
-    ///   filter := ident | 'non' ident
-    ///   transform := 'prima' [expr] | 'ultima' [expr] | 'summa' [expr]
-    ///
-    /// WHY: Collection DSL provides a concise syntax for filtering and transforming
-    /// collections. Example: `ab users activus, prima` gets first active user.
-    fn parse_ab_expr(&mut self) -> Result<Expr, ParseError> {
-        let start = self.current_span();
-        // Note: 'ab' token already consumed by caller in parse_primary
-
-        // Parse source - use postfix to avoid recursion through ab
-        let source = Box::new(self.parse_postfix()?);
-
-        // Check for optional filter after source expression
-        let filter = if matches!(self.peek().kind, TokenKind::Comma | TokenKind::RBrace) || self.is_at_end() {
-            // No filter - go straight to transforms
-            None
-        } else if self.eat_keyword(TokenKind::Non) {
-            // Negated property: non activus
-            self.try_parse_ident()
-                .map(|ident| CollectionFilter { negated: true, kind: CollectionFilterKind::Property(ident) })
-        } else {
-            self.try_parse_ident()
-                .map(|ident| CollectionFilter { negated: false, kind: CollectionFilterKind::Property(ident) })
-        };
-
-        let mut transforms = Vec::new();
-        while self.eat(&TokenKind::Comma) {
-            let transform_start = self.current_span();
-            let kind = if self.eat_keyword(TokenKind::Prima) {
-                TransformKind::First
-            } else if self.eat_keyword(TokenKind::Ultima) {
-                TransformKind::Last
-            } else if self.eat_keyword(TokenKind::Summa) {
-                TransformKind::Sum
-            } else {
-                break;
-            };
-
-            let arg = if self.can_start_expression(&self.peek().kind) {
-                Some(Box::new(self.parse_expression()?))
-            } else {
-                None
-            };
-
-            let span = transform_start.merge(self.previous_span());
-            transforms.push(CollectionTransform { kind, arg, span });
-        }
-
-        let span = start.merge(self.previous_span());
-        let id = self.next_id();
-        Ok(Expr { id, kind: ExprKind::Ab(AbExpr { source, filter, transforms }), span })
-    }
 
     /// Parse a function-call argument list after `(` has been consumed.
     ///

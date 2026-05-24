@@ -26,46 +26,6 @@
 use super::*;
 
 impl<'a> TypeChecker<'a> {
-    /// Type-checks an `ab` collection pipeline while preserving its source
-    /// collection shape unless a transform explicitly changes the result.
-    ///
-    /// `ab` is mostly a dataflow expression: filters must be valid conditions
-    /// and transform arguments must be checked, but target-specific pipeline
-    /// lowering remains a backend concern. The semantic commitment made here is
-    /// only the result type visible to surrounding Faber expressions.
-    pub(super) fn check_ab(
-        &mut self,
-        source: &mut HirExpr,
-        filter: Option<&mut crate::hir::HirCollectionFilter>,
-        transforms: &mut [crate::hir::HirCollectionTransform],
-    ) -> TypeId {
-        let source_ty = self.check_expr(source);
-
-        if let Some(filter) = filter {
-            match &mut filter.kind {
-                crate::hir::HirCollectionFilterKind::Condition(cond) => {
-                    self.check_condition(cond);
-                }
-                crate::hir::HirCollectionFilterKind::Property(_name) => {}
-            }
-        }
-
-        let mut has_sum = false;
-        for transform in transforms {
-            if let Some(arg) = &mut transform.arg {
-                self.check_expr(arg);
-            }
-            if matches!(transform.kind, crate::hir::HirTransformKind::Sum) {
-                has_sum = true;
-            }
-        }
-
-        if has_sum {
-            self.numerus_type()
-        } else {
-            source_ty
-        }
-    }
     /// Synthesizes an expression type, optionally using an expected type as
     /// context for shape-sensitive expressions.
     ///
@@ -88,7 +48,6 @@ impl<'a> TypeChecker<'a> {
             HirExprKind::Index(object, index) => self.check_index(object, index),
             HirExprKind::OptionalChain(object, chain) => self.check_optional_chain(object, chain, expr.span),
             HirExprKind::NonNull(object, chain) => self.check_non_null(object, chain, expr.span),
-            HirExprKind::Ab { source, filter, transforms } => self.check_ab(source, filter.as_mut(), transforms),
             HirExprKind::Block(block) => self.check_block(block, expected),
             HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.check_if(cond, then_block, then_catch.as_deref_mut(), else_block.as_mut(), expected)

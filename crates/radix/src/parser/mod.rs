@@ -445,20 +445,6 @@ impl Parser {
         Ident { name: sym, span }
     }
 
-    /// Try to parse an identifier if present.
-    ///
-    /// WHY: For optional identifier syntax like in collection DSL filters.
-    fn try_parse_ident(&mut self) -> Option<Ident> {
-        match self.peek().kind {
-            TokenKind::Ident(sym) | TokenKind::Underscore(sym) => {
-                let span = self.peek().span;
-                self.advance();
-                Some(Ident { name: sym, span })
-            }
-            _ => None,
-        }
-    }
-
     /// Parse a string literal.
     ///
     /// GRAMMAR:

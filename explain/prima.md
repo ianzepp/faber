@@ -1,15 +1,15 @@
 +++
 term = "prima"
-kind = "keyword"
+kind = "concept"
 category = "collection"
 canonical = true
-summary = "Selects the first matching item from a collection pipeline."
-syntax = "prima [<expression>]"
-related = ["ultima", "summa"]
+summary = "Returns the first N elements from a list."
+syntax = "<lista>.prima(<n>)"
+related = ["ultima", "summa", "lista"]
 +++
 
-Selects the first matching item from a collection pipeline.
+Returns the first N elements from a list.
 
 ```fab
-fixum _ first ← ab users prima
+fixum _ first ← numbers.prima(3)
 ```

@@ -300,17 +300,6 @@ pub fn walk_expr<V: HirVisitor>(visitor: &mut V, expr: &HirExpr) {
             visitor.visit_expr(object);
             walk_non_null(visitor, chain);
         }
-        HirExprKind::Ab { source, filter, transforms } => {
-            visitor.visit_expr(source);
-            if let Some(filter) = filter {
-                walk_collection_filter(visitor, filter);
-            }
-            for transform in transforms {
-                if let Some(arg) = &transform.arg {
-                    visitor.visit_expr(arg);
-                }
-            }
-        }
         HirExprKind::Block(block) | HirExprKind::Loop(block) => visitor.visit_block(block),
         HirExprKind::Si { cond, then_block, then_catch, else_block } => {
             visitor.visit_expr(cond);
@@ -473,14 +462,6 @@ pub fn walk_non_null<V: HirVisitor>(visitor: &mut V, chain: &HirNonNullKind) {
                 visitor.visit_expr(arg);
             }
         }
-    }
-}
-
-/// Walk expression children of a collection filter.
-pub fn walk_collection_filter<V: HirVisitor>(visitor: &mut V, filter: &HirCollectionFilter) {
-    match &filter.kind {
-        HirCollectionFilterKind::Condition(cond) => visitor.visit_expr(cond),
-        HirCollectionFilterKind::Property(_) => {}
     }
 }
 
@@ -750,17 +731,6 @@ pub fn walk_expr_mut<V: HirVisitorMut>(visitor: &mut V, expr: &mut HirExpr) {
             visitor.visit_expr_mut(object);
             walk_non_null_mut(visitor, chain);
         }
-        HirExprKind::Ab { source, filter, transforms } => {
-            visitor.visit_expr_mut(source);
-            if let Some(filter) = filter {
-                walk_collection_filter_mut(visitor, filter);
-            }
-            for transform in transforms {
-                if let Some(arg) = &mut transform.arg {
-                    visitor.visit_expr_mut(arg);
-                }
-            }
-        }
         HirExprKind::Block(block) | HirExprKind::Loop(block) => visitor.visit_block_mut(block),
         HirExprKind::Si { cond, then_block, then_catch, else_block } => {
             visitor.visit_expr_mut(cond);
@@ -923,13 +893,5 @@ pub fn walk_non_null_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut HirNonNu
                 visitor.visit_expr_mut(arg);
             }
         }
-    }
-}
-
-/// Mutably walk expression children of a collection filter.
-pub fn walk_collection_filter_mut<V: HirVisitorMut>(visitor: &mut V, filter: &mut HirCollectionFilter) {
-    match &mut filter.kind {
-        HirCollectionFilterKind::Condition(cond) => visitor.visit_expr_mut(cond),
-        HirCollectionFilterKind::Property(_) => {}
     }
 }

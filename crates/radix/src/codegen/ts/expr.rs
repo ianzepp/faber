@@ -32,8 +32,8 @@ use super::types;
 use super::{CodeWriter, CodegenError, TsCodegen};
 use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{
-    HirArrayElement, HirBinOp, HirBlock, HirCollectionFilterKind, HirExpr, HirExprKind, HirIteraMode, HirLiteral,
-    HirObjectKey, HirOptionalChainKind, HirRangeKind, HirTransformKind, HirUnOp,
+    HirArrayElement, HirBinOp, HirBlock, HirExpr, HirExprKind, HirIteraMode, HirLiteral, HirObjectKey,
+    HirOptionalChainKind, HirRangeKind, HirUnOp,
 };
 use crate::semantic::{Primitive, Type, TypeTable};
 
@@ -467,52 +467,6 @@ pub fn generate_expr(
                 generate_expr(codegen, step, types, w)?;
             }
             w.write("]");
-        }
-        HirExprKind::Ab { source, filter, transforms } => {
-            generate_expr(codegen, source, types, w)?;
-            if let Some(filter) = filter {
-                match &filter.kind {
-                    HirCollectionFilterKind::Property(name) => {
-                        w.write(".filter((x) => ");
-                        if filter.negated {
-                            w.write("!");
-                        }
-                        w.write("x.");
-                        w.write(codegen.resolve_symbol(*name));
-                        w.write(")");
-                    }
-                    HirCollectionFilterKind::Condition(cond) => {
-                        w.write(".filter((_x) => ");
-                        generate_expr(codegen, cond, types, w)?;
-                        w.write(")");
-                    }
-                }
-            }
-            for transform in transforms {
-                match transform.kind {
-                    HirTransformKind::First => {
-                        w.write(".slice(0, ");
-                        if let Some(arg) = &transform.arg {
-                            generate_expr(codegen, arg, types, w)?;
-                        } else {
-                            w.write("1");
-                        }
-                        w.write(")");
-                    }
-                    HirTransformKind::Last => {
-                        w.write(".slice(-");
-                        if let Some(arg) = &transform.arg {
-                            generate_expr(codegen, arg, types, w)?;
-                        } else {
-                            w.write("1");
-                        }
-                        w.write(")");
-                    }
-                    HirTransformKind::Sum => {
-                        w.write(".reduce((acc, value) => acc + value, 0)");
-                    }
-                }
-            }
         }
         HirExprKind::Adfirma(cond, message) => {
             w.write("(() => { if (!(");

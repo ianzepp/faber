@@ -211,7 +211,6 @@ Potential cleanup backlog after context support exists:
 - `lege` and `lineam` if input moves to stdlib/HAL
 - `scriptum` if formatting becomes stdlib or string interpolation syntax
 - `sed` if regex literals become a typed construction form
-- `ab`, `ubi`, `prima`, `ultima`, `summa` if the collection DSL is demoted to stdlib methods
 - `ante`, `usque`, `intra`, `inter` if glyph range/membership forms become canonical
 - `qua`, `innatum`, `novum` now that `∷` is the only compile-time cast/ascription spelling
 - `nulla`, `nonnulla`, `nonnihil`, `negativum`, `positivum` if convenience predicates are cut

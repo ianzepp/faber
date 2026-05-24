@@ -761,7 +761,6 @@ fn unsupported_expr_kind_name(kind: &HirExprKind) -> &'static str {
         HirExprKind::Index(_, _) => "index access before aggregate place MIR lowering",
         HirExprKind::OptionalChain(_, _) => "optional chains before nullable control-flow MIR lowering",
         HirExprKind::NonNull(_, _) => "non-null assertions before nullable control-flow MIR lowering",
-        HirExprKind::Ab { .. } => "ab collection pipelines before collection MIR lowering",
         HirExprKind::Block(_) => "block expressions before nested-block MIR lowering",
         HirExprKind::Si { .. } => "si before control-flow MIR lowering",
         HirExprKind::Discerne(_, _) => "discerne before switch MIR lowering",
