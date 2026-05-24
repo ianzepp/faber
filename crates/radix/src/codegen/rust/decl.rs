@@ -37,6 +37,13 @@ use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::*;
 use crate::semantic::{Type, TypeId, TypeTable};
 
+#[derive(Clone, Copy, Default)]
+struct FunctionEmitContext<'a> {
+    cli_args_type: Option<&'a str>,
+    receiver: Option<&'a str>,
+    return_type_override: Option<&'a str>,
+}
+
 /// Emit one Rust function item from a HIR function.
 ///
 /// The declaration layer decides the Rust signature: async marker, generated
@@ -62,7 +69,14 @@ pub fn generate_function_with_cli_args_type(
     w: &mut CodeWriter,
     cli_args_type: Option<&str>,
 ) -> Result<(), CodegenError> {
-    generate_function_inner(codegen, def_id, func, types, w, cli_args_type, None, None)
+    generate_function_inner(
+        codegen,
+        def_id,
+        func,
+        types,
+        w,
+        FunctionEmitContext { cli_args_type, ..FunctionEmitContext::default() },
+    )
 }
 
 fn generate_function_inner(
@@ -71,9 +85,7 @@ fn generate_function_inner(
     func: &HirFunction,
     types: &TypeTable,
     w: &mut CodeWriter,
-    cli_args_type: Option<&str>,
-    receiver: Option<&str>,
-    return_type_override: Option<&str>,
+    context: FunctionEmitContext<'_>,
 ) -> Result<(), CodegenError> {
     let is_failable = codegen.is_failable_def(def_id);
     let is_test = func.test.is_some();
@@ -93,7 +105,7 @@ fn generate_function_inner(
         w.write("async ");
     }
 
-    if cli_args_type.is_some() {
+    if context.cli_args_type.is_some() {
         w.write("pub(crate) ");
     }
     w.write("fn ");
@@ -119,11 +131,11 @@ fn generate_function_inner(
     // CLI-mounted functions get one synthetic argument slot supplied by the
     // package CLI adapter. Ordinary functions use only HIR parameters.
     w.write("(");
-    if let Some(receiver) = receiver {
+    if let Some(receiver) = context.receiver {
         w.write(receiver);
     }
     for (i, param) in func.params.iter().enumerate() {
-        if i > 0 || receiver.is_some() {
+        if i > 0 || context.receiver.is_some() {
             w.write(", ");
         }
         w.write(codegen.resolve_symbol(param.name));
@@ -142,7 +154,7 @@ fn generate_function_inner(
         }
         w.write(codegen.resolve_symbol(param.name));
         w.write(": ");
-        w.write(cli_args_type.unwrap_or("CliArgs"));
+        w.write(context.cli_args_type.unwrap_or("CliArgs"));
     }
     w.write(")");
 
@@ -151,7 +163,7 @@ fn generate_function_inner(
     if is_failable {
         w.write(" -> ");
         w.write("Result<");
-        if let Some(ret_ty) = return_type_override {
+        if let Some(ret_ty) = context.return_type_override {
             w.write(ret_ty);
         } else if let Some(ret_ty) = func.ret_ty {
             w.write(&type_to_rust(codegen, ret_ty, types));
@@ -167,7 +179,7 @@ fn generate_function_inner(
             w.write("()");
         }
         w.write(">");
-    } else if let Some(ret_ty) = return_type_override {
+    } else if let Some(ret_ty) = context.return_type_override {
         w.write(" -> ");
         w.write(ret_ty);
     } else if let Some(ret_ty) = func.ret_ty {
@@ -337,9 +349,11 @@ fn generate_method(
         &method.func,
         types,
         w,
-        None,
-        Some(receiver),
-        return_type_override.as_deref(),
+        FunctionEmitContext {
+            receiver: Some(receiver),
+            return_type_override: return_type_override.as_deref(),
+            ..FunctionEmitContext::default()
+        },
     );
     codegen.replace_current_self_def(previous_self);
     result
@@ -351,9 +365,7 @@ fn method_self_return_type_override(
     method: &HirMethod,
     types: &TypeTable,
 ) -> Option<String> {
-    let Some(ret_ty) = method.func.ret_ty else {
-        return None;
-    };
+    let ret_ty = method.func.ret_ty?;
     if !matches!(resolve_type(ret_ty, types), Type::Struct(def_id) if def_id == struct_def) {
         return None;
     }
@@ -373,11 +385,11 @@ fn method_mutates_self(func: &HirFunction, self_def: DefId) -> bool {
     impl HirVisitor for SelfMutationDetector {
         fn visit_expr(&mut self, expr: &HirExpr) {
             match &expr.kind {
-                HirExprKind::Assign(target, _) | HirExprKind::AssignOp(_, target, _) => {
-                    if assignment_target_starts_at_self(target, self.self_def) {
-                        self.found = true;
-                        return;
-                    }
+                HirExprKind::Assign(target, _) | HirExprKind::AssignOp(_, target, _)
+                    if assignment_target_starts_at_self(target, self.self_def) =>
+                {
+                    self.found = true;
+                    return;
                 }
                 _ => {}
             }

@@ -619,10 +619,7 @@ fn itera_binding_type(mode: crate::hir::HirIteraMode, iter_ty: Option<TypeId>, t
 }
 
 fn type_id_is_option(type_id: TypeId, types: &TypeTable) -> bool {
-    match resolve_type_id(type_id, types) {
-        Type::Option(_) => true,
-        _ => false,
-    }
+    matches!(resolve_type_id(type_id, types), Type::Option(_))
 }
 
 fn resolve_type_id(type_id: TypeId, types: &TypeTable) -> Type {
