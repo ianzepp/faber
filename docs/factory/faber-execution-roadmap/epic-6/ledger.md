@@ -137,3 +137,52 @@ Poker-face gate:
   out-of-scope compiler/strict-mode/provisioning constraints.
 - Misses: no high or medium misses found.
 - Completion estimate: 100% for 6.2.
+
+## Epic 6 Completion Audit
+
+Status: complete
+
+Original target:
+
+- `docs/factory/faber-execution-roadmap/goal.md` Epic 6: classify `norma` and
+  migrate the first host-effect contract.
+
+Requirement results:
+
+- Durable ownership labels exist: satisfied by
+  `norma-classification.md` label definitions and file tables.
+- Every current `stdlib/norma` and `crates/norma` file has a classification:
+  satisfied by the 6.1 coverage check over
+  `find stdlib/norma crates/norma -maxdepth 3 -type f`.
+- Existing `stdlib/norma/hal/*.fab` pacta are recognized as host-effect
+  contract sources: satisfied by 6.1 decisions and HAL file classifications.
+- `stdlib/norma/hal/consolum.fab` is the first host-effect proof surface:
+  satisfied by `norma-classification.md` and the 6.2 host implementation.
+- `crates/norma/hal/consolum.rs` remains available as `rust-bridge` support:
+  satisfied by classification and by the 6.2 diff not touching the file.
+- Current `consolum` members have canonical syscall identities without new
+  annotation syntax: satisfied by the `consolum:<member>` table and host
+  manifest tests.
+- `nota`, `vide`, `mone`, and related output semantics are recorded as host IO
+  while native Rust direct output remains a backend policy: satisfied by the
+  6.1 classification and ledger decisions.
+- Generic host/frame errors are preserved: satisfied by `E_INVALID_ARGS` and
+  `E_NO_ROUTE` handling in the 6.2 tests.
+- Strict-mode manifests, host dependency provisioning, provider catalog work,
+  compiler lowering changes, and shared host crate extraction remain out of
+  scope: satisfied by the changed-file set and delivery constraints.
+- No `norma` implementation files were deleted: satisfied by the changed-file
+  set and clean git status after commits.
+
+Final validation:
+
+- `cargo fmt --check -p faber-host-macos-arm64` passed.
+- `cargo test -p faber-host-macos-arm64` passed.
+- `git diff --check -- hosts/macos-arm64 docs/factory/faber-execution-roadmap/epic-6`
+  passed before the 6.2 commit.
+- `git status --short` was clean after the 6.1 and 6.2 commits.
+
+Committed slices:
+
+- `94707d04 docs: classify norma epic 6 baseline`
+- `23721860 feat(host): expose consolum syscalls`
