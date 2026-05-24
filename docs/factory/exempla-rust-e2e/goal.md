@@ -32,6 +32,7 @@ Make the `examples/exempla/` corpus truthful against the Rust target: every rema
 - `crates/radix/src/exempla_e2e_test.rs`: the Rust e2e harness collects every `.fab` file under `examples/exempla`, compiles it with the default Rust target, runs generated code through `format_generated_code` and best-effort `lint_generated_code`, then invokes standalone `rustc` and executes the resulting binary.
 - `crates/radix/src/tool.rs`: `--format` and `--linter` are implemented as generated-code post-processing helpers; the e2e harness uses those helpers directly rather than invoking the CLI flags.
 - `AGENTS.md`: Rust-only tooling, no invented syntax, no papering over missing type information, and correctness over completion are project constraints.
+- `docs/factory/remove-ab-dsl/goal.md`: `ab` collection DSL removal is tracked as its own language simplification goal and should not be treated as an ordinary Rust backend repair.
 
 ## Failure Taxonomy
 
@@ -71,7 +72,7 @@ These fail before or at codegen because the Rust target does not support the rep
 
 These appear to be real backend/lowering defects where Faber source compiles but generated Rust is not valid or not executable.
 
-- Option/nullability and `ignotum`/dynamic value lowering: `optionalis/optionalis.fab`, `functio/optionalis.fab`, `ternarius/ternarius.fab`, `si/est.fab`, parts of `ab/ab.fab`, `assignatio/assignatio.fab`, `conversio/conversio.fab`, `innatum/innatum.fab`, `membrum/membrum.fab`, `mori/mori.fab`, `objectum/objectum.fab`, `redde/redde.fab`.
+- Option/nullability and `ignotum`/dynamic value lowering: `optionalis/optionalis.fab`, `functio/optionalis.fab`, `ternarius/ternarius.fab`, `si/est.fab`, `assignatio/assignatio.fab`, `conversio/conversio.fab`, `innatum/innatum.fab`, `membrum/membrum.fab`, `mori/mori.fab`, `objectum/objectum.fab`, `redde/redde.fab`.
 - Enum, variant, match, and `finge` construction: `discerne/discerne.fab`, `finge/finge.fab`, `ordo/ordo.fab`, `elige/*.fab`.
 - Struct construction, methods, `ego`, and receiver lowering: `genus/creo.fab`, `genus/methodi.fab`, `pactum/pactum.fab`, `vocatio/vocatio.fab`.
 - Iteration and range lowering: `itera/cursor-iteratio.fab`, `itera/intervallum.fab`, `itera/intervallum-gradus.fab`, `itera/nidificatus.fab`, `itera/de.fab`, `itera/in-functione.fab`.
@@ -196,6 +197,7 @@ Before editing, inspect:
 - `examples/exempla/`: corpus classification and source corrections.
 - `EBNF.md`: canonical syntax before changing any exemplar.
 - `/tmp/faber-exempla-rust-e2e.log`: baseline failure evidence from 2026-05-24.
+- `docs/factory/remove-ab-dsl/goal.md`: linked goal for retiring the `ab` collection DSL and migrating its exempla.
 
 ## Supporting Skills
 
@@ -229,7 +231,7 @@ Fix valid-source backend failures in focused slices: option/null lowering, dynam
 
 ### Phase 5: Iteration, Ranges, And Collection Semantics
 
-Handle `itera` over ranges, stepped ranges, maps, cursors, nested iteration, and collection transforms as a focused backend correctness phase. The checkpoint is that all valid `itera/*`, `ab/ab.fab`, and collection-related exempla either compile/run or expose a smaller semantic blocker recorded for a later phase.
+Handle `itera` over ranges, stepped ranges, maps, cursors, nested iteration, and ordinary collection library behavior as a focused backend correctness phase. Do not repair the `ab` DSL here; `ab` removal and example migration belong to `docs/factory/remove-ab-dsl/goal.md`. The checkpoint is that all valid `itera/*` and collection-library exempla either compile/run or expose a smaller semantic blocker recorded for a later phase.
 
 ### Phase 6: Effects, Alternate Exit, And Unsupported Rust Features
 
@@ -248,6 +250,7 @@ Run the full ignored Rust e2e harness, regular test suite, and any package-aware
 - The baseline ledger exists and classifies all `138` currently collected `.fab` files.
 - Every remaining file classified as executable Rust compiles, links, and runs through the Rust e2e harness.
 - Every file removed from the executable Rust set has an explicit reason: library helper, package-only, test-only, intentionally invalid, future feature, non-Rust target, or removed stale source.
+- `examples/exempla/ab/ab.fab` is resolved through the linked `ab` removal goal: migrated to ordinary collection calls, moved to a legacy/negative fixture, or removed.
 - `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reports no unexpected exemplar failures.
 - The e2e path still applies generated-code formatting and linter logic before final Rust validation.
 - Source corrections obey `EBNF.md` and the project grammar rules.
