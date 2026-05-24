@@ -73,7 +73,13 @@
 - Kept the test names and assertions intact while adjusting only ancestor-private module paths needed by the child module.
 - Validation after this slice: focused type-rendering tests, `cargo test -p radix --test hygiene`, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
 
-Remaining high-priority cleanup is now mostly helper-level tests around centralized emission decisions and any final completion audit evidence.
+2026-05-24 follow-up added helper-level optional emission coverage:
+
+- Added `docs/factory/faber-execution-roadmap/epic-2-post-cleanup-phase-8-delivery.md` as the phase delivery artifact.
+- Added a direct helper test for `expr_may_already_produce_option`, covering nil literals, optional chains, option-typed calls, non-option calls, nullable `verte`, and plain literals without relying on generated Rust string snapshots.
+- Validation after this slice: focused optional predicate test, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
+
+Remaining cleanup is final completion audit evidence plus explicitly deferred lower-priority documentation and fixture hygiene items.
 
 ## Highest Priority Cleanup And Correctness Risks
 

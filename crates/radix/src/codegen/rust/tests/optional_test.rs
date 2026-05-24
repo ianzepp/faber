@@ -1,4 +1,84 @@
 #[test]
+fn expr_may_already_produce_option_classifies_wrapping_inputs() {
+    use crate::hir::{HirExpr, HirExprKind, HirLiteral, HirOptionalChainKind, HirProgram};
+    use crate::semantic::{Primitive, Type, TypeTable};
+
+    fn expr(kind: HirExprKind, ty: Option<crate::semantic::TypeId>) -> HirExpr {
+        HirExpr { id: crate::hir::HirId(1), kind, ty, span: crate::lexer::Span::default() }
+    }
+
+    let mut interner = crate::lexer::Interner::new();
+    let member = interner.intern("field");
+    let roma = interner.intern("roma");
+    let program = HirProgram { items: Vec::new(), entry: None };
+    let codegen = super::super::RustCodegen::new(&program, &interner);
+
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let textus = types.primitive(Primitive::Textus);
+    let nihil = types.primitive(Primitive::Nihil);
+    let option_numerus = types.option(numerus);
+    let nullable_textus = types.intern(Type::Union(vec![textus, nihil]));
+
+    let nil = expr(HirExprKind::Literal(HirLiteral::Nil), Some(nihil));
+    assert!(super::super::expr::expr_may_already_produce_option(&codegen, &nil, &types));
+
+    let optional_chain = expr(
+        HirExprKind::OptionalChain(
+            Box::new(expr(HirExprKind::Literal(HirLiteral::Nil), Some(nihil))),
+            HirOptionalChainKind::Member(member),
+        ),
+        Some(option_numerus),
+    );
+    assert!(super::super::expr::expr_may_already_produce_option(
+        &codegen,
+        &optional_chain,
+        &types
+    ));
+
+    let optional_call = expr(
+        HirExprKind::Call(Box::new(expr(HirExprKind::Path(crate::hir::DefId(1)), None)), Vec::new()),
+        Some(option_numerus),
+    );
+    assert!(super::super::expr::expr_may_already_produce_option(
+        &codegen,
+        &optional_call,
+        &types
+    ));
+
+    let plain_call = expr(
+        HirExprKind::Call(Box::new(expr(HirExprKind::Path(crate::hir::DefId(2)), None)), Vec::new()),
+        Some(numerus),
+    );
+    assert!(!super::super::expr::expr_may_already_produce_option(
+        &codegen,
+        &plain_call,
+        &types
+    ));
+
+    let nullable_verte = expr(
+        HirExprKind::Verte {
+            source: Box::new(expr(HirExprKind::Literal(HirLiteral::String(roma)), Some(textus))),
+            target: nullable_textus,
+            entries: None,
+        },
+        Some(nullable_textus),
+    );
+    assert!(super::super::expr::expr_may_already_produce_option(
+        &codegen,
+        &nullable_verte,
+        &types
+    ));
+
+    let plain_literal = expr(HirExprKind::Literal(HirLiteral::Int(1)), Some(numerus));
+    assert!(!super::super::expr::expr_may_already_produce_option(
+        &codegen,
+        &plain_literal,
+        &types
+    ));
+}
+
+#[test]
 fn emits_optional_chain_for_plain_and_optional_receivers() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
