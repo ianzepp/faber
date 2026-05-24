@@ -60,6 +60,7 @@ These should be corrected to canonical Faber, moved out of the executable corpus
 
 These fail before or at codegen because the Rust target does not support the represented Faber feature yet.
 
+- `ad` is endpoint/provider dispatch (`ad "fasciculus:lege" (...) ...`), not the collection filtering DSL. The collection DSL is `ab`.
 - `ad/ad.fab`: `ad` is not supported for Rust codegen, and explicit `ignotum` disables precise typechecking.
 - `fac/cape.fab`, `fac/fac.fab`, `functio/exitus.fab`, `custodi/validatio.fab`: `cape` and/or `iace` are not supported for Rust targets.
 - Any fix must choose between implementing the feature for Rust, marking the exemplar as non-Rust-executable, or removing/correcting the source if it is no longer part of the active language.
