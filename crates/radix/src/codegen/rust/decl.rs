@@ -195,6 +195,7 @@ pub fn generate_struct(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
+    w.writeln("#[derive(Clone, Debug)]");
     w.write("pub struct ");
     w.write(codegen.resolve_symbol(s.name));
 

@@ -304,6 +304,53 @@ incipit {
 }
 
 #[test]
+fn emits_optional_chain_for_plain_and_optional_receivers() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+genus Address {
+    textus city
+    textus state sponte
+}
+
+genus User {
+    textus name
+    Address address sponte
+}
+
+incipit {
+    fixum _ alice ← User {
+        name = "Alice",
+        address = Address { city = "Roma", state = "Italia" }
+    }
+    fixum _ city ← alice?.address?.city
+    fixum _ state ← alice?.address?.state
+    fixum _ bob ← User { name = "Bob" }
+    fixum _ bobCity ← bob?.address?.city
+    fixum _ items ← ["a", "b", "c"]
+    nota city, state, bobCity, items?[10]
+}
+"#;
+
+    let result = compiler.compile_str("optional-chain-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("let city: Option<String> = (alice.address.clone()).as_ref().map"));
+    assert!(rust
+        .code
+        .contains("let state: Option<String> = (alice.address.clone()).as_ref().and_then"));
+    assert!(rust
+        .code
+        .contains("let bobCity: Option<String> = (bob.address.clone()).as_ref().map"));
+    assert!(rust.code.contains("(items).get((10) as usize).cloned()"));
+    assert!(!rust.code.contains("(alice).as_ref()"));
+    assert!(!rust.code.contains("(items).as_ref()"));
+}
+
+#[test]
 fn emits_array_spread_without_moving_source_vector() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
