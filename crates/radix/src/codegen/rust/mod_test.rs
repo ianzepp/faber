@@ -390,6 +390,58 @@ incipit {
 }
 
 #[test]
+fn emits_lista_morphology_methods_as_rust_collection_operations() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    varia _ items ← [1, 2, 3, 4, 5] ∷ numerus[]
+    fixum _ evens ← items.filtrata(numerus x ∴ x % 2 ≡ 0)
+    fixum _ extended ← items.addita(6)
+    fixum _ reversed ← items.inversa()
+    varia _ mutable ← [1, 2, 3]
+    mutable.inverte()
+    fixum _ sorted ← items.ordinata()
+    fixum _ doubled ← items.mappata(numerus x ∴ x * 2)
+    nota evens, extended, reversed, mutable, sorted, doubled
+}
+"#;
+
+    let result = compiler.compile_str("lista-morphology.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("let evens: Vec<i64> = { let mut __faber_pred_"));
+    assert!(rust.code.contains(".filter(|__faber_item| __faber_pred_"));
+    assert!(rust
+        .code
+        .contains("let extended: Vec<i64> = { let mut __faber_list_"));
+    assert!(rust.code.contains(".push(6);"));
+    assert!(rust
+        .code
+        .contains("let reversed: Vec<i64> = { let mut __faber_list_"));
+    assert!(rust.code.contains(".reverse();"));
+    assert!(rust.code.contains("mutable.reverse();"));
+    assert!(rust
+        .code
+        .contains("let sorted: Vec<i64> = { let mut __faber_list_"));
+    assert!(rust.code.contains(".sort();"));
+    assert!(rust
+        .code
+        .contains("let doubled: Vec<i64> = { let mut __faber_map_"));
+    assert!(rust.code.contains(".map(|__faber_item| __faber_map_"));
+    assert!(!rust.code.contains(".filtrata("));
+    assert!(!rust.code.contains(".addita("));
+    assert!(!rust.code.contains(".inversa("));
+    assert!(!rust.code.contains(".inverte("));
+    assert!(!rust.code.contains(".ordinata("));
+    assert!(!rust.code.contains(".mappata("));
+    assert!(!rust.code.contains("let doubled: Vec<_>"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

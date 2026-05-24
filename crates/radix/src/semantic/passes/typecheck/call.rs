@@ -151,23 +151,13 @@ impl<'a> TypeChecker<'a> {
             _ => None,
         };
         if let Some(inner) = array_inner {
-            if args.is_empty() {
-                return self.numerus_type();
-            }
-            if let [arg] = args {
-                let arg_ty = self.check_expr(arg);
-                if self
-                    .function_signature_from_type(self.resolve_type(arg_ty))
-                    .is_none()
-                {
-                    self.unify(arg_ty, inner, arg.span, "argument type mismatch");
-                    return self.vacuum_type();
-                }
+            if let Some(result) = self.check_lista_method_call(name, inner, args, receiver.span) {
+                return result;
             }
             for arg in args {
                 self.check_expr(arg);
             }
-            return self.types.array(inner);
+            return self.fresh_infer();
         }
 
         if matches!(
@@ -192,6 +182,102 @@ impl<'a> TypeChecker<'a> {
             self.check_expr(arg);
         }
         self.fresh_infer()
+    }
+
+    fn check_lista_method_call(
+        &mut self,
+        name: Symbol,
+        inner: TypeId,
+        args: &mut [HirExpr],
+        span: crate::lexer::Span,
+    ) -> Option<TypeId> {
+        let method_name = self
+            .interner
+            .map(|interner| interner.resolve(name).to_owned())?;
+        match method_name.as_str() {
+            "longitudo" => {
+                let ret = self.numerus_type();
+                Some(self.check_known_method_args(args, Vec::new(), ret, span))
+            }
+            "vacua" => {
+                let ret = self.bool_type();
+                Some(self.check_known_method_args(args, Vec::new(), ret, span))
+            }
+            "appende" => {
+                let ret = self.vacuum_type();
+                let params = vec![ParamType { ty: inner, mode: ParamMode::Owned, optional: false }];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "addita" => {
+                let ret = self.types.array(inner);
+                let params = vec![ParamType { ty: inner, mode: ParamMode::Owned, optional: false }];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "inversa" | "ordinata" => {
+                let ret = self.types.array(inner);
+                Some(self.check_known_method_args(args, Vec::new(), ret, span))
+            }
+            "inverte" => {
+                let ret = self.vacuum_type();
+                Some(self.check_known_method_args(args, Vec::new(), ret, span))
+            }
+            "filtrata" => {
+                let bool_ty = self.bool_type();
+                let pred_ty = self.types.function(FuncSig {
+                    params: vec![ParamType { ty: inner, mode: ParamMode::Owned, optional: false }],
+                    ret: bool_ty,
+                    err: None,
+                    is_async: false,
+                    is_generator: false,
+                });
+                let ret = self.types.array(inner);
+                let params = vec![ParamType { ty: pred_ty, mode: ParamMode::Owned, optional: false }];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "mappata" => {
+                let ret = self.fresh_infer();
+                let mapper_ty = self.types.function(FuncSig {
+                    params: vec![ParamType { ty: inner, mode: ParamMode::Owned, optional: false }],
+                    ret,
+                    err: None,
+                    is_async: false,
+                    is_generator: false,
+                });
+                let params = vec![ParamType { ty: mapper_ty, mode: ParamMode::Owned, optional: false }];
+                let sig = FuncSig { params, ret, err: None, is_async: false, is_generator: false };
+                self.check_call_args(&sig, args, span);
+                let ret = self.resolve_type(ret);
+                Some(self.types.array(ret))
+            }
+            "continet" => {
+                let ret = self.bool_type();
+                let params = vec![ParamType { ty: inner, mode: ParamMode::Owned, optional: false }];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "accipe" => {
+                let numerus = self.numerus_type();
+                let ret = self.types.option(inner);
+                let params = vec![ParamType { ty: numerus, mode: ParamMode::Owned, optional: false }];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "remove" | "decapita" | "primus" | "ultimus" => {
+                let ret = self.types.option(inner);
+                Some(self.check_known_method_args(args, Vec::new(), ret, span))
+            }
+            _ => None,
+        }
+    }
+
+    fn check_known_method_args(
+        &mut self,
+        args: &mut [HirExpr],
+        params: Vec<ParamType>,
+        ret: TypeId,
+        span: crate::lexer::Span,
+    ) -> TypeId {
+        let sig = FuncSig { params, ret, err: None, is_async: false, is_generator: false };
+        self.check_call_args(&sig, args, span);
+        ret
     }
     /// Checks direct call syntax, including enum variant construction.
     ///

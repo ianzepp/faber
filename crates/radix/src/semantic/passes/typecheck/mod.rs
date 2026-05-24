@@ -62,7 +62,7 @@ use crate::hir::{
     HirItemKind, HirLiteral, HirLocal, HirObjectField, HirObjectKey, HirParam, HirParamMode, HirPattern, HirProgram,
     HirStmt, HirStmtKind, HirStruct,
 };
-use crate::lexer::Symbol;
+use crate::lexer::{Interner, Symbol};
 use crate::semantic::{
     types::InferVar, FuncSig, ParamMode, ParamType, Primitive, Resolver, SemanticError, SemanticErrorKind, Type,
     TypeId, TypeTable,
@@ -142,6 +142,10 @@ struct TypeChecker<'a> {
     #[allow(dead_code)]
     resolver: &'a Resolver,
 
+    /// Lexer-local symbol table used when typechecking name-sensitive stdlib
+    /// method contracts. Symbols are not stable across lexer runs.
+    interner: Option<&'a Interner>,
+
     /// Shared semantic type arena. All `TypeId`s read or written here are local
     /// to this table and must not be compared against IDs from another run.
     types: &'a mut TypeTable,
@@ -204,7 +208,16 @@ struct TypeChecker<'a> {
 /// so callers can present a useful batch instead of stopping at the first
 /// mismatch.
 pub fn typecheck(hir: &mut HirProgram, resolver: &Resolver, types: &mut TypeTable) -> Result<(), Vec<SemanticError>> {
-    let mut checker = TypeChecker::new(resolver, types);
+    typecheck_with_interner(hir, resolver, types, None)
+}
+
+pub fn typecheck_with_interner(
+    hir: &mut HirProgram,
+    resolver: &Resolver,
+    types: &mut TypeTable,
+    interner: Option<&Interner>,
+) -> Result<(), Vec<SemanticError>> {
+    let mut checker = TypeChecker::new(resolver, types, interner);
     checker.collect_items(hir);
     checker.check_program(hir);
 
@@ -216,10 +229,11 @@ pub fn typecheck(hir: &mut HirProgram, resolver: &Resolver, types: &mut TypeTabl
 }
 
 impl<'a> TypeChecker<'a> {
-    fn new(resolver: &'a Resolver, types: &'a mut TypeTable) -> Self {
+    fn new(resolver: &'a Resolver, types: &'a mut TypeTable, interner: Option<&'a Interner>) -> Self {
         let error_type = types.intern(Type::Error);
         Self {
             resolver,
+            interner,
             types,
             errors: Vec::new(),
             scopes: Vec::new(),

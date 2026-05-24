@@ -143,7 +143,7 @@ pub fn analyze_with_cli(
         return SemanticResult { hir: None, types, errors };
     }
 
-    if let Err(e) = passes::typecheck::typecheck(&mut hir, &resolver, &mut types) {
+    if let Err(e) = passes::typecheck::typecheck_with_interner(&mut hir, &resolver, &mut types, Some(interner)) {
         errors.extend(e);
     }
 

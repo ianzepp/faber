@@ -340,6 +340,144 @@ fn generate_lista_method(
             )?;
             w.write(".remove(0)) }");
         }
+        "addita" if args.len() == 1 => {
+            let temp = format!("__faber_list_{}", receiver.id.0);
+            w.write("{ let mut ");
+            w.write(&temp);
+            w.write(" = ");
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".clone(); ");
+            w.write(&temp);
+            w.write(".push(");
+            generate_expr_unwrapped(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write("); ");
+            w.write(&temp);
+            w.write(" }");
+        }
+        "filtrata" if args.len() == 1 => {
+            let pred = format!("__faber_pred_{}", receiver.id.0);
+            w.write("{ let mut ");
+            w.write(&pred);
+            w.write(" = ");
+            generate_expr(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write("; ");
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".iter().cloned().filter(|__faber_item| ");
+            w.write(&pred);
+            w.write("((*__faber_item).clone())).collect::<Vec<_>>() }");
+        }
+        "mappata" if args.len() == 1 => {
+            let mapper = format!("__faber_map_{}", receiver.id.0);
+            w.write("{ let mut ");
+            w.write(&mapper);
+            w.write(" = ");
+            generate_expr(
+                codegen,
+                &args[0],
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write("; ");
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".iter().cloned().map(|__faber_item| ");
+            w.write(&mapper);
+            w.write("(__faber_item)).collect::<Vec<_>>() }");
+        }
+        "inversa" if args.is_empty() => {
+            let temp = format!("__faber_list_{}", receiver.id.0);
+            w.write("{ let mut ");
+            w.write(&temp);
+            w.write(" = ");
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".clone(); ");
+            w.write(&temp);
+            w.write(".reverse(); ");
+            w.write(&temp);
+            w.write(" }");
+        }
+        "inverte" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".reverse()");
+        }
+        "ordinata" if args.is_empty() => {
+            let temp = format!("__faber_list_{}", receiver.id.0);
+            w.write("{ let mut ");
+            w.write(&temp);
+            w.write(" = ");
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".clone(); ");
+            w.write(&temp);
+            w.write(".sort(); ");
+            w.write(&temp);
+            w.write(" }");
+        }
         _ => return Ok(false),
     }
     Ok(true)
