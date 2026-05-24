@@ -471,6 +471,34 @@ incipit {
 }
 
 #[test]
+fn emits_async_futura_functions_and_entry_block_on() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+@ futura
+functio fetchData() → textus {
+    redde "data loaded"
+}
+
+incipiet {
+    fixum _ data ← cede fetchData()
+    nota data
+}
+"#;
+
+    let result = compiler.compile_str("incipiet-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("async fn fetchData() -> String"));
+    assert!(rust
+        .code
+        .contains("fn __faber_block_on<F: std::future::Future>"));
+    assert!(rust.code.contains("__faber_block_on(async {"));
+    assert!(rust.code.contains("fetchData().await"));
+}
+
+#[test]
 fn emits_usize_cast_for_lista_indexing() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

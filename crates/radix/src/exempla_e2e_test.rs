@@ -86,6 +86,7 @@ fn exempla_rust_e2e() {
         }
 
         let rustc = Command::new("rustc")
+            .arg("--edition=2021")
             .arg(&rust_file)
             .arg("-o")
             .arg(&bin_file)

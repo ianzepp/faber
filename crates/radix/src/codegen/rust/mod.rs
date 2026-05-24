@@ -43,7 +43,11 @@ mod stmt;
 mod types;
 
 use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
-use crate::hir::{DefId, HirExpr, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier};
+use crate::hir::visit::{walk_expr, HirVisitor};
+use crate::hir::{
+    DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata,
+    HirTestModifier,
+};
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::{Type, TypeId, TypeTable};
 use crate::RustOutput;
@@ -644,6 +648,59 @@ fn collect_prelude_imports(code: &str) -> BTreeSet<String> {
     imports
 }
 
+fn block_contains_await(block: &HirBlock) -> bool {
+    struct AwaitFinder {
+        found: bool,
+    }
+
+    impl HirVisitor for AwaitFinder {
+        fn visit_expr(&mut self, expr: &HirExpr) {
+            if self.found {
+                return;
+            }
+            if matches!(expr.kind, HirExprKind::Cede(_)) {
+                self.found = true;
+                return;
+            }
+            walk_expr(self, expr);
+        }
+    }
+
+    let mut finder = AwaitFinder { found: false };
+    finder.visit_block(block);
+    finder.found
+}
+
+fn generate_block_on_helper(w: &mut CodeWriter) {
+    w.writeln("fn __faber_block_on<F: std::future::Future>(future: F) -> F::Output {");
+    w.indented(|w| {
+        w.writeln("fn raw_waker() -> std::task::RawWaker {");
+        w.indented(|w| {
+            w.writeln("unsafe fn clone(_: *const ()) -> std::task::RawWaker { raw_waker() }");
+            w.writeln("unsafe fn wake(_: *const ()) {}");
+            w.writeln("unsafe fn wake_by_ref(_: *const ()) {}");
+            w.writeln("unsafe fn drop(_: *const ()) {}");
+            w.writeln("static VTABLE: std::task::RawWakerVTable = std::task::RawWakerVTable::new(clone, wake, wake_by_ref, drop);");
+            w.writeln("std::task::RawWaker::new(std::ptr::null(), &VTABLE)");
+        });
+        w.writeln("}");
+        w.writeln("let waker = unsafe { std::task::Waker::from_raw(raw_waker()) };");
+        w.writeln("let mut context = std::task::Context::from_waker(&waker);");
+        w.writeln("let mut future = std::pin::pin!(future);");
+        w.writeln("loop {");
+        w.indented(|w| {
+            w.writeln("match std::future::Future::poll(future.as_mut(), &mut context) {");
+            w.indented(|w| {
+                w.writeln("std::task::Poll::Ready(value) => return value,");
+                w.writeln("std::task::Poll::Pending => std::thread::yield_now(),");
+            });
+            w.writeln("}");
+        });
+        w.writeln("}");
+    });
+    w.writeln("}");
+}
+
 fn collect_hir_imports(codegen: &RustCodegen<'_>, hir: &HirProgram) -> BTreeSet<String> {
     let mut imports = BTreeSet::new();
     for item in &hir.items {
@@ -728,40 +785,53 @@ impl RustCodegen<'_> {
         // boundary, so statements run in entry context instead of inheriting
         // the failable function model used for ordinary Faber functions.
         if let Some(entry) = &hir.entry {
+            let entry_needs_block_on = block_contains_await(entry);
+            if entry_needs_block_on {
+                generate_block_on_helper(&mut body);
+                body.newline();
+            }
             body.writeln("fn main() {");
             let mut entry_result = Ok(());
             body.indented(|w| {
-                if let Some(cli_program) = cli_program {
-                    if cli_program.mode == crate::cli::CliMode::Subcommand {
-                        cli::generate_command_dispatch(cli_program, w);
-                        return;
-                    }
+                if entry_needs_block_on {
+                    w.writeln("__faber_block_on(async {");
                 }
-                if let Some(cli_program) = cli_program {
-                    w.write("let ");
-                    w.write(&cli_program.entry_args);
-                    w.writeln(" = parse_cli_args_or_exit();");
-                }
-                for stmt in &entry.stmts {
-                    if entry_result.is_err() {
-                        return;
+                w.indented(|w| {
+                    if let Some(cli_program) = cli_program {
+                        if cli_program.mode == crate::cli::CliMode::Subcommand {
+                            cli::generate_command_dispatch(cli_program, w);
+                            return;
+                        }
                     }
-                    if cli_program.is_some_and(|cli| is_cli_args_local(stmt, &cli.entry_args, self)) {
-                        continue;
+                    if let Some(cli_program) = cli_program {
+                        w.write("let ");
+                        w.write(&cli_program.entry_args);
+                        w.writeln(" = parse_cli_args_or_exit();");
                     }
-                    entry_result = stmt::generate_stmt(self, stmt, types, w, false, true, false);
-                }
-                if let Some(expr) = &entry.expr {
-                    if entry_result.is_err() {
-                        return;
+                    for stmt in &entry.stmts {
+                        if entry_result.is_err() {
+                            return;
+                        }
+                        if cli_program.is_some_and(|cli| is_cli_args_local(stmt, &cli.entry_args, self)) {
+                            continue;
+                        }
+                        entry_result = stmt::generate_stmt(self, stmt, types, w, false, true, false);
                     }
-                    entry_result = expr::generate_expr(self, expr, types, w, false, true, false);
-                    w.writeln(";");
-                }
-                if let Some(cli_program) = cli_program {
-                    if let Some(exit) = &cli_program.exit {
-                        cli::generate_cli_exit(exit, w);
+                    if let Some(expr) = &entry.expr {
+                        if entry_result.is_err() {
+                            return;
+                        }
+                        entry_result = expr::generate_expr(self, expr, types, w, false, true, false);
+                        w.writeln(";");
                     }
+                    if let Some(cli_program) = cli_program {
+                        if let Some(exit) = &cli_program.exit {
+                            cli::generate_cli_exit(exit, w);
+                        }
+                    }
+                });
+                if entry_needs_block_on {
+                    w.writeln("});");
                 }
             });
             entry_result?;
