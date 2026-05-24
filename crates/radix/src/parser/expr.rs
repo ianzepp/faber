@@ -1096,8 +1096,9 @@ impl Parser {
     }
 
     fn looks_like_typed_constructor_fields(&self) -> bool {
-        matches!(self.peek_at(1).kind, TokenKind::Ident(_) | TokenKind::String(_))
-            && matches!(self.peek_at(2).kind, TokenKind::Eq)
+        matches!(self.peek_at(1).kind, TokenKind::RBrace)
+            || matches!(self.peek_at(1).kind, TokenKind::Ident(_) | TokenKind::String(_))
+                && matches!(self.peek_at(2).kind, TokenKind::Eq)
     }
 
     fn expect_field_value_separator(&mut self) -> Result<(), ParseError> {

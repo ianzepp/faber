@@ -619,6 +619,30 @@ incipit {
 }
 
 #[test]
+fn empty_typed_constructor_uses_field_defaults() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+genus Counter {
+    numerus count = 0
+}
+
+incipit {
+    varia _ counter ← Counter {}
+    nota counter.count
+}
+"#;
+
+    let result = compiler.compile_str("empty-typed-constructor.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("let mut counter: Counter = Counter {"));
+    assert!(rust.code.contains("count: 0,"));
+    assert!(!rust.code.contains("Counter;"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");
