@@ -256,6 +256,38 @@ functio pick(lista<numerus> items, numerus index) → numerus {
 }
 
 #[test]
+fn emits_radix_parse_for_hinted_numerus_conversio() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    fixum _ hex ← "ff" ⇒ numerus<i32, Hex>
+    fixum _ bin ← "1010" ⇒ numerus<i32, Bin>
+    fixum _ oct ← "755" ⇒ numerus<i32, Oct>
+    fixum _ dec ← "42" ⇒ numerus
+    nota hex, bin, oct, dec
+}
+"#;
+
+    let result = compiler.compile_str("radix-conversio.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("i64::from_str_radix(&(\"ff\".to_string()), 16).unwrap()"));
+    assert!(rust
+        .code
+        .contains("i64::from_str_radix(&(\"1010\".to_string()), 2).unwrap()"));
+    assert!(rust
+        .code
+        .contains("i64::from_str_radix(&(\"755\".to_string()), 8).unwrap()"));
+    assert!(rust
+        .code
+        .contains("\"42\".to_string().parse::<i64>().unwrap()"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

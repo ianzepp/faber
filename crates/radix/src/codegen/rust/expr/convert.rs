@@ -24,6 +24,7 @@ pub(super) fn generate_conversio_expr(
     codegen: &RustCodegen<'_>,
     source: &HirExpr,
     target: TypeId,
+    params: &[Symbol],
     fallback: Option<&HirExpr>,
     types: &TypeTable,
     w: &mut CodeWriter,
@@ -37,17 +38,33 @@ pub(super) fn generate_conversio_expr(
     let target_resolved = types.get(target);
     let source_ty = source.ty.map(|t| types.get(t));
     match (source_ty, target_resolved) {
-        (Some(Type::Primitive(Primitive::Textus)), Type::Primitive(Primitive::Numerus)) => generate_parse_expr(
-            codegen,
-            source,
-            "i64",
-            fallback,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        ),
+        (Some(Type::Primitive(Primitive::Textus)), Type::Primitive(Primitive::Numerus)) => {
+            if let Some(radix) = radix_hint(codegen, params) {
+                generate_radix_parse_expr(
+                    codegen,
+                    source,
+                    radix,
+                    fallback,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )
+            } else {
+                generate_parse_expr(
+                    codegen,
+                    source,
+                    "i64",
+                    fallback,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )
+            }
+        }
         (Some(Type::Primitive(Primitive::Textus)), Type::Primitive(Primitive::Fractus)) => generate_parse_expr(
             codegen,
             source,
@@ -121,6 +138,17 @@ pub(super) fn generate_conversio_expr(
     }
 }
 
+fn radix_hint(codegen: &RustCodegen<'_>, params: &[Symbol]) -> Option<u32> {
+    params
+        .iter()
+        .find_map(|param| match codegen.resolve_symbol(*param) {
+            "Hex" => Some(16),
+            "Bin" => Some(2),
+            "Oct" => Some(8),
+            _ => None,
+        })
+}
+
 #[allow(clippy::too_many_arguments)]
 fn generate_parse_expr(
     codegen: &RustCodegen<'_>,
@@ -152,6 +180,40 @@ fn generate_parse_expr(
         w.write(")");
     } else {
         w.write(">().unwrap()");
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_radix_parse_expr(
+    codegen: &RustCodegen<'_>,
+    source: &HirExpr,
+    radix: u32,
+    fallback: Option<&HirExpr>,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("i64::from_str_radix(&(");
+    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write("), ");
+    w.write(&radix.to_string());
+    if let Some(fallback) = fallback {
+        w.write(").unwrap_or(");
+        generate_expr(
+            codegen,
+            fallback,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
+        w.write(")");
+    } else {
+        w.write(").unwrap()");
     }
     Ok(())
 }

@@ -380,10 +380,11 @@ pub fn generate_expr(
             in_entry,
             suppress_error_propagation,
         )?,
-        HirExprKind::Conversio { source, target, params: _, fallback } => generate_conversio_expr(
+        HirExprKind::Conversio { source, target, params, fallback } => generate_conversio_expr(
             codegen,
             source,
             *target,
+            params,
             fallback.as_deref(),
             types,
             w,
