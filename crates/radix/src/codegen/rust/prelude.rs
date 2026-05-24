@@ -91,6 +91,51 @@ pub(super) fn collect_prelude_imports(code: &str) -> BTreeSet<String> {
 }
 
 fn generate_faber_ad_helper(writer: &mut CodeWriter) {
+    writer.writeln("#[cfg(target_arch = \"wasm32\")]");
+    writer.writeln("#[link(wasm_import_module = \"\")]");
+    writer.writeln("extern \"C\" {");
+    writer.indented(|writer| {
+        writer.writeln("#[link_name = \"capability-call\"]");
+        writer.writeln("fn __faber_syscall(route_code: i32) -> i32;");
+    });
+    writer.writeln("}");
+    writer.newline();
+    writer.writeln("#[cfg(target_arch = \"wasm32\")]");
+    writer.writeln("fn __faber_ad<T, A>(capability: &str, _args: A) -> Result<T, String>");
+    writer.writeln("where");
+    writer.indented(|writer| {
+        writer.writeln("T: Default,");
+    });
+    writer.writeln("{");
+    writer.indented(|writer| {
+        writer.writeln("let route_code = __faber_ad_route_code(capability)?;");
+        writer.writeln("let status = unsafe { __faber_syscall(route_code) };");
+        writer.writeln("if status == 0 {");
+        writer.indented(|writer| {
+            writer.writeln("Ok(T::default())");
+        });
+        writer.writeln("} else {");
+        writer.indented(|writer| {
+            writer.writeln("Err(format!(\"E_NO_ROUTE: unresolved capability {}\", capability))");
+        });
+        writer.writeln("}");
+    });
+    writer.writeln("}");
+    writer.newline();
+    writer.writeln("#[cfg(target_arch = \"wasm32\")]");
+    writer.writeln("fn __faber_ad_route_code(capability: &str) -> Result<i32, String> {");
+    writer.indented(|writer| {
+        writer.writeln("match capability {");
+        writer.indented(|writer| {
+            writer.writeln("\"host:echo\" => Ok(1),");
+            writer.writeln("\"pg:query\" => Ok(2),");
+            writer.writeln("_ => Err(format!(\"E_NO_ROUTE: unresolved capability {}\", capability)),");
+        });
+        writer.writeln("}");
+    });
+    writer.writeln("}");
+    writer.newline();
+    writer.writeln("#[cfg(not(target_arch = \"wasm32\"))]");
     writer.writeln("fn __faber_ad<T, A>(capability: &str, _args: A) -> Result<T, String> {");
     writer.indented(|writer| {
         writer.writeln("Err(format!(\"E_NO_ROUTE: unresolved capability {}\", capability))");

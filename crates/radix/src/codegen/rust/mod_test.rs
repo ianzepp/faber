@@ -10,6 +10,8 @@ use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
 use crate::syntax::Visibility;
 
+#[path = "tests/ad_test.rs"]
+mod ad;
 #[path = "tests/calls_test.rs"]
 mod calls;
 #[path = "tests/collections_test.rs"]
