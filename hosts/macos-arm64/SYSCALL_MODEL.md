@@ -1,6 +1,6 @@
 # Faber Host Syscall Model
 
-**Status**: design direction captured, not implemented
+**Status**: direct frame/kernel route proof implemented; Wasm/component boundary not yet implemented
 **Created**: 2026-05-24
 **Host Crate**: `hosts/macos-arm64`
 **Primary References**:
