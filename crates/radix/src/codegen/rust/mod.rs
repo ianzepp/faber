@@ -113,6 +113,12 @@ pub struct RustCodegen<'a> {
     /// `Option<T>` without re-inferring expression types in codegen.
     current_return_ty: Cell<Option<TypeId>>,
 
+    /// Current struct receiver while emitting an inherent method body.
+    ///
+    /// HIR lowers `ego` to the enclosing struct definition path. Rust method
+    /// emission remaps that path to `self` only while this context is active.
+    current_self_def: Cell<Option<DefId>>,
+
     /// DefId -> declared or derived binding type.
     ///
     /// Expression annotations can be widened by contextual checks. For path
@@ -137,6 +143,7 @@ impl<'a> RustCodegen<'a> {
             test_selection: None,
             struct_fields: FxHashMap::default(),
             current_return_ty: Cell::new(None),
+            current_self_def: Cell::new(None),
             binding_types: RefCell::new(FxHashMap::default()),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
@@ -194,6 +201,14 @@ impl<'a> RustCodegen<'a> {
 
     pub(super) fn replace_current_return_ty(&self, ty: Option<TypeId>) -> Option<TypeId> {
         self.current_return_ty.replace(ty)
+    }
+
+    pub(super) fn current_self_def(&self) -> Option<DefId> {
+        self.current_self_def.get()
+    }
+
+    pub(super) fn replace_current_self_def(&self, def_id: Option<DefId>) -> Option<DefId> {
+        self.current_self_def.replace(def_id)
     }
 
     pub(super) fn binding_type(&self, def_id: DefId) -> Option<TypeId> {
@@ -296,7 +311,7 @@ impl<'a> RustCodegen<'a> {
                 }
             }
             HirItemKind::Struct(s) => {
-                decl::generate_struct(self, s, types, w)?;
+                decl::generate_struct(self, item.def_id, s, types, w)?;
             }
             HirItemKind::Enum(e) => {
                 decl::generate_enum(self, e, types, w)?;

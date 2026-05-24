@@ -74,7 +74,11 @@ pub fn generate_expr(
 ) -> Result<(), CodegenError> {
     match &expr.kind {
         HirExprKind::Path(def_id) => {
-            w.write(codegen.resolve_def(*def_id));
+            if codegen.current_self_def() == Some(*def_id) {
+                w.write("self");
+            } else {
+                w.write(codegen.resolve_def(*def_id));
+            }
         }
         HirExprKind::Literal(lit) => {
             generate_literal(codegen, lit, w);

@@ -33,6 +33,7 @@
 use super::super::CodeWriter;
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
+use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::*;
 use crate::semantic::{Type, TypeId, TypeTable};
 
@@ -60,6 +61,18 @@ pub fn generate_function_with_cli_args_type(
     types: &TypeTable,
     w: &mut CodeWriter,
     cli_args_type: Option<&str>,
+) -> Result<(), CodegenError> {
+    generate_function_inner(codegen, def_id, func, types, w, cli_args_type, None)
+}
+
+fn generate_function_inner(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    func: &HirFunction,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    cli_args_type: Option<&str>,
+    receiver: Option<&str>,
 ) -> Result<(), CodegenError> {
     let is_failable = codegen.is_failable_def(def_id);
     let is_test = func.test.is_some();
@@ -105,8 +118,11 @@ pub fn generate_function_with_cli_args_type(
     // CLI-mounted functions get one synthetic argument slot supplied by the
     // package CLI adapter. Ordinary functions use only HIR parameters.
     w.write("(");
+    if let Some(receiver) = receiver {
+        w.write(receiver);
+    }
     for (i, param) in func.params.iter().enumerate() {
-        if i > 0 {
+        if i > 0 || receiver.is_some() {
             w.write(", ");
         }
         w.write(codegen.resolve_symbol(param.name));
@@ -168,6 +184,7 @@ fn escape_ignore_reason(reason: &str) -> String {
 /// than hidden in field emission.
 pub fn generate_struct(
     codegen: &RustCodegen<'_>,
+    def_id: DefId,
     s: &HirStruct,
     types: &TypeTable,
     w: &mut CodeWriter,
@@ -219,7 +236,7 @@ pub fn generate_struct(
                 if method_result.is_err() {
                     return;
                 }
-                method_result = generate_function(codegen, method.def_id, &method.func, types, w);
+                method_result = generate_method(codegen, def_id, method, types, w);
             }
         });
         method_result?;
@@ -227,6 +244,61 @@ pub fn generate_struct(
     }
 
     Ok(())
+}
+
+fn generate_method(
+    codegen: &RustCodegen<'_>,
+    struct_def: DefId,
+    method: &HirMethod,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    let receiver = match method.receiver {
+        HirReceiver::MutRef => "&mut self",
+        HirReceiver::None if method_mutates_self(&method.func, struct_def) => "&mut self",
+        HirReceiver::Owned => "self",
+        HirReceiver::Ref | HirReceiver::None => "&self",
+    };
+    let previous_self = codegen.replace_current_self_def(Some(struct_def));
+    let result = generate_function_inner(codegen, method.def_id, &method.func, types, w, None, Some(receiver));
+    codegen.replace_current_self_def(previous_self);
+    result
+}
+
+fn method_mutates_self(func: &HirFunction, self_def: DefId) -> bool {
+    struct SelfMutationDetector {
+        self_def: DefId,
+        found: bool,
+    }
+
+    impl HirVisitor for SelfMutationDetector {
+        fn visit_expr(&mut self, expr: &HirExpr) {
+            match &expr.kind {
+                HirExprKind::Assign(target, _) | HirExprKind::AssignOp(_, target, _) => {
+                    if assignment_target_starts_at_self(target, self.self_def) {
+                        self.found = true;
+                        return;
+                    }
+                }
+                _ => {}
+            }
+            walk_expr(self, expr);
+        }
+    }
+
+    let mut detector = SelfMutationDetector { self_def, found: false };
+    detector.visit_function(func);
+    detector.found
+}
+
+fn assignment_target_starts_at_self(expr: &HirExpr, self_def: DefId) -> bool {
+    match &expr.kind {
+        HirExprKind::Path(def_id) => *def_id == self_def,
+        HirExprKind::Field(object, _) | HirExprKind::Index(object, _) => {
+            assignment_target_starts_at_self(object, self_def)
+        }
+        _ => false,
+    }
 }
 
 fn type_is_option(type_id: TypeId, types: &TypeTable) -> bool {

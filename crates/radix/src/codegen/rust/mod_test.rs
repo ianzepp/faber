@@ -571,6 +571,54 @@ incipit {
 }
 
 #[test]
+fn rust_methods_emit_self_receivers() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+genus Rectangle {
+    numerus width = 1
+    numerus height = 1
+
+    functio area() → numerus {
+        redde ego.width * ego.height
+    }
+}
+
+genus Counter {
+    numerus count = 0
+
+    functio increment() {
+        ego.count ← ego.count + 1
+    }
+
+    functio getValue() → numerus {
+        redde ego.count
+    }
+}
+
+incipit {
+    fixum _ rect ← Rectangle { width = 10, height = 5 }
+    nota rect.area()
+    varia _ counter ← Counter { count = 0 }
+    counter.increment()
+    nota counter.getValue()
+}
+"#;
+
+    let result = compiler.compile_str("rust-method-receivers.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("fn area(&self) -> i64"));
+    assert!(rust.code.contains("return self.width * self.height;"));
+    assert!(rust.code.contains("fn increment(&mut self) -> ()"));
+    assert!(rust.code.contains("self.count = self.count + 1;"));
+    assert!(rust.code.contains("fn getValue(&self) -> i64"));
+    assert!(!rust.code.contains("Rectangle.width"));
+    assert!(!rust.code.contains("Counter.count"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");
