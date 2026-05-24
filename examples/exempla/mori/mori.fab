@@ -12,7 +12,7 @@ functio divide(numerus a, numerus b) → fractus {
     si b ≡ 0 {
         mori "Division by zero is a fatal error"
     }
-    redde a / b
+    redde (a ⇒ fractus) / (b ⇒ fractus)
 }
 
 functio accessArray(lista<numerus> items, numerus index) → numerus {

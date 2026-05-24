@@ -11,8 +11,10 @@
 //! - Out-of-range scalar `textus` access currently yields an empty string.
 //! - Text ranges use saturating length arithmetic and clamp a missing or zero
 //!   step to one.
-//! - Non-text index expressions stay direct Rust indexing and may panic exactly
-//!   as the generated Rust collection access would.
+//! - List indexes use Faber `numerus` (`i64`) in source but Rust slice indexes
+//!   are `usize`, so scalar list indexes are cast at the backend boundary.
+//! - Other non-text index expressions stay direct Rust indexing and may panic
+//!   exactly as the generated Rust collection access would.
 
 use super::*;
 
@@ -44,7 +46,8 @@ pub(super) fn generate_index_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if matches!(object.ty.map(|ty| types.get(ty)), Some(Type::Primitive(Primitive::Textus))) {
+    let object_ty = object.ty.map(|ty| resolve_type(ty, types));
+    if matches!(object_ty, Some(Type::Primitive(Primitive::Textus))) {
         return generate_textus_index_expr(
             codegen,
             object,
@@ -59,7 +62,13 @@ pub(super) fn generate_index_expr(
 
     generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write("[");
-    generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if matches!(object_ty, Some(Type::Array(_))) {
+        w.write("(");
+        generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(") as usize");
+    } else {
+        generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    }
     w.write("]");
     Ok(())
 }

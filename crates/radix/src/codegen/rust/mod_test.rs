@@ -238,6 +238,24 @@ incipit {
 }
 
 #[test]
+fn emits_usize_cast_for_lista_indexing() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio pick(lista<numerus> items, numerus index) → numerus {
+    redde items[index]
+}
+"#;
+
+    let result = compiler.compile_str("lista-index.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("return items[(index) as usize];"));
+    assert!(!rust.code.contains("return items[index];"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");
