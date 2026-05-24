@@ -1,7 +1,7 @@
 ---
-title: Language Reference
-description: Faber Romanus language reference, CLI, targets, and guides. Sources of truth live in the repository (EBNF.md, explain/, docs/, examples/).
-order: 10
+title = "Language Reference"
+description = "Faber Romanus language reference, CLI, targets, and guides. Sources of truth live in the repository (EBNF.md, explain/, docs/, examples/)."
+order = 10
 ---
 
 # Language & Tool Reference
