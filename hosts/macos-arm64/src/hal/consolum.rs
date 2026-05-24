@@ -11,110 +11,137 @@ use crate::kernel::{Frame, FrameData, HostError, HostResult, Syscall, SyscallInf
 /// `crates/norma`, but host execution should resolve these names here.
 pub struct Consolum;
 
-const CONSOLUM_SYSCALLS: &[SyscallInfo] = &[
-    SyscallInfo {
-        name: "consolum:hauri",
-        prefix: "consolum",
-        summary: "Read bytes from stdin.",
-    },
-    SyscallInfo {
-        name: "consolum:hauriet",
-        prefix: "consolum",
-        summary: "Read bytes from stdin asynchronously.",
-    },
-    SyscallInfo {
-        name: "consolum:lege",
-        prefix: "consolum",
-        summary: "Read one text line from stdin.",
-    },
-    SyscallInfo {
-        name: "consolum:leget",
-        prefix: "consolum",
-        summary: "Read one text line from stdin asynchronously.",
-    },
-    SyscallInfo {
-        name: "consolum:funde",
-        prefix: "consolum",
-        summary: "Write bytes to stdout.",
-    },
-    SyscallInfo {
-        name: "consolum:fundet",
-        prefix: "consolum",
-        summary: "Write bytes to stdout asynchronously.",
-    },
-    SyscallInfo {
-        name: "consolum:scribe",
-        prefix: "consolum",
-        summary: "Write a text line to stdout.",
-    },
-    SyscallInfo {
-        name: "consolum:scribet",
-        prefix: "consolum",
-        summary: "Write a text line to stdout asynchronously.",
-    },
-    SyscallInfo {
-        name: "consolum:dic",
-        prefix: "consolum",
-        summary: "Write text to stdout without a newline.",
-    },
-    SyscallInfo {
-        name: "consolum:dicet",
-        prefix: "consolum",
-        summary: "Write text to stdout without a newline asynchronously.",
-    },
-    SyscallInfo {
-        name: "consolum:mone",
-        prefix: "consolum",
-        summary: "Write a warning line to stderr.",
-    },
-    SyscallInfo {
-        name: "consolum:monet",
-        prefix: "consolum",
-        summary: "Write a warning line to stderr asynchronously.",
-    },
-    SyscallInfo {
-        name: "consolum:vide",
-        prefix: "consolum",
-        summary: "Write a debug line to stderr.",
-    },
-    SyscallInfo {
-        name: "consolum:videbit",
-        prefix: "consolum",
-        summary: "Write a debug line to stderr asynchronously.",
-    },
-    SyscallInfo {
-        name: "consolum:estTerminale",
-        prefix: "consolum",
-        summary: "Report whether stdin is a terminal.",
-    },
-    SyscallInfo {
-        name: "consolum:estTerminaleOutput",
-        prefix: "consolum",
-        summary: "Report whether stdout is a terminal.",
-    },
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ConsolumCall {
+    Hauri,
+    Hauriet,
+    Lege,
+    Leget,
+    Funde,
+    Fundet,
+    Scribe,
+    Scribet,
+    Dic,
+    Dicet,
+    Mone,
+    Monet,
+    Vide,
+    Videbit,
+    EstTerminale,
+    EstTerminaleOutput,
+}
+
+const CONSOLUM_CALLS: &[ConsolumCall] = &[
+    ConsolumCall::Hauri,
+    ConsolumCall::Hauriet,
+    ConsolumCall::Lege,
+    ConsolumCall::Leget,
+    ConsolumCall::Funde,
+    ConsolumCall::Fundet,
+    ConsolumCall::Scribe,
+    ConsolumCall::Scribet,
+    ConsolumCall::Dic,
+    ConsolumCall::Dicet,
+    ConsolumCall::Mone,
+    ConsolumCall::Monet,
+    ConsolumCall::Vide,
+    ConsolumCall::Videbit,
+    ConsolumCall::EstTerminale,
+    ConsolumCall::EstTerminaleOutput,
 ];
 
-impl Syscall for Consolum {
-    fn prefix(&self) -> &'static str {
-        "consolum"
+const CONSOLUM_SYSCALLS: &[SyscallInfo] = &[
+    ConsolumCall::Hauri.info(),
+    ConsolumCall::Hauriet.info(),
+    ConsolumCall::Lege.info(),
+    ConsolumCall::Leget.info(),
+    ConsolumCall::Funde.info(),
+    ConsolumCall::Fundet.info(),
+    ConsolumCall::Scribe.info(),
+    ConsolumCall::Scribet.info(),
+    ConsolumCall::Dic.info(),
+    ConsolumCall::Dicet.info(),
+    ConsolumCall::Mone.info(),
+    ConsolumCall::Monet.info(),
+    ConsolumCall::Vide.info(),
+    ConsolumCall::Videbit.info(),
+    ConsolumCall::EstTerminale.info(),
+    ConsolumCall::EstTerminaleOutput.info(),
+];
+
+impl ConsolumCall {
+    const fn route(self) -> &'static str {
+        match self {
+            Self::Hauri => "consolum:hauri",
+            Self::Hauriet => "consolum:hauriet",
+            Self::Lege => "consolum:lege",
+            Self::Leget => "consolum:leget",
+            Self::Funde => "consolum:funde",
+            Self::Fundet => "consolum:fundet",
+            Self::Scribe => "consolum:scribe",
+            Self::Scribet => "consolum:scribet",
+            Self::Dic => "consolum:dic",
+            Self::Dicet => "consolum:dicet",
+            Self::Mone => "consolum:mone",
+            Self::Monet => "consolum:monet",
+            Self::Vide => "consolum:vide",
+            Self::Videbit => "consolum:videbit",
+            Self::EstTerminale => "consolum:estTerminale",
+            Self::EstTerminaleOutput => "consolum:estTerminaleOutput",
+        }
     }
 
-    fn syscalls(&self) -> &'static [SyscallInfo] {
-        CONSOLUM_SYSCALLS
+    const fn summary(self) -> &'static str {
+        match self {
+            Self::Hauri => "Read bytes from stdin.",
+            Self::Hauriet => "Read bytes from stdin asynchronously.",
+            Self::Lege => "Read one text line from stdin.",
+            Self::Leget => "Read one text line from stdin asynchronously.",
+            Self::Funde => "Write bytes to stdout.",
+            Self::Fundet => "Write bytes to stdout asynchronously.",
+            Self::Scribe => "Write a text line to stdout.",
+            Self::Scribet => "Write a text line to stdout asynchronously.",
+            Self::Dic => "Write text to stdout without a newline.",
+            Self::Dicet => "Write text to stdout without a newline asynchronously.",
+            Self::Mone => "Write a warning line to stderr.",
+            Self::Monet => "Write a warning line to stderr asynchronously.",
+            Self::Vide => "Write a debug line to stderr.",
+            Self::Videbit => "Write a debug line to stderr asynchronously.",
+            Self::EstTerminale => "Report whether stdin is a terminal.",
+            Self::EstTerminaleOutput => "Report whether stdout is a terminal.",
+        }
     }
 
-    fn dispatch(&self, request: &Frame) -> HostResult<Frame> {
-        match request.call.as_str() {
-            "consolum:hauri" | "consolum:hauriet" => read_bytes(request),
-            "consolum:lege" | "consolum:leget" => read_line(request),
-            "consolum:funde" | "consolum:fundet" => write_stdout_bytes(request),
-            "consolum:scribe" | "consolum:scribet" => write_stdout_line(request),
-            "consolum:dic" | "consolum:dicet" => write_stdout_text(request),
-            "consolum:mone" | "consolum:monet" | "consolum:vide" | "consolum:videbit" => {
-                write_stderr_line(request)
-            }
-            "consolum:estTerminale" => Ok(request.done_with(bool_data(is_terminal_stdin()))),
-            "consolum:estTerminaleOutput" => Ok(request.done_with(bool_data(is_terminal_stdout()))),
+    const fn info(self) -> SyscallInfo {
+        SyscallInfo {
+            name: self.route(),
+            prefix: "consolum",
+            summary: self.summary(),
+        }
+    }
+}
+
+impl TryFrom<&str> for ConsolumCall {
+    type Error = HostError;
+
+    fn try_from(call: &str) -> HostResult<Self> {
+        match call {
+            "consolum:hauri" => Ok(Self::Hauri),
+            "consolum:hauriet" => Ok(Self::Hauriet),
+            "consolum:lege" => Ok(Self::Lege),
+            "consolum:leget" => Ok(Self::Leget),
+            "consolum:funde" => Ok(Self::Funde),
+            "consolum:fundet" => Ok(Self::Fundet),
+            "consolum:scribe" => Ok(Self::Scribe),
+            "consolum:scribet" => Ok(Self::Scribet),
+            "consolum:dic" => Ok(Self::Dic),
+            "consolum:dicet" => Ok(Self::Dicet),
+            "consolum:mone" => Ok(Self::Mone),
+            "consolum:monet" => Ok(Self::Monet),
+            "consolum:vide" => Ok(Self::Vide),
+            "consolum:videbit" => Ok(Self::Videbit),
+            "consolum:estTerminale" => Ok(Self::EstTerminale),
+            "consolum:estTerminaleOutput" => Ok(Self::EstTerminaleOutput),
             other => Err(HostError::no_route(format!(
                 "no built-in consolum syscall registered for {other}"
             ))),
@@ -122,62 +149,163 @@ impl Syscall for Consolum {
     }
 }
 
-fn read_bytes(request: &Frame) -> HostResult<Frame> {
-    let magnitude = i64_arg(&request.data, "magnitudo")?.max(0) as usize;
+enum ConsolumRequest {
+    Hauri { magnitudo: i64 },
+    Hauriet { magnitudo: i64 },
+    Lege,
+    Leget,
+    Funde { data: Vec<u8> },
+    Fundet { data: Vec<u8> },
+    Scribe { msg: String },
+    Scribet { msg: String },
+    Dic { msg: String },
+    Dicet { msg: String },
+    Mone { msg: String },
+    Monet { msg: String },
+    Vide { msg: String },
+    Videbit { msg: String },
+    EstTerminale,
+    EstTerminaleOutput,
+}
+
+impl ConsolumRequest {
+    fn decode(call: ConsolumCall, data: &FrameData) -> HostResult<Self> {
+        match call {
+            ConsolumCall::Hauri => Ok(Self::Hauri {
+                magnitudo: i64_arg(data, "magnitudo")?,
+            }),
+            ConsolumCall::Hauriet => Ok(Self::Hauriet {
+                magnitudo: i64_arg(data, "magnitudo")?,
+            }),
+            ConsolumCall::Lege => Ok(Self::Lege),
+            ConsolumCall::Leget => Ok(Self::Leget),
+            ConsolumCall::Funde => Ok(Self::Funde {
+                data: bytes_arg(data, "data")?,
+            }),
+            ConsolumCall::Fundet => Ok(Self::Fundet {
+                data: bytes_arg(data, "data")?,
+            }),
+            ConsolumCall::Scribe => Ok(Self::Scribe {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::Scribet => Ok(Self::Scribet {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::Dic => Ok(Self::Dic {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::Dicet => Ok(Self::Dicet {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::Mone => Ok(Self::Mone {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::Monet => Ok(Self::Monet {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::Vide => Ok(Self::Vide {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::Videbit => Ok(Self::Videbit {
+                msg: string_arg(data, "msg")?,
+            }),
+            ConsolumCall::EstTerminale => Ok(Self::EstTerminale),
+            ConsolumCall::EstTerminaleOutput => Ok(Self::EstTerminaleOutput),
+        }
+    }
+
+    fn execute(self, frame: &Frame) -> HostResult<Frame> {
+        match self {
+            Self::Hauri { magnitudo } | Self::Hauriet { magnitudo } => hauri(frame, magnitudo),
+            Self::Lege | Self::Leget => lege(frame),
+            Self::Funde { data } | Self::Fundet { data } => funde(frame, data),
+            Self::Scribe { msg } | Self::Scribet { msg } => scribe(frame, msg),
+            Self::Dic { msg } | Self::Dicet { msg } => dic(frame, msg),
+            Self::Mone { msg } | Self::Monet { msg } => mone(frame, msg),
+            Self::Vide { msg } | Self::Videbit { msg } => vide(frame, msg),
+            Self::EstTerminale => Ok(frame.done_with(bool_data(is_terminal_stdin()))),
+            Self::EstTerminaleOutput => Ok(frame.done_with(bool_data(is_terminal_stdout()))),
+        }
+    }
+}
+
+impl Syscall for Consolum {
+    fn prefix(&self) -> &'static str {
+        "consolum"
+    }
+
+    fn syscalls(&self) -> &'static [SyscallInfo] {
+        debug_assert_eq!(CONSOLUM_CALLS.len(), CONSOLUM_SYSCALLS.len());
+        CONSOLUM_SYSCALLS
+    }
+
+    fn dispatch(&self, frame: &Frame) -> HostResult<Frame> {
+        let call = ConsolumCall::try_from(frame.call.as_str())?;
+        let request = ConsolumRequest::decode(call, &frame.data)?;
+        request.execute(frame)
+    }
+}
+
+fn hauri(frame: &Frame, magnitudo: i64) -> HostResult<Frame> {
+    let magnitude = magnitudo.max(0) as usize;
     let mut buffer = vec![0u8; magnitude];
     let bytes_read = io::stdin()
         .lock()
         .read(&mut buffer)
         .map_err(|error| HostError::internal(format!("failed to read stdin: {error}")))?;
     buffer.truncate(bytes_read);
-    Ok(request.done_with(bytes_data(buffer)))
+    Ok(frame.done_with(bytes_data(buffer)))
 }
 
-fn read_line(request: &Frame) -> HostResult<Frame> {
+fn lege(frame: &Frame) -> HostResult<Frame> {
     let mut line = String::new();
     io::stdin()
         .lock()
         .read_line(&mut line)
         .map_err(|error| HostError::internal(format!("failed to read stdin line: {error}")))?;
     trim_line_ending(&mut line);
-    Ok(request.done_with(text_data(line)))
+    Ok(frame.done_with(text_data(line)))
 }
 
-fn write_stdout_bytes(request: &Frame) -> HostResult<Frame> {
-    let bytes = bytes_arg(&request.data, "data")?;
+fn funde(frame: &Frame, data: Vec<u8>) -> HostResult<Frame> {
     let mut stdout = io::stdout().lock();
     stdout
-        .write_all(&bytes)
+        .write_all(&data)
         .and_then(|_| stdout.flush())
         .map_err(|error| HostError::internal(format!("failed to write stdout: {error}")))?;
-    Ok(request.done())
+    Ok(frame.done())
 }
 
-fn write_stdout_line(request: &Frame) -> HostResult<Frame> {
-    let msg = string_arg(&request.data, "msg")?;
+fn scribe(frame: &Frame, msg: String) -> HostResult<Frame> {
     let mut stdout = io::stdout().lock();
     writeln!(stdout, "{msg}")
         .and_then(|_| stdout.flush())
         .map_err(|error| HostError::internal(format!("failed to write stdout: {error}")))?;
-    Ok(request.done())
+    Ok(frame.done())
 }
 
-fn write_stdout_text(request: &Frame) -> HostResult<Frame> {
-    let msg = string_arg(&request.data, "msg")?;
+fn dic(frame: &Frame, msg: String) -> HostResult<Frame> {
     let mut stdout = io::stdout().lock();
     write!(stdout, "{msg}")
         .and_then(|_| stdout.flush())
         .map_err(|error| HostError::internal(format!("failed to write stdout: {error}")))?;
-    Ok(request.done())
+    Ok(frame.done())
 }
 
-fn write_stderr_line(request: &Frame) -> HostResult<Frame> {
-    let msg = string_arg(&request.data, "msg")?;
+fn mone(frame: &Frame, msg: String) -> HostResult<Frame> {
+    write_stderr_line(frame, msg)
+}
+
+fn vide(frame: &Frame, msg: String) -> HostResult<Frame> {
+    write_stderr_line(frame, msg)
+}
+
+fn write_stderr_line(frame: &Frame, msg: String) -> HostResult<Frame> {
     let mut stderr = io::stderr().lock();
     writeln!(stderr, "{msg}")
         .and_then(|_| stderr.flush())
         .map_err(|error| HostError::internal(format!("failed to write stderr: {error}")))?;
-    Ok(request.done())
+    Ok(frame.done())
 }
 
 fn string_arg(data: &FrameData, key: &str) -> HostResult<String> {
