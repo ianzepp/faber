@@ -237,8 +237,9 @@ pub fn generate_expr(
             in_entry,
             suppress_error_propagation,
         )?,
-        HirExprKind::Itera(_, binding, _binding_name, iter, block) => generate_for_expr(
+        HirExprKind::Itera(mode, binding, _binding_name, iter, block) => generate_for_expr(
             codegen,
+            *mode,
             *binding,
             iter,
             block,

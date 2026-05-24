@@ -273,6 +273,7 @@ pub(super) fn generate_while_expr(
 #[allow(clippy::too_many_arguments)]
 pub(super) fn generate_for_expr(
     codegen: &RustCodegen<'_>,
+    mode: HirIteraMode,
     binding: DefId,
     iter: &HirExpr,
     block: &HirBlock,
@@ -285,9 +286,63 @@ pub(super) fn generate_for_expr(
     w.write("for ");
     w.write(codegen.resolve_def(binding));
     w.write(" in ");
-    generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if matches!(mode, HirIteraMode::Pro) {
+        if let HirExprKind::Intervallum { start, end, step, kind } = &iter.kind {
+            generate_range_iter_expr(
+                codegen,
+                start,
+                end,
+                step.as_deref(),
+                *kind,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+        } else {
+            generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        }
+    } else {
+        generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    }
     w.write(" ");
     generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_range_iter_expr(
+    codegen: &RustCodegen<'_>,
+    start: &HirExpr,
+    end: &HirExpr,
+    step: Option<&HirExpr>,
+    kind: HirRangeKind,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("{ let __faber_start: i64 = ");
+    generate_expr(codegen, start, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write("; let __faber_end: i64 = ");
+    generate_expr(codegen, end, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write("; let __faber_step: i64 = ");
+    if let Some(step) = step {
+        generate_expr(codegen, step, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    } else {
+        w.write("if __faber_start <= __faber_end { 1 } else { -1 }");
+    }
+    w.write("; let __faber_limit: i64 = ");
+    match kind {
+        HirRangeKind::Exclusive => w.write("__faber_end"),
+        HirRangeKind::Inclusive => w.write("__faber_end + __faber_step.signum()"),
+    }
+    w.write("; let mut __faber_values = Vec::new(); let mut __faber_i = __faber_start; ");
+    w.write("if __faber_step > 0 { while __faber_i < __faber_limit { __faber_values.push(__faber_i); __faber_i += __faber_step; } } ");
+    w.write("else if __faber_step < 0 { while __faber_i > __faber_limit { __faber_values.push(__faber_i); __faber_i += __faber_step; } } ");
+    w.write("__faber_values }");
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]

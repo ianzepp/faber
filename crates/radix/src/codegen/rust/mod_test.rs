@@ -158,6 +158,41 @@ incipit {
 }
 
 #[test]
+fn emits_iterable_rust_ranges_for_itera_pro() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    itera pro 0‥3 fixum i {
+        nota i
+    }
+    itera pro 0…3 fixum j {
+        nota j
+    }
+    itera pro 0‥6 per 2 fixum k {
+        nota k
+    }
+    itera pro 6‥0 per -2 fixum n {
+        nota n
+    }
+}
+"#;
+
+    let result = compiler.compile_str("range-iteration.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("for i in { let __faber_start: i64 = 0"));
+    assert!(rust.code.contains("let __faber_limit: i64 = __faber_end"));
+    assert!(rust
+        .code
+        .contains("let __faber_limit: i64 = __faber_end + __faber_step.signum()"));
+    assert!(rust.code.contains("let __faber_step: i64 = 2"));
+    assert!(rust.code.contains("let __faber_step: i64 = -2"));
+    assert!(!rust.code.contains("for i in (0, 3)"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");
