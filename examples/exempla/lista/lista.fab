@@ -2,7 +2,7 @@
 
 incipit {
     # Empty array
-    fixum _ empty ← []
+    fixum lista<numerus> empty ← vacua
 
     # Number array
     fixum _ numbers ← [1, 2, 3, 4, 5]

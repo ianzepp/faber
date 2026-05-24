@@ -64,7 +64,7 @@ pub(super) fn generate_array_expr(
                     }
                     HirArrayElement::Spread(elem) => {
                         w.write(&temp);
-                        w.write(".extend(");
+                        w.write(".extend((");
                         result = generate_expr(
                             codegen,
                             elem,
@@ -74,7 +74,7 @@ pub(super) fn generate_array_expr(
                             in_entry,
                             suppress_error_propagation,
                         );
-                        w.writeln(");");
+                        w.writeln(").iter().cloned());");
                     }
                 }
             }

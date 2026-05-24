@@ -216,6 +216,28 @@ incipit {
 }
 
 #[test]
+fn emits_array_spread_without_moving_source_vector() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    fixum _ first ← [1, 2, 3]
+    fixum _ combined ← [sparge first]
+    fixum _ extended ← [0, sparge first, 99]
+    nota combined
+    nota extended
+}
+"#;
+
+    let result = compiler.compile_str("array-spread.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains(".extend((first).iter().cloned());"));
+    assert!(!rust.code.contains(".extend(first);"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

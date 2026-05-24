@@ -217,7 +217,7 @@ fn generate_verte_array_expr(
                         }
                         HirArrayElement::Spread(elem_expr) => {
                             w.write(&temp);
-                            w.write(".extend(");
+                            w.write(".extend((");
                             array_result = generate_expr(
                                 codegen,
                                 elem_expr,
@@ -227,7 +227,7 @@ fn generate_verte_array_expr(
                                 in_entry,
                                 suppress_error_propagation,
                             );
-                            w.writeln(");");
+                            w.writeln(").iter().cloned());");
                         }
                     }
                 }
