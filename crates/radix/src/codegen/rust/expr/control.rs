@@ -239,10 +239,19 @@ pub(super) fn generate_match_expr(
             );
             w.writeln(",");
         }
+        if !arms.iter().any(arm_has_wildcard_pattern) {
+            w.writeln("_ => {},");
+        }
     });
     discerne_result?;
     w.write("}");
     Ok(())
+}
+
+fn arm_has_wildcard_pattern(arm: &HirCasuArm) -> bool {
+    arm.patterns
+        .iter()
+        .any(|pattern| matches!(pattern, HirPattern::Wildcard))
 }
 
 #[allow(clippy::too_many_arguments)]

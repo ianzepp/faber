@@ -469,6 +469,37 @@ functio length(textus value) → numerus {
 }
 
 #[test]
+fn emits_wildcard_arm_for_elige_without_ceterum() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio greeting(textus language) → textus {
+    elige language {
+        casu "latin" { redde "Salve" }
+        casu "english" { redde "Hello" }
+    }
+    redde "Hi"
+}
+
+incipit {
+    fixum _ code ← 200
+    elige code {
+        casu 200 { nota "OK" }
+        casu 404 { nota "Missing" }
+    }
+}
+"#;
+
+    let result = compiler.compile_str("elige-exhaustive.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("match language.as_str()"));
+    assert!(rust.code.contains("_ => {},"));
+    assert!(rust.code.contains("return \"Hi\".to_string();"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");
