@@ -58,3 +58,6 @@ fons/nanus-go/nanus-go
 
 # Claude Code local artifacts
 .claude/
+
+# Generated website output (monorepo docs site)
+website/dist/

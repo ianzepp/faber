@@ -24,6 +24,8 @@ explain/                # embedded faber explain reference corpus
 EBNF.md                 # formal grammar and spec commentary
 
 scripta/                # shell helper scripts
+
+website/                # static documentation site (monorepo; templates + curated content; generated dist/ ignored)
 ```
 
 Do not restore archived bootstrap, self-hosting, old reference, proba, or golden trees into this repository. Historical surfaces live in the sibling archive repository.

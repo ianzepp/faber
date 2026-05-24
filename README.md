@@ -21,6 +21,7 @@ repository; they are useful for archaeology, not for current commands or CI.
 - [Commandments](#commandments)
 - [Language Orientation](#language-orientation)
 - [Common LLM Failure Modes](#common-llm-failure-modes)
+- [Website / Documentation Site](#website--documentation-site)
 - [Archive Note](#archive-note)
 
 ## Codebase Index
@@ -36,6 +37,7 @@ repository; they are useful for archaeology, not for current commands or CI.
 | Grammar | [`EBNF.md`](EBNF.md) | You need the canonical grammar and spec commentary. |
 | Explain corpus | [`explain`](explain) | You need user-facing keyword/glyph docs embedded by `faber explain`. |
 | Docs | [`docs`](docs) | You need delivery plans, release notes, and design history. |
+| Website / Docs Site | [`website`](website) | You are updating the public static documentation site (templates, styles, curated content sources). The site is part of the monorepo so docs stay in sync with the compiler. |
 | Scripts | [`scripta`](scripta) | You need repo-local CI, test, lint, or helper wrappers. |
 | macOS host placeholder | [`hosts/macos-arm64`](hosts/macos-arm64) | You are looking at future host runtime work for Faber-produced Wasm components on macOS arm64. |
 
@@ -578,6 +580,19 @@ These are the mistakes to avoid during warm-up or code generation:
 - Guessing missing types in codegen-shaped explanations. Missing type information is an upstream analysis issue.
 - Assuming package builds work for every file-emission target. Package builds are Rust-backed today.
 - Treating `faber` and `radix` as competing compilers. `faber` is the user tool; Radix is the compiler implementation and developer inspection tool.
+
+## Website / Documentation Site
+
+The public Faber documentation site lives in [`website/`](website/) as part of this monorepo.
+
+- Presentation layer: `templates/layout.html` + `styles/main.css`
+- Curated content sources: `content/`
+- Legacy pre-migration content (for reference during refresh): `content/legacy-from-faber-www/`
+- Migration plan and history: `docs/faber-website-refresh-plan.md`
+
+The site is intentionally lightweight and static. A repo-local generator (Rust/xtask preferred) will be added to produce `website/dist/`, `llms.txt`, and `faber-complete.md` from the content while pulling live grammar and examples from the repository root. See the plan doc for phases, acceptance criteria, and open questions.
+
+Until the generator lands, the assets here are the source of truth for any manual or external publishing process.
 
 ## Archive Note
 
