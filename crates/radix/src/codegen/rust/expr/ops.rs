@@ -170,11 +170,12 @@ pub(super) fn generate_binary_expr(
                 Some(Type::Option(_)) => {
                     w.write("(");
                     generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                    w.write(").clone()");
                     let rhs_ty = rhs.ty.map(|ty| resolve_type(ty, types));
                     if matches!(rhs_ty, Some(Type::Option(_))) {
-                        w.write(").or(");
+                        w.write(".or(");
                     } else {
-                        w.write(").unwrap_or(");
+                        w.write(".unwrap_or(");
                     }
                     generate_expr(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
                     w.write(")");

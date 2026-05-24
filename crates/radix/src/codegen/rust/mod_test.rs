@@ -337,6 +337,33 @@ incipit {
 }
 
 #[test]
+fn emits_non_consuming_option_coalesce() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    fixum textus ∪ nihil name ← nihil
+    fixum _ first ← name vel "Anonymous"
+    fixum _ second ← name vel "Default"
+    nota first
+    nota second
+}
+"#;
+
+    let result = compiler.compile_str("option-coalesce.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("(name).clone().unwrap_or(\"Anonymous\".to_string())"));
+    assert!(rust
+        .code
+        .contains("(name).clone().unwrap_or(\"Default\".to_string())"));
+    assert!(!rust.code.contains("(name).unwrap_or("));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");
