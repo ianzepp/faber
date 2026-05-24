@@ -89,53 +89,19 @@ impl<'a, 'cg> ExprEmitter<'a, 'cg> {
     }
 
     pub(super) fn expr(&mut self, expr: &HirExpr) -> Result<(), CodegenError> {
-        generate_expr(
-            self.codegen,
-            expr,
-            self.types,
-            self.writer,
-            self.policy.can_propagate_failure,
-            self.policy.inside_entrypoint,
-            self.policy.propagation_suppressed,
-        )
+        emit_expr(self, expr)
     }
 
     pub(super) fn expr_unwrapped(&mut self, expr: &HirExpr) -> Result<(), CodegenError> {
-        generate_expr_unwrapped(
-            self.codegen,
-            expr,
-            self.types,
-            self.writer,
-            self.policy.can_propagate_failure,
-            self.policy.inside_entrypoint,
-            self.policy.propagation_suppressed,
-        )
+        emit_expr_unwrapped(self, expr)
     }
 
     pub(super) fn expr_as_type(&mut self, expr: &HirExpr, target_ty: TypeId) -> Result<(), CodegenError> {
-        generate_expr_as_type(
-            self.codegen,
-            expr,
-            target_ty,
-            self.types,
-            self.writer,
-            self.policy.can_propagate_failure,
-            self.policy.inside_entrypoint,
-            self.policy.propagation_suppressed,
-        )
+        emit_expr_as_type(self, expr, target_ty)
     }
 
     pub(super) fn expr_as_optional_target(&mut self, expr: &HirExpr, value_ty: TypeId) -> Result<(), CodegenError> {
-        generate_expr_as_optional_target(
-            self.codegen,
-            expr,
-            value_ty,
-            self.types,
-            self.writer,
-            self.policy.can_propagate_failure,
-            self.policy.inside_entrypoint,
-            self.policy.propagation_suppressed,
-        )
+        emit_expr_as_optional_target(self, expr, value_ty)
     }
 }
 
@@ -153,149 +119,74 @@ pub fn generate_expr(
     codegen: &RustCodegen<'_>,
     expr: &HirExpr,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     in_failable_fn: bool,
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        writer,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_expr(&mut emitter, expr)
+}
+
+fn emit_expr(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr) -> Result<(), CodegenError> {
     match &expr.kind {
         HirExprKind::Path(def_id) => {
-            if codegen.current_self_def() == Some(*def_id) {
-                w.write("self");
-            } else if let Some(variant) = codegen.variant_info(*def_id) {
-                w.write(codegen.resolve_def(variant.enum_def));
-                w.write("::");
-                w.write(codegen.resolve_def(*def_id));
+            if emitter.codegen.current_self_def() == Some(*def_id) {
+                emitter.writer.write("self");
+            } else if let Some(variant) = emitter.codegen.variant_info(*def_id) {
+                emitter
+                    .writer
+                    .write(emitter.codegen.resolve_def(variant.enum_def));
+                emitter.writer.write("::");
+                emitter.writer.write(emitter.codegen.resolve_def(*def_id));
             } else {
-                w.write(codegen.resolve_def(*def_id));
+                emitter.writer.write(emitter.codegen.resolve_def(*def_id));
             }
         }
         HirExprKind::Literal(lit) => {
-            generate_literal(codegen, lit, w);
+            generate_literal(emitter.codegen, lit, emitter.writer);
             if matches!(lit, HirLiteral::String(_))
                 && expr
                     .ty
-                    .is_some_and(|ty| matches!(types.get(ty), Type::Primitive(Primitive::Textus)))
+                    .is_some_and(|ty| matches!(emitter.types.get(ty), Type::Primitive(Primitive::Textus)))
             {
-                w.write(".to_string()");
+                emitter.writer.write(".to_string()");
             }
         }
         HirExprKind::Binary(op, lhs, rhs) => {
-            generate_binary_expr(
-                codegen,
-                *op,
-                lhs,
-                rhs,
-                expr.ty,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-                true,
-            )?;
+            generate_binary_expr_with_emitter(emitter, *op, lhs, rhs, expr.ty, true)?;
         }
         HirExprKind::Unary(op, operand) => {
-            generate_unary_expr(
-                codegen,
-                *op,
-                operand,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-                true,
-            )?;
+            generate_unary_expr_with_emitter(emitter, *op, operand, true)?;
         }
         HirExprKind::Call(callee, args) => {
-            let mut emitter = ExprEmitter::new(
-                codegen,
-                types,
-                w,
-                ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-            );
-            generate_call_expr(&mut emitter, callee, args)?;
+            generate_call_expr(emitter, callee, args)?;
         }
         HirExprKind::MethodCall(receiver, method, args) => {
-            let mut emitter = ExprEmitter::new(
-                codegen,
-                types,
-                w,
-                ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-            );
-            generate_method_call_expr(&mut emitter, receiver, *method, args)?;
+            generate_method_call_expr(emitter, receiver, *method, args)?;
         }
         HirExprKind::Field(obj, field) => {
-            generate_field_expr(
-                codegen,
-                obj,
-                *field,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_field_expr_with_emitter(emitter, obj, *field)?;
         }
         HirExprKind::Index(obj, idx) => {
-            generate_index_expr(
-                codegen,
-                obj,
-                idx,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_index_expr_with_emitter(emitter, obj, idx)?;
         }
-        HirExprKind::OptionalChain(object, chain) => generate_optional_chain_expr(
-            codegen,
-            object,
-            chain,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::NonNull(object, chain) => generate_non_null_expr(
-            codegen,
-            object,
-            chain,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
+        HirExprKind::OptionalChain(object, chain) => generate_optional_chain_expr_with_emitter(emitter, object, chain)?,
+        HirExprKind::NonNull(object, chain) => generate_non_null_expr_with_emitter(emitter, object, chain)?,
         HirExprKind::Block(block) => {
-            generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_block_with_emitter(emitter, block)?;
         }
-        HirExprKind::Tempta { body, catch, finally } => generate_tempta_expr(
-            codegen,
-            body,
-            catch.as_ref(),
-            finally.as_ref(),
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Si { cond, then_block, then_catch: None, else_block } => generate_if_expr(
-            codegen,
-            cond,
-            then_block,
-            else_block.as_ref(),
-            expr.ty,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
+        HirExprKind::Tempta { body, catch, finally } => {
+            emit_tempta_expr(emitter, body, catch.as_ref(), finally.as_ref())?
+        }
+        HirExprKind::Si { cond, then_block, then_catch: None, else_block } => {
+            generate_if_expr_with_emitter(emitter, cond, then_block, else_block.as_ref(), expr.ty)?
+        }
         HirExprKind::Si { then_catch: Some(_), .. } | HirExprKind::Handled { .. } => {
             // Fail closed: these HIR surfaces carry structured handler
             // semantics that this Rust backend slice does not yet lower.
@@ -303,200 +194,53 @@ pub fn generate_expr(
                 message: "structured cape handlers are not emitted by Rust codegen in Phase 5C".to_owned(),
             });
         }
-        HirExprKind::Discerne(scrutinees, arms) => generate_match_expr(
-            codegen,
-            scrutinees,
-            arms,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Loop(block) => {
-            generate_loop_expr(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)?
+        HirExprKind::Discerne(scrutinees, arms) => generate_match_expr_with_emitter(emitter, scrutinees, arms)?,
+        HirExprKind::Loop(block) => generate_loop_expr_with_emitter(emitter, block)?,
+        HirExprKind::Dum(cond, block) => generate_while_expr_with_emitter(emitter, cond, block)?,
+        HirExprKind::Itera(mode, binding, _binding_name, iter, block) => {
+            generate_for_expr_with_emitter(emitter, *mode, *binding, iter, block)?
         }
-        HirExprKind::Dum(cond, block) => generate_while_expr(
-            codegen,
-            cond,
-            block,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Itera(mode, binding, _binding_name, iter, block) => generate_for_expr(
-            codegen,
-            *mode,
-            *binding,
-            iter,
-            block,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Intervallum { start, end, step, .. } => generate_range_tuple_expr(
-            codegen,
-            start,
-            end,
-            step.as_deref(),
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
+        HirExprKind::Intervallum { start, end, step, .. } => {
+            generate_range_tuple_expr_with_emitter(emitter, start, end, step.as_deref())?
+        }
         HirExprKind::Assign(target, value) => {
-            generate_assign_expr(
-                codegen,
-                target,
-                value,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_assign_expr_with_emitter(emitter, target, value)?;
         }
-        HirExprKind::AssignOp(op, target, value) => generate_assign_op_expr(
-            codegen,
-            *op,
-            target,
-            value,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Array(elements) => generate_array_expr(
-            codegen,
-            expr.id,
-            expr.ty,
-            elements,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Vacua => generate_vacua_expr(expr, types, w),
-        HirExprKind::Struct(def_id, fields) => generate_struct_expr(
-            codegen,
-            expr.id,
-            *def_id,
-            fields,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Tuple(elements) => generate_tuple_expr(
-            codegen,
-            elements,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
+        HirExprKind::AssignOp(op, target, value) => generate_assign_op_expr_with_emitter(emitter, *op, target, value)?,
+        HirExprKind::Array(elements) => emit_array_expr(emitter, expr.id, expr.ty, elements)?,
+        HirExprKind::Vacua => generate_vacua_expr(expr, emitter),
+        HirExprKind::Struct(def_id, fields) => emit_struct_expr(emitter, expr.id, *def_id, fields)?,
+        HirExprKind::Tuple(elements) => emit_tuple_expr(emitter, elements)?,
         HirExprKind::Scribe(kind, args) => {
-            generate_scribe_expr(
-                codegen,
-                *kind,
-                args,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_scribe_expr_with_emitter(emitter, *kind, args)?;
         }
-        HirExprKind::Scriptum(template, args) => generate_scriptum_expr(
-            codegen,
-            *template,
-            args,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
+        HirExprKind::Scriptum(template, args) => generate_scriptum_expr_with_emitter(emitter, *template, args)?,
         HirExprKind::Adfirma(cond, message) => {
-            generate_assert_expr(
-                codegen,
-                cond,
-                message.as_deref(),
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_assert_expr_with_emitter(emitter, cond, message.as_deref())?;
         }
         HirExprKind::Panic(value) => {
-            generate_panic_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_panic_expr_with_emitter(emitter, value)?;
         }
         HirExprKind::Throw(value) => {
-            generate_throw_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_throw_expr_with_emitter(emitter, value)?;
         }
         HirExprKind::Clausura(params, _ret, body) => {
-            generate_closure_expr(
-                codegen,
-                params,
-                body,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            emit_closure_expr(emitter, params, body)?;
         }
         HirExprKind::Cede(expr) => {
-            generate_await_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emit_await_expr(emitter, expr)?;
         }
-        HirExprKind::Verte { source, target, entries } => generate_verte_expr(
-            codegen,
-            expr.id,
-            source,
-            expr.ty.unwrap_or(*target),
-            entries.as_deref(),
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
-        HirExprKind::Conversio { source, target, params, fallback } => generate_conversio_expr(
-            codegen,
-            source,
-            *target,
-            params,
-            fallback.as_deref(),
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?,
+        HirExprKind::Verte { source, target, entries } => {
+            emit_verte_expr(emitter, expr.id, source, expr.ty.unwrap_or(*target), entries.as_deref())?
+        }
+        HirExprKind::Conversio { source, target, params, fallback } => {
+            generate_conversio_expr_with_emitter(emitter, source, *target, params, fallback.as_deref())?
+        }
         HirExprKind::Ref(kind, expr) => {
-            generate_ref_expr(
-                codegen,
-                *kind,
-                expr,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_ref_expr_with_emitter(emitter, *kind, expr)?;
         }
         HirExprKind::Deref(expr) => {
-            generate_deref_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_deref_expr_with_emitter(emitter, expr)?;
         }
         HirExprKind::Error => {
             // Error sentinels mean an earlier phase could not produce sound HIR.
@@ -512,12 +256,12 @@ pub fn generate_expr(
     Ok(())
 }
 
-fn generate_vacua_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
-    match expr.ty.map(|ty| types.get(ty)) {
-        Some(Type::Map(_, _)) => w.write("std::collections::HashMap::new()"),
-        Some(Type::Set(_)) => w.write("std::collections::HashSet::new()"),
-        Some(Type::Array(_)) => w.write("Vec::new()"),
-        _ => w.write("Vec::new()"),
+fn generate_vacua_expr(expr: &HirExpr, emitter: &mut ExprEmitter<'_, '_>) {
+    match expr.ty.map(|ty| emitter.types.get(ty)) {
+        Some(Type::Map(_, _)) => emitter.writer.write("std::collections::HashMap::new()"),
+        Some(Type::Set(_)) => emitter.writer.write("std::collections::HashSet::new()"),
+        Some(Type::Array(_)) => emitter.writer.write("Vec::new()"),
+        _ => emitter.writer.write("Vec::new()"),
     }
 }
 
@@ -525,103 +269,58 @@ pub(super) fn generate_expr_unwrapped(
     codegen: &RustCodegen<'_>,
     expr: &HirExpr,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     in_failable_fn: bool,
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        writer,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_expr_unwrapped(&mut emitter, expr)
+}
+
+fn emit_expr_unwrapped(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr) -> Result<(), CodegenError> {
     match &expr.kind {
-        HirExprKind::Binary(op, lhs, rhs) => generate_binary_expr(
-            codegen,
-            *op,
-            lhs,
-            rhs,
-            expr.ty,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-            false,
-        ),
-        HirExprKind::Unary(op, operand) => generate_unary_expr(
-            codegen,
-            *op,
-            operand,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-            false,
-        ),
-        _ => generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation),
+        HirExprKind::Binary(op, lhs, rhs) => generate_binary_expr_with_emitter(emitter, *op, lhs, rhs, expr.ty, false),
+        HirExprKind::Unary(op, operand) => generate_unary_expr_with_emitter(emitter, *op, operand, false),
+        _ => emit_expr(emitter, expr),
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_expr_as_type(
-    codegen: &RustCodegen<'_>,
-    expr: &HirExpr,
-    target_ty: TypeId,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    if type_id_is_faber_value(target_ty, types) {
-        return generate_expr_as_faber_value(
-            codegen,
-            expr,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        );
+fn emit_expr_as_type(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr, target_ty: TypeId) -> Result<(), CodegenError> {
+    if type_id_is_faber_value(target_ty, emitter.types) {
+        return generate_expr_as_faber_value_with_emitter(emitter, expr);
     }
 
-    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    emit_expr_unwrapped(emitter, expr)?;
     if matches!(expr.kind, HirExprKind::Literal(HirLiteral::String(_)))
         && !expr
             .ty
-            .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Textus)))
-        && matches!(resolve_type(target_ty, types), Type::Primitive(Primitive::Textus))
+            .is_some_and(|ty| matches!(resolve_type(ty, emitter.types), Type::Primitive(Primitive::Textus)))
+        && matches!(resolve_type(target_ty, emitter.types), Type::Primitive(Primitive::Textus))
     {
-        w.write(".to_string()");
+        emitter.writer.write(".to_string()");
     }
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_expr_as_optional_target(
-    codegen: &RustCodegen<'_>,
+fn emit_expr_as_optional_target(
+    emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,
     value_ty: TypeId,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if expr_may_already_produce_option(codegen, expr, types) {
-        generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if expr_may_already_produce_option(emitter.codegen, expr, emitter.types) {
+        emit_expr_unwrapped(emitter, expr)?;
         return Ok(());
     }
 
-    w.write("Some(");
-    generate_expr_as_type(
-        codegen,
-        expr,
-        value_ty,
-        types,
-        w,
-        in_failable_fn,
-        in_entry,
-        suppress_error_propagation,
-    )?;
-    w.write(")");
+    emitter.writer.write("Some(");
+    emit_expr_as_type(emitter, expr, value_ty)?;
+    emitter.writer.write(")");
     Ok(())
 }
 
@@ -641,25 +340,4 @@ pub(super) fn expr_may_already_produce_option(codegen: &RustCodegen<'_>, expr: &
         | HirExprKind::Si { .. } => expr.ty.is_some_and(|ty| type_is_option_or_nihil(ty, types)),
         _ => false,
     }
-}
-
-#[allow(clippy::too_many_arguments)]
-fn generate_expr_as_faber_value(
-    codegen: &RustCodegen<'_>,
-    expr: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    if matches!(expr.kind, HirExprKind::Literal(HirLiteral::Nil)) {
-        w.write("FaberValue::Nihil");
-        return Ok(());
-    }
-
-    w.write("FaberValue::from(");
-    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(")");
-    Ok(())
 }

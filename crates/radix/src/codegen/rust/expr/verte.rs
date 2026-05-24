@@ -20,30 +20,7 @@ use super::super::type_shape::{resolve_type, type_id_is_faber_value};
 use super::super::types::type_to_rust;
 use super::*;
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_verte_expr(
-    codegen: &RustCodegen<'_>,
-    expr_id: HirId,
-    source: &HirExpr,
-    target: TypeId,
-    entries: Option<&[HirObjectField]>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_verte_expr(&mut emitter, expr_id, source, target, entries)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_verte_expr(
+pub(super) fn emit_verte_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
     source: &HirExpr,
@@ -78,7 +55,6 @@ fn emit_verte_expr(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn emit_verte_struct_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
@@ -120,7 +96,6 @@ fn emit_verte_struct_expr(
     emit_verte_struct_literal_expr(emitter, def_id, entries)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn emit_verte_struct_literal_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
@@ -142,7 +117,7 @@ fn emit_verte_struct_literal_expr(
     let types = emitter.types;
     let policy = emitter.policy;
     emitter.writer.indented(|w| {
-        let nested = ExprEmitter::new(codegen, types, w, policy);
+        let mut nested = ExprEmitter::new(codegen, types, w, policy);
         for field in entries {
             let (name, value) = match (&field.key, &field.value) {
                 (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(value)) => (name, value),
@@ -153,39 +128,19 @@ fn emit_verte_struct_literal_expr(
             if struct_result.is_err() {
                 return;
             }
-            struct_result = generate_struct_field_value(
-                codegen,
-                def_id,
-                *name,
-                value,
-                types,
-                nested.writer,
-                policy.can_propagate_failure,
-                policy.inside_entrypoint,
-                policy.propagation_suppressed,
-            );
+            struct_result = emit_struct_field_value(&mut nested, def_id, *name, value);
             nested.writer.writeln(",");
         }
         if struct_result.is_err() {
             return;
         }
-        struct_result = generate_omitted_struct_fields(
-            codegen,
-            def_id,
-            &provided,
-            types,
-            nested.writer,
-            policy.can_propagate_failure,
-            policy.inside_entrypoint,
-            policy.propagation_suppressed,
-        );
+        struct_result = emit_omitted_struct_fields(&mut nested, def_id, &provided);
     });
     struct_result?;
     emitter.writer.write("}");
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn emit_verte_array_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
@@ -269,7 +224,6 @@ fn emit_verte_array_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn emit_verte_map_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
@@ -312,16 +266,7 @@ fn emit_verte_map_expr(
                         if map_result.is_err() {
                             return;
                         }
-                        map_result = write_object_map_key(
-                            codegen,
-                            types,
-                            &field.key,
-                            key_ty,
-                            nested.writer,
-                            policy.can_propagate_failure,
-                            policy.inside_entrypoint,
-                            policy.propagation_suppressed,
-                        );
+                        map_result = emit_object_map_key(&mut nested, &field.key, key_ty);
                         if map_result.is_err() {
                             return;
                         }
@@ -352,7 +297,6 @@ fn emit_verte_map_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn emit_verte_value_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     value: &HirExpr,

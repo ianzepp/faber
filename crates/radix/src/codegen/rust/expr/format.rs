@@ -65,27 +65,7 @@ pub(super) fn rust_scribe_format(expr: &HirExpr, types: &TypeTable) -> &'static 
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_scribe_expr(
-    codegen: &RustCodegen<'_>,
-    kind: HirScribeKind,
-    args: &[HirExpr],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_scribe_expr_with_emitter(&mut emitter, kind, args)
-}
-
-fn generate_scribe_expr_with_emitter(
+pub(super) fn generate_scribe_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     kind: HirScribeKind,
     args: &[HirExpr],
@@ -128,27 +108,7 @@ fn generate_format_arg_expr(emitter: &mut ExprEmitter<'_, '_>, arg: &HirExpr) ->
     emitter.expr(arg)
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_scriptum_expr(
-    codegen: &RustCodegen<'_>,
-    template: Symbol,
-    args: &[HirExpr],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_scriptum_expr_with_emitter(&mut emitter, template, args)
-}
-
-fn generate_scriptum_expr_with_emitter(
+pub(super) fn generate_scriptum_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     template: Symbol,
     args: &[HirExpr],

@@ -19,30 +19,7 @@
 use super::super::types::type_to_rust;
 use super::*;
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_conversio_expr(
-    codegen: &RustCodegen<'_>,
-    source: &HirExpr,
-    target: TypeId,
-    params: &[Symbol],
-    fallback: Option<&HirExpr>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_conversio_expr_with_emitter(&mut emitter, source, target, params, fallback)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn generate_conversio_expr_with_emitter(
+pub(super) fn generate_conversio_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     source: &HirExpr,
     target: TypeId,
@@ -116,7 +93,6 @@ fn radix_hint(codegen: &RustCodegen<'_>, params: &[Symbol]) -> Option<u32> {
         })
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_parse_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     source: &HirExpr,
@@ -138,7 +114,6 @@ fn generate_parse_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_radix_parse_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     source: &HirExpr,
@@ -159,7 +134,6 @@ fn generate_radix_parse_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_text_bool_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     source: &HirExpr,
@@ -179,7 +153,6 @@ fn generate_text_bool_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_number_bool_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     source: &HirExpr,
@@ -198,27 +171,7 @@ fn generate_number_bool_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_ref_expr(
-    codegen: &RustCodegen<'_>,
-    kind: HirRefKind,
-    expr: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_ref_expr_with_emitter(&mut emitter, kind, expr)
-}
-
-fn generate_ref_expr_with_emitter(
+pub(super) fn generate_ref_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     kind: HirRefKind,
     expr: &HirExpr,
@@ -230,26 +183,10 @@ fn generate_ref_expr_with_emitter(
     emitter.expr(expr)
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_deref_expr(
-    codegen: &RustCodegen<'_>,
+pub(super) fn generate_deref_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_deref_expr_with_emitter(&mut emitter, expr)
-}
-
-fn generate_deref_expr_with_emitter(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr) -> Result<(), CodegenError> {
     emitter.writer.write("*");
     emitter.expr(expr)
 }

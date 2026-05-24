@@ -7,19 +7,19 @@
 //! and generated code remain readable instead of collapsing to a sentinel.
 
 use super::*;
-pub(super) fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, w: &mut CodeWriter) {
+pub(super) fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, writer: &mut CodeWriter) {
     match pattern {
         HirPattern::Wildcard => {
-            w.write("_");
+            writer.write("_");
         }
         HirPattern::Binding(def_id, name) => {
             let resolved = codegen.resolve_def(*def_id);
             // The unresolved sentinel is a backend recovery value, not a legal
             // Rust binding. Prefer the user's symbol when HIR resolution failed.
             if resolved == "unresolved_def" {
-                w.write(codegen.resolve_symbol(*name));
+                writer.write(codegen.resolve_symbol(*name));
             } else {
-                w.write(resolved);
+                writer.write(resolved);
             }
         }
         HirPattern::Alias(def_id, name, pattern) => {
@@ -27,32 +27,32 @@ pub(super) fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, 
             // Alias bindings follow the same recovery rule as plain bindings,
             // then emit Rust's `name @ pattern` form.
             if resolved == "unresolved_def" {
-                w.write(codegen.resolve_symbol(*name));
+                writer.write(codegen.resolve_symbol(*name));
             } else {
-                w.write(resolved);
+                writer.write(resolved);
             }
-            w.write(" @ ");
-            generate_pattern(codegen, pattern, w);
+            writer.write(" @ ");
+            generate_pattern(codegen, pattern, writer);
         }
         HirPattern::Variant(def_id, fields) => {
             if let Some(variant) = codegen.variant_info(*def_id) {
-                w.write(codegen.resolve_def(variant.enum_def));
-                w.write("::");
+                writer.write(codegen.resolve_def(variant.enum_def));
+                writer.write("::");
             }
-            w.write(codegen.resolve_def(*def_id));
+            writer.write(codegen.resolve_def(*def_id));
             if !fields.is_empty() {
-                w.write(" { ");
+                writer.write(" { ");
                 for (i, field) in fields.iter().enumerate() {
                     if i > 0 {
-                        w.write(", ");
+                        writer.write(", ");
                     }
-                    generate_pattern(codegen, field, w);
+                    generate_pattern(codegen, field, writer);
                 }
-                w.write(" }");
+                writer.write(" }");
             }
         }
         HirPattern::Literal(lit) => {
-            generate_literal(codegen, lit, w);
+            generate_literal(codegen, lit, writer);
         }
     }
 }

@@ -60,28 +60,7 @@ pub(super) fn binop_to_rust(op: HirBinOp) -> &'static str {
         HirBinOp::Between => "inter",
     }
 }
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_unary_expr(
-    codegen: &RustCodegen<'_>,
-    op: HirUnOp,
-    operand: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-    wrap: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_unary_expr_with_emitter(&mut emitter, op, operand, wrap)
-}
-
-fn generate_unary_expr_with_emitter(
+pub(super) fn generate_unary_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     op: HirUnOp,
     operand: &HirExpr,
@@ -186,30 +165,7 @@ fn generate_unary_expr_with_emitter(
 
     Ok(())
 }
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_binary_expr(
-    codegen: &RustCodegen<'_>,
-    op: HirBinOp,
-    lhs: &HirExpr,
-    rhs: &HirExpr,
-    result_ty: Option<TypeId>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-    wrap: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_binary_expr_with_emitter(&mut emitter, op, lhs, rhs, result_ty, wrap)
-}
-
-fn generate_binary_expr_with_emitter(
+pub(super) fn generate_binary_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     op: HirBinOp,
     lhs: &HirExpr,
@@ -339,7 +295,6 @@ fn generate_binary_expr_with_emitter(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_fractus_operand_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,
@@ -363,7 +318,6 @@ fn binary_has_faber_value_operand(lhs: &HirExpr, rhs: &HirExpr, types: &TypeTabl
         || rhs.ty.is_some_and(|ty| type_id_is_faber_value(ty, types))
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_binary_faber_value_operand_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,
@@ -383,27 +337,7 @@ fn expr_is_numerus(expr: &HirExpr, types: &TypeTable) -> bool {
         .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Numerus)))
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_assign_expr(
-    codegen: &RustCodegen<'_>,
-    target: &HirExpr,
-    value: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_assign_expr_with_emitter(&mut emitter, target, value)
-}
-
-fn generate_assign_expr_with_emitter(
+pub(super) fn generate_assign_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     target: &HirExpr,
     value: &HirExpr,
@@ -446,28 +380,7 @@ fn generate_assign_expr_with_emitter(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_assign_op_expr(
-    codegen: &RustCodegen<'_>,
-    op: HirBinOp,
-    target: &HirExpr,
-    value: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_assign_op_expr_with_emitter(&mut emitter, op, target, value)
-}
-
-fn generate_assign_op_expr_with_emitter(
+pub(super) fn generate_assign_op_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     op: HirBinOp,
     target: &HirExpr,
@@ -494,8 +407,7 @@ fn is_text_expr(expr: &HirExpr, types: &TypeTable) -> bool {
         .unwrap_or(false)
 }
 
-#[allow(clippy::too_many_arguments)]
-fn generate_expr_as_faber_value_with_emitter(
+pub(super) fn generate_expr_as_faber_value_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,
 ) -> Result<(), CodegenError> {

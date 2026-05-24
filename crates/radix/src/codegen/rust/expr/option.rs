@@ -20,27 +20,7 @@
 use super::super::type_shape::{resolve_type, type_id_is_option};
 use super::*;
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_optional_chain_expr(
-    codegen: &RustCodegen<'_>,
-    object: &HirExpr,
-    chain: &HirOptionalChainKind,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_optional_chain_expr_with_emitter(&mut emitter, object, chain)
-}
-
-fn generate_optional_chain_expr_with_emitter(
+pub(super) fn generate_optional_chain_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     chain: &HirOptionalChainKind,
@@ -231,27 +211,7 @@ fn expr_type_is_option(expr: &HirExpr, types: &TypeTable) -> bool {
     expr.ty.is_some_and(|ty| type_id_is_option(ty, types))
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_non_null_expr(
-    codegen: &RustCodegen<'_>,
-    object: &HirExpr,
-    chain: &HirNonNullKind,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_non_null_expr_with_emitter(&mut emitter, object, chain)
-}
-
-fn generate_non_null_expr_with_emitter(
+pub(super) fn generate_non_null_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     chain: &HirNonNullKind,

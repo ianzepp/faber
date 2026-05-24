@@ -95,65 +95,7 @@ fn rust_float_literal(value: f64) -> String {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_assert_expr(
-    codegen: &RustCodegen<'_>,
-    cond: &HirExpr,
-    message: Option<&HirExpr>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_assert_expr_with_emitter(&mut emitter, cond, message)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_panic_expr(
-    codegen: &RustCodegen<'_>,
-    value: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_panic_expr_with_emitter(&mut emitter, value)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_throw_expr(
-    codegen: &RustCodegen<'_>,
-    value: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_throw_expr_with_emitter(&mut emitter, value)
-}
-
-fn generate_assert_expr_with_emitter(
+pub(super) fn generate_assert_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     cond: &HirExpr,
     message: Option<&HirExpr>,
@@ -168,14 +110,20 @@ fn generate_assert_expr_with_emitter(
     Ok(())
 }
 
-fn generate_panic_expr_with_emitter(emitter: &mut ExprEmitter<'_, '_>, value: &HirExpr) -> Result<(), CodegenError> {
+pub(super) fn generate_panic_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    value: &HirExpr,
+) -> Result<(), CodegenError> {
     emitter.writer.write("panic!(\"{}\", ");
     emitter.expr(value)?;
     emitter.writer.write(")");
     Ok(())
 }
 
-fn generate_throw_expr_with_emitter(emitter: &mut ExprEmitter<'_, '_>, value: &HirExpr) -> Result<(), CodegenError> {
+pub(super) fn generate_throw_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    value: &HirExpr,
+) -> Result<(), CodegenError> {
     if emitter.policy.permits_question_mark() {
         emitter.writer.write("return Err(");
         if matches!(value.kind, HirExprKind::Literal(HirLiteral::String(_))) {

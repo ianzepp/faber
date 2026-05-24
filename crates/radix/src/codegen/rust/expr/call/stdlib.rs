@@ -2,7 +2,6 @@
 
 use super::*;
 
-#[allow(clippy::too_many_arguments)]
 pub(super) fn try_generate_stdlib_method_call(
     emitter: &mut ExprEmitter<'_, '_>,
     receiver: &HirExpr,
@@ -25,7 +24,6 @@ pub(super) fn try_generate_stdlib_method_call(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_lista_method(
     emitter: &mut ExprEmitter<'_, '_>,
     receiver: &HirExpr,
@@ -156,7 +154,6 @@ fn generate_lista_method(
     Ok(true)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_textus_method(
     emitter: &mut ExprEmitter<'_, '_>,
     receiver: &HirExpr,
@@ -173,7 +170,6 @@ fn generate_textus_method(
     Ok(true)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_tabula_method(
     emitter: &mut ExprEmitter<'_, '_>,
     receiver: &HirExpr,

@@ -3,30 +3,7 @@
 use super::*;
 use crate::codegen::rust::stmt::generate_stmt;
 
-#[allow(clippy::too_many_arguments)]
-pub(in crate::codegen::rust::expr) fn generate_if_expr(
-    codegen: &RustCodegen<'_>,
-    cond: &HirExpr,
-    then: &HirBlock,
-    else_: Option<&HirBlock>,
-    result_ty: Option<TypeId>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_if_expr_with_emitter(&mut emitter, cond, then, else_, result_ty)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn generate_if_expr_with_emitter(
+pub(in crate::codegen::rust::expr) fn generate_if_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     cond: &HirExpr,
     then: &HirBlock,
@@ -39,36 +16,19 @@ fn generate_if_expr_with_emitter(
     if result_ty.is_some_and(|ty| matches!(resolve_type(ty, emitter.types), Type::Option(_))) {
         generate_option_branch_block_with_emitter(emitter, then)?;
     } else {
-        generate_block(
-            emitter.codegen,
-            then,
-            emitter.types,
-            emitter.writer,
-            emitter.policy.can_propagate_failure,
-            emitter.policy.inside_entrypoint,
-            emitter.policy.propagation_suppressed,
-        )?;
+        generate_block_with_emitter(emitter, then)?;
     }
     if let Some(else_block) = else_ {
         emitter.writer.write(" else ");
         if result_ty.is_some_and(|ty| matches!(resolve_type(ty, emitter.types), Type::Option(_))) {
             generate_option_branch_block_with_emitter(emitter, else_block)?;
         } else {
-            generate_block(
-                emitter.codegen,
-                else_block,
-                emitter.types,
-                emitter.writer,
-                emitter.policy.can_propagate_failure,
-                emitter.policy.inside_entrypoint,
-                emitter.policy.propagation_suppressed,
-            )?;
+            generate_block_with_emitter(emitter, else_block)?;
         }
     }
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_option_branch_block_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     block: &HirBlock,
@@ -107,7 +67,6 @@ fn generate_option_branch_block_with_emitter(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_option_branch_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     expr: &HirExpr,

@@ -24,35 +24,16 @@ mod branch;
 mod iteration;
 mod match_expr;
 
-pub(super) use branch::generate_if_expr;
-pub(super) use iteration::{generate_for_expr, generate_loop_expr, generate_range_tuple_expr, generate_while_expr};
-pub(super) use match_expr::generate_match_expr;
+pub(super) use branch::generate_if_expr_with_emitter;
+pub(super) use iteration::{
+    generate_for_expr_with_emitter, generate_loop_expr_with_emitter, generate_range_tuple_expr_with_emitter,
+    generate_while_expr_with_emitter,
+};
+pub(super) use match_expr::generate_match_expr_with_emitter;
 
 use super::*;
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_tempta_expr(
-    codegen: &RustCodegen<'_>,
-    body: &HirBlock,
-    catch: Option<&HirBlock>,
-    finally: Option<&HirBlock>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_tempta_expr(&mut emitter, body, catch, finally)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_tempta_expr(
+pub(super) fn emit_tempta_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     body: &HirBlock,
     catch: Option<&HirBlock>,
@@ -141,28 +122,7 @@ fn emit_tempta_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_closure_expr(
-    codegen: &RustCodegen<'_>,
-    params: &[HirParam],
-    body: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_closure_expr(&mut emitter, params, body)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_closure_expr(
+pub(super) fn emit_closure_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     params: &[HirParam],
     body: &HirExpr,
@@ -180,27 +140,7 @@ fn emit_closure_expr(
     emitter.expr(body)
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_await_expr(
-    codegen: &RustCodegen<'_>,
-    expr: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_await_expr(&mut emitter, expr)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_await_expr(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr) -> Result<(), CodegenError> {
+pub(super) fn emit_await_expr(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr) -> Result<(), CodegenError> {
     emitter.expr(expr)?;
     emitter.writer.write(".await");
     Ok(())

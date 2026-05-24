@@ -27,7 +27,7 @@
 //! repair missing type information.
 
 use super::super::CodeWriter;
-use super::expr::{generate_expr, generate_expr_as_optional_target, generate_expr_unwrapped};
+use super::expr::{generate_expr, generate_expr_unwrapped, ExprEmitPolicy, ExprEmitter};
 use super::type_shape::{option_inner_or_self, resolve_type, type_id_is_option};
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
@@ -156,15 +156,13 @@ fn generate_local(
     if let Some(init) = &local.init {
         w.write(" = ");
         if let Some(value_ty) = local_optional_value_type(codegen, local, types) {
-            generate_expr_as_optional_target(
+            generate_optional_target_expr(
                 codegen,
                 init,
                 value_ty,
                 types,
                 w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
+                ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
             )?;
         } else {
             generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
@@ -191,6 +189,18 @@ fn local_storage_type_to_rust(codegen: &RustCodegen<'_>, local: &HirLocal, ty: T
     type_to_rust(codegen, ty, types)
 }
 
+fn generate_optional_target_expr(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    value_ty: TypeId,
+    types: &TypeTable,
+    writer: &mut CodeWriter,
+    policy: ExprEmitPolicy,
+) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(codegen, types, writer, policy);
+    emitter.expr_as_optional_target(expr, value_ty)
+}
+
 fn generate_return_value_expr(
     codegen: &RustCodegen<'_>,
     expr: &HirExpr,
@@ -201,15 +211,13 @@ fn generate_return_value_expr(
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     if let Some(value_ty) = return_optional_value_type(codegen, types) {
-        generate_expr_as_optional_target(
+        generate_optional_target_expr(
             codegen,
             expr,
             value_ty,
             types,
             w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
+            ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
         )?;
         return Ok(());
     }

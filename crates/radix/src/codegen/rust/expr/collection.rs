@@ -20,29 +20,7 @@ use super::super::type_shape::{option_inner_or_self, resolve_type, type_id_is_fa
 use super::*;
 use rustc_hash::FxHashSet;
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_array_expr(
-    codegen: &RustCodegen<'_>,
-    expr_id: HirId,
-    expr_ty: Option<TypeId>,
-    elements: &[HirArrayElement],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_array_expr(&mut emitter, expr_id, expr_ty, elements)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_array_expr(
+pub(super) fn emit_array_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
     expr_ty: Option<TypeId>,
@@ -122,29 +100,7 @@ fn dynamic_array_element_type(expr_ty: Option<TypeId>, types: &TypeTable) -> Opt
     type_id_is_faber_value(elem_ty, types).then_some(elem_ty)
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_struct_expr(
-    codegen: &RustCodegen<'_>,
-    expr_id: HirId,
-    def_id: DefId,
-    fields: &[(Symbol, HirExpr)],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_struct_expr(&mut emitter, expr_id, def_id, fields)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_struct_expr(
+pub(super) fn emit_struct_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
     def_id: DefId,
@@ -180,7 +136,6 @@ fn emit_struct_expr(
     emit_struct_literal_expr(emitter, def_id, fields)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn emit_struct_literal_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
@@ -214,8 +169,7 @@ fn emit_struct_literal_expr(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-fn emit_struct_field_value(
+pub(super) fn emit_struct_field_value(
     emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
     name: Symbol,
@@ -238,8 +192,7 @@ fn emit_struct_field_value(
     emit_struct_value_expr(emitter, def_id, name, value)
 }
 
-#[allow(clippy::too_many_arguments)]
-fn emit_omitted_struct_fields(
+pub(super) fn emit_omitted_struct_fields(
     emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
     provided: &FxHashSet<Symbol>,
@@ -262,7 +215,6 @@ fn emit_omitted_struct_fields(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn emit_struct_value_expr(
     emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
@@ -310,68 +262,7 @@ fn struct_field_value_is_textus(codegen: &RustCodegen<'_>, def_id: DefId, name: 
     matches!(types.get(value_type), Type::Primitive(Primitive::Textus))
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_struct_field_value(
-    codegen: &RustCodegen<'_>,
-    def_id: DefId,
-    name: Symbol,
-    value: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_struct_field_value(&mut emitter, def_id, name, value)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_omitted_struct_fields(
-    codegen: &RustCodegen<'_>,
-    def_id: DefId,
-    provided: &FxHashSet<Symbol>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_omitted_struct_fields(&mut emitter, def_id, provided)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_tuple_expr(
-    codegen: &RustCodegen<'_>,
-    elements: &[HirExpr],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_tuple_expr(&mut emitter, elements)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_tuple_expr(emitter: &mut ExprEmitter<'_, '_>, elements: &[HirExpr]) -> Result<(), CodegenError> {
+pub(super) fn emit_tuple_expr(emitter: &mut ExprEmitter<'_, '_>, elements: &[HirExpr]) -> Result<(), CodegenError> {
     emitter.writer.write("(");
     for (i, elem) in elements.iter().enumerate() {
         if i > 0 {
@@ -383,27 +274,7 @@ fn emit_tuple_expr(emitter: &mut ExprEmitter<'_, '_>, elements: &[HirExpr]) -> R
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn write_object_map_key(
-    codegen: &RustCodegen<'_>,
-    types: &TypeTable,
-    key: &HirObjectKey,
-    key_ty: TypeId,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    emit_object_map_key(&mut emitter, key, key_ty)
-}
-
-fn emit_object_map_key(
+pub(super) fn emit_object_map_key(
     emitter: &mut ExprEmitter<'_, '_>,
     key: &HirObjectKey,
     key_ty: TypeId,
@@ -428,23 +299,23 @@ pub(super) fn write_innatum_map_key(
     types: &TypeTable,
     key: Symbol,
     key_ty: TypeId,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) {
     if matches!(types.get(key_ty), Type::Primitive(Primitive::Textus)) {
-        w.write("\"");
+        writer.write("\"");
         for ch in codegen.resolve_symbol(key).chars() {
             match ch {
-                '\\' => w.write("\\\\"),
-                '"' => w.write("\\\""),
-                '\n' => w.write("\\n"),
-                '\r' => w.write("\\r"),
-                '\t' => w.write("\\t"),
-                _ => w.write(&ch.to_string()),
+                '\\' => writer.write("\\\\"),
+                '"' => writer.write("\\\""),
+                '\n' => writer.write("\\n"),
+                '\r' => writer.write("\\r"),
+                '\t' => writer.write("\\t"),
+                _ => writer.write(&ch.to_string()),
             }
         }
-        w.write("\".to_string()");
+        writer.write("\".to_string()");
         return;
     }
 
-    w.write(codegen.resolve_symbol(key));
+    writer.write(codegen.resolve_symbol(key));
 }

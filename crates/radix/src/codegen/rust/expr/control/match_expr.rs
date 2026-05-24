@@ -2,24 +2,7 @@
 
 use super::*;
 
-#[allow(clippy::too_many_arguments)]
-pub(in crate::codegen::rust::expr) fn generate_match_expr(
-    codegen: &RustCodegen<'_>,
-    scrutinees: &[HirExpr],
-    arms: &[HirCasuArm],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let policy = ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation);
-    let mut emitter = ExprEmitter::new(codegen, types, w, policy);
-    generate_match_expr_inner(&mut emitter, scrutinees, arms)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn generate_match_expr_inner(
+pub(in crate::codegen::rust::expr) fn generate_match_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     scrutinees: &[HirExpr],
     arms: &[HirCasuArm],

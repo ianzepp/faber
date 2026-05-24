@@ -18,27 +18,7 @@
 
 use super::*;
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_field_expr(
-    codegen: &RustCodegen<'_>,
-    object: &HirExpr,
-    field: Symbol,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_field_expr_with_emitter(&mut emitter, object, field)
-}
-
-fn generate_field_expr_with_emitter(
+pub(super) fn generate_field_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     field: Symbol,
@@ -59,27 +39,7 @@ fn generate_field_expr_with_emitter(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(super) fn generate_index_expr(
-    codegen: &RustCodegen<'_>,
-    object: &HirExpr,
-    index: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_index_expr_with_emitter(&mut emitter, object, index)
-}
-
-fn generate_index_expr_with_emitter(
+pub(super) fn generate_index_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     index: &HirExpr,

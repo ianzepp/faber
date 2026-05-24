@@ -3,86 +3,15 @@
 use super::*;
 use crate::codegen::rust::stmt::generate_stmt;
 
-#[allow(clippy::too_many_arguments)]
-pub(in crate::codegen::rust::expr) fn generate_loop_expr(
-    codegen: &RustCodegen<'_>,
+pub(in crate::codegen::rust::expr) fn generate_loop_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_loop_expr_with_emitter(&mut emitter, block)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(in crate::codegen::rust::expr) fn generate_while_expr(
-    codegen: &RustCodegen<'_>,
-    cond: &HirExpr,
-    block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_while_expr_with_emitter(&mut emitter, cond, block)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub(in crate::codegen::rust::expr) fn generate_for_expr(
-    codegen: &RustCodegen<'_>,
-    mode: HirIteraMode,
-    binding: DefId,
-    iter: &HirExpr,
-    block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_for_expr_with_emitter(&mut emitter, mode, binding, iter, block)
-}
-
-#[allow(clippy::too_many_arguments)]
-fn generate_loop_expr_with_emitter(emitter: &mut ExprEmitter<'_, '_>, block: &HirBlock) -> Result<(), CodegenError> {
     emitter.writer.write("loop ");
-    let codegen = emitter.codegen;
-    let types = emitter.types;
-    let policy = emitter.policy;
-    generate_block(
-        codegen,
-        block,
-        types,
-        emitter.writer,
-        policy.can_propagate_failure,
-        policy.inside_entrypoint,
-        policy.propagation_suppressed,
-    )
+    generate_block_with_emitter(emitter, block)
 }
 
-#[allow(clippy::too_many_arguments)]
-fn generate_while_expr_with_emitter(
+pub(in crate::codegen::rust::expr) fn generate_while_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     cond: &HirExpr,
     block: &HirBlock,
@@ -90,22 +19,10 @@ fn generate_while_expr_with_emitter(
     emitter.writer.write("while ");
     emitter.expr_unwrapped(cond)?;
     emitter.writer.write(" ");
-    let codegen = emitter.codegen;
-    let types = emitter.types;
-    let policy = emitter.policy;
-    generate_block(
-        codegen,
-        block,
-        types,
-        emitter.writer,
-        policy.can_propagate_failure,
-        policy.inside_entrypoint,
-        policy.propagation_suppressed,
-    )
+    generate_block_with_emitter(emitter, block)
 }
 
-#[allow(clippy::too_many_arguments)]
-fn generate_for_expr_with_emitter(
+pub(in crate::codegen::rust::expr) fn generate_for_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     mode: HirIteraMode,
     binding: DefId,
@@ -143,21 +60,9 @@ fn generate_for_expr_with_emitter(
         emitter.expr(iter)?;
     }
     emitter.writer.write(" ");
-    let codegen = emitter.codegen;
-    let types = emitter.types;
-    let policy = emitter.policy;
-    generate_block(
-        codegen,
-        block,
-        types,
-        emitter.writer,
-        policy.can_propagate_failure,
-        policy.inside_entrypoint,
-        policy.propagation_suppressed,
-    )
+    generate_block_with_emitter(emitter, block)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_array_index_for_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     binding: DefId,
@@ -169,21 +74,9 @@ fn generate_array_index_for_expr_with_emitter(
     emitter.writer.write(" in 0..((");
     emitter.expr_unwrapped(iter)?;
     emitter.writer.write(").len() as i64) ");
-    let codegen = emitter.codegen;
-    let types = emitter.types;
-    let policy = emitter.policy;
-    generate_block(
-        codegen,
-        block,
-        types,
-        emitter.writer,
-        policy.can_propagate_failure,
-        policy.inside_entrypoint,
-        policy.propagation_suppressed,
-    )
+    generate_block_with_emitter(emitter, block)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_map_key_for_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     binding: DefId,
@@ -195,21 +88,9 @@ fn generate_map_key_for_expr_with_emitter(
     emitter.writer.write(" in (");
     emitter.expr_unwrapped(iter)?;
     emitter.writer.write(").keys().cloned() ");
-    let codegen = emitter.codegen;
-    let types = emitter.types;
-    let policy = emitter.policy;
-    generate_block(
-        codegen,
-        block,
-        types,
-        emitter.writer,
-        policy.can_propagate_failure,
-        policy.inside_entrypoint,
-        policy.propagation_suppressed,
-    )
+    generate_block_with_emitter(emitter, block)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_borrowed_array_for_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     binding: DefId,
@@ -259,7 +140,6 @@ fn generate_borrowed_array_for_expr_with_emitter(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_range_iter_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     start: &HirExpr,
@@ -297,28 +177,7 @@ fn generate_range_iter_expr_with_emitter(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(in crate::codegen::rust::expr) fn generate_range_tuple_expr(
-    codegen: &RustCodegen<'_>,
-    start: &HirExpr,
-    end: &HirExpr,
-    step: Option<&HirExpr>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    let mut emitter = ExprEmitter::new(
-        codegen,
-        types,
-        w,
-        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
-    );
-    generate_range_tuple_expr_with_emitter(&mut emitter, start, end, step)
-}
-
-fn generate_range_tuple_expr_with_emitter(
+pub(in crate::codegen::rust::expr) fn generate_range_tuple_expr_with_emitter(
     emitter: &mut ExprEmitter<'_, '_>,
     start: &HirExpr,
     end: &HirExpr,
