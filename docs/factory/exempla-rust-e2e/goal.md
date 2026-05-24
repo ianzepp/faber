@@ -33,6 +33,7 @@ Make the `examples/exempla/` corpus truthful against the Rust target: every rema
 - `crates/radix/src/tool.rs`: `--format` and `--linter` are implemented as generated-code post-processing helpers; the e2e harness uses those helpers directly rather than invoking the CLI flags.
 - `AGENTS.md`: Rust-only tooling, no invented syntax, no papering over missing type information, and correctness over completion are project constraints.
 - `docs/factory/remove-ab-dsl/goal.md`: `ab` collection DSL removal is tracked as its own language simplification goal and should not be treated as an ordinary Rust backend repair.
+- `docs/factory/capability-calls/goal.md`: `ad` capability-call policy is tracked as its own language/runtime-boundary goal and should not be treated as an ordinary Rust backend repair.
 
 ## Failure Taxonomy
 
@@ -61,10 +62,7 @@ These should be corrected to canonical Faber, moved out of the executable corpus
 
 These fail before or at codegen because the Rust target does not support the represented Faber feature yet.
 
-- `ad` is a capability call (`ad "fasciculus:lege" (...) ...`), not the collection filtering DSL. The collection DSL is `ab`.
-- Capability calls should not require all providers to exist during normal compilation. For now, unresolved capability names should still compile into an executable artifact that fails clearly at runtime when the host/provider cannot resolve the capability.
-- A future strict mode may verify that every capability exists and that provider signatures match the source-level expected types, but strict capability resolution is not part of the current repair goal.
-- `ad/ad.fab`: `ad` is not supported for Rust codegen today, and explicit `ignotum` disables precise typechecking.
+- `ad/ad.fab`: `ad` capability calls are not supported for Rust codegen today. The policy and implementation goal for permissive unresolved capability calls lives in `docs/factory/capability-calls/goal.md`.
 - `fac/cape.fab`, `fac/fac.fab`, `functio/exitus.fab`, `custodi/validatio.fab`: `cape` and/or `iace` are not supported for Rust targets.
 - Any fix must choose between implementing the feature for Rust, marking the exemplar as non-Rust-executable, or removing/correcting the source if it is no longer part of the active language.
 
@@ -198,6 +196,7 @@ Before editing, inspect:
 - `EBNF.md`: canonical syntax before changing any exemplar.
 - `/tmp/faber-exempla-rust-e2e.log`: baseline failure evidence from 2026-05-24.
 - `docs/factory/remove-ab-dsl/goal.md`: linked goal for retiring the `ab` collection DSL and migrating its exempla.
+- `docs/factory/capability-calls/goal.md`: linked goal for `ad` capability-call semantics and unresolved-provider runtime behavior.
 
 ## Supporting Skills
 
@@ -235,7 +234,7 @@ Handle `itera` over ranges, stepped ranges, maps, cursors, nested iteration, and
 
 ### Phase 6: Effects, Alternate Exit, And Unsupported Rust Features
 
-Decide and implement the Rust target policy for `iace`, `cape`, `fac`, capability calls (`ad`), declaration-only `externa`/annotation examples, and other currently unsupported surfaces. For capability calls, the current policy is permissive compilation: unresolved capabilities compile and then fail clearly at runtime because no host/provider implementation is linked. Strict provider existence and signature checks are a future mode, not the default for this goal. This phase may split into separate delivery plans if the remaining semantic design is still unsettled. The checkpoint is that no executable Rust exemplar fails only because the target policy is ambiguous.
+Decide and implement the Rust target policy for `iace`, `cape`, `fac`, declaration-only `externa`/annotation examples, and other currently unsupported surfaces. Do not design capability calls in this phase; `ad` policy and implementation belong to `docs/factory/capability-calls/goal.md`. This phase may split into separate delivery plans if the remaining semantic design is still unsettled. The checkpoint is that no executable Rust exemplar fails only because the target policy is ambiguous.
 
 ### Phase 7: Formatter/Linter Signal Hardening
 
@@ -251,6 +250,7 @@ Run the full ignored Rust e2e harness, regular test suite, and any package-aware
 - Every remaining file classified as executable Rust compiles, links, and runs through the Rust e2e harness.
 - Every file removed from the executable Rust set has an explicit reason: library helper, package-only, test-only, intentionally invalid, future feature, non-Rust target, or removed stale source.
 - `examples/exempla/ab/ab.fab` is resolved through the linked `ab` removal goal: migrated to ordinary collection calls, moved to a legacy/negative fixture, or removed.
+- `examples/exempla/ad/ad.fab` is resolved through the linked capability-call goal: compiled with expected unresolved-provider runtime failure, migrated, moved, or otherwise classified explicitly.
 - `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reports no unexpected exemplar failures.
 - The e2e path still applies generated-code formatting and linter logic before final Rust validation.
 - Source corrections obey `EBNF.md` and the project grammar rules.
@@ -271,7 +271,6 @@ Run the full ignored Rust e2e harness, regular test suite, and any package-aware
 - Should the Rust e2e harness validate package examples through `faber build/test` instead of direct compiler APIs?
 - Should declaration-only examples such as `externa` and annotation grammars become compile-only checks, executable examples with stubs, or non-executable reference examples?
 - Should intentionally failing examples remain in the repo as negative fixtures, and if so, where should they live so positive e2e corpus discovery does not collect them?
-- What runtime failure shape should unresolved capability calls produce before the future host runtime exists: generated Rust panic, structured `cape` error, process exit with diagnostic, or a temporary runtime stub?
 
 ## Stop Conditions
 
@@ -279,4 +278,4 @@ Run the full ignored Rust e2e harness, regular test suite, and any package-aware
 - Stop before adding compatibility for retired syntax such as `tempta`; source correction is preferred unless the language policy changes.
 - Stop if a backend fix requires guessing missing type information in codegen.
 - Stop if validating a package/runtime example would require network access or non-repo dependencies that are not already part of the workspace contract.
-- Stop if the work implies a larger semantic decision for `iace`, `cape`, FFI declarations, or effect handling that is not already settled by the language docs. For capability calls, preserve the clarified policy: permissive compile now, runtime failure if unresolved, future strict verification later.
+- Stop if the work implies a larger semantic decision for `iace`, `cape`, FFI declarations, or effect handling that is not already settled by the language docs. Capability-call design belongs to `docs/factory/capability-calls/goal.md`.
