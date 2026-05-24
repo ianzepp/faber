@@ -216,6 +216,53 @@ incipit {
 }
 
 #[test]
+fn emits_fractus_arithmetic_casts_for_numerus_operands() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+genus Circle {
+    numerus radius
+}
+
+incipit {
+    fixum _ radius ← 5
+    fixum _ circle ← Circle { radius = radius }
+    fixum _ tau ← 2 * 3.14159
+    fixum _ area ← 3.14159 * circle.radius
+    nota tau, area
+}
+"#;
+
+    let result = compiler.compile_str("mixed-fractus-arithmetic.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("(2 as f64) * 3.14159"));
+    assert!(rust.code.contains("3.14159 * (circle.radius as f64)"));
+}
+
+#[test]
+fn emits_contextual_fractus_integer_division_as_float_division() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio divide(numerus a, numerus b) → fractus {
+    redde a / b
+}
+
+incipit {
+    nota divide(3, 2)
+}
+"#;
+
+    let result = compiler.compile_str("contextual-fractus-division.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("return (a as f64) / (b as f64);"));
+}
+
+#[test]
 fn emits_array_spread_without_moving_source_vector() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

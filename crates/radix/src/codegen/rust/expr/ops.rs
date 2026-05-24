@@ -147,6 +147,7 @@ pub(super) fn generate_binary_expr(
     op: HirBinOp,
     lhs: &HirExpr,
     rhs: &HirExpr,
+    result_ty: Option<TypeId>,
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
@@ -239,6 +240,21 @@ pub(super) fn generate_binary_expr(
             generate_expr(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(")");
         }
+        HirBinOp::Add | HirBinOp::Sub | HirBinOp::Mul | HirBinOp::Div | HirBinOp::Mod
+            if binary_result_is_fractus(result_ty, types) =>
+        {
+            if wrap {
+                w.write("(");
+            }
+            generate_fractus_operand(codegen, lhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(" ");
+            w.write(binop_to_rust(op));
+            w.write(" ");
+            generate_fractus_operand(codegen, rhs, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            if wrap {
+                w.write(")");
+            }
+        }
         _ => {
             if wrap {
                 w.write("(");
@@ -255,6 +271,35 @@ pub(super) fn generate_binary_expr(
     }
 
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_fractus_operand(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if expr_is_numerus(expr, types) {
+        w.write("(");
+        generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(" as f64)");
+        return Ok(());
+    }
+
+    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+fn binary_result_is_fractus(result_ty: Option<TypeId>, types: &TypeTable) -> bool {
+    result_ty.is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Fractus)))
+}
+
+fn expr_is_numerus(expr: &HirExpr, types: &TypeTable) -> bool {
+    expr.ty
+        .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Numerus)))
 }
 
 #[allow(clippy::too_many_arguments)]
