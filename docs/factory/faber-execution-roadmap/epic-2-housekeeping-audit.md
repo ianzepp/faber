@@ -39,7 +39,17 @@
 - Reduced `crates/radix/src/codegen/rust/mod_test.rs` from roughly 2,800 lines to roughly 1,840 lines without changing production code.
 - Validation after this slice: focused moved-module tests, `cargo test -p radix`, `cargo test -p radix --test hygiene`, `./scripta/lint`, and `git diff --check` pass.
 
-Remaining high-priority cleanup is now mostly production-module decomposition and helper-level tests: split the large Rust call/codegen modules, isolate the remaining hand-built control/type-rendering tests, and add narrower helper-level tests around centralized emission decisions.
+2026-05-24 follow-up decomposed the Rust call emitter:
+
+- Added `docs/factory/faber-execution-roadmap/epic-2-post-cleanup-phase-4-delivery.md` as the phase delivery artifact.
+- Converted `crates/radix/src/codegen/rust/expr/call.rs` into the directory-backed `expr/call/` module.
+- Moved call argument planning and spread handling into `expr/call/args.rs`.
+- Moved stdlib collection/text method lowering into `expr/call/stdlib.rs`.
+- Moved norma runtime module bridge helpers into `expr/call/runtime.rs`.
+- Kept direct call/method orchestration and variant constructor lowering in `expr/call/mod.rs`.
+- Validation after this slice: focused call, collection, dynamic, and failable Rust backend tests, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
+
+Remaining high-priority cleanup is now mostly production-module decomposition and helper-level tests: split `expr/control.rs`, move generated helper prelude emission out of `codegen/rust/mod.rs`, isolate the remaining hand-built control/type-rendering tests, and add narrower helper-level tests around centralized emission decisions.
 
 ## Highest Priority Cleanup And Correctness Risks
 
