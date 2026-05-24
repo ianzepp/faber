@@ -59,6 +59,7 @@ How it works:
 6. **Rust-only tooling**: Use Cargo and `scripta/` helpers, not Bun or Node.
 7. **Correctness over completion**: Explicit over convenient.
 8. **Fix root causes**: Do not paper over upstream missing type information.
+9. **Compiler engineering**: Follow [`docs/compiler-engineering-rules.md`](docs/compiler-engineering-rules.md) for parser, diagnostics, semantic, lowering, codegen, and test discipline.
 
 ## Grammar Rules
 
