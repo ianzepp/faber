@@ -35,21 +35,21 @@ pub(super) fn apply_regex_flags(pattern: &str, flags: Option<&str>) -> String {
         format!("(?{}){}", mapped, pattern)
     }
 }
-pub(super) fn write_rust_string_literal(text: &str, w: &mut CodeWriter) {
+pub(super) fn write_rust_string_literal(text: &str, writer: &mut CodeWriter) {
     // Keep expression string escaping centralized so string and regex literal
     // emission do not drift in their Rust literal policy.
-    w.write("\"");
+    writer.write("\"");
     for ch in text.chars() {
         match ch {
-            '\\' => w.write("\\\\"),
-            '"' => w.write("\\\""),
-            '\n' => w.write("\\n"),
-            '\r' => w.write("\\r"),
-            '\t' => w.write("\\t"),
-            _ => w.write(&ch.to_string()),
+            '\\' => writer.write("\\\\"),
+            '"' => writer.write("\\\""),
+            '\n' => writer.write("\\n"),
+            '\r' => writer.write("\\r"),
+            '\t' => writer.write("\\t"),
+            _ => writer.write(&ch.to_string()),
         }
     }
-    w.write("\"");
+    writer.write("\"");
 }
 /// Generate a Rust literal.
 ///
@@ -59,29 +59,29 @@ pub(super) fn write_rust_string_literal(text: &str, w: &mut CodeWriter) {
 ///   HirLiteral::Nil             -> None
 ///
 /// TARGET: Rust string escaping (\n, \t, \\, \").
-pub(super) fn generate_literal(codegen: &RustCodegen<'_>, lit: &HirLiteral, w: &mut CodeWriter) {
+pub(super) fn generate_literal(codegen: &RustCodegen<'_>, lit: &HirLiteral, writer: &mut CodeWriter) {
     match lit {
         HirLiteral::Int(n) => {
-            w.write(&n.to_string());
+            writer.write(&n.to_string());
         }
         HirLiteral::Float(f) => {
-            w.write(&rust_float_literal(*f));
+            writer.write(&rust_float_literal(*f));
         }
         HirLiteral::String(s) => {
-            write_rust_string_literal(codegen.resolve_symbol(*s), w);
+            write_rust_string_literal(codegen.resolve_symbol(*s), writer);
         }
         HirLiteral::Regex(pattern, flags) => {
             let pattern_text = codegen.resolve_symbol(*pattern);
             let regex_pattern = apply_regex_flags(pattern_text, flags.map(|f| codegen.resolve_symbol(f)));
-            w.write("regex::Regex::new(");
-            write_rust_string_literal(&regex_pattern, w);
-            w.write(").unwrap()");
+            writer.write("regex::Regex::new(");
+            write_rust_string_literal(&regex_pattern, writer);
+            writer.write(").unwrap()");
         }
         HirLiteral::Bool(b) => {
-            w.write(if *b { "true" } else { "false" });
+            writer.write(if *b { "true" } else { "false" });
         }
         HirLiteral::Nil => {
-            w.write("None");
+            writer.write("None");
         }
     }
 }
@@ -106,14 +106,13 @@ pub(super) fn generate_assert_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("assert!(");
-    generate_expr(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    if let Some(message) = message {
-        w.write(", \"{}\", ");
-        generate_expr(codegen, message, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    }
-    w.write(")");
-    Ok(())
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_assert_expr_with_emitter(&mut emitter, cond, message)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -126,10 +125,13 @@ pub(super) fn generate_panic_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("panic!(\"{}\", ");
-    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(")");
-    Ok(())
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_panic_expr_with_emitter(&mut emitter, value)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -142,20 +144,52 @@ pub(super) fn generate_throw_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if in_failable_fn && !in_entry && !suppress_error_propagation {
-        w.write("return Err(");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_throw_expr_with_emitter(&mut emitter, value)
+}
+
+fn generate_assert_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    cond: &HirExpr,
+    message: Option<&HirExpr>,
+) -> Result<(), CodegenError> {
+    emitter.writer.write("assert!(");
+    emitter.expr(cond)?;
+    if let Some(message) = message {
+        emitter.writer.write(", \"{}\", ");
+        emitter.expr(message)?;
+    }
+    emitter.writer.write(")");
+    Ok(())
+}
+
+fn generate_panic_expr_with_emitter(emitter: &mut ExprEmitter<'_, '_>, value: &HirExpr) -> Result<(), CodegenError> {
+    emitter.writer.write("panic!(\"{}\", ");
+    emitter.expr(value)?;
+    emitter.writer.write(")");
+    Ok(())
+}
+
+fn generate_throw_expr_with_emitter(emitter: &mut ExprEmitter<'_, '_>, value: &HirExpr) -> Result<(), CodegenError> {
+    if emitter.policy.permits_question_mark() {
+        emitter.writer.write("return Err(");
         if matches!(value.kind, HirExprKind::Literal(HirLiteral::String(_))) {
-            w.write("String::from(");
-            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(")");
+            emitter.writer.write("String::from(");
+            emitter.expr(value)?;
+            emitter.writer.write(")");
         } else {
-            w.write("format!(\"{}\", ");
-            generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(")");
+            emitter.writer.write("format!(\"{}\", ");
+            emitter.expr(value)?;
+            emitter.writer.write(")");
         }
-        w.write(")");
+        emitter.writer.write(")");
     } else {
-        generate_panic_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        generate_panic_expr_with_emitter(emitter, value)?;
     }
     Ok(())
 }

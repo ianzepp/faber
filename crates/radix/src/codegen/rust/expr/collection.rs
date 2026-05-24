@@ -32,7 +32,23 @@ pub(super) fn generate_array_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    let dynamic_elem_ty = dynamic_array_element_type(expr_ty, types);
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_array_expr(&mut emitter, expr_id, expr_ty, elements)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_array_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
+    expr_id: HirId,
+    expr_ty: Option<TypeId>,
+    elements: &[HirArrayElement],
+) -> Result<(), CodegenError> {
+    let dynamic_elem_ty = dynamic_array_element_type(expr_ty, emitter.types);
 
     if elements
         .iter()
@@ -41,82 +57,60 @@ pub(super) fn generate_array_expr(
         // Rust's `vec![...]` cannot interleave single elements and spreads, so
         // spread arrays lower to a mutable accumulator and return that vector.
         let temp = format!("__faber_vec_{}", expr_id.0);
-        w.writeln("{");
+        emitter.writer.writeln("{");
         let mut result = Ok(());
-        w.indented(|w| {
-            w.write("let mut ");
-            w.write(&temp);
-            w.writeln(" = Vec::new();");
+        let codegen = emitter.codegen;
+        let types = emitter.types;
+        let policy = emitter.policy;
+        emitter.writer.indented(|w| {
+            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+            nested.writer.write("let mut ");
+            nested.writer.write(&temp);
+            nested.writer.writeln(" = Vec::new();");
             for element in elements {
                 if result.is_err() {
                     return;
                 }
                 match element {
                     HirArrayElement::Expr(elem) => {
-                        w.write(&temp);
-                        w.write(".push(");
+                        nested.writer.write(&temp);
+                        nested.writer.write(".push(");
                         result = if let Some(elem_ty) = dynamic_elem_ty {
-                            generate_expr_as_type(
-                                codegen,
-                                elem,
-                                elem_ty,
-                                types,
-                                w,
-                                in_failable_fn,
-                                in_entry,
-                                suppress_error_propagation,
-                            )
+                            nested.expr_as_type(elem, elem_ty)
                         } else {
-                            generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+                            nested.expr(elem)
                         };
-                        w.writeln(");");
+                        nested.writer.writeln(");");
                     }
                     HirArrayElement::Spread(elem) => {
-                        w.write(&temp);
-                        w.write(".extend((");
-                        result = generate_expr(
-                            codegen,
-                            elem,
-                            types,
-                            w,
-                            in_failable_fn,
-                            in_entry,
-                            suppress_error_propagation,
-                        );
-                        w.writeln(").iter().cloned());");
+                        nested.writer.write(&temp);
+                        nested.writer.write(".extend((");
+                        result = nested.expr(elem);
+                        nested.writer.writeln(").iter().cloned());");
                     }
                 }
             }
-            w.write(&temp);
-            w.newline();
+            nested.writer.write(&temp);
+            nested.writer.newline();
         });
         result?;
-        w.write("}");
+        emitter.writer.write("}");
     } else {
-        w.write("vec![");
+        emitter.writer.write("vec![");
         for (i, elem) in elements.iter().enumerate() {
             if i > 0 {
-                w.write(", ");
+                emitter.writer.write(", ");
             }
             let HirArrayElement::Expr(elem) = elem else {
                 continue;
             };
             if let Some(elem_ty) = dynamic_elem_ty {
-                generate_expr_as_type(
-                    codegen,
-                    elem,
-                    elem_ty,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                )?;
+                emitter.expr_as_type(elem, elem_ty)?;
             } else {
-                generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                emitter.expr(elem)?;
             }
         }
-        w.write("]");
+        emitter.writer.write("]");
     }
     Ok(())
 }
@@ -140,213 +134,154 @@ pub(super) fn generate_struct_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if codegen.struct_has_creo_hook(def_id) {
-        let temp = format!("__faber_struct_{}", expr_id.0);
-        w.writeln("{");
-        let mut result = Ok(());
-        w.indented(|w| {
-            w.write("let mut ");
-            w.write(&temp);
-            w.write(" = ");
-            result = generate_struct_literal_expr(
-                codegen,
-                def_id,
-                fields,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            );
-            if result.is_err() {
-                return;
-            }
-            w.writeln(";");
-            w.write(&temp);
-            w.writeln(".creo();");
-            w.write(&temp);
-            w.newline();
-        });
-        result?;
-        w.write("}");
-        return Ok(());
-    }
-
-    generate_struct_literal_expr(
+    let mut emitter = ExprEmitter::new(
         codegen,
-        def_id,
-        fields,
         types,
         w,
-        in_failable_fn,
-        in_entry,
-        suppress_error_propagation,
-    )
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_struct_expr(&mut emitter, expr_id, def_id, fields)
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn generate_struct_literal_expr(
-    codegen: &RustCodegen<'_>,
+fn emit_struct_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
+    expr_id: HirId,
     def_id: DefId,
     fields: &[(Symbol, HirExpr)],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write(codegen.resolve_def(def_id));
-    w.writeln(" {");
+    if emitter.codegen.struct_has_creo_hook(def_id) {
+        let temp = format!("__faber_struct_{}", expr_id.0);
+        emitter.writer.writeln("{");
+        let mut result = Ok(());
+        let codegen = emitter.codegen;
+        let types = emitter.types;
+        let policy = emitter.policy;
+        emitter.writer.indented(|w| {
+            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+            nested.writer.write("let mut ");
+            nested.writer.write(&temp);
+            nested.writer.write(" = ");
+            result = emit_struct_literal_expr(&mut nested, def_id, fields);
+            if result.is_err() {
+                return;
+            }
+            nested.writer.writeln(";");
+            nested.writer.write(&temp);
+            nested.writer.writeln(".creo();");
+            nested.writer.write(&temp);
+            nested.writer.newline();
+        });
+        result?;
+        emitter.writer.write("}");
+        return Ok(());
+    }
+
+    emit_struct_literal_expr(emitter, def_id, fields)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_struct_literal_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
+    def_id: DefId,
+    fields: &[(Symbol, HirExpr)],
+) -> Result<(), CodegenError> {
+    emitter.writer.write(emitter.codegen.resolve_def(def_id));
+    emitter.writer.writeln(" {");
     let mut struct_result = Ok(());
     let provided: FxHashSet<Symbol> = fields.iter().map(|(n, _)| *n).collect();
-    w.indented(|w| {
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    emitter.writer.indented(|w| {
+        let mut nested = ExprEmitter::new(codegen, types, w, policy);
         for (name, value) in fields {
-            w.write(codegen.resolve_symbol(*name));
-            w.write(": ");
+            nested.writer.write(codegen.resolve_symbol(*name));
+            nested.writer.write(": ");
             if struct_result.is_err() {
                 return;
             }
-            struct_result = generate_struct_field_value(
-                codegen,
-                def_id,
-                *name,
-                value,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            );
-            w.writeln(",");
+            struct_result = emit_struct_field_value(&mut nested, def_id, *name, value);
+            nested.writer.writeln(",");
         }
         if struct_result.is_err() {
             return;
         }
-        struct_result = generate_omitted_struct_fields(
-            codegen,
-            def_id,
-            &provided,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        );
+        struct_result = emit_omitted_struct_fields(&mut nested, def_id, &provided);
     });
     struct_result?;
-    w.write("}");
+    emitter.writer.write("}");
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn generate_struct_field_value(
-    codegen: &RustCodegen<'_>,
+fn emit_struct_field_value(
+    emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
     name: Symbol,
     value: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     // Optional field wrapping is decided against the Rust storage type, not the
     // source spelling. That keeps `T ∪ nihil` fields represented as `Option<T>`
     // even when the user supplies a bare non-option expression.
-    if codegen.struct_field_stores_option(def_id, name, types)
-        && !expr_may_already_produce_option(codegen, value, types)
+    if emitter
+        .codegen
+        .struct_field_stores_option(def_id, name, emitter.types)
+        && !expr_may_already_produce_option(emitter.codegen, value, emitter.types)
     {
-        w.write("Some(");
-        generate_struct_value_expr(
-            codegen,
-            def_id,
-            name,
-            value,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?;
-        w.write(")");
+        emitter.writer.write("Some(");
+        emit_struct_value_expr(emitter, def_id, name, value)?;
+        emitter.writer.write(")");
         return Ok(());
     }
 
-    generate_struct_value_expr(
-        codegen,
-        def_id,
-        name,
-        value,
-        types,
-        w,
-        in_failable_fn,
-        in_entry,
-        suppress_error_propagation,
-    )
+    emit_struct_value_expr(emitter, def_id, name, value)
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn generate_omitted_struct_fields(
-    codegen: &RustCodegen<'_>,
+fn emit_omitted_struct_fields(
+    emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
     provided: &FxHashSet<Symbol>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    for field in codegen.sorted_struct_omittable_fields(def_id) {
+    for field in emitter.codegen.sorted_struct_omittable_fields(def_id) {
         if provided.contains(&field.name) {
             continue;
         }
-        w.write(codegen.resolve_symbol(field.name));
-        w.write(": ");
+        emitter
+            .writer
+            .write(emitter.codegen.resolve_symbol(field.name));
+        emitter.writer.write(": ");
         if let Some(init) = field.init {
-            generate_struct_field_value(
-                codegen,
-                def_id,
-                field.name,
-                init,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            emit_struct_field_value(emitter, def_id, field.name, init)?;
         } else {
-            w.write("None");
+            emitter.writer.write("None");
         }
-        w.writeln(",");
+        emitter.writer.writeln(",");
     }
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_struct_value_expr(
-    codegen: &RustCodegen<'_>,
+fn emit_struct_value_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
     name: Symbol,
     value: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     if let HirExprKind::Literal(HirLiteral::Int(value)) = value.kind {
-        if struct_field_value_is_fractus(codegen, def_id, name, types) {
-            w.write(&format!("{value}.0"));
+        if struct_field_value_is_fractus(emitter.codegen, def_id, name, emitter.types) {
+            emitter.writer.write(&format!("{value}.0"));
             return Ok(());
         }
     }
 
-    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    emitter.expr(value)?;
     if matches!(value.kind, HirExprKind::Literal(HirLiteral::String(_)))
         && value.ty.is_none()
-        && struct_field_value_is_textus(codegen, def_id, name, types)
+        && struct_field_value_is_textus(emitter.codegen, def_id, name, emitter.types)
     {
-        w.write(".to_string()");
+        emitter.writer.write(".to_string()");
     }
     Ok(())
 }
@@ -376,6 +311,47 @@ fn struct_field_value_is_textus(codegen: &RustCodegen<'_>, def_id: DefId, name: 
 }
 
 #[allow(clippy::too_many_arguments)]
+pub(super) fn generate_struct_field_value(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    name: Symbol,
+    value: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_struct_field_value(&mut emitter, def_id, name, value)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_omitted_struct_fields(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    provided: &FxHashSet<Symbol>,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_omitted_struct_fields(&mut emitter, def_id, provided)
+}
+
+#[allow(clippy::too_many_arguments)]
 pub(super) fn generate_tuple_expr(
     codegen: &RustCodegen<'_>,
     elements: &[HirExpr],
@@ -385,16 +361,28 @@ pub(super) fn generate_tuple_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("(");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_tuple_expr(&mut emitter, elements)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_tuple_expr(emitter: &mut ExprEmitter<'_, '_>, elements: &[HirExpr]) -> Result<(), CodegenError> {
+    emitter.writer.write("(");
     for (i, elem) in elements.iter().enumerate() {
         if i > 0 {
-            w.write(", ");
+            emitter.writer.write(", ");
         }
-        generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.expr(elem)?;
     }
-    w.write(")");
+    emitter.writer.write(")");
     Ok(())
 }
+
 #[allow(clippy::too_many_arguments)]
 pub(super) fn write_object_map_key(
     codegen: &RustCodegen<'_>,
@@ -406,20 +394,35 @@ pub(super) fn write_object_map_key(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_object_map_key(&mut emitter, key, key_ty)
+}
+
+fn emit_object_map_key(
+    emitter: &mut ExprEmitter<'_, '_>,
+    key: &HirObjectKey,
+    key_ty: TypeId,
+) -> Result<(), CodegenError> {
     // Object keys are shared by literal maps and `verte` map construction. Bare
     // identifier keys become text only when the target map key type says so;
     // computed keys are already expressions and must not be stringified here.
     match key {
         HirObjectKey::Ident(key) | HirObjectKey::String(key) => {
-            write_innatum_map_key(codegen, types, *key, key_ty, w);
+            write_innatum_map_key(emitter.codegen, emitter.types, *key, key_ty, emitter.writer);
         }
         HirObjectKey::Computed(expr) => {
-            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emitter.expr(expr)?;
         }
         HirObjectKey::Spread(_) => {}
     }
     Ok(())
 }
+
 pub(super) fn write_innatum_map_key(
     codegen: &RustCodegen<'_>,
     types: &TypeTable,

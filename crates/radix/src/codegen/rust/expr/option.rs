@@ -31,205 +31,168 @@ pub(super) fn generate_optional_chain_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    let object_is_option = expr_type_is_option(object, types);
-    let value_is_option = optional_chain_value_is_option(codegen, object, chain, types);
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_optional_chain_expr_with_emitter(&mut emitter, object, chain)
+}
 
-    if optional_chain_inner_type(object, types)
-        .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Nihil)))
+fn generate_optional_chain_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    object: &HirExpr,
+    chain: &HirOptionalChainKind,
+) -> Result<(), CodegenError> {
+    let object_is_option = expr_type_is_option(object, emitter.types);
+    let value_is_option = optional_chain_value_is_option(emitter.codegen, object, chain, emitter.types);
+
+    if optional_chain_inner_type(object, emitter.types)
+        .is_some_and(|ty| matches!(resolve_type(ty, emitter.types), Type::Primitive(Primitive::Nihil)))
     {
-        w.write("None::<FaberValue>");
+        emitter.writer.write("None::<FaberValue>");
         return Ok(());
     }
 
     match chain {
         HirOptionalChainKind::Member(field) => {
-            if generate_optional_map_member_expr(
-                codegen,
-                object,
-                *field,
-                object_is_option,
-                value_is_option,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )? {
+            if generate_optional_map_member_expr(emitter, object, *field, object_is_option, value_is_option)? {
                 return Ok(());
             }
 
             if object_is_option {
-                w.write("(");
-                generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                emitter.writer.write("(");
+                emitter.expr(object)?;
                 if value_is_option {
-                    w.write(").as_ref().and_then(|__faber_opt| __faber_opt.");
+                    emitter
+                        .writer
+                        .write(").as_ref().and_then(|__faber_opt| __faber_opt.");
                 } else {
-                    w.write(").as_ref().map(|__faber_opt| __faber_opt.");
+                    emitter
+                        .writer
+                        .write(").as_ref().map(|__faber_opt| __faber_opt.");
                 }
-                w.write(codegen.resolve_symbol(*field));
-                w.write(".clone())");
+                emitter.writer.write(emitter.codegen.resolve_symbol(*field));
+                emitter.writer.write(".clone())");
             } else {
                 if !value_is_option {
-                    w.write("Some(");
+                    emitter.writer.write("Some(");
                 }
-                generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(".");
-                w.write(codegen.resolve_symbol(*field));
-                w.write(".clone()");
+                emitter.expr(object)?;
+                emitter.writer.write(".");
+                emitter.writer.write(emitter.codegen.resolve_symbol(*field));
+                emitter.writer.write(".clone()");
                 if !value_is_option {
-                    w.write(")");
+                    emitter.writer.write(")");
                 }
             }
         }
         HirOptionalChainKind::Index(index) => {
-            generate_optional_index_expr(
-                codegen,
-                object,
-                index,
-                object_is_option,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_optional_index_expr(emitter, object, index, object_is_option)?;
         }
         HirOptionalChainKind::Call(args) => {
-            w.write("(");
-            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(").and_then(|__faber_opt| Some(__faber_opt(");
+            emitter.writer.write("(");
+            emitter.expr(object)?;
+            emitter
+                .writer
+                .write(").and_then(|__faber_opt| Some(__faber_opt(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
-                    w.write(", ");
+                    emitter.writer.write(", ");
                 }
-                generate_expr(
-                    codegen,
-                    &arg.expr,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                )?;
+                emitter.expr(&arg.expr)?;
             }
-            w.write(")))");
+            emitter.writer.write(")))");
         }
     }
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_optional_map_member_expr(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     field: Symbol,
     object_is_option: bool,
     value_is_option: bool,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<bool, CodegenError> {
-    let Some(Type::Map(key_ty, _)) = optional_chain_inner_type(object, types).map(|ty| resolve_type(ty, types)) else {
+    let Some(Type::Map(key_ty, _)) =
+        optional_chain_inner_type(object, emitter.types).map(|ty| resolve_type(ty, emitter.types))
+    else {
         return Ok(false);
     };
-    if !matches!(resolve_type(key_ty, types), Type::Primitive(Primitive::Textus)) {
+    if !matches!(resolve_type(key_ty, emitter.types), Type::Primitive(Primitive::Textus)) {
         return Ok(false);
     }
 
     if object_is_option {
-        w.write("(");
-        generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(").as_ref().and_then(|__faber_opt| __faber_opt.get(\"");
-        w.write(codegen.resolve_symbol(field));
+        emitter.writer.write("(");
+        emitter.expr(object)?;
+        emitter
+            .writer
+            .write(").as_ref().and_then(|__faber_opt| __faber_opt.get(\"");
+        emitter.writer.write(emitter.codegen.resolve_symbol(field));
         if value_is_option {
-            w.write("\").cloned().flatten())");
+            emitter.writer.write("\").cloned().flatten())");
         } else {
-            w.write("\").cloned())");
+            emitter.writer.write("\").cloned())");
         }
     } else {
-        w.write("(");
-        generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(").get(\"");
-        w.write(codegen.resolve_symbol(field));
+        emitter.writer.write("(");
+        emitter.expr(object)?;
+        emitter.writer.write(").get(\"");
+        emitter.writer.write(emitter.codegen.resolve_symbol(field));
         if value_is_option {
-            w.write("\").cloned().flatten()");
+            emitter.writer.write("\").cloned().flatten()");
         } else {
-            w.write("\").cloned()");
+            emitter.writer.write("\").cloned()");
         }
     }
 
     Ok(true)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_optional_index_expr(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     index: &HirExpr,
     object_is_option: bool,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     if object_is_option {
-        w.write("(");
-        generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(").as_ref().and_then(|__faber_opt| __faber_opt.get(");
-        generate_optional_index_key(
-            codegen,
-            object,
-            index,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?;
-        w.write(").cloned())");
+        emitter.writer.write("(");
+        emitter.expr(object)?;
+        emitter
+            .writer
+            .write(").as_ref().and_then(|__faber_opt| __faber_opt.get(");
+        generate_optional_index_key(emitter, object, index)?;
+        emitter.writer.write(").cloned())");
         return Ok(());
     }
 
-    w.write("(");
-    generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(").get(");
-    generate_optional_index_key(
-        codegen,
-        object,
-        index,
-        types,
-        w,
-        in_failable_fn,
-        in_entry,
-        suppress_error_propagation,
-    )?;
-    w.write(").cloned()");
+    emitter.writer.write("(");
+    emitter.expr(object)?;
+    emitter.writer.write(").get(");
+    generate_optional_index_key(emitter, object, index)?;
+    emitter.writer.write(").cloned()");
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_optional_index_key(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     index: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if optional_chain_inner_type(object, types).is_some_and(|ty| matches!(resolve_type(ty, types), Type::Array(_))) {
-        w.write("(");
-        generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(") as usize");
+    if optional_chain_inner_type(object, emitter.types)
+        .is_some_and(|ty| matches!(resolve_type(ty, emitter.types), Type::Array(_)))
+    {
+        emitter.writer.write("(");
+        emitter.expr(index)?;
+        emitter.writer.write(") as usize");
         return Ok(());
     }
 
-    w.write("&");
-    generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.writer.write("&");
+    emitter.expr(index)
 }
 
 fn optional_chain_value_is_option(
@@ -279,36 +242,44 @@ pub(super) fn generate_non_null_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("(");
-    generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(").expect(\"nonnull assertion failed\")");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_non_null_expr_with_emitter(&mut emitter, object, chain)
+}
+
+fn generate_non_null_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    object: &HirExpr,
+    chain: &HirNonNullKind,
+) -> Result<(), CodegenError> {
+    emitter.writer.write("(");
+    emitter.expr(object)?;
+    emitter
+        .writer
+        .write(").expect(\"nonnull assertion failed\")");
     match chain {
         HirNonNullKind::Member(field) => {
-            w.write(".");
-            w.write(codegen.resolve_symbol(*field));
+            emitter.writer.write(".");
+            emitter.writer.write(emitter.codegen.resolve_symbol(*field));
         }
         HirNonNullKind::Index(index) => {
-            w.write("[");
-            generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write("]");
+            emitter.writer.write("[");
+            emitter.expr(index)?;
+            emitter.writer.write("]");
         }
         HirNonNullKind::Call(args) => {
-            w.write("(");
+            emitter.writer.write("(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {
-                    w.write(", ");
+                    emitter.writer.write(", ");
                 }
-                generate_expr(
-                    codegen,
-                    &arg.expr,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                )?;
+                emitter.expr(&arg.expr)?;
             }
-            w.write(")");
+            emitter.writer.write(")");
         }
     }
     Ok(())

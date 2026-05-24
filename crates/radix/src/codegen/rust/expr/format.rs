@@ -13,6 +13,7 @@
 //!   uses `{:?}` for composite or unknown values where Display is not promised.
 
 use super::*;
+
 pub(super) fn rust_format_template(template: &str) -> String {
     // Faber templates use `§`/`§0` placeholders. Rust format strings use braces,
     // so user-authored braces must be doubled before the template reaches
@@ -75,51 +76,56 @@ pub(super) fn generate_scribe_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_scribe_expr_with_emitter(&mut emitter, kind, args)
+}
+
+fn generate_scribe_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    kind: HirScribeKind,
+    args: &[HirExpr],
+) -> Result<(), CodegenError> {
     let macro_name = match kind {
         HirScribeKind::Mone => "eprintln",
         HirScribeKind::Nota | HirScribeKind::Vide | HirScribeKind::Scribe => "println",
     };
     if args.is_empty() {
-        w.write(macro_name);
-        w.write("!()");
+        emitter.writer.write(macro_name);
+        emitter.writer.write("!()");
         return Ok(());
     }
 
     let format = args
         .iter()
-        .map(|arg| rust_scribe_format(arg, types))
+        .map(|arg| rust_scribe_format(arg, emitter.types))
         .collect::<Vec<_>>()
         .join(" ");
-    w.write(macro_name);
-    w.write("!(\"");
-    w.write(&format);
-    w.write("\"");
+    emitter.writer.write(macro_name);
+    emitter.writer.write("!(\"");
+    emitter.writer.write(&format);
+    emitter.writer.write("\"");
     for arg in args {
-        w.write(", ");
-        generate_format_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.writer.write(", ");
+        generate_format_arg_expr(emitter, arg)?;
     }
-    w.write(")");
+    emitter.writer.write(")");
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-fn generate_format_arg_expr(
-    codegen: &RustCodegen<'_>,
-    arg: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
-) -> Result<(), CodegenError> {
-    if matches!(arg.kind, HirExprKind::Path(def_id) if codegen.binding_stores_option(def_id)) {
-        w.write("(");
-        generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(").clone().unwrap()");
+fn generate_format_arg_expr(emitter: &mut ExprEmitter<'_, '_>, arg: &HirExpr) -> Result<(), CodegenError> {
+    if matches!(arg.kind, HirExprKind::Path(def_id) if emitter.codegen.binding_stores_option(def_id)) {
+        emitter.writer.write("(");
+        emitter.expr(arg)?;
+        emitter.writer.write(").clone().unwrap()");
         return Ok(());
     }
 
-    generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.expr(arg)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -133,13 +139,29 @@ pub(super) fn generate_scriptum_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("format!(\"");
-    w.write(&rust_format_template(codegen.resolve_symbol(template)));
-    w.write("\"");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_scriptum_expr_with_emitter(&mut emitter, template, args)
+}
+
+fn generate_scriptum_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    template: Symbol,
+    args: &[HirExpr],
+) -> Result<(), CodegenError> {
+    emitter.writer.write("format!(\"");
+    emitter
+        .writer
+        .write(&rust_format_template(emitter.codegen.resolve_symbol(template)));
+    emitter.writer.write("\"");
     for arg in args {
-        w.write(", ");
-        generate_format_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.writer.write(", ");
+        generate_format_arg_expr(emitter, arg)?;
     }
-    w.write(")");
+    emitter.writer.write(")");
     Ok(())
 }

@@ -23,31 +23,45 @@ pub(super) fn generate_block(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.writeln("{");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_block_with_emitter(&mut emitter, block)
+}
+
+fn generate_block_with_emitter(emitter: &mut ExprEmitter<'_, '_>, block: &HirBlock) -> Result<(), CodegenError> {
+    emitter.writer.writeln("{");
     let mut block_result = Ok(());
-    w.indented(|w| {
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    emitter.writer.indented(|writer| {
+        let mut inner_emitter = ExprEmitter::new(codegen, types, writer, policy);
         for stmt in &block.stmts {
             if block_result.is_err() {
                 return;
             }
             block_result = super::super::stmt::generate_stmt(
-                codegen,
+                inner_emitter.codegen,
                 stmt,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
+                inner_emitter.types,
+                inner_emitter.writer,
+                policy.can_propagate_failure,
+                policy.inside_entrypoint,
+                policy.propagation_suppressed,
             );
         }
         if let Some(expr) = &block.expr {
             if block_result.is_err() {
                 return;
             }
-            block_result = generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+            block_result = inner_emitter.expr(expr);
         }
     });
     block_result?;
-    w.write("}");
+    emitter.writer.write("}");
     Ok(())
 }
