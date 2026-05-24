@@ -33,142 +33,103 @@ pub(super) fn generate_verte_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_verte_expr(&mut emitter, expr_id, source, target, entries)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_verte_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
+    expr_id: HirId,
+    source: &HirExpr,
+    target: TypeId,
+    entries: Option<&[HirObjectField]>,
+) -> Result<(), CodegenError> {
     // Dispatch is target-first. Source shape only matters inside target-specific
     // constructors, which keeps fallback behavior explicit when the source does
     // not match a literal form this backend can construct.
-    match types.get(target) {
-        Type::Struct(def_id) => generate_verte_struct_expr(
-            codegen,
-            expr_id,
-            source,
-            *def_id,
-            entries,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        ),
-        Type::Array(elem) => generate_verte_array_expr(
-            codegen,
-            expr_id,
-            source,
-            *elem,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        ),
-        Type::Map(key_ty, value_ty) => generate_verte_map_expr(
-            codegen,
-            expr_id,
-            *key_ty,
-            *value_ty,
-            entries,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        ),
+    match emitter.types.get(target) {
+        Type::Struct(def_id) => emit_verte_struct_expr(emitter, expr_id, source, *def_id, entries),
+        Type::Array(elem) => emit_verte_array_expr(emitter, expr_id, source, *elem),
+        Type::Map(key_ty, value_ty) => emit_verte_map_expr(emitter, expr_id, *key_ty, *value_ty, entries),
         Type::Primitive(Primitive::Numerus)
         | Type::Primitive(Primitive::Fractus)
         | Type::Primitive(Primitive::Bivalens) => {
-            generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" as ");
-            w.write(&type_to_rust(codegen, target, types));
+            emitter.expr(source)?;
+            emitter.writer.write(" as ");
+            emitter
+                .writer
+                .write(&type_to_rust(emitter.codegen, target, emitter.types));
             Ok(())
         }
         Type::Primitive(Primitive::Textus) => {
-            w.write("format!(\"{}\", ");
-            generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(")");
+            emitter.writer.write("format!(\"{}\", ");
+            emitter.expr(source)?;
+            emitter.writer.write(")");
             Ok(())
         }
-        Type::Enum(_) | Type::Interface(_) => {
-            generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)
-        }
-        _ => generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation),
+        Type::Enum(_) | Type::Interface(_) => emitter.expr(source),
+        _ => emitter.expr(source),
     }
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_verte_struct_expr(
-    codegen: &RustCodegen<'_>,
+fn emit_verte_struct_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
     source: &HirExpr,
     def_id: DefId,
     entries: Option<&[HirObjectField]>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     let Some(entries) = entries else {
-        return generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+        return emitter.expr(source);
     };
 
-    if codegen.struct_has_creo_hook(def_id) {
+    if emitter.codegen.struct_has_creo_hook(def_id) {
         let temp = format!("__faber_struct_{}", expr_id.0);
-        w.writeln("{");
+        emitter.writer.writeln("{");
         let mut result = Ok(());
-        w.indented(|w| {
-            w.write("let mut ");
-            w.write(&temp);
-            w.write(" = ");
-            result = generate_verte_struct_literal_expr(
-                codegen,
-                def_id,
-                entries,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            );
+        let codegen = emitter.codegen;
+        let types = emitter.types;
+        let policy = emitter.policy;
+        emitter.writer.indented(|w| {
+            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+            nested.writer.write("let mut ");
+            nested.writer.write(&temp);
+            nested.writer.write(" = ");
+            result = emit_verte_struct_literal_expr(&mut nested, def_id, entries);
             if result.is_err() {
                 return;
             }
-            w.writeln(";");
-            w.write(&temp);
-            w.writeln(".creo();");
-            w.write(&temp);
-            w.newline();
+            nested.writer.writeln(";");
+            nested.writer.write(&temp);
+            nested.writer.writeln(".creo();");
+            nested.writer.write(&temp);
+            nested.writer.newline();
         });
         result?;
-        w.write("}");
+        emitter.writer.write("}");
         return Ok(());
     }
 
-    generate_verte_struct_literal_expr(
-        codegen,
-        def_id,
-        entries,
-        types,
-        w,
-        in_failable_fn,
-        in_entry,
-        suppress_error_propagation,
-    )
+    emit_verte_struct_literal_expr(emitter, def_id, entries)
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_verte_struct_literal_expr(
-    codegen: &RustCodegen<'_>,
+fn emit_verte_struct_literal_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
     def_id: DefId,
     entries: &[HirObjectField],
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     // Entry-backed struct construction mirrors `generate_struct_expr` so
     // defaulted and optional fields do not diverge under `verte`.
-    w.write(codegen.resolve_def(def_id));
-    w.writeln(" {");
+    emitter.writer.write(emitter.codegen.resolve_def(def_id));
+    emitter.writer.writeln(" {");
     let mut struct_result = Ok(());
     let provided = entries
         .iter()
@@ -177,14 +138,18 @@ fn generate_verte_struct_literal_expr(
             _ => None,
         })
         .collect::<rustc_hash::FxHashSet<_>>();
-    w.indented(|w| {
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    emitter.writer.indented(|w| {
+        let nested = ExprEmitter::new(codegen, types, w, policy);
         for field in entries {
             let (name, value) = match (&field.key, &field.value) {
                 (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(value)) => (name, value),
                 _ => continue,
             };
-            w.write(codegen.resolve_symbol(*name));
-            w.write(": ");
+            nested.writer.write(codegen.resolve_symbol(*name));
+            nested.writer.write(": ");
             if struct_result.is_err() {
                 return;
             }
@@ -194,12 +159,12 @@ fn generate_verte_struct_literal_expr(
                 *name,
                 value,
                 types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
+                nested.writer,
+                policy.can_propagate_failure,
+                policy.inside_entrypoint,
+                policy.propagation_suppressed,
             );
-            w.writeln(",");
+            nested.writer.writeln(",");
         }
         if struct_result.is_err() {
             return;
@@ -209,36 +174,33 @@ fn generate_verte_struct_literal_expr(
             def_id,
             &provided,
             types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
+            nested.writer,
+            policy.can_propagate_failure,
+            policy.inside_entrypoint,
+            policy.propagation_suppressed,
         );
     });
     struct_result?;
-    w.write("}");
+    emitter.writer.write("}");
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_verte_array_expr(
-    codegen: &RustCodegen<'_>,
+fn emit_verte_array_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
     source: &HirExpr,
     elem: TypeId,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     if let HirExprKind::Array(elements) = &source.kind {
         if elements.is_empty() {
             // Empty vectors need the target element type because Rust cannot
             // infer it from `vec![]` in all generated contexts.
-            w.write("Vec::<");
-            w.write(&type_to_rust(codegen, elem, types));
-            w.write(">::new()");
+            emitter.writer.write("Vec::<");
+            emitter
+                .writer
+                .write(&type_to_rust(emitter.codegen, elem, emitter.types));
+            emitter.writer.write(">::new()");
             return Ok(());
         }
         if elements
@@ -248,134 +210,105 @@ fn generate_verte_array_expr(
             // Spread arrays need mutation; the HIR id makes the generated
             // temporary stable and unique within the emitted expression tree.
             let temp = format!("__faber_verte_vec_{}", expr_id.0);
-            w.writeln("{");
+            emitter.writer.writeln("{");
             let mut array_result = Ok(());
-            w.indented(|w| {
-                w.write("let mut ");
-                w.write(&temp);
-                w.writeln(" = Vec::new();");
+            let codegen = emitter.codegen;
+            let types = emitter.types;
+            let policy = emitter.policy;
+            emitter.writer.indented(|w| {
+                let mut nested = ExprEmitter::new(codegen, types, w, policy);
+                nested.writer.write("let mut ");
+                nested.writer.write(&temp);
+                nested.writer.writeln(" = Vec::new();");
                 for element in elements {
                     if array_result.is_err() {
                         return;
                     }
                     match element {
                         HirArrayElement::Expr(elem_expr) => {
-                            w.write(&temp);
-                            w.write(".push(");
-                            array_result = generate_verte_value_expr(
-                                codegen,
-                                elem_expr,
-                                elem,
-                                types,
-                                w,
-                                in_failable_fn,
-                                in_entry,
-                                suppress_error_propagation,
-                            );
-                            w.writeln(");");
+                            nested.writer.write(&temp);
+                            nested.writer.write(".push(");
+                            array_result = emit_verte_value_expr(&mut nested, elem_expr, elem);
+                            nested.writer.writeln(");");
                         }
                         HirArrayElement::Spread(elem_expr) => {
-                            w.write(&temp);
-                            w.write(".extend((");
-                            array_result = generate_expr(
-                                codegen,
-                                elem_expr,
-                                types,
-                                w,
-                                in_failable_fn,
-                                in_entry,
-                                suppress_error_propagation,
-                            );
-                            w.writeln(").iter().cloned());");
+                            nested.writer.write(&temp);
+                            nested.writer.write(".extend((");
+                            array_result = nested.expr(elem_expr);
+                            nested.writer.writeln(").iter().cloned());");
                         }
                     }
                 }
-                w.write(&temp);
-                w.newline();
+                nested.writer.write(&temp);
+                nested.writer.newline();
             });
             array_result?;
-            w.write("}");
+            emitter.writer.write("}");
             return Ok(());
         }
 
-        w.write("vec![");
+        emitter.writer.write("vec![");
         for (i, elem_expr) in elements.iter().enumerate() {
             if i > 0 {
-                w.write(", ");
+                emitter.writer.write(", ");
             }
             let HirArrayElement::Expr(elem_expr) = elem_expr else {
                 continue;
             };
-            generate_verte_value_expr(
-                codegen,
-                elem_expr,
-                elem,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            emit_verte_value_expr(emitter, elem_expr, elem)?;
         }
-        w.write("]");
+        emitter.writer.write("]");
         return Ok(());
     }
 
-    w.write("Vec::<");
-    w.write(&type_to_rust(codegen, elem, types));
-    w.write(">::new()");
+    emitter.writer.write("Vec::<");
+    emitter
+        .writer
+        .write(&type_to_rust(emitter.codegen, elem, emitter.types));
+    emitter.writer.write(">::new()");
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_verte_map_expr(
-    codegen: &RustCodegen<'_>,
+fn emit_verte_map_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
     expr_id: HirId,
     key_ty: TypeId,
     value_ty: TypeId,
     entries: Option<&[HirObjectField]>,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     if let Some(entries) = entries {
         // Map construction always states key/value types up front. That avoids
         // depending on insert order or spread contents for Rust type inference.
         let map_name = format!("__faber_verte_map_{}", expr_id.0);
-        w.writeln("{");
+        emitter.writer.writeln("{");
         let mut map_result = Ok(());
-        w.indented(|w| {
-            w.write("let mut ");
-            w.write(&map_name);
-            w.write(" = std::collections::HashMap::<");
-            w.write(&type_to_rust(codegen, key_ty, types));
-            w.write(", ");
-            w.write(&type_to_rust(codegen, value_ty, types));
-            w.writeln(">::new();");
+        let codegen = emitter.codegen;
+        let types = emitter.types;
+        let policy = emitter.policy;
+        emitter.writer.indented(|w| {
+            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+            nested.writer.write("let mut ");
+            nested.writer.write(&map_name);
+            nested.writer.write(" = std::collections::HashMap::<");
+            nested.writer.write(&type_to_rust(codegen, key_ty, types));
+            nested.writer.write(", ");
+            nested.writer.write(&type_to_rust(codegen, value_ty, types));
+            nested.writer.writeln(">::new();");
             for field in entries {
                 match (&field.key, &field.value) {
                     (HirObjectKey::Spread(expr), _) => {
-                        w.write(&map_name);
-                        w.write(".extend(");
+                        nested.writer.write(&map_name);
+                        nested.writer.write(".extend(");
                         if map_result.is_err() {
                             return;
                         }
-                        map_result = generate_expr(
-                            codegen,
-                            expr,
-                            types,
-                            w,
-                            in_failable_fn,
-                            in_entry,
-                            suppress_error_propagation,
-                        );
-                        w.writeln(");");
+                        map_result = nested.expr(expr);
+                        nested.writer.writeln(");");
                     }
                     (_, Some(value)) => {
-                        w.write(&map_name);
-                        w.write(".insert(");
+                        nested.writer.write(&map_name);
+                        nested.writer.write(".insert(");
                         if map_result.is_err() {
                             return;
                         }
@@ -384,85 +317,56 @@ fn generate_verte_map_expr(
                             types,
                             &field.key,
                             key_ty,
-                            w,
-                            in_failable_fn,
-                            in_entry,
-                            suppress_error_propagation,
+                            nested.writer,
+                            policy.can_propagate_failure,
+                            policy.inside_entrypoint,
+                            policy.propagation_suppressed,
                         );
                         if map_result.is_err() {
                             return;
                         }
-                        w.write(", ");
-                        map_result = generate_verte_value_expr(
-                            codegen,
-                            value,
-                            value_ty,
-                            types,
-                            w,
-                            in_failable_fn,
-                            in_entry,
-                            suppress_error_propagation,
-                        );
-                        w.writeln(");");
+                        nested.writer.write(", ");
+                        map_result = emit_verte_value_expr(&mut nested, value, value_ty);
+                        nested.writer.writeln(");");
                     }
                     (_, None) => {}
                 }
             }
-            w.write(&map_name);
-            w.newline();
+            nested.writer.write(&map_name);
+            nested.writer.newline();
         });
         map_result?;
-        w.write("}");
+        emitter.writer.write("}");
         return Ok(());
     }
 
-    w.write("std::collections::HashMap::<");
-    w.write(&type_to_rust(codegen, key_ty, types));
-    w.write(", ");
-    w.write(&type_to_rust(codegen, value_ty, types));
-    w.write(">::new()");
+    emitter.writer.write("std::collections::HashMap::<");
+    emitter
+        .writer
+        .write(&type_to_rust(emitter.codegen, key_ty, emitter.types));
+    emitter.writer.write(", ");
+    emitter
+        .writer
+        .write(&type_to_rust(emitter.codegen, value_ty, emitter.types));
+    emitter.writer.write(">::new()");
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_verte_value_expr(
-    codegen: &RustCodegen<'_>,
+fn emit_verte_value_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
     value: &HirExpr,
     target_ty: TypeId,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if let Type::Array(elem_ty) = resolve_type(target_ty, types) {
-        if type_id_is_faber_value(elem_ty, types) {
-            return generate_verte_array_expr(
-                codegen,
-                value.id,
-                value,
-                elem_ty,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            );
+    if let Type::Array(elem_ty) = resolve_type(target_ty, emitter.types) {
+        if type_id_is_faber_value(elem_ty, emitter.types) {
+            return emit_verte_array_expr(emitter, value.id, value, elem_ty);
         }
     }
 
-    if type_id_is_faber_value(target_ty, types) {
-        return generate_expr_as_type(
-            codegen,
-            value,
-            target_ty,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        );
+    if type_id_is_faber_value(target_ty, emitter.types) {
+        return emitter.expr_as_type(value, target_ty);
     }
 
-    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.expr(value)
 }
