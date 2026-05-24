@@ -160,6 +160,16 @@ impl<'a> TypeChecker<'a> {
             return self.fresh_infer();
         }
 
+        if self.is_textus(receiver_ty) {
+            if let Some(result) = self.check_textus_method_call(name, args, receiver.span) {
+                return result;
+            }
+            for arg in args {
+                self.check_expr(arg);
+            }
+            return self.fresh_infer();
+        }
+
         if matches!(
             self.types.get(self.resolve_type(receiver_ty)),
             Type::Primitive(Primitive::Ignotum)
@@ -278,6 +288,58 @@ impl<'a> TypeChecker<'a> {
         let sig = FuncSig { params, ret, err: None, is_async: false, is_generator: false };
         self.check_call_args(&sig, args, span);
         ret
+    }
+
+    fn check_textus_method_call(
+        &mut self,
+        name: Symbol,
+        args: &mut [HirExpr],
+        span: crate::lexer::Span,
+    ) -> Option<TypeId> {
+        let method_name = self
+            .interner
+            .map(|interner| interner.resolve(name).to_owned())?;
+        match method_name.as_str() {
+            "longitudo" => {
+                let ret = self.numerus_type();
+                Some(self.check_known_method_args(args, Vec::new(), ret, span))
+            }
+            "continet" | "initium" | "finis" => {
+                let textus = self.textus_type();
+                let ret = self.bool_type();
+                let params = vec![ParamType { ty: textus, mode: ParamMode::Owned, optional: false }];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "maiuscula" | "minuscula" | "recide" => {
+                let ret = self.textus_type();
+                Some(self.check_known_method_args(args, Vec::new(), ret, span))
+            }
+            "sectio" => {
+                let numerus = self.numerus_type();
+                let ret = self.textus_type();
+                let params = vec![
+                    ParamType { ty: numerus, mode: ParamMode::Owned, optional: false },
+                    ParamType { ty: numerus, mode: ParamMode::Owned, optional: false },
+                ];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "divide" => {
+                let textus = self.textus_type();
+                let ret = self.types.array(textus);
+                let params = vec![ParamType { ty: textus, mode: ParamMode::Owned, optional: false }];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            "muta" => {
+                let textus = self.textus_type();
+                let ret = textus;
+                let params = vec![
+                    ParamType { ty: textus, mode: ParamMode::Owned, optional: false },
+                    ParamType { ty: textus, mode: ParamMode::Owned, optional: false },
+                ];
+                Some(self.check_known_method_args(args, params, ret, span))
+            }
+            _ => None,
+        }
     }
     /// Checks direct call syntax, including enum variant construction.
     ///

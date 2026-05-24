@@ -442,6 +442,33 @@ incipit {
 }
 
 #[test]
+fn emits_textus_match_scrutinee_and_longitudo() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio code(textus name) → numerus {
+    elige name {
+        casu "textus" ergo redde 1
+        ceterum ergo redde 0
+    }
+}
+
+functio length(textus value) → numerus {
+    redde value.longitudo()
+}
+"#;
+
+    let result = compiler.compile_str("textus-match.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("match name.as_str()"));
+    assert!(rust.code.contains("\"textus\" =>"));
+    assert!(rust.code.contains("return value.len() as i64;"));
+    assert!(!rust.code.contains("value.longitudo()"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

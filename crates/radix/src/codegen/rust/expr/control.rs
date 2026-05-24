@@ -176,6 +176,12 @@ pub(super) fn generate_match_expr(
             in_entry,
             suppress_error_propagation,
         )?;
+        if matches!(
+            scrutinees[0].ty.map(|ty| resolve_type(ty, types)),
+            Some(Type::Primitive(Primitive::Textus))
+        ) {
+            w.write(".as_str()");
+        }
     } else {
         w.write("(");
         for (idx, scrutinee) in scrutinees.iter().enumerate() {

@@ -187,6 +187,17 @@ fn try_generate_stdlib_method_call(
             in_entry,
             suppress_error_propagation,
         ),
+        Type::Primitive(Primitive::Textus) => generate_textus_method(
+            codegen,
+            receiver,
+            method_name,
+            args,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        ),
         Type::Map(_, _) => generate_tabula_method(
             codegen,
             receiver,
@@ -477,6 +488,36 @@ fn generate_lista_method(
             w.write(".sort(); ");
             w.write(&temp);
             w.write(" }");
+        }
+        _ => return Ok(false),
+    }
+    Ok(true)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_textus_method(
+    codegen: &RustCodegen<'_>,
+    receiver: &HirExpr,
+    method_name: &str,
+    args: &[HirExpr],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<bool, CodegenError> {
+    match method_name {
+        "longitudo" if args.is_empty() => {
+            generate_expr(
+                codegen,
+                receiver,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(".len() as i64");
         }
         _ => return Ok(false),
     }
