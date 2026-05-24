@@ -28,10 +28,7 @@ genus SolumStatus {
     bivalens estVinculum  # is symlink
 }
 
-@ subsidia ts "../../../../runtimes/norma-ts/hal/solum.ts"
 @ subsidia rs "../../../crates/norma/hal/solum.rs"
-@ subsidia go "../../../../runtimes/norma-go/hal/solum/solum.go"
-@ subsidia py "../../../../runtimes/norma-py/hal/solum.py"
 pactum solum {
     # =========================================================================
     # READING - Text

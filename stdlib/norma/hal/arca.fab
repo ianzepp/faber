@@ -11,9 +11,7 @@
 #     - Future plural (-ent): async generator, yields multiple values
 #   - Parameterized queries prevent SQL injection
 
-@ subsidia ts "../../../../runtimes/norma-ts/hal/arca.ts"
 @ subsidia rs "../../../crates/norma/hal/arca.rs"
-@ subsidia py "../../../../runtimes/norma-py/hal/arca.py"
 pactum arca {
     # =========================================================================
     # CONNECTION

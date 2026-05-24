@@ -10,10 +10,7 @@
 #   - TOML root must be a table (object), not array or primitive
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "../../../runtimes/norma-ts/toml.ts"
 @ subsidia rs "../../crates/norma/toml.rs"
-@ subsidia go "../../../runtimes/norma-go/toml/toml.go"
-@ subsidia py "../../../runtimes/norma-py/toml.py"
 pactum toml {
     # =========================================================================
     # SERIALIZATION

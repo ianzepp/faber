@@ -10,7 +10,6 @@
 #   - Decoding: text representation → raw bytes
 #   - URL encoding operates on text (percent-encoding)
 
-@ subsidia ts "../../../runtimes/norma-ts/codex.ts"
 pactum codex {
     # =========================================================================
     # BASE64

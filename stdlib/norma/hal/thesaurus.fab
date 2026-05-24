@@ -12,7 +12,6 @@
 #   - Pub/sub messaging with pattern subscriptions
 #   - In-memory for dev/single-node, Redis for production
 
-@ subsidia ts "../../../../runtimes/norma-ts/hal/thesaurus.ts"
 pactum thesaurus {
     # =========================================================================
     # KEY-VALUE CACHE

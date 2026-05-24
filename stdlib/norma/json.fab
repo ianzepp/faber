@@ -9,10 +9,7 @@
 #   - solve (untangle) for parsing: solving/extracting data from text
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "../../../runtimes/norma-ts/json.ts"
 @ subsidia rs "../../crates/norma/json.rs"
-@ subsidia go "../../../runtimes/norma-go/json/json.go"
-@ subsidia py "../../../runtimes/norma-py/json.py"
 pactum json {
     # =========================================================================
     # SERIALIZATION

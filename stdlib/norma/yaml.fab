@@ -10,10 +10,7 @@
 #   - necto/collige for multi-document: bind/gather multiple docs
 #   - All operations are synchronous (pure in-memory transforms)
 
-@ subsidia ts "../../../runtimes/norma-ts/yaml.ts"
 @ subsidia rs "../../crates/norma/yaml.rs"
-@ subsidia go "../../../runtimes/norma-go/yaml/yaml.go"
-@ subsidia py "../../../runtimes/norma-py/yaml.py"
 pactum yaml {
     # =========================================================================
     # SERIALIZATION

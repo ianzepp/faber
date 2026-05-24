@@ -80,7 +80,7 @@ Both files have `@ subsidia` annotations on the `pactum` itself (these attach to
 - **TOML datetime**: Degrade or error deterministically (decision in Phase 2/7).
 - **Error model**: Replace all `expect` with Result/Option paths visible to Faber (failable functions + `tempta` variants).
 - **Caveats recorded**:
-  - Subsidia paths in stdlib/*.fab point to non-existent `runtimes/` trees (out-of-repo; ignored for Rust path in this plan).
+  - Legacy non-Rust subsidia paths were removed from stdlib metadata; the active Rust path points at `crates/norma`.
   - `pactum` annotations (`@ externa`, `@ subsidia`) on methods require parser/AST/HIR extension (Phase 1).
   - Syntax normalization (`->` → `→`, `si T` usage) required in stdlib sources.
   - `faber test` flow (Cargo-backed) must be functional; assumes prior work on test runner evolution.
