@@ -9,7 +9,7 @@ syscall routing without breaking the current Rust backend.
 
 ## 6.1 Norma Classification Baseline
 
-Status: complete pending commit
+Status: complete
 
 Delivery spec:
 
@@ -95,10 +95,16 @@ Delivery spec:
 
 Implementation:
 
-- Added `hosts/macos-arm64/src/kernel/consolum.rs`.
+- Added `hosts/macos-arm64/src/hal/consolum.rs`.
 - Registered `Consolum` in `HostKernel::new`.
-- Exported `Consolum` through `hosts/macos-arm64/src/kernel/mod.rs`.
+- Exported `Consolum` through `hosts/macos-arm64/src/hal/mod.rs`.
 - Added focused coverage in `hosts/macos-arm64/tests/host_kernel_test.rs`.
+
+Follow-up correction:
+
+- Moved `consolum` from `kernel` to `hal` after design review. The kernel now
+  owns generic frame/routing/syscall mechanics, while `consolum` is a host-owned
+  HAL built-in registered with the router.
 
 Decisions recorded:
 

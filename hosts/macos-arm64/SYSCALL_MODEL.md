@@ -7,6 +7,10 @@
 
 - `/Users/ianzepp/work/ianzepp/muninn/protocol/frames-rs`
 - `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`
+- `/Users/ianzepp/work/ianzepp/abbot/daemon/src/kernel/dispatcher.rs`
+- `/Users/ianzepp/work/ianzepp/abbot/daemon/src/kernel/sigcall_hub.rs`
+- `/Users/ianzepp/work/ianzepp/monk-os-kernel/src/dispatch/dispatcher.ts`
+- `/Users/ianzepp/work/ianzepp/monk-os-kernel/src/dispatch/sigcall/registry.ts`
 
 ## Summary
 
@@ -110,7 +114,7 @@ If no built-in route and no registered provider exists, the host returns a struc
 
 ## Syscalls And Sigcalls
 
-The useful distinction from Muninn is:
+The useful distinction from Muninn, Abbot, and Monk OS is:
 
 ```text
 Syscall: caller -> host kernel -> built-in handler -> host kernel -> caller
@@ -119,10 +123,45 @@ Sigcall: caller -> host kernel -> registered external handler -> host kernel -> 
 
 For Faber:
 
-- **Syscalls** are capabilities implemented by the host itself.
-- **Sigcalls** are capabilities implemented by installed providers, plugins, sidecars, or future dynamically loaded libraries.
+- `ad` names a capability route in source code.
+- The host decides whether that route is satisfied by a built-in syscall handler or by a registered sigcall provider.
+- **Syscalls** are capabilities implemented by the host itself. They are appropriate for tiny, stable host-owned effects such as `host:echo` and narrowly selected built-ins.
+- **Sigcalls** are capabilities implemented by installed providers, plugins, sidecars, or future dynamically loaded libraries. They are appropriate for broad or optional surfaces such as databases, TUI frameworks, browser automation, cloud APIs, and application-specific services.
 
 This gives Faber a clean path for both standard host functionality and application/provider extensions without changing source syntax.
+
+The design pressure is to keep the host kernel small. Adding every effectful
+interface as compiled-in host code would turn the host into a monolith and would
+force users to recompile the host to add new IO surfaces. Built-in syscalls are
+the exception for stable host primitives; sigcall providers are the scalable
+extension path.
+
+`consolum:*` is currently a built-in syscall proof because console IO is the
+first migrated host-effect surface. That does not make every `norma` HAL surface
+a future kernel module. The long-term rule is:
+
+```text
+source:      ad "provider:operation" (...)
+host route:  built-in syscall OR registered sigcall provider
+contract:    local/Norma/interface source used for typechecking
+provider:    host-installed implementation selected by manifest/registry
+```
+
+This separates three concerns that should not be conflated:
+
+- Compile-time interfaces describe callable shapes.
+- Runtime routes name capabilities.
+- Host/provider registration decides implementation and lifecycle.
+
+Abbot is useful as a frame and stream reference: every request and response is a
+correlated frame, and the dispatcher owns streaming, lane selection, cancellation,
+and backpressure. Abbot's current `SigcallHub` is mostly an outbound turn-stream
+delivery mechanism, not a general provider registry.
+
+Monk OS is the closer routing reference: the dispatcher sits outside the kernel,
+unknown syscall names are checked against a sigcall registry, and registered
+userspace handlers stream responses back to the original caller. Faber should
+follow that separation when provider routing becomes real.
 
 ## Error Model
 

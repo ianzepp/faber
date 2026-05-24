@@ -55,6 +55,8 @@ Coordinate the current Faber execution work into a long-running factory roadmap:
 - `hosts/macos-arm64/README.md`: placeholder host crate intent and links to the host architecture/syscall docs.
 - `/Users/ianzepp/work/ianzepp/muninn/protocol/frames-rs`: reference frame protocol material.
 - `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`: reference syscall routing, sigcall registry, cancellation, backpressure, and error model.
+- `/Users/ianzepp/work/ianzepp/abbot/daemon/src/kernel/dispatcher.rs` and `/Users/ianzepp/work/ianzepp/abbot/daemon/src/kernel/sigcall_hub.rs`: frame-first syscall dispatcher and outbound sigcall stream reference.
+- `/Users/ianzepp/work/ianzepp/monk-os-kernel/src/dispatch/dispatcher.ts` and `/Users/ianzepp/work/ianzepp/monk-os-kernel/src/dispatch/sigcall/registry.ts`: dispatcher-owned syscall/sigcall split where unknown syscall names can route to registered userspace handlers.
 - User clarification from 2026-05-24: the macOS host implementation should live in `hosts/macos-arm64`; the Muninn kernel code should be copied/vendorized into the Faber host and edited into a Faber-owned kernel rather than pulled as an external crate dependency.
 - `crates/radix/src/hir/nodes.rs`: HIR already preserves `HirStmtKind::Ad(HirAd)`.
 - `crates/radix/src/codegen/rust/`: current stable execution path and the first place to prove `ad` -> `__faber_ad` -> `__faber_syscall`.
@@ -97,6 +99,8 @@ Then inspect the focused goal for the active epic:
 - The first host implementation should stay in `hosts/macos-arm64`; extract shared host code only after concrete duplication or cross-host pressure exists.
 - Do not depend on Muninn as a runtime crate for the Faber host. Copy or reimplement only the relevant Muninn-inspired kernel pieces inside `hosts/macos-arm64`, preserve provenance for any copied source or adapted semantics, and make the result Faber-owned host code.
 - `norma` should move toward canonical contracts and interfaces, not per-program linked implementation as the final model.
+- `ad` names a capability route. The host decides whether the route is handled by a built-in syscall or by a registered sigcall provider.
+- Built-in host syscalls are for small, stable host primitives. Broad or optional IO surfaces should route through sigcall providers instead of growing the host kernel.
 - Git commands that create locks must run serially in this repository.
 
 ## Supporting Skills
@@ -299,6 +303,7 @@ hosts/macos-arm64/src/
 │   └── syscall.rs
 ├── hal/
 │   ├── mod.rs
+│   ├── consolum.rs
 │   └── host.rs
 └── manifest.rs
 ```
@@ -416,6 +421,43 @@ Checkpoint:
 - Future strict-mode host manifests have a clear contract source, but strict verification itself remains out of scope.
 - No `norma` implementation files are deleted as part of this epic.
 
+### Epic 7: Host Sigcall Provider Boundary
+
+Future step added after Epic 6 design review.
+
+Primary references:
+
+- `hosts/macos-arm64/SYSCALL_MODEL.md`
+- `hosts/macos-arm64/src/kernel/`
+- `/Users/ianzepp/work/ianzepp/monk-os-kernel/src/dispatch/dispatcher.ts`
+- `/Users/ianzepp/work/ianzepp/monk-os-kernel/src/dispatch/sigcall/registry.ts`
+- `/Users/ianzepp/work/ianzepp/abbot/daemon/src/kernel/dispatcher.rs`
+- `/Users/ianzepp/work/ianzepp/abbot/daemon/src/kernel/sigcall_hub.rs`
+
+Intent:
+
+- Stop treating every outside-world interface as a candidate for compiled-in host kernel code.
+- Make the host dispatcher choose between built-in syscalls and registered sigcall providers for the same source-level `ad` route shape.
+- Keep `ad "provider:operation"` stable as source syntax while moving implementation selection into host manifests, provider registration, and runtime routing.
+- Define provider lifecycle, registration, request correlation, streaming responses, cancellation, timeout, and `E_NO_ROUTE` behavior before adding broad IO surfaces such as databases, TUI frameworks, browser automation, or cloud APIs.
+- Preserve `consolum:*` as the small built-in proof while moving future HAL/provider work out of the kernel module tree unless a route is truly a host primitive.
+
+Recommended first slice:
+
+1. Define the provider registry data model: exact route ownership, optional prefix ownership, provider id, process/transport handle, version, and declared capabilities.
+2. Add a host-internal sigcall dispatcher path that can route an unknown non-built-in call to a registered provider.
+3. Add request/response correlation for one external provider process or in-test provider shim.
+4. Prove `E_NO_ROUTE` still fires when neither a built-in syscall nor a provider registration exists.
+5. Add manifest output that distinguishes built-in syscalls from registered providers.
+
+Checkpoint:
+
+- Host kernel modules contain generic frame, routing, syscall, and sigcall infrastructure, not provider-specific IO implementations by default.
+- At least one non-built-in capability route is served by a registered provider or provider shim.
+- Built-in `consolum:*` still works as the small host-owned syscall proof.
+- Provider registration does not require recompiling the host for every new interface family.
+- Runtime response semantics remain frame-shaped and support the eventual streaming/cancellation model.
+
 ## Exit Strategy
 
 Decision: included.
@@ -437,6 +479,7 @@ Decision: included.
   - Epic 5: step 8.
   - Epic 6: step 9.
 - Every epic has intent, primary references, agent policy, and checkpoint criteria.
+- Epic 7 records the syscall/sigcall provider boundary before broad host/provider interfaces are added.
 - The roadmap is suitable for multi-session factory execution without relying on hidden chat context.
 - The roadmap preserves the dependency order between e2e cleanup, `ab` removal, Rust backend stabilization, `ad` capability calls, host syscalls, the Rust-to-Wasm host syscall bridge, and `norma` migration.
 
@@ -451,7 +494,7 @@ Decision: included.
 ## Open Questions
 
 - Should the e2e baseline ledger live only under `docs/factory/exempla-rust-e2e/`, or should this roadmap keep a rollup ledger of epic status?
-- Should strict mode become Epic 7 after `norma` migration, or should it wait until a real host/provider set exists?
+- Should strict mode follow the Epic 7 provider boundary, or wait until a real host/provider set exists?
 - Should the first Wasm boundary expose full frames or a smaller `call(name, args)` wrapper that becomes frames inside the host?
 
 ## Future Host Dependency Manifests

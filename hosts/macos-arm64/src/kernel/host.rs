@@ -1,4 +1,5 @@
-use crate::kernel::{Consolum, Frame, HostEcho, Router, SyscallInfo};
+use crate::hal::Consolum;
+use crate::kernel::{Frame, HostEcho, Router, SyscallInfo};
 use crate::manifest::{CapabilityManifest, RegisteredProvider};
 
 /// Faber-owned host kernel for macOS route proofs.

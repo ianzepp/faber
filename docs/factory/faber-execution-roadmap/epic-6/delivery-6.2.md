@@ -10,8 +10,8 @@ the host syscall router and manifest.
 
 ## Normalized Spec
 
-Add a Faber-owned `consolum` built-in syscall handler under
-`hosts/macos-arm64`:
+Add a Faber-owned `consolum` HAL built-in syscall handler under
+`hosts/macos-arm64/src/hal`:
 
 - register the `consolum` prefix in `HostKernel`,
 - list all current `stdlib/norma/hal/consolum.fab` members in the host
@@ -38,9 +38,9 @@ a new routing abstraction.
 
 ## Stage Graph
 
-1. Add a host kernel module for the `consolum` syscall handler.
+1. Add a host HAL module for the `consolum` syscall handler.
 2. Register the handler in `HostKernel::new`.
-3. Export the handler through `kernel::mod`.
+3. Export the handler through `hal::mod`.
 4. Add focused tests proving:
    - manifest lists `consolum` identities,
    - a text output call returns a `done` frame,
