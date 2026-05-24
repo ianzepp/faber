@@ -42,6 +42,46 @@
    - Evidence: `crates/radix/src/tool.rs` removes the temp dir before reading `main.rs`.
    - Expected fix: read fixed code before cleanup and capture tool stderr so e2e output stays focused on final failures.
 
+## Deduplication And Decomposition Targets
+
+These are structural cleanup candidates even when no immediate bug is fixed.
+The goal is to make the next Rust backend phases easier to test in small units.
+
+1. Extract Rust type-shape predicates into one module.
+   - Current repetition: `resolve_type`, `type_id_is_option`, `type_is_option_or_nihil`, `option_inner_or_self`, and `type_id_is_faber_value` are redefined across `decl.rs`, `mod.rs`, `stmt.rs`, `expr/mod.rs`, `expr/option.rs`, `expr/collection.rs`, and `expr/verte.rs`.
+   - Suggested boundary: add a small `codegen/rust/type_shape.rs` or `codegen/rust/expr/shape.rs` with pure helpers over `TypeId` and `TypeTable`.
+   - Test payoff: helper tests can cover alias resolution, `Option<T>`, `T ∪ nihil`, `ignotum`, and dynamic unions without snapshotting generated Rust strings.
+
+2. Introduce an expression-emission context object.
+   - Current repetition: most expression helpers take `codegen`, `types`, `w`, `in_failable_fn`, `in_entry`, and `suppress_error_propagation`, creating long signatures and making small helpers hard to compose.
+   - Suggested boundary: an `ExprEmitter` or `EmitCtx` that owns the invariant context and exposes focused methods such as `expr`, `expr_unwrapped`, `expr_as_type`, and `call_arg`.
+   - Test payoff: unit tests can construct one context and test narrow emission helpers without threading eight arguments through every call.
+
+3. Split `expr/call.rs` by responsibility.
+   - Current shape: direct calls, method calls, variant constructors, spread expansion, optional-parameter defaults, runtime module bridges, and stdlib collection translations all live in one roughly 1,000-line file.
+   - Suggested split: `call/direct.rs`, `call/method.rs`, `call/stdlib.rs`, and `call/args.rs`, or equivalent sibling modules under `expr/call/`.
+   - Test payoff: optional/default argument behavior and collection-method translation can be tested independently from runtime bridges and variant constructors.
+
+4. Split `expr/control.rs` by construct family.
+   - Current shape: `fac`/`cape`, `si`, `elige`, `discerne`, `itera`, cursor/yield support, and range rendering share one roughly 670-line module.
+   - Suggested split: `control/branch.rs`, `control/match.rs`, `control/iteration.rs`, and `control/failable.rs`.
+   - Test payoff: range and iteration emitters can get focused tests without pulling in match/failable-control fixtures.
+
+5. Move generated helper prelude emission out of `codegen/rust/mod.rs`.
+   - Current shape: the main backend module owns catalog setup, binding/field/variant collection, import detection, entrypoint emission, generated helper types such as `FaberValue`, and final assembly.
+   - Suggested split: `prelude.rs` or `helpers.rs` for generated helper types and imports; keep `mod.rs` as orchestration.
+   - Test payoff: `FaberValue` helper emission and import detection can be tested directly and reused by future Epic 3 capability-call helper code.
+
+6. Decompose `codegen/rust/mod_test.rs` into companion test modules.
+   - Current shape: one roughly 2,700-line test file mixes Epic 2 clusters with older backend tests.
+   - Suggested split: `optional_test.rs`, `dynamic_test.rs`, `calls_test.rs`, `collections_test.rs`, `control_test.rs`, and `decl_test.rs` under `codegen/rust/`, wired with the existing `#[cfg(test)] #[path = "..."] mod tests;` convention or a nested test module layout.
+   - Test payoff: future changes can run a narrow test name/module and reviewers can see which behavior cluster changed.
+
+7. Replace string-snapshot-heavy tests with helper-level assertions where possible.
+   - Current shape: many Epic 2 tests assert exact emitted Rust substrings. That is useful for smoke coverage but makes harmless refactors noisy.
+   - Suggested boundary: keep end-to-end generated Rust assertions for public behavior, but add pure helper tests for type-shape, argument planning, optional wrapping decisions, and stdlib method translation selection.
+   - Test payoff: decomposition can proceed without every cleanup becoming a brittle output-string migration.
+
 ## Documentation And Drift
 
 - `docs/factory/exempla-rust-e2e/goal.md` still says `not started` and `71/138`.
