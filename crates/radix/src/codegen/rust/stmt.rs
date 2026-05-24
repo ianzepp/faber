@@ -53,6 +53,22 @@ pub fn generate_stmt(
             generate_local(codegen, local, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirStmtKind::Expr(expr) => {
+            if let HirExprKind::Cede(value) = &expr.kind {
+                if codegen.current_generator_yield_ty().is_some() {
+                    w.write("__faber_yielded.push(");
+                    generate_expr_unwrapped(
+                        codegen,
+                        value,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
+                    w.writeln(");");
+                    return Ok(());
+                }
+            }
             generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.writeln(";");
         }

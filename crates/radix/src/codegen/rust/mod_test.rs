@@ -499,6 +499,50 @@ incipiet {
 }
 
 #[test]
+fn emits_cursor_functions_as_vec_producers() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+@ cursor
+functio rangeSync(numerus n) → numerus {
+    itera pro 0‥n fixum i {
+        cede i
+    }
+}
+
+@ futura
+@ cursor
+functio rangeAsync(numerus n) → numerus {
+    itera pro 0‥n fixum i {
+        cede i
+    }
+}
+
+incipit {
+    itera ex rangeSync(3) fixum num {
+        nota num
+    }
+}
+"#;
+
+    let result = compiler.compile_str("cursor-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("fn rangeSync(n: i64) -> Vec<i64>"));
+    assert!(rust
+        .code
+        .contains("async fn rangeAsync(n: i64) -> Vec<i64>"));
+    assert!(rust
+        .code
+        .contains("let mut __faber_yielded: Vec<i64> = Vec::new();"));
+    assert!(rust.code.contains("__faber_yielded.push(i);"));
+    assert!(rust.code.contains("for __faber_item_"));
+    assert!(rust.code.contains("in &(rangeSync(3))"));
+    assert!(!rust.code.contains("i.await"));
+}
+
+#[test]
 fn emits_usize_cast_for_lista_indexing() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

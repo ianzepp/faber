@@ -159,6 +159,14 @@ fn generate_function_inner(
             w.write("()");
         }
         w.write(", String>");
+    } else if func.is_generator {
+        w.write(" -> Vec<");
+        if let Some(ret_ty) = func.ret_ty {
+            w.write(&type_to_rust(codegen, ret_ty, types));
+        } else {
+            w.write("()");
+        }
+        w.write(">");
     } else if let Some(ret_ty) = return_type_override {
         w.write(" -> ");
         w.write(ret_ty);
@@ -170,17 +178,66 @@ fn generate_function_inner(
     // Declarations without bodies are emitted as Rust signatures, used by
     // trait-like surfaces and imported interface stubs.
     let previous_return_ty = codegen.replace_current_return_ty(func.ret_ty);
+    let previous_generator_yield_ty = codegen.replace_current_generator_yield_ty(
+        func.is_generator.then_some(
+            func.ret_ty
+                .unwrap_or_else(|| types.primitive(crate::semantic::Primitive::Vacuum)),
+        ),
+    );
     let body_result = if let Some(body) = &func.body {
         w.write(" ");
-        generate_block(codegen, body, types, w, is_failable, false, true)
+        if func.is_generator {
+            generate_generator_block(codegen, body, func.ret_ty, types, w, is_failable)
+        } else {
+            generate_block(codegen, body, types, w, is_failable, false, true)
+        }
     } else {
         w.write(";");
         Ok(())
     };
     codegen.replace_current_return_ty(previous_return_ty);
+    codegen.replace_current_generator_yield_ty(previous_generator_yield_ty);
     body_result?;
 
     w.newline();
+    Ok(())
+}
+
+fn generate_generator_block(
+    codegen: &RustCodegen<'_>,
+    block: &HirBlock,
+    yield_ty: Option<TypeId>,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+) -> Result<(), CodegenError> {
+    w.writeln("{");
+    let mut block_result = Ok(());
+    w.indented(|w| {
+        w.write("let mut __faber_yielded: Vec<");
+        if let Some(yield_ty) = yield_ty {
+            w.write(&type_to_rust(codegen, yield_ty, types));
+        } else {
+            w.write("()");
+        }
+        w.writeln("> = Vec::new();");
+        for stmt in &block.stmts {
+            if block_result.is_err() {
+                return;
+            }
+            block_result = super::stmt::generate_stmt(codegen, stmt, types, w, in_failable_fn, false, false);
+        }
+        if let Some(expr) = &block.expr {
+            if block_result.is_err() {
+                return;
+            }
+            block_result = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, false, false);
+            w.writeln(";");
+        }
+        w.writeln("__faber_yielded");
+    });
+    block_result?;
+    w.write("}");
     Ok(())
 }
 

@@ -28,7 +28,10 @@ impl<'a> TypeChecker<'a> {
             .iter()
             .map(|param| ParamType { ty: param.ty, mode: param_mode_from_hir(param.mode), optional: param.optional })
             .collect();
-        let ret = func.ret_ty.unwrap_or_else(|| self.vacuum_type());
+        let mut ret = func.ret_ty.unwrap_or_else(|| self.vacuum_type());
+        if func.is_generator {
+            ret = self.types.array(ret);
+        }
         FuncSig { params, ret, err: func.err_ty, is_async: func.is_async, is_generator: func.is_generator }
     }
 

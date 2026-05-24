@@ -133,6 +133,9 @@ pub struct RustCodegen<'a> {
     /// `Option<T>` without re-inferring expression types in codegen.
     current_return_ty: Cell<Option<TypeId>>,
 
+    /// Current generator yield type while emitting a cursor function body.
+    current_generator_yield_ty: Cell<Option<TypeId>>,
+
     /// Current struct receiver while emitting an inherent method body.
     ///
     /// HIR lowers `ego` to the enclosing struct definition path. Rust method
@@ -178,6 +181,7 @@ impl<'a> RustCodegen<'a> {
             struct_fields: FxHashMap::default(),
             struct_creo_hooks: FxHashSet::default(),
             current_return_ty: Cell::new(None),
+            current_generator_yield_ty: Cell::new(None),
             current_self_def: Cell::new(None),
             binding_types: RefCell::new(FxHashMap::default()),
             function_params: FxHashMap::default(),
@@ -248,6 +252,14 @@ impl<'a> RustCodegen<'a> {
 
     pub(super) fn replace_current_return_ty(&self, ty: Option<TypeId>) -> Option<TypeId> {
         self.current_return_ty.replace(ty)
+    }
+
+    pub(super) fn current_generator_yield_ty(&self) -> Option<TypeId> {
+        self.current_generator_yield_ty.get()
+    }
+
+    pub(super) fn replace_current_generator_yield_ty(&self, ty: Option<TypeId>) -> Option<TypeId> {
+        self.current_generator_yield_ty.replace(ty)
     }
 
     pub(super) fn current_self_def(&self) -> Option<DefId> {

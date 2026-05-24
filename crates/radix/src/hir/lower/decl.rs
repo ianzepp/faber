@@ -67,6 +67,14 @@ impl<'a> Lowerer<'a> {
         })
     }
 
+    fn has_cursor_annotation(&self, annotations: &[crate::syntax::Annotation]) -> bool {
+        annotations.iter().any(|annotation| match &annotation.kind {
+            crate::syntax::AnnotationKind::Cursor => true,
+            crate::syntax::AnnotationKind::Statement(stmt) => self.interner.resolve(stmt.name.name) == "cursor",
+            _ => false,
+        })
+    }
+
     fn has_externa_annotation(&self, stmt: &Stmt) -> bool {
         stmt.annotations
             .iter()
@@ -221,7 +229,7 @@ impl<'a> Lowerer<'a> {
             err_ty: decl.err.as_ref().map(|ty| self.lower_type(ty)),
             body,
             is_async: self.has_futura_annotation(&stmt.annotations),
-            is_generator: false,
+            is_generator: self.has_cursor_annotation(&stmt.annotations),
             test: None,
         };
 
@@ -338,7 +346,7 @@ impl<'a> Lowerer<'a> {
                         err_ty: method.err.as_ref().map(|ty| self.lower_type(ty)),
                         body,
                         is_async: self.has_futura_annotation(&member.annotations),
-                        is_generator: false,
+                        is_generator: self.has_cursor_annotation(&member.annotations),
                         test: None,
                     };
 
