@@ -193,6 +193,29 @@ incipit {
 }
 
 #[test]
+fn emits_integral_fractus_literals_as_rust_floats() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio average(fractus a, fractus b) → fractus {
+    redde (a + b) / 2.0
+}
+
+incipit {
+    nota average(3.0, 7.0)
+}
+"#;
+
+    let result = compiler.compile_str("float-literals.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("return (a + b) / 2.0;"));
+    assert!(rust.code.contains("average(3.0, 7.0)"));
+    assert!(!rust.code.contains("average(3, 7)"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

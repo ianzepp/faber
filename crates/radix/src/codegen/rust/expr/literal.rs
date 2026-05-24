@@ -65,7 +65,7 @@ pub(super) fn generate_literal(codegen: &RustCodegen<'_>, lit: &HirLiteral, w: &
             w.write(&n.to_string());
         }
         HirLiteral::Float(f) => {
-            w.write(&f.to_string());
+            w.write(&rust_float_literal(*f));
         }
         HirLiteral::String(s) => {
             write_rust_string_literal(codegen.resolve_symbol(*s), w);
@@ -83,6 +83,15 @@ pub(super) fn generate_literal(codegen: &RustCodegen<'_>, lit: &HirLiteral, w: &
         HirLiteral::Nil => {
             w.write("None");
         }
+    }
+}
+
+fn rust_float_literal(value: f64) -> String {
+    let rendered = value.to_string();
+    if value.is_finite() && !rendered.contains(['.', 'e', 'E']) {
+        format!("{rendered}.0")
+    } else {
+        rendered
     }
 }
 
