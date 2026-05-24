@@ -97,6 +97,39 @@ fn generate_faber_ad_helper(writer: &mut CodeWriter) {
     writer.indented(|writer| {
         writer.writeln("#[link_name = \"capability-call\"]");
         writer.writeln("fn __faber_syscall(route_code: i32) -> i32;");
+        writer.writeln("#[link_name = \"capability-text-len\"]");
+        writer.writeln("fn __faber_syscall_text_len() -> usize;");
+        writer.writeln("#[link_name = \"capability-text-read\"]");
+        writer.writeln("fn __faber_syscall_text_read(ptr: *mut u8, len: usize) -> usize;");
+    });
+    writer.writeln("}");
+    writer.newline();
+    writer.writeln("#[cfg(target_arch = \"wasm32\")]");
+    writer.writeln("trait __FaberAdResult {");
+    writer.indented(|writer| {
+        writer.writeln("fn __faber_from_syscall() -> Self;");
+    });
+    writer.writeln("}");
+    writer.newline();
+    writer.writeln("#[cfg(target_arch = \"wasm32\")]");
+    writer.writeln("impl __FaberAdResult for () {");
+    writer.indented(|writer| {
+        writer.writeln("fn __faber_from_syscall() -> Self {}");
+    });
+    writer.writeln("}");
+    writer.newline();
+    writer.writeln("#[cfg(target_arch = \"wasm32\")]");
+    writer.writeln("impl __FaberAdResult for String {");
+    writer.indented(|writer| {
+        writer.writeln("fn __faber_from_syscall() -> Self {");
+        writer.indented(|writer| {
+            writer.writeln("let len = unsafe { __faber_syscall_text_len() };");
+            writer.writeln("let mut bytes = vec![0_u8; len];");
+            writer.writeln("let written = unsafe { __faber_syscall_text_read(bytes.as_mut_ptr(), bytes.len()) };");
+            writer.writeln("bytes.truncate(written);");
+            writer.writeln("String::from_utf8(bytes).unwrap_or_default()");
+        });
+        writer.writeln("}");
     });
     writer.writeln("}");
     writer.newline();
@@ -104,7 +137,7 @@ fn generate_faber_ad_helper(writer: &mut CodeWriter) {
     writer.writeln("fn __faber_ad<T, A>(capability: &str, _args: A) -> Result<T, String>");
     writer.writeln("where");
     writer.indented(|writer| {
-        writer.writeln("T: Default,");
+        writer.writeln("T: __FaberAdResult,");
     });
     writer.writeln("{");
     writer.indented(|writer| {
@@ -112,7 +145,7 @@ fn generate_faber_ad_helper(writer: &mut CodeWriter) {
         writer.writeln("let status = unsafe { __faber_syscall(route_code) };");
         writer.writeln("if status == 0 {");
         writer.indented(|writer| {
-            writer.writeln("Ok(T::default())");
+            writer.writeln("Ok(T::__faber_from_syscall())");
         });
         writer.writeln("} else {");
         writer.indented(|writer| {

@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Reproduce the Epic 5 generated Rust-to-Wasm host syscall proof.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+wasm_rustc="${WASM_RUSTC:-rustc}"
+target="wasm32-unknown-unknown"
+tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/faber-epic5-proof.XXXXXX")"
+trap 'rm -rf "$tmp_dir"' EXIT
+
+cat > "$tmp_dir/proof.fab" <<'FABER'
+functio route_host_echo() → textus ⇥ textus {
+    ad "host:echo" ("salve") → textus echoed ⇥ textus {
+        redde echoed
+    }
+}
+
+functio route_pg_query() → textus ⇥ textus {
+    ad "pg:query" ("select 1") → textus row ⇥ textus {
+        redde row
+    }
+}
+FABER
+
+env -u RUSTC cargo run -q -p radix --bin radix -- emit -t rust "$tmp_dir/proof.fab" > "$tmp_dir/proof.rs"
+
+cat >> "$tmp_dir/proof.rs" <<'RUST'
+
+#[no_mangle]
+pub extern "C" fn route(route_code: i32) -> i32 {
+    match route_code {
+        1 => route_host_echo()
+            .map(|value| if value == "salve" { 0 } else { 3 })
+            .unwrap_or(1),
+        2 => route_pg_query().map(|_| 0).unwrap_or(1),
+        _ => 1,
+    }
+}
+RUST
+
+if ! "$wasm_rustc" --target "$target" --print target-libdir >/dev/null 2>&1; then
+    cat >&2 <<EOF
+missing Rust target: $target
+
+Install it with rustup, or run this script with WASM_RUSTC pointing at a rustc whose
+toolchain has $target installed.
+EOF
+    exit 70
+fi
+
+"$wasm_rustc" \
+    --edition=2021 \
+    --target "$target" \
+    --crate-type cdylib \
+    "$tmp_dir/proof.rs" \
+    -o "$tmp_dir/proof.wasm"
+
+env -u RUSTC cargo run -q -p faber-host-macos-arm64 -- wasm-call "$tmp_dir/proof.wasm" route 1 > "$tmp_dir/host-echo.json"
+
+set +e
+env -u RUSTC cargo run -q -p faber-host-macos-arm64 -- wasm-call "$tmp_dir/proof.wasm" route 2 > "$tmp_dir/pg-query.json"
+pg_status=$?
+set -e
+
+if [[ "$pg_status" -ne 2 ]]; then
+    echo "expected pg:query to exit 2, got $pg_status" >&2
+    exit 1
+fi
+
+grep -q '"call": "host:echo"' "$tmp_dir/host-echo.json"
+grep -q '"status": "done"' "$tmp_dir/host-echo.json"
+grep -q '"value": "salve"' "$tmp_dir/host-echo.json"
+grep -q '"call": "pg:query"' "$tmp_dir/pg-query.json"
+grep -q '"status": "error"' "$tmp_dir/pg-query.json"
+grep -q '"code": "E_NO_ROUTE"' "$tmp_dir/pg-query.json"
+
+echo "Epic 5 generated Rust-to-Wasm syscall proof passed."

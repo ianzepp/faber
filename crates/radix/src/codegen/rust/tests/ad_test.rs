@@ -58,12 +58,18 @@ incipit {
     assert!(rust
         .code
         .contains("fn __faber_syscall(route_code: i32) -> i32;"));
+    assert!(rust.code.contains("#[link_name = \"capability-text-len\"]"));
+    assert!(rust
+        .code
+        .contains("#[link_name = \"capability-text-read\"]"));
     assert!(rust
         .code
         .contains("let status = unsafe { __faber_syscall(route_code) };"));
     assert!(rust.code.contains("\"host:echo\" => Ok(1),"));
     assert!(rust.code.contains("\"pg:query\" => Ok(2),"));
-    assert!(rust.code.contains("T: Default,"));
+    assert!(rust.code.contains("T: __FaberAdResult,"));
+    assert!(rust.code.contains("Ok(T::__faber_from_syscall())"));
+    assert!(rust.code.contains("impl __FaberAdResult for String"));
     assert!(rust
         .code
         .contains("__faber_ad::<String, _>(\"pg:query\", (\"select 1\".to_string(),))"));

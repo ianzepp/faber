@@ -7,6 +7,7 @@
 use std::fs;
 use std::path::Path;
 
+use serde_json::Value;
 use wasmtime::{Config, Engine, Linker, Module, Store, TypedFunc};
 
 use crate::syscall_import::{route_capability_code, CAPABILITY_CALL_IMPORT};
@@ -56,6 +57,7 @@ impl From<std::io::Error> for WasmHostError {
 struct WasmState {
     kernel: HostKernel,
     last_response: Option<Frame>,
+    last_text: Vec<u8>,
 }
 
 pub struct WasmHost {
@@ -93,6 +95,7 @@ impl WasmHost {
             WasmState {
                 kernel: HostKernel::new(),
                 last_response: None,
+                last_text: Vec::new(),
             },
         );
         let mut linker: Linker<WasmState> = Linker::new(&self.engine);
@@ -107,8 +110,37 @@ impl WasmHost {
                 } else {
                     0
                 };
+                caller.data_mut().last_text = response_text_payload(&response);
                 caller.data_mut().last_response = Some(response);
                 module_status
+            },
+        )?;
+        linker.func_wrap(
+            "",
+            "capability-text-len",
+            |caller: wasmtime::Caller<'_, WasmState>| -> i32 {
+                caller.data().last_text.len() as i32
+            },
+        )?;
+        linker.func_wrap(
+            "",
+            "capability-text-read",
+            |mut caller: wasmtime::Caller<'_, WasmState>, ptr: i32, len: i32| -> i32 {
+                let Some(memory) = caller
+                    .get_export("memory")
+                    .and_then(|export| export.into_memory())
+                else {
+                    return 0;
+                };
+                let bytes = caller.data().last_text.clone();
+                let count = bytes.len().min(len.max(0) as usize);
+                if memory
+                    .write(&mut caller, ptr.max(0) as usize, &bytes[..count])
+                    .is_err()
+                {
+                    return 0;
+                }
+                count as i32
             },
         )?;
 
@@ -137,4 +169,16 @@ impl Default for WasmHost {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn response_text_payload(response: &Frame) -> Vec<u8> {
+    response
+        .data
+        .get("echo")
+        .and_then(Value::as_object)
+        .and_then(|echo| echo.get("value"))
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .as_bytes()
+        .to_vec()
 }

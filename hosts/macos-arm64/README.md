@@ -39,12 +39,14 @@ handlers or registered providers.
 ## Current Route Proof
 
 The current executable proves the host-internal frame route contract without
-requiring a background daemon or Wasm loader yet.
+requiring a background daemon. It also includes narrow core Wasm and Component
+Model loaders for the syscall import proof.
 
 ```bash
 cargo run -p faber-host-macos-arm64 -- manifest
 cargo run -p faber-host-macos-arm64 -- call host:echo '{"value":"salve"}'
 cargo run -p faber-host-macos-arm64 -- call pg:query '{}'
+cargo run -p faber-host-macos-arm64 -- wasm-call hosts/macos-arm64/tests/fixtures/core-route-proof.wat route 1
 cargo run -p faber-host-macos-arm64 -- component-call hosts/macos-arm64/tests/fixtures/route-proof.wat route 1
 ```
 
@@ -55,6 +57,13 @@ The `call` command builds a request `Frame`, routes it through the in-process
 host kernel, and prints the response frame as JSON. Unknown calls such as
 `pg:query` return a structured `E_NO_ROUTE` error frame. The command exits with
 status `2` when the response frame has `status = "error"`.
+
+The `wasm-call` command loads a core Wasm module, calls a named exported
+function, and provides the generated Rust helper imports: `capability-call`,
+`capability-text-len`, and `capability-text-read`. Route code `1` maps to
+`host:echo`, and route code `2` maps to unresolved `pg:query`. The text imports
+are a temporary ABI for returning `textus` results from frame data while the
+final Faber component world is still unsettled.
 
 The `component-call` command loads a Wasm component, calls a named exported
 function, and exposes one host import named `capability-call`. The current proof
