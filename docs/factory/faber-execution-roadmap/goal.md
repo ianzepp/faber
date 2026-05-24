@@ -445,6 +445,18 @@ Decision: included.
 - Should strict mode become Epic 7 after `norma` migration, or should it wait until a real host/provider set exists?
 - Should the first Wasm boundary expose full frames or a smaller `call(name, args)` wrapper that becomes frames inside the host?
 
+## Future Host Dependency Manifests
+
+Decision note: included, out of current epic scope.
+
+- Provider dependencies should be installed, resolved, and versioned on the host side rather than compiled into each Faber program.
+- Normal compilation should continue to accept `ad` calls from local source-declared shapes without requiring a complete provider interface or SDK.
+- `requirit.toml` and `requirit.lock` are the likely future surfaces for project host requirements and resolved provider truth.
+- Tooling may partially manage `requirit.toml` by scanning `ad` dispatch paths, scaffolding missing provider sections, or warning when a route such as `pg:query` has no declared host requirement.
+- Full auto-generation is not assumed, because an `ad` path alone does not decide provider package, version range, grants, config, secrets, or deployment host.
+- Host sync/provisioning should eventually read project requirements, install or verify provider packages, bind config/secrets, and expose the route manifest used by runtime dispatch and optional strict checks.
+- This is not part of Epic 6; Epic 6 should avoid turning `norma` into the provider dependency catalog.
+
 ## Stop Conditions
 
 - Stop if a phase attempts to solve multiple epics at once without a delivery spec.
