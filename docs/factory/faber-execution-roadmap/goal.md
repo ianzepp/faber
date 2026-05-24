@@ -14,7 +14,7 @@ Coordinate the current Faber execution work into a long-running factory roadmap:
 ## Problem
 
 - The recent planning work produced several related goal documents, but there is not yet one roadmap that explains how they fit together.
-- The Rust e2e corpus currently mixes stale syntax, invalid examples, package-bound examples, unsupported target features, real backend bugs, and future host/capability work.
+- The Rust e2e corpus currently mixes stale syntax, invalid examples, package-bound examples that should live outside `examples/exempla/`, unsupported target features, real backend bugs, and future host/capability work.
 - `ab` and `ad` are easy to confuse if they stay embedded in the e2e failure list, but they are different problems: `ab` should be removed, while `ad` should become capability-call syntax.
 - The host architecture, syscall/frame model, MIR lowering, `norma` direction, and generated Rust bridge need to evolve in a coherent order.
 - This work will span multiple sessions and likely multiple agents, so each phase needs explicit handoff, validation, and stop rules.
@@ -166,7 +166,7 @@ Primary docs:
 Intent:
 
 - Establish the coordinating roadmap and make it durable.
-- Classify all exempla before changing validation behavior.
+- Classify all exempla before moving, rewriting, removing, or fixing them.
 - Remove the dead `ab` collection DSL and migrate/remove its examples.
 
 Agent use:
@@ -176,15 +176,15 @@ Agent use:
 
 Checkpoint:
 
-- The e2e ledger exists and every exemplar has a class.
+- The e2e ledger exists and every original exemplar has a recorded class/disposition.
 - `ab` is no longer active collection DSL syntax or executable-backend obligation.
 - E2E failures no longer include `ab` as an ordinary Rust backend bug.
 
-### Epic 2: Harness Truth And Core Rust Backend Stabilization
+### Epic 2: Exempla Boundary And Core Rust Backend Stabilization
 
 Includes prior steps 4 and 5:
 
-4. Fix e2e harness truth.
+4. Enforce the `examples/exempla/` standalone corpus boundary.
 5. Stabilize current Rust backend for core language.
 
 Primary doc:
@@ -193,18 +193,19 @@ Primary doc:
 
 Intent:
 
-- Make validation honest for standalone files, packages, helper libraries, test examples, dependency-backed examples, future features, and intentionally invalid fixtures.
+- Make `examples/exempla/` honest as a standalone single-file language-example corpus. Rewrite, move, or remove files that need package structure, helper modules, external crates, host/runtime providers, generated test harnesses, future features, or intentional failure semantics.
 - Fix valid-source Rust backend failures in focused clusters: option/nullability, objects/maps, enums/variants, `elige`/`discerne`, structs/methods, iteration/ranges, ownership, conversions, and collection methods.
 
 Agent use:
 
-- Allow agents for failure-cluster diagnosis and isolated backend bug fixes after the harness classes are defined.
+- Allow agents for failure-cluster diagnosis, corpus relocation/rewrite audits, and isolated backend bug fixes after the exempla boundary decisions are defined.
 - Avoid parallel edits to shared Rust codegen/typecheck files unless the delivery spec explicitly assigns disjoint files.
 
 Checkpoint:
 
-- The e2e report distinguishes classification, compile, lint, link, runtime, and expected-failure outcomes.
-- Valid executable Rust exempla pass or have narrow, recorded blockers.
+- Every remaining `.fab` file under `examples/exempla/` is intended to compile as a single standalone Rust executable through the existing e2e shape.
+- Files needing package/dependency/runtime/test context have been rewritten, moved to sibling examples/fixtures, or removed with recorded rationale.
+- Valid executable Rust exempla pass or have narrow, recorded backend blockers.
 - Rust backend fixes do not guess missing type information.
 
 ### Epic 3: Non-Strict `ad` Capability Calls In Current Rust Path
@@ -369,7 +370,7 @@ Decision: included.
 ## Stop Conditions
 
 - Stop if a phase attempts to solve multiple epics at once without a delivery spec.
-- Stop if e2e pass counts improve by deleting or hiding examples before classification.
+- Stop if e2e pass counts improve by deleting, moving, or hiding examples before classification/disposition evidence.
 - Stop if `ab` removal starts adding compatibility layers instead of retiring the DSL.
 - Stop if `ad` implementation starts requiring provider metadata in normal compilation.
 - Stop if host work creates a common crate before the macOS host has a working minimal slice.

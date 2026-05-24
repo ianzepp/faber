@@ -15,8 +15,8 @@ After Epic 1 removes `ab/ab.fab`, the ignored Rust e2e harness reports `71/137` 
 | Removed stale source | 1 | Retired syntax exemplar removed from executable corpus |
 | Standalone Rust executable, baseline pass | 59 | Already passed the ignored Rust e2e harness in the baseline |
 | Standalone Rust executable, backend/semantic failure | 40 | Valid or likely-valid source exposing current Rust backend gaps |
-| Harness/package/dependency/runtime shape | 15 | Needs Cargo/package/runtime/dependency-aware validation, not raw standalone `rustc` |
-| Test/package fixture | 8 | Belongs to package/test validation rather than ordinary executable file collection |
+| Non-standalone corpus mismatch | 15 | Requires package/module/runtime/dependency shape and must be rewritten, moved out of `examples/exempla/`, or removed |
+| Test/package fixture outside exempla boundary | 8 | Belongs to package/test validation or compiler fixtures rather than the standalone language-example corpus |
 | Unsupported/future Rust target feature | 8 | Active or aspirational language surface without current Rust execution support |
 | Stale, invalid, or declaration-only source | 7 | Needs source correction, relocation, or non-executable classification |
 | Total original baseline | 138 | All original exempla accounted for |
@@ -27,9 +27,9 @@ First failure reason: retired collection DSL should not be kept alive for e2e pa
 
 - `ab/ab.fab`
 
-## Harness, Package, Dependency, Or Runtime Shape
+## Non-Standalone Corpus Mismatch
 
-First failure reason: standalone `rustc` is the wrong execution shape or misses package/runtime/dependency context.
+First failure reason: the file is not currently a single-file executable language example. Epic 2 should not add package/runtime/dependency-aware validation for these paths inside `examples/exempla/`; it should rewrite them, move them to sibling examples/fixtures, or remove them.
 
 - `cli/main.fab`
 - `expressionis/expressionis.fab`
@@ -47,9 +47,9 @@ First failure reason: standalone `rustc` is the wrong execution shape or misses 
 - `proba/packages/solum/src/main.fab`
 - `proba/packages/suite/src/main.fab`
 
-## Test Or Package Fixtures
+## Test Or Package Fixtures Outside Exempla Boundary
 
-First failure reason: test harness or package-selection semantics, not standalone executable semantics.
+First failure reason: test harness or package-selection semantics, not standalone executable language-example semantics. These should move outside `examples/exempla/` unless rewritten into ordinary standalone examples.
 
 - `proba/modificatores.fab`
 - `proba/packages/selection-failure/src/main.fab`
@@ -132,7 +132,7 @@ First failure reason: baseline compile/link/runtime failure appears to be a comp
 
 ## Standalone Rust Executable, Baseline Pass
 
-These files were not listed in the baseline failure set and remain ordinary executable Rust corpus candidates unless a later harness-truth phase reclassifies them with stronger evidence.
+These files were not listed in the baseline failure set and remain ordinary executable Rust corpus candidates unless a later corpus-boundary phase proves they should be moved or rewritten.
 
 - `abstractus/abstractus.fab`
 - `adfirma/adfirma.fab`
@@ -196,4 +196,4 @@ These files were not listed in the baseline failure set and remain ordinary exec
 
 ## Epic 2 Handoff
 
-The next epic should teach the harness to use these classes instead of treating every file as a standalone `rustc` unit. Some classifications above are intentionally conservative and should be revised only with stronger validation evidence.
+The next epic should use these classes to enforce the `examples/exempla/` boundary: every remaining file there should be a standalone single-file Rust language example. Files that need package structure, helper modules, external crates, host/runtime dependencies, or test-harness semantics should be rewritten, moved to sibling example/fixture trees, or removed. Some classifications above are intentionally conservative and should be revised only with stronger validation evidence.

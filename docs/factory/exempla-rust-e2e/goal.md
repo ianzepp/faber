@@ -10,20 +10,20 @@
 
 ## Summary
 
-Make the `examples/exempla/` corpus truthful against the Rust target: every remaining exemplar should compile to executable Rust and run successfully through the end-to-end harness, or the exemplar should be corrected, reclassified, moved out of the executable corpus, or removed because it is no longer valid Faber.
+Make the `examples/exempla/` corpus truthful against the Rust target: every remaining exemplar is a single-file language example that compiles to executable Rust and runs successfully through the standalone end-to-end harness, or the exemplar is corrected, moved out of the exempla boundary, or removed because it is no longer valid Faber.
 
 ## Problem
 
 - The ignored Rust e2e harness currently reports `71/138` exemplar files passing end-to-end and `67` failing.
-- The failures are not one bug. They mix source files that are stale or intentionally invalid, Rust backend semantic gaps, unsupported target features, runtime/package validation gaps, and a few cases where the current single-file `rustc` harness is the wrong executable shape.
+- The failures are not one bug. They mix source files that are stale or intentionally invalid, Rust backend semantic gaps, unsupported target features, package examples, dependency-backed examples, and files that should not live in a single-file language-example corpus.
 - The harness already exercises the generated-code format/linter path before `rustc`, so future fixes must preserve that coverage and avoid hiding formatter or linter regressions.
-- The corpus currently blurs several categories: executable programs, library/helper files, package examples, tests, intentionally failing cases, and language sketch files.
+- The corpus currently blurs several categories: single-file language examples, package examples, test fixtures, dependency-backed examples, library/helper files, intentionally failing cases, and language sketch files.
 
 ## Desired End State
 
-- `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reports all executable Rust exemplars passing.
-- Every `.fab` file under the executable exemplar corpus has a clear classification and does not rely on hidden knowledge to decide whether it should run.
-- Files that are not meant to be executable Rust are moved, renamed, marked, or removed according to a documented rule instead of silently failing in the e2e list.
+- `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reports all `examples/exempla/**/*.fab` files passing as standalone Rust executables.
+- Every `.fab` file under `examples/exempla/` is intentionally compilable as a single Rust file. The e2e harness should not need package/module assembly to make exempla pass.
+- Files that need package structure, test-package selection, external crates, host/runtime dependencies, or multi-file module assembly are rewritten to avoid those dependencies, moved to a sibling examples tree such as `examples/automation`, or removed.
 - When an exemplar fails, the failure points to a real compiler/runtime/source bug rather than harness mismatch, stale syntax, or accidental corpus drift.
 
 ## Ground Truth Researched
@@ -38,16 +38,16 @@ Make the `examples/exempla/` corpus truthful against the Rust target: every rema
 
 ## Failure Taxonomy
 
-### A. Harness Shape Or Package Boundary Mismatch
+### A. Corpus Boundary Mismatch
 
-These failures look partly or wholly caused by validating a file as a standalone `rustc` unit when the source needs package/module/runtime context, dependencies, or a test harness.
+These failures look partly or wholly caused by files living inside `examples/exempla/` even though they are not single-file language examples. Epic 2 should not rebuild the Rust e2e harness around these cases. It should either rewrite them to become standalone exempla, move them to sibling package/example trees, or remove/quarantine them as non-exempla fixtures.
 
-- `cli/main.fab`: generated Rust imports `crate::commands`, but standalone `rustc` has no package module tree.
-- `importa/importa.fab`, `importa/auxilia.fab`: import helper/library shape is not represented by one generated Rust file with `main`.
-- `hal/aleator.fab`, `hal/consolum.fab`, `hal/json.fab`, `hal/processus.fab`, `hal/yaml.fab`: generated Rust expects `crate::norma`, but standalone `rustc` does not build a Cargo crate with the runtime dependency.
-- `expressionis/expressionis.fab`: generated Rust references `regex`, but standalone `rustc` has no dependency resolution.
-- `proba/proba.fab`, `proba/modificatores.fab`: generated Rust contains test-like code without a `main`.
-- Some package examples under `examples/exempla/proba/packages/*` need package-aware validation, not raw file collection.
+- `cli/main.fab`: generated Rust imports `crate::commands`; this is package/module structure and belongs in a sibling package example tree, not `examples/exempla/`.
+- `importa/importa.fab`, `importa/auxilia.fab`: demonstrate imports/helper-library shape; rewrite as standalone language examples or move out of exempla.
+- `hal/aleator.fab`, `hal/consolum.fab`, `hal/json.fab`, `hal/processus.fab`, `hal/yaml.fab`: depend on `norma`/HAL runtime surfaces; rewrite to avoid runtime dependencies or move to host/norma/package examples.
+- `expressionis/expressionis.fab`: generated Rust references `regex`; rewrite to avoid external crates or move out of exempla.
+- `proba/proba.fab`, `proba/modificatores.fab`: generated Rust contains test-like code without a standalone `main`; move to test/package fixtures or rewrite as executable language examples.
+- Package examples under `examples/exempla/proba/packages/*` have real `faber.toml` package structure and should move to a sibling package-example tree.
 
 ### B. Stale, Invalid, Or Non-Executable Exemplar Sources
 
@@ -157,8 +157,8 @@ vocatio/vocatio.fab
 
 ## Goals
 
-- Establish an explicit classification for every `examples/exempla/**/*.fab` file: executable Rust program, package executable, library/helper, test-only exemplar, intentionally failing exemplar, non-Rust target exemplar, stale/invalid exemplar, or removal candidate.
-- Make the e2e harness validate each class with the correct mechanism instead of treating every file as standalone `rustc`.
+- Establish an explicit disposition for every `examples/exempla/**/*.fab` file: keep as a standalone executable Rust language example, rewrite into that shape, move to a sibling example/fixture tree, or remove as stale/invalid.
+- Keep the Rust e2e harness centered on the `examples/exempla/` corpus as standalone single-file Rust validation, not package/module/dependency assembly.
 - Correct stale exempla to current grammar and active language semantics, especially retired `tempta` and non-canonical constructs.
 - Fix Rust backend/codegen/type-lowering issues that prevent valid exempla from becoming executable Rust.
 - Preserve generated-code formatter and linter coverage in the e2e path, and make their diagnostics useful rather than misleading.
@@ -171,6 +171,7 @@ vocatio/vocatio.fab
 - Do not lower all Rust output through MIR as part of this goal unless a focused phase explicitly proves it is the smallest correct fix for a failure class.
 - Do not implement unrelated language features just because an old exemplar mentions them; decide whether the exemplar still belongs.
 - Do not remove failing exempla as a shortcut before classifying whether they are compiler obligations, stale examples, or non-executable fixtures.
+- Do not rebuild the `examples/exempla/` Rust e2e path into package-aware or dependency-aware infrastructure; non-standalone examples belong outside this corpus.
 
 ## Constraints And Invariants
 
@@ -182,6 +183,8 @@ vocatio/vocatio.fab
 - Use Cargo and `scripta/` helpers, not Bun or Node.
 - Codegen must fail closed on unsupported HIR instead of emitting placeholder Rust such as `/* error */`.
 - The e2e command should keep exercising generated `--format` and `--linter` behavior for Rust.
+- `examples/exempla/` is a language-example corpus. Every remaining file in it must compile as one Faber source file lowered to one standalone executable Rust file.
+- Files that require `faber.toml`, sibling modules, external crates, host providers, runtime package layout, or generated test harnesses must be rewritten to avoid that requirement, moved to a sibling tree such as `examples/automation`, or removed.
 
 ## Reference Packet
 
@@ -211,19 +214,19 @@ Before editing, inspect:
 
 ### Phase 0: Baseline Ledger And Classification
 
-Create a durable ledger under `docs/factory/exempla-rust-e2e/` that records every exemplar, current pass/fail state, expected validation class, and first failure reason. Classify before fixing. The checkpoint is a reviewed table where each failure has an owner category: harness/package, source correction/removal, unsupported Rust feature, backend semantic bug, or linter/formatter noise.
+Create a durable ledger under `docs/factory/exempla-rust-e2e/` that records every exemplar, current pass/fail state, expected disposition, and first failure reason. Classify before fixing. The checkpoint is a reviewed table where each failure has an owner category: keep and fix, rewrite into standalone shape, move out of `examples/exempla/`, remove stale/invalid source, unsupported Rust feature, backend semantic bug, or linter/formatter noise.
 
-### Phase 1: Harness Truth And Corpus Classes
+### Phase 1: Corpus Boundary Enforcement
 
-Teach the e2e surface to distinguish executable files from packages, library helpers, generated test crates, dependency-backed examples, and intentionally invalid fixtures. This phase should not claim language correctness wins; its job is to make the validation mechanism honest. The checkpoint is that false standalone-`rustc` failures are either validated through Cargo/package context or explicitly removed from the executable Rust set.
+Apply the hard `examples/exempla/` boundary: it contains only standalone single-file language examples. Move package examples, helper modules, generated test crates, dependency-backed examples, runtime/host examples, and intentionally invalid fixtures to sibling locations or rewrite them into standalone examples. This phase should not claim language correctness wins; its job is to make the corpus honest. The checkpoint is that there are no false standalone-`rustc` failures caused by package shape, external dependencies, helper-only files, or test/package fixtures inside `examples/exempla/`.
 
 ### Phase 2: Source Corpus Canonicalization
 
-Correct or retire exempla that are stale, invalid, or no longer canonical. Replace retired `tempta` examples with current `fac { ... } cape err { ... }` only if the Rust target is meant to support that behavior; otherwise move them to a non-Rust or future-feature area. Remove or quarantine intentionally failing package fixtures from the executable corpus. The checkpoint is that source-invalid failures no longer pollute Rust backend validation.
+Correct or retire exempla that are stale, invalid, or no longer canonical. Replace retired `tempta` examples with current `fac { ... } cape err { ... }` only if the Rust target is meant to support that behavior; otherwise move them to a non-Rust or future-feature area. Move or quarantine intentionally failing package fixtures outside `examples/exempla/`. The checkpoint is that source-invalid failures no longer pollute Rust backend validation.
 
-### Phase 3: Runtime, Dependency, And Package Execution
+### Phase 3: Dependency-Free Rewrite Or Relocation
 
-Make Rust executable validation work for exempla that need `norma`, `regex`, imports, package module trees, CLI commands, or generated test harnesses. Prefer Cargo-backed temporary projects where standalone `rustc` cannot represent the dependency graph. The checkpoint is that HAL, regex, import, CLI, and proba examples either run in their correct Rust shape or are documented as non-executable fixtures.
+Resolve exempla that currently need `norma`, `regex`, imports, package module trees, CLI commands, host/runtime providers, or generated test harnesses without expanding the exempla harness. Rewrite them into dependency-free single-file language examples where that preserves the lesson; otherwise move them to sibling package, host, norma, or fixture trees. The checkpoint is that HAL, regex, import, CLI, and proba examples no longer require package/dependency/runtime context from inside `examples/exempla/`.
 
 ### Phase 4: Core Rust Backend Semantics
 
@@ -243,13 +246,13 @@ Keep the generated-code `--format --linter` path in the e2e run, but make failur
 
 ### Phase 8: Closeout And Drift Prevention
 
-Run the full ignored Rust e2e harness, regular test suite, and any package-aware validation added in earlier phases. Update docs or explain entries that mention removed or moved exempla. Add a guard that prevents new executable exempla from silently entering the corpus without expected validation class. The checkpoint is `0` unexpected Rust e2e failures and a clear rule for future examples.
+Run the full ignored Rust e2e harness and regular test suite. Update docs or explain entries that mention removed or moved exempla. Add a guard or review rule that prevents non-standalone package/dependency/runtime fixtures from silently entering `examples/exempla/`. The checkpoint is `0` unexpected Rust e2e failures and a clear rule for future examples.
 
 ## Acceptance Criteria
 
-- The baseline ledger exists and classifies all `138` currently collected `.fab` files.
-- Every remaining file classified as executable Rust compiles, links, and runs through the Rust e2e harness.
-- Every file removed from the executable Rust set has an explicit reason: library helper, package-only, test-only, intentionally invalid, future feature, non-Rust target, or removed stale source.
+- The baseline ledger exists and accounts for all `138` files from the original corpus.
+- Every remaining `.fab` file under `examples/exempla/` compiles, links, and runs through the standalone Rust e2e harness as a single-file language example.
+- Every file moved out of `examples/exempla/` or removed has an explicit reason: library helper, package-only, test-only, external dependency, host/runtime dependency, intentionally invalid, future feature, non-Rust target, or stale source.
 - `examples/exempla/ab/ab.fab` is resolved through the linked `ab` removal goal: migrated to ordinary collection calls, moved to a legacy/negative fixture, or removed.
 - `examples/exempla/ad/ad.fab` is resolved through the linked capability-call goal: compiled with expected unresolved-provider runtime failure, migrated, moved, or otherwise classified explicitly.
 - `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reports no unexpected exemplar failures.
@@ -268,15 +271,15 @@ Run the full ignored Rust e2e harness, regular test suite, and any package-aware
 
 ## Open Questions
 
-- Should non-executable fixture files stay under `examples/exempla/` with metadata, move to a separate fixture tree, or be excluded by path convention?
-- Should the Rust e2e harness validate package examples through `faber build/test` instead of direct compiler APIs?
+- Which sibling tree should receive package, runtime, host, and test-fixture examples: existing trees such as `examples/automation`, new focused siblings, or compiler test fixtures under `crates/radix`?
 - Should declaration-only examples such as `externa` and annotation grammars become compile-only checks, executable examples with stubs, or non-executable reference examples?
-- Should intentionally failing examples remain in the repo as negative fixtures, and if so, where should they live so positive e2e corpus discovery does not collect them?
+- Should intentionally failing examples remain in the repo as negative fixtures, and if so, where should they live outside `examples/exempla/` so positive e2e corpus discovery does not collect them?
 
 ## Stop Conditions
 
 - Stop before deleting an exemplar if classification cannot prove it is stale, intentionally invalid, or out of scope.
 - Stop before adding compatibility for retired syntax such as `tempta`; source correction is preferred unless the language policy changes.
 - Stop if a backend fix requires guessing missing type information in codegen.
+- Stop if a proposed fix expands the exempla e2e harness into package/module/dependency execution instead of rewriting, moving, or removing the non-standalone file.
 - Stop if validating a package/runtime example would require network access or non-repo dependencies that are not already part of the workspace contract.
 - Stop if the work implies a larger semantic decision for `iace`, `cape`, FFI declarations, or effect handling that is not already settled by the language docs. Capability-call design belongs to `docs/factory/capability-calls/goal.md`.
