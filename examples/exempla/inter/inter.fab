@@ -1,18 +1,18 @@
 # Set membership operator: inter
 
-fixum _ status ← "active"
-fixum _ age ← 21
-
-# Basic inter with string array
-si status inter ["pending", "active", "paused"] {
-    nota "valid status"
-}
-
-# inter with numeric array
-si age inter [18, 21, 65] {
-    nota "milestone age"
-}
-
 incipit {
+    fixum _ status ← "active"
+    fixum _ age ← 21
+
+    # Basic inter with string array
+    si status inter ["pending", "active", "paused"] {
+        nota "valid status"
+    }
+
+    # inter with numeric array
+    si age inter [18, 21, 65] {
+        nota "milestone age"
+    }
+
     nota "inter operator examples"
 }
