@@ -8,16 +8,14 @@
 use std::fs;
 use std::path::Path;
 
-use serde_json::Value;
 use wasmtime::component::{Component, Linker, Val};
 use wasmtime::{Config, Engine, Store};
 
-use crate::kernel::FrameData;
-use crate::{Frame, HostError, HostKernel, Status};
-
-pub const CAPABILITY_CALL_IMPORT: &str = "capability-call";
-pub const COMPONENT_CODE_HOST_ECHO: u32 = 1;
-pub const COMPONENT_CODE_PG_QUERY: u32 = 2;
+use crate::syscall_import::route_capability_code;
+pub use crate::syscall_import::{
+    CAPABILITY_CALL_IMPORT, COMPONENT_CODE_HOST_ECHO, COMPONENT_CODE_PG_QUERY,
+};
+use crate::{Frame, HostKernel, Status};
 
 pub type ComponentResult<T> = Result<T, ComponentHostError>;
 
@@ -158,23 +156,4 @@ impl Default for ComponentHost {
     fn default() -> Self {
         Self::new()
     }
-}
-
-fn route_capability_code(kernel: &HostKernel, route_code: i32) -> Frame {
-    let (call, data) = match route_code {
-        code if code == COMPONENT_CODE_HOST_ECHO as i32 => {
-            let mut data = FrameData::new();
-            data.insert("value".into(), Value::String("salve".into()));
-            ("host:echo", data)
-        }
-        code if code == COMPONENT_CODE_PG_QUERY as i32 => ("pg:query", FrameData::new()),
-        other => {
-            let request = Frame::request("host:unknown").with_from("wasm-component");
-            return request.error(&HostError::invalid_args(format!(
-                "unknown component route code: {other}"
-            )));
-        }
-    };
-    let request = Frame::request_with(call, data).with_from("wasm-component");
-    kernel.route(&request)
 }

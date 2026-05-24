@@ -10,6 +10,8 @@ pub mod component;
 pub mod hal;
 pub mod kernel;
 pub mod manifest;
+pub mod syscall_import;
+pub mod wasm;
 
 pub use kernel::{Frame, HostError, HostKernel, Status};
 pub use manifest::{CapabilityManifest, RegisteredProvider, SyscallManifest};
