@@ -278,13 +278,13 @@ pub fn walk_expr<V: HirVisitor>(visitor: &mut V, expr: &HirExpr) {
         HirExprKind::Call(callee, args) => {
             visitor.visit_expr(callee);
             for arg in args {
-                visitor.visit_expr(arg);
+                visitor.visit_expr(&arg.expr);
             }
         }
         HirExprKind::MethodCall(receiver, _, args) => {
             visitor.visit_expr(receiver);
             for arg in args {
-                visitor.visit_expr(arg);
+                visitor.visit_expr(&arg.expr);
             }
         }
         HirExprKind::Field(object, _) => visitor.visit_expr(object),
@@ -709,13 +709,13 @@ pub fn walk_expr_mut<V: HirVisitorMut>(visitor: &mut V, expr: &mut HirExpr) {
         HirExprKind::Call(callee, args) => {
             visitor.visit_expr_mut(callee);
             for arg in args {
-                visitor.visit_expr_mut(arg);
+                visitor.visit_expr_mut(&mut arg.expr);
             }
         }
         HirExprKind::MethodCall(receiver, _, args) => {
             visitor.visit_expr_mut(receiver);
             for arg in args {
-                visitor.visit_expr_mut(arg);
+                visitor.visit_expr_mut(&mut arg.expr);
             }
         }
         HirExprKind::Field(object, _) => visitor.visit_expr_mut(object),

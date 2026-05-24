@@ -170,7 +170,7 @@ impl FunctionBuilder<'_> {
                 }
                 let mut lowered_args = Vec::with_capacity(args.len());
                 for arg in args {
-                    lowered_args.push(self.lower_expr_value(arg)?);
+                    lowered_args.push(self.lower_expr_value(&arg.expr)?);
                 }
                 let fields = self.variant_payload(*def_id, lowered_args);
                 Some(self.construct_temp(

@@ -32,7 +32,7 @@ use super::types;
 use super::{CodeWriter, CodegenError, TsCodegen};
 use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{
-    HirArrayElement, HirBinOp, HirBlock, HirExpr, HirExprKind, HirIteraMode, HirLiteral, HirObjectKey,
+    HirArrayElement, HirBinOp, HirBlock, HirCallArg, HirExpr, HirExprKind, HirIteraMode, HirLiteral, HirObjectKey,
     HirOptionalChainKind, HirRangeKind, HirUnOp,
 };
 use crate::semantic::{Primitive, Type, TypeTable};
@@ -73,7 +73,7 @@ pub fn generate_expr(
                 if idx > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w)?;
+                generate_expr(codegen, &arg.expr, types, w)?;
             }
             w.write(")");
         }
@@ -89,7 +89,7 @@ pub fn generate_expr(
                 if idx > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w)?;
+                generate_expr(codegen, &arg.expr, types, w)?;
             }
             w.write(")");
         }
@@ -503,7 +503,7 @@ fn generate_vacua_expr(expr: &HirExpr, types: &TypeTable, w: &mut CodeWriter) {
 fn try_generate_intrinsic_call(
     codegen: &TsCodegen<'_>,
     callee: &HirExpr,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
@@ -538,7 +538,7 @@ fn try_generate_intrinsic_call(
         if idx > 0 {
             w.write(", ");
         }
-        generate_expr(codegen, arg, types, w)?;
+        generate_expr(codegen, &arg.expr, types, w)?;
     }
     w.write(")");
     Ok(true)
@@ -548,7 +548,7 @@ fn try_generate_translated_method_call(
     codegen: &TsCodegen<'_>,
     receiver: &HirExpr,
     method: crate::lexer::Symbol,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
@@ -570,7 +570,7 @@ fn try_generate_translated_method_call(
     if method_name == "accipe" && args.len() == 1 && (is_lista || is_textus) {
         generate_expr(codegen, receiver, types, w)?;
         w.write("[");
-        generate_expr(codegen, &args[0], types, w)?;
+        generate_expr(codegen, &args[0].expr, types, w)?;
         w.write("]");
         return Ok(true);
     }
@@ -584,22 +584,22 @@ fn try_generate_translated_method_call(
                 w.write("(");
                 generate_expr(codegen, receiver, types, w)?;
                 w.write("[");
-                generate_expr(codegen, &args[0], types, w)?;
+                generate_expr(codegen, &args[0].expr, types, w)?;
                 w.write("] = ");
-                generate_expr(codegen, &args[1], types, w)?;
+                generate_expr(codegen, &args[1].expr, types, w)?;
                 w.write(")");
                 return Ok(true);
             }
             "accipe" if args.len() == 1 => {
                 generate_expr(codegen, receiver, types, w)?;
                 w.write("[");
-                generate_expr(codegen, &args[0], types, w)?;
+                generate_expr(codegen, &args[0].expr, types, w)?;
                 w.write("]");
                 return Ok(true);
             }
             "habet" if args.len() == 1 => {
                 w.write("(");
-                generate_expr(codegen, &args[0], types, w)?;
+                generate_expr(codegen, &args[0].expr, types, w)?;
                 w.write(" in ");
                 generate_expr(codegen, receiver, types, w)?;
                 w.write(")");
@@ -664,7 +664,7 @@ fn try_generate_translated_method_call(
         if idx > 0 {
             w.write(", ");
         }
-        generate_expr(codegen, arg, types, w)?;
+        generate_expr(codegen, &arg.expr, types, w)?;
     }
     w.write(")");
     Ok(true)

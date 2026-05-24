@@ -34,6 +34,7 @@
 //!   diagnostic consumer treats warning-kind diagnostics as errors.
 
 use crate::hir::visit::{walk_expr, HirVisitor};
+use crate::hir::HirCallArg;
 use crate::hir::{
     DefId, HirBlock, HirExpr, HirExprKind, HirFunction, HirItem, HirItemKind, HirParamMode, HirProgram, HirStmt,
     HirStmtKind,
@@ -222,10 +223,10 @@ impl<'a> BorrowChecker<'a> {
         self.visit_expr(expr);
     }
 
-    fn check_call_args(&mut self, callee: &HirExpr, args: &[HirExpr]) {
+    fn check_call_args(&mut self, callee: &HirExpr, args: &[HirCallArg]) {
         let Some(callee_ty) = callee.ty else {
             for arg in args {
-                self.check_expr(arg);
+                self.check_expr(&arg.expr);
             }
             return;
         };
@@ -242,7 +243,7 @@ impl<'a> BorrowChecker<'a> {
         match sig {
             Some(sig) => {
                 for (arg, param) in args.iter().zip(sig.params.iter()) {
-                    if let Some(arg_def_id) = self.root_def_id(arg) {
+                    if let Some(arg_def_id) = self.root_def_id(&arg.expr) {
                         if let Some(arg_usage) = self.param_usage.get_mut(&arg_def_id) {
                             if matches!(param.mode, ParamMode::MutRef | ParamMode::Move) {
                                 arg_usage.passed_in_or_ex = true;
@@ -256,22 +257,22 @@ impl<'a> BorrowChecker<'a> {
                                 self.error(
                                     SemanticErrorKind::ModeMismatch,
                                     "cannot pass `de` parameter to `in` or `ex` position",
-                                    arg.span,
+                                    arg.expr.span,
                                 );
                             }
                         }
                     }
                     match param.mode {
-                        ParamMode::Ref => self.borrow_from_expr(arg, BorrowKind::Shared),
-                        ParamMode::MutRef => self.borrow_from_expr(arg, BorrowKind::Mutable),
-                        ParamMode::Move => self.move_from_expr(arg),
-                        ParamMode::Owned => self.check_expr(arg),
+                        ParamMode::Ref => self.borrow_from_expr(&arg.expr, BorrowKind::Shared),
+                        ParamMode::MutRef => self.borrow_from_expr(&arg.expr, BorrowKind::Mutable),
+                        ParamMode::Move => self.move_from_expr(&arg.expr),
+                        ParamMode::Owned => self.check_expr(&arg.expr),
                     }
                 }
             }
             None => {
                 for arg in args {
-                    self.check_expr(arg);
+                    self.check_expr(&arg.expr);
                 }
             }
         }

@@ -77,7 +77,10 @@ impl super::FaberCodegen {
                     if idx > 0 {
                         w.write(", ");
                     }
-                    self.write_expr(arg, types, names, interner, w);
+                    if arg.spread {
+                        w.write("sparge ");
+                    }
+                    self.write_expr(&arg.expr, types, names, interner, w);
                 }
                 w.write(")");
             }
@@ -92,7 +95,10 @@ impl super::FaberCodegen {
                     if idx > 0 {
                         w.write(", ");
                     }
-                    self.write_expr(arg, types, names, interner, w);
+                    if arg.spread {
+                        w.write("sparge ");
+                    }
+                    self.write_expr(&arg.expr, types, names, interner, w);
                 }
                 w.write(")");
             }

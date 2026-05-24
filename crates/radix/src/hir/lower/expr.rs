@@ -28,8 +28,8 @@
 
 use super::Lowerer;
 use crate::hir::{
-    HirArrayElement, HirBinOp, HirExpr, HirExprKind, HirLiteral, HirNonNullKind, HirObjectField, HirObjectKey,
-    HirOptionalChainKind, HirUnOp,
+    HirArrayElement, HirBinOp, HirCallArg, HirExpr, HirExprKind, HirLiteral, HirNonNullKind, HirObjectField,
+    HirObjectKey, HirOptionalChainKind, HirUnOp,
 };
 use crate::semantic::{InferVar, Primitive, Type, TypeId};
 use crate::syntax::{BinaryExpr, Expr, ExprKind, Literal, UnaryExpr};
@@ -193,24 +193,32 @@ impl<'a> Lowerer<'a> {
     /// member callees are kept as `MethodCall` so receiver typing can select the
     /// method later. Ordinary calls retain an explicit callee expression.
     fn lower_vocare(&mut self, call: &crate::syntax::CallExpr) -> HirExprKind {
-        let args = call
-            .args
-            .iter()
-            .map(|arg| lower_expr(self, &arg.value))
-            .collect();
-
         match &call.callee.kind {
-            ExprKind::Literal(Literal::String(template)) => HirExprKind::Scriptum(*template, args),
+            ExprKind::Literal(Literal::String(template)) => HirExprKind::Scriptum(
+                *template,
+                call.args
+                    .iter()
+                    .map(|arg| lower_expr(self, &arg.value))
+                    .collect(),
+            ),
             ExprKind::Member(member) => {
                 let recv = lower_expr(self, &member.object);
                 let name = member.member.name;
+                let args = self.lower_call_args(&call.args);
                 HirExprKind::MethodCall(Box::new(recv), name, args)
             }
             _ => {
                 let callee = lower_expr(self, &call.callee);
+                let args = self.lower_call_args(&call.args);
                 HirExprKind::Call(Box::new(callee), args)
             }
         }
+    }
+
+    fn lower_call_args(&mut self, args: &[crate::syntax::Argument]) -> Vec<HirCallArg> {
+        args.iter()
+            .map(|arg| HirCallArg { spread: arg.spread, expr: lower_expr(self, &arg.value), span: arg.span })
+            .collect()
     }
 
     /// Lower member access, including the enum-variant shorthand.
@@ -493,7 +501,7 @@ impl<'a> Lowerer<'a> {
         let args = finge
             .fields
             .iter()
-            .map(|field| lower_expr(self, &field.value))
+            .map(|field| HirCallArg { spread: false, expr: lower_expr(self, &field.value), span: field.span })
             .collect();
 
         let call = HirExpr {

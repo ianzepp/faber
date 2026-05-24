@@ -16,6 +16,7 @@
 //! upstream semantic facts.
 
 use super::*;
+use crate::hir::HirCallArg;
 
 /// Visitor contract for lowering a HIR expression when the caller needs a MIR
 /// operand.
@@ -76,12 +77,12 @@ pub(super) trait HirExprLoweringVisitor {
     fn visit_unary_expr(&mut self, op: HirUnOp, operand: &HirExpr, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_binary_expr(&mut self, op: HirBinOp, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_coalesce_expr(&mut self, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand>;
-    fn visit_call_expr(&mut self, callee: &HirExpr, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand>;
+    fn visit_call_expr(&mut self, callee: &HirExpr, args: &[HirCallArg], expr: &HirExpr) -> Option<MirOperand>;
     fn visit_method_call_expr(
         &mut self,
         receiver: &HirExpr,
         method: Symbol,
-        args: &[HirExpr],
+        args: &[HirCallArg],
         expr: &HirExpr,
     ) -> Option<MirOperand>;
     fn visit_field_expr(&mut self, object: &HirExpr, name: Symbol, expr: &HirExpr) -> Option<MirOperand>;
@@ -152,7 +153,7 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
         self.lower_coalesce(lhs, rhs, expr)
     }
 
-    fn visit_call_expr(&mut self, callee: &HirExpr, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
+    fn visit_call_expr(&mut self, callee: &HirExpr, args: &[HirCallArg], expr: &HirExpr) -> Option<MirOperand> {
         self.lower_call(callee, args, expr)
     }
 
@@ -160,7 +161,7 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
         &mut self,
         receiver: &HirExpr,
         method: Symbol,
-        args: &[HirExpr],
+        args: &[HirCallArg],
         expr: &HirExpr,
     ) -> Option<MirOperand> {
         self.lower_method_call(receiver, method, args, expr)

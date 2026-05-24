@@ -1,10 +1,10 @@
 use crate::codegen::rust::TestSelection;
 use crate::codegen::{self, Target};
 use crate::hir::{
-    DefId, HirArrayElement, HirBlock, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction, HirId,
-    HirImport, HirImportItem, HirInterface, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirParam, HirParamMode,
-    HirPattern, HirProgram, HirScribeKind, HirStmt, HirStmtKind, HirStruct, HirTestMetadata, HirTestModifier,
-    HirTypeAlias, HirVariant, HirVariantField,
+    DefId, HirArrayElement, HirBlock, HirCallArg, HirCasuArm, HirEnum, HirExpr, HirExprKind, HirField, HirFunction,
+    HirId, HirImport, HirImportItem, HirInterface, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirParam,
+    HirParamMode, HirPattern, HirProgram, HirScribeKind, HirStmt, HirStmtKind, HirStruct, HirTestMetadata,
+    HirTestModifier, HirTypeAlias, HirVariant, HirVariantField,
 };
 use crate::lexer::{Interner, Span};
 use crate::semantic::{FuncSig, InferVar, Mutability, ParamMode, ParamType, Primitive, Type, TypeTable};
@@ -686,6 +686,32 @@ incipit {
     assert!(rust
         .code
         .contains("let result: i64 = calc.setValue(5).double().getResult();"));
+}
+
+#[test]
+fn direct_spread_call_expands_array_arguments() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio add(numerus a, numerus b) → numerus {
+    redde a + b
+}
+
+incipit {
+    fixum numerus[] numbers ← [3, 7]
+    fixum _ sum ← add(sparge numbers)
+    nota sum
+}
+"#;
+
+    let result = compiler.compile_str("direct-spread-call.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("let sum: i64 = add((numbers[0usize].clone()), (numbers[1usize].clone()));"));
+    assert!(!rust.code.contains("add(numbers.clone())"));
 }
 
 #[test]
@@ -1424,10 +1450,14 @@ fn expr_codegen_handles_control_flow_and_operators() {
                 id: HirId(305),
                 kind: HirExprKind::Call(
                     Box::new(HirExpr { id: HirId(306), kind: HirExprKind::Path(DefId(1)), ty: None, span: span() }),
-                    vec![HirExpr {
-                        id: HirId(307),
-                        kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
-                        ty: Some(types.primitive(Primitive::Textus)),
+                    vec![HirCallArg {
+                        spread: false,
+                        expr: HirExpr {
+                            id: HirId(307),
+                            kind: HirExprKind::Literal(HirLiteral::String(numerus_name)),
+                            ty: Some(types.primitive(Primitive::Textus)),
+                            span: span(),
+                        },
                         span: span(),
                     }],
                 ),
@@ -1439,10 +1469,14 @@ fn expr_codegen_handles_control_flow_and_operators() {
                 kind: HirExprKind::MethodCall(
                     Box::new(HirExpr { id: HirId(309), kind: HirExprKind::Path(DefId(2)), ty: None, span: span() }),
                     method,
-                    vec![HirExpr {
-                        id: HirId(310),
-                        kind: HirExprKind::Literal(HirLiteral::Bool(true)),
-                        ty: Some(bivalens),
+                    vec![HirCallArg {
+                        spread: false,
+                        expr: HirExpr {
+                            id: HirId(310),
+                            kind: HirExprKind::Literal(HirLiteral::Bool(true)),
+                            ty: Some(bivalens),
+                            span: span(),
+                        },
                         span: span(),
                     }],
                 ),

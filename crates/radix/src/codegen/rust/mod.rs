@@ -125,6 +125,9 @@ pub struct RustCodegen<'a> {
     /// emission decisions such as `return Some(local)`, the original binding
     /// storage type is the target contract we need.
     binding_types: RefCell<FxHashMap<DefId, TypeId>>,
+
+    /// DefId -> function parameter count for direct-call spread expansion.
+    function_param_counts: FxHashMap<DefId, usize>,
 }
 
 impl<'a> RustCodegen<'a> {
@@ -145,6 +148,7 @@ impl<'a> RustCodegen<'a> {
             current_return_ty: Cell::new(None),
             current_self_def: Cell::new(None),
             binding_types: RefCell::new(FxHashMap::default()),
+            function_param_counts: FxHashMap::default(),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen.test_selection = Some(TestSelectionState {
@@ -155,6 +159,7 @@ impl<'a> RustCodegen<'a> {
                 .any(|item| matches!(&item.kind, HirItemKind::Function(func) if func.test.as_ref().is_some_and(|test| test.modifiers.iter().any(|modifier| matches!(modifier, HirTestModifier::Solum))))),
         });
         codegen.struct_fields = codegen.collect_struct_fields(hir);
+        codegen.function_param_counts = codegen.collect_function_param_counts(hir);
         codegen
     }
 
@@ -213,6 +218,10 @@ impl<'a> RustCodegen<'a> {
 
     pub(super) fn binding_type(&self, def_id: DefId) -> Option<TypeId> {
         self.binding_types.borrow().get(&def_id).copied()
+    }
+
+    pub(super) fn function_param_count(&self, def_id: DefId) -> Option<usize> {
+        self.function_param_counts.get(&def_id).copied()
     }
 
     pub(super) fn test_ignore_reason(&self, func: &HirFunction) -> Option<String> {
@@ -370,6 +379,24 @@ impl<'a> RustCodegen<'a> {
             }
         }
         fields
+    }
+
+    fn collect_function_param_counts(&self, hir: &HirProgram) -> FxHashMap<DefId, usize> {
+        let mut counts = FxHashMap::default();
+        for item in &hir.items {
+            match &item.kind {
+                HirItemKind::Function(func) => {
+                    counts.insert(item.def_id, func.params.len());
+                }
+                HirItemKind::Struct(strukt) => {
+                    for method in &strukt.methods {
+                        counts.insert(method.def_id, method.func.params.len());
+                    }
+                }
+                _ => {}
+            }
+        }
+        counts
     }
 
     fn collect_binding_types(&self, hir: &HirProgram, types: &TypeTable) -> FxHashMap<DefId, TypeId> {

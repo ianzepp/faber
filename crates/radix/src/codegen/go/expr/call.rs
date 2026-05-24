@@ -17,11 +17,12 @@
 //!   feeding a multi-parameter function.
 
 use super::*;
+use crate::hir::HirCallArg;
 
 pub(super) fn generate_call_expr(
     codegen: &GoCodegen<'_>,
     callee: &HirExpr,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
@@ -44,7 +45,7 @@ pub(super) fn generate_call_expr(
         if idx > 0 {
             w.write(", ");
         }
-        generate_expr(codegen, arg, types, w)?;
+        generate_expr(codegen, &arg.expr, types, w)?;
     }
     w.write(")");
     Ok(())
@@ -54,7 +55,7 @@ pub(super) fn generate_method_call_expr(
     codegen: &GoCodegen<'_>,
     receiver: &HirExpr,
     method: crate::lexer::Symbol,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
@@ -69,7 +70,7 @@ pub(super) fn generate_method_call_expr(
         if idx > 0 {
             w.write(", ");
         }
-        generate_expr(codegen, arg, types, w)?;
+        generate_expr(codegen, &arg.expr, types, w)?;
     }
     w.write(")");
     Ok(())
@@ -123,7 +124,7 @@ pub(super) fn try_generate_translated_method_call(
     codegen: &GoCodegen<'_>,
     receiver: &HirExpr,
     method: crate::lexer::Symbol,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
@@ -151,7 +152,7 @@ pub(super) fn try_generate_translated_method_call(
     if method_name == "accipe" && args.len() == 1 && (is_lista || is_textus) {
         generate_expr(codegen, receiver, types, w)?;
         w.write("[");
-        generate_expr(codegen, &args[0], types, w)?;
+        generate_expr(codegen, &args[0].expr, types, w)?;
         w.write("]");
         return Ok(true);
     }
@@ -174,13 +175,14 @@ pub(super) fn try_generate_translated_method_call(
         w.write("; out := append([]");
         w.write(&elem_go_ty);
         w.write("{}, src...); out = append(out, ");
-        generate_expr_for_go_type(codegen, &args[0], elem_ty, types, w)?;
+        generate_expr_for_go_type(codegen, &args[0].expr, elem_ty, types, w)?;
         w.write("); return out }()");
         return Ok(true);
     }
 
     if matches!(method_name, "map" | "mappata") && args.len() == 1 && is_lista {
         let Some(out_ty) = args[0]
+            .expr
             .ty
             .and_then(|ty| match normalize_receiver_type(types.get(ty), types) {
                 Type::Func(sig) => Some(sig.ret),
@@ -193,7 +195,7 @@ pub(super) fn try_generate_translated_method_call(
         w.write("func() []");
         w.write(&out_go_ty);
         w.write(" { mapper := ");
-        generate_expr(codegen, &args[0], types, w)?;
+        generate_expr(codegen, &args[0].expr, types, w)?;
         w.write("; src := ");
         generate_expr(codegen, receiver, types, w)?;
         w.write("; out := make([]");
@@ -210,7 +212,7 @@ pub(super) fn try_generate_translated_method_call(
         w.write("func() []");
         w.write(&elem_go_ty);
         w.write(" { pred := ");
-        generate_expr(codegen, &args[0], types, w)?;
+        generate_expr(codegen, &args[0].expr, types, w)?;
         w.write("; src := ");
         generate_expr(codegen, receiver, types, w)?;
         w.write("; out := make([]");
@@ -256,7 +258,7 @@ pub(super) fn try_generate_translated_method_call(
 pub(super) fn try_generate_spread_call_recovery(
     codegen: &GoCodegen<'_>,
     callee: &HirExpr,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
@@ -269,10 +271,10 @@ pub(super) fn try_generate_spread_call_recovery(
     let Type::Func(sig) = normalize_receiver_type(types.get(callee_ty), types) else {
         return Ok(false);
     };
-    if args.len() != 1 || sig.params.len() <= 1 {
+    if args.len() != 1 || !args[0].spread || sig.params.len() <= 1 {
         return Ok(false);
     }
-    let Some(arg_ty) = args[0].ty else {
+    let Some(arg_ty) = args[0].expr.ty else {
         return Ok(false);
     };
     let Type::Array(_) = normalize_receiver_type(types.get(arg_ty), types) else {
@@ -285,7 +287,7 @@ pub(super) fn try_generate_spread_call_recovery(
         if idx > 0 {
             w.write(", ");
         }
-        generate_expr(codegen, &args[0], types, w)?;
+        generate_expr(codegen, &args[0].expr, types, w)?;
         w.write("[");
         w.write(&idx.to_string());
         w.write("]");
@@ -296,7 +298,7 @@ pub(super) fn try_generate_spread_call_recovery(
 pub(super) fn try_generate_intrinsic_call(
     codegen: &GoCodegen<'_>,
     callee: &HirExpr,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<bool, CodegenError> {
@@ -325,7 +327,7 @@ pub(super) fn try_generate_intrinsic_call(
             if idx > 0 {
                 w.write(", ");
             }
-            generate_expr(codegen, arg, types, w)?;
+            generate_expr(codegen, &arg.expr, types, w)?;
         }
         w.write(")");
     } else {
@@ -335,7 +337,7 @@ pub(super) fn try_generate_intrinsic_call(
             if idx > 0 {
                 w.write(", ");
             }
-            generate_expr(codegen, arg, types, w)?;
+            generate_expr(codegen, &arg.expr, types, w)?;
         }
         w.write(")");
     }

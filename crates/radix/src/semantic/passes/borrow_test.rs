@@ -31,7 +31,11 @@ fn reports_use_after_move() {
                 ty: Some(func_ty),
                 span: span(),
             }),
-            vec![HirExpr { id: crate::hir::HirId(4), kind: HirExprKind::Path(DefId(1)), ty: None, span: span() }],
+            vec![crate::hir::HirCallArg {
+                spread: false,
+                expr: HirExpr { id: crate::hir::HirId(4), kind: HirExprKind::Path(DefId(1)), ty: None, span: span() },
+                span: span(),
+            }],
         ),
         ty: None,
         span: span(),
@@ -245,10 +249,14 @@ fn reports_de_passed_to_in_position() {
                 ty: Some(callee_ty),
                 span: span(),
             }),
-            vec![HirExpr {
-                id: crate::hir::HirId(3),
-                kind: HirExprKind::Path(DefId(1)),
-                ty: Some(numerus),
+            vec![crate::hir::HirCallArg {
+                spread: false,
+                expr: HirExpr {
+                    id: crate::hir::HirId(3),
+                    kind: HirExprKind::Path(DefId(1)),
+                    ty: Some(numerus),
+                    span: span(),
+                },
                 span: span(),
             }],
         ),

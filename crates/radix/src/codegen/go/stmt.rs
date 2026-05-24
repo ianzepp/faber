@@ -414,7 +414,7 @@ fn generate_expr_stmt(
             w.write(name);
             for arg in args {
                 w.write(", ");
-                generate_expr(codegen, arg, types, w)?;
+                generate_expr(codegen, &arg.expr, types, w)?;
             }
             w.write(")");
             w.newline();

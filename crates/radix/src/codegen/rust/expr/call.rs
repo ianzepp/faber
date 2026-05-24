@@ -24,7 +24,7 @@ use super::*;
 pub(super) fn generate_call_expr(
     codegen: &RustCodegen<'_>,
     callee: &HirExpr,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
@@ -36,11 +36,32 @@ pub(super) fn generate_call_expr(
     let is_failable_call = matches!(&callee.kind, HirExprKind::Path(def_id) if codegen.is_failable_def(*def_id));
     generate_expr(codegen, callee, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write("(");
-    for (i, arg) in args.iter().enumerate() {
-        if i > 0 {
-            w.write(", ");
+    if let Some(spread) = direct_spread_call_arity(codegen, callee, args) {
+        generate_spread_call_args(
+            codegen,
+            &args[0].expr,
+            spread,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
+    } else {
+        for (i, arg) in args.iter().enumerate() {
+            if i > 0 {
+                w.write(", ");
+            }
+            generate_call_arg_expr(
+                codegen,
+                &arg.expr,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
         }
-        generate_call_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
     w.write(")");
     if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
@@ -54,7 +75,7 @@ pub(super) fn generate_method_call_expr(
     codegen: &RustCodegen<'_>,
     receiver: &HirExpr,
     method: Symbol,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
@@ -89,7 +110,15 @@ pub(super) fn generate_method_call_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_call_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                generate_call_arg_expr(
+                    codegen,
+                    &arg.expr,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
             }
             w.write(")");
             if codegen.is_failable_method_name(method) && in_failable_fn && !in_entry && !suppress_error_propagation {
@@ -116,11 +145,53 @@ pub(super) fn generate_method_call_expr(
         if i > 0 {
             w.write(", ");
         }
-        generate_call_arg_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        generate_call_arg_expr(
+            codegen,
+            &arg.expr,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
     }
     w.write(")");
     if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
         w.write("?");
+    }
+    Ok(())
+}
+
+fn direct_spread_call_arity(codegen: &RustCodegen<'_>, callee: &HirExpr, args: &[HirCallArg]) -> Option<usize> {
+    if args.len() != 1 || !args[0].spread {
+        return None;
+    }
+    let HirExprKind::Path(def_id) = callee.kind else {
+        return None;
+    };
+    codegen
+        .function_param_count(def_id)
+        .filter(|count| *count > 1)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_spread_call_args(
+    codegen: &RustCodegen<'_>,
+    arg: &HirExpr,
+    arity: usize,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    for index in 0..arity {
+        if index > 0 {
+            w.write(", ");
+        }
+        w.write("(");
+        generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(&format!("[{index}usize].clone())"));
     }
     Ok(())
 }
@@ -160,7 +231,7 @@ fn try_generate_stdlib_method_call(
     codegen: &RustCodegen<'_>,
     receiver: &HirExpr,
     method: Symbol,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
@@ -218,7 +289,7 @@ fn generate_lista_method(
     codegen: &RustCodegen<'_>,
     receiver: &HirExpr,
     method_name: &str,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
@@ -239,7 +310,7 @@ fn generate_lista_method(
             w.write(".push(");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -285,7 +356,7 @@ fn generate_lista_method(
             w.write(".contains(&");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -307,7 +378,7 @@ fn generate_lista_method(
             w.write(".get(");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -370,7 +441,7 @@ fn generate_lista_method(
             w.write(".push(");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -388,7 +459,7 @@ fn generate_lista_method(
             w.write(" = ");
             generate_expr(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -409,14 +480,14 @@ fn generate_lista_method(
             w.write(&pred);
             w.write("((*__faber_item).clone())).collect::<Vec<_>>() }");
         }
-        "mappata" if args.len() == 1 => {
+        "map" | "mappata" if args.len() == 1 => {
             let mapper = format!("__faber_map_{}", receiver.id.0);
             w.write("{ let mut ");
             w.write(&mapper);
             w.write(" = ");
             generate_expr(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -499,7 +570,7 @@ fn generate_textus_method(
     codegen: &RustCodegen<'_>,
     receiver: &HirExpr,
     method_name: &str,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
@@ -529,7 +600,7 @@ fn generate_tabula_method(
     codegen: &RustCodegen<'_>,
     receiver: &HirExpr,
     method_name: &str,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
@@ -550,7 +621,7 @@ fn generate_tabula_method(
             w.write(".insert(");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -560,7 +631,7 @@ fn generate_tabula_method(
             w.write(", ");
             generate_expr_unwrapped(
                 codegen,
-                &args[1],
+                &args[1].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -582,7 +653,7 @@ fn generate_tabula_method(
             w.write(".get(&");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -604,7 +675,7 @@ fn generate_tabula_method(
             w.write(".contains_key(&");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,
@@ -626,7 +697,7 @@ fn generate_tabula_method(
             w.write(".remove(&");
             generate_expr_unwrapped(
                 codegen,
-                &args[0],
+                &args[0].expr,
                 types,
                 w,
                 in_failable_fn,

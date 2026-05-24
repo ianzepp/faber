@@ -623,6 +623,19 @@ pub struct HirExpr {
     pub span: Span,
 }
 
+/// Function or method call argument.
+#[derive(Debug)]
+pub struct HirCallArg {
+    /// Whether the source argument used `sparge`.
+    pub spread: bool,
+
+    /// Lowered argument expression.
+    pub expr: HirExpr,
+
+    /// Whole argument span.
+    pub span: Span,
+}
+
 /// Recoverable error handler binding and body.
 ///
 /// `cape` introduces a binding for the recovered value. HIR records that binding
@@ -670,10 +683,10 @@ pub enum HirExprKind {
     Unary(HirUnOp, Box<HirExpr>),
 
     /// Function call.
-    Call(Box<HirExpr>, Vec<HirExpr>),
+    Call(Box<HirExpr>, Vec<HirCallArg>),
 
     /// Method call normalized from receiver syntax.
-    MethodCall(Box<HirExpr>, Symbol, Vec<HirExpr>),
+    MethodCall(Box<HirExpr>, Symbol, Vec<HirCallArg>),
 
     /// Field access.
     Field(Box<HirExpr>, Symbol),

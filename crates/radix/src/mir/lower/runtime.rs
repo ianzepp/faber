@@ -18,6 +18,7 @@
 //!   calls allocate a temp and return that temp as the expression operand.
 
 use super::*;
+use crate::hir::HirCallArg;
 
 impl FunctionBuilder<'_> {
     /// Lower a method call into a provider or collection intrinsic.
@@ -29,14 +30,14 @@ impl FunctionBuilder<'_> {
         &mut self,
         receiver: &HirExpr,
         method: Symbol,
-        args: &[HirExpr],
+        args: &[HirCallArg],
         expr: &HirExpr,
     ) -> Option<MirOperand> {
         if let HirExprKind::Path(def_id) = receiver.kind {
             if let Some(import) = self.context.provider_imports.get(&def_id).cloned() {
                 let mut lowered_args = Vec::with_capacity(args.len());
                 for arg in args {
-                    lowered_args.push(self.lower_expr_value(arg)?);
+                    lowered_args.push(self.lower_expr_value(&arg.expr)?);
                 }
                 let ty = self.expr_ty(expr)?;
                 let mut module = import.module;
@@ -61,7 +62,7 @@ impl FunctionBuilder<'_> {
         let mut lowered_args = Vec::with_capacity(args.len() + 1);
         lowered_args.push(self.lower_expr_value(receiver)?);
         for arg in args {
-            lowered_args.push(self.lower_expr_value(arg)?);
+            lowered_args.push(self.lower_expr_value(&arg.expr)?);
         }
         let ty = self.expr_ty(expr)?;
         Some(self.runtime_call_value(MirIntrinsic::Collection(op), lowered_args, ty, expr.span))
@@ -73,7 +74,7 @@ impl FunctionBuilder<'_> {
     /// Only path callees are supported in this MIR phase. Callable values and
     /// other indirect forms remain unsupported until MIR has a representation
     /// for dynamic call targets.
-    pub(super) fn lower_call(&mut self, callee: &HirExpr, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
+    pub(super) fn lower_call(&mut self, callee: &HirExpr, args: &[HirCallArg], expr: &HirExpr) -> Option<MirOperand> {
         let HirExprKind::Path(def_id) = &callee.kind else {
             self.errors.push(MirError::unsupported(
                 callee.span,
@@ -84,7 +85,7 @@ impl FunctionBuilder<'_> {
 
         let mut lowered_args = Vec::with_capacity(args.len());
         for arg in args {
-            let arg = self.lower_expr_value(arg)?;
+            let arg = self.lower_expr_value(&arg.expr)?;
             lowered_args.push(arg);
         }
 
@@ -176,7 +177,7 @@ impl FunctionBuilder<'_> {
         &mut self,
         receiver: &HirExpr,
         method: Symbol,
-        args: &[HirExpr],
+        args: &[HirCallArg],
         span: Span,
     ) -> Option<MirCollectionOp> {
         let Some(receiver_ty) = receiver.ty else {

@@ -16,6 +16,7 @@
 //!   empty composite literal body for that variant shape.
 
 use super::*;
+use crate::hir::HirCallArg;
 
 pub(super) fn variant_value_expr(expr: &HirExpr, codegen: &GoCodegen<'_>) -> bool {
     match &expr.kind {
@@ -30,7 +31,7 @@ pub(super) fn variant_value_expr(expr: &HirExpr, codegen: &GoCodegen<'_>) -> boo
 pub(super) fn generate_variant_constructor(
     codegen: &GoCodegen<'_>,
     def_id: crate::hir::DefId,
-    args: &[HirExpr],
+    args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
@@ -47,7 +48,7 @@ pub(super) fn generate_variant_constructor(
                 w.write(&capitalize(codegen.resolve_symbol(*field)));
                 w.write(": ");
             }
-            generate_expr(codegen, arg, types, w)?;
+            generate_expr(codegen, &arg.expr, types, w)?;
         }
     }
     w.write("}");

@@ -800,10 +800,14 @@ fn translates_norma_methods_and_intrinsics() {
                                 span: span(),
                             }),
                             appende,
-                            vec![HirExpr {
-                                id: HirId(11),
-                                kind: HirExprKind::Literal(HirLiteral::Int(1)),
-                                ty: Some(numerus),
+                            vec![HirCallArg {
+                                spread: false,
+                                expr: HirExpr {
+                                    id: HirId(11),
+                                    kind: HirExprKind::Literal(HirLiteral::Int(1)),
+                                    ty: Some(numerus),
+                                    span: span(),
+                                },
                                 span: span(),
                             }],
                         ),
@@ -844,16 +848,24 @@ fn translates_norma_methods_and_intrinsics() {
                             }),
                             pone,
                             vec![
-                                HirExpr {
-                                    id: HirId(18),
-                                    kind: HirExprKind::Literal(HirLiteral::String(interner.intern("k"))),
-                                    ty: Some(textus),
+                                HirCallArg {
+                                    spread: false,
+                                    expr: HirExpr {
+                                        id: HirId(18),
+                                        kind: HirExprKind::Literal(HirLiteral::String(interner.intern("k"))),
+                                        ty: Some(textus),
+                                        span: span(),
+                                    },
                                     span: span(),
                                 },
-                                HirExpr {
-                                    id: HirId(19),
-                                    kind: HirExprKind::Literal(HirLiteral::Int(9)),
-                                    ty: Some(numerus),
+                                HirCallArg {
+                                    spread: false,
+                                    expr: HirExpr {
+                                        id: HirId(19),
+                                        kind: HirExprKind::Literal(HirLiteral::Int(9)),
+                                        ty: Some(numerus),
+                                        span: span(),
+                                    },
                                     span: span(),
                                 },
                             ],
@@ -874,10 +886,14 @@ fn translates_norma_methods_and_intrinsics() {
                                 ty: None,
                                 span: span(),
                             }),
-                            vec![HirExpr {
-                                id: HirId(23),
-                                kind: HirExprKind::Literal(HirLiteral::Float(3.9)),
-                                ty: Some(types.primitive(Primitive::Fractus)),
+                            vec![HirCallArg {
+                                spread: false,
+                                expr: HirExpr {
+                                    id: HirId(23),
+                                    kind: HirExprKind::Literal(HirLiteral::Float(3.9)),
+                                    ty: Some(types.primitive(Primitive::Fractus)),
+                                    span: span(),
+                                },
                                 span: span(),
                             }],
                         ),
