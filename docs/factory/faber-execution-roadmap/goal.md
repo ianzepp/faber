@@ -397,6 +397,15 @@ Agent use:
 - Require human/integrating-agent review before changing contract file layout or moving implementation responsibilities.
 - Do not delegate deletion of `stdlib/norma` or `crates/norma` files; deletion is out of scope for this epic.
 
+Recommended first slice:
+
+1. `6.1`: Create an Epic 6 ledger and classify `norma` at module/file level before changing compiler behavior.
+2. Inventory `stdlib/norma/` and `crates/norma/` with enough detail to assign `core-language`, `host-effect`, `rust-bridge`, or `needs-decision`.
+3. Classify `stdlib/norma/hal/consolum.fab` as `host-effect` and `crates/norma/hal/consolum.rs` as `rust-bridge`.
+4. Record canonical syscall identities for existing `consolum` members, such as `consolum:scribe`, `consolum:dic`, `consolum:mone`, `consolum:vide`, and stdin/TTY operations.
+5. Record that `nota`, `vide`, `mone`, and related language output semantics are host IO, while native Rust direct output remains allowed as backend lowering policy.
+6. Validate the classification docs and ledger for consistency. Do not change compiler lowering, strict-mode behavior, host dependency provisioning, or delete any `norma` files in `6.1`.
+
 Checkpoint:
 
 - Every `norma` surface inspected in the epic has a recorded classification: `core-language`, `host-effect`, `rust-bridge`, or `needs-decision`.
