@@ -486,3 +486,58 @@ fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
         ty => ty.clone(),
     }
 }
+
+fn type_id_is_faber_value(type_id: TypeId, types: &TypeTable) -> bool {
+    match resolve_type(type_id, types) {
+        Type::Primitive(Primitive::Ignotum) => true,
+        Type::Union(variants) => !variants.is_empty(),
+        _ => false,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_expr_as_type(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    target_ty: TypeId,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if type_id_is_faber_value(target_ty, types) {
+        return generate_expr_as_faber_value(
+            codegen,
+            expr,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
+    }
+
+    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_expr_as_faber_value(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if matches!(expr.kind, HirExprKind::Literal(HirLiteral::Nil)) {
+        w.write("FaberValue::Nihil");
+        return Ok(());
+    }
+
+    w.write("FaberValue::from(");
+    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write(")");
+    Ok(())
+}

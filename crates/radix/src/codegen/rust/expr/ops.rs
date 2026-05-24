@@ -77,8 +77,16 @@ pub(super) fn generate_unary_expr(
             if wrap {
                 w.write("(");
             }
-            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" == None");
+            if operand
+                .ty
+                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+            {
+                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write(" == FaberValue::Nihil");
+            } else {
+                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write(" == None");
+            }
             if wrap {
                 w.write(")");
             }
@@ -87,8 +95,16 @@ pub(super) fn generate_unary_expr(
             if wrap {
                 w.write("(");
             }
-            generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" != None");
+            if operand
+                .ty
+                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+            {
+                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write(" != FaberValue::Nihil");
+            } else {
+                generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                w.write(" != None");
+            }
             if wrap {
                 w.write(")");
             }
@@ -118,7 +134,14 @@ pub(super) fn generate_unary_expr(
                 w.write("(");
             }
             generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" == true");
+            if operand
+                .ty
+                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+            {
+                w.write(" == FaberValue::from(true)");
+            } else {
+                w.write(" == true");
+            }
             if wrap {
                 w.write(")");
             }
@@ -128,7 +151,14 @@ pub(super) fn generate_unary_expr(
                 w.write("(");
             }
             generate_expr(codegen, operand, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(" == false");
+            if operand
+                .ty
+                .is_some_and(|ty| type_id_is_faber_value(ty, types))
+            {
+                w.write(" == FaberValue::from(false)");
+            } else {
+                w.write(" == false");
+            }
             if wrap {
                 w.write(")");
             }
@@ -255,6 +285,42 @@ pub(super) fn generate_binary_expr(
                 w.write(")");
             }
         }
+        HirBinOp::Eq
+        | HirBinOp::NotEq
+        | HirBinOp::StrictEq
+        | HirBinOp::StrictNotEq
+        | HirBinOp::Is
+        | HirBinOp::IsNot
+            if binary_has_faber_value_operand(lhs, rhs, types) =>
+        {
+            if wrap {
+                w.write("(");
+            }
+            generate_binary_faber_value_operand(
+                codegen,
+                lhs,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            w.write(" ");
+            w.write(binop_to_rust(op));
+            w.write(" ");
+            generate_binary_faber_value_operand(
+                codegen,
+                rhs,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            if wrap {
+                w.write(")");
+            }
+        }
         _ => {
             if wrap {
                 w.write("(");
@@ -297,6 +363,28 @@ fn binary_result_is_fractus(result_ty: Option<TypeId>, types: &TypeTable) -> boo
     result_ty.is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Fractus)))
 }
 
+fn binary_has_faber_value_operand(lhs: &HirExpr, rhs: &HirExpr, types: &TypeTable) -> bool {
+    lhs.ty.is_some_and(|ty| type_id_is_faber_value(ty, types))
+        || rhs.ty.is_some_and(|ty| type_id_is_faber_value(ty, types))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_binary_faber_value_operand(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if expr.ty.is_some_and(|ty| type_id_is_faber_value(ty, types)) {
+        return generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+    }
+
+    generate_expr_as_faber_value(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
 fn expr_is_numerus(expr: &HirExpr, types: &TypeTable) -> bool {
     expr.ty
         .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Numerus)))
@@ -319,15 +407,61 @@ pub(super) fn generate_assign_expr(
             w.write(".insert(");
             generate_expr_unwrapped(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.write(", ");
-            generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            match object.ty.map(|ty| resolve_type(ty, types)) {
+                Some(Type::Map(_, value_ty)) => {
+                    generate_expr_as_type(
+                        codegen,
+                        value,
+                        value_ty,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
+                }
+                _ => {
+                    generate_expr_unwrapped(
+                        codegen,
+                        value,
+                        types,
+                        w,
+                        in_failable_fn,
+                        in_entry,
+                        suppress_error_propagation,
+                    )?;
+                }
+            }
             w.write(")");
             return Ok(());
         }
     }
 
+    let target_ty = match &target.kind {
+        HirExprKind::Path(def_id) => codegen
+            .binding_type(*def_id)
+            .or_else(|| codegen.binding_type_by_generated_name(*def_id))
+            .or(target.ty),
+        _ => target.ty,
+    };
+
     generate_expr(codegen, target, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write(" = ");
-    generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+
+    if let Some(target_ty) = target_ty {
+        generate_expr_as_type(
+            codegen,
+            value,
+            target_ty,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )
+    } else {
+        generate_expr_unwrapped(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

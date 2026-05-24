@@ -64,13 +64,21 @@ pub(super) fn generate_call_expr(
             suppress_error_propagation,
         )?;
     } else if let HirExprKind::Path(def_id) = callee.kind {
-        if let Some(params) = codegen
-            .function_params(def_id)
-            .filter(|params| params.iter().any(|param| param.optional))
-        {
+        if let Some(params) = codegen.function_params(def_id) {
             generate_direct_call_args_with_optional_params(
                 codegen,
                 params,
+                args,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+        } else if let Some(target_tys) = call_arg_target_types(callee, types) {
+            generate_call_args_with_target_types(
+                codegen,
+                &target_tys,
                 args,
                 types,
                 w,
@@ -86,6 +94,7 @@ pub(super) fn generate_call_expr(
                 generate_call_arg_expr(
                     codegen,
                     &arg.expr,
+                    None,
                     types,
                     w,
                     in_failable_fn,
@@ -102,6 +111,7 @@ pub(super) fn generate_call_expr(
             generate_call_arg_expr(
                 codegen,
                 &arg.expr,
+                None,
                 types,
                 w,
                 in_failable_fn,
@@ -115,6 +125,42 @@ pub(super) fn generate_call_expr(
         w.write("?");
     }
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_call_args_with_target_types(
+    codegen: &RustCodegen<'_>,
+    target_tys: &[TypeId],
+    args: &[HirCallArg],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    for (i, arg) in args.iter().enumerate() {
+        if i > 0 {
+            w.write(", ");
+        }
+        generate_call_arg_expr(
+            codegen,
+            &arg.expr,
+            target_tys.get(i).copied(),
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
+    }
+    Ok(())
+}
+
+fn call_arg_target_types(callee: &HirExpr, types: &TypeTable) -> Option<Vec<TypeId>> {
+    match callee.ty.map(|ty| resolve_type(ty, types)) {
+        Some(Type::Func(sig)) => Some(sig.params.iter().map(|param| param.ty).collect()),
+        _ => None,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -142,6 +188,7 @@ fn generate_direct_call_args_with_optional_params(
                 generate_call_arg_expr(
                     codegen,
                     &arg.expr,
+                    Some(param.ty),
                     types,
                     w,
                     in_failable_fn,
@@ -153,6 +200,7 @@ fn generate_direct_call_args_with_optional_params(
                 generate_call_arg_expr(
                     codegen,
                     &arg.expr,
+                    Some(param.ty),
                     types,
                     w,
                     in_failable_fn,
@@ -200,6 +248,7 @@ fn generate_variant_constructor_expr(
             generate_call_arg_expr(
                 codegen,
                 &arg.expr,
+                None,
                 types,
                 w,
                 in_failable_fn,
@@ -257,6 +306,7 @@ pub(super) fn generate_method_call_expr(
                 generate_call_arg_expr(
                     codegen,
                     &arg.expr,
+                    None,
                     types,
                     w,
                     in_failable_fn,
@@ -292,6 +342,7 @@ pub(super) fn generate_method_call_expr(
         generate_call_arg_expr(
             codegen,
             &arg.expr,
+            None,
             types,
             w,
             in_failable_fn,
@@ -344,13 +395,27 @@ fn generate_spread_call_args(
 fn generate_call_arg_expr(
     codegen: &RustCodegen<'_>,
     arg: &HirExpr,
+    target_ty: Option<TypeId>,
     types: &TypeTable,
     w: &mut CodeWriter,
     in_failable_fn: bool,
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if let Some(target_ty) = target_ty {
+        generate_expr_as_type(
+            codegen,
+            arg,
+            target_ty,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
+    } else {
+        generate_expr_unwrapped(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    }
     if call_arg_clones_owned_path(arg, types) {
         w.write(".clone()");
     }

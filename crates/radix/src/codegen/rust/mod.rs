@@ -95,6 +95,7 @@ pub(super) struct StructFieldInfo<'a> {
 #[derive(Clone, Copy)]
 pub(super) struct FunctionParamInfo<'a> {
     pub(super) def_id: DefId,
+    pub(super) ty: TypeId,
     pub(super) optional: bool,
     pub(super) default: Option<&'a HirExpr>,
 }
@@ -280,6 +281,14 @@ impl<'a> RustCodegen<'a> {
 
     pub(super) fn binding_type(&self, def_id: DefId) -> Option<TypeId> {
         self.binding_types.borrow().get(&def_id).copied()
+    }
+
+    pub(super) fn binding_type_by_generated_name(&self, def_id: DefId) -> Option<TypeId> {
+        let name = self.resolve_def(def_id);
+        self.binding_types
+            .borrow()
+            .iter()
+            .find_map(|(binding_def, ty)| (self.resolve_def(*binding_def) == name).then_some(*ty))
     }
 
     pub(super) fn function_param_count(&self, def_id: DefId) -> Option<usize> {
@@ -590,6 +599,7 @@ fn function_param_info(func: &HirFunction) -> Vec<FunctionParamInfo<'_>> {
         .iter()
         .map(|param| FunctionParamInfo {
             def_id: param.def_id,
+            ty: param.ty,
             optional: param.optional,
             default: param.default.as_ref(),
         })

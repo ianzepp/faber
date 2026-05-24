@@ -379,15 +379,23 @@ impl<'a> Lowerer<'a> {
     fn lower_objectum(&mut self, obj: &crate::syntax::ObjectExpr) -> HirExprKind {
         let textus_ty = self.types.primitive(Primitive::Textus);
         let mut value_types = Vec::new();
+        let has_spread = obj
+            .fields
+            .iter()
+            .any(|field| matches!(field.key, crate::syntax::ObjectKey::Spread(_)));
         for field in &obj.fields {
             if let Some(value) = &field.value {
                 value_types.push(self.guess_expr_type(value));
             }
         }
-        let value_ty = match value_types.as_slice() {
-            [] => self.fresh_lower_infer_type(),
-            [single] => *single,
-            _ => self.types.intern(Type::Union(value_types)),
+        let value_ty = if has_spread {
+            self.fresh_lower_infer_type()
+        } else {
+            match value_types.as_slice() {
+                [] => self.types.primitive(Primitive::Ignotum),
+                [single] => *single,
+                _ => self.types.intern(Type::Union(value_types)),
+            }
         };
         let target = self.types.map(textus_ty, value_ty);
         let mut entries = Vec::new();

@@ -126,7 +126,15 @@ impl<'a> TypeChecker<'a> {
                             match self.types.get(self.resolve_type(spread_ty)).clone() {
                                 Type::Map(spread_key_ty, spread_value_ty) => {
                                     self.unify(spread_key_ty, key_ty, expr.span, "map spread key type mismatch");
-                                    self.unify(spread_value_ty, value_ty, expr.span, "map spread value type mismatch");
+                                    inferred_values.push(self.resolve_type(spread_value_ty));
+                                    if !self.is_infer(self.resolve_type(value_ty)) {
+                                        self.unify(
+                                            spread_value_ty,
+                                            value_ty,
+                                            expr.span,
+                                            "map spread value type mismatch",
+                                        );
+                                    }
                                 }
                                 _ => {
                                     self.error(
