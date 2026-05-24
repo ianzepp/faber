@@ -45,6 +45,7 @@ Reframe `ad` as Faber's capability-call syntax: a source-level request for a nam
 - `crates/radix/src/codegen/rust/stmt.rs`: rejects `ad` with `ad is not supported for Rust codegen`.
 - `hosts/macos-arm64/README.md`: records the long-term split where Faber source lowers to MIR/Wasm and a prebuilt host supplies HAL imports and standard capabilities.
 - `hosts/macos-arm64/ARCHITECTURE.md`: captures the host-owned capability model, non-strict and strict capability compilation modes, and the direction for moving `norma` implementation into compiler core or host capabilities.
+- `hosts/macos-arm64/SYSCALL_MODEL.md`: models capability calls as host syscalls using the Muninn frame/kernel pattern from `/Users/ianzepp/work/ianzepp/muninn/protocol/frames-rs` and `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`.
 
 ## Reference Packet
 
@@ -61,6 +62,7 @@ Before editing, inspect:
 - `crates/radix/src/codegen/go/stmt.rs`: existing Go stub behavior may inform a temporary unresolved-provider shape.
 - `hosts/macos-arm64/README.md`: future host-runtime constraints and capability-grant open questions.
 - `hosts/macos-arm64/ARCHITECTURE.md`: host-layer architecture that should own the longer-term capability implementation plan.
+- `hosts/macos-arm64/SYSCALL_MODEL.md`: syscall/frame routing model for the host side of capability calls.
 
 ## Constraints And Invariants
 
@@ -71,6 +73,8 @@ Before editing, inspect:
 - If the result type is omitted and no provider metadata exists, the compiler should either require an explicit type or choose a documented escape type; do not guess a specific concrete type in codegen.
 - `ad` is not the collection DSL. The retired collection DSL is `ab`.
 - Capability calls should fit both current Rust output and future host/Wasm imports without encoding Rust-specific library paths in language semantics.
+- Capability calls are host syscalls at runtime: source syntax names a capability, generated artifacts submit a named request, and the host routes it through built-in syscall handlers or registered providers.
+- Missing runtime providers should fail as structured host errors, initially equivalent to `E_NO_ROUTE` unless a more explicit `E_CAPABILITY_UNRESOLVED` code is added.
 
 ## Implementation Shape
 
@@ -96,7 +100,7 @@ Add only the design surface needed for a future strict flag: where capability me
 
 ### Phase 5: Host/Wasm Alignment Notes
 
-Update host-runtime planning notes so capability calls are the source-level form that can later lower to Wasm component imports or host-provided functions. This is documentation/design alignment, not host implementation.
+Update host-runtime planning notes so capability calls are the source-level form that can later lower to Wasm component imports or host-provided functions. The host-side implementation model is a frame-shaped syscall request routed by the macOS host kernel. This phase is documentation/design alignment, not host implementation.
 
 ### Phase 6: Exempla And E2E Integration
 

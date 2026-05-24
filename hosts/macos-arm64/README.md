@@ -32,6 +32,9 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the current host-layer goal:
 Rust host implementation, Wasm Component Model compatibility, non-strict and
 strict capability compilation modes, and the direction for moving `norma`
 functionality into compiler-owned core behavior or host-provided capabilities.
+See [`SYSCALL_MODEL.md`](SYSCALL_MODEL.md) for the host-internal model where
+Faber capability calls become frame-shaped syscalls routed through built-in host
+handlers or registered providers.
 
 ## Non-Goals For This Placeholder
 

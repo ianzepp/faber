@@ -4,6 +4,7 @@
 **Created**: 2026-05-24
 **Host Crate**: `hosts/macos-arm64`
 **Implementation Language**: Rust
+**Syscall Model**: [`SYSCALL_MODEL.md`](SYSCALL_MODEL.md)
 
 ## Summary
 
@@ -127,7 +128,7 @@ Strict mode is for deployment certainty. It should not be required for ordinary 
 The Rust host is responsible for:
 
 - loading Faber-produced Wasm components,
-- exposing capability imports,
+- exposing capability imports as host syscalls,
 - maintaining a registry of installed providers,
 - exporting a machine-readable capability contract manifest for strict compilation,
 - enforcing capability grants and permissions,
@@ -157,15 +158,18 @@ The host decides whether that maps to:
 - a network service,
 - or an unresolved-capability failure.
 
+Internally, these capability imports should route through the frame/syscall model described in [`SYSCALL_MODEL.md`](SYSCALL_MODEL.md). The host should treat `ad "pg:query"` as a request frame whose `call` is `pg:query`, then route it through built-in syscall handlers or registered external providers.
+
 ## First Implementation Slice
 
 The first useful host implementation should be deliberately small:
 
 1. Select Wasmtime and the Wasm Component Model, unless a repo-aware design pass finds a better current Rust implementation path.
-2. Define a tiny Faber-owned component world with one entrypoint and one host capability import.
-3. Build a Rust host that loads a minimal component and reports unresolved capability imports clearly.
-4. Add a host capability registry shape and a static exported manifest.
-5. Prove non-strict vs strict behavior with one fake capability such as `pg:query` or `host:echo`.
+2. Add the smallest host-internal frame/syscall router needed for one request and one terminal response.
+3. Define a tiny Faber-owned component world with one entrypoint and one host capability import.
+4. Build a Rust host that loads a minimal component and reports unresolved capability imports clearly.
+5. Add a host capability registry shape and a static exported manifest.
+6. Prove non-strict vs strict behavior with one fake capability such as `pg:query` or `host:echo`.
 
 This first slice should not attempt to migrate all of `norma`.
 
