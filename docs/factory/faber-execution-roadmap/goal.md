@@ -365,32 +365,47 @@ Checkpoint:
 
 Includes prior step 9:
 
-9. Classify and migrate `norma`.
+9. Classify `norma` and migrate the first host-effect contract.
 
 Primary references:
 
 - `stdlib/norma/`
 - `crates/norma/`
+- `stdlib/norma/hal/consolum.fab`
+- `crates/norma/hal/consolum.rs`
 - `hosts/macos-arm64/ARCHITECTURE.md`
 - `hosts/macos-arm64/SYSCALL_MODEL.md`
 
 Intent:
 
-- Classify `norma` into compiler-owned core, host capability contracts, and temporary Rust backend support.
-- Move HAL/IO/network/process/database-style surfaces toward host capability contracts.
-- Keep pure collection/data operations as compiler core or ordinary built-in type APIs.
-- Preserve generated Rust support only as a bridge while the host path matures.
+- Classify `norma` with durable ownership labels:
+  - `core-language`: pure language/library semantics the compiler or target runtime can own directly.
+  - `host-effect`: outside-world effects and IO that semantically route through Faber host syscall capability surfaces.
+  - `rust-bridge`: native Rust support kept for current HIR-to-Rust output while the host path matures.
+  - `needs-decision`: surfaces that require human review before classification.
+- Use existing `stdlib/norma/hal/*.fab` pacta as the first host-effect contract source instead of inventing new syscall annotation syntax.
+- Treat `@ externa` HAL functions as syscall-capability contract surfaces by convention; their syscall identities can start from the pactum/function path such as `consolum:scribe`.
+- Classify all IO as `host-effect`, including console IO. Native Rust may keep direct output fast paths, but that is backend lowering policy, not a separate `norma` ownership category.
+- Start with `stdlib/norma/hal/consolum.fab` as the first proof surface and keep language output such as `nota`, `vide`, and `mone` consistent with host IO semantics.
+- Keep host syscall errors generic for now, using the frame/host error shape proven by earlier epics rather than per-syscall error taxonomies.
+- Preserve `crates/norma` implementations as `rust-bridge` support where current native Rust output still needs them; do not delete implementations in this epic.
+- Keep pure collection/data operations as `core-language` or ordinary built-in type APIs.
 
 Agent use:
 
 - Allow agents for inventory and classification proposals.
-- Require human/integrating-agent review before moving or deleting contract files.
+- Require human/integrating-agent review before changing contract file layout or moving implementation responsibilities.
+- Do not delegate deletion of `stdlib/norma` or `crates/norma` files; deletion is out of scope for this epic.
 
 Checkpoint:
 
-- `norma` no longer means "implementation linked into every Faber binary" as the architectural target.
-- Host capability contracts and compiler-core contracts are distinguishable.
-- Future strict-mode host manifests have a clear source of contract truth.
+- Every `norma` surface inspected in the epic has a recorded classification: `core-language`, `host-effect`, `rust-bridge`, or `needs-decision`.
+- Existing `stdlib/norma/hal/*.fab` pacta are recognized as host-effect contract sources, with `consolum` classified first.
+- `consolum` records canonical syscall identities for its existing interface members without adding new annotation syntax.
+- `crates/norma/hal/consolum.rs` remains available as `rust-bridge` support for native Rust output.
+- `nota`, `vide`, `mone`, and related console output behavior are treated as host IO semantically while preserving existing native Rust behavior where appropriate.
+- Future strict-mode host manifests have a clear contract source, but strict verification itself remains out of scope.
+- No `norma` implementation files are deleted as part of this epic.
 
 ## Exit Strategy
 
