@@ -55,6 +55,7 @@ Coordinate the current Faber execution work into a long-running factory roadmap:
 - `hosts/macos-arm64/README.md`: placeholder host crate intent and links to the host architecture/syscall docs.
 - `/Users/ianzepp/work/ianzepp/muninn/protocol/frames-rs`: reference frame protocol material.
 - `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`: reference syscall routing, sigcall registry, cancellation, backpressure, and error model.
+- User clarification from 2026-05-24: the macOS host implementation should live in `hosts/macos-arm64`; the Muninn kernel code should be copied/vendorized into the Faber host and edited into a Faber-owned kernel rather than pulled as an external crate dependency.
 - `crates/radix/src/hir/nodes.rs`: HIR already preserves `HirStmtKind::Ad(HirAd)`.
 - `crates/radix/src/mir/nodes.rs`: MIR already has `RuntimeCall` and runtime intrinsic structure suitable for host-call extension.
 - `crates/radix/src/mir/lower/stmt.rs`: MIR currently rejects `ad` before effectful MIR lowering.
@@ -94,6 +95,7 @@ Then inspect the focused goal for the active epic:
 - `ad` unresolved-provider behavior is allowed in non-strict mode and must fail clearly at runtime.
 - Host capability calls should route as frame-shaped syscalls internally.
 - The first host implementation should stay in `hosts/macos-arm64`; extract shared host code only after concrete duplication or cross-host pressure exists.
+- Do not depend on Muninn as a runtime crate for the Faber host. Copy the relevant kernel code into `hosts/macos-arm64`, preserve provenance during the import, and then adapt it into Faber-owned host code.
 - `norma` should move toward canonical contracts and interfaces, not per-program linked implementation as the final model.
 - Git commands that create locks must run serially in this repository.
 
@@ -236,7 +238,7 @@ Checkpoint:
 - Runtime failure for missing providers is explicit.
 - The behavior aligns with the host syscall model but does not require the host to exist yet.
 
-### Epic 4: Minimal macOS Host Syscall Slice
+### Epic 4: Faber-Owned macOS Host Kernel Slice
 
 Includes prior step 7:
 
@@ -247,24 +249,61 @@ Primary docs:
 - `hosts/macos-arm64/ARCHITECTURE.md`
 - `hosts/macos-arm64/SYSCALL_MODEL.md`
 - `hosts/macos-arm64/README.md`
+- `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`
+- `/Users/ianzepp/work/ianzepp/muninn/protocol/frames-rs`
+- `stdlib/norma/hal/`
+- `crates/norma/hal/`
 
 Intent:
 
-- Prove the host model inside `hosts/macos-arm64`.
-- Add a small frame/status/error/router shape based on Muninn.
-- Add one built-in syscall such as `host:echo`.
-- Add manifest output and unresolved `E_NO_ROUTE`.
-- Keep the first runtime slice small and macOS-local.
+- Prove the host model inside the existing `hosts/macos-arm64` crate.
+- Copy the relevant Muninn kernel runtime code into `hosts/macos-arm64` instead of depending on Muninn as an external crate.
+- Preserve the useful Muninn semantics: `Frame`, `Status`, request correlation, prefix routing, syscalls, sigcalls, cancellation, structured `E_` errors, and unresolved `E_NO_ROUTE`.
+- Edit the imported code into a Faber-owned host kernel with Faber naming, docs, tests, and capability/HAL assumptions.
+- Add one tiny built-in syscall, such as `host:echo`, to prove routing before broader HAL migration.
+- Add manifest output for built-in syscalls and registered providers.
+- Begin identifying which existing HAL surfaces under `stdlib/norma/hal/` and `crates/norma/hal/` should move to host-owned syscalls, but migrate only the smallest surface needed to prove the slice.
+- Keep the first runtime slice small, macOS-local, and additive to the existing compiler/Rust backend path.
 
 Agent use:
 
-- Allow a prototype agent for the host crate once the Wasm boundary for the slice is chosen.
+- Allow a prototype agent for the mechanical Muninn code import if the delivery spec defines exact source files, target module paths, provenance notes, and expected compile/test fixes.
+- Allow read-only agents to inventory Faber HAL surfaces and propose syscall names, but do not let that inventory become a full `norma` migration in this epic.
+- Keep the integrating owner responsible for adapting imported kernel semantics, because copied code must stop being Muninn-shaped and become Faber host-owned.
 - Do not let this epic create a shared/common host crate.
+- Do not add a path, git, or published crate dependency on Muninn for the Faber host runtime.
+
+Suggested first module shape:
+
+```text
+hosts/macos-arm64/src/
+├── main.rs
+├── kernel/
+│   ├── mod.rs
+│   ├── backpressure.rs
+│   ├── error.rs
+│   ├── frame.rs
+│   ├── kernel.rs
+│   ├── pipe.rs
+│   ├── router.rs
+│   ├── sender.rs
+│   ├── sigcall.rs
+│   └── syscall.rs
+├── hal/
+│   ├── mod.rs
+│   └── host.rs
+└── manifest.rs
+```
+
+This shape is a starting point, not a final ABI. The imported kernel should stay internal to the macOS host until a second host or concrete duplication justifies extraction.
 
 Checkpoint:
 
-- The host can route at least one built-in syscall and report one unresolved capability.
-- Manifest output exists.
+- The copied kernel compiles as Faber-owned source inside `hosts/macos-arm64` with no Muninn runtime dependency.
+- Provenance from the Muninn source import is recorded in commit history, docs, or module comments clearly enough for future audits.
+- The host can route at least one built-in syscall and report one unresolved capability as `E_NO_ROUTE`.
+- Manifest output exists and includes the built-in syscall surface.
+- The first HAL migration candidate is recorded, with rationale for why it belongs in the host kernel rather than generated Rust support.
 - The design remains compatible with future Wasm component integration.
 
 ### Epic 5: MIR/Wasm Lowering To Host Calls
