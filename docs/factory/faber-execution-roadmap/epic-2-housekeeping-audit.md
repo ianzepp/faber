@@ -59,7 +59,14 @@
 - Kept `tempta`, closure, and await lowering in `expr/control/mod.rs`.
 - Validation after this slice: focused collection, optional, and broad control-flow Rust backend tests, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
 
-Remaining high-priority cleanup is now mostly generated helper/prelude extraction and helper-level tests: move generated helper prelude emission out of `codegen/rust/mod.rs`, isolate the remaining hand-built type-rendering tests, and add narrower helper-level tests around centralized emission decisions.
+2026-05-24 follow-up extracted generated Rust prelude emission:
+
+- Added `docs/factory/faber-execution-roadmap/epic-2-post-cleanup-phase-6-delivery.md` as the phase delivery artifact.
+- Added `crates/radix/src/codegen/rust/prelude.rs` for generated file headers, import normalization, helper-import scanning, `FaberValue` helper emission, async entry `__faber_block_on`, and source HIR import collection.
+- Reduced `crates/radix/src/codegen/rust/mod.rs` from roughly 1,020 lines to roughly 780 lines while keeping `RustCodegen` orchestration and HIR state collection there.
+- Validation after this slice: focused dynamic/prelude/import/async Rust backend tests, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
+
+Remaining high-priority cleanup is now mostly helper-level tests and residual test decomposition: isolate the remaining hand-built type-rendering tests and add narrower helper-level tests around centralized emission decisions.
 
 ## Highest Priority Cleanup And Correctness Risks
 
