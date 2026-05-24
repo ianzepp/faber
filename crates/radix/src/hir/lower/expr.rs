@@ -217,7 +217,12 @@ impl<'a> Lowerer<'a> {
 
     fn lower_call_args(&mut self, args: &[crate::syntax::Argument]) -> Vec<HirCallArg> {
         args.iter()
-            .map(|arg| HirCallArg { spread: arg.spread, expr: lower_expr(self, &arg.value), span: arg.span })
+            .map(|arg| HirCallArg {
+                name: None,
+                spread: arg.spread,
+                expr: lower_expr(self, &arg.value),
+                span: arg.span,
+            })
             .collect()
     }
 
@@ -257,11 +262,7 @@ impl<'a> Lowerer<'a> {
             crate::syntax::OptionalChainKind::Index(index) => {
                 HirOptionalChainKind::Index(Box::new(lower_expr(self, index)))
             }
-            crate::syntax::OptionalChainKind::Call(args) => HirOptionalChainKind::Call(
-                args.iter()
-                    .map(|arg| lower_expr(self, &arg.value))
-                    .collect(),
-            ),
+            crate::syntax::OptionalChainKind::Call(args) => HirOptionalChainKind::Call(self.lower_call_args(args)),
         };
         HirExprKind::OptionalChain(Box::new(object), chain)
     }
@@ -271,11 +272,7 @@ impl<'a> Lowerer<'a> {
         let chain = match &expr.chain {
             crate::syntax::NonNullKind::Member(member) => HirNonNullKind::Member(member.name),
             crate::syntax::NonNullKind::Index(index) => HirNonNullKind::Index(Box::new(lower_expr(self, index))),
-            crate::syntax::NonNullKind::Call(args) => HirNonNullKind::Call(
-                args.iter()
-                    .map(|arg| lower_expr(self, &arg.value))
-                    .collect(),
-            ),
+            crate::syntax::NonNullKind::Call(args) => HirNonNullKind::Call(self.lower_call_args(args)),
         };
         HirExprKind::NonNull(Box::new(object), chain)
     }
@@ -509,7 +506,12 @@ impl<'a> Lowerer<'a> {
         let args = finge
             .fields
             .iter()
-            .map(|field| HirCallArg { spread: false, expr: lower_expr(self, &field.value), span: field.span })
+            .map(|field| HirCallArg {
+                name: Some(field.name.name),
+                spread: false,
+                expr: lower_expr(self, &field.value),
+                span: field.span,
+            })
             .collect();
 
         let call = HirExpr {

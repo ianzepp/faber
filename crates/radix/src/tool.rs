@@ -1202,7 +1202,7 @@ fn lint_rust_code(code: &str) -> Result<String, String> {
     .map_err(|e| format!("failed to write Cargo.toml: {e}"))?;
 
     // Run cargo clippy --fix (best effort)
-    let status = Command::new("cargo")
+    let output = Command::new("cargo")
         .args([
             "clippy",
             "--fix",
@@ -1215,18 +1215,23 @@ fn lint_rust_code(code: &str) -> Result<String, String> {
             "warnings",
         ])
         .current_dir(&temp_dir)
-        .status();
+        .output();
 
-    // Clean up temp dir (ignore errors)
-    let _ = fs::remove_dir_all(&temp_dir);
-
-    match status {
-        Ok(s) if s.success() => {
+    match output {
+        Ok(output) if output.status.success() => {
             let fixed = fs::read_to_string(&main_rs).map_err(|e| format!("failed to read fixed code: {e}"))?;
+            let _ = fs::remove_dir_all(&temp_dir);
             Ok(fixed)
         }
-        Ok(s) => Err(format!("cargo clippy --fix exited with status {s}")),
-        Err(e) => Err(format!("failed to run cargo clippy: {e} (is clippy installed?)")),
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+            let _ = fs::remove_dir_all(&temp_dir);
+            Err(format!("cargo clippy --fix exited with status {}: {stderr}", output.status))
+        }
+        Err(e) => {
+            let _ = fs::remove_dir_all(&temp_dir);
+            Err(format!("failed to run cargo clippy: {e} (is clippy installed?)"))
+        }
     }
 }
 

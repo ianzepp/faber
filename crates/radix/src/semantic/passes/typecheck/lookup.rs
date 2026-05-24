@@ -8,11 +8,10 @@
 //!
 //! NULLABILITY AND ACCESS
 //! ======================
-//! Struct, enum, and interface extraction intentionally look through references,
-//! optional wrappers, and applied generic shells. That lets field/access/call
-//! checking operate on the underlying declaration contract while the expression
-//! checker still owns whether optional chaining, non-null access, or direct
-//! access is legal for the surface syntax.
+//! Struct and interface extraction intentionally do not look through optional
+//! wrappers for ordinary lookup. Optional chaining and non-null access unwrap
+//! their receiver before calling these helpers, which keeps `maybe.field` from
+//! silently behaving like `maybe?.field`.
 
 use super::*;
 
@@ -137,12 +136,11 @@ impl<'a> TypeChecker<'a> {
         None
     }
 
-    /// Extract the underlying struct definition from a receiver-like type.
+    /// Extract the underlying struct definition from an ordinary receiver type.
     pub(super) fn struct_def_from_type(&self, ty: TypeId) -> Option<DefId> {
         match self.types.get(self.resolve_type(ty)) {
             Type::Struct(def_id) => Some(*def_id),
             Type::Ref(_, inner) => self.struct_def_from_type(*inner),
-            Type::Option(inner) => self.struct_def_from_type(*inner),
             Type::Applied(base, _) => self.struct_def_from_type(*base),
             _ => None,
         }
@@ -158,12 +156,11 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    /// Extract the underlying interface definition from a receiver-like type.
+    /// Extract the underlying interface definition from an ordinary receiver type.
     pub(super) fn interface_def_from_type(&self, ty: TypeId) -> Option<DefId> {
         match self.types.get(self.resolve_type(ty)) {
             Type::Interface(def_id) => Some(*def_id),
             Type::Ref(_, inner) => self.interface_def_from_type(*inner),
-            Type::Option(inner) => self.interface_def_from_type(*inner),
             Type::Applied(base, _) => self.interface_def_from_type(*base),
             _ => None,
         }

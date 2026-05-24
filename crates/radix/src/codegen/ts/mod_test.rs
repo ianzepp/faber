@@ -806,6 +806,7 @@ fn translates_norma_methods_and_intrinsics() {
                             }),
                             appende,
                             vec![HirCallArg {
+                                name: None,
                                 spread: false,
                                 expr: HirExpr {
                                     id: HirId(11),
@@ -854,6 +855,7 @@ fn translates_norma_methods_and_intrinsics() {
                             pone,
                             vec![
                                 HirCallArg {
+                                    name: None,
                                     spread: false,
                                     expr: HirExpr {
                                         id: HirId(18),
@@ -864,6 +866,7 @@ fn translates_norma_methods_and_intrinsics() {
                                     span: span(),
                                 },
                                 HirCallArg {
+                                    name: None,
                                     spread: false,
                                     expr: HirExpr {
                                         id: HirId(19),
@@ -892,6 +895,7 @@ fn translates_norma_methods_and_intrinsics() {
                                 span: span(),
                             }),
                             vec![HirCallArg {
+                                name: None,
                                 spread: false,
                                 expr: HirExpr {
                                     id: HirId(23),

@@ -142,11 +142,22 @@ impl<'a> TypeChecker<'a> {
         &mut self,
         object_ty: TypeId,
         name: Symbol,
-        _span: crate::lexer::Span,
+        span: crate::lexer::Span,
     ) -> TypeId {
+        if matches!(self.types.get(self.resolve_type(object_ty)), Type::Option(_)) {
+            self.error(
+                SemanticErrorKind::UndefinedMember,
+                "optional receiver requires optional chaining or non-null access",
+                span,
+            );
+            return self.error_type;
+        }
         if let Some(struct_def) = self.struct_def_from_type(object_ty) {
             if let Some(info) = self.structs.get(&struct_def) {
                 if let Some(field) = info.fields.get(&name).copied() {
+                    if field.optional {
+                        return self.types.option(field.ty);
+                    }
                     return field.ty;
                 }
             }
@@ -158,7 +169,7 @@ impl<'a> TypeChecker<'a> {
             if let Some(field_ty) = fields.get(&name).copied() {
                 return field_ty;
             }
-            self.error(SemanticErrorKind::UndefinedVariable, "unknown record field", _span);
+            self.error(SemanticErrorKind::UndefinedVariable, "unknown record field", span);
             return self.error_type;
         }
         self.error_type
@@ -225,7 +236,11 @@ impl<'a> TypeChecker<'a> {
             crate::hir::HirOptionalChainKind::Call(args) => self.check_call_from_type(inner_ty, args, span),
         };
 
-        self.types.option(result)
+        if matches!(self.types.get(self.resolve_type(result)), Type::Option(_)) {
+            result
+        } else {
+            self.types.option(result)
+        }
     }
     /// Checks ordinary index syntax by synthesizing both operands first.
     pub(super) fn check_index(&mut self, object: &mut HirExpr, index: &mut HirExpr) -> TypeId {

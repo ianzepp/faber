@@ -62,3 +62,10 @@ receivers and tries to access fields on a `nihil` local.
 ## Open Questions
 
 - None for this phase. Any remaining `ad/ad.fab` failure is outside Epic 2.
+
+## Closeout Update
+
+Post-phase cleanup on 2026-05-24 confirms the live Rust e2e state is `99/100`,
+with `examples/exempla/ad/ad.fab` as the only expected failure deferred to Epic
+3. The Rust e2e harness now asserts that full expected corpus state rather than
+only proving `salve-munde.fab`.

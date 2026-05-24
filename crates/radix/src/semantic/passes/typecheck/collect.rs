@@ -46,7 +46,12 @@ impl<'a> TypeChecker<'a> {
         for field in &struct_item.fields {
             fields.insert(
                 field.name,
-                StructFieldInfo { ty: field.ty, required: !field.sponte && field.init.is_none(), span: field.span },
+                StructFieldInfo {
+                    ty: field.ty,
+                    optional: field.sponte,
+                    required: !field.sponte && field.init.is_none(),
+                    span: field.span,
+                },
             );
         }
 
@@ -95,7 +100,9 @@ impl<'a> TypeChecker<'a> {
                 HirItemKind::Enum(enum_item) => {
                     for variant in &enum_item.variants {
                         let fields = variant.fields.iter().map(|f| f.ty).collect();
+                        let field_names = variant.fields.iter().map(|f| f.name).collect();
                         self.variant_fields.insert(variant.def_id, fields);
+                        self.variant_field_names.insert(variant.def_id, field_names);
                         self.variant_parent.insert(variant.def_id, item.def_id);
                     }
                 }

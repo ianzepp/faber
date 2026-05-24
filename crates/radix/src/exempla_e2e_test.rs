@@ -12,6 +12,8 @@ struct E2eResult {
     reason: String,
 }
 
+const RUST_EXPECTED_FAILURES: &[&str] = &["ad/ad.fab"];
+
 #[test]
 #[ignore = "slow end-to-end harness; run explicitly with cargo test exempla_rust_e2e -- --ignored"]
 fn exempla_rust_e2e() {
@@ -152,12 +154,25 @@ fn exempla_rust_e2e() {
         eprintln!("[fail] {} :: {}", fail.path.display(), fail.reason);
     }
 
-    let salve_ok = results
+    let unexpected_failures = results
         .iter()
-        .find(|r| r.path.ends_with("salve-munde.fab"))
-        .map(|r| r.passed)
-        .unwrap_or(false);
-    assert!(salve_ok, "salve-munde.fab should pass end-to-end");
+        .filter(|r| !r.passed && !is_expected_failure(&r.path, RUST_EXPECTED_FAILURES))
+        .collect::<Vec<_>>();
+    let unexpected_passes = results
+        .iter()
+        .filter(|r| r.passed && is_expected_failure(&r.path, RUST_EXPECTED_FAILURES))
+        .collect::<Vec<_>>();
+
+    assert!(
+        unexpected_failures.is_empty(),
+        "unexpected Rust e2e failures: {}",
+        format_result_paths(&unexpected_failures)
+    );
+    assert!(
+        unexpected_passes.is_empty(),
+        "Rust e2e expected failures now pass and should be removed from metadata: {}",
+        format_result_paths(&unexpected_passes)
+    );
 }
 
 #[test]
@@ -403,6 +418,20 @@ fn read_expected_stdout(fab_path: &Path) -> Option<String> {
     let expected_path = fab_path.with_extension("expected");
     let content = fs::read_to_string(expected_path).ok()?;
     Some(normalize_newline(&content))
+}
+
+fn is_expected_failure(path: &Path, expected_failures: &[&str]) -> bool {
+    expected_failures
+        .iter()
+        .any(|expected| path.ends_with(expected))
+}
+
+fn format_result_paths(results: &[&E2eResult]) -> String {
+    results
+        .iter()
+        .map(|result| result.path.display().to_string())
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn normalize_newline(text: &str) -> String {

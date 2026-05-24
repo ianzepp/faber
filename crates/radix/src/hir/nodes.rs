@@ -629,6 +629,9 @@ pub struct HirExpr {
 /// Function or method call argument.
 #[derive(Debug)]
 pub struct HirCallArg {
+    /// Source field name for named construction forms such as `finge`.
+    pub name: Option<Symbol>,
+
     /// Whether the source argument used `sparge`.
     pub spread: bool,
 
@@ -875,7 +878,7 @@ pub enum HirOptionalChainKind {
     Index(Box<HirExpr>),
 
     /// Null-safe call.
-    Call(Vec<HirExpr>),
+    Call(Vec<HirCallArg>),
 }
 
 /// One non-null assertion operation after the base expression.
@@ -888,7 +891,7 @@ pub enum HirNonNullKind {
     Index(Box<HirExpr>),
 
     /// Assert then call.
-    Call(Vec<HirExpr>),
+    Call(Vec<HirCallArg>),
 }
 
 /// Iteration source mode lowered from `itera` syntax.

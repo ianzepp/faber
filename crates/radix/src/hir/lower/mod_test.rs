@@ -1,5 +1,5 @@
 use super::lower;
-use crate::hir::{HirFunction, HirItemKind, HirStruct, HirTestMetadata, HirTestModifier};
+use crate::hir::{HirExprKind, HirFunction, HirItemKind, HirStmtKind, HirStruct, HirTestMetadata, HirTestModifier};
 use crate::lexer::Interner;
 use crate::semantic::{passes, Resolver, TypeTable};
 
@@ -38,6 +38,40 @@ fn test_metadata(item: &crate::hir::HirItem) -> &HirTestMetadata {
         panic!("expected lowered test function");
     };
     test
+}
+
+#[test]
+fn preserves_spread_args_in_optional_and_non_null_calls() {
+    let source = r#"
+functio run(ignotum callback) → vacuum {
+  fixum numerus[] values ← [1, 2]
+  callback?(sparge values)
+  callback!(sparge values)
+}
+"#;
+
+    let (hir, _) = lower_source(source);
+    let HirItemKind::Function(function) = &hir.items[0].kind else {
+        panic!("expected function item");
+    };
+    let body = function.body.as_ref().expect("expected function body");
+
+    let HirStmtKind::Expr(optional_call) = &body.stmts[1].kind else {
+        panic!("expected optional call statement");
+    };
+    let HirExprKind::OptionalChain(_, crate::hir::HirOptionalChainKind::Call(optional_args)) = &optional_call.kind
+    else {
+        panic!("expected optional call");
+    };
+    assert!(optional_args[0].spread);
+
+    let HirStmtKind::Expr(non_null_call) = &body.stmts[2].kind else {
+        panic!("expected non-null call statement");
+    };
+    let HirExprKind::NonNull(_, crate::hir::HirNonNullKind::Call(non_null_args)) = &non_null_call.kind else {
+        panic!("expected non-null call");
+    };
+    assert!(non_null_args[0].spread);
 }
 
 #[test]

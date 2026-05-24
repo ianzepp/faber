@@ -449,7 +449,7 @@ pub fn walk_optional_chain<V: HirVisitor>(visitor: &mut V, chain: &HirOptionalCh
         HirOptionalChainKind::Index(index) => visitor.visit_expr(index),
         HirOptionalChainKind::Call(args) => {
             for arg in args {
-                visitor.visit_expr(arg);
+                visitor.visit_expr(&arg.expr);
             }
         }
     }
@@ -462,7 +462,7 @@ pub fn walk_non_null<V: HirVisitor>(visitor: &mut V, chain: &HirNonNullKind) {
         HirNonNullKind::Index(index) => visitor.visit_expr(index),
         HirNonNullKind::Call(args) => {
             for arg in args {
-                visitor.visit_expr(arg);
+                visitor.visit_expr(&arg.expr);
             }
         }
     }
@@ -883,7 +883,7 @@ pub fn walk_optional_chain_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut Hi
         HirOptionalChainKind::Index(index) => visitor.visit_expr_mut(index),
         HirOptionalChainKind::Call(args) => {
             for arg in args {
-                visitor.visit_expr_mut(arg);
+                visitor.visit_expr_mut(&mut arg.expr);
             }
         }
     }
@@ -896,7 +896,7 @@ pub fn walk_non_null_mut<V: HirVisitorMut>(visitor: &mut V, chain: &mut HirNonNu
         HirNonNullKind::Index(index) => visitor.visit_expr_mut(index),
         HirNonNullKind::Call(args) => {
             for arg in args {
-                visitor.visit_expr_mut(arg);
+                visitor.visit_expr_mut(&mut arg.expr);
             }
         }
     }

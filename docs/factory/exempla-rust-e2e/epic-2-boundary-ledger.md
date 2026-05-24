@@ -68,4 +68,14 @@ This ledger records files moved out of `examples/exempla/` during Epic 2 Phase 1
 
 Generated package `target/` directories were not preserved in the new fixture tree. They are build artifacts, not source fixtures.
 
-After relocation, `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reports `59/100` files passing. The harness itself passes because it currently asserts `salve-munde.fab`, but the `[fail]` records show the next Epic 2 work is backend/source-policy stabilization. The relocated boundary classes no longer contribute HAL, regex, import, package, proba, `tempta`, declaration-only, or standalone-input failures to the executable corpus.
+After relocation, `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reported `59/100` files passing. That was the Phase 1 boundary baseline, not the current state.
+
+Current closeout state on 2026-05-24:
+
+- `examples/exempla/` contains `100` `.fab` files.
+- `examples/fixtures/exempla-boundary/` contains `37` relocated `.fab` fixtures.
+- `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` reports `99/100` files passing.
+- The only current expected failure is `examples/exempla/ad/ad.fab`, deferred to Epic 3 capability-call support.
+- The Rust e2e harness now asserts the full expected corpus state instead of only checking `salve-munde.fab`.
+
+The relocated boundary classes no longer contribute HAL, regex, import, package, proba, `tempta`, declaration-only, or standalone-input failures to the executable corpus.

@@ -244,7 +244,11 @@ fn generate_variant_constructor_expr(
         }
         w.write(codegen.resolve_symbol(*field));
         w.write(": ");
-        if let Some(arg) = args.get(idx) {
+        let arg = args
+            .iter()
+            .find(|arg| arg.name == Some(*field))
+            .or_else(|| args.get(idx));
+        if let Some(arg) = arg {
             generate_call_arg_expr(
                 codegen,
                 &arg.expr,

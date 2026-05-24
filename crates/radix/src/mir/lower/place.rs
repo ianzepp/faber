@@ -106,7 +106,7 @@ impl FunctionBuilder<'_> {
             HirOptionalChainKind::Call(args) => {
                 let mut lowered_args = Vec::with_capacity(args.len());
                 for arg in args {
-                    lowered_args.push(self.lower_expr_value(arg)?);
+                    lowered_args.push(self.lower_expr_value(&arg.expr)?);
                 }
                 Some(MirOptionChainLink::Call { callee: MirCallee::Value(base), args: lowered_args })
             }

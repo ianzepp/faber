@@ -274,7 +274,7 @@ pub(super) fn generate_optional_chain_expr(
                 if idx > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w)?;
+                generate_expr(codegen, &arg.expr, types, w)?;
             }
             w.write("); ");
             if matches!(
@@ -328,7 +328,7 @@ pub(super) fn generate_non_null_expr(
                 if idx > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w)?;
+                generate_expr(codegen, &arg.expr, types, w)?;
             }
             w.write(")");
         }

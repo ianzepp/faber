@@ -10,6 +10,19 @@
 - `cargo test -p radix`: pass, `458` tests, `3` ignored, plus `8` hygiene tests.
 - `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture`: harness pass, `99/100` exempla pass. The only current failure is `examples/exempla/ad/ad.fab`, intentionally deferred to Epic 3.
 
+## Post-Audit Cleanup Progress
+
+2026-05-24 follow-up implemented the first correctness slice:
+
+- Optional/non-null call HIR now preserves full `HirCallArg` metadata, including `sparge`.
+- `finge` variant construction now preserves source field names, checks unknown/duplicate names before codegen, and emits Rust fields by declared name instead of source order.
+- Sponte struct field access now produces optional receiver types, and ordinary access on optional receivers is rejected unless optional-chain or non-null syntax is explicit.
+- The Rust e2e harness now uses `ad/ad.fab` as explicit expected-failure metadata and asserts the full corpus state.
+- Generated Rust linting reads fixed `src/main.rs` before deleting the temporary Cargo project and captures clippy stderr for focused diagnostics.
+- Drifted status docs were updated with the live `99/100`, `100` exempla, and `37` relocated fixture counts.
+
+Remaining high-priority cleanup still includes centralized optional-shape emission and centralized dynamic `FaberValue` coercion.
+
 ## Highest Priority Cleanup And Correctness Risks
 
 1. Harden optional-shape emission behind one helper.

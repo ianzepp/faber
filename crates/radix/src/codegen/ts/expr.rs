@@ -126,7 +126,7 @@ pub fn generate_expr(
                         if idx > 0 {
                             w.write(", ");
                         }
-                        generate_expr(codegen, arg, types, w)?;
+                        generate_expr(codegen, &arg.expr, types, w)?;
                     }
                     w.write(")");
                 }
@@ -150,7 +150,7 @@ pub fn generate_expr(
                         if idx > 0 {
                             w.write(", ");
                         }
-                        generate_expr(codegen, arg, types, w)?;
+                        generate_expr(codegen, &arg.expr, types, w)?;
                     }
                     w.write(")");
                 }

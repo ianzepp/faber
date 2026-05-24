@@ -32,6 +32,7 @@ fn reports_use_after_move() {
                 span: span(),
             }),
             vec![crate::hir::HirCallArg {
+                name: None,
                 spread: false,
                 expr: HirExpr { id: crate::hir::HirId(4), kind: HirExprKind::Path(DefId(1)), ty: None, span: span() },
                 span: span(),
@@ -253,6 +254,7 @@ fn reports_de_passed_to_in_position() {
                 span: span(),
             }),
             vec![crate::hir::HirCallArg {
+                name: None,
                 spread: false,
                 expr: HirExpr {
                     id: crate::hir::HirId(3),

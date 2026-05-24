@@ -110,6 +110,9 @@ struct StructFieldInfo {
     /// Declared field type in the shared type table.
     ty: TypeId,
 
+    /// Whether ordinary field access produces an optional value.
+    optional: bool,
+
     /// Whether a struct literal must provide this field explicitly.
     required: bool,
 
@@ -171,6 +174,9 @@ struct TypeChecker<'a> {
 
     /// Enum variant payload types keyed by variant definition.
     variant_fields: FxHashMap<DefId, Vec<TypeId>>,
+
+    /// Enum variant payload names keyed by variant definition.
+    variant_field_names: FxHashMap<DefId, Vec<Symbol>>,
 
     /// Parent enum for each variant constructor.
     variant_parent: FxHashMap<DefId, DefId>,
@@ -242,6 +248,7 @@ impl<'a> TypeChecker<'a> {
             structs: FxHashMap::default(),
             interfaces: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
+            variant_field_names: FxHashMap::default(),
             variant_parent: FxHashMap::default(),
             current_return: None,
             current_error: None,

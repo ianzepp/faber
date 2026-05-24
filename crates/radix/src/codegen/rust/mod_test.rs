@@ -284,7 +284,7 @@ functio handle(Event e) → vacuum {
 }
 
 incipit {
-    fixum Event e1 ← finge Click { x = 1, y = 2 } ∷ Event
+    fixum Event e1 ← finge Click { y = 2, x = 1 } ∷ Event
     fixum Event e2 ← finge Quit ∷ Event
     handle(e1)
     handle(e2)
@@ -302,6 +302,27 @@ incipit {
         .code
         .contains("let e1: Event = Event::Click { x: 1, y: 2 };"));
     assert!(rust.code.contains("let e2: Event = Event::Quit;"));
+}
+
+#[test]
+fn rejects_unknown_finge_variant_fields_before_codegen() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+discretio Event {
+    Click { numerus x, numerus y }
+}
+
+incipit {
+    fixum Event e1 ← finge Click { y = 2, z = 1 } ∷ Event
+}
+"#;
+
+    let result = compiler.compile_str("unknown-finge-field.fab", source);
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.message.contains("unknown variant field")));
 }
 
 #[test]
@@ -349,6 +370,31 @@ incipit {
     assert!(rust.code.contains("(items).get((10) as usize).cloned()"));
     assert!(!rust.code.contains("(alice).as_ref()"));
     assert!(!rust.code.contains("(items).as_ref()"));
+}
+
+#[test]
+fn rejects_ordinary_access_on_optional_receivers() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+genus Address {
+    textus city
+}
+
+genus User {
+    Address address sponte
+}
+
+incipit {
+    fixum _ user ← User {}
+    fixum _ city ← user.address.city
+}
+"#;
+
+    let result = compiler.compile_str("ordinary-optional-access.fab", source);
+    assert!(result.output.is_none());
+    assert!(result.diagnostics.iter().any(|diagnostic| diagnostic
+        .message
+        .contains("optional receiver requires optional chaining")));
 }
 
 #[test]
@@ -1913,6 +1959,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                 kind: HirExprKind::Call(
                     Box::new(HirExpr { id: HirId(306), kind: HirExprKind::Path(DefId(1)), ty: None, span: span() }),
                     vec![HirCallArg {
+                        name: None,
                         spread: false,
                         expr: HirExpr {
                             id: HirId(307),
@@ -1932,6 +1979,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                     Box::new(HirExpr { id: HirId(309), kind: HirExprKind::Path(DefId(2)), ty: None, span: span() }),
                     method,
                     vec![HirCallArg {
+                        name: None,
                         spread: false,
                         expr: HirExpr {
                             id: HirId(310),

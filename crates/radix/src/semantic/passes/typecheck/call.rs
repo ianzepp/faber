@@ -49,12 +49,12 @@ impl<'a> TypeChecker<'a> {
     pub(super) fn check_call_from_type(
         &mut self,
         callee_ty: TypeId,
-        args: &mut [HirExpr],
+        args: &mut [HirCallArg],
         span: crate::lexer::Span,
     ) -> TypeId {
         let resolved = self.resolve_type(callee_ty);
         if let Some(sig) = self.function_signature_from_type(resolved) {
-            self.check_plain_call_args(&sig, args, span);
+            self.check_call_args(&sig, args, span);
             if self.reject_failable_call(&sig, span) {
                 return self.error_type;
             }
@@ -62,44 +62,25 @@ impl<'a> TypeChecker<'a> {
         }
 
         if self.is_infer(resolved) {
-            let sig = self.build_plain_call_signature(args);
+            let sig = self.build_call_signature(args);
             let func_ty = self.types.function(sig.clone());
             self.unify(resolved, func_ty, span, "callee is not callable");
-            self.check_plain_call_args(&sig, args, span);
+            self.check_call_args(&sig, args, span);
             return sig.ret;
         }
 
         if matches!(self.types.get(resolved), Type::Primitive(Primitive::Ignotum)) {
             for arg in args {
-                self.check_expr(arg);
+                self.check_expr(&mut arg.expr);
             }
             return self.types.primitive(Primitive::Ignotum);
         }
 
         for arg in args {
-            self.check_expr(arg);
+            self.check_expr(&mut arg.expr);
         }
         self.error(SemanticErrorKind::NotCallable, "callee is not callable", span);
         self.error_type
-    }
-
-    fn build_plain_call_signature(&mut self, args: &mut [HirExpr]) -> FuncSig {
-        let params = args
-            .iter_mut()
-            .map(|arg| ParamType { ty: self.check_expr(arg), mode: ParamMode::Owned, optional: false })
-            .collect();
-        FuncSig { params, ret: self.fresh_infer(), err: None, is_async: false, is_generator: false }
-    }
-
-    fn check_plain_call_args(&mut self, sig: &FuncSig, args: &mut [HirExpr], span: crate::lexer::Span) {
-        let required = sig.params.iter().filter(|param| !param.optional).count();
-        if args.len() < required || args.len() > sig.params.len() {
-            self.error(SemanticErrorKind::WrongArity, "wrong number of arguments", span);
-        }
-        for (arg, param) in args.iter_mut().zip(sig.params.iter()) {
-            let arg_ty = self.check_expr_with_expected(arg, Some(param.ty));
-            self.unify(arg_ty, param.ty, arg.span, "argument type mismatch");
-        }
     }
     /// Accepts a single spread-array argument when it can satisfy every required
     /// non-optional parameter in a fixed signature.
@@ -161,6 +142,17 @@ impl<'a> TypeChecker<'a> {
         args: &mut [HirCallArg],
     ) -> TypeId {
         let receiver_ty = self.check_expr(receiver);
+        if matches!(self.types.get(self.resolve_type(receiver_ty)), Type::Option(_)) {
+            for arg in args {
+                self.check_expr(&mut arg.expr);
+            }
+            self.error(
+                SemanticErrorKind::UndefinedMember,
+                "optional receiver requires optional chaining or non-null access",
+                receiver.span,
+            );
+            return self.error_type;
+        }
         if let Some(sig) = self.lookup_method_signature(receiver_ty, name) {
             self.check_call_args(&sig, args, receiver.span);
             if self.reject_failable_call(&sig, receiver.span) {
@@ -373,12 +365,41 @@ impl<'a> TypeChecker<'a> {
         if let HirExprKind::Path(def_id) = &callee.kind {
             if let Some(parent) = self.variant_parent.get(def_id).copied() {
                 let fields = self.variant_fields.get(def_id).cloned().unwrap_or_default();
+                let field_names = self
+                    .variant_field_names
+                    .get(def_id)
+                    .cloned()
+                    .unwrap_or_default();
                 if args.len() != fields.len() {
                     self.error(SemanticErrorKind::WrongArity, "wrong number of arguments", callee.span);
                 }
-                for (arg, field_ty) in args.iter_mut().zip(fields.iter()) {
-                    let arg_ty = self.check_expr(&mut arg.expr);
-                    self.unify(arg_ty, *field_ty, arg.span, "argument type mismatch");
+                if args.iter().any(|arg| arg.name.is_some()) {
+                    let mut seen = FxHashSet::default();
+                    for arg in args {
+                        let Some(name) = arg.name else {
+                            let arg_ty = self.check_expr(&mut arg.expr);
+                            self.unify(arg_ty, self.error_type, arg.span, "argument type mismatch");
+                            self.error(SemanticErrorKind::UndefinedMember, "missing variant field name", arg.span);
+                            continue;
+                        };
+                        if !seen.insert(name) {
+                            self.error(SemanticErrorKind::UndefinedMember, "duplicate variant field", arg.span);
+                        }
+                        let Some(index) = field_names.iter().position(|field| *field == name) else {
+                            self.check_expr(&mut arg.expr);
+                            self.error(SemanticErrorKind::UndefinedMember, "unknown variant field", arg.span);
+                            continue;
+                        };
+                        if let Some(field_ty) = fields.get(index).copied() {
+                            let arg_ty = self.check_expr_with_expected(&mut arg.expr, Some(field_ty));
+                            self.unify(arg_ty, field_ty, arg.span, "argument type mismatch");
+                        }
+                    }
+                } else {
+                    for (arg, field_ty) in args.iter_mut().zip(fields.iter()) {
+                        let arg_ty = self.check_expr(&mut arg.expr);
+                        self.unify(arg_ty, *field_ty, arg.span, "argument type mismatch");
+                    }
                 }
                 return self.types.intern(Type::Enum(parent));
             }

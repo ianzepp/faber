@@ -101,7 +101,15 @@ pub(super) fn generate_optional_chain_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                generate_expr(
+                    codegen,
+                    &arg.expr,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
             }
             w.write(")))");
         }
@@ -297,7 +305,15 @@ pub(super) fn generate_non_null_expr(
                 if i > 0 {
                     w.write(", ");
                 }
-                generate_expr(codegen, arg, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+                generate_expr(
+                    codegen,
+                    &arg.expr,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
             }
             w.write(")");
         }

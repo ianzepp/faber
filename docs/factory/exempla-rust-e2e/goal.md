@@ -1,6 +1,6 @@
 # Goal: Executable Rust Coverage For Exempla
 
-**Status**: problem set defined, not started
+**Status**: Epic 2 closeout reached; Rust e2e gate is truthful with one Epic 3 expected failure
 **Created**: 2026-05-24
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/exempla-rust-e2e/`
@@ -12,7 +12,15 @@
 
 Make the `examples/exempla/` corpus truthful against the Rust target: every remaining exemplar is a single-file language example that compiles to executable Rust and runs successfully through the standalone end-to-end harness, or the exemplar is corrected, moved out of the exempla boundary, or removed because it is no longer valid Faber.
 
-## Problem
+## Current State
+
+- `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` now reports `99/100` files passing.
+- The only expected Rust e2e failure is `examples/exempla/ad/ad.fab`, which remains linked to Epic 3 capability-call work.
+- `examples/exempla/` currently contains `100` `.fab` files.
+- `examples/fixtures/exempla-boundary/` preserves `37` relocated `.fab` fixtures that are not standalone Rust exempla.
+- The Rust e2e harness now fails on any unexpected exemplar failure and also fails if `ad/ad.fab` starts passing without removing the expected-failure metadata.
+
+## Original Problem
 
 - The ignored Rust e2e harness currently reports `71/138` exemplar files passing end-to-end and `67` failing.
 - The failures are not one bug. They mix source files that are stale or intentionally invalid, Rust backend semantic gaps, unsupported target features, package examples, dependency-backed examples, and files that should not live in a single-file language-example corpus.
