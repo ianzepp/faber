@@ -35,6 +35,10 @@ pub(super) fn generate_pattern(codegen: &RustCodegen<'_>, pattern: &HirPattern, 
             generate_pattern(codegen, pattern, w);
         }
         HirPattern::Variant(def_id, fields) => {
+            if let Some(variant) = codegen.variant_info(*def_id) {
+                w.write(codegen.resolve_def(variant.enum_def));
+                w.write("::");
+            }
             w.write(codegen.resolve_def(*def_id));
             if !fields.is_empty() {
                 w.write(" { ");

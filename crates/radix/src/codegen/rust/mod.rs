@@ -74,6 +74,12 @@ struct TestSelectionState {
     has_solum_tests: bool,
 }
 
+#[derive(Clone)]
+pub(super) struct VariantInfo {
+    pub(super) enum_def: DefId,
+    pub(super) fields: Vec<Symbol>,
+}
+
 #[derive(Clone, Copy)]
 pub(super) struct StructFieldInfo<'a> {
     pub(super) name: Symbol,
@@ -128,6 +134,14 @@ pub struct RustCodegen<'a> {
 
     /// DefId -> function parameter count for direct-call spread expansion.
     function_param_counts: FxHashMap<DefId, usize>,
+
+    /// Variant DefId -> parent enum and payload field names.
+    ///
+    /// Rust requires enum variants to be qualified at expression and pattern
+    /// sites. HIR stores the resolved variant identity, so codegen keeps the
+    /// parent relationship here instead of asking expression emitters to infer
+    /// it from names.
+    variant_info: FxHashMap<DefId, VariantInfo>,
 }
 
 impl<'a> RustCodegen<'a> {
@@ -149,6 +163,7 @@ impl<'a> RustCodegen<'a> {
             current_self_def: Cell::new(None),
             binding_types: RefCell::new(FxHashMap::default()),
             function_param_counts: FxHashMap::default(),
+            variant_info: FxHashMap::default(),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen.test_selection = Some(TestSelectionState {
@@ -160,6 +175,7 @@ impl<'a> RustCodegen<'a> {
         });
         codegen.struct_fields = codegen.collect_struct_fields(hir);
         codegen.function_param_counts = codegen.collect_function_param_counts(hir);
+        codegen.variant_info = codegen.collect_variant_info(hir);
         codegen
     }
 
@@ -188,6 +204,10 @@ impl<'a> RustCodegen<'a> {
 
     pub(super) fn resolve_def(&self, def_id: DefId) -> &str {
         self.names.resolve_def(def_id)
+    }
+
+    pub(super) fn variant_info(&self, def_id: DefId) -> Option<&VariantInfo> {
+        self.variant_info.get(&def_id)
     }
 
     pub(super) fn is_failable_def(&self, def_id: DefId) -> bool {
@@ -397,6 +417,25 @@ impl<'a> RustCodegen<'a> {
             }
         }
         counts
+    }
+
+    fn collect_variant_info(&self, hir: &HirProgram) -> FxHashMap<DefId, VariantInfo> {
+        let mut info = FxHashMap::default();
+        for item in &hir.items {
+            let HirItemKind::Enum(enum_item) = &item.kind else {
+                continue;
+            };
+            for variant in &enum_item.variants {
+                info.insert(
+                    variant.def_id,
+                    VariantInfo {
+                        enum_def: item.def_id,
+                        fields: variant.fields.iter().map(|field| field.name).collect(),
+                    },
+                );
+            }
+        }
+        info
     }
 
     fn collect_binding_types(&self, hir: &HirProgram, types: &TypeTable) -> FxHashMap<DefId, TypeId> {

@@ -76,6 +76,10 @@ pub fn generate_expr(
         HirExprKind::Path(def_id) => {
             if codegen.current_self_def() == Some(*def_id) {
                 w.write("self");
+            } else if let Some(variant) = codegen.variant_info(*def_id) {
+                w.write(codegen.resolve_def(variant.enum_def));
+                w.write("::");
+                w.write(codegen.resolve_def(*def_id));
             } else {
                 w.write(codegen.resolve_def(*def_id));
             }

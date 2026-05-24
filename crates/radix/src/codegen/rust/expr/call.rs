@@ -33,6 +33,22 @@ pub(super) fn generate_call_expr(
 ) -> Result<(), CodegenError> {
     // Only direct path calls carry stable failable-def metadata here. Other
     // callable shapes are emitted without speculative propagation.
+    if let HirExprKind::Path(def_id) = callee.kind {
+        if let Some(variant) = codegen.variant_info(def_id) {
+            return generate_variant_constructor_expr(
+                codegen,
+                def_id,
+                variant,
+                args,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
+        }
+    }
+
     let is_failable_call = matches!(&callee.kind, HirExprKind::Path(def_id) if codegen.is_failable_def(*def_id));
     generate_expr(codegen, callee, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write("(");
@@ -67,6 +83,51 @@ pub(super) fn generate_call_expr(
     if is_failable_call && in_failable_fn && !in_entry && !suppress_error_propagation {
         w.write("?");
     }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_variant_constructor_expr(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    variant: &super::super::VariantInfo,
+    args: &[HirCallArg],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write(codegen.resolve_def(variant.enum_def));
+    w.write("::");
+    w.write(codegen.resolve_def(def_id));
+
+    if variant.fields.is_empty() {
+        return Ok(());
+    }
+
+    w.write(" { ");
+    for (idx, field) in variant.fields.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+        w.write(codegen.resolve_symbol(*field));
+        w.write(": ");
+        if let Some(arg) = args.get(idx) {
+            generate_call_arg_expr(
+                codegen,
+                &arg.expr,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+        } else {
+            w.write("Default::default()");
+        }
+    }
+    w.write(" }");
     Ok(())
 }
 

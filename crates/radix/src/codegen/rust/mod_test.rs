@@ -263,6 +263,47 @@ incipit {
 }
 
 #[test]
+fn emits_qualified_enum_variants_for_values_constructors_and_patterns() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+discretio Event {
+    Click { numerus x, numerus y },
+    Quit
+}
+
+functio handle(Event e) → vacuum {
+    discerne e {
+        casu Click fixum x, y {
+            nota x, y
+        }
+        casu Quit {
+            nota "quit"
+        }
+    }
+}
+
+incipit {
+    fixum Event e1 ← finge Click { x = 1, y = 2 } ∷ Event
+    fixum Event e2 ← finge Quit ∷ Event
+    handle(e1)
+    handle(e2)
+}
+"#;
+
+    let result = compiler.compile_str("qualified-enum-variants.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("Event::Click { x, y } =>"));
+    assert!(rust.code.contains("Event::Quit =>"));
+    assert!(rust
+        .code
+        .contains("let e1: Event = Event::Click { x: 1, y: 2 };"));
+    assert!(rust.code.contains("let e2: Event = Event::Quit;"));
+}
+
+#[test]
 fn emits_array_spread_without_moving_source_vector() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

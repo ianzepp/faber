@@ -239,7 +239,9 @@ pub(super) fn generate_match_expr(
             );
             w.writeln(",");
         }
-        if !arms.iter().any(arm_has_wildcard_pattern) {
+        if !arms.iter().any(arm_has_wildcard_pattern) && match_scrutinee_is_enum(scrutinees, types) {
+            w.writeln("_ => unreachable!(),");
+        } else if !arms.iter().any(arm_has_wildcard_pattern) {
             w.writeln("_ => {},");
         }
     });
@@ -252,6 +254,14 @@ fn arm_has_wildcard_pattern(arm: &HirCasuArm) -> bool {
     arm.patterns
         .iter()
         .any(|pattern| matches!(pattern, HirPattern::Wildcard))
+}
+
+fn match_scrutinee_is_enum(scrutinees: &[HirExpr], types: &TypeTable) -> bool {
+    matches!(
+        scrutinees,
+        [scrutinee]
+            if matches!(scrutinee.ty.map(|ty| resolve_type(ty, types)), Some(Type::Enum(_)))
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
