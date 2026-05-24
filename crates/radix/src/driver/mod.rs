@@ -1082,11 +1082,9 @@ fn scan_stmt_for_rust_unsupported_errors(stmt: &Stmt, file: &str, diagnostics: &
                 scan_block_for_rust_unsupported_errors(body, file, diagnostics);
             }
             if let Some(catch) = &endpoint.catch {
-                diagnostics.push(rust_target_exception_diagnostic(
-                    file,
-                    catch.span,
-                    "cape is not supported for Rust targets",
-                ));
+                // `ad` has a target-local unresolved-provider error channel in
+                // the Rust backend. This is narrower than general structured
+                // `cape`, which still remains unsupported for Rust targets.
                 scan_block_for_rust_unsupported_errors(&catch.body, file, diagnostics);
             }
         }

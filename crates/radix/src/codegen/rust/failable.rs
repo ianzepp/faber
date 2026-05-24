@@ -25,7 +25,7 @@
 
 use super::RustCodegen;
 use crate::hir::visit::{walk_expr, HirVisitor};
-use crate::hir::{DefId, HirExpr, HirExprKind, HirFunction, HirItemKind, HirProgram};
+use crate::hir::{DefId, HirAd, HirExpr, HirExprKind, HirFunction, HirItemKind, HirProgram};
 use crate::lexer::Symbol;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -132,6 +132,13 @@ impl DependencyVisitor {
 }
 
 impl HirVisitor for DependencyVisitor {
+    fn visit_ad(&mut self, ad: &HirAd) {
+        if ad.catch.is_none() && !self.suppressed {
+            self.deps.direct_throw = true;
+        }
+        crate::hir::visit::walk_ad(self, ad);
+    }
+
     fn visit_expr(&mut self, expr: &HirExpr) {
         match &expr.kind {
             HirExprKind::Throw(_) => {

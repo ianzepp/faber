@@ -528,7 +528,7 @@ pub enum HirStmtKind {
     /// Expression used for effects.
     Expr(HirExpr),
 
-    /// Endpoint or route-like declaration/execution form.
+    /// Host/provider capability-call form.
     Ad(HirAd),
 
     /// Function return with optional value.
@@ -567,33 +567,33 @@ pub struct HirLocal {
     pub mutable: bool,
 }
 
-/// Lowered `ad` endpoint form.
+/// Lowered `ad` capability-call form.
 ///
 /// HIR preserves the routing/binding shape because endpoint semantics cross
 /// parser, package CLI mounting, typecheck, and backend generation. The body and
 /// catch blocks remain ordinary HIR blocks once the endpoint boundary is known.
 #[derive(Debug)]
 pub struct HirAd {
-    /// Endpoint path or route specifier.
+    /// Capability path or route specifier.
     pub path: Symbol,
 
-    /// Arguments supplied to the endpoint form.
+    /// Arguments supplied to the capability call.
     pub args: Vec<HirExpr>,
 
-    /// Optional route/request binding introduced by the form.
+    /// Optional success binding introduced by the form.
     pub binding: Option<HirAdBinding>,
 
-    /// Endpoint body block.
+    /// Success body block.
     pub body: Option<HirBlock>,
 
     /// Recoverable handler block.
     pub catch: Option<HirBlock>,
 }
 
-/// Binding introduced by an endpoint form.
+/// Binding introduced by a capability-call form.
 #[derive(Debug)]
 pub struct HirAdBinding {
-    /// Endpoint verb taxonomy after lowering.
+    /// Capability-call verb taxonomy after lowering.
     pub verb: HirEndpointVerb,
 
     /// Declared binding type, when source syntax provides one.
@@ -917,7 +917,7 @@ pub enum HirRangeKind {
     Inclusive,
 }
 
-/// Endpoint verb taxonomy for `ad` forms.
+/// Capability-call verb taxonomy for `ad` forms.
 #[derive(Debug, Clone, Copy)]
 pub enum HirEndpointVerb {
     Fit,

@@ -3,14 +3,16 @@ term = "ad"
 kind = "keyword"
 category = "endpoint"
 canonical = true
-summary = "Declares an HTTP endpoint."
+summary = "Requests a host capability."
 syntax = "ad <path> (<args>) [→ [<type>] pro <name> [ut <alias>]] [<block>] [cape <name> <block>]"
 related = ["argumenta", "exitus"]
 +++
 
-Declares an HTTP endpoint.
+Requests a host or provider capability. Normal compilation is permissive:
+capability names do not need to be linked while compiling, but an unresolved
+capability fails explicitly at runtime.
 
 ```fab
-ad "/salve" (request) → textus pro res {
+ad "fasciculus:lege" ("hello.txt") → textus pro content {
 }
 ```

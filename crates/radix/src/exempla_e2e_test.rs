@@ -12,7 +12,8 @@ struct E2eResult {
     reason: String,
 }
 
-const RUST_EXPECTED_FAILURES: &[&str] = &["ad/ad.fab"];
+const RUST_EXPECTED_FAILURES: &[&str] = &[];
+const RUST_EXPECTED_RUNTIME_FAILURES: &[(&str, &str)] = &[("ad/ad.fab", "E_NO_ROUTE: unresolved capability")];
 
 #[test]
 #[ignore = "slow end-to-end harness; run explicitly with cargo test exempla_rust_e2e -- --ignored"]
@@ -127,7 +128,25 @@ fn exempla_rust_e2e() {
 
         if !run.status.success() {
             let stderr = String::from_utf8_lossy(&run.stderr).trim().to_owned();
+            if let Some(expected) = expected_runtime_failure(&file, RUST_EXPECTED_RUNTIME_FAILURES) {
+                if stderr.contains(expected) {
+                    results.push(E2eResult {
+                        path: file.clone(),
+                        passed: true,
+                        reason: format!("expected runtime failure: {expected}"),
+                    });
+                    continue;
+                }
+            }
             results.push(E2eResult { path: file.clone(), passed: false, reason: format!("binary failed: {stderr}") });
+            continue;
+        }
+        if let Some(expected) = expected_runtime_failure(&file, RUST_EXPECTED_RUNTIME_FAILURES) {
+            results.push(E2eResult {
+                path: file.clone(),
+                passed: false,
+                reason: format!("expected runtime failure containing `{expected}`, but binary succeeded"),
+            });
             continue;
         }
 
@@ -424,6 +443,12 @@ fn is_expected_failure(path: &Path, expected_failures: &[&str]) -> bool {
     expected_failures
         .iter()
         .any(|expected| path.ends_with(expected))
+}
+
+fn expected_runtime_failure<'a>(path: &Path, expected_failures: &'a [(&str, &str)]) -> Option<&'a str> {
+    expected_failures
+        .iter()
+        .find_map(|(expected_path, expected_message)| path.ends_with(expected_path).then_some(*expected_message))
 }
 
 fn format_result_paths(results: &[&E2eResult]) -> String {

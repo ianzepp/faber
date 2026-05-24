@@ -1,6 +1,6 @@
 # Goal: Define And Lower `ad` Capability Calls
 
-**Status**: problem defined, not started
+**Status**: Epic 3 implemented for current Rust path
 **Created**: 2026-05-24
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/capability-calls/`
@@ -47,6 +47,7 @@ Reframe `ad` as Faber's capability-call syntax: a source-level request for a nam
 - `hosts/macos-arm64/README.md`: records the long-term split where Faber source lowers to MIR/Wasm and a prebuilt host supplies HAL imports and standard capabilities.
 - `hosts/macos-arm64/ARCHITECTURE.md`: captures the host-owned capability model, non-strict and strict capability compilation modes, and the direction for moving `norma` implementation into compiler core or host capabilities.
 - `hosts/macos-arm64/SYSCALL_MODEL.md`: models capability calls as host syscalls using the Muninn frame/kernel pattern from `/Users/ianzepp/work/ianzepp/muninn/protocol/frames-rs` and `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`.
+- 2026-05-24 implementation update: Rust codegen now emits a temporary unresolved capability dispatcher, explicit success-binding result types are required without provider metadata, `cape` receives unresolved dispatcher errors in the Rust path, and `examples/exempla/ad/ad.fab` is classified as an expected unresolved runtime failure rather than unsupported codegen.
 
 ## Reference Packet
 

@@ -100,6 +100,17 @@ impl<'a> TypeChecker<'a> {
                 for arg in &mut ad.args {
                     self.check_expr(arg);
                 }
+                if ad
+                    .binding
+                    .as_ref()
+                    .is_some_and(|binding| binding.ty.is_none())
+                {
+                    self.error(
+                        SemanticErrorKind::MissingTypeAnnotation,
+                        "unresolved capability calls with a success binding require an explicit result type",
+                        stmt.span,
+                    );
+                }
                 if let Some(body) = &mut ad.body {
                     self.check_block(body, None);
                 }

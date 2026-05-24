@@ -541,12 +541,12 @@ impl Parser {
         Ok(StmtKind::Cura(CuraStmt { kind, mutability, ty, binding, body, catch }))
     }
 
-    /// Parse an HTTP endpoint declaration.
+    /// Parse an `ad` capability-call declaration.
     ///
     /// GRAMMAR:
     ///   ad-stmt := 'ad' string '(' args ')' ['→' [type] 'pro' ident ['ut' ident]] [block] ['cape' ident block]
     ///
-    /// Endpoint parsing records route path, call-style arguments, optional
+    /// Capability-call parsing records the provider path, call-style arguments, optional
     /// response binding, body, and catch clause. Package/runtime integration owns
     /// verb routing and host framework semantics.
     pub(super) fn parse_ad_stmt(&mut self) -> Result<StmtKind, ParseError> {

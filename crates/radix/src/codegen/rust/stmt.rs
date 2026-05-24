@@ -14,8 +14,9 @@
 //! - Expression statements and local initializers preserve the current error
 //!   propagation mode so failable calls can append `?` where expression
 //!   lowering permits it.
-//! - `ad` remains an explicit Rust backend error. This module does not invent a
-//!   target mapping for behavior the Rust backend cannot yet represent.
+//! - `ad` lowers through a temporary unresolved-capability dispatcher. The
+//!   Rust path compiles permissively, then fails explicitly at runtime unless
+//!   a later host/provider path supplies a real route.
 //! - Entry contexts suppress Result propagation because entry throws are
 //!   rendered as panic paths by expression lowering.
 //!
@@ -73,11 +74,8 @@ pub fn generate_stmt(
             generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             w.writeln(";");
         }
-        HirStmtKind::Ad(_) => {
-            // `ad` has no Rust backend contract yet. Returning an explicit
-            // codegen error keeps unsupported syntax visible instead of
-            // producing misleading Rust.
-            return Err(CodegenError { message: "ad is not supported for Rust codegen".to_owned() });
+        HirStmtKind::Ad(ad) => {
+            generate_ad_stmt(codegen, ad, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirStmtKind::Redde(value) => {
             if let Some(expr) = value {
@@ -173,6 +171,279 @@ fn generate_local(
     }
 
     w.writeln(";");
+    Ok(())
+}
+
+fn generate_ad_stmt(
+    codegen: &RustCodegen<'_>,
+    ad: &HirAd,
+    types: &TypeTable,
+    writer: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    // Non-strict capability calls compile without provider metadata. The
+    // temporary dispatcher never constructs the success value, but the generic
+    // result type keeps the source-declared success binding meaningful.
+    let binding_ty = match &ad.binding {
+        Some(binding) => binding.ty.ok_or_else(|| CodegenError {
+            message: "ad capability calls with a success binding require an explicit result type".to_owned(),
+        })?,
+        None => types.primitive(Primitive::Vacuum),
+    };
+    writer.write("match ");
+    ExprEmitter::new(
+        codegen,
+        types,
+        writer,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    )
+    .ad_dispatch(ad, binding_ty)?;
+    writer.writeln(" {");
+    writer.indented(|writer| {
+        writer.write("Ok(__faber_result) => ");
+        let mut result = if let Some(body) = &ad.body {
+            generate_ad_success_block(
+                codegen,
+                ad,
+                body,
+                types,
+                writer,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )
+        } else {
+            writer.writeln("{");
+            writer.indented(|writer| {
+                if ad.binding.is_some() {
+                    writer.writeln("let _ = __faber_result;");
+                }
+            });
+            writer.write("}");
+            Ok(())
+        };
+        if result.is_ok() {
+            writer.writeln(",");
+            writer.write("Err(__faber_err) => ");
+            result = match &ad.catch {
+                Some(catch) => generate_ad_error_block(
+                    codegen,
+                    catch,
+                    types,
+                    writer,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                ),
+                None => {
+                    writer.writeln("{");
+                    writer.indented(|writer| {
+                        if in_failable_fn && !in_entry && !suppress_error_propagation {
+                            writer.writeln("return Err(__faber_err);");
+                        } else {
+                            writer.writeln("panic!(\"{}\", __faber_err);");
+                        }
+                    });
+                    writer.write("}");
+                    Ok(())
+                }
+            };
+        }
+        if result.is_ok() {
+            writer.writeln(",");
+        }
+    });
+    writer.writeln("}");
+    Ok(())
+}
+
+fn generate_ad_success_block(
+    codegen: &RustCodegen<'_>,
+    ad: &HirAd,
+    body: &HirBlock,
+    types: &TypeTable,
+    writer: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    let Some(binding) = &ad.binding else {
+        return generate_ad_plain_block(
+            codegen,
+            body,
+            0,
+            types,
+            writer,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
+    };
+    let Some(HirStmt { kind: HirStmtKind::Local(binding_local), .. }) = body.stmts.first() else {
+        return generate_ad_plain_block(
+            codegen,
+            body,
+            0,
+            types,
+            writer,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
+    };
+
+    let alias_local = if binding.alias.is_some() {
+        match body.stmts.get(1) {
+            Some(HirStmt { kind: HirStmtKind::Local(local), .. }) => Some(local),
+            _ => None,
+        }
+    } else {
+        None
+    };
+    let skip = 1 + usize::from(alias_local.is_some());
+
+    generate_ad_prefixed_block(
+        codegen,
+        body,
+        skip,
+        types,
+        writer,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+        |writer| {
+            writer.write("let ");
+            writer.write(codegen.resolve_symbol(binding_local.name));
+            writer.writeln(" = __faber_result;");
+            if let Some(alias_local) = alias_local {
+                writer.write("let ");
+                writer.write(codegen.resolve_symbol(alias_local.name));
+                writer.write(" = ");
+                writer.write(codegen.resolve_symbol(binding.name));
+                writer.writeln(".clone();");
+            }
+            Ok(())
+        },
+    )
+}
+
+fn generate_ad_error_block(
+    codegen: &RustCodegen<'_>,
+    catch: &HirBlock,
+    types: &TypeTable,
+    writer: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    let Some(HirStmt { kind: HirStmtKind::Local(local), .. }) = catch.stmts.first() else {
+        return generate_ad_plain_block(
+            codegen,
+            catch,
+            0,
+            types,
+            writer,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
+    };
+
+    generate_ad_prefixed_block(
+        codegen,
+        catch,
+        1,
+        types,
+        writer,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+        |writer| {
+            writer.write("let ");
+            writer.write(codegen.resolve_symbol(local.name));
+            writer.writeln(" = __faber_err;");
+            Ok(())
+        },
+    )
+}
+
+fn generate_ad_plain_block(
+    codegen: &RustCodegen<'_>,
+    block: &HirBlock,
+    skip: usize,
+    types: &TypeTable,
+    writer: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    generate_ad_prefixed_block(
+        codegen,
+        block,
+        skip,
+        types,
+        writer,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+        |_| Ok(()),
+    )
+}
+
+fn generate_ad_prefixed_block<F>(
+    codegen: &RustCodegen<'_>,
+    block: &HirBlock,
+    skip: usize,
+    types: &TypeTable,
+    writer: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+    prefix: F,
+) -> Result<(), CodegenError>
+where
+    F: FnOnce(&mut CodeWriter) -> Result<(), CodegenError>,
+{
+    writer.writeln("{");
+    let mut result = Ok(());
+    writer.indented(|writer| {
+        result = prefix(writer);
+        if result.is_err() {
+            return;
+        }
+        for stmt in block.stmts.iter().skip(skip) {
+            result = generate_stmt(
+                codegen,
+                stmt,
+                types,
+                writer,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
+            if result.is_err() {
+                return;
+            }
+        }
+        if let Some(expr) = &block.expr {
+            result = generate_expr(
+                codegen,
+                expr,
+                types,
+                writer,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
+            if result.is_ok() {
+                writer.writeln(";");
+            }
+        }
+    });
+    result?;
+    writer.write("}");
     Ok(())
 }
 

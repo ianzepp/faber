@@ -1,18 +1,17 @@
-# Ad statement - endpoint dispatch
-# NOTE: Currently parsed but codegen not yet implemented
-# See consilia/futura/ad.md for future implementation details
+# Ad statement - capability calls
+# NOTE: In the current Rust path these compile and fail clearly at runtime
+# when no provider is linked.
 
 incipit {
-    # Basic endpoint dispatch with sync handler
+    # Basic capability call with sync handler
     ad "fasciculus:lege" ("hello.txt") → textus pro content {
         nota "File contents: §"(content)
     }
 
-    # Async endpoint dispatch
+    # Async capability call
     @ futura
     ad "caelum:pete" ("https://api.example.com/data") → objectum pro response {
-        fixum _ data ← cede response.json()
-        nota data
+        nota response
     }
 
     # Multiple arguments
@@ -20,7 +19,7 @@ incipit {
         nota output
     }
 
-    # Complex dispatch with error handling
+    # Complex capability call with error handling
     #ad "rete:connecta" ("127.0.0.1", 8080) → rete.Socket pro socket {
     #    nota "Connected successfully"
     #    socket.claude()
@@ -28,6 +27,7 @@ incipit {
     #    nota "Connection failed: §"(err.nuntius)
     #}
 
-    # Endpoint dispatch without handler (fire-and-forget)
+    # Capability call without handler (fire-and-forget)
+    fixum numerus userId ← 42
     ad "notificatio:mitte" ("User logged in", userId)
 }

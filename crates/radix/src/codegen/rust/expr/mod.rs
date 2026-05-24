@@ -23,6 +23,7 @@
 
 use super::super::CodeWriter;
 use super::type_shape::{resolve_type, type_id_is_faber_value, type_is_option_or_nihil};
+use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::lexer::Symbol;
@@ -102,6 +103,28 @@ impl<'a, 'cg> ExprEmitter<'a, 'cg> {
 
     pub(super) fn expr_as_optional_target(&mut self, expr: &HirExpr, value_ty: TypeId) -> Result<(), CodegenError> {
         emit_expr_as_optional_target(self, expr, value_ty)
+    }
+
+    pub(super) fn ad_dispatch(&mut self, ad: &HirAd, result_ty: TypeId) -> Result<(), CodegenError> {
+        self.writer.write("__faber_ad::<");
+        self.writer
+            .write(&type_to_rust(self.codegen, result_ty, self.types));
+        self.writer.write(", _>(");
+        self.writer
+            .write(&format!("{:?}", self.codegen.resolve_symbol(ad.path)));
+        self.writer.write(", ");
+        self.writer.write("(");
+        for (idx, arg) in ad.args.iter().enumerate() {
+            if idx > 0 {
+                self.writer.write(", ");
+            }
+            self.expr(arg)?;
+        }
+        if ad.args.len() == 1 {
+            self.writer.write(",");
+        }
+        self.writer.write("))");
+        Ok(())
     }
 }
 

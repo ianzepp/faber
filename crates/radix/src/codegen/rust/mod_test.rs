@@ -232,6 +232,97 @@ incipit {
 }
 
 #[test]
+fn emits_unresolved_ad_dispatch_for_rust() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    ad "fasciculus:lege" ("hello.txt") → textus pro content {
+        nota content
+    }
+}
+"#;
+
+    let result = compiler.compile_str("ad-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("fn __faber_ad<T, A>(capability: &str, _args: A) -> Result<T, String>"));
+    assert!(rust
+        .code
+        .contains("match __faber_ad::<String, _>(\"fasciculus:lege\", (\"hello.txt\".to_string(),))"));
+    assert!(rust.code.contains("E_NO_ROUTE: unresolved capability"));
+    assert!(rust.code.contains("let content = __faber_result;"));
+}
+
+#[test]
+fn unresolved_ad_can_route_to_cape_handler_in_rust() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    ad "fasciculus:lege" ("hello.txt") → textus pro content {
+        nota content
+    } cape err {
+        nota err
+    }
+}
+"#;
+
+    let result = compiler.compile_str("ad-cape-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("Err(__faber_err) => {"));
+    assert!(rust.code.contains("let err = __faber_err;"));
+    assert!(rust.code.contains("println!(\"{:?}\", err);"));
+}
+
+#[test]
+fn uncaught_ad_marks_rust_function_failable() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio legit() → textus {
+    ad "fasciculus:lege" ("hello.txt") → textus pro content {
+        redde content
+    }
+    redde "unreachable"
+}
+"#;
+
+    let result = compiler.compile_str("ad-failable-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("fn legit() -> Result<String, String>"));
+    assert!(rust.code.contains("return Err(__faber_err);"));
+}
+
+#[test]
+fn ad_success_binding_requires_explicit_result_type() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    ad "fasciculus:lege" ("hello.txt") → pro content {
+        nota content
+    }
+}
+"#;
+
+    let result = compiler.compile_str("ad-missing-type.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(result.diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("unresolved capability calls with a success binding require an explicit result type")
+    }));
+}
+
+#[test]
 fn emits_fractus_arithmetic_casts_for_numerus_operands() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

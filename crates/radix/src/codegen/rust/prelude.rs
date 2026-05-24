@@ -16,7 +16,7 @@ pub(super) fn generate_prelude(w: &mut CodeWriter, imports: &BTreeSet<String>) {
     w.newline();
 
     for import in imports {
-        if import == "__faber_value" {
+        if matches!(import.as_str(), "__faber_value" | "__faber_ad") {
             continue;
         }
         w.write("use ");
@@ -30,6 +30,10 @@ pub(super) fn generate_prelude(w: &mut CodeWriter, imports: &BTreeSet<String>) {
 
     if imports.contains("__faber_value") {
         generate_faber_value_helper(w);
+        w.newline();
+    }
+    if imports.contains("__faber_ad") {
+        generate_faber_ad_helper(w);
         w.newline();
     }
 }
@@ -80,7 +84,18 @@ pub(super) fn collect_prelude_imports(code: &str) -> BTreeSet<String> {
     if code.contains("FaberValue") {
         imports.insert("__faber_value".to_owned());
     }
+    if code.contains("__faber_ad::<") {
+        imports.insert("__faber_ad".to_owned());
+    }
     imports
+}
+
+fn generate_faber_ad_helper(w: &mut CodeWriter) {
+    w.writeln("fn __faber_ad<T, A>(capability: &str, _args: A) -> Result<T, String> {");
+    w.indented(|w| {
+        w.writeln("Err(format!(\"E_NO_ROUTE: unresolved capability {}\", capability))");
+    });
+    w.writeln("}");
 }
 
 fn generate_faber_value_helper(w: &mut CodeWriter) {

@@ -545,14 +545,17 @@ functio deploy() argumenta args {
 
 ---
 
-## Endpoint Dispatch
+## Capability Calls
 
 ```ebnf
 adStmt        := 'ad' STRING '(' argumentList ')' adBinding? blockStmt? catchClause?
 adBinding     := '→' typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
 ```
 
-**Note:** `ad` statement is parsed but codegen is not yet implemented.
+**Note:** `ad` names a host/provider capability. Normal compilation is
+permissive; unresolved providers compile and fail explicitly at runtime in the
+current Rust path. A success binding without provider metadata requires an
+explicit result type.
 
 ---
 
