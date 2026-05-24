@@ -31,8 +31,8 @@ pub(in crate::codegen::rust::expr) fn generate_match_expr_with_emitter(
     let codegen = emitter.codegen;
     let types = emitter.types;
     let policy = emitter.policy;
-    emitter.writer.indented(|w| {
-        let mut arm_emitter = ExprEmitter::new(codegen, types, w, policy);
+    emitter.writer.indented(|writer| {
+        let mut arm_emitter = ExprEmitter::new(codegen, types, writer, policy);
         for arm in arms {
             if arm.patterns.len() == 1 {
                 generate_pattern(codegen, &arm.patterns[0], arm_emitter.writer);

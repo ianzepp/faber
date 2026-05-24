@@ -40,8 +40,8 @@ pub(super) fn emit_array_expr(
         let codegen = emitter.codegen;
         let types = emitter.types;
         let policy = emitter.policy;
-        emitter.writer.indented(|w| {
-            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+        emitter.writer.indented(|writer| {
+            let mut nested = ExprEmitter::new(codegen, types, writer, policy);
             nested.writer.write("let mut ");
             nested.writer.write(&temp);
             nested.writer.writeln(" = Vec::new();");
@@ -113,8 +113,8 @@ pub(super) fn emit_struct_expr(
         let codegen = emitter.codegen;
         let types = emitter.types;
         let policy = emitter.policy;
-        emitter.writer.indented(|w| {
-            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+        emitter.writer.indented(|writer| {
+            let mut nested = ExprEmitter::new(codegen, types, writer, policy);
             nested.writer.write("let mut ");
             nested.writer.write(&temp);
             nested.writer.write(" = ");
@@ -148,8 +148,8 @@ fn emit_struct_literal_expr(
     let codegen = emitter.codegen;
     let types = emitter.types;
     let policy = emitter.policy;
-    emitter.writer.indented(|w| {
-        let mut nested = ExprEmitter::new(codegen, types, w, policy);
+    emitter.writer.indented(|writer| {
+        let mut nested = ExprEmitter::new(codegen, types, writer, policy);
         for (name, value) in fields {
             nested.writer.write(codegen.resolve_symbol(*name));
             nested.writer.write(": ");

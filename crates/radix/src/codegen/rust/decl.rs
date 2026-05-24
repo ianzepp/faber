@@ -57,9 +57,9 @@ pub fn generate_function(
     def_id: DefId,
     func: &HirFunction,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    generate_function_with_cli_args_type(codegen, def_id, func, types, w, None)
+    generate_function_with_cli_args_type(codegen, def_id, func, types, writer, None)
 }
 
 pub fn generate_function_with_cli_args_type(
@@ -67,7 +67,7 @@ pub fn generate_function_with_cli_args_type(
     def_id: DefId,
     func: &HirFunction,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     cli_args_type: Option<&str>,
 ) -> Result<(), CodegenError> {
     generate_function_inner(
@@ -75,7 +75,7 @@ pub fn generate_function_with_cli_args_type(
         def_id,
         func,
         types,
-        w,
+        writer,
         FunctionEmitContext { cli_args_type, ..FunctionEmitContext::default() },
     )
 }
@@ -85,7 +85,7 @@ fn generate_function_inner(
     def_id: DefId,
     func: &HirFunction,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     context: FunctionEmitContext<'_>,
 ) -> Result<(), CodegenError> {
     let is_failable = codegen.is_failable_def(def_id);
@@ -94,98 +94,98 @@ fn generate_function_inner(
     // Faber tests are compiled as Rust tests while preserving selection state
     // through ignore reasons rather than deleting unselected tests from output.
     if is_test {
-        w.writeln("#[test]");
+        writer.writeln("#[test]");
         if let Some(reason) = codegen.test_ignore_reason(func) {
-            w.writeln(&format!("#[ignore = \"{}\"]", escape_ignore_reason(&reason)));
+            writer.writeln(&format!("#[ignore = \"{}\"]", escape_ignore_reason(&reason)));
         }
     }
 
     // Faber `@ futura` maps directly to `async fn`; the async return type
     // remains part of the Rust function contract below.
     if func.is_async {
-        w.write("async ");
+        writer.write("async ");
     }
 
     if context.cli_args_type.is_some() {
-        w.write("pub(crate) ");
+        writer.write("pub(crate) ");
     }
-    w.write("fn ");
+    writer.write("fn ");
     if is_test {
-        w.write(&format!("proba_{}", def_id.0));
+        writer.write(&format!("proba_{}", def_id.0));
     } else {
-        w.write(codegen.resolve_symbol(func.name));
+        writer.write(codegen.resolve_symbol(func.name));
     }
 
     // Type parameters are emitted unchanged after symbol resolution; trait
     // bounds are not invented here.
     if !func.type_params.is_empty() {
-        w.write("<");
+        writer.write("<");
         for (i, param) in func.type_params.iter().enumerate() {
             if i > 0 {
-                w.write(", ");
+                writer.write(", ");
             }
-            w.write(codegen.resolve_symbol(param.name));
+            writer.write(codegen.resolve_symbol(param.name));
         }
-        w.write(">");
+        writer.write(">");
     }
 
     // CLI-mounted functions get one synthetic argument slot supplied by the
     // package CLI adapter. Ordinary functions use only HIR parameters.
-    w.write("(");
+    writer.write("(");
     if let Some(receiver) = context.receiver {
-        w.write(receiver);
+        writer.write(receiver);
     }
     for (i, param) in func.params.iter().enumerate() {
         if i > 0 || context.receiver.is_some() {
-            w.write(", ");
+            writer.write(", ");
         }
-        w.write(codegen.resolve_symbol(param.name));
-        w.write(": ");
+        writer.write(codegen.resolve_symbol(param.name));
+        writer.write(": ");
         if param.optional && param.default.is_none() {
-            w.write("Option<");
-            w.write(&type_to_rust(codegen, param.ty, types));
-            w.write(">");
+            writer.write("Option<");
+            writer.write(&type_to_rust(codegen, param.ty, types));
+            writer.write(">");
         } else {
-            w.write(&type_to_rust(codegen, param.ty, types));
+            writer.write(&type_to_rust(codegen, param.ty, types));
         }
     }
     if let Some(param) = &func.cli_args {
         if !func.params.is_empty() {
-            w.write(", ");
+            writer.write(", ");
         }
-        w.write(codegen.resolve_symbol(param.name));
-        w.write(": ");
-        w.write(context.cli_args_type.unwrap_or("CliArgs"));
+        writer.write(codegen.resolve_symbol(param.name));
+        writer.write(": ");
+        writer.write(context.cli_args_type.unwrap_or("CliArgs"));
     }
-    w.write(")");
+    writer.write(")");
 
     // Failable status is a whole-function ABI decision: every explicit return
     // and tail expression in the body must match this `Result` wrapper.
     if is_failable {
-        w.write(" -> ");
-        w.write("Result<");
+        writer.write(" -> ");
+        writer.write("Result<");
         if let Some(ret_ty) = context.return_type_override {
-            w.write(ret_ty);
+            writer.write(ret_ty);
         } else if let Some(ret_ty) = func.ret_ty {
-            w.write(&type_to_rust(codegen, ret_ty, types));
+            writer.write(&type_to_rust(codegen, ret_ty, types));
         } else {
-            w.write("()");
+            writer.write("()");
         }
-        w.write(", String>");
+        writer.write(", String>");
     } else if func.is_generator {
-        w.write(" -> Vec<");
+        writer.write(" -> Vec<");
         if let Some(ret_ty) = func.ret_ty {
-            w.write(&type_to_rust(codegen, ret_ty, types));
+            writer.write(&type_to_rust(codegen, ret_ty, types));
         } else {
-            w.write("()");
+            writer.write("()");
         }
-        w.write(">");
+        writer.write(">");
     } else if let Some(ret_ty) = context.return_type_override {
-        w.write(" -> ");
-        w.write(ret_ty);
+        writer.write(" -> ");
+        writer.write(ret_ty);
     } else if let Some(ret_ty) = func.ret_ty {
-        w.write(" -> ");
-        w.write(&type_to_rust(codegen, ret_ty, types));
+        writer.write(" -> ");
+        writer.write(&type_to_rust(codegen, ret_ty, types));
     }
 
     // Declarations without bodies are emitted as Rust signatures, used by
@@ -198,21 +198,21 @@ fn generate_function_inner(
         ),
     );
     let body_result = if let Some(body) = &func.body {
-        w.write(" ");
+        writer.write(" ");
         if func.is_generator {
-            generate_generator_block(codegen, body, func.ret_ty, types, w, is_failable)
+            generate_generator_block(codegen, body, func.ret_ty, types, writer, is_failable)
         } else {
-            generate_block(codegen, body, types, w, is_failable, false, true)
+            generate_block(codegen, body, types, writer, is_failable, false, true)
         }
     } else {
-        w.write(";");
+        writer.write(";");
         Ok(())
     };
     codegen.replace_current_return_ty(previous_return_ty);
     codegen.replace_current_generator_yield_ty(previous_generator_yield_ty);
     body_result?;
 
-    w.newline();
+    writer.newline();
     Ok(())
 }
 
@@ -221,36 +221,36 @@ fn generate_generator_block(
     block: &HirBlock,
     yield_ty: Option<TypeId>,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     in_failable_fn: bool,
 ) -> Result<(), CodegenError> {
-    w.writeln("{");
+    writer.writeln("{");
     let mut block_result = Ok(());
-    w.indented(|w| {
-        w.write("let mut __faber_yielded: Vec<");
+    writer.indented(|writer| {
+        writer.write("let mut __faber_yielded: Vec<");
         if let Some(yield_ty) = yield_ty {
-            w.write(&type_to_rust(codegen, yield_ty, types));
+            writer.write(&type_to_rust(codegen, yield_ty, types));
         } else {
-            w.write("()");
+            writer.write("()");
         }
-        w.writeln("> = Vec::new();");
+        writer.writeln("> = Vec::new();");
         for stmt in &block.stmts {
             if block_result.is_err() {
                 return;
             }
-            block_result = super::stmt::generate_stmt(codegen, stmt, types, w, in_failable_fn, false, false);
+            block_result = super::stmt::generate_stmt(codegen, stmt, types, writer, in_failable_fn, false, false);
         }
         if let Some(expr) = &block.expr {
             if block_result.is_err() {
                 return;
             }
-            block_result = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, false, false);
-            w.writeln(";");
+            block_result = super::expr::generate_expr(codegen, expr, types, writer, in_failable_fn, false, false);
+            writer.writeln(";");
         }
-        w.writeln("__faber_yielded");
+        writer.writeln("__faber_yielded");
     });
     block_result?;
-    w.write("}");
+    writer.write("}");
     Ok(())
 }
 
@@ -269,61 +269,61 @@ pub fn generate_struct(
     def_id: DefId,
     s: &HirStruct,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    w.writeln("#[derive(Clone, Debug)]");
-    w.write("pub struct ");
-    w.write(codegen.resolve_symbol(s.name));
+    writer.writeln("#[derive(Clone, Debug)]");
+    writer.write("pub struct ");
+    writer.write(codegen.resolve_symbol(s.name));
 
     if !s.type_params.is_empty() {
-        w.write("<");
+        writer.write("<");
         for (i, param) in s.type_params.iter().enumerate() {
             if i > 0 {
-                w.write(", ");
+                writer.write(", ");
             }
-            w.write(codegen.resolve_symbol(param.name));
+            writer.write(codegen.resolve_symbol(param.name));
         }
-        w.write(">");
+        writer.write(">");
     }
 
-    w.writeln(" {");
-    w.indented(|w| {
+    writer.writeln(" {");
+    writer.indented(|writer| {
         for field in &s.fields {
             if !field.is_static {
-                w.write("pub ");
-                w.write(codegen.resolve_symbol(field.name));
-                w.write(": ");
+                writer.write("pub ");
+                writer.write(codegen.resolve_symbol(field.name));
+                writer.write(": ");
                 let ty_str = type_to_rust(codegen, field.ty, types);
                 if field.sponte && !type_id_is_option(field.ty, types) {
                     // sponte (voluntary declaration) represented as Option<T> in Rust for
                     // partial construction support; fixus has no target immutability effect here.
-                    w.write(&format!("Option<{}>", ty_str));
+                    writer.write(&format!("Option<{}>", ty_str));
                 } else {
-                    w.write(&ty_str);
+                    writer.write(&ty_str);
                 }
-                w.writeln(",");
+                writer.writeln(",");
             }
         }
     });
-    w.writeln("}");
+    writer.writeln("}");
 
     // Generate impl block for methods
     if !s.methods.is_empty() {
-        w.newline();
-        w.write("impl ");
-        w.write(codegen.resolve_symbol(s.name));
-        w.writeln(" {");
+        writer.newline();
+        writer.write("impl ");
+        writer.write(codegen.resolve_symbol(s.name));
+        writer.writeln(" {");
         let mut method_result = Ok(());
-        w.indented(|w| {
+        writer.indented(|writer| {
             for method in &s.methods {
                 if method_result.is_err() {
                     return;
                 }
-                method_result = generate_method(codegen, def_id, method, types, w);
+                method_result = generate_method(codegen, def_id, method, types, writer);
             }
         });
         method_result?;
-        w.writeln("}");
+        writer.writeln("}");
     }
 
     Ok(())
@@ -334,7 +334,7 @@ fn generate_method(
     struct_def: DefId,
     method: &HirMethod,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     let receiver = match method.receiver {
         HirReceiver::MutRef => "&mut self",
@@ -349,7 +349,7 @@ fn generate_method(
         method.def_id,
         &method.func,
         types,
-        w,
+        writer,
         FunctionEmitContext {
             receiver: Some(receiver),
             return_type_override: return_type_override.as_deref(),
@@ -445,42 +445,42 @@ pub fn generate_enum(
     codegen: &RustCodegen<'_>,
     e: &HirEnum,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    w.write("pub enum ");
-    w.write(codegen.resolve_symbol(e.name));
+    writer.write("pub enum ");
+    writer.write(codegen.resolve_symbol(e.name));
 
     if !e.type_params.is_empty() {
-        w.write("<");
+        writer.write("<");
         for (i, param) in e.type_params.iter().enumerate() {
             if i > 0 {
-                w.write(", ");
+                writer.write(", ");
             }
-            w.write(codegen.resolve_symbol(param.name));
+            writer.write(codegen.resolve_symbol(param.name));
         }
-        w.write(">");
+        writer.write(">");
     }
 
-    w.writeln(" {");
-    w.indented(|w| {
+    writer.writeln(" {");
+    writer.indented(|writer| {
         for variant in &e.variants {
-            w.write(codegen.resolve_symbol(variant.name));
+            writer.write(codegen.resolve_symbol(variant.name));
             if !variant.fields.is_empty() {
-                w.writeln(" {");
-                w.indented(|w| {
+                writer.writeln(" {");
+                writer.indented(|writer| {
                     for field in &variant.fields {
-                        w.write(codegen.resolve_symbol(field.name));
-                        w.write(": ");
-                        w.write(&type_to_rust(codegen, field.ty, types));
-                        w.writeln(",");
+                        writer.write(codegen.resolve_symbol(field.name));
+                        writer.write(": ");
+                        writer.write(&type_to_rust(codegen, field.ty, types));
+                        writer.writeln(",");
                     }
                 });
-                w.write("}");
+                writer.write("}");
             }
-            w.writeln(",");
+            writer.writeln(",");
         }
     });
-    w.writeln("}");
+    writer.writeln("}");
 
     Ok(())
 }
@@ -494,44 +494,44 @@ pub fn generate_trait(
     codegen: &RustCodegen<'_>,
     i: &HirInterface,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    w.write("pub trait ");
-    w.write(codegen.resolve_symbol(i.name));
+    writer.write("pub trait ");
+    writer.write(codegen.resolve_symbol(i.name));
 
     if !i.type_params.is_empty() {
-        w.write("<");
+        writer.write("<");
         for (idx, param) in i.type_params.iter().enumerate() {
             if idx > 0 {
-                w.write(", ");
+                writer.write(", ");
             }
-            w.write(codegen.resolve_symbol(param.name));
+            writer.write(codegen.resolve_symbol(param.name));
         }
-        w.write(">");
+        writer.write(">");
     }
 
-    w.writeln(" {");
-    w.indented(|w| {
+    writer.writeln(" {");
+    writer.indented(|writer| {
         for method in &i.methods {
-            w.write("fn ");
-            w.write(codegen.resolve_symbol(method.name));
-            w.write("(");
-            w.write("&self");
+            writer.write("fn ");
+            writer.write(codegen.resolve_symbol(method.name));
+            writer.write("(");
+            writer.write("&self");
             for param in &method.params {
-                w.write(", ");
-                w.write(codegen.resolve_symbol(param.name));
-                w.write(": ");
-                w.write(&type_to_rust(codegen, param.ty, types));
+                writer.write(", ");
+                writer.write(codegen.resolve_symbol(param.name));
+                writer.write(": ");
+                writer.write(&type_to_rust(codegen, param.ty, types));
             }
-            w.write(")");
+            writer.write(")");
             if let Some(ret) = method.ret_ty {
-                w.write(" -> ");
-                w.write(&type_to_rust(codegen, ret, types));
+                writer.write(" -> ");
+                writer.write(&type_to_rust(codegen, ret, types));
             }
-            w.writeln(";");
+            writer.writeln(";");
         }
     });
-    w.writeln("}");
+    writer.writeln("}");
 
     Ok(())
 }
@@ -540,15 +540,15 @@ pub fn generate_type_alias(
     codegen: &RustCodegen<'_>,
     a: &HirTypeAlias,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     // Aliases intentionally render their resolved target type. Name retention
     // is tracked by semantic definitions, not by emitting a Rust newtype here.
-    w.write("pub type ");
-    w.write(codegen.resolve_symbol(a.name));
-    w.write(" = ");
-    w.write(&type_to_rust(codegen, a.ty, types));
-    w.writeln(";");
+    writer.write("pub type ");
+    writer.write(codegen.resolve_symbol(a.name));
+    writer.write(" = ");
+    writer.write(&type_to_rust(codegen, a.ty, types));
+    writer.writeln(";");
 
     Ok(())
 }
@@ -557,21 +557,21 @@ pub fn generate_const(
     codegen: &RustCodegen<'_>,
     c: &HirConst,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     // A missing const annotation type has already survived semantic analysis;
     // this backend emits `()` rather than guessing from the initializer.
-    w.write("pub const ");
-    w.write(codegen.resolve_symbol(c.name));
-    w.write(": ");
+    writer.write("pub const ");
+    writer.write(codegen.resolve_symbol(c.name));
+    writer.write(": ");
     if let Some(ty) = c.ty {
-        w.write(&type_to_rust(codegen, ty, types));
+        writer.write(&type_to_rust(codegen, ty, types));
     } else {
-        w.write("()");
+        writer.write("()");
     }
-    w.write(" = ");
-    super::expr::generate_expr(codegen, &c.value, types, w, false, false, false)?;
-    w.writeln(";");
+    writer.write(" = ");
+    super::expr::generate_expr(codegen, &c.value, types, writer, false, false, false)?;
+    writer.writeln(";");
 
     Ok(())
 }
@@ -580,19 +580,19 @@ fn generate_block(
     codegen: &RustCodegen<'_>,
     block: &HirBlock,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     in_failable_fn: bool,
     in_entry: bool,
     wrap_tail_ok: bool,
 ) -> Result<(), CodegenError> {
-    w.writeln("{");
+    writer.writeln("{");
     let mut block_result = Ok(());
-    w.indented(|w| {
+    writer.indented(|writer| {
         for stmt in &block.stmts {
             if block_result.is_err() {
                 return;
             }
-            block_result = super::stmt::generate_stmt(codegen, stmt, types, w, in_failable_fn, in_entry, false);
+            block_result = super::stmt::generate_stmt(codegen, stmt, types, writer, in_failable_fn, in_entry, false);
         }
         if let Some(expr) = &block.expr {
             if block_result.is_err() {
@@ -602,15 +602,17 @@ fn generate_block(
             // `redde`; entry blocks are excluded because entry throws lower to
             // panic paths instead of caller-visible propagation.
             if wrap_tail_ok && in_failable_fn && !in_entry {
-                w.write("Ok(");
-                block_result = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
-                w.writeln(")");
+                writer.write("Ok(");
+                block_result =
+                    super::expr::generate_expr(codegen, expr, types, writer, in_failable_fn, in_entry, false);
+                writer.writeln(")");
             } else {
-                block_result = super::expr::generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, false);
+                block_result =
+                    super::expr::generate_expr(codegen, expr, types, writer, in_failable_fn, in_entry, false);
             }
         }
     });
     block_result?;
-    w.write("}");
+    writer.write("}");
     Ok(())
 }

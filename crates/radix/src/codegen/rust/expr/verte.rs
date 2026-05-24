@@ -73,8 +73,8 @@ fn emit_verte_struct_expr(
         let codegen = emitter.codegen;
         let types = emitter.types;
         let policy = emitter.policy;
-        emitter.writer.indented(|w| {
-            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+        emitter.writer.indented(|writer| {
+            let mut nested = ExprEmitter::new(codegen, types, writer, policy);
             nested.writer.write("let mut ");
             nested.writer.write(&temp);
             nested.writer.write(" = ");
@@ -116,8 +116,8 @@ fn emit_verte_struct_literal_expr(
     let codegen = emitter.codegen;
     let types = emitter.types;
     let policy = emitter.policy;
-    emitter.writer.indented(|w| {
-        let mut nested = ExprEmitter::new(codegen, types, w, policy);
+    emitter.writer.indented(|writer| {
+        let mut nested = ExprEmitter::new(codegen, types, writer, policy);
         for field in entries {
             let (name, value) = match (&field.key, &field.value) {
                 (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(value)) => (name, value),
@@ -170,8 +170,8 @@ fn emit_verte_array_expr(
             let codegen = emitter.codegen;
             let types = emitter.types;
             let policy = emitter.policy;
-            emitter.writer.indented(|w| {
-                let mut nested = ExprEmitter::new(codegen, types, w, policy);
+            emitter.writer.indented(|writer| {
+                let mut nested = ExprEmitter::new(codegen, types, writer, policy);
                 nested.writer.write("let mut ");
                 nested.writer.write(&temp);
                 nested.writer.writeln(" = Vec::new();");
@@ -240,8 +240,8 @@ fn emit_verte_map_expr(
         let codegen = emitter.codegen;
         let types = emitter.types;
         let policy = emitter.policy;
-        emitter.writer.indented(|w| {
-            let mut nested = ExprEmitter::new(codegen, types, w, policy);
+        emitter.writer.indented(|writer| {
+            let mut nested = ExprEmitter::new(codegen, types, writer, policy);
             nested.writer.write("let mut ");
             nested.writer.write(&map_name);
             nested.writer.write(" = std::collections::HashMap::<");

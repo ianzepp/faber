@@ -45,84 +45,100 @@ pub fn generate_stmt(
     codegen: &RustCodegen<'_>,
     stmt: &HirStmt,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     in_failable_fn: bool,
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     match &stmt.kind {
         HirStmtKind::Local(local) => {
-            generate_local(codegen, local, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_local(
+                codegen,
+                local,
+                types,
+                writer,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
         }
         HirStmtKind::Expr(expr) => {
             if let HirExprKind::Cede(value) = &expr.kind {
                 if codegen.current_generator_yield_ty().is_some() {
-                    w.write("__faber_yielded.push(");
+                    writer.write("__faber_yielded.push(");
                     generate_expr_unwrapped(
                         codegen,
                         value,
                         types,
-                        w,
+                        writer,
                         in_failable_fn,
                         in_entry,
                         suppress_error_propagation,
                     )?;
-                    w.writeln(");");
+                    writer.writeln(");");
                     return Ok(());
                 }
             }
-            generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.writeln(";");
+            generate_expr(
+                codegen,
+                expr,
+                types,
+                writer,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
+            writer.writeln(";");
         }
         HirStmtKind::Ad(ad) => {
-            generate_ad_stmt(codegen, ad, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_ad_stmt(codegen, ad, types, writer, in_failable_fn, in_entry, suppress_error_propagation)?;
         }
         HirStmtKind::Redde(value) => {
             if let Some(expr) = value {
-                w.write("return ");
+                writer.write("return ");
                 if in_failable_fn && !in_entry {
                     // `redde` returns the success value of the generated
                     // `Result`; expression lowering still decides whether any
                     // nested failable calls need `?`.
-                    w.write("Ok(");
+                    writer.write("Ok(");
                     generate_return_value_expr(
                         codegen,
                         expr,
                         types,
-                        w,
+                        writer,
                         in_failable_fn,
                         in_entry,
                         suppress_error_propagation,
                     )?;
-                    w.write(")");
+                    writer.write(")");
                 } else {
                     generate_return_value_expr(
                         codegen,
                         expr,
                         types,
-                        w,
+                        writer,
                         in_failable_fn,
                         in_entry,
                         suppress_error_propagation,
                     )?;
                 }
-                w.writeln(";");
+                writer.writeln(";");
             } else if in_failable_fn && !in_entry {
                 // Bare `redde` from a failable function is the unit success
                 // path, matching `Result<(), String>`.
-                w.writeln("return Ok(());");
+                writer.writeln("return Ok(());");
             } else {
-                w.writeln("return;");
+                writer.writeln("return;");
             }
         }
         HirStmtKind::Rumpe => {
-            w.writeln("break;");
+            writer.writeln("break;");
         }
         HirStmtKind::Perge => {
-            w.writeln("continue;");
+            writer.writeln("continue;");
         }
         HirStmtKind::Tacet => {
-            w.writeln("{ /* tacet: explicit noop */ }");
+            writer.writeln("{ /* tacet: explicit noop */ }");
         }
     }
     Ok(())
@@ -132,7 +148,7 @@ fn generate_local(
     codegen: &RustCodegen<'_>,
     local: &HirLocal,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     in_failable_fn: bool,
     in_entry: bool,
     suppress_error_propagation: bool,
@@ -140,37 +156,45 @@ fn generate_local(
     // Mutability is the only local-binding policy owned here. Borrow modes,
     // option shape, and collection details come from the type table through
     // `type_to_rust`.
-    w.write("let ");
+    writer.write("let ");
     if local.mutable {
-        w.write("mut ");
+        writer.write("mut ");
     }
-    w.write(codegen.resolve_symbol(local.name));
+    writer.write(codegen.resolve_symbol(local.name));
 
     if let Some(ty) = local.ty {
-        w.write(": ");
-        w.write(&local_storage_type_to_rust(codegen, local, ty, types));
+        writer.write(": ");
+        writer.write(&local_storage_type_to_rust(codegen, local, ty, types));
     }
 
     if let Some(init) = &local.init {
-        w.write(" = ");
+        writer.write(" = ");
         if let Some(value_ty) = local_optional_value_type(codegen, local, types) {
             generate_optional_target_expr(
                 codegen,
                 init,
                 value_ty,
                 types,
-                w,
+                writer,
                 ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
             )?;
         } else {
-            generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            generate_expr(
+                codegen,
+                init,
+                types,
+                writer,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
             if local_init_clones_indexed_owned_value(local, init, types) {
-                w.write(".clone()");
+                writer.write(".clone()");
             }
         }
     }
 
-    w.writeln(";");
+    writer.writeln(";");
     Ok(())
 }
 
@@ -475,7 +499,7 @@ fn generate_return_value_expr(
     codegen: &RustCodegen<'_>,
     expr: &HirExpr,
     types: &TypeTable,
-    w: &mut CodeWriter,
+    writer: &mut CodeWriter,
     in_failable_fn: bool,
     in_entry: bool,
     suppress_error_propagation: bool,
@@ -486,19 +510,35 @@ fn generate_return_value_expr(
             expr,
             value_ty,
             types,
-            w,
+            writer,
             ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
         )?;
         return Ok(());
     }
 
     if return_value_requires_option_unwrap(codegen, expr) {
-        generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(".clone().unwrap()");
+        generate_expr_unwrapped(
+            codegen,
+            expr,
+            types,
+            writer,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
+        writer.write(".clone().unwrap()");
         return Ok(());
     }
 
-    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    generate_expr_unwrapped(
+        codegen,
+        expr,
+        types,
+        writer,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+    )
 }
 
 fn return_optional_value_type(codegen: &RustCodegen<'_>, types: &TypeTable) -> Option<TypeId> {

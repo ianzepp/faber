@@ -352,7 +352,7 @@ impl<'a> RustCodegen<'a> {
         &self,
         item: &HirItem,
         types: &TypeTable,
-        w: &mut CodeWriter,
+        writer: &mut CodeWriter,
         cli_program: Option<&crate::cli::CliProgram>,
         cli_args_type_prefix: &str,
     ) -> Result<(), CodegenError> {
@@ -365,25 +365,32 @@ impl<'a> RustCodegen<'a> {
                         .find(|command| command.module_path.is_none() && command.function_symbol == func.name)
                 }) {
                     let args_type = format!("{cli_args_type_prefix}{}", cli::command_args_struct_name(command));
-                    decl::generate_function_with_cli_args_type(self, item.def_id, func, types, w, Some(&args_type))?;
+                    decl::generate_function_with_cli_args_type(
+                        self,
+                        item.def_id,
+                        func,
+                        types,
+                        writer,
+                        Some(&args_type),
+                    )?;
                 } else {
-                    decl::generate_function(self, item.def_id, func, types, w)?;
+                    decl::generate_function(self, item.def_id, func, types, writer)?;
                 }
             }
             HirItemKind::Struct(s) => {
-                decl::generate_struct(self, item.def_id, s, types, w)?;
+                decl::generate_struct(self, item.def_id, s, types, writer)?;
             }
             HirItemKind::Enum(e) => {
-                decl::generate_enum(self, e, types, w)?;
+                decl::generate_enum(self, e, types, writer)?;
             }
             HirItemKind::Interface(i) => {
-                decl::generate_trait(self, i, types, w)?;
+                decl::generate_trait(self, i, types, writer)?;
             }
             HirItemKind::TypeAlias(a) => {
-                decl::generate_type_alias(self, a, types, w)?;
+                decl::generate_type_alias(self, a, types, writer)?;
             }
             HirItemKind::Const(c) => {
-                decl::generate_const(self, c, types, w)?;
+                decl::generate_const(self, c, types, writer)?;
             }
             HirItemKind::Import(_) => {
                 // Handled in prelude or use statements
@@ -649,21 +656,21 @@ impl RustCodegen<'_> {
             }
             body.writeln("fn main() {");
             let mut entry_result = Ok(());
-            body.indented(|w| {
+            body.indented(|writer| {
                 if entry_needs_block_on {
-                    w.writeln("__faber_block_on(async {");
+                    writer.writeln("__faber_block_on(async {");
                 }
-                w.indented(|w| {
+                writer.indented(|writer| {
                     if let Some(cli_program) = cli_program {
                         if cli_program.mode == crate::cli::CliMode::Subcommand {
-                            cli::generate_command_dispatch(cli_program, w);
+                            cli::generate_command_dispatch(cli_program, writer);
                             return;
                         }
                     }
                     if let Some(cli_program) = cli_program {
-                        w.write("let ");
-                        w.write(&cli_program.entry_args);
-                        w.writeln(" = parse_cli_args_or_exit();");
+                        writer.write("let ");
+                        writer.write(&cli_program.entry_args);
+                        writer.writeln(" = parse_cli_args_or_exit();");
                     }
                     for stmt in &entry.stmts {
                         if entry_result.is_err() {
@@ -672,23 +679,23 @@ impl RustCodegen<'_> {
                         if cli_program.is_some_and(|cli| is_cli_args_local(stmt, &cli.entry_args, self)) {
                             continue;
                         }
-                        entry_result = stmt::generate_stmt(self, stmt, types, w, false, true, false);
+                        entry_result = stmt::generate_stmt(self, stmt, types, writer, false, true, false);
                     }
                     if let Some(expr) = &entry.expr {
                         if entry_result.is_err() {
                             return;
                         }
-                        entry_result = expr::generate_expr(self, expr, types, w, false, true, false);
-                        w.writeln(";");
+                        entry_result = expr::generate_expr(self, expr, types, writer, false, true, false);
+                        writer.writeln(";");
                     }
                     if let Some(cli_program) = cli_program {
                         if let Some(exit) = &cli_program.exit {
-                            cli::generate_cli_exit(exit, w);
+                            cli::generate_cli_exit(exit, writer);
                         }
                     }
                 });
                 if entry_needs_block_on {
-                    w.writeln("});");
+                    writer.writeln("});");
                 }
             });
             entry_result?;
@@ -699,22 +706,22 @@ impl RustCodegen<'_> {
         let mut imports = collect_hir_imports(self, hir);
         imports.extend(collect_prelude_imports(&body_code));
 
-        let mut w = CodeWriter::new();
+        let mut writer = CodeWriter::new();
         if module_mode {
             for import in &imports {
-                w.write("use ");
-                w.write(import);
-                w.writeln(";");
+                writer.write("use ");
+                writer.write(import);
+                writer.writeln(";");
             }
             if !imports.is_empty() {
-                w.newline();
+                writer.newline();
             }
         } else {
-            generate_prelude(&mut w, &imports);
+            generate_prelude(&mut writer, &imports);
         }
-        w.write(&body_code);
+        writer.write(&body_code);
 
-        Ok(RustOutput { code: w.finish() })
+        Ok(RustOutput { code: writer.finish() })
     }
 }
 

@@ -47,8 +47,8 @@ pub(super) fn emit_tempta_expr(
     let codegen = emitter.codegen;
     let types = emitter.types;
     let policy = emitter.policy;
-    emitter.writer.indented(|w| {
-        let mut inner = ExprEmitter::new(codegen, types, w, policy);
+    emitter.writer.indented(|writer| {
+        let mut inner = ExprEmitter::new(codegen, types, writer, policy);
         for stmt in &body.stmts {
             if tempta_result.is_err() {
                 return;
