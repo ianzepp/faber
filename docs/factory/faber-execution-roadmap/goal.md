@@ -9,14 +9,14 @@
 
 ## Summary
 
-Coordinate the current Faber execution work into a long-running factory roadmap: make the exempla Rust e2e corpus truthful, remove retired `ab` collection syntax, stabilize the Rust backend, implement non-strict `ad` capability calls, prove the macOS host syscall model, lower Faber through MIR/Wasm into host calls, and migrate `norma` toward compiler-core contracts and host-owned capabilities. This document is the umbrella control plane; linked factory docs remain the implementation goals for their specific areas.
+Coordinate the current Faber execution work into a long-running factory roadmap: make the exempla Rust e2e corpus truthful, remove retired `ab` collection syntax, stabilize the Rust backend, implement non-strict `ad` capability calls, prove the macOS host syscall model, bridge stable Rust-generated Faber code into Wasm host syscalls, and migrate `norma` toward compiler-core contracts and host-owned capabilities. This document is the umbrella control plane; linked factory docs remain the implementation goals for their specific areas.
 
 ## Problem
 
 - The recent planning work produced several related goal documents, but there is not yet one roadmap that explains how they fit together.
 - The Rust e2e corpus currently mixes stale syntax, invalid examples, package-bound examples that should live outside `examples/exempla/`, unsupported target features, real backend bugs, and future host/capability work.
 - `ab` and `ad` are easy to confuse if they stay embedded in the e2e failure list, but they are different problems: `ab` should be removed, while `ad` should become capability-call syntax.
-- The host architecture, syscall/frame model, MIR lowering, `norma` direction, and generated Rust bridge need to evolve in a coherent order.
+- The host architecture, syscall/frame model, generated Rust syscall bridge, future MIR lowering, and `norma` direction need to evolve in a coherent order.
 - This work will span multiple sessions and likely multiple agents, so each phase needs explicit handoff, validation, and stop rules.
 
 ## Goals
@@ -57,8 +57,8 @@ Coordinate the current Faber execution work into a long-running factory roadmap:
 - `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`: reference syscall routing, sigcall registry, cancellation, backpressure, and error model.
 - User clarification from 2026-05-24: the macOS host implementation should live in `hosts/macos-arm64`; the Muninn kernel code should be copied/vendorized into the Faber host and edited into a Faber-owned kernel rather than pulled as an external crate dependency.
 - `crates/radix/src/hir/nodes.rs`: HIR already preserves `HirStmtKind::Ad(HirAd)`.
-- `crates/radix/src/mir/nodes.rs`: MIR already has `RuntimeCall` and runtime intrinsic structure suitable for host-call extension.
-- `crates/radix/src/mir/lower/stmt.rs`: MIR currently rejects `ad` before effectful MIR lowering.
+- `crates/radix/src/codegen/rust/`: current stable execution path and the first place to prove `ad` -> `__faber_ad` -> `__faber_syscall`.
+- `crates/radix/src/mir/`: MIR exists as an eventual canonical lower-target candidate and analysis surface, but the current Epic 5 bridge should not depend on MIR-exclusive Wasm codegen.
 - User clarification from 2026-05-24: steps 1, 2, and 3 form Epic 1; steps 4 and 5 form Epic 2; steps 6, 7, 8, and 9 are individual epics.
 
 ## Reference Packet
@@ -81,7 +81,7 @@ Then inspect the focused goal for the active epic:
 - Epic 2: `docs/factory/exempla-rust-e2e/goal.md`.
 - Epic 3: `docs/factory/capability-calls/goal.md`.
 - Epic 4: `hosts/macos-arm64/ARCHITECTURE.md` and `hosts/macos-arm64/SYSCALL_MODEL.md`.
-- Epic 5: current MIR docs/code, plus host syscall docs.
+- Epic 5: `crates/radix/src/codegen/rust/`, current MIR docs/code for future constraints, and host syscall docs/code.
 - Epic 6: `hosts/macos-arm64/ARCHITECTURE.md`, `hosts/macos-arm64/SYSCALL_MODEL.md`, `stdlib/norma/`, and `crates/norma/`.
 
 ## Constraints And Invariants
@@ -91,7 +91,7 @@ Then inspect the focused goal for the active epic:
 - Source grammar remains type-first and must match `EBNF.md`.
 - Do not invent syntax to repair examples.
 - Missing type information must be fixed upstream; codegen must not guess.
-- `ab` is the retired collection DSL; `ad` is capability-call syntax.
+- `ab` is the retired collection DSL; `ad` is capability-call syntax and the source-level Faber host syscall form.
 - `ad` unresolved-provider behavior is allowed in non-strict mode and must fail clearly at runtime.
 - Host capability calls should route as frame-shaped syscalls internally.
 - The first host implementation should stay in `hosts/macos-arm64`; extract shared host code only after concrete duplication or cross-host pressure exists.
@@ -320,36 +320,46 @@ Checkpoint:
 - The first HAL migration candidate is recorded, with rationale for why it belongs in the host kernel rather than generated Rust support.
 - The design remains compatible with both future Wasm component integration and local frame-stream server transport.
 
-### Epic 5: MIR/Wasm Lowering To Host Calls
+### Epic 5: Rust-To-Wasm Faber Host Syscall Bridge
 
 Includes prior step 8:
 
-8. Lower Faber MIR/Wasm to host calls.
+8. Lower Faber `ad` calls to host syscalls through the stable Rust path.
 
 Primary references:
 
 - `crates/radix/src/hir/nodes.rs`
-- `crates/radix/src/mir/nodes.rs`
-- `crates/radix/src/mir/lower/`
+- `crates/radix/src/codegen/rust/`
+- `crates/radix/src/mir/`
 - `hosts/macos-arm64/SYSCALL_MODEL.md`
+- `hosts/macos-arm64/src/component.rs`
+- `hosts/macos-arm64/src/kernel/`
 
 Intent:
 
-- Add the compiler representation needed for effectful/failable host calls.
-- Lower `ad` from HIR into MIR as a capability syscall operation.
-- Decide whether MIR needs `TryRuntimeCall`, generalized `TryCall`, or a host-call runtime intrinsic with explicit success/error lowering.
-- Lower the MIR operation to the Wasm/component host-call boundary.
+- Treat `ad` as the Faber source-level host syscall form: source syntax names a host capability/syscall such as `host:echo`, `fs:read`, or `pg:query`.
+- Reuse the stable HIR-to-Rust backend as the first implementation path instead of making MIR or a full Wasm backend the critical path.
+- Lower generated Rust `ad` dispatches through a source-form helper such as `__faber_ad(...)`, then through a target-specific syscall helper such as `__faber_syscall(...)`.
+- For native Rust output, preserve the current explicit unresolved-provider behavior unless a concrete linked-provider path is added.
+- For Rust compiled to Wasm, make `__faber_syscall(...)` call a host import supplied by the macOS host.
+- Have the macOS host import wrapper decode or build a request, route it as a `Frame` through `HostKernel`, and return the response.
+- Prove both a successful built-in syscall (`host:echo`) and an unresolved provider syscall (`pg:query` producing `E_NO_ROUTE`) from generated Faber code.
+- Keep MIR as an eventual canonical lower-target candidate and analysis surface, but do not require MIR-backed Wasm codegen for this epic.
 
 Agent use:
 
-- Use agents only for read-only design comparison or focused tests.
-- Keep representation changes under one integrating owner because HIR/MIR contracts affect many passes.
+- Allow agents for read-only Rust-to-Wasm tooling research, ABI sketch comparison, and focused host/runtime tests.
+- Keep the integrating owner responsible for generated Rust helper shape, host import ABI, and any compiler-driver or package-build changes.
+- Do not split overlapping edits across Rust codegen, host component loading, and package build wiring without an explicit delivery spec.
 
 Checkpoint:
 
-- HIR preserves source-level `ad`.
-- MIR represents the effectful host call without pretending it is an ordinary pure function call.
-- The backend can lower one capability call into the host syscall ABI path.
+- Existing native HIR-to-Rust behavior remains stable, including explicit unresolved behavior for `ad` when no host/provider is linked.
+- A Wasm-targeted generated Rust path exists where `ad` dispatches call `__faber_ad(...)`, which delegates to a host syscall import through `__faber_syscall(...)`.
+- The host can instantiate or run the generated Wasm artifact and provide the syscall import.
+- `ad "host:echo"` reaches the Epic 4 `HostKernel` path and returns a successful frame-derived result.
+- `ad "pg:query"` reaches the same host path and returns a structured `E_NO_ROUTE` failure.
+- The proof does not require strict provider verification, a final WIT world, a daemon/server transport, full `norma` migration, or MIR-exclusive Wasm codegen.
 
 ### Epic 6: `norma` Classification And Migration
 
@@ -404,7 +414,7 @@ Decision: included.
   - Epic 6: step 9.
 - Every epic has intent, primary references, agent policy, and checkpoint criteria.
 - The roadmap is suitable for multi-session factory execution without relying on hidden chat context.
-- The roadmap preserves the dependency order between e2e cleanup, `ab` removal, Rust backend stabilization, `ad` capability calls, host syscalls, MIR/Wasm lowering, and `norma` migration.
+- The roadmap preserves the dependency order between e2e cleanup, `ab` removal, Rust backend stabilization, `ad` capability calls, host syscalls, the Rust-to-Wasm host syscall bridge, and `norma` migration.
 
 ## Validation
 
@@ -427,5 +437,6 @@ Decision: included.
 - Stop if `ab` removal starts adding compatibility layers instead of retiring the DSL.
 - Stop if `ad` implementation starts requiring provider metadata in normal compilation.
 - Stop if host work creates a common crate before the macOS host has a working minimal slice.
-- Stop if MIR/Wasm lowering decisions are made without updating tests and dumps for the new representation.
+- Stop if Epic 5 starts replacing the stable HIR-to-Rust path with MIR-exclusive Wasm codegen before the Rust-to-Wasm syscall bridge is proven.
+- Stop if later MIR/Wasm lowering decisions are made without updating tests and dumps for the new representation.
 - Stop if `norma` migration would remove temporary Rust backend support before current validation has a replacement.
