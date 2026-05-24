@@ -452,10 +452,16 @@ fn generate_verte_value_expr(
     }
 
     if type_id_is_faber_value(target_ty, types) {
-        w.write("FaberValue::from(");
-        generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(")");
-        return Ok(());
+        return generate_expr_as_type(
+            codegen,
+            value,
+            target_ty,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
     }
 
     generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)

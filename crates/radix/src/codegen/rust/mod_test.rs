@@ -443,6 +443,36 @@ incipit {
 }
 
 #[test]
+fn preserves_option_values_for_optional_targets() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio greet(textus nomen sponte) → vacuum {
+    nota nomen
+}
+
+incipit {
+    varia textus ∪ nihil maybe ← "Marcus"
+    fixum textus ∪ nihil alias ← maybe
+    greet(maybe)
+    greet("Julia")
+}
+"#;
+
+    let result = compiler.compile_str("optional-target-values-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains(r#"let mut maybe: Option<String> = Some("Marcus".to_string());"#));
+    assert!(rust.code.contains("let alias: Option<String> = maybe;"));
+    assert!(rust.code.contains("greet(maybe);"));
+    assert!(rust.code.contains(r#"greet(Some("Julia".to_string()));"#));
+    assert!(!rust.code.contains("Some(maybe)"));
+}
+
+#[test]
 fn emits_option_shaped_if_expression_branches() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
@@ -577,6 +607,29 @@ incipit {
     assert!(rust.code.contains("check(FaberValue::Nihil)"));
     assert!(rust.code.contains("check(FaberValue::from(true))"));
     assert!(rust.code.contains("check(FaberValue::from(42))"));
+}
+
+#[test]
+fn rust_dynamic_collection_methods_coerce_arguments_to_faber_value() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    varia lista<ignotum> values ← vacua
+    values.appende(1)
+    varia tabula<textus, ignotum> data ← vacua
+    data.pone("count", 2)
+}
+"#;
+
+    let result = compiler.compile_str("dynamic-collection-methods.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("values.push(FaberValue::from(1));"));
+    assert!(rust
+        .code
+        .contains(r#"data.insert("count".to_string(), FaberValue::from(2));"#));
 }
 
 #[test]

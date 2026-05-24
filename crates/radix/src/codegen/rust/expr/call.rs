@@ -180,22 +180,17 @@ fn generate_direct_call_args_with_optional_params(
         }
 
         if let Some(arg) = args.get(idx) {
-            if param.optional
-                && param.default.is_none()
-                && !matches!(arg.expr.kind, HirExprKind::Literal(HirLiteral::Nil))
-            {
-                w.write("Some(");
-                generate_call_arg_expr(
+            if param.optional && param.default.is_none() {
+                generate_expr_as_optional_target(
                     codegen,
                     &arg.expr,
-                    Some(param.ty),
+                    param.ty,
                     types,
                     w,
                     in_failable_fn,
                     in_entry,
                     suppress_error_propagation,
                 )?;
-                w.write(")");
             } else {
                 generate_call_arg_expr(
                     codegen,
@@ -454,16 +449,17 @@ fn try_generate_stdlib_method_call(
     // TARGET: stdlib methods are recognized by receiver type, not by every
     // method name globally. This keeps ordinary user methods free to share
     // Latin names without being captured by the Rust backend.
-    let Some(receiver_ty) = receiver.ty.map(|ty| types.get(ty)) else {
+    let Some(receiver_ty) = receiver.ty.map(|ty| resolve_type(ty, types)) else {
         return Ok(false);
     };
     let method_name = codegen.resolve_symbol(method);
 
     match receiver_ty {
-        Type::Array(_) => generate_lista_method(
+        Type::Array(elem_ty) => generate_lista_method(
             codegen,
             receiver,
             method_name,
+            elem_ty,
             args,
             types,
             w,
@@ -482,10 +478,12 @@ fn try_generate_stdlib_method_call(
             in_entry,
             suppress_error_propagation,
         ),
-        Type::Map(_, _) => generate_tabula_method(
+        Type::Map(key_ty, value_ty) => generate_tabula_method(
             codegen,
             receiver,
             method_name,
+            key_ty,
+            value_ty,
             args,
             types,
             w,
@@ -502,6 +500,7 @@ fn generate_lista_method(
     codegen: &RustCodegen<'_>,
     receiver: &HirExpr,
     method_name: &str,
+    elem_ty: TypeId,
     args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
@@ -521,9 +520,10 @@ fn generate_lista_method(
                 suppress_error_propagation,
             )?;
             w.write(".push(");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[0].expr,
+                elem_ty,
                 types,
                 w,
                 in_failable_fn,
@@ -567,9 +567,10 @@ fn generate_lista_method(
                 suppress_error_propagation,
             )?;
             w.write(".contains(&");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[0].expr,
+                elem_ty,
                 types,
                 w,
                 in_failable_fn,
@@ -676,9 +677,10 @@ fn generate_lista_method(
             w.write(".clone(); ");
             w.write(&temp);
             w.write(".push(");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[0].expr,
+                elem_ty,
                 types,
                 w,
                 in_failable_fn,
@@ -837,6 +839,8 @@ fn generate_tabula_method(
     codegen: &RustCodegen<'_>,
     receiver: &HirExpr,
     method_name: &str,
+    key_ty: TypeId,
+    value_ty: TypeId,
     args: &[HirCallArg],
     types: &TypeTable,
     w: &mut CodeWriter,
@@ -856,9 +860,10 @@ fn generate_tabula_method(
                 suppress_error_propagation,
             )?;
             w.write(".insert(");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[0].expr,
+                key_ty,
                 types,
                 w,
                 in_failable_fn,
@@ -866,9 +871,10 @@ fn generate_tabula_method(
                 suppress_error_propagation,
             )?;
             w.write(", ");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[1].expr,
+                value_ty,
                 types,
                 w,
                 in_failable_fn,
@@ -888,9 +894,10 @@ fn generate_tabula_method(
                 suppress_error_propagation,
             )?;
             w.write(".get(&");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[0].expr,
+                key_ty,
                 types,
                 w,
                 in_failable_fn,
@@ -910,9 +917,10 @@ fn generate_tabula_method(
                 suppress_error_propagation,
             )?;
             w.write(".contains_key(&");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[0].expr,
+                key_ty,
                 types,
                 w,
                 in_failable_fn,
@@ -932,9 +940,10 @@ fn generate_tabula_method(
                 suppress_error_propagation,
             )?;
             w.write(".remove(&");
-            generate_expr_unwrapped(
+            generate_expr_as_type(
                 codegen,
                 &args[0].expr,
+                key_ty,
                 types,
                 w,
                 in_failable_fn,

@@ -22,7 +22,7 @@
 //! that earlier phases have not made precise.
 
 use super::super::CodeWriter;
-use super::type_shape::{resolve_type, type_id_is_faber_value};
+use super::type_shape::{resolve_type, type_id_is_faber_value, type_is_option_or_nihil};
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
 use crate::lexer::Symbol;
@@ -482,7 +482,7 @@ pub(super) fn generate_expr_unwrapped(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_expr_as_type(
+pub(super) fn generate_expr_as_type(
     codegen: &RustCodegen<'_>,
     expr: &HirExpr,
     target_ty: TypeId,
@@ -504,7 +504,65 @@ fn generate_expr_as_type(
         );
     }
 
-    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    if matches!(expr.kind, HirExprKind::Literal(HirLiteral::String(_)))
+        && !expr
+            .ty
+            .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Textus)))
+        && matches!(resolve_type(target_ty, types), Type::Primitive(Primitive::Textus))
+    {
+        w.write(".to_string()");
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_expr_as_optional_target(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    value_ty: TypeId,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if expr_may_already_produce_option(codegen, expr, types) {
+        generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        return Ok(());
+    }
+
+    w.write("Some(");
+    generate_expr_as_type(
+        codegen,
+        expr,
+        value_ty,
+        types,
+        w,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+    )?;
+    w.write(")");
+    Ok(())
+}
+
+pub(super) fn expr_may_already_produce_option(codegen: &RustCodegen<'_>, expr: &HirExpr, types: &TypeTable) -> bool {
+    match &expr.kind {
+        HirExprKind::Literal(HirLiteral::Nil) | HirExprKind::OptionalChain(_, _) => true,
+        HirExprKind::Path(def_id) => codegen
+            .binding_type(*def_id)
+            .or(expr.ty)
+            .is_some_and(|ty| type_is_option_or_nihil(ty, types)),
+        HirExprKind::Verte { target, .. } => type_is_option_or_nihil(*target, types),
+        HirExprKind::Call(_, _)
+        | HirExprKind::MethodCall(_, _, _)
+        | HirExprKind::Field(_, _)
+        | HirExprKind::Index(_, _)
+        | HirExprKind::NonNull(_, _)
+        | HirExprKind::Si { .. } => expr.ty.is_some_and(|ty| type_is_option_or_nihil(ty, types)),
+        _ => false,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

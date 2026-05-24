@@ -27,8 +27,8 @@
 //! repair missing type information.
 
 use super::super::CodeWriter;
-use super::expr::{generate_expr, generate_expr_unwrapped};
-use super::type_shape::{resolve_type, type_id_is_option, type_is_option_or_nihil};
+use super::expr::{generate_expr, generate_expr_as_optional_target, generate_expr_unwrapped};
+use super::type_shape::{option_inner_or_self, resolve_type, type_id_is_option};
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
@@ -155,13 +155,17 @@ fn generate_local(
 
     if let Some(init) = &local.init {
         w.write(" = ");
-        if local_init_requires_some_wrapper(codegen, local, init, types) {
-            w.write("Some(");
-            generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            if matches!(init.kind, HirExprKind::Literal(HirLiteral::String(_))) {
-                w.write(".to_string()");
-            }
-            w.write(")");
+        if let Some(value_ty) = local_optional_value_type(codegen, local, types) {
+            generate_expr_as_optional_target(
+                codegen,
+                init,
+                value_ty,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )?;
         } else {
             generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             if local_init_clones_indexed_owned_value(local, init, types) {
@@ -196,10 +200,17 @@ fn generate_return_value_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if return_value_requires_some_wrapper(codegen, expr, types) {
-        w.write("Some(");
-        generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(")");
+    if let Some(value_ty) = return_optional_value_type(codegen, types) {
+        generate_expr_as_optional_target(
+            codegen,
+            expr,
+            value_ty,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        )?;
         return Ok(());
     }
 
@@ -212,31 +223,12 @@ fn generate_return_value_expr(
     generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
 }
 
-fn return_value_requires_some_wrapper(codegen: &RustCodegen<'_>, expr: &HirExpr, types: &TypeTable) -> bool {
-    let Some(return_ty) = codegen.current_return_ty() else {
-        return false;
-    };
+fn return_optional_value_type(codegen: &RustCodegen<'_>, types: &TypeTable) -> Option<TypeId> {
+    let return_ty = codegen.current_return_ty()?;
     if !type_id_is_option(return_ty, types) {
-        return false;
+        return None;
     }
-
-    !return_value_may_already_produce_option(codegen, expr, types)
-}
-
-fn return_value_may_already_produce_option(codegen: &RustCodegen<'_>, expr: &HirExpr, types: &TypeTable) -> bool {
-    match &expr.kind {
-        HirExprKind::Literal(HirLiteral::Nil) | HirExprKind::OptionalChain(_, _) => true,
-        HirExprKind::Path(def_id) => codegen
-            .binding_type(*def_id)
-            .or(expr.ty)
-            .is_some_and(|ty| type_is_option_or_nihil(ty, types)),
-        HirExprKind::Call(_, _)
-        | HirExprKind::MethodCall(_, _, _)
-        | HirExprKind::Field(_, _)
-        | HirExprKind::Index(_, _)
-        | HirExprKind::NonNull(_, _) => expr.ty.is_some_and(|ty| type_is_option_or_nihil(ty, types)),
-        _ => false,
-    }
+    Some(option_inner_or_self(return_ty, types))
 }
 
 fn return_value_requires_option_unwrap(codegen: &RustCodegen<'_>, expr: &HirExpr) -> bool {
@@ -256,39 +248,12 @@ fn local_init_clones_indexed_owned_value(local: &HirLocal, init: &HirExpr, types
         .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Array(_) | Type::Primitive(Primitive::Textus)))
 }
 
-fn local_init_requires_some_wrapper(
-    codegen: &RustCodegen<'_>,
-    local: &HirLocal,
-    init: &HirExpr,
-    types: &TypeTable,
-) -> bool {
-    let Some(local_ty) = local.ty else {
-        return false;
-    };
+fn local_optional_value_type(codegen: &RustCodegen<'_>, local: &HirLocal, types: &TypeTable) -> Option<TypeId> {
+    let local_ty = local.ty?;
 
     if !type_to_rust(codegen, local_ty, types).starts_with("Option<") {
-        return false;
+        return None;
     }
 
-    if let HirExprKind::Verte { target, .. } = &init.kind {
-        if type_id_is_option(*target, types) {
-            return false;
-        }
-    }
-
-    // Expressions that may already produce `Option<T>` are left alone. Literal
-    // and constructed values need Rust's `Some(...)` wrapper to satisfy an
-    // optional local annotation.
-    !matches!(
-        &init.kind,
-        HirExprKind::Literal(HirLiteral::Nil)
-            | HirExprKind::OptionalChain(_, _)
-            | HirExprKind::Path(_)
-            | HirExprKind::Call(_, _)
-            | HirExprKind::MethodCall(_, _, _)
-            | HirExprKind::Field(_, _)
-            | HirExprKind::Index(_, _)
-            | HirExprKind::Binary(_, _, _)
-            | HirExprKind::Si { .. }
-    )
+    Some(option_inner_or_self(local_ty, types))
 }

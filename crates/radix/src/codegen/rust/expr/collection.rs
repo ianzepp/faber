@@ -16,7 +16,7 @@
 //!   become `None`, and omitted fields with initializers are emitted through the
 //!   same field-value wrapper path as provided fields.
 
-use super::super::type_shape::{option_inner_or_self, resolve_type, type_id_is_faber_value, type_is_option_or_nihil};
+use super::super::type_shape::{option_inner_or_self, resolve_type, type_id_is_faber_value};
 use super::*;
 use rustc_hash::FxHashSet;
 
@@ -32,10 +32,7 @@ pub(super) fn generate_array_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    let dynamic_elem_ty = match expr_ty.map(|ty| resolve_type(ty, types)) {
-        Some(Type::Array(elem_ty)) => type_id_is_faber_value(elem_ty, types),
-        _ => false,
-    };
+    let dynamic_elem_ty = dynamic_array_element_type(expr_ty, types);
 
     if elements
         .iter()
@@ -58,21 +55,20 @@ pub(super) fn generate_array_expr(
                     HirArrayElement::Expr(elem) => {
                         w.write(&temp);
                         w.write(".push(");
-                        if dynamic_elem_ty {
-                            w.write("FaberValue::from(");
-                        }
-                        result = generate_expr(
-                            codegen,
-                            elem,
-                            types,
-                            w,
-                            in_failable_fn,
-                            in_entry,
-                            suppress_error_propagation,
-                        );
-                        if dynamic_elem_ty {
-                            w.write(")");
-                        }
+                        result = if let Some(elem_ty) = dynamic_elem_ty {
+                            generate_expr_as_type(
+                                codegen,
+                                elem,
+                                elem_ty,
+                                types,
+                                w,
+                                in_failable_fn,
+                                in_entry,
+                                suppress_error_propagation,
+                            )
+                        } else {
+                            generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+                        };
                         w.writeln(");");
                     }
                     HirArrayElement::Spread(elem) => {
@@ -105,17 +101,31 @@ pub(super) fn generate_array_expr(
             let HirArrayElement::Expr(elem) = elem else {
                 continue;
             };
-            if dynamic_elem_ty {
-                w.write("FaberValue::from(");
-            }
-            generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            if dynamic_elem_ty {
-                w.write(")");
+            if let Some(elem_ty) = dynamic_elem_ty {
+                generate_expr_as_type(
+                    codegen,
+                    elem,
+                    elem_ty,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                )?;
+            } else {
+                generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
             }
         }
         w.write("]");
     }
     Ok(())
+}
+
+fn dynamic_array_element_type(expr_ty: Option<TypeId>, types: &TypeTable) -> Option<TypeId> {
+    let Type::Array(elem_ty) = resolve_type(expr_ty?, types) else {
+        return None;
+    };
+    type_id_is_faber_value(elem_ty, types).then_some(elem_ty)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -243,7 +253,9 @@ pub(super) fn generate_struct_field_value(
     // Optional field wrapping is decided against the Rust storage type, not the
     // source spelling. That keeps `T ∪ nihil` fields represented as `Option<T>`
     // even when the user supplies a bare non-option expression.
-    if codegen.struct_field_stores_option(def_id, name, types) && expr_requires_some_wrapper(value, types) {
+    if codegen.struct_field_stores_option(def_id, name, types)
+        && !expr_may_already_produce_option(codegen, value, types)
+    {
         w.write("Some(");
         generate_struct_value_expr(
             codegen,
@@ -308,17 +320,6 @@ pub(super) fn generate_omitted_struct_fields(
         w.writeln(",");
     }
     Ok(())
-}
-
-fn expr_requires_some_wrapper(expr: &HirExpr, types: &TypeTable) -> bool {
-    if matches!(expr.kind, HirExprKind::Literal(HirLiteral::Nil)) {
-        return false;
-    }
-
-    match expr.ty {
-        Some(ty) => !type_is_option_or_nihil(ty, types),
-        None => true,
-    }
 }
 
 #[allow(clippy::too_many_arguments)]

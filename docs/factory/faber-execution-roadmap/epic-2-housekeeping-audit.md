@@ -22,7 +22,16 @@
 - Drifted status docs were updated with the live `99/100`, `100` exempla, and `37` relocated fixture counts.
 - Rust backend type-shape predicates are centralized in `crates/radix/src/codegen/rust/type_shape.rs` with helper-level alias, optional, nil, and dynamic-value tests.
 
-Remaining high-priority cleanup still includes centralizing optional target-expression emission and dynamic `FaberValue` coercion call paths.
+2026-05-24 follow-up implemented the second Rust backend cleanup slice:
+
+- Optional target emission now flows through `generate_expr_as_optional_target`, backed by the shared `expr_may_already_produce_option` predicate for option-valued locals, returns, call arguments, and struct fields.
+- Nullable union shape detection now reuses the type-shape helper path, while preserving the distinction between `T ∪ nihil` option-like values and dynamic `ignotum`/`FaberValue`.
+- Dynamic collection and `verte` construction paths now use the shared target-type expression emission path instead of local `FaberValue::from(...)` wrappers.
+- Stdlib `lista` and `tabula` method translations now pass receiver-derived target element, key, and value types into argument emission, so dynamic collection method calls coerce through the same path as direct calls.
+- Added focused Rust backend tests for preserving option-valued optional targets and coercing dynamic collection method arguments.
+- Validation after this slice: `cargo test -p radix`, `./scripta/lint`, and `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` pass; the ignored Rust exempla harness remains at `99/100` with `ad/ad.fab` as the expected Epic 3 failure.
+
+Remaining high-priority cleanup is now mostly decomposition and test-boundary work: split the large Rust call/codegen modules, split the broad Rust backend test file, and add narrower helper-level tests around the newly centralized emission decisions.
 
 ## Highest Priority Cleanup And Correctness Risks
 
