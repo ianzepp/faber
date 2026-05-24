@@ -1,4 +1,4 @@
-use crate::kernel::{Frame, HostEcho, Router, SyscallInfo};
+use crate::kernel::{Consolum, Frame, HostEcho, Router, SyscallInfo};
 use crate::manifest::{CapabilityManifest, RegisteredProvider};
 
 /// Faber-owned host kernel for macOS route proofs.
@@ -15,6 +15,7 @@ impl HostKernel {
     pub fn new() -> Self {
         let mut router = Router::new();
         router.register(HostEcho);
+        router.register(Consolum);
 
         Self {
             router,

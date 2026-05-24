@@ -7,12 +7,14 @@
 //! socket later, but it should still be routed as a frame with structured
 //! terminal success or failure.
 
+mod consolum;
 mod error;
 mod frame;
 mod host;
 mod router;
 mod syscall;
 
+pub use consolum::Consolum;
 pub use error::{HostError, HostResult};
 pub use frame::{Frame, FrameData, Status};
 pub use host::HostKernel;
