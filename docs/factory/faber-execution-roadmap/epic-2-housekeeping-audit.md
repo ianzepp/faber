@@ -46,6 +46,9 @@
 
 These are structural cleanup candidates even when no immediate bug is fixed.
 The goal is to make the next Rust backend phases easier to test in small units.
+Prefer well-named Rust modules over large concatenated source files. Small
+module files are acceptable when the module boundary makes ownership, review,
+and targeted tests clearer.
 
 1. Extract Rust type-shape predicates into one module.
    - Current repetition: `resolve_type`, `type_id_is_option`, `type_is_option_or_nihil`, `option_inner_or_self`, and `type_id_is_faber_value` are redefined across `decl.rs`, `mod.rs`, `stmt.rs`, `expr/mod.rs`, `expr/option.rs`, `expr/collection.rs`, and `expr/verte.rs`.
