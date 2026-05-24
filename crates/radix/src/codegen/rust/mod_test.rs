@@ -397,6 +397,30 @@ incipit {
 }
 
 #[test]
+fn emits_option_shaped_if_expression_branches() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    varia _ maybe ← nihil ∷ textus ∪ nihil
+    fixum _ result ← nonnihil maybe sic maybe secus "default"
+    nota result
+}
+"#;
+
+    let result = compiler.compile_str("optional-if-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("let result: Option<String> = if maybe != None"));
+    assert!(rust.code.contains("maybe.clone()"));
+    assert!(rust.code.contains(r#"Some("default".to_string())"#));
+    assert!(!rust.code.contains("Some(if maybe != None"));
+}
+
+#[test]
 fn emits_array_spread_without_moving_source_vector() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

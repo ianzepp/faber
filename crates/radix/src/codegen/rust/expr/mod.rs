@@ -210,6 +210,7 @@ pub fn generate_expr(
             cond,
             then_block,
             else_block.as_ref(),
+            expr.ty,
             types,
             w,
             in_failable_fn,

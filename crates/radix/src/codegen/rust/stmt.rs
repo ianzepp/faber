@@ -276,5 +276,6 @@ fn local_init_requires_some_wrapper(
             | HirExprKind::Field(_, _)
             | HirExprKind::Index(_, _)
             | HirExprKind::Binary(_, _, _)
+            | HirExprKind::Si { .. }
     )
 }
