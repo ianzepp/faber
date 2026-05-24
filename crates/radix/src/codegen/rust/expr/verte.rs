@@ -38,6 +38,7 @@ pub(super) fn generate_verte_expr(
     match types.get(target) {
         Type::Struct(def_id) => generate_verte_struct_expr(
             codegen,
+            expr_id,
             source,
             *def_id,
             entries,
@@ -94,6 +95,7 @@ pub(super) fn generate_verte_expr(
 #[allow(clippy::too_many_arguments)]
 fn generate_verte_struct_expr(
     codegen: &RustCodegen<'_>,
+    expr_id: HirId,
     source: &HirExpr,
     def_id: DefId,
     entries: Option<&[HirObjectField]>,
@@ -103,63 +105,118 @@ fn generate_verte_struct_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if let Some(entries) = entries {
-        // Entry-backed struct construction mirrors `generate_struct_expr` so
-        // defaulted and optional fields do not diverge under `verte`.
-        w.write(codegen.resolve_def(def_id));
-        w.writeln(" {");
-        let mut struct_result = Ok(());
-        let provided = entries
-            .iter()
-            .filter_map(|field| match (&field.key, &field.value) {
-                (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(_)) => Some(*name),
-                _ => None,
-            })
-            .collect::<rustc_hash::FxHashSet<_>>();
+    let Some(entries) = entries else {
+        return generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+    };
+
+    if codegen.struct_has_creo_hook(def_id) {
+        let temp = format!("__faber_struct_{}", expr_id.0);
+        w.writeln("{");
+        let mut result = Ok(());
         w.indented(|w| {
-            for field in entries {
-                let (name, value) = match (&field.key, &field.value) {
-                    (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(value)) => (name, value),
-                    _ => continue,
-                };
-                w.write(codegen.resolve_symbol(*name));
-                w.write(": ");
-                if struct_result.is_err() {
-                    return;
-                }
-                struct_result = generate_struct_field_value(
-                    codegen,
-                    def_id,
-                    *name,
-                    value,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                );
-                w.writeln(",");
-            }
-            if struct_result.is_err() {
-                return;
-            }
-            struct_result = generate_omitted_struct_fields(
+            w.write("let mut ");
+            w.write(&temp);
+            w.write(" = ");
+            result = generate_verte_struct_literal_expr(
                 codegen,
                 def_id,
-                &provided,
+                entries,
                 types,
                 w,
                 in_failable_fn,
                 in_entry,
                 suppress_error_propagation,
             );
+            if result.is_err() {
+                return;
+            }
+            w.writeln(";");
+            w.write(&temp);
+            w.writeln(".creo();");
+            w.write(&temp);
+            w.newline();
         });
-        struct_result?;
+        result?;
         w.write("}");
         return Ok(());
     }
 
-    generate_expr(codegen, source, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    generate_verte_struct_literal_expr(
+        codegen,
+        def_id,
+        entries,
+        types,
+        w,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_verte_struct_literal_expr(
+    codegen: &RustCodegen<'_>,
+    def_id: DefId,
+    entries: &[HirObjectField],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    // Entry-backed struct construction mirrors `generate_struct_expr` so
+    // defaulted and optional fields do not diverge under `verte`.
+    w.write(codegen.resolve_def(def_id));
+    w.writeln(" {");
+    let mut struct_result = Ok(());
+    let provided = entries
+        .iter()
+        .filter_map(|field| match (&field.key, &field.value) {
+            (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(_)) => Some(*name),
+            _ => None,
+        })
+        .collect::<rustc_hash::FxHashSet<_>>();
+    w.indented(|w| {
+        for field in entries {
+            let (name, value) = match (&field.key, &field.value) {
+                (HirObjectKey::Ident(name) | HirObjectKey::String(name), Some(value)) => (name, value),
+                _ => continue,
+            };
+            w.write(codegen.resolve_symbol(*name));
+            w.write(": ");
+            if struct_result.is_err() {
+                return;
+            }
+            struct_result = generate_struct_field_value(
+                codegen,
+                def_id,
+                *name,
+                value,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
+            w.writeln(",");
+        }
+        if struct_result.is_err() {
+            return;
+        }
+        struct_result = generate_omitted_struct_fields(
+            codegen,
+            def_id,
+            &provided,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
+    });
+    struct_result?;
+    w.write("}");
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]

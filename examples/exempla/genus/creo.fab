@@ -29,7 +29,7 @@ genus BoundedValue {
 genus Circle {
     numerus radius = 1
     numerus diameter = 0
-    numerus area = 0
+    fractus area = 0
 
     functio creo() {
         ego.diameter ← ego.radius * 2

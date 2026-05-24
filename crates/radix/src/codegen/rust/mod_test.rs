@@ -852,6 +852,38 @@ incipit {
 }
 
 #[test]
+fn typed_struct_construction_calls_creo_hook() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+genus Circle {
+    numerus radius = 1
+    fractus area = 0
+
+    functio creo() {
+        ego.area ← 3.14159 * ego.radius * ego.radius
+    }
+}
+
+incipit {
+    fixum _ circle ← Circle { radius = 5 }
+    nota circle.area
+}
+"#;
+
+    let result = compiler.compile_str("creo-hook-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("pub area: f64,"));
+    assert!(rust.code.contains("let circle: Circle = {"));
+    assert!(rust.code.contains("let mut __faber_struct_"));
+    assert!(rust.code.contains("area: 0.0,"));
+    assert!(rust.code.contains(".creo();"));
+    assert!(rust.code.contains("return self.area;") || rust.code.contains("circle.area"));
+}
+
+#[test]
 fn empty_typed_constructor_uses_field_defaults() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

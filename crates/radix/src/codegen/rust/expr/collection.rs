@@ -102,6 +102,62 @@ pub(super) fn generate_array_expr(
 #[allow(clippy::too_many_arguments)]
 pub(super) fn generate_struct_expr(
     codegen: &RustCodegen<'_>,
+    expr_id: HirId,
+    def_id: DefId,
+    fields: &[(Symbol, HirExpr)],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if codegen.struct_has_creo_hook(def_id) {
+        let temp = format!("__faber_struct_{}", expr_id.0);
+        w.writeln("{");
+        let mut result = Ok(());
+        w.indented(|w| {
+            w.write("let mut ");
+            w.write(&temp);
+            w.write(" = ");
+            result = generate_struct_literal_expr(
+                codegen,
+                def_id,
+                fields,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
+            if result.is_err() {
+                return;
+            }
+            w.writeln(";");
+            w.write(&temp);
+            w.writeln(".creo();");
+            w.write(&temp);
+            w.newline();
+        });
+        result?;
+        w.write("}");
+        return Ok(());
+    }
+
+    generate_struct_literal_expr(
+        codegen,
+        def_id,
+        fields,
+        types,
+        w,
+        in_failable_fn,
+        in_entry,
+        suppress_error_propagation,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn generate_struct_literal_expr(
+    codegen: &RustCodegen<'_>,
     def_id: DefId,
     fields: &[(Symbol, HirExpr)],
     types: &TypeTable,
@@ -266,6 +322,13 @@ fn generate_struct_value_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    if let HirExprKind::Literal(HirLiteral::Int(value)) = value.kind {
+        if struct_field_value_is_fractus(codegen, def_id, name, types) {
+            w.write(&format!("{value}.0"));
+            return Ok(());
+        }
+    }
+
     generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     if matches!(value.kind, HirExprKind::Literal(HirLiteral::String(_)))
         && value.ty.is_none()
@@ -274,6 +337,17 @@ fn generate_struct_value_expr(
         w.write(".to_string()");
     }
     Ok(())
+}
+
+fn struct_field_value_is_fractus(codegen: &RustCodegen<'_>, def_id: DefId, name: Symbol, types: &TypeTable) -> bool {
+    let Some(field) = codegen.struct_field_info(def_id, name) else {
+        return false;
+    };
+
+    matches!(
+        types.get(option_inner_or_self(field.ty, types)),
+        Type::Primitive(Primitive::Fractus)
+    )
 }
 
 fn struct_field_value_is_textus(codegen: &RustCodegen<'_>, def_id: DefId, name: Symbol, types: &TypeTable) -> bool {

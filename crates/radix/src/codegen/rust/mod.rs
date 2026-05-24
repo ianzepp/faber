@@ -120,6 +120,9 @@ pub struct RustCodegen<'a> {
     /// and fields with genus defaults, while preserving nullable storage as `Option<T>`.
     struct_fields: FxHashMap<DefId, Vec<StructFieldInfo<'a>>>,
 
+    /// Struct definitions that declare a `creo` post-construction hook.
+    struct_creo_hooks: FxHashSet<DefId>,
+
     /// Current function return type while emitting a body.
     ///
     /// Statement lowering uses this to bridge nullable Faber returns to Rust
@@ -169,6 +172,7 @@ impl<'a> RustCodegen<'a> {
             failable_defs: FxHashSet::default(),
             test_selection: None,
             struct_fields: FxHashMap::default(),
+            struct_creo_hooks: FxHashSet::default(),
             current_return_ty: Cell::new(None),
             current_self_def: Cell::new(None),
             binding_types: RefCell::new(FxHashMap::default()),
@@ -185,6 +189,7 @@ impl<'a> RustCodegen<'a> {
                 .any(|item| matches!(&item.kind, HirItemKind::Function(func) if func.test.as_ref().is_some_and(|test| test.modifiers.iter().any(|modifier| matches!(modifier, HirTestModifier::Solum))))),
         });
         codegen.struct_fields = codegen.collect_struct_fields(hir);
+        codegen.struct_creo_hooks = codegen.collect_struct_creo_hooks(hir);
         codegen.function_params = codegen.collect_function_params(hir);
         codegen.option_param_defs = codegen.collect_option_param_defs();
         codegen.variant_info = codegen.collect_variant_info(hir);
@@ -197,6 +202,7 @@ impl<'a> RustCodegen<'a> {
         w.writeln("#![allow(unused_imports)]");
         w.writeln("#![allow(unused_variables)]");
         w.writeln("#![allow(dead_code)]");
+        w.writeln("#![allow(non_snake_case)]");
         w.newline();
 
         for import in imports {
@@ -421,6 +427,26 @@ impl<'a> RustCodegen<'a> {
         fields
     }
 
+    fn collect_struct_creo_hooks(&self, hir: &'a HirProgram) -> FxHashSet<DefId> {
+        hir.items
+            .iter()
+            .filter_map(|item| {
+                let HirItemKind::Struct(strukt) = &item.kind else {
+                    return None;
+                };
+                strukt
+                    .methods
+                    .iter()
+                    .any(|method| {
+                        self.resolve_symbol(method.func.name) == "creo"
+                            && method.func.params.is_empty()
+                            && method.func.body.is_some()
+                    })
+                    .then_some(item.def_id)
+            })
+            .collect()
+    }
+
     fn collect_function_params(&self, hir: &'a HirProgram) -> FxHashMap<DefId, Vec<FunctionParamInfo<'a>>> {
         let mut params = FxHashMap::default();
         for item in &hir.items {
@@ -528,6 +554,10 @@ impl<'a> RustCodegen<'a> {
             .unwrap_or_default();
         fields.sort_by(|a, b| self.resolve_symbol(a.name).cmp(self.resolve_symbol(b.name)));
         fields
+    }
+
+    pub(super) fn struct_has_creo_hook(&self, def_id: DefId) -> bool {
+        self.struct_creo_hooks.contains(&def_id)
     }
 }
 

@@ -306,6 +306,7 @@ pub fn generate_expr(
         HirExprKind::Vacua => generate_vacua_expr(expr, types, w),
         HirExprKind::Struct(def_id, fields) => generate_struct_expr(
             codegen,
+            expr.id,
             *def_id,
             fields,
             types,
