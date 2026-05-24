@@ -59,7 +59,7 @@ fn ad_is_rejected_for_go_targets() {
         &session,
         "<test>",
         r#"incipit {
-  ad "fasciculus:lege" ("hello.txt") → textus pro content {
+  ad "fasciculus:lege" ("hello.txt") → textus content ⇥ textus {
     nota content
   }
 }"#,
@@ -79,7 +79,7 @@ fn ad_with_catch_is_rejected_for_go_targets() {
         &session,
         "<test>",
         r#"incipit {
-  ad "fasciculus:lege" ("hello.txt") → textus pro content {
+  ad "fasciculus:lege" ("hello.txt") → textus content ⇥ textus {
     nota content
   } cape err {
     nota err

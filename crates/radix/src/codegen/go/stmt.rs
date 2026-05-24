@@ -253,7 +253,7 @@ fn generate_ad_stmt(
     let binding_ty = ad
         .binding
         .as_ref()
-        .and_then(|binding| binding.ty)
+        .map(|binding| binding.ty)
         .map(|ty| type_to_go(codegen, ty, types))
         .filter(|ty| !ty.is_empty())
         .unwrap_or_else(|| "any".to_owned());

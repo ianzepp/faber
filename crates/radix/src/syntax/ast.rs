@@ -775,6 +775,7 @@ pub struct AdStmt {
     pub path: Symbol,
     pub args: Vec<Argument>,
     pub binding: Option<AdBinding>,
+    pub err_ty: Option<TypeExpr>,
     pub body: Option<BlockStmt>,
     pub catch: Option<CapeClause>,
 }
@@ -782,7 +783,7 @@ pub struct AdStmt {
 #[derive(Debug)]
 pub struct AdBinding {
     pub verb: EndpointVerb,
-    pub ty: Option<TypeExpr>,
+    pub ty: TypeExpr,
     pub name: Ident,
     pub alias: Option<Ident>,
 }

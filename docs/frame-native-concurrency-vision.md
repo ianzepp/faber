@@ -25,7 +25,7 @@ outside-world effects become host-owned capabilities. In that model, calls such
 as:
 
 ```fab
-ad "pg:query" ("select * from users") → lista<tabula<textus, ignotum>> pro rows {
+ad "pg:query" ("select * from users") → lista<tabula<textus, ignotum>> rows ⇥ textus {
     nota rows
 }
 ```

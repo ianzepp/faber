@@ -468,10 +468,11 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                 resolve_expr(resolver, interner, &arg.value, errors);
             }
             if let Some(binding) = &stmt.binding {
-                if let Some(ty) = &binding.ty {
-                    resolve_type(resolver, interner, ty, errors);
-                }
+                resolve_type(resolver, interner, &binding.ty, errors);
                 define_symbol(resolver, binding.name.name, binding.name.span, SymbolKind::Local, false, errors);
+            }
+            if let Some(err_ty) = &stmt.err_ty {
+                resolve_type(resolver, interner, err_ty, errors);
             }
             if let Some(body) = &stmt.body {
                 resolve_block(resolver, interner, body, errors);

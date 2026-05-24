@@ -186,12 +186,11 @@ fn generate_ad_stmt(
     // Non-strict capability calls compile without provider metadata. The
     // temporary dispatcher never constructs the success value, but the generic
     // result type keeps the source-declared success binding meaningful.
-    let binding_ty = match &ad.binding {
-        Some(binding) => binding.ty.ok_or_else(|| CodegenError {
-            message: "ad capability calls with a success binding require an explicit result type".to_owned(),
-        })?,
-        None => types.primitive(Primitive::Vacuum),
-    };
+    let binding_ty = ad
+        .binding
+        .as_ref()
+        .map(|binding| binding.ty)
+        .unwrap_or_else(|| types.primitive(Primitive::Vacuum));
     writer.write("match ");
     ExprEmitter::new(
         codegen,

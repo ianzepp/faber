@@ -1132,7 +1132,7 @@ incipit argumenta args exitus 1 {}
 incipiet argumenta argv {}
 cura "arena" fixum _ alloc {}
 cura "page" fixum _ page {}
-ad "/salve" (request, sparge extra) → textus pro res ut alias {} cape err {}
+ad "/salve" (request, sparge extra) → textus res ut alias ⇥ textus {} cape err {}
 ex source varia nomen ut name, ceteri reliqua
 "#,
     );
@@ -1177,6 +1177,7 @@ ex source varia nomen ut name, ceteri reliqua
     let binding = endpoint.binding.as_ref().expect("endpoint binding");
     assert_eq!(symbol_name(&result, binding.name.name), "res");
     assert_eq!(symbol_name(&result, binding.alias.as_ref().expect("alias").name), "alias");
+    assert!(endpoint.err_ty.is_some());
     assert!(endpoint.body.is_some());
     assert!(endpoint.catch.is_some());
 

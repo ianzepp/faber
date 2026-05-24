@@ -236,7 +236,7 @@ fn emits_unresolved_ad_dispatch_for_rust() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
 incipit {
-    ad "fasciculus:lege" ("hello.txt") → textus pro content {
+    ad "fasciculus:lege" ("hello.txt") → textus content ⇥ textus {
         nota content
     }
 }
@@ -262,7 +262,7 @@ fn unresolved_ad_can_route_to_cape_handler_in_rust() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
 incipit {
-    ad "fasciculus:lege" ("hello.txt") → textus pro content {
+    ad "fasciculus:lege" ("hello.txt") → textus content ⇥ textus {
         nota content
     } cape err {
         nota err
@@ -277,7 +277,7 @@ incipit {
 
     assert!(rust.code.contains("Err(__faber_err) => {"));
     assert!(rust.code.contains("let err = __faber_err;"));
-    assert!(rust.code.contains("println!(\"{:?}\", err);"));
+    assert!(rust.code.contains("println!(\"{}\", err);"));
 }
 
 #[test]
@@ -285,7 +285,7 @@ fn uncaught_ad_marks_rust_function_failable() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
 functio legit() → textus {
-    ad "fasciculus:lege" ("hello.txt") → textus pro content {
+    ad "fasciculus:lege" ("hello.txt") → textus content ⇥ textus {
         redde content
     }
     redde "unreachable"
@@ -302,7 +302,7 @@ functio legit() → textus {
 }
 
 #[test]
-fn ad_success_binding_requires_explicit_result_type() {
+fn ad_rejects_legacy_pro_success_binding() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
 incipit {
@@ -312,14 +312,35 @@ incipit {
 }
 "#;
 
-    let result = compiler.compile_str("ad-missing-type.fab", source);
+    let result = compiler.compile_str("ad-legacy-pro.fab", source);
 
     assert!(result.output.is_none());
     assert!(result.diagnostics.iter().any(|diagnostic| {
         diagnostic
             .message
-            .contains("unresolved capability calls with a success binding require an explicit result type")
+            .contains("ad success bindings use '→ Type name', not '→ pro name'")
     }));
+}
+
+#[test]
+fn ad_cape_requires_explicit_error_channel_type() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    ad "fasciculus:lege" ("hello.txt") → textus content {
+        nota content
+    } cape err {
+        nota err
+    }
+}
+"#;
+
+    let result = compiler.compile_str("ad-cape-missing-error-type.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(result.diagnostics.iter().any(|diagnostic| diagnostic
+        .message
+        .contains("ad cape handlers require an explicit ⇥ error type")));
 }
 
 #[test]

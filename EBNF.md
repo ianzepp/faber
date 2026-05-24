@@ -548,14 +548,15 @@ functio deploy() argumenta args {
 ## Capability Calls
 
 ```ebnf
-adStmt        := 'ad' STRING '(' argumentList ')' adBinding? blockStmt? catchClause?
-adBinding     := '→' typeAnnotation? 'pro' IDENTIFIER ('ut' IDENTIFIER)?
+adStmt        := 'ad' STRING '(' argumentList ')' adSuccess? adError? blockStmt? catchClause?
+adSuccess     := '→' typeAnnotation IDENTIFIER ('ut' IDENTIFIER)?
+adError       := '⇥' typeAnnotation
 ```
 
 **Note:** `ad` names a host/provider capability. Normal compilation is
 permissive; unresolved providers compile and fail explicitly at runtime in the
-current Rust path. A success binding without provider metadata requires an
-explicit result type.
+current Rust path. Success bindings are type-first (`→ textus content`), and
+recoverable error-channel types use the same `⇥` glyph as failable functions.
 
 ---
 

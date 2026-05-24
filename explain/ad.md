@@ -4,7 +4,7 @@ kind = "keyword"
 category = "endpoint"
 canonical = true
 summary = "Requests a host capability."
-syntax = "ad <path> (<args>) [→ [<type>] pro <name> [ut <alias>]] [<block>] [cape <name> <block>]"
+syntax = "ad <path> (<args>) [→ <type> <name> [ut <alias>]] [⇥ <type>] [<block>] [cape <name> <block>]"
 related = ["argumenta", "exitus"]
 +++
 
@@ -13,6 +13,6 @@ capability names do not need to be linked while compiling, but an unresolved
 capability fails explicitly at runtime.
 
 ```fab
-ad "fasciculus:lege" ("hello.txt") → textus pro content {
+ad "fasciculus:lege" ("hello.txt") → textus content ⇥ CapabilityError {
 }
 ```

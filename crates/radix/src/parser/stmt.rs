@@ -544,7 +544,7 @@ impl Parser {
     /// Parse an `ad` capability-call declaration.
     ///
     /// GRAMMAR:
-    ///   ad-stmt := 'ad' string '(' args ')' ['→' [type] 'pro' ident ['ut' ident]] [block] ['cape' ident block]
+    ///   ad-stmt := 'ad' string '(' args ')' ['→' type ident ['ut' ident]] ['⇥' type] [block] ['cape' ident block]
     ///
     /// Capability-call parsing records the provider path, call-style arguments, optional
     /// response binding, body, and catch clause. Package/runtime integration owns
@@ -558,7 +558,12 @@ impl Parser {
         let args = self.parse_argument_list()?;
         self.expect(&TokenKind::RParen, "expected ')'")?;
 
-        let binding = self.try_parse_endpoint_binding()?;
+        let binding = self.try_parse_ad_binding()?;
+        let err_ty = if self.eat(&TokenKind::ExitArrow) {
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
 
         let body = if self.check(&TokenKind::LBrace) {
             Some(self.parse_block()?)
@@ -568,7 +573,7 @@ impl Parser {
 
         let catch = self.try_parse_cape_stmt()?;
 
-        Ok(StmtKind::Ad(AdStmt { path, args, binding, body, catch }))
+        Ok(StmtKind::Ad(AdStmt { path, args, binding, err_ty, body, catch }))
     }
 
     /// Parse destructuring statement.
@@ -622,18 +627,18 @@ impl Parser {
         Ok(StmtKind::Ex(ExStmt { source, mutability, fields, rest, span }))
     }
 
-    fn try_parse_endpoint_binding(&mut self) -> Result<Option<AdBinding>, ParseError> {
+    fn try_parse_ad_binding(&mut self) -> Result<Option<AdBinding>, ParseError> {
         if !self.eat(&TokenKind::Arrow) {
             return Ok(None);
         }
 
-        let ty = if self.check_keyword(TokenKind::Pro) {
-            None
-        } else {
-            Some(self.parse_type()?)
-        };
-
-        self.expect_keyword(TokenKind::Pro, "expected 'pro'")?;
+        if self.check_keyword(TokenKind::Pro) {
+            return Err(self.error(
+                ParseErrorKind::Expected,
+                "ad success bindings use '→ Type name', not '→ pro name'",
+            ));
+        }
+        let ty = self.parse_type()?;
         let name = self.parse_ident()?;
 
         let alias = if self.eat_keyword(TokenKind::Ut) {

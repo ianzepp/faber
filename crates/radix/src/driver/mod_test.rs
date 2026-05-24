@@ -897,7 +897,7 @@ incipit {
 fn go_target_rejects_ad_with_explicit_policy_diagnostic() {
     let session = session(Target::Go);
     let source = r#"incipit {
-  ad "fasciculus:lege" ("hello.txt") → textus pro response {
+  ad "fasciculus:lege" ("hello.txt") → textus response ⇥ textus {
     nota response
   }
 }"#;
@@ -2633,7 +2633,7 @@ functio compare(Event left, Event right) → vacuum {
 #[test]
 fn ad_roundtrips_through_faber_codegen() {
     let source = r#"incipit {
-  ad "fasciculus:lege" ("hello.txt") → textus pro content {
+  ad "fasciculus:lege" ("hello.txt") → textus content ⇥ textus {
     nota content
   } cape err {
     nota err
@@ -2641,7 +2641,7 @@ fn ad_roundtrips_through_faber_codegen() {
 }"#;
 
     let output = faber_roundtrip(source);
-    assert!(output.contains("ad \"fasciculus:lege\" (\"hello.txt\") → textus pro content {"));
+    assert!(output.contains("ad \"fasciculus:lege\" (\"hello.txt\") → textus content ⇥ textus {"));
     assert!(output.contains("cape err {"));
 }
 

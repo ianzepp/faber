@@ -100,27 +100,44 @@ impl<'a> TypeChecker<'a> {
                 for arg in &mut ad.args {
                     self.check_expr(arg);
                 }
-                if ad
-                    .binding
-                    .as_ref()
-                    .is_some_and(|binding| binding.ty.is_none())
-                {
-                    self.error(
-                        SemanticErrorKind::MissingTypeAnnotation,
-                        "unresolved capability calls with a success binding require an explicit result type",
-                        stmt.span,
-                    );
-                }
                 if let Some(body) = &mut ad.body {
                     self.check_block(body, None);
                 }
                 if let Some(catch) = &mut ad.catch {
-                    self.check_block(catch, None);
+                    if ad.err_ty.is_none() {
+                        self.error(
+                            SemanticErrorKind::MissingTypeAnnotation,
+                            "ad cape handlers require an explicit ⇥ error type",
+                            stmt.span,
+                        );
+                    }
+                    let err_ty = ad
+                        .err_ty
+                        .unwrap_or_else(|| self.types.primitive(Primitive::Ignotum));
+                    self.check_ad_catch_block(catch, err_ty);
                 }
             }
             HirStmtKind::Redde(value) => self.check_return(value.as_mut(), stmt.span),
             HirStmtKind::Rumpe | HirStmtKind::Perge | HirStmtKind::Tacet => {}
         }
+    }
+
+    fn check_ad_catch_block(&mut self, catch: &mut HirBlock, err_ty: TypeId) {
+        let Some(HirStmt { kind: HirStmtKind::Local(local), .. }) = catch.stmts.first_mut() else {
+            self.check_block(catch, None);
+            return;
+        };
+
+        local.ty = Some(err_ty);
+        self.push_scope();
+        self.insert_binding(local.def_id, err_ty, false);
+        for stmt in catch.stmts.iter_mut().skip(1) {
+            self.check_stmt(stmt);
+        }
+        if let Some(expr) = &mut catch.expr {
+            self.check_expr(expr);
+        }
+        self.pop_scope();
     }
 
     /// Check a lexical block and return its value type.

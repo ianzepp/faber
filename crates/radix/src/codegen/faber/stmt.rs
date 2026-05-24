@@ -337,17 +337,18 @@ impl super::FaberCodegen {
                 w.write(")");
                 if let Some(binding) = &ad.binding {
                     let _ = binding.verb;
-                    w.write(" →");
-                    if let Some(ty) = binding.ty {
-                        w.write(" ");
-                        w.write(&self.type_to_faber(ty, types, names, interner));
-                    }
-                    w.write(" pro ");
+                    w.write(" → ");
+                    w.write(&self.type_to_faber(binding.ty, types, names, interner));
+                    w.write(" ");
                     w.write(&self.symbol_to_string(binding.name, interner));
                     if let Some(alias) = binding.alias {
                         w.write(" ut ");
                         w.write(&self.symbol_to_string(alias, interner));
                     }
+                }
+                if let Some(err_ty) = ad.err_ty {
+                    w.write(" ⇥ ");
+                    w.write(&self.type_to_faber(err_ty, types, names, interner));
                 }
                 if let Some(body) = &ad.body {
                     w.writeln(" {");

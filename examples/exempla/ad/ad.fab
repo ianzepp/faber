@@ -4,23 +4,23 @@
 
 incipit {
     # Basic capability call with sync handler
-    ad "fasciculus:lege" ("hello.txt") → textus pro content {
+    ad "fasciculus:lege" ("hello.txt") → textus content ⇥ textus {
         nota "File contents: §"(content)
     }
 
     # Async capability call
     @ futura
-    ad "caelum:pete" ("https://api.example.com/data") → objectum pro response {
+    ad "caelum:pete" ("https://api.example.com/data") → objectum response ⇥ textus {
         nota response
     }
 
     # Multiple arguments
-    ad "processus:executa" ("ls", "-la") → textus pro output {
+    ad "processus:executa" ("ls", "-la") → textus output ⇥ textus {
         nota output
     }
 
     # Complex capability call with error handling
-    #ad "rete:connecta" ("127.0.0.1", 8080) → rete.Socket pro socket {
+    #ad "rete:connecta" ("127.0.0.1", 8080) → rete.Socket socket ⇥ textus {
     #    nota "Connected successfully"
     #    socket.claude()
     #} cape err {
@@ -29,5 +29,5 @@ incipit {
 
     # Capability call without handler (fire-and-forget)
     fixum numerus userId ← 42
-    ad "notificatio:mitte" ("User logged in", userId)
+    ad "notificatio:mitte" ("User logged in", userId) ⇥ textus
 }

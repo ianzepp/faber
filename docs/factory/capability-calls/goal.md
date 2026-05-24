@@ -22,7 +22,7 @@ Reframe `ad` as Faber's capability-call syntax: a source-level request for a nam
 ## Goals
 
 - Rename the conceptual model from endpoint dispatch to **capability calls** in planning/docs.
-- Preserve `ad "name:operation" (...) → Type pro binding { ... }` as the source shape for capability calls unless later grammar work chooses otherwise.
+- Preserve `ad "name:operation" (...) → Type binding ⇥ ErrorType { ... }` as the source shape for capability calls unless later grammar work chooses otherwise.
 - Allow unresolved capabilities during normal compilation.
 - Emit executable target code that represents unresolved capability calls and fails clearly at runtime when no host/provider implementation is linked.
 - Keep room for a future strict flag that verifies capability existence and provider signatures against expected source types.
@@ -47,7 +47,7 @@ Reframe `ad` as Faber's capability-call syntax: a source-level request for a nam
 - `hosts/macos-arm64/README.md`: records the long-term split where Faber source lowers to MIR/Wasm and a prebuilt host supplies HAL imports and standard capabilities.
 - `hosts/macos-arm64/ARCHITECTURE.md`: captures the host-owned capability model, non-strict and strict capability compilation modes, and the direction for moving `norma` implementation into compiler core or host capabilities.
 - `hosts/macos-arm64/SYSCALL_MODEL.md`: models capability calls as host syscalls using the Muninn frame/kernel pattern from `/Users/ianzepp/work/ianzepp/muninn/protocol/frames-rs` and `/Users/ianzepp/work/ianzepp/muninn/runtimes/kernel-rs`.
-- 2026-05-24 implementation update: Rust codegen now emits a temporary unresolved capability dispatcher, explicit success-binding result types are required without provider metadata, `cape` receives unresolved dispatcher errors in the Rust path, and `examples/exempla/ad/ad.fab` is classified as an expected unresolved runtime failure rather than unsupported codegen.
+- 2026-05-24 implementation update: Rust codegen now emits a temporary unresolved capability dispatcher, success bindings use type-first syntax, `⇥` declares the error channel type, `cape` receives unresolved dispatcher errors in the Rust path, and `examples/exempla/ad/ad.fab` is classified as an expected unresolved runtime failure rather than unsupported codegen.
 
 ## Reference Packet
 
@@ -86,7 +86,7 @@ Update docs and examples to consistently call `ad` a capability call. Record the
 
 ### Phase 1: Typecheck Contract
 
-Define the minimum typechecking contract for unresolved capability calls. The important decision is how the success binding gets a type when no provider metadata exists: explicit `→ Type` should be accepted; omitted type should produce a clear diagnostic unless a deliberate escape type is chosen.
+Define the minimum typechecking contract for unresolved capability calls. The important decision is how channel declarations get types when no provider metadata exists: explicit `→ Type name` and `⇥ ErrorType` source annotations should be accepted; omitted provider-derived channel types should not be guessed.
 
 ### Phase 2: Temporary Rust Runtime Stub
 

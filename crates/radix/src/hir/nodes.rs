@@ -583,6 +583,9 @@ pub struct HirAd {
     /// Optional success binding introduced by the form.
     pub binding: Option<HirAdBinding>,
 
+    /// Declared recoverable error-channel type.
+    pub err_ty: Option<TypeId>,
+
     /// Success body block.
     pub body: Option<HirBlock>,
 
@@ -596,8 +599,8 @@ pub struct HirAdBinding {
     /// Capability-call verb taxonomy after lowering.
     pub verb: HirEndpointVerb,
 
-    /// Declared binding type, when source syntax provides one.
-    pub ty: Option<TypeId>,
+    /// Declared success binding type.
+    pub ty: TypeId,
 
     /// Binding name introduced into the endpoint body.
     pub name: Symbol,

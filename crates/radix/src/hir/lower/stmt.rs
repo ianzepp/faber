@@ -541,20 +541,21 @@ impl<'a> Lowerer<'a> {
                     crate::syntax::EndpointVerb::Fiunt => crate::hir::HirEndpointVerb::Fiunt,
                     crate::syntax::EndpointVerb::Fient => crate::hir::HirEndpointVerb::Fient,
                 },
-                ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+                ty: self.lower_type(&binding.ty),
                 name: binding.name.name,
                 alias: binding.alias.as_ref().map(|alias| alias.name),
             });
+        let err_ty = stmt.err_ty.as_ref().map(|ty| self.lower_type(ty));
         let body = stmt
             .body
             .as_ref()
             .map(|body| self.lower_ad_body(body, stmt.binding.as_ref()));
-        let catch = stmt
-            .catch
-            .as_ref()
-            .map(|catch| self.lower_cape_clause_block(catch));
+        let catch = stmt.catch.as_ref().map(|catch| {
+            let err_ty = err_ty.unwrap_or_else(|| self.types.primitive(crate::semantic::Primitive::Ignotum));
+            self.lower_typed_cape_clause_block(catch, err_ty)
+        });
 
-        HirStmtKind::Ad(crate::hir::HirAd { path: stmt.path, args, binding, body, catch })
+        HirStmtKind::Ad(crate::hir::HirAd { path: stmt.path, args, binding, err_ty, body, catch })
     }
 
     fn lower_ex(&mut self, _stmt: &crate::syntax::ExStmt) -> HirStmtKind {
@@ -818,6 +819,20 @@ impl<'a> Lowerer<'a> {
 
     fn lower_cape_clause_block(&mut self, catch: &crate::syntax::CapeClause) -> HirBlock {
         let cape = self.lower_cape_clause(catch);
+        self.cape_clause_block(cape)
+    }
+
+    fn lower_typed_cape_clause_block(
+        &mut self,
+        catch: &crate::syntax::CapeClause,
+        ty: crate::semantic::TypeId,
+    ) -> HirBlock {
+        let mut cape = self.lower_cape_clause(catch);
+        cape.binding_ty = Some(ty);
+        self.cape_clause_block(cape)
+    }
+
+    fn cape_clause_block(&mut self, cape: crate::hir::HirCape) -> HirBlock {
         let mut body = cape.body;
         // Block-shaped handlers need an explicit first local so downstream
         // passes see the caught value through normal local-binding machinery.
@@ -877,7 +892,7 @@ impl<'a> Lowerer<'a> {
                     kind: HirStmtKind::Local(crate::hir::HirLocal {
                         def_id,
                         name: binding.name.name,
-                        ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+                        ty: Some(self.lower_type(&binding.ty)),
                         init: None,
                         mutable: false,
                     }),
@@ -895,7 +910,7 @@ impl<'a> Lowerer<'a> {
                         kind: HirStmtKind::Local(crate::hir::HirLocal {
                             def_id: alias_def_id,
                             name: alias.name,
-                            ty: binding.ty.as_ref().map(|ty| self.lower_type(ty)),
+                            ty: Some(self.lower_type(&binding.ty)),
                             init: None,
                             mutable: false,
                         }),
