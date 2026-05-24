@@ -30,13 +30,13 @@ Use `check --package` as the package validation gate, and keep Rust package emit
 
 Current observation:
 
-The production automation files are Markdown files with TOML-like front matter:
+The production automation files are Markdown files with TOML front matter (using `+++` delimiters, matching the `explain/` corpus convention):
 
 ```markdown
----
++++
 id = "sample-automation"
 status = "PAUSED"
----
++++
 
 Prompt body...
 ```

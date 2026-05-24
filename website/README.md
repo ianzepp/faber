@@ -16,7 +16,7 @@ The website was originally a sibling repository (`faber-www`). It has been migra
 
 ```
 website/
-├── content/                 # Markdown sources (frontmatter + body)
+├── content/                 # Markdown sources (TOML frontmatter with +++ delimiters + body; matches explain/ corpus convention)
 │   ├── index.md             # Homepage
 │   ├── docs/                # Language and tool reference
 │   └── ...

@@ -70,7 +70,7 @@ Confirmed:
 - The `build/*.ts` files are deleted in the current worktree, so `bun run build` fails with `Module not found "build/sync-grammar.ts"`.
 - Deployment uploads `dist` to GitHub Pages but does not currently run a build step.
 - Current tracked site content is mostly hand/synced Markdown and old generated pages.
-- The old generator used `gray-matter`, which assumes YAML-style front matter by default. Current Faber direction is TOML front matter, so any replacement generator should parse TOML metadata intentionally.
+- The old generator used `gray-matter`, which assumes YAML-style front matter by default (delimited by `---`). Current Faber direction is TOML front matter delimited by `+++` (consistent with the `explain/` corpus), so any replacement generator should parse TOML metadata intentionally.
 
 Existing local changes before this plan:
 
@@ -91,7 +91,7 @@ Those deletions were pre-existing in the workspace and should not be reverted bl
 - Prefer a small Rust-owned generator or `xtask`-style command inside `../faber` for first implementation.
 - Keep the generator architecture simple enough that it can be ported to Faber later when filesystem/path/Markdown/TOML support is mature enough.
 - Decide whether content under `website/content` is curated Markdown, generated copies from root docs, or a mix.
-- Replace YAML-front-matter assumptions with TOML front matter parsing.
+- Replace YAML-front-matter assumptions (`---`) with TOML front matter parsing (`+++ ... +++`).
 - Add or move GitHub Pages workflow into `../faber` so it builds `website/dist` before upload, or document that `dist` must be committed/generated elsewhere.
 - Regenerate `llms.txt` and `faber-complete.md` from current content if the site keeps those artifacts.
 
@@ -207,7 +207,7 @@ The current `compilers` nav should not remain a primary section unless it is rew
 2. Add a repo-local site generator.
    - Prefer Rust inside `../faber`, either as a small crate or an `xtask`-style command.
    - Avoid `package.json`, Bun, Node, and `gray-matter` unless a later decision explicitly reverses this.
-   - Parse TOML front matter as the page metadata format.
+   - Parse TOML front matter (`+++` delimiters) as the page metadata format (see the `explain/` corpus for the established convention).
    - Render Markdown to HTML, build navigation, copy CSS/static assets, and write `website/dist`.
    - Generate `llms.txt` and `faber-complete.md` from current docs if those artifacts remain published.
 
@@ -215,7 +215,7 @@ The current `compilers` nav should not remain a primary section unless it is rew
    - Point grammar import at repo-local `EBNF.md`.
    - Point prose docs at repo-local `docs/grammatica`.
    - Decide whether examples are generated from `examples/exempla`, curated under `website/content`, or both.
-   - Preserve or generate TOML front matter in `website/content`.
+   - Preserve or generate TOML front matter (using `+++` delimiters) in `website/content`.
 
 4. Replace stale content.
    - Homepage.
@@ -242,7 +242,7 @@ The current `compilers` nav should not remain a primary section unless it is rew
 
 - The website source lives under `../faber/website`.
 - The website builds from a clean `../faber` checkout with documented commands and no sibling-repo dependency.
-- The default build path does not require `package.json`, Bun, Node, or YAML front matter.
+- The default build path does not require `package.json`, Bun, Node, or YAML front matter (use `+++` TOML front matter instead of `---` YAML).
 - The homepage no longer claims active Zig/Python/C++ package targets.
 - The docs no longer describe TypeScript Faber, rivus, or nanus as the active compiler stack.
 - The target page matches `cargo run -q -p faber -- targets` from the same `../faber` checkout.
@@ -259,3 +259,18 @@ The current `compilers` nav should not remain a primary section unless it is rew
 - Should research pages remain public in this refresh, or be deferred until the current documentation is correct?
 - Should archive pages be retained for historical continuity, or cut entirely from the first refreshed version?
 - Should `website/dist` remain ignored and generated in CI, or should it be committed for GitHub Pages upload?
+
+## Generator Decision (after Phase 1 landing)
+
+**Chosen approach:** Dedicated small workspace member `crates/site` (invoked as `cargo run -p site -- build` or eventually wired into `faber site build`).
+
+Rationale:
+- Keeps the generator in the Rust-only toolchain (no Bun/Node for the default path, per AGENTS.md and this plan).
+- Avoids bloating the published user-facing `faber` binary with markdown rendering + site deps (pulldown-cmark, etc. will live only in the site crate).
+- Simple to implement a first version: walk `website/content/**/*.md`, parse TOML frontmatter delimited by `+++` (we already depend on `toml` + `serde` in the workspace; see `explain/` for examples), render bodies with `pulldown-cmark`, perform the trivial `{{title}}` / `{{content}}` / `{{nav}}` / `{{description}}` substitutions into `templates/layout.html`, emit static assets + synthesized `llms.txt` and `faber-complete.md`.
+- The site crate can live alongside the other crates; it only needs to be built for docs publishing, not for normal `faber` releases.
+- Future path: once the Faber language + norma runtime can comfortably do filesystem + markdown + toml work, the generator logic can be ported to a first-class `faber` package under `examples/` or `stdlib/`, fulfilling the "eventually a Faber package" option.
+
+Interim fallback: if a pure-shell implementation in `scripta/website-build` using only repo tools is faster for v1, we can do that and still call it from CI. But the strong preference is the `crates/site` Rust binary.
+
+This decision unblocks Phase 2 implementation.

@@ -1,4 +1,4 @@
----
++++
 version = 1
 id = "sample-automation"
 kind = "cron"
@@ -12,7 +12,7 @@ reasoning_effort = "high"
 cwds = ["/tmp/faber-automation-fixture"]
 created_at = 1778148984162
 updated_at = 1778210342668
----
++++
 
 Use this fixture to validate Faber automation metadata parsing and dry-run prompt assembly.
 

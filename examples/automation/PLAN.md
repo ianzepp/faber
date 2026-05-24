@@ -4,7 +4,7 @@
 
 Build `examples/automation/` as a real CLI-shaped Faber example, using `../automations/` as the reference workload. The goal is to expose what Faber can do today and what compiler/runtime support is still missing before a faithful automation executor can replace the shell implementation.
 
-The reference executor scans `*/SKILL.md`, parses TOML-style front matter, checks automation status and recurrence, manages state and locks, builds an agent prompt, dispatches to `codex`, `opencode`, or `ollama`, logs output, and updates state after successful runs.
+The reference executor scans `*/SKILL.md`, parses TOML front matter (delimited by `+++`, consistent with the `explain/` corpus), checks automation status and recurrence, manages state and locks, builds an agent prompt, dispatches to `codex`, `opencode`, or `ollama`, logs output, and updates state after successful runs.
 
 ## Normalized Spec
 
@@ -53,7 +53,7 @@ Replace placeholder output with actual fixture scanning and metadata parsing:
 
 - Find `*/SKILL.md`.
 - Extract front matter.
-- Parse metadata with `toml.solve()` or a focused front-matter helper.
+- Parse metadata with `toml` (from `+++` ... `+++` blocks) or a focused front-matter helper.
 - Validate required fields: `id`, `kind`, `execute`, `status`, `rrule`, `model`, `reasoning_effort`, and `cwds`.
 
 Acceptance:
