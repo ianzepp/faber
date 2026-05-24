@@ -42,40 +42,52 @@ pub(super) fn generate_tempta_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_tempta_expr(&mut emitter, body, catch, finally)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_tempta_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
+    body: &HirBlock,
+    catch: Option<&HirBlock>,
+    finally: Option<&HirBlock>,
+) -> Result<(), CodegenError> {
     // WHY: A catch-bearing body is locally handled in Faber terms, so direct
     // Rust `?` would skip the catch block. The current lowering suppresses
     // propagation in that body and emits the catch/finally fragments in order.
-    w.writeln("{");
+    emitter.writer.writeln("{");
     let mut tempta_result = Ok(());
-    w.indented(|w| {
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    emitter.writer.indented(|w| {
+        let mut inner = ExprEmitter::new(codegen, types, w, policy);
         for stmt in &body.stmts {
             if tempta_result.is_err() {
                 return;
             }
             tempta_result = super::super::stmt::generate_stmt(
-                codegen,
+                inner.codegen,
                 stmt,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation || catch.is_some(),
+                inner.types,
+                inner.writer,
+                policy.can_propagate_failure,
+                policy.inside_entrypoint,
+                policy.propagation_suppressed || catch.is_some(),
             );
         }
         if let Some(expr) = &body.expr {
             if tempta_result.is_err() {
                 return;
             }
-            tempta_result = generate_expr(
-                codegen,
-                expr,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation || catch.is_some(),
-            );
-            w.writeln(";");
+            tempta_result = inner.expr(expr);
+            inner.writer.writeln(";");
         }
         if let Some(catch) = catch {
             for stmt in &catch.stmts {
@@ -83,22 +95,21 @@ pub(super) fn generate_tempta_expr(
                     return;
                 }
                 tempta_result = super::super::stmt::generate_stmt(
-                    codegen,
+                    inner.codegen,
                     stmt,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
+                    inner.types,
+                    inner.writer,
+                    policy.can_propagate_failure,
+                    policy.inside_entrypoint,
+                    policy.propagation_suppressed,
                 );
             }
             if let Some(expr) = &catch.expr {
                 if tempta_result.is_err() {
                     return;
                 }
-                tempta_result =
-                    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
-                w.writeln(";");
+                tempta_result = inner.expr(expr);
+                inner.writer.writeln(";");
             }
         }
         if let Some(finally) = finally {
@@ -107,27 +118,26 @@ pub(super) fn generate_tempta_expr(
                     return;
                 }
                 tempta_result = super::super::stmt::generate_stmt(
-                    codegen,
+                    inner.codegen,
                     stmt,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
+                    inner.types,
+                    inner.writer,
+                    policy.can_propagate_failure,
+                    policy.inside_entrypoint,
+                    policy.propagation_suppressed,
                 );
             }
             if let Some(expr) = &finally.expr {
                 if tempta_result.is_err() {
                     return;
                 }
-                tempta_result =
-                    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
-                w.writeln(";");
+                tempta_result = inner.expr(expr);
+                inner.writer.writeln(";");
             }
         }
     });
     tempta_result?;
-    w.write("}");
+    emitter.writer.write("}");
     Ok(())
 }
 
@@ -142,15 +152,32 @@ pub(super) fn generate_closure_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("|");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_closure_expr(&mut emitter, params, body)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_closure_expr(
+    emitter: &mut ExprEmitter<'_, '_>,
+    params: &[HirParam],
+    body: &HirExpr,
+) -> Result<(), CodegenError> {
+    emitter.writer.write("|");
     for (i, param) in params.iter().enumerate() {
         if i > 0 {
-            w.write(", ");
+            emitter.writer.write(", ");
         }
-        w.write(codegen.resolve_symbol(param.name));
+        emitter
+            .writer
+            .write(emitter.codegen.resolve_symbol(param.name));
     }
-    w.write("| ");
-    generate_expr(codegen, body, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.writer.write("| ");
+    emitter.expr(body)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -163,7 +190,18 @@ pub(super) fn generate_await_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(".await");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    emit_await_expr(&mut emitter, expr)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn emit_await_expr(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr) -> Result<(), CodegenError> {
+    emitter.expr(expr)?;
+    emitter.writer.write(".await");
     Ok(())
 }
