@@ -689,8 +689,7 @@ fn scan_expr_for_go_unsupported_errors(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     use crate::syntax::{
-        ArrayElement, ClausuraBody, ExprKind, NonNullKind, ObjectKey, OptionalChainKind,
-        PraefixumBody,
+        ArrayElement, ClausuraBody, ExprKind, NonNullKind, ObjectKey, OptionalChainKind, PraefixumBody,
     };
 
     match &expr.kind {
@@ -1178,8 +1177,7 @@ fn scan_else_for_rust_unsupported_errors(clause: &SecusClause, file: &str, diagn
 
 fn scan_expr_for_rust_unsupported_errors(expr: &Expr, file: &str, diagnostics: &mut Vec<Diagnostic>) {
     use crate::syntax::{
-        ArrayElement, ClausuraBody, ExprKind, NonNullKind, ObjectKey, OptionalChainKind,
-        PraefixumBody,
+        ArrayElement, ClausuraBody, ExprKind, NonNullKind, ObjectKey, OptionalChainKind, PraefixumBody,
     };
 
     match &expr.kind {
