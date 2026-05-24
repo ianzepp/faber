@@ -7,7 +7,7 @@
 ## Validation Snapshot
 
 - `./scripta/lint`: pass after lint cleanup in `crates/radix/src/codegen/rust/decl.rs` and `crates/radix/src/codegen/rust/mod.rs`.
-- `cargo test -p radix`: pass, `458` tests, `3` ignored, plus `8` hygiene tests.
+- `cargo test -p radix`: pass, `466` unit tests, `3` ignored, plus `8` hygiene tests and `2` doctests (`1` ignored).
 - `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture`: harness pass, `99/100` exempla pass. The only current failure is `examples/exempla/ad/ad.fab`, intentionally deferred to Epic 3.
 
 ## Post-Audit Cleanup Progress
@@ -79,7 +79,14 @@
 - Added a direct helper test for `expr_may_already_produce_option`, covering nil literals, optional chains, option-typed calls, non-option calls, nullable `verte`, and plain literals without relying on generated Rust string snapshots.
 - Validation after this slice: focused optional predicate test, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
 
-Remaining cleanup is final completion audit evidence plus explicitly deferred lower-priority documentation and fixture hygiene items.
+2026-05-24 completion gate:
+
+- High-priority correctness risks 1-6 are satisfied by the follow-up commits listed above and direct evidence in `crates/radix/src/codegen/rust/type_shape.rs`, `crates/radix/src/codegen/rust/expr/mod.rs`, `crates/radix/src/semantic/passes/typecheck/access.rs`, `crates/radix/src/semantic/passes/typecheck/call.rs`, `crates/radix/src/hir/nodes.rs`, `crates/radix/src/hir/lower/expr.rs`, `crates/radix/src/exempla_e2e_test.rs`, and `crates/radix/src/tool.rs`.
+- Structural targets 1, 3, 4, 5, 6, and 7 have concrete implementation evidence: centralized type-shape helpers, split call/control emitters, extracted prelude helpers, companion backend test modules, type-rendering split, and direct optional-emission predicate coverage.
+- Structural target 2 (`ExprEmitter`/context object) is deferred. It remains a larger ergonomics refactor, not required for the correctness or decomposition gates completed here because optional/dynamic target emission is centralized without introducing a context object.
+- Lower-priority documentation, fixture-boundary guard, `ad` terminology, runtime `.expected` coverage, and temp-root cleanup remain explicitly deferred below.
+
+Material post-audit cleanup for Epic 2 is complete. The remaining entries in the original risk and target lists are historical context or named lower-priority follow-ups.
 
 ## Highest Priority Cleanup And Correctness Risks
 
