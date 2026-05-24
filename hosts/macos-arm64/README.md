@@ -28,6 +28,11 @@ This host is expected to eventually:
 - provide macOS-specific adapters where WASI is not enough,
 - expose a launcher shape that makes Faber tools feel like native commands.
 
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the current host-layer goal:
+Rust host implementation, Wasm Component Model compatibility, non-strict and
+strict capability compilation modes, and the direction for moving `norma`
+functionality into compiler-owned core behavior or host-provided capabilities.
+
 ## Non-Goals For This Placeholder
 
 - No Wasmtime or WASI dependency is selected yet.

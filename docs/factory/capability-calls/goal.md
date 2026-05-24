@@ -44,6 +44,7 @@ Reframe `ad` as Faber's capability-call syntax: a source-level request for a nam
 - `crates/radix/src/hir/nodes.rs`: has `HirAd` and preserves path, args, optional binding, body, and catch block.
 - `crates/radix/src/codegen/rust/stmt.rs`: rejects `ad` with `ad is not supported for Rust codegen`.
 - `hosts/macos-arm64/README.md`: records the long-term split where Faber source lowers to MIR/Wasm and a prebuilt host supplies HAL imports and standard capabilities.
+- `hosts/macos-arm64/ARCHITECTURE.md`: captures the host-owned capability model, non-strict and strict capability compilation modes, and the direction for moving `norma` implementation into compiler core or host capabilities.
 
 ## Reference Packet
 
@@ -59,6 +60,7 @@ Before editing, inspect:
 - `crates/radix/src/codegen/rust/stmt.rs`: current fail-closed Rust rejection.
 - `crates/radix/src/codegen/go/stmt.rs`: existing Go stub behavior may inform a temporary unresolved-provider shape.
 - `hosts/macos-arm64/README.md`: future host-runtime constraints and capability-grant open questions.
+- `hosts/macos-arm64/ARCHITECTURE.md`: host-layer architecture that should own the longer-term capability implementation plan.
 
 ## Constraints And Invariants
 
