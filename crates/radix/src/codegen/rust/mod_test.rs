@@ -312,6 +312,31 @@ incipit {
 }
 
 #[test]
+fn clones_owned_array_values_from_indexed_locals() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    fixum _ matrix ← [[1, 2], [3, 4]]
+    fixum [row1, row2] ← matrix
+    nota row1
+    nota row2
+}
+"#;
+
+    let result = compiler.compile_str("array-destructure-clone.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("let row1: Vec<i64> = matrix[(0) as usize].clone();"));
+    assert!(rust
+        .code
+        .contains("let row2: Vec<i64> = matrix[(1) as usize].clone();"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

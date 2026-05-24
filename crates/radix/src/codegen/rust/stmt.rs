@@ -31,7 +31,7 @@ use super::expr::{generate_expr, generate_expr_unwrapped};
 use super::types::type_to_rust;
 use super::{CodegenError, RustCodegen};
 use crate::hir::*;
-use crate::semantic::TypeTable;
+use crate::semantic::{Primitive, Type, TypeId, TypeTable};
 
 /// Emit one Rust statement from HIR.
 ///
@@ -147,11 +147,31 @@ fn generate_local(
             w.write(")");
         } else {
             generate_expr(codegen, init, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            if local_init_clones_indexed_owned_value(local, init, types) {
+                w.write(".clone()");
+            }
         }
     }
 
     w.writeln(";");
     Ok(())
+}
+
+fn local_init_clones_indexed_owned_value(local: &HirLocal, init: &HirExpr, types: &TypeTable) -> bool {
+    if !matches!(init.kind, HirExprKind::Index(_, _)) {
+        return false;
+    }
+
+    local
+        .ty
+        .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Array(_) | Type::Primitive(Primitive::Textus)))
+}
+
+fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
+    match types.get(type_id) {
+        Type::Alias(_, resolved) => resolve_type(*resolved, types),
+        ty => ty.clone(),
+    }
 }
 
 fn local_init_requires_some_wrapper(
