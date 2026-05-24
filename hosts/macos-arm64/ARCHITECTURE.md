@@ -5,6 +5,7 @@
 **Host Crate**: `hosts/macos-arm64`
 **Implementation Language**: Rust
 **Syscall Model**: [`SYSCALL_MODEL.md`](SYSCALL_MODEL.md)
+**Coordinating Roadmap**: [`../../docs/factory/faber-execution-roadmap/goal.md`](../../docs/factory/faber-execution-roadmap/goal.md)
 
 ## Summary
 

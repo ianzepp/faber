@@ -6,6 +6,7 @@
 **Factory Artifact Dir**: `docs/factory/capability-calls/`
 **Mode**: language/runtime boundary design and compiler lowering
 **Commit Policy**: Commit after each completed phase and validation gate pass
+**Coordinating Roadmap**: [`../faber-execution-roadmap/goal.md`](../faber-execution-roadmap/goal.md)
 
 ## Summary
 
