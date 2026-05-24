@@ -165,14 +165,22 @@ Internally, these capability imports should route through the frame/syscall mode
 
 The first useful host implementation should be deliberately small:
 
-1. Select Wasmtime and the Wasm Component Model, unless a repo-aware design pass finds a better current Rust implementation path.
-2. Add the smallest host-internal frame/syscall router needed for one request and one terminal response.
-3. Define a tiny Faber-owned component world with one entrypoint and one host capability import.
-4. Build a Rust host that loads a minimal component and reports unresolved capability imports clearly.
-5. Add a host capability registry shape and a static exported manifest.
-6. Prove non-strict vs strict behavior with one fake capability such as `pg:query` or `host:echo`.
+1. Add the smallest host-internal frame/syscall router needed for one request and one terminal response.
+2. Add one built-in syscall such as `host:echo` and prove unresolved calls such as `pg:query` return a structured `E_NO_ROUTE`.
+3. Add a host capability registry shape and a static exported manifest.
+4. Select Wasmtime and the Wasm Component Model, unless a repo-aware design pass finds a better current Rust implementation path.
+5. Define a tiny Faber-owned component world with one entrypoint and one host capability import.
+6. Build a Rust host launcher that loads a minimal component and wraps the imported capability call into the same frame router.
+7. Add a daemon/server transport only after provider registration, shared service lifecycle, or multi-process capability routing needs it.
 
 This first slice should not attempt to migrate all of `norma`.
+
+The frame contract is the invariant. The first executable may be a direct
+launcher-style host command with an in-process router; a later `serve` mode can
+carry the same frames over a Unix domain socket, JSON, or a compact binary
+stream. Wasm compilation does not remove the frame layer: the host should turn a
+Wasm capability import into a frame before routing it, even if the first import
+ABI is smaller than a full frame.
 
 ## Later Migration Shape
 

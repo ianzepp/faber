@@ -95,7 +95,7 @@ Then inspect the focused goal for the active epic:
 - `ad` unresolved-provider behavior is allowed in non-strict mode and must fail clearly at runtime.
 - Host capability calls should route as frame-shaped syscalls internally.
 - The first host implementation should stay in `hosts/macos-arm64`; extract shared host code only after concrete duplication or cross-host pressure exists.
-- Do not depend on Muninn as a runtime crate for the Faber host. Copy the relevant kernel code into `hosts/macos-arm64`, preserve provenance during the import, and then adapt it into Faber-owned host code.
+- Do not depend on Muninn as a runtime crate for the Faber host. Copy or reimplement only the relevant Muninn-inspired kernel pieces inside `hosts/macos-arm64`, preserve provenance for any copied source or adapted semantics, and make the result Faber-owned host code.
 - `norma` should move toward canonical contracts and interfaces, not per-program linked implementation as the final model.
 - Git commands that create locks must run serially in this repository.
 
@@ -257,19 +257,27 @@ Primary docs:
 Intent:
 
 - Prove the host model inside the existing `hosts/macos-arm64` crate.
-- Copy the relevant Muninn kernel runtime code into `hosts/macos-arm64` instead of depending on Muninn as an external crate.
+- Treat frames as the durable host/protocol invariant, not as an implementation detail of one process shape.
 - Preserve the useful Muninn semantics: `Frame`, `Status`, request correlation, prefix routing, syscalls, sigcalls, cancellation, structured `E_` errors, and unresolved `E_NO_ROUTE`.
-- Edit the imported code into a Faber-owned host kernel with Faber naming, docs, tests, and capability/HAL assumptions.
-- Add one tiny built-in syscall, such as `host:echo`, to prove routing before broader HAL migration.
+- Build or copy only the relevant Muninn-inspired kernel runtime pieces into `hosts/macos-arm64`; do not depend on Muninn as an external crate and do not import unused transport or scheduler machinery just to match Muninn's current crate shape.
+- Edit any imported code into a Faber-owned host kernel with Faber naming, docs, tests, and capability/HAL assumptions.
+- Add one tiny built-in syscall, such as `host:echo`, to prove frame routing before broader HAL migration.
 - Add manifest output for built-in syscalls and registered providers.
 - Begin identifying which existing HAL surfaces under `stdlib/norma/hal/` and `crates/norma/hal/` should move to host-owned syscalls, but migrate only the smallest surface needed to prove the slice.
 - Keep the first runtime slice small, macOS-local, and additive to the existing compiler/Rust backend path.
 
+Host topology:
+
+- The first runtime proof may be a direct launcher-style host command that routes an in-memory frame through the kernel, because this proves the syscall contract with the least lifecycle policy.
+- A later `serve` mode may expose the same frame contract over a local transport such as a Unix domain socket, using JSON for debug/local ergonomics or a compact binary frame stream for production.
+- The long-term model can be hybrid: in-process host built-ins and local/remote provider processes both speak the same frame-shaped protocol.
+- Wasm/component compilation does not replace frames. A Wasm import can be a small function such as `capability_call(name, args)`, and the host should immediately wrap that import as a `Frame` before routing it.
+
 Agent use:
 
-- Allow a prototype agent for the mechanical Muninn code import if the delivery spec defines exact source files, target module paths, provenance notes, and expected compile/test fixes.
+- Allow a prototype agent for a mechanical Muninn code import only if the delivery spec defines exact source files, target module paths, provenance notes, and expected compile/test fixes.
 - Allow read-only agents to inventory Faber HAL surfaces and propose syscall names, but do not let that inventory become a full `norma` migration in this epic.
-- Keep the integrating owner responsible for adapting imported kernel semantics, because copied code must stop being Muninn-shaped and become Faber host-owned.
+- Keep the integrating owner responsible for adapting imported kernel semantics, because copied code or copied ideas must become Faber host-owned.
 - Do not let this epic create a shared/common host crate.
 - Do not add a path, git, or published crate dependency on Muninn for the Faber host runtime.
 
@@ -295,16 +303,22 @@ hosts/macos-arm64/src/
 └── manifest.rs
 ```
 
-This shape is a starting point, not a final ABI. The imported kernel should stay internal to the macOS host until a second host or concrete duplication justifies extraction.
+This shape is a starting point, not a final ABI. The kernel should stay internal to the macOS host until a second host or concrete duplication justifies extraction.
+
+Recommended phase split:
+
+1. `4.1`: Add the Faber-owned frame/kernel route proof inside `hosts/macos-arm64`, with `host:echo`, `E_NO_ROUTE`, manifest output, tests, and provenance notes. This may run entirely in-process from a CLI command.
+2. `4.2`: Attach a first Wasm/component import to the same frame router. The import ABI can be smaller than a full frame if it wraps into a frame immediately inside the host.
+3. `4.3`: Add daemon/server transport only when provider registration, shared service lifecycle, or multi-process capability routing needs it. The transport must carry the same frame contract rather than introducing a parallel protocol.
 
 Checkpoint:
 
-- The copied kernel compiles as Faber-owned source inside `hosts/macos-arm64` with no Muninn runtime dependency.
-- Provenance from the Muninn source import is recorded in commit history, docs, or module comments clearly enough for future audits.
+- The Faber-owned kernel compiles inside `hosts/macos-arm64` with no Muninn runtime dependency.
+- Provenance from any Muninn source import or semantic adaptation is recorded in commit history, docs, or module comments clearly enough for future audits.
 - The host can route at least one built-in syscall and report one unresolved capability as `E_NO_ROUTE`.
 - Manifest output exists and includes the built-in syscall surface.
 - The first HAL migration candidate is recorded, with rationale for why it belongs in the host kernel rather than generated Rust support.
-- The design remains compatible with future Wasm component integration.
+- The design remains compatible with both future Wasm component integration and local frame-stream server transport.
 
 ### Epic 5: MIR/Wasm Lowering To Host Calls
 

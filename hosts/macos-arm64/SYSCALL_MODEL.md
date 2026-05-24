@@ -207,9 +207,14 @@ The first implementation should:
 2. Add prefix routing and an unresolved-route error.
 3. Add one built-in syscall, such as `host:echo`.
 4. Add a manifest command that lists built-in syscalls and any registered providers.
-5. Wire one Wasm/component import to the frame router.
-6. Return `E_NO_ROUTE` for a call such as `pg:query` when no provider is installed.
+5. Return `E_NO_ROUTE` for a call such as `pg:query` when no provider is installed.
+6. Wire one Wasm/component import to the same frame router after the direct route proof works.
 7. Keep strict host verification out of the first runtime slice, except for the manifest shape needed later.
+
+The route proof can be launcher-style and in-process. It does not need to start
+as a background daemon. A later daemon can expose the same frame contract over a
+local transport, and external providers can speak the same protocol through
+JSON, a compact binary frame stream, or another boundary codec.
 
 ## What Not To Steal Yet
 
@@ -217,12 +222,12 @@ Do not copy the entire Muninn kernel into Faber before the first host slice has 
 
 The risks are:
 
-- importing abstractions before the Wasm boundary is proven,
+- importing abstractions before the route contract and Wasm boundary are proven,
 - creating a shared crate too early,
-- carrying transport features before Faber needs them,
+- carrying daemon/server transport features before Faber needs them,
 - binding Faber's host lifecycle to Muninn's runtime lifecycle accidentally.
 
-The right near-term move is to borrow the frame/kernel/syscall semantics and implement the smallest macOS host version. After that, decide whether to vendor/copy Muninn modules, depend on Muninn crates, or extract a common package.
+The right near-term move is to borrow the frame/kernel/syscall semantics and implement the smallest macOS host version. After that, decide whether to vendor/copy Muninn modules, reimplement the needed pieces directly, or extract a common package.
 
 ## Open Questions
 
