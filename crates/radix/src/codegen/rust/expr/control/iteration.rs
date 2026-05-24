@@ -13,8 +13,13 @@ pub(in crate::codegen::rust::expr) fn generate_loop_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("loop ");
-    generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_loop_expr_with_emitter(&mut emitter, block)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -28,10 +33,13 @@ pub(in crate::codegen::rust::expr) fn generate_while_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("while ");
-    generate_expr_unwrapped(codegen, cond, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(" ");
-    generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_while_expr_with_emitter(&mut emitter, cond, block)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -47,194 +55,245 @@ pub(in crate::codegen::rust::expr) fn generate_for_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if matches!(mode, HirIteraMode::Ex) && matches!(iter.ty.map(|ty| resolve_type(ty, types)), Some(Type::Array(_))) {
-        return generate_borrowed_array_for_expr(
-            codegen,
-            binding,
-            iter,
-            block,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        );
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_for_expr_with_emitter(&mut emitter, mode, binding, iter, block)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_loop_expr_with_emitter(emitter: &mut ExprEmitter<'_, '_>, block: &HirBlock) -> Result<(), CodegenError> {
+    emitter.writer.write("loop ");
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    generate_block(
+        codegen,
+        block,
+        types,
+        emitter.writer,
+        policy.can_propagate_failure,
+        policy.inside_entrypoint,
+        policy.propagation_suppressed,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_while_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    cond: &HirExpr,
+    block: &HirBlock,
+) -> Result<(), CodegenError> {
+    emitter.writer.write("while ");
+    emitter.expr_unwrapped(cond)?;
+    emitter.writer.write(" ");
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    generate_block(
+        codegen,
+        block,
+        types,
+        emitter.writer,
+        policy.can_propagate_failure,
+        policy.inside_entrypoint,
+        policy.propagation_suppressed,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_for_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    mode: HirIteraMode,
+    binding: DefId,
+    iter: &HirExpr,
+    block: &HirBlock,
+) -> Result<(), CodegenError> {
+    if matches!(mode, HirIteraMode::Ex)
+        && matches!(iter.ty.map(|ty| resolve_type(ty, emitter.types)), Some(Type::Array(_)))
+    {
+        return generate_borrowed_array_for_expr_with_emitter(emitter, binding, iter, block);
     }
 
     if matches!(mode, HirIteraMode::De) {
-        match iter.ty.map(|ty| resolve_type(ty, types)) {
+        match iter.ty.map(|ty| resolve_type(ty, emitter.types)) {
             Some(Type::Array(_)) => {
-                return generate_array_index_for_expr(
-                    codegen,
-                    binding,
-                    iter,
-                    block,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                );
+                return generate_array_index_for_expr_with_emitter(emitter, binding, iter, block);
             }
             Some(Type::Map(_, _)) => {
-                return generate_map_key_for_expr(
-                    codegen,
-                    binding,
-                    iter,
-                    block,
-                    types,
-                    w,
-                    in_failable_fn,
-                    in_entry,
-                    suppress_error_propagation,
-                );
+                return generate_map_key_for_expr_with_emitter(emitter, binding, iter, block);
             }
             _ => {}
         }
     }
 
-    w.write("for ");
-    w.write(codegen.resolve_def(binding));
-    w.write(" in ");
+    emitter.writer.write("for ");
+    emitter.writer.write(emitter.codegen.resolve_def(binding));
+    emitter.writer.write(" in ");
     if matches!(mode, HirIteraMode::Pro) {
         if let HirExprKind::Intervallum { start, end, step, kind } = &iter.kind {
-            generate_range_iter_expr(
-                codegen,
-                start,
-                end,
-                step.as_deref(),
-                *kind,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            generate_range_iter_expr_with_emitter(emitter, start, end, step.as_deref(), *kind)?;
         } else {
-            generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emitter.expr(iter)?;
         }
     } else {
-        generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.expr(iter)?;
     }
-    w.write(" ");
-    generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.writer.write(" ");
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    generate_block(
+        codegen,
+        block,
+        types,
+        emitter.writer,
+        policy.can_propagate_failure,
+        policy.inside_entrypoint,
+        policy.propagation_suppressed,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_array_index_for_expr(
-    codegen: &RustCodegen<'_>,
+fn generate_array_index_for_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     binding: DefId,
     iter: &HirExpr,
     block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("for ");
-    w.write(codegen.resolve_def(binding));
-    w.write(" in 0..((");
-    generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(").len() as i64) ");
-    generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.writer.write("for ");
+    emitter.writer.write(emitter.codegen.resolve_def(binding));
+    emitter.writer.write(" in 0..((");
+    emitter.expr_unwrapped(iter)?;
+    emitter.writer.write(").len() as i64) ");
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    generate_block(
+        codegen,
+        block,
+        types,
+        emitter.writer,
+        policy.can_propagate_failure,
+        policy.inside_entrypoint,
+        policy.propagation_suppressed,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_map_key_for_expr(
-    codegen: &RustCodegen<'_>,
+fn generate_map_key_for_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     binding: DefId,
     iter: &HirExpr,
     block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("for ");
-    w.write(codegen.resolve_def(binding));
-    w.write(" in (");
-    generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(").keys().cloned() ");
-    generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+    emitter.writer.write("for ");
+    emitter.writer.write(emitter.codegen.resolve_def(binding));
+    emitter.writer.write(" in (");
+    emitter.expr_unwrapped(iter)?;
+    emitter.writer.write(").keys().cloned() ");
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    generate_block(
+        codegen,
+        block,
+        types,
+        emitter.writer,
+        policy.can_propagate_failure,
+        policy.inside_entrypoint,
+        policy.propagation_suppressed,
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_borrowed_array_for_expr(
-    codegen: &RustCodegen<'_>,
+fn generate_borrowed_array_for_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     binding: DefId,
     iter: &HirExpr,
     block: &HirBlock,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     let item = format!("__faber_item_{}", binding.0);
-    w.write("for ");
-    w.write(&item);
-    w.write(" in &(");
-    generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.writeln(") {");
+    emitter.writer.write("for ");
+    emitter.writer.write(&item);
+    emitter.writer.write(" in &(");
+    emitter.expr_unwrapped(iter)?;
+    emitter.writer.writeln(") {");
     let mut block_result = Ok(());
-    w.indented(|w| {
-        w.write("let ");
-        w.write(codegen.resolve_def(binding));
-        w.write(" = ");
-        w.write(&item);
-        w.writeln(".clone();");
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    emitter.writer.indented(|writer| {
+        let mut inner_emitter = ExprEmitter::new(codegen, types, writer, policy);
+        inner_emitter.writer.write("let ");
+        inner_emitter.writer.write(codegen.resolve_def(binding));
+        inner_emitter.writer.write(" = ");
+        inner_emitter.writer.write(&item);
+        inner_emitter.writer.writeln(".clone();");
         for stmt in &block.stmts {
             if block_result.is_err() {
                 return;
             }
-            block_result = generate_stmt(codegen, stmt, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+            block_result = generate_stmt(
+                codegen,
+                stmt,
+                types,
+                inner_emitter.writer,
+                policy.can_propagate_failure,
+                policy.inside_entrypoint,
+                policy.propagation_suppressed,
+            );
         }
         if let Some(expr) = &block.expr {
             if block_result.is_err() {
                 return;
             }
-            block_result = generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+            block_result = inner_emitter.expr(expr);
         }
     });
     block_result?;
-    w.write("}");
+    emitter.writer.write("}");
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-fn generate_range_iter_expr(
-    codegen: &RustCodegen<'_>,
+fn generate_range_iter_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
     start: &HirExpr,
     end: &HirExpr,
     step: Option<&HirExpr>,
     kind: HirRangeKind,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("{ let __faber_start: i64 = ");
-    generate_expr(codegen, start, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write("; let __faber_end: i64 = ");
-    generate_expr(codegen, end, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write("; let __faber_step: i64 = ");
+    emitter.writer.write("{ let __faber_start: i64 = ");
+    emitter.expr_unwrapped(start)?;
+    emitter.writer.write("; let __faber_end: i64 = ");
+    emitter.expr_unwrapped(end)?;
+    emitter.writer.write("; let __faber_step: i64 = ");
     if let Some(step) = step {
-        generate_expr(codegen, step, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.expr_unwrapped(step)?;
     } else {
-        w.write("if __faber_start <= __faber_end { 1 } else { -1 }");
+        emitter
+            .writer
+            .write("if __faber_start <= __faber_end { 1 } else { -1 }");
     }
-    w.write("; let __faber_limit: i64 = ");
+    emitter.writer.write("; let __faber_limit: i64 = ");
     match kind {
-        HirRangeKind::Exclusive => w.write("__faber_end"),
-        HirRangeKind::Inclusive => w.write("__faber_end + __faber_step.signum()"),
+        HirRangeKind::Exclusive => emitter.writer.write("__faber_end"),
+        HirRangeKind::Inclusive => emitter.writer.write("__faber_end + __faber_step.signum()"),
     }
-    w.write("; let mut __faber_values = Vec::new(); let mut __faber_i = __faber_start; ");
-    w.write("if __faber_step > 0 { while __faber_i < __faber_limit { __faber_values.push(__faber_i); __faber_i += __faber_step; } } ");
-    w.write("else if __faber_step < 0 { while __faber_i > __faber_limit { __faber_values.push(__faber_i); __faber_i += __faber_step; } } ");
-    w.write("__faber_values }");
+    emitter
+        .writer
+        .write("; let mut __faber_values = Vec::new(); let mut __faber_i = __faber_start; ");
+    emitter
+        .writer
+        .write("if __faber_step > 0 { while __faber_i < __faber_limit { __faber_values.push(__faber_i); __faber_i += __faber_step; } } ");
+    emitter
+        .writer
+        .write("else if __faber_step < 0 { while __faber_i > __faber_limit { __faber_values.push(__faber_i); __faber_i += __faber_step; } } ");
+    emitter.writer.write("__faber_values }");
     Ok(())
 }
 
@@ -250,14 +309,29 @@ pub(in crate::codegen::rust::expr) fn generate_range_tuple_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("(");
-    generate_expr(codegen, start, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(", ");
-    generate_expr(codegen, end, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_range_tuple_expr_with_emitter(&mut emitter, start, end, step)
+}
+
+fn generate_range_tuple_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    start: &HirExpr,
+    end: &HirExpr,
+    step: Option<&HirExpr>,
+) -> Result<(), CodegenError> {
+    emitter.writer.write("(");
+    emitter.expr_unwrapped(start)?;
+    emitter.writer.write(", ");
+    emitter.expr_unwrapped(end)?;
     if let Some(step) = step {
-        w.write(", ");
-        generate_expr(codegen, step, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.writer.write(", ");
+        emitter.expr_unwrapped(step)?;
     }
-    w.write(")");
+    emitter.writer.write(")");
     Ok(())
 }
