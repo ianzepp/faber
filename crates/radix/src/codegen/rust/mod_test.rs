@@ -288,6 +288,30 @@ incipit {
 }
 
 #[test]
+fn emits_borrowed_iteration_for_lista_itera_ex() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    fixum _ numbers ← [1, 2, 3]
+    itera ex numbers fixum n {
+        nota n
+    }
+    nota numbers
+}
+"#;
+
+    let result = compiler.compile_str("borrowed-itera-ex.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("for __faber_item_"));
+    assert!(rust.code.contains(" in &(numbers)"));
+    assert!(rust.code.contains(".clone();"));
+    assert!(!rust.code.contains("for n in numbers"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

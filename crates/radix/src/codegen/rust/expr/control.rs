@@ -283,6 +283,20 @@ pub(super) fn generate_for_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    if matches!(mode, HirIteraMode::Ex) && matches!(iter.ty.map(|ty| resolve_type(ty, types)), Some(Type::Array(_))) {
+        return generate_borrowed_array_for_expr(
+            codegen,
+            binding,
+            iter,
+            block,
+            types,
+            w,
+            in_failable_fn,
+            in_entry,
+            suppress_error_propagation,
+        );
+    }
+
     w.write("for ");
     w.write(codegen.resolve_def(binding));
     w.write(" in ");
@@ -308,6 +322,57 @@ pub(super) fn generate_for_expr(
     }
     w.write(" ");
     generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_borrowed_array_for_expr(
+    codegen: &RustCodegen<'_>,
+    binding: DefId,
+    iter: &HirExpr,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    let item = format!("__faber_item_{}", binding.0);
+    w.write("for ");
+    w.write(&item);
+    w.write(" in &(");
+    generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.writeln(") {");
+    let mut block_result = Ok(());
+    w.indented(|w| {
+        w.write("let ");
+        w.write(codegen.resolve_def(binding));
+        w.write(" = ");
+        w.write(&item);
+        w.writeln(".clone();");
+        for stmt in &block.stmts {
+            if block_result.is_err() {
+                return;
+            }
+            block_result = super::super::stmt::generate_stmt(
+                codegen,
+                stmt,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
+        }
+        if let Some(expr) = &block.expr {
+            if block_result.is_err() {
+                return;
+            }
+            block_result = generate_expr(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+        }
+    });
+    block_result?;
+    w.write("}");
+    Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
