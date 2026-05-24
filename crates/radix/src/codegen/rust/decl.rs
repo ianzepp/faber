@@ -141,12 +141,16 @@ pub fn generate_function_with_cli_args_type(
 
     // Declarations without bodies are emitted as Rust signatures, used by
     // trait-like surfaces and imported interface stubs.
-    if let Some(body) = &func.body {
+    let previous_return_ty = codegen.replace_current_return_ty(func.ret_ty);
+    let body_result = if let Some(body) = &func.body {
         w.write(" ");
-        generate_block(codegen, body, types, w, is_failable, false, true)?;
+        generate_block(codegen, body, types, w, is_failable, false, true)
     } else {
         w.write(";");
-    }
+        Ok(())
+    };
+    codegen.replace_current_return_ty(previous_return_ty);
+    body_result?;
 
     w.newline();
     Ok(())

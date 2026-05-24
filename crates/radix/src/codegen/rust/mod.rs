@@ -48,6 +48,7 @@ use crate::lexer::{Interner, Symbol};
 use crate::semantic::{Type, TypeId, TypeTable};
 use crate::RustOutput;
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::cell::{Cell, RefCell};
 use std::collections::BTreeSet;
 
 /// User-facing test filter requested by the package or CLI layer.
@@ -105,6 +106,19 @@ pub struct RustCodegen<'a> {
     /// Enables Rust struct literals to emit complete initializers for omitted `sponte` fields
     /// and fields with genus defaults, while preserving nullable storage as `Option<T>`.
     struct_fields: FxHashMap<DefId, Vec<StructFieldInfo<'a>>>,
+
+    /// Current function return type while emitting a body.
+    ///
+    /// Statement lowering uses this to bridge nullable Faber returns to Rust
+    /// `Option<T>` without re-inferring expression types in codegen.
+    current_return_ty: Cell<Option<TypeId>>,
+
+    /// DefId -> declared or derived binding type.
+    ///
+    /// Expression annotations can be widened by contextual checks. For path
+    /// emission decisions such as `return Some(local)`, the original binding
+    /// storage type is the target contract we need.
+    binding_types: RefCell<FxHashMap<DefId, TypeId>>,
 }
 
 impl<'a> RustCodegen<'a> {
@@ -122,6 +136,8 @@ impl<'a> RustCodegen<'a> {
             failable_defs: FxHashSet::default(),
             test_selection: None,
             struct_fields: FxHashMap::default(),
+            current_return_ty: Cell::new(None),
+            binding_types: RefCell::new(FxHashMap::default()),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen.test_selection = Some(TestSelectionState {
@@ -170,6 +186,18 @@ impl<'a> RustCodegen<'a> {
         self.names
             .iter()
             .any(|(def_id, name)| *name == method && self.failable_defs.contains(def_id))
+    }
+
+    pub(super) fn current_return_ty(&self) -> Option<TypeId> {
+        self.current_return_ty.get()
+    }
+
+    pub(super) fn replace_current_return_ty(&self, ty: Option<TypeId>) -> Option<TypeId> {
+        self.current_return_ty.replace(ty)
+    }
+
+    pub(super) fn binding_type(&self, def_id: DefId) -> Option<TypeId> {
+        self.binding_types.borrow().get(&def_id).copied()
     }
 
     pub(super) fn test_ignore_reason(&self, func: &HirFunction) -> Option<String> {
@@ -329,6 +357,39 @@ impl<'a> RustCodegen<'a> {
         fields
     }
 
+    fn collect_binding_types(&self, hir: &HirProgram, types: &TypeTable) -> FxHashMap<DefId, TypeId> {
+        struct BindingTypeCollector<'a> {
+            types: &'a TypeTable,
+            bindings: FxHashMap<DefId, TypeId>,
+        }
+
+        impl<'a> crate::hir::visit::HirVisitor for BindingTypeCollector<'a> {
+            fn visit_param(&mut self, param: &crate::hir::HirParam) {
+                self.bindings.insert(param.def_id, param.ty);
+            }
+
+            fn visit_local(&mut self, local: &crate::hir::HirLocal) {
+                if let Some(ty) = local.ty {
+                    self.bindings.insert(local.def_id, ty);
+                }
+                crate::hir::visit::walk_local(self, local);
+            }
+
+            fn visit_expr(&mut self, expr: &HirExpr) {
+                if let crate::hir::HirExprKind::Itera(mode, def_id, _, iter, _) = &expr.kind {
+                    if let Some(binding_ty) = itera_binding_type(*mode, iter.ty, self.types) {
+                        self.bindings.insert(*def_id, binding_ty);
+                    }
+                }
+                crate::hir::visit::walk_expr(self, expr);
+            }
+        }
+
+        let mut collector = BindingTypeCollector { types, bindings: FxHashMap::default() };
+        crate::hir::visit::HirVisitor::visit_program(&mut collector, hir);
+        collector.bindings
+    }
+
     pub(super) fn struct_field_info(&self, def_id: DefId, field: Symbol) -> Option<StructFieldInfo<'a>> {
         self.struct_fields
             .get(&def_id)?
@@ -360,11 +421,29 @@ impl<'a> RustCodegen<'a> {
     }
 }
 
+fn itera_binding_type(mode: crate::hir::HirIteraMode, iter_ty: Option<TypeId>, types: &TypeTable) -> Option<TypeId> {
+    let iter_ty = iter_ty?;
+    match (mode, resolve_type_id(iter_ty, types)) {
+        (crate::hir::HirIteraMode::Ex, Type::Array(inner)) => Some(inner),
+        (crate::hir::HirIteraMode::De, Type::Array(_)) | (crate::hir::HirIteraMode::Pro, _) => {
+            Some(types.primitive(crate::semantic::Primitive::Numerus))
+        }
+        (crate::hir::HirIteraMode::De, Type::Map(key, _)) => Some(key),
+        _ => None,
+    }
+}
+
 fn type_id_is_option(type_id: TypeId, types: &TypeTable) -> bool {
-    match types.get(type_id) {
+    match resolve_type_id(type_id, types) {
         Type::Option(_) => true,
-        Type::Alias(_, resolved) => type_id_is_option(*resolved, types),
         _ => false,
+    }
+}
+
+fn resolve_type_id(type_id: TypeId, types: &TypeTable) -> Type {
+    match types.get(type_id) {
+        Type::Alias(_, resolved) => resolve_type_id(*resolved, types),
+        ty => ty.clone(),
     }
 }
 
@@ -476,6 +555,8 @@ impl RustCodegen<'_> {
         module_mode: bool,
         cli_program: Option<&crate::cli::CliProgram>,
     ) -> Result<RustOutput, CodegenError> {
+        self.binding_types
+            .replace(self.collect_binding_types(hir, types));
         let mut body = CodeWriter::new();
 
         // Item emission intentionally precedes the prelude. Imports include

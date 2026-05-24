@@ -70,7 +70,7 @@ pub fn generate_stmt(
                     // `Result`; expression lowering still decides whether any
                     // nested failable calls need `?`.
                     w.write("Ok(");
-                    generate_expr_unwrapped(
+                    generate_return_value_expr(
                         codegen,
                         expr,
                         types,
@@ -81,7 +81,7 @@ pub fn generate_stmt(
                     )?;
                     w.write(")");
                 } else {
-                    generate_expr_unwrapped(
+                    generate_return_value_expr(
                         codegen,
                         expr,
                         types,
@@ -157,6 +157,54 @@ fn generate_local(
     Ok(())
 }
 
+fn generate_return_value_expr(
+    codegen: &RustCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if return_value_requires_some_wrapper(codegen, expr, types) {
+        w.write("Some(");
+        generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(")");
+        return Ok(());
+    }
+
+    generate_expr_unwrapped(codegen, expr, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+fn return_value_requires_some_wrapper(codegen: &RustCodegen<'_>, expr: &HirExpr, types: &TypeTable) -> bool {
+    let Some(return_ty) = codegen.current_return_ty() else {
+        return false;
+    };
+    if !type_id_is_option(return_ty, types) {
+        return false;
+    }
+
+    !return_value_may_already_produce_option(codegen, expr, types)
+}
+
+fn return_value_may_already_produce_option(codegen: &RustCodegen<'_>, expr: &HirExpr, types: &TypeTable) -> bool {
+    match &expr.kind {
+        HirExprKind::Literal(HirLiteral::Nil) | HirExprKind::OptionalChain(_, _) => true,
+        HirExprKind::Path(def_id) => codegen
+            .binding_type(*def_id)
+            .or(expr.ty)
+            .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Option(_) | Type::Primitive(Primitive::Nihil))),
+        HirExprKind::Call(_, _)
+        | HirExprKind::MethodCall(_, _, _)
+        | HirExprKind::Field(_, _)
+        | HirExprKind::Index(_, _)
+        | HirExprKind::NonNull(_, _) => expr
+            .ty
+            .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Option(_) | Type::Primitive(Primitive::Nihil))),
+        _ => false,
+    }
+}
+
 fn local_init_clones_indexed_owned_value(local: &HirLocal, init: &HirExpr, types: &TypeTable) -> bool {
     if !matches!(init.kind, HirExprKind::Index(_, _)) {
         return false;
@@ -174,6 +222,14 @@ fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
     }
 }
 
+fn type_id_is_option(type_id: TypeId, types: &TypeTable) -> bool {
+    match types.get(type_id) {
+        Type::Option(_) => true,
+        Type::Alias(_, resolved) => type_id_is_option(*resolved, types),
+        _ => false,
+    }
+}
+
 fn local_init_requires_some_wrapper(
     codegen: &RustCodegen<'_>,
     local: &HirLocal,
@@ -186,6 +242,12 @@ fn local_init_requires_some_wrapper(
 
     if !type_to_rust(codegen, local_ty, types).starts_with("Option<") {
         return false;
+    }
+
+    if let HirExprKind::Verte { target, .. } = &init.kind {
+        if type_id_is_option(*target, types) {
+            return false;
+        }
     }
 
     // Expressions that may already produce `Option<T>` are left alone. Literal

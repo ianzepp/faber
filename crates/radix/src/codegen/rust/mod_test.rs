@@ -364,6 +364,44 @@ incipit {
 }
 
 #[test]
+fn wraps_nullable_return_values_in_some() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio divide(numerus a, numerus b) → numerus ∪ nihil {
+    si b ≡ 0 ergo redde nihil
+    redde a / b
+}
+
+functio first(lista<numerus> items, numerus target) → numerus ∪ nihil {
+    itera ex items fixum item {
+        si item ≡ target ergo redde item
+    }
+    redde nihil
+}
+
+functio keep(textus ∪ nihil value) → textus ∪ nihil {
+    redde value
+}
+
+incipit {
+    varia _ maybe ← nihil ∷ textus ∪ nihil
+    nota divide(10, 2), first([1, 2, 3], 2), keep(maybe)
+}
+"#;
+
+    let result = compiler.compile_str("nullable-return.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("return Some(a / b);"));
+    assert!(rust.code.contains("return Some(item);"));
+    assert!(rust.code.contains("return value;"));
+    assert!(rust.code.contains("let mut maybe: Option<String> = None;"));
+    assert!(!rust.code.contains("Some(None)"));
+}
+
+#[test]
 fn clones_owned_path_arguments_for_function_calls() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
