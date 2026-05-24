@@ -103,7 +103,7 @@ Then inspect the focused goal for the active epic:
 - `goal-forge`: use only to refine this roadmap or split a new goal document when scope is still fuzzy.
 - `delivery`: use to lower each epic phase into a concrete implementation plan before code edits.
 - `factory`: use as the outer loop for executing an epic or a set of delivery phases.
-- `poker-face`: use after each epic checkpoint to verify the work actually satisfies the epic and did not only move failures.
+- `poker-face`: use after each epic checkpoint to verify the work actually satisfies the epic and did not only move failures. Run poker-face agents with high thinking levels because these gates must catch subtle scope misses, false completion, and cross-epic regressions.
 - `zombie-docs`: use when examples, explain corpus, README, or architecture docs may drift during implementation.
 - `consequences`: use before changes that alter grammar, HIR/MIR contracts, host ABI, capability contracts, or `norma` classification.
 - `clean-break`: use for the `ab` removal epic to avoid carrying compatibility residue.
@@ -140,7 +140,7 @@ Each epic should follow this loop:
 3. Lower the next bounded phase through `delivery`.
 4. Execute only that phase.
 5. Validate with the phase's focused commands.
-6. Run a `poker-face` completion gate or equivalent checklist.
+6. Run a `poker-face` completion gate or equivalent checklist. When using a poker-face agent, configure it for high thinking levels and require it to compare the finished work against this roadmap, the active focused goal, the delivery spec, and validation evidence.
 7. Commit the completed phase.
 8. Update the ledger with status, remaining failures, commands run, and next recommended phase.
 9. Stop cleanly if the next phase would require a new architectural decision.
@@ -375,4 +375,3 @@ Decision: included.
 - Stop if host work creates a common crate before the macOS host has a working minimal slice.
 - Stop if MIR/Wasm lowering decisions are made without updating tests and dumps for the new representation.
 - Stop if `norma` migration would remove temporary Rust backend support before current validation has a replacement.
-
