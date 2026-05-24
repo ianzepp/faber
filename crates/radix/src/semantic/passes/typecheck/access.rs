@@ -211,7 +211,13 @@ impl<'a> TypeChecker<'a> {
         };
 
         let result = match chain {
-            crate::hir::HirOptionalChainKind::Member(name) => self.check_field_from_type(inner_ty, *name, object.span),
+            crate::hir::HirOptionalChainKind::Member(name) => {
+                if matches!(self.types.get(self.resolve_type(inner_ty)), Type::Primitive(Primitive::Nihil)) {
+                    self.types.primitive(Primitive::Ignotum)
+                } else {
+                    self.check_field_from_type(inner_ty, *name, object.span)
+                }
+            }
             crate::hir::HirOptionalChainKind::Index(index) => {
                 let idx_ty = self.check_expr(index);
                 self.check_index_from_type(inner_ty, idx_ty, object.span, index.span)

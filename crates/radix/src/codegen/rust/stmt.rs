@@ -149,7 +149,7 @@ fn generate_local(
 
     if let Some(ty) = local.ty {
         w.write(": ");
-        w.write(&type_to_rust(codegen, ty, types));
+        w.write(&local_storage_type_to_rust(codegen, local, ty, types));
     }
 
     if let Some(init) = &local.init {
@@ -171,6 +171,19 @@ fn generate_local(
 
     w.writeln(";");
     Ok(())
+}
+
+fn local_storage_type_to_rust(codegen: &RustCodegen<'_>, local: &HirLocal, ty: TypeId, types: &TypeTable) -> String {
+    if local
+        .init
+        .as_ref()
+        .is_some_and(|init| matches!(init.kind, HirExprKind::Literal(HirLiteral::Nil)))
+        && matches!(resolve_type(ty, types), Type::Primitive(Primitive::Nihil))
+    {
+        return "Option<()>".to_owned();
+    }
+
+    type_to_rust(codegen, ty, types)
 }
 
 fn generate_return_value_expr(

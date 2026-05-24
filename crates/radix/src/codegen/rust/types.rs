@@ -157,7 +157,7 @@ fn primitive_to_rust(prim: Primitive) -> String {
         Primitive::Numerus => "i64",
         Primitive::Fractus => "f64",
         Primitive::Bivalens => "bool",
-        Primitive::Nihil => "()", // or Option::None
+        Primitive::Nihil => "()", // local nil initializers choose Option<()> at the statement boundary
         Primitive::Vacuum => "()",
         Primitive::Numquam => "!",
         Primitive::Ignotum => "FaberValue",

@@ -564,6 +564,37 @@ incipit {
 }
 
 #[test]
+fn rust_optional_member_access_uses_map_lookup_and_nil_none() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    fixum _ maybe ← { present = { value = 100 } }
+    nota maybe?.present?.value
+    fixum _ empty ← nihil
+    fixum _ missing ← empty?.missing
+    nota missing
+}
+"#;
+
+    let result = compiler.compile_str("optional-member-access.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains(r#"(maybe).get("present").cloned()"#));
+    assert!(rust
+        .code
+        .contains(r#").as_ref().and_then(|__faber_opt| __faber_opt.get("value").cloned())"#));
+    assert!(rust.code.contains("let empty: Option<()> = None;"));
+    assert!(rust
+        .code
+        .contains("let missing: Option<FaberValue> = None::<FaberValue>;"));
+    assert!(!rust.code.contains(".present"));
+    assert!(!rust.code.contains(".missing"));
+    assert!(!rust.code.contains("Option</* error */>"));
+}
+
+#[test]
 fn emits_async_futura_functions_and_entry_block_on() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"

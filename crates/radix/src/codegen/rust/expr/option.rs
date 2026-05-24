@@ -33,8 +33,30 @@ pub(super) fn generate_optional_chain_expr(
     let object_is_option = expr_type_is_option(object, types);
     let value_is_option = optional_chain_value_is_option(codegen, object, chain, types);
 
+    if optional_chain_inner_type(object, types)
+        .is_some_and(|ty| matches!(resolve_type(ty, types), Type::Primitive(Primitive::Nihil)))
+    {
+        w.write("None::<FaberValue>");
+        return Ok(());
+    }
+
     match chain {
         HirOptionalChainKind::Member(field) => {
+            if generate_optional_map_member_expr(
+                codegen,
+                object,
+                *field,
+                object_is_option,
+                value_is_option,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            )? {
+                return Ok(());
+            }
+
             if object_is_option {
                 w.write("(");
                 generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
@@ -85,6 +107,51 @@ pub(super) fn generate_optional_chain_expr(
         }
     }
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_optional_map_member_expr(
+    codegen: &RustCodegen<'_>,
+    object: &HirExpr,
+    field: Symbol,
+    object_is_option: bool,
+    value_is_option: bool,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<bool, CodegenError> {
+    let Some(Type::Map(key_ty, _)) = optional_chain_inner_type(object, types).map(|ty| resolve_type(ty, types)) else {
+        return Ok(false);
+    };
+    if !matches!(resolve_type(key_ty, types), Type::Primitive(Primitive::Textus)) {
+        return Ok(false);
+    }
+
+    if object_is_option {
+        w.write("(");
+        generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(").as_ref().and_then(|__faber_opt| __faber_opt.get(\"");
+        w.write(codegen.resolve_symbol(field));
+        if value_is_option {
+            w.write("\").cloned().flatten())");
+        } else {
+            w.write("\").cloned())");
+        }
+    } else {
+        w.write("(");
+        generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(").get(\"");
+        w.write(codegen.resolve_symbol(field));
+        if value_is_option {
+            w.write("\").cloned().flatten()");
+        } else {
+            w.write("\").cloned()");
+        }
+    }
+
+    Ok(true)
 }
 
 #[allow(clippy::too_many_arguments)]
