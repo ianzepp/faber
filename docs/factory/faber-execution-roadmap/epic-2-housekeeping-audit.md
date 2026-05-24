@@ -66,7 +66,14 @@
 - Reduced `crates/radix/src/codegen/rust/mod.rs` from roughly 1,020 lines to roughly 780 lines while keeping `RustCodegen` orchestration and HIR state collection there.
 - Validation after this slice: focused dynamic/prelude/import/async Rust backend tests, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
 
-Remaining high-priority cleanup is now mostly helper-level tests and residual test decomposition: isolate the remaining hand-built type-rendering tests and add narrower helper-level tests around centralized emission decisions.
+2026-05-24 follow-up isolated Rust type rendering tests:
+
+- Added `docs/factory/faber-execution-roadmap/epic-2-post-cleanup-phase-7-delivery.md` as the phase delivery artifact.
+- Moved the hand-built Rust type rendering tests from `mod_test.rs` into `crates/radix/src/codegen/rust/tests/types_test.rs`.
+- Kept the test names and assertions intact while adjusting only ancestor-private module paths needed by the child module.
+- Validation after this slice: focused type-rendering tests, `cargo test -p radix --test hygiene`, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
+
+Remaining high-priority cleanup is now mostly helper-level tests around centralized emission decisions and any final completion audit evidence.
 
 ## Highest Priority Cleanup And Correctness Risks
 
