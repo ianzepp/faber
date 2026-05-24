@@ -49,7 +49,17 @@
 - Kept direct call/method orchestration and variant constructor lowering in `expr/call/mod.rs`.
 - Validation after this slice: focused call, collection, dynamic, and failable Rust backend tests, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
 
-Remaining high-priority cleanup is now mostly production-module decomposition and helper-level tests: split `expr/control.rs`, move generated helper prelude emission out of `codegen/rust/mod.rs`, isolate the remaining hand-built control/type-rendering tests, and add narrower helper-level tests around centralized emission decisions.
+2026-05-24 follow-up decomposed the Rust control emitter:
+
+- Added `docs/factory/faber-execution-roadmap/epic-2-post-cleanup-phase-5-delivery.md` as the phase delivery artifact.
+- Converted `crates/radix/src/codegen/rust/expr/control.rs` into the directory-backed `expr/control/` module.
+- Moved `si` and option-shaped branch lowering into `expr/control/branch.rs`.
+- Moved `elige`/match lowering into `expr/control/match_expr.rs`.
+- Moved loop, `dum`, `itera`, and range lowering into `expr/control/iteration.rs`.
+- Kept `tempta`, closure, and await lowering in `expr/control/mod.rs`.
+- Validation after this slice: focused collection, optional, and broad control-flow Rust backend tests, `cargo test -p radix`, `./scripta/lint`, and `git diff --check` pass.
+
+Remaining high-priority cleanup is now mostly generated helper/prelude extraction and helper-level tests: move generated helper prelude emission out of `codegen/rust/mod.rs`, isolate the remaining hand-built type-rendering tests, and add narrower helper-level tests around centralized emission decisions.
 
 ## Highest Priority Cleanup And Correctness Risks
 
