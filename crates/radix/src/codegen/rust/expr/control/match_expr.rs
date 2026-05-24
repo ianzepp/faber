@@ -13,88 +13,78 @@ pub(in crate::codegen::rust::expr) fn generate_match_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    w.write("match ");
+    let policy = ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation);
+    let mut emitter = ExprEmitter::new(codegen, types, w, policy);
+    generate_match_expr_inner(&mut emitter, scrutinees, arms)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_match_expr_inner(
+    emitter: &mut ExprEmitter<'_, '_>,
+    scrutinees: &[HirExpr],
+    arms: &[HirCasuArm],
+) -> Result<(), CodegenError> {
+    emitter.writer.write("match ");
     if scrutinees.len() == 1 {
-        generate_expr(
-            codegen,
-            &scrutinees[0],
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        )?;
+        emitter.expr(&scrutinees[0])?;
         if matches!(
-            scrutinees[0].ty.map(|ty| resolve_type(ty, types)),
+            scrutinees[0].ty.map(|ty| resolve_type(ty, emitter.types)),
             Some(Type::Primitive(Primitive::Textus))
         ) {
-            w.write(".as_str()");
+            emitter.writer.write(".as_str()");
         }
     } else {
-        w.write("(");
+        emitter.writer.write("(");
         for (idx, scrutinee) in scrutinees.iter().enumerate() {
             if idx > 0 {
-                w.write(", ");
+                emitter.writer.write(", ");
             }
-            generate_expr(
-                codegen,
-                scrutinee,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            )?;
+            emitter.expr(scrutinee)?;
         }
-        w.write(")");
+        emitter.writer.write(")");
     }
-    w.writeln(" {");
+    emitter.writer.writeln(" {");
     let mut discerne_result = Ok(());
-    w.indented(|w| {
+    let codegen = emitter.codegen;
+    let types = emitter.types;
+    let policy = emitter.policy;
+    emitter.writer.indented(|w| {
+        let mut arm_emitter = ExprEmitter::new(codegen, types, w, policy);
         for arm in arms {
             if arm.patterns.len() == 1 {
-                generate_pattern(codegen, &arm.patterns[0], w);
+                generate_pattern(codegen, &arm.patterns[0], arm_emitter.writer);
             } else {
-                w.write("(");
+                arm_emitter.writer.write("(");
                 for (idx, pattern) in arm.patterns.iter().enumerate() {
                     if idx > 0 {
-                        w.write(", ");
+                        arm_emitter.writer.write(", ");
                     }
-                    generate_pattern(codegen, pattern, w);
+                    generate_pattern(codegen, pattern, arm_emitter.writer);
                 }
-                w.write(")");
+                arm_emitter.writer.write(")");
             }
             if let Some(guard) = &arm.guard {
-                w.write(" if ");
+                arm_emitter.writer.write(" if ");
                 if discerne_result.is_err() {
                     return;
                 }
-                discerne_result =
-                    generate_expr(codegen, guard, types, w, in_failable_fn, in_entry, suppress_error_propagation);
+                discerne_result = arm_emitter.expr(guard);
             }
-            w.write(" => ");
+            arm_emitter.writer.write(" => ");
             if discerne_result.is_err() {
                 return;
             }
-            discerne_result = generate_expr(
-                codegen,
-                &arm.body,
-                types,
-                w,
-                in_failable_fn,
-                in_entry,
-                suppress_error_propagation,
-            );
-            w.writeln(",");
+            discerne_result = arm_emitter.expr(&arm.body);
+            arm_emitter.writer.writeln(",");
         }
         if !arms.iter().any(arm_has_wildcard_pattern) && match_scrutinee_is_enum(scrutinees, types) {
-            w.writeln("_ => unreachable!(),");
+            arm_emitter.writer.writeln("_ => unreachable!(),");
         } else if !arms.iter().any(arm_has_wildcard_pattern) {
-            w.writeln("_ => {},");
+            arm_emitter.writer.writeln("_ => {},");
         }
     });
     discerne_result?;
-    w.write("}");
+    emitter.writer.write("}");
     Ok(())
 }
 
