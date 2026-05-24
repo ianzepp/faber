@@ -312,6 +312,38 @@ pub(super) fn generate_for_expr(
         );
     }
 
+    if matches!(mode, HirIteraMode::De) {
+        match iter.ty.map(|ty| resolve_type(ty, types)) {
+            Some(Type::Array(_)) => {
+                return generate_array_index_for_expr(
+                    codegen,
+                    binding,
+                    iter,
+                    block,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                );
+            }
+            Some(Type::Map(_, _)) => {
+                return generate_map_key_for_expr(
+                    codegen,
+                    binding,
+                    iter,
+                    block,
+                    types,
+                    w,
+                    in_failable_fn,
+                    in_entry,
+                    suppress_error_propagation,
+                );
+            }
+            _ => {}
+        }
+    }
+
     w.write("for ");
     w.write(codegen.resolve_def(binding));
     w.write(" in ");
@@ -336,6 +368,46 @@ pub(super) fn generate_for_expr(
         generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
     w.write(" ");
+    generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_array_index_for_expr(
+    codegen: &RustCodegen<'_>,
+    binding: DefId,
+    iter: &HirExpr,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("for ");
+    w.write(codegen.resolve_def(binding));
+    w.write(" in 0..((");
+    generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write(").len() as i64) ");
+    generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_map_key_for_expr(
+    codegen: &RustCodegen<'_>,
+    binding: DefId,
+    iter: &HirExpr,
+    block: &HirBlock,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    w.write("for ");
+    w.write(codegen.resolve_def(binding));
+    w.write(" in (");
+    generate_expr(codegen, iter, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+    w.write(").keys().cloned() ");
     generate_block(codegen, block, types, w, in_failable_fn, in_entry, suppress_error_propagation)
 }
 

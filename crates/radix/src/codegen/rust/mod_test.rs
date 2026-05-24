@@ -538,6 +538,39 @@ incipit {
 }
 
 #[test]
+fn emits_itera_de_keys_and_indices_for_rust() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+functio hasKey(tabula<textus, numerus> obj, textus key) → bivalens {
+    itera de obj fixum k {
+        si k ≡ key ergo redde verum
+    }
+    redde falsum
+}
+
+incipit {
+    fixum _ numbers ← [10, 20, 30]
+    itera de numbers fixum index {
+        nota numbers[index]
+    }
+}
+"#;
+
+    let result = compiler.compile_str("itera-de-rust.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("for k in (obj).keys().cloned()"));
+    assert!(rust
+        .code
+        .contains("for index in 0..((numbers).len() as i64)"));
+    assert!(rust.code.contains("numbers[(index) as usize]"));
+    assert!(!rust.code.contains("for k in obj"));
+    assert!(!rust.code.contains("for index in numbers"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");

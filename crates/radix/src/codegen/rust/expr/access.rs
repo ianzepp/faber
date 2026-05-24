@@ -66,6 +66,9 @@ pub(super) fn generate_index_expr(
         w.write("(");
         generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
         w.write(") as usize");
+    } else if matches!(object_ty, Some(Type::Map(_, _))) {
+        w.write("&");
+        generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     } else {
         generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     }
