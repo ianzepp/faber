@@ -296,6 +296,7 @@ pub fn generate_expr(
         HirExprKind::Array(elements) => generate_array_expr(
             codegen,
             expr.id,
+            expr.ty,
             elements,
             types,
             w,

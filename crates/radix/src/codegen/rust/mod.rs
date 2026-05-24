@@ -214,12 +214,20 @@ impl<'a> RustCodegen<'a> {
         w.newline();
 
         for import in imports {
+            if import == "__faber_value" {
+                continue;
+            }
             w.write("use ");
             w.write(import);
             w.writeln(";");
         }
 
         if !imports.is_empty() {
+            w.newline();
+        }
+
+        if imports.contains("__faber_value") {
+            generate_faber_value_helper(w);
             w.newline();
         }
     }
@@ -657,7 +665,84 @@ fn collect_prelude_imports(code: &str) -> BTreeSet<String> {
     if code.contains("Future<Output =") {
         imports.insert("std::future::Future".to_owned());
     }
+    if code.contains("FaberValue") {
+        imports.insert("__faber_value".to_owned());
+    }
     imports
+}
+
+fn generate_faber_value_helper(w: &mut CodeWriter) {
+    w.writeln("#[derive(Debug, Clone, PartialEq)]");
+    w.writeln("enum FaberValue {");
+    w.indented(|w| {
+        w.writeln("Nihil,");
+        w.writeln("Bivalens(bool),");
+        w.writeln("Numerus(i64),");
+        w.writeln("Fractus(f64),");
+        w.writeln("Textus(String),");
+        w.writeln("Lista(Vec<FaberValue>),");
+        w.writeln("Tabula(std::collections::HashMap<String, FaberValue>),");
+    });
+    w.writeln("}");
+    w.newline();
+    w.writeln("impl Default for FaberValue {");
+    w.indented(|w| {
+        w.writeln("fn default() -> Self {");
+        w.indented(|w| {
+            w.writeln("FaberValue::Nihil");
+        });
+        w.writeln("}");
+    });
+    w.writeln("}");
+    w.newline();
+    w.writeln("impl From<()> for FaberValue {");
+    w.indented(|w| {
+        w.writeln("fn from(_: ()) -> Self { FaberValue::Nihil }");
+    });
+    w.writeln("}");
+    w.writeln("impl From<bool> for FaberValue {");
+    w.indented(|w| {
+        w.writeln("fn from(value: bool) -> Self { FaberValue::Bivalens(value) }");
+    });
+    w.writeln("}");
+    w.writeln("impl From<i64> for FaberValue {");
+    w.indented(|w| {
+        w.writeln("fn from(value: i64) -> Self { FaberValue::Numerus(value) }");
+    });
+    w.writeln("}");
+    w.writeln("impl From<f64> for FaberValue {");
+    w.indented(|w| {
+        w.writeln("fn from(value: f64) -> Self { FaberValue::Fractus(value) }");
+    });
+    w.writeln("}");
+    w.writeln("impl From<String> for FaberValue {");
+    w.indented(|w| {
+        w.writeln("fn from(value: String) -> Self { FaberValue::Textus(value) }");
+    });
+    w.writeln("}");
+    w.writeln("impl From<&str> for FaberValue {");
+    w.indented(|w| {
+        w.writeln("fn from(value: &str) -> Self { FaberValue::Textus(value.to_string()) }");
+    });
+    w.writeln("}");
+    w.writeln("impl<T> From<Vec<T>> for FaberValue where T: Into<FaberValue> {");
+    w.indented(|w| {
+        w.writeln("fn from(value: Vec<T>) -> Self {");
+        w.indented(|w| {
+            w.writeln("FaberValue::Lista(value.into_iter().map(Into::into).collect())");
+        });
+        w.writeln("}");
+    });
+    w.writeln("}");
+    w.writeln("impl<T> From<std::collections::HashMap<String, T>> for FaberValue where T: Into<FaberValue> {");
+    w.indented(|w| {
+        w.writeln("fn from(value: std::collections::HashMap<String, T>) -> Self {");
+        w.indented(|w| {
+            w.writeln("FaberValue::Tabula(value.into_iter().map(|(key, value)| (key, value.into())).collect())");
+        });
+        w.writeln("}");
+    });
+    w.writeln("}");
 }
 
 fn block_contains_await(block: &HirBlock) -> bool {

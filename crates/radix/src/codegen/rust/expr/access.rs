@@ -29,6 +29,16 @@ pub(super) fn generate_field_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    if let Some(Type::Map(key_ty, _)) = object.ty.map(|ty| resolve_type(ty, types)) {
+        if matches!(resolve_type(key_ty, types), Type::Primitive(Primitive::Textus)) {
+            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            w.write(".get(\"");
+            w.write(codegen.resolve_symbol(field));
+            w.write("\").cloned().unwrap_or_default()");
+            return Ok(());
+        }
+    }
+
     generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
     w.write(".");
     w.write(codegen.resolve_symbol(field));

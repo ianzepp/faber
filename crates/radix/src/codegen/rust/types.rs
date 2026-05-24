@@ -24,9 +24,10 @@
 //!
 //! ESCAPE HATCHES
 //! ==============
-//! `ignotum` and non-empty ad-hoc unions render as `Box<dyn std::any::Any>`.
-//! That preserves an explicit dynamic boundary for constructs the Rust backend
-//! cannot model precisely as a static Rust type.
+//! `ignotum` and non-empty ad-hoc unions render as `FaberValue`. That preserves
+//! an explicit dynamic boundary for constructs the Rust backend cannot model
+//! precisely as a static Rust type while keeping generated single-file Rust
+//! printable and cloneable under the direct `rustc` e2e harness.
 
 use super::RustCodegen;
 use crate::semantic::{Mutability, Primitive, Type, TypeId, TypeTable};
@@ -127,7 +128,7 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
             if variants.is_empty() {
                 "!".to_owned()
             } else {
-                "Box<dyn std::any::Any>".to_owned()
+                "FaberValue".to_owned()
             }
         }
 
@@ -145,7 +146,7 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
 ///   Nihil    -> ()
 ///   Vacuum   -> ()
 ///   Numquam  -> ! (never type)
-///   Ignotum  -> Box<dyn Any>
+///   Ignotum  -> FaberValue
 ///   Valor    -> norma::datum::Valor
 ///   Octeti   -> Vec<u8>
 ///
@@ -159,7 +160,7 @@ fn primitive_to_rust(prim: Primitive) -> String {
         Primitive::Nihil => "()", // or Option::None
         Primitive::Vacuum => "()",
         Primitive::Numquam => "!",
-        Primitive::Ignotum => "Box<dyn std::any::Any>",
+        Primitive::Ignotum => "FaberValue",
         Primitive::Octeti => "Vec<u8>",
         Primitive::Regex => "regex::Regex",
         Primitive::Valor => "norma::datum::Valor",

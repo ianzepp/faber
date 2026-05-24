@@ -471,6 +471,34 @@ incipit {
 }
 
 #[test]
+fn rust_dynamic_object_values_use_faber_value() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+incipit {
+    fixum _ point ← { x = 10, label = "home" }
+    nota point
+    nota point.x
+}
+"#;
+
+    let result = compiler.compile_str("dynamic-object.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust.code.contains("enum FaberValue"));
+    assert!(rust.code.contains("HashMap<String, FaberValue>"));
+    assert!(rust
+        .code
+        .contains(r#".insert("x".to_string(), FaberValue::from(10))"#));
+    assert!(rust
+        .code
+        .contains(r#"point.get("x").cloned().unwrap_or_default()"#));
+    assert!(!rust.code.contains("Box<dyn std::any::Any>"));
+    assert!(!rust.code.contains("point.x"));
+}
+
+#[test]
 fn emits_async_futura_functions_and_entry_block_on() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
@@ -2390,7 +2418,7 @@ fn type_to_rust_covers_composite_and_special_cases() {
     assert_eq!(super::types::type_to_rust(&codegen, applied_ty, &types), "Structum<i64>");
     assert_eq!(super::types::type_to_rust(&codegen, infer_ty, &types), "_");
     assert_eq!(super::types::type_to_rust(&codegen, union_empty_ty, &types), "!");
-    assert_eq!(super::types::type_to_rust(&codegen, union_ty, &types), "Box<dyn std::any::Any>");
+    assert_eq!(super::types::type_to_rust(&codegen, union_ty, &types), "FaberValue");
     assert_eq!(super::types::type_to_rust(&codegen, error_ty, &types), "/* error */");
 }
 

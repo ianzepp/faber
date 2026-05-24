@@ -261,9 +261,10 @@ fn generate_verte_array_expr(
                         HirArrayElement::Expr(elem_expr) => {
                             w.write(&temp);
                             w.write(".push(");
-                            array_result = generate_expr(
+                            array_result = generate_verte_value_expr(
                                 codegen,
                                 elem_expr,
+                                elem,
                                 types,
                                 w,
                                 in_failable_fn,
@@ -304,9 +305,10 @@ fn generate_verte_array_expr(
             let HirArrayElement::Expr(elem_expr) = elem_expr else {
                 continue;
             };
-            generate_expr(
+            generate_verte_value_expr(
                 codegen,
                 elem_expr,
+                elem,
                 types,
                 w,
                 in_failable_fn,
@@ -390,9 +392,10 @@ fn generate_verte_map_expr(
                             return;
                         }
                         w.write(", ");
-                        map_result = generate_expr(
+                        map_result = generate_verte_value_expr(
                             codegen,
                             value,
+                            value_ty,
                             types,
                             w,
                             in_failable_fn,
@@ -418,4 +421,49 @@ fn generate_verte_map_expr(
     w.write(&type_to_rust(codegen, value_ty, types));
     w.write(">::new()");
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_verte_value_expr(
+    codegen: &RustCodegen<'_>,
+    value: &HirExpr,
+    target_ty: TypeId,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+    in_failable_fn: bool,
+    in_entry: bool,
+    suppress_error_propagation: bool,
+) -> Result<(), CodegenError> {
+    if let Type::Array(elem_ty) = resolve_type(target_ty, types) {
+        if type_id_is_faber_value(elem_ty, types) {
+            return generate_verte_array_expr(
+                codegen,
+                value.id,
+                value,
+                elem_ty,
+                types,
+                w,
+                in_failable_fn,
+                in_entry,
+                suppress_error_propagation,
+            );
+        }
+    }
+
+    if type_id_is_faber_value(target_ty, types) {
+        w.write("FaberValue::from(");
+        generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        w.write(")");
+        return Ok(());
+    }
+
+    generate_expr(codegen, value, types, w, in_failable_fn, in_entry, suppress_error_propagation)
+}
+
+fn type_id_is_faber_value(type_id: TypeId, types: &TypeTable) -> bool {
+    match resolve_type(type_id, types) {
+        Type::Primitive(Primitive::Ignotum) => true,
+        Type::Union(variants) => !variants.is_empty(),
+        _ => false,
+    }
 }

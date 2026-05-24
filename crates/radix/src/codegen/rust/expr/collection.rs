@@ -23,6 +23,7 @@ use rustc_hash::FxHashSet;
 pub(super) fn generate_array_expr(
     codegen: &RustCodegen<'_>,
     expr_id: HirId,
+    expr_ty: Option<TypeId>,
     elements: &[HirArrayElement],
     types: &TypeTable,
     w: &mut CodeWriter,
@@ -30,6 +31,11 @@ pub(super) fn generate_array_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
+    let dynamic_elem_ty = match expr_ty.map(|ty| resolve_type(ty, types)) {
+        Some(Type::Array(elem_ty)) => type_id_is_faber_value(elem_ty, types),
+        _ => false,
+    };
+
     if elements
         .iter()
         .any(|element| matches!(element, HirArrayElement::Spread(_)))
@@ -51,6 +57,9 @@ pub(super) fn generate_array_expr(
                     HirArrayElement::Expr(elem) => {
                         w.write(&temp);
                         w.write(".push(");
+                        if dynamic_elem_ty {
+                            w.write("FaberValue::from(");
+                        }
                         result = generate_expr(
                             codegen,
                             elem,
@@ -60,6 +69,9 @@ pub(super) fn generate_array_expr(
                             in_entry,
                             suppress_error_propagation,
                         );
+                        if dynamic_elem_ty {
+                            w.write(")");
+                        }
                         w.writeln(");");
                     }
                     HirArrayElement::Spread(elem) => {
@@ -92,11 +104,25 @@ pub(super) fn generate_array_expr(
             let HirArrayElement::Expr(elem) = elem else {
                 continue;
             };
+            if dynamic_elem_ty {
+                w.write("FaberValue::from(");
+            }
             generate_expr(codegen, elem, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            if dynamic_elem_ty {
+                w.write(")");
+            }
         }
         w.write("]");
     }
     Ok(())
+}
+
+fn type_id_is_faber_value(type_id: TypeId, types: &TypeTable) -> bool {
+    match resolve_type(type_id, types) {
+        Type::Primitive(Primitive::Ignotum) => true,
+        Type::Union(variants) => !variants.is_empty(),
+        _ => false,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
