@@ -31,7 +31,15 @@
 - Added focused Rust backend tests for preserving option-valued optional targets and coercing dynamic collection method arguments.
 - Validation after this slice: `cargo test -p radix`, `./scripta/lint`, and `cargo test -p radix exempla_rust_e2e -- --ignored --nocapture` pass; the ignored Rust exempla harness remains at `99/100` with `ad/ad.fab` as the expected Epic 3 failure.
 
-Remaining high-priority cleanup is now mostly decomposition and test-boundary work: split the large Rust call/codegen modules, split the broad Rust backend test file, and add narrower helper-level tests around the newly centralized emission decisions.
+2026-05-24 follow-up implemented the Rust backend test-boundary split:
+
+- Added `docs/factory/faber-execution-roadmap/epic-2-post-cleanup-phase-3-delivery.md` as the phase delivery artifact.
+- Split optional/nullability, dynamic value, collection/iteration, call, declaration, and failable Rust backend tests out of `mod_test.rs` into focused companion modules under `crates/radix/src/codegen/rust/tests/`.
+- Kept moved test names intact so narrow `cargo test` filters still target the same behaviors.
+- Reduced `crates/radix/src/codegen/rust/mod_test.rs` from roughly 2,800 lines to roughly 1,840 lines without changing production code.
+- Validation after this slice: focused moved-module tests, `cargo test -p radix`, `cargo test -p radix --test hygiene`, `./scripta/lint`, and `git diff --check` pass.
+
+Remaining high-priority cleanup is now mostly production-module decomposition and helper-level tests: split the large Rust call/codegen modules, isolate the remaining hand-built control/type-rendering tests, and add narrower helper-level tests around centralized emission decisions.
 
 ## Highest Priority Cleanup And Correctness Risks
 
