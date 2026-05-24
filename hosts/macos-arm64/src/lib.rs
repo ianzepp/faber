@@ -6,6 +6,7 @@
 //! frame and kernel semantics, but this crate intentionally has no Muninn
 //! runtime dependency.
 
+pub mod component;
 pub mod hal;
 pub mod kernel;
 pub mod manifest;

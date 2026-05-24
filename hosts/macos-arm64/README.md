@@ -45,6 +45,7 @@ requiring a background daemon or Wasm loader yet.
 cargo run -p faber-host-macos-arm64 -- manifest
 cargo run -p faber-host-macos-arm64 -- call host:echo '{"value":"salve"}'
 cargo run -p faber-host-macos-arm64 -- call pg:query '{}'
+cargo run -p faber-host-macos-arm64 -- component-call hosts/macos-arm64/tests/fixtures/route-proof.wat route 1
 ```
 
 The `manifest` command emits a JSON capability manifest containing built-in
@@ -54,6 +55,14 @@ The `call` command builds a request `Frame`, routes it through the in-process
 host kernel, and prints the response frame as JSON. Unknown calls such as
 `pg:query` return a structured `E_NO_ROUTE` error frame. The command exits with
 status `2` when the response frame has `status = "error"`.
+
+The `component-call` command loads a Wasm component, calls a named exported
+function, and exposes one host import named `capability-call`. The current proof
+ABI is intentionally tiny: route code `1` maps to `host:echo`, and route code
+`2` maps to unresolved `pg:query`. The host import wraps that route code into a
+`Frame`, routes it through the same `HostKernel`, and prints the routed response
+frame as JSON. This proves the Wasm/component boundary without committing the
+final Faber WIT world or string ABI.
 
 ## Frame Topology
 
@@ -108,5 +117,6 @@ good next surface to move toward host-owned frame syscalls after the route proof
 - How should capability grants be represented for filesystem, process, network,
   and environment access?
 
-Status: route proof implemented. Bene currit for this phase when `host:echo`
-routes through the host kernel and unresolved calls produce `E_NO_ROUTE`.
+Status: route proof and minimal component import proof implemented. Bene currit
+for this epic when direct calls and component imports both route through the host
+kernel and unresolved calls produce `E_NO_ROUTE`.

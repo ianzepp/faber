@@ -1,6 +1,6 @@
 # Faber macOS arm64 Host Architecture Goal
 
-**Status**: frame/kernel route proof implemented; Wasm/component loading not yet implemented
+**Status**: frame/kernel route proof and minimal Wasm/component import proof implemented
 **Created**: 2026-05-24
 **Host Crate**: `hosts/macos-arm64`
 **Implementation Language**: Rust

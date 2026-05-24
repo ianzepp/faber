@@ -1,6 +1,7 @@
 use std::env;
 use std::process::ExitCode;
 
+use faber_host_macos_arm64::component::ComponentHost;
 use faber_host_macos_arm64::kernel::FrameData;
 use faber_host_macos_arm64::{Frame, HostKernel, Status};
 use serde_json::Value;
@@ -24,6 +25,7 @@ fn run(args: Vec<String>) -> Result<ExitCode, String> {
     match command {
         "manifest" => print_manifest(),
         "call" => call(&args[1..]),
+        "component-call" => component_call(&args[1..]),
         "help" | "-h" | "--help" => {
             print_usage();
             Ok(ExitCode::SUCCESS)
@@ -61,6 +63,29 @@ fn call(args: &[String]) -> Result<ExitCode, String> {
     }
 }
 
+fn component_call(args: &[String]) -> Result<ExitCode, String> {
+    let [path, export_name, route_code] = args else {
+        return Err(
+            "usage: faber-host-macos-arm64 component-call <component> <export> <route-code>".into(),
+        );
+    };
+
+    let route_code = route_code
+        .parse::<u32>()
+        .map_err(|error| format!("component route code must be a u32: {error}"))?;
+    let host = ComponentHost::new();
+    let output = host
+        .call_export_from_file(path, export_name, route_code)
+        .map_err(|error| format!("component call failed: {error}"))?;
+    print_json(&output.response)?;
+
+    if output.response.status == Status::Error {
+        Ok(ExitCode::from(2))
+    } else {
+        Ok(ExitCode::SUCCESS)
+    }
+}
+
 fn parse_frame_data(raw: &str) -> Result<FrameData, String> {
     match serde_json::from_str::<Value>(raw) {
         Ok(Value::Object(map)) => Ok(map),
@@ -80,4 +105,5 @@ fn print_usage() {
     println!("usage:");
     println!("  faber-host-macos-arm64 manifest");
     println!("  faber-host-macos-arm64 call <name> [json-object]");
+    println!("  faber-host-macos-arm64 component-call <component> <export> <route-code>");
 }
