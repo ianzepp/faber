@@ -129,6 +129,25 @@ fn reports_consolum_bad_payload_as_invalid_args() {
 }
 
 #[test]
+fn reports_consolum_missing_required_read_size_as_invalid_args() {
+    let kernel = HostKernel::new();
+    let request = Frame::request("consolum:hauri");
+
+    let response = kernel.route(&request);
+
+    assert_eq!(response.status, Status::Error);
+    assert_eq!(response.parent_id.as_deref(), Some(request.id.as_str()));
+    assert_eq!(
+        response.data["code"],
+        Value::String("E_INVALID_ARGS".into())
+    );
+    assert_eq!(
+        response.data["message"],
+        Value::String("missing magnitudo".into())
+    );
+}
+
+#[test]
 fn reports_unknown_consolum_member_as_no_route() {
     let kernel = HostKernel::new();
     let request = Frame::request("consolum:ignotum");

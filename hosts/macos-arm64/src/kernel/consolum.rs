@@ -123,9 +123,7 @@ impl Syscall for Consolum {
 }
 
 fn read_bytes(request: &Frame) -> HostResult<Frame> {
-    let magnitude = optional_i64(&request.data, "magnitudo")?
-        .unwrap_or(0)
-        .max(0) as usize;
+    let magnitude = i64_arg(&request.data, "magnitudo")?.max(0) as usize;
     let mut buffer = vec![0u8; magnitude];
     let bytes_read = io::stdin()
         .lock()
@@ -211,14 +209,13 @@ fn bytes_arg(data: &FrameData, key: &str) -> HostResult<Vec<u8>> {
     }
 }
 
-fn optional_i64(data: &FrameData, key: &str) -> HostResult<Option<i64>> {
+fn i64_arg(data: &FrameData, key: &str) -> HostResult<i64> {
     match data.get(key) {
         Some(Value::Number(value)) => value
             .as_i64()
-            .map(Some)
             .ok_or_else(|| HostError::invalid_args(format!("{key} must be an integer"))),
         Some(_) => Err(HostError::invalid_args(format!("{key} must be an integer"))),
-        None => Ok(None),
+        None => Err(HostError::invalid_args(format!("missing {key}"))),
     }
 }
 
