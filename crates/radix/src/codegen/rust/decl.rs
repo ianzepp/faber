@@ -62,7 +62,7 @@ pub fn generate_function_with_cli_args_type(
     w: &mut CodeWriter,
     cli_args_type: Option<&str>,
 ) -> Result<(), CodegenError> {
-    generate_function_inner(codegen, def_id, func, types, w, cli_args_type, None)
+    generate_function_inner(codegen, def_id, func, types, w, cli_args_type, None, None)
 }
 
 fn generate_function_inner(
@@ -73,6 +73,7 @@ fn generate_function_inner(
     w: &mut CodeWriter,
     cli_args_type: Option<&str>,
     receiver: Option<&str>,
+    return_type_override: Option<&str>,
 ) -> Result<(), CodegenError> {
     let is_failable = codegen.is_failable_def(def_id);
     let is_test = func.test.is_some();
@@ -144,12 +145,17 @@ fn generate_function_inner(
     if is_failable {
         w.write(" -> ");
         w.write("Result<");
-        if let Some(ret_ty) = func.ret_ty {
+        if let Some(ret_ty) = return_type_override {
+            w.write(ret_ty);
+        } else if let Some(ret_ty) = func.ret_ty {
             w.write(&type_to_rust(codegen, ret_ty, types));
         } else {
             w.write("()");
         }
         w.write(", String>");
+    } else if let Some(ret_ty) = return_type_override {
+        w.write(" -> ");
+        w.write(ret_ty);
     } else if let Some(ret_ty) = func.ret_ty {
         w.write(" -> ");
         w.write(&type_to_rust(codegen, ret_ty, types));
@@ -259,10 +265,39 @@ fn generate_method(
         HirReceiver::Owned => "self",
         HirReceiver::Ref | HirReceiver::None => "&self",
     };
+    let return_type_override = method_self_return_type_override(codegen, struct_def, method, types);
     let previous_self = codegen.replace_current_self_def(Some(struct_def));
-    let result = generate_function_inner(codegen, method.def_id, &method.func, types, w, None, Some(receiver));
+    let result = generate_function_inner(
+        codegen,
+        method.def_id,
+        &method.func,
+        types,
+        w,
+        None,
+        Some(receiver),
+        return_type_override.as_deref(),
+    );
     codegen.replace_current_self_def(previous_self);
     result
+}
+
+fn method_self_return_type_override(
+    codegen: &RustCodegen<'_>,
+    struct_def: DefId,
+    method: &HirMethod,
+    types: &TypeTable,
+) -> Option<String> {
+    let Some(ret_ty) = method.func.ret_ty else {
+        return None;
+    };
+    if !matches!(resolve_type(ret_ty, types), Type::Struct(def_id) if def_id == struct_def) {
+        return None;
+    }
+    if !method_returns_self(&method.func, struct_def) {
+        return None;
+    }
+
+    Some(format!("&mut {}", codegen.resolve_def(struct_def)))
 }
 
 fn method_mutates_self(func: &HirFunction, self_def: DefId) -> bool {
@@ -291,6 +326,29 @@ fn method_mutates_self(func: &HirFunction, self_def: DefId) -> bool {
     detector.found
 }
 
+fn method_returns_self(func: &HirFunction, self_def: DefId) -> bool {
+    struct SelfReturnDetector {
+        self_def: DefId,
+        found: bool,
+    }
+
+    impl HirVisitor for SelfReturnDetector {
+        fn visit_stmt(&mut self, stmt: &HirStmt) {
+            if let HirStmtKind::Redde(Some(expr)) = &stmt.kind {
+                if matches!(expr.kind, HirExprKind::Path(def_id) if def_id == self.self_def) {
+                    self.found = true;
+                    return;
+                }
+            }
+            crate::hir::visit::walk_stmt(self, stmt);
+        }
+    }
+
+    let mut detector = SelfReturnDetector { self_def, found: false };
+    detector.visit_function(func);
+    detector.found
+}
+
 fn assignment_target_starts_at_self(expr: &HirExpr, self_def: DefId) -> bool {
     match &expr.kind {
         HirExprKind::Path(def_id) => *def_id == self_def,
@@ -298,6 +356,13 @@ fn assignment_target_starts_at_self(expr: &HirExpr, self_def: DefId) -> bool {
             assignment_target_starts_at_self(object, self_def)
         }
         _ => false,
+    }
+}
+
+fn resolve_type(type_id: TypeId, types: &TypeTable) -> Type {
+    match types.get(type_id) {
+        Type::Alias(_, resolved) => resolve_type(*resolved, types),
+        other => other.clone(),
     }
 }
 

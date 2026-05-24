@@ -643,6 +643,52 @@ incipit {
 }
 
 #[test]
+fn self_returning_methods_use_mutable_receiver_return() {
+    let compiler = crate::Compiler::new(crate::Config::default());
+    let source = r#"
+genus Calculator {
+    numerus value = 0
+
+    functio setValue(numerus n) → Calculator {
+        ego.value ← n
+        redde ego
+    }
+
+    functio double() → Calculator {
+        ego.value ← ego.value * 2
+        redde ego
+    }
+
+    functio getResult() → numerus {
+        redde ego.value
+    }
+}
+
+incipit {
+    varia _ calc ← Calculator {}
+    fixum _ result ← calc.setValue(5).double().getResult()
+    nota result
+}
+"#;
+
+    let result = compiler.compile_str("self-return-method.fab", source);
+    let Some(crate::Output::Rust(rust)) = result.output else {
+        panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
+    };
+
+    assert!(rust
+        .code
+        .contains("fn setValue(&mut self, n: i64) -> &mut Calculator"));
+    assert!(rust
+        .code
+        .contains("fn double(&mut self) -> &mut Calculator"));
+    assert!(rust.code.contains("return self;"));
+    assert!(rust
+        .code
+        .contains("let result: i64 = calc.setValue(5).double().getResult();"));
+}
+
+#[test]
 fn emits_metadata_driven_test_attributes() {
     let mut interner = Interner::new();
     let case_name = interner.intern("one plus one equals two");
