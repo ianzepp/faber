@@ -29,19 +29,33 @@ pub(super) fn generate_field_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    if let Some(Type::Map(key_ty, _)) = object.ty.map(|ty| resolve_type(ty, types)) {
-        if matches!(resolve_type(key_ty, types), Type::Primitive(Primitive::Textus)) {
-            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(".get(\"");
-            w.write(codegen.resolve_symbol(field));
-            w.write("\").cloned().unwrap_or_default()");
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_field_expr_with_emitter(&mut emitter, object, field)
+}
+
+fn generate_field_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    object: &HirExpr,
+    field: Symbol,
+) -> Result<(), CodegenError> {
+    if let Some(Type::Map(key_ty, _)) = object.ty.map(|ty| resolve_type(ty, emitter.types)) {
+        if matches!(resolve_type(key_ty, emitter.types), Type::Primitive(Primitive::Textus)) {
+            emitter.expr(object)?;
+            emitter.writer.write(".get(\"");
+            emitter.writer.write(emitter.codegen.resolve_symbol(field));
+            emitter.writer.write("\").cloned().unwrap_or_default()");
             return Ok(());
         }
     }
 
-    generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write(".");
-    w.write(codegen.resolve_symbol(field));
+    emitter.expr(object)?;
+    emitter.writer.write(".");
+    emitter.writer.write(emitter.codegen.resolve_symbol(field));
     Ok(())
 }
 
@@ -56,75 +70,76 @@ pub(super) fn generate_index_expr(
     in_entry: bool,
     suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
-    let object_ty = object.ty.map(|ty| resolve_type(ty, types));
+    let mut emitter = ExprEmitter::new(
+        codegen,
+        types,
+        w,
+        ExprEmitPolicy::new(in_failable_fn, in_entry, suppress_error_propagation),
+    );
+    generate_index_expr_with_emitter(&mut emitter, object, index)
+}
+
+fn generate_index_expr_with_emitter(
+    emitter: &mut ExprEmitter<'_, '_>,
+    object: &HirExpr,
+    index: &HirExpr,
+) -> Result<(), CodegenError> {
+    let object_ty = object.ty.map(|ty| resolve_type(ty, emitter.types));
     if matches!(object_ty, Some(Type::Primitive(Primitive::Textus))) {
-        return generate_textus_index_expr(
-            codegen,
-            object,
-            index,
-            types,
-            w,
-            in_failable_fn,
-            in_entry,
-            suppress_error_propagation,
-        );
+        return generate_textus_index_expr(emitter, object, index);
     }
 
-    generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-    w.write("[");
+    emitter.expr(object)?;
+    emitter.writer.write("[");
     if matches!(object_ty, Some(Type::Array(_))) {
-        w.write("(");
-        generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-        w.write(") as usize");
+        emitter.writer.write("(");
+        emitter.expr(index)?;
+        emitter.writer.write(") as usize");
     } else if matches!(object_ty, Some(Type::Map(_, _))) {
-        w.write("&");
-        generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.writer.write("&");
+        emitter.expr(index)?;
     } else {
-        generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+        emitter.expr(index)?;
     }
-    w.write("]");
+    emitter.writer.write("]");
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
 fn generate_textus_index_expr(
-    codegen: &RustCodegen<'_>,
+    emitter: &mut ExprEmitter<'_, '_>,
     object: &HirExpr,
     index: &HirExpr,
-    types: &TypeTable,
-    w: &mut CodeWriter,
-    in_failable_fn: bool,
-    in_entry: bool,
-    suppress_error_propagation: bool,
 ) -> Result<(), CodegenError> {
     match &index.kind {
         HirExprKind::Intervallum { start, end, step, kind } => {
-            w.write("({ let __faber_text = ");
-            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write("; let __faber_start = (");
-            generate_expr(codegen, start, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(") as usize; let __faber_end = (");
-            generate_expr(codegen, end, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
+            emitter.writer.write("({ let __faber_text = ");
+            emitter.expr(object)?;
+            emitter.writer.write("; let __faber_start = (");
+            emitter.expr(start)?;
+            emitter.writer.write(") as usize; let __faber_end = (");
+            emitter.expr(end)?;
             match kind {
-                HirRangeKind::Exclusive => w.write(") as usize; "),
-                HirRangeKind::Inclusive => w.write(") as usize + 1; "),
+                HirRangeKind::Exclusive => emitter.writer.write(") as usize; "),
+                HirRangeKind::Inclusive => emitter.writer.write(") as usize + 1; "),
             }
-            w.write("let __faber_step = ");
+            emitter.writer.write("let __faber_step = ");
             if let Some(step) = step {
-                w.write("((");
-                generate_expr(codegen, step, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-                w.write(") as usize).max(1)");
+                emitter.writer.write("((");
+                emitter.expr(step)?;
+                emitter.writer.write(") as usize).max(1)");
             } else {
-                w.write("1usize");
+                emitter.writer.write("1usize");
             }
-            w.write("; __faber_text.chars().skip(__faber_start).take(__faber_end.saturating_sub(__faber_start)).step_by(__faber_step).collect::<String>() })");
+            emitter.writer.write("; __faber_text.chars().skip(__faber_start).take(__faber_end.saturating_sub(__faber_start)).step_by(__faber_step).collect::<String>() })");
         }
         _ => {
-            w.write("(");
-            generate_expr(codegen, object, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(".chars().nth((");
-            generate_expr(codegen, index, types, w, in_failable_fn, in_entry, suppress_error_propagation)?;
-            w.write(") as usize).map(|ch| ch.to_string()).unwrap_or_default())");
+            emitter.writer.write("(");
+            emitter.expr(object)?;
+            emitter.writer.write(".chars().nth((");
+            emitter.expr(index)?;
+            emitter
+                .writer
+                .write(") as usize).map(|ch| ch.to_string()).unwrap_or_default())");
         }
     }
     Ok(())
