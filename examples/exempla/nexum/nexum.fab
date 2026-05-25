@@ -1,2 +1,14 @@
-# TODO
-incipit {}
+# nexum marks a bound genus field.
+
+genus Computator {
+    nexum numerus valor = 0
+
+    functio accipe() → numerus {
+        redde ego.valor
+    }
+}
+
+incipit {
+    fixum _ c ← Computator { valor = 7 }
+    nota c.accipe()
+}

@@ -1,2 +1,14 @@
-# TODO
-incipit {}
+# ego refers to the current genus instance inside a method.
+
+genus Capsa {
+    textus titulus
+
+    functio describe() → textus {
+        redde "capsa: " + ego.titulus
+    }
+}
+
+incipit {
+    fixum _ capsa ← Capsa { titulus = "prima" }
+    nota capsa.describe()
+}

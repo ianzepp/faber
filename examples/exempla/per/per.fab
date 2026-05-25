@@ -1,2 +1,7 @@
-# TODO
-incipit {}
+# per supplies a step for range iteration.
+
+incipit {
+    itera pro 0‥8 per 2 fixum i {
+        nota i
+    }
+}

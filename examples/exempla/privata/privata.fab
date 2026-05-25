@@ -1,0 +1,10 @@
+# @ privata marks a declaration as private metadata.
+
+@ privata
+functio nomenPrivatum() → textus {
+    redde "privata"
+}
+
+incipit {
+    nota nomenPrivatum()
+}

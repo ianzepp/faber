@@ -1,2 +1,5 @@
-# TODO
-incipit {}
+# mone writes a warning-style diagnostic.
+
+incipit {
+    mone "cave"
+}

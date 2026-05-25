@@ -1,2 +1,7 @@
-# TODO
-incipit {}
+# usque forms an inclusive upper bound.
+
+incipit {
+    itera pro 0 usque 3 fixum i {
+        nota i
+    }
+}

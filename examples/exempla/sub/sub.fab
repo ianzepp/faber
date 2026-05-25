@@ -1,2 +1,18 @@
-# TODO
-incipit {}
+# sub records a parent genus in the genus header.
+
+genus Animal {
+    textus nomen
+}
+
+genus Canis sub Animal {
+    textus nomen
+
+    functio clama() → textus {
+        redde ego.nomen + " latrat"
+    }
+}
+
+incipit {
+    fixum _ canis ← Canis { nomen = "Lupa" }
+    nota canis.clama()
+}

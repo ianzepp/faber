@@ -1,2 +1,8 @@
-# TODO
-incipit {}
+# fixum declares an immutable binding.
+
+incipit {
+    fixum _ nomen ← "Marcus"
+    fixum _ salve ← "Salve, §!"(nomen)
+
+    nota salve
+}

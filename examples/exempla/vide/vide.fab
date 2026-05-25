@@ -1,2 +1,5 @@
-# TODO
-incipit {}
+# vide writes a debug-style diagnostic.
+
+incipit {
+    vide "inspecta"
+}

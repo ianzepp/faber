@@ -1,2 +1,11 @@
-# TODO
-incipit {}
+# generis marks a static genus field.
+
+genus Color {
+    generis textus ruber = "#ff0000"
+    textus nomen = "ruber"
+}
+
+incipit {
+    fixum _ color ← Color {}
+    nota color.nomen
+}

@@ -1,2 +1,18 @@
-# TODO
-incipit {}
+# omnia asks discerne to cover every variant.
+
+discretio Status {
+    Activa,
+    Quietus
+}
+
+functio describe(Status status) → textus {
+    discerne omnia status {
+        casu Activa { redde "activa" }
+        casu Quietus { redde "quietus" }
+    }
+}
+
+incipit {
+    fixum _ status ← finge Activa
+    nota describe(status)
+}

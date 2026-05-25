@@ -1,2 +1,11 @@
-# TODO
-incipit {}
+# cede awaits a futura function in an async entrypoint.
+
+@ futura
+functio accipe() → textus {
+    redde "paratum"
+}
+
+incipiet {
+    fixum _ status ← cede accipe()
+    nota status
+}

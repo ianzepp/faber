@@ -1,0 +1,10 @@
+# @ publica marks a declaration as public metadata.
+
+@ publica
+functio nomenPublicum() → textus {
+    redde "publica"
+}
+
+incipit {
+    nota nomenPublicum()
+}

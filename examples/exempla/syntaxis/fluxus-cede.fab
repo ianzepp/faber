@@ -1,0 +1,24 @@
+# Async and cursor cede share a keyword but lower by context.
+
+@ futura
+functio accipeNomen() → textus {
+    redde "Livia"
+}
+
+@ cursor
+functio paria(numerus finis) → numerus {
+    itera pro 0 ante finis fixum i {
+        si i % 2 ≡ 0 {
+            cede i
+        }
+    }
+}
+
+incipiet {
+    fixum _ nomen ← cede accipeNomen()
+    nota "salve §"(nomen)
+
+    itera ex paria(8) fixum n {
+        nota n
+    }
+}

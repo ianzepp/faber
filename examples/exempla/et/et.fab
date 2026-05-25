@@ -1,2 +1,9 @@
-# TODO
-incipit {}
+# et is boolean AND.
+
+incipit {
+    fixum _ paratus ← verum
+    fixum _ licet ← verum
+    fixum _ currit ← paratus et licet
+
+    nota currit
+}

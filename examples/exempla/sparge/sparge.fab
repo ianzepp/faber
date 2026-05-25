@@ -1,2 +1,10 @@
-# TODO
-incipit {}
+# sparge spreads one collection into another.
+
+incipit {
+    fixum _ media ← [2, 3]
+    fixum _ numeri ← [1, sparge media, 4]
+
+    itera ex numeri fixum n {
+        nota n
+    }
+}

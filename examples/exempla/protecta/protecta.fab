@@ -1,0 +1,10 @@
+# @ protecta marks a declaration as protected metadata.
+
+@ protecta
+functio nomenProtectum() → textus {
+    redde "protecta"
+}
+
+incipit {
+    nota nomenProtectum()
+}

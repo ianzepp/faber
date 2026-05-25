@@ -1,0 +1,40 @@
+# A dense syntax tour: optional fields, ranges, closures, templates, and methods.
+
+genus Nauta {
+    textus nomen
+    textus navis sponte
+    numerus gradus = 0
+
+    functio titulus() → textus {
+        redde "§@§"(ego.nomen, ego.navis vel "terra")
+    }
+}
+
+functio notaGradus(numerus n) → textus {
+    redde n ≥ 10 sic "veteranus" secus n ≥ 5 sic "peritus" secus "novus"
+}
+
+incipit {
+    fixum _ nautae ← [
+        Nauta { nomen = "Aelia", navis = "Fortuna", gradus = 12 },
+        Nauta { nomen = "Brutus", gradus = 3 },
+        Nauta { nomen = "Claudia", navis = "Aurora", gradus = 7 }
+    ]
+
+    fixum _ titulus ← Nauta n → textus ∴ fac {
+        fixum _ navis ← n?.navis vel "nulla navis"
+        redde "§ :: § :: §"(n.nomen, navis, notaGradus(n.gradus))
+    }
+
+    itera ex nautae fixum n {
+        nota titulus(n)
+    }
+
+    varia lista<numerus> gradus ← vacua
+    itera pro 0 usque 6 per 2 fixum i {
+        gradus.appende(i * 3)
+    }
+
+    fixum _ magni ← gradus.filtrata(numerus g ∴ g ≥ 6).mappata(numerus g ∴ g + 1)
+    nota magni
+}

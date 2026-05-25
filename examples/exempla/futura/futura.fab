@@ -1,2 +1,11 @@
-# TODO
-incipit {}
+# @ futura marks an asynchronous function.
+
+@ futura
+functio responde() → numerus {
+    redde 42
+}
+
+incipiet {
+    fixum _ responsum ← cede responde()
+    nota responsum
+}

@@ -1,0 +1,31 @@
+# A compact algebraic-data example with payload patterns and exhaustive match.
+
+discretio Mandatum {
+    Move { textus locus, numerus passus },
+    Loquere { textus verba },
+    Tace
+}
+
+functio describe(Mandatum m) → textus {
+    discerne omnia m {
+        casu Move fixum locus, passus {
+            redde "move § by §"(locus, passus)
+        }
+        casu Loquere fixum verba {
+            redde "say §"(verba)
+        }
+        casu Tace {
+            redde "silentium"
+        }
+    }
+}
+
+incipit {
+    fixum Mandatum a ← finge Move { locus = "forum", passus = 8 }
+    fixum Mandatum b ← finge Loquere { verba = "salve" }
+    fixum Mandatum c ← finge Tace
+
+    nota describe(a)
+    nota describe(b)
+    nota describe(c)
+}

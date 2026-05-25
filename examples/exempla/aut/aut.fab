@@ -1,2 +1,9 @@
-# TODO
-incipit {}
+# aut is boolean OR.
+
+incipit {
+    fixum _ invitatus ← falsum
+    fixum _ membrum ← verum
+    fixum _ intrat ← invitatus aut membrum
+
+    nota intrat
+}

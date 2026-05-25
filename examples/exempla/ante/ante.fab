@@ -1,2 +1,7 @@
-# TODO
-incipit {}
+# ante forms an exclusive upper bound.
+
+incipit {
+    itera pro 0 ante 4 fixum i {
+        nota i
+    }
+}

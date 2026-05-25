@@ -1,0 +1,25 @@
+# Destructuring and spread forms in the same small program.
+
+functio summa(lista<numerus> numeri) → numerus {
+    varia _ total ← 0
+    itera ex numeri fixum n {
+        total ← total + n
+    }
+    redde total
+}
+
+incipit {
+    fixum _ prima ← [1, 2]
+    fixum _ secunda ← [3, 4]
+    fixum _ omnes ← [0, sparge prima, sparge secunda, 5]
+
+    fixum [initium, alterum, tertium] ← omnes
+    nota "caput:", initium, alterum, tertium
+
+    fixum _ paria ← omnes.filtrata(numerus n ∴ n % 2 ≡ 0)
+    fixum _ aucta ← paria.mappata(numerus n → numerus ∴ fac {
+        redde n + 10
+    })
+
+    nota summa(aucta)
+}

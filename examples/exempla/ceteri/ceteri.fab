@@ -1,2 +1,15 @@
-# TODO
-incipit {}
+# ceteri collects the remaining arguments for a rest parameter.
+
+functio summa(ceteri numerus[] numeri) → numerus {
+    varia _ total ← 0
+
+    itera ex numeri fixum n {
+        total ← total + n
+    }
+
+    redde total
+}
+
+incipit {
+    nota summa([1, 2, 3, 4])
+}

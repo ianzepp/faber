@@ -1,2 +1,27 @@
-# TODO
-incipit {}
+# Abstractus marks a genus as an abstract contract.
+#
+# The active compiler records the abstract flag, while concrete behavior still
+# lives in ordinary genus methods.
+
+abstractus genus Figura {
+    textus nomen
+
+    functio titulus() → textus {
+        redde "§"(ego.nomen)
+    }
+}
+
+genus Circulus {
+    textus nomen
+    numerus radius = 1
+
+    functio areaSimplex() → numerus {
+        redde ego.radius * ego.radius
+    }
+}
+
+incipit {
+    fixum _ c ← Circulus { nomen = "rota", radius = 4 }
+    nota c.nomen
+    nota c.areaSimplex()
+}

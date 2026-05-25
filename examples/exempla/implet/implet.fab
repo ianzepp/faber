@@ -1,2 +1,18 @@
-# TODO
-incipit {}
+# implet records that a genus implements a pactum.
+
+pactum Nominatum {
+    functio nomenPlenum() → textus
+}
+
+genus Civis implet Nominatum {
+    textus nomen
+
+    functio nomenPlenum() → textus {
+        redde "§"(ego.nomen)
+    }
+}
+
+incipit {
+    fixum _ civis ← Civis { nomen = "Aurelia" }
+    nota civis.nomenPlenum()
+}
