@@ -49,7 +49,7 @@ alternateExitClause := '⇥' typeAnnotation
 ergoToken      := '∴' | 'ergo'
 clausuraExpr   := compactClausuraExpr | legacyClausuraExpr
 compactClausuraExpr := clausuraSignature ergoToken (expression | closureFacBlock)
-clausuraSignature := (clausuraParam | '(' clausuraParams? ')') ('→' typeAnnotation alternateExitClause?)?
+clausuraSignature := (clausuraParam | '(' clausuraParams? ')') returnClause? alternateExitClause?
 closureFacBlock := 'fac' blockStmt catchClause?
 legacyClausuraExpr := 'clausura' clausuraParams? ('→' typeAnnotation)? (':' expression | blockStmt)
 clausuraParams := clausuraParam (',' clausuraParam)*
@@ -57,7 +57,7 @@ clausuraParam  := typeAnnotation IDENTIFIER
 ```
 
 - Return syntax: `→` declares the normal success type. A bodyful function with no `→` is effect-only (`vacuum`) and must not contain `redde`. A statement-bodied closure (`fac { ... }` or legacy block body) must also spell `→ T` before it can use `redde`; expression-bodied closures may infer their result from the expression.
-- Recoverable alternate-exit syntax: `⇥` declares the error-channel type. It can appear after `→ T` or alone on an effect-only failable function.
+- Recoverable alternate-exit syntax: `⇥` declares the error-channel type. It can appear after `→ T` or alone on an effect-only failable function or closure. A closure body that uses an escaping `iace` must declare its own `⇥ E`; it cannot inherit the enclosing function's error channel. A local `fac { ... } cape err { ... }` may catch `iace` without an enclosing `⇥`.
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - Post-name markers: `sponte` (voluntary/optional provision), `fixus` (fixed after first assignment); canonical order `sponte fixus`
 - `ceteri` marks rest parameter

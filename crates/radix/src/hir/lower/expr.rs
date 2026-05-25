@@ -552,8 +552,9 @@ impl<'a> Lowerer<'a> {
     /// Lower closures with a temporary scope for their parameters.
     ///
     /// Parameter bindings are available while lowering the body and disappear
-    /// before the enclosing expression continues. Return type annotations remain
-    /// optional HIR metadata for typecheck to reconcile with the body.
+    /// before the enclosing expression continues. Return and alternate-exit type
+    /// annotations remain optional HIR metadata for typecheck to reconcile with
+    /// the body.
     fn lower_clausura(&mut self, closure: &crate::syntax::ClausuraExpr) -> HirExprKind {
         let mut params = Vec::new();
         self.push_scope();
@@ -586,7 +587,8 @@ impl<'a> Lowerer<'a> {
         self.pop_scope();
 
         let ret = closure.ret.as_ref().map(|ret| self.lower_type(ret));
-        HirExprKind::Clausura(params, ret, Box::new(body))
+        let err = closure.err.as_ref().map(|err| self.lower_type(err));
+        HirExprKind::Clausura(params, ret, err, Box::new(body))
     }
 
     /// Lower range expression (intervallum)

@@ -10,7 +10,7 @@ aliases = ["exit arrow", "alternate exit arrow", "error arrow", "failable return
 related = ["→", "functio", "iace", "cape", "mori"]
 +++
 
-Use `⇥` to declare the type carried by recoverable alternate exits. It may follow a normal `→` return type, or it may appear alone on an effect-only function whose normal success type is `vacuum`.
+Use `⇥` to declare the type carried by recoverable alternate exits. It may follow a normal `→` return type, or it may appear alone on an effect-only function or closure whose normal success type is `vacuum`.
 
 ```fab
 functio divide(numerus a, numerus b) → numerus ⇥ textus {
@@ -25,3 +25,5 @@ functio logOrFail(textus line) ⇥ textus {
 ```
 
 `redde` exits through the normal `→` path. `iace` exits through the recoverable `⇥` path. `mori` remains fatal and is not part of the typed recoverable path.
+
+A closure that uses an escaping `iace` must declare its own `⇥`; it does not inherit a surrounding function's alternate-exit channel.

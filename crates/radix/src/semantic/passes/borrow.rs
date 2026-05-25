@@ -499,7 +499,7 @@ impl HirVisitor for BorrowChecker<'_> {
                 self.check_lvalue(target);
                 self.visit_expr(value);
             }
-            HirExprKind::Clausura(params, _, body) => {
+            HirExprKind::Clausura(params, _, _, body) => {
                 self.push_scope();
                 for param in params {
                     self.ensure_state(param.def_id);

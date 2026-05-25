@@ -939,6 +939,7 @@ fn traverses_match_patterns_and_closure_params_in_name_collection() {
                 span: span(),
             }],
             None,
+            None,
             Box::new(HirExpr { id: HirId(25), kind: HirExprKind::Path(DefId(42)), ty: Some(numerus), span: span() }),
         ),
         ty: None,
@@ -1570,6 +1571,7 @@ fn expr_codegen_handles_control_flow_and_operators() {
                         default: None,
                         span: span(),
                     }],
+                    None,
                     None,
                     Box::new(HirExpr {
                         id: HirId(339),

@@ -161,7 +161,9 @@ impl<'a> TypeChecker<'a> {
                 }
                 self.vacuum_type()
             }
-            HirExprKind::Clausura(params, ret, body) => self.check_closure(params, ret.as_mut(), body, expected),
+            HirExprKind::Clausura(params, ret, err, body) => {
+                self.check_closure(params, ret.as_mut(), err.as_mut(), body, expected)
+            }
             HirExprKind::Cede(inner) => self.check_expr(inner),
             HirExprKind::Ref(kind, inner) => {
                 let inner_ty = self.check_expr(inner);

@@ -462,6 +462,23 @@ fn compile_accepts_effect_only_failable_function_without_return_arrow() {
 }
 
 #[test]
+fn compile_rejects_iace_without_function_error_channel() {
+    let session = session(Target::Faber);
+    let source = r#"functio bad() {
+  iace "boom"
+}"#;
+
+    let result = compile(&session, "missing-error-channel.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("iace requires an enclosing function")));
+}
+
+#[test]
 fn incipit_argumenta_compiles_for_faber_target() {
     let session = session(Target::Faber);
     let source = r#"incipit argumenta args {
@@ -1510,6 +1527,52 @@ fn contextual_compact_fac_closure_rejects_redde_without_local_return_type() {
     assert!(result.diagnostics.iter().any(|d| d.is_error()
         && d.message
             .contains("redde requires an explicit normal return type")));
+}
+
+#[test]
+fn compact_fac_closure_accepts_iace_with_explicit_error_channel() {
+    let session = session(Target::Faber);
+    let source = r#"incipit {
+  fixum _ failer ← numerus n ⇥ textus ∴ fac {
+    iace "bad"
+  }
+}"#;
+    let result = compile(&session, "closure-explicit-error-channel.fab", source);
+
+    assert!(result.success(), "{:?}", result.diagnostics);
+}
+
+#[test]
+fn compact_fac_closure_rejects_iace_without_local_error_channel() {
+    let session = session(Target::Faber);
+    let source = r#"functio outer() ⇥ textus {
+  fixum _ failer ← numerus n ∴ fac {
+    iace "bad"
+  }
+}"#;
+    let result = compile(&session, "closure-missing-error-channel.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("iace requires an enclosing function")));
+}
+
+#[test]
+fn compact_fac_closure_accepts_local_cape_without_error_channel() {
+    let session = session(Target::Faber);
+    let source = r#"incipit {
+  fixum _ handled ← numerus n ∴ fac {
+    iace "bad"
+  } cape err {
+    nota err
+  }
+}"#;
+    let result = compile(&session, "closure-local-cape-error.fab", source);
+
+    assert!(result.success(), "{:?}", result.diagnostics);
 }
 
 #[test]

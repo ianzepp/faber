@@ -89,7 +89,7 @@ pub fn generate_expr(
         HirExprKind::Scriptum(template, args) => generate_scriptum_expr(codegen, *template, args, types, w)?,
         HirExprKind::Panic(value) | HirExprKind::Throw(value) => generate_panic_expr(codegen, value, types, w)?,
         HirExprKind::Tempta { body, catch, .. } => generate_tempta_expr(codegen, body, catch.as_ref(), types, w)?,
-        HirExprKind::Clausura(params, ret_ty, body) => {
+        HirExprKind::Clausura(params, ret_ty, _, body) => {
             w.write("func(");
             for (idx, param) in params.iter().enumerate() {
                 if idx > 0 {

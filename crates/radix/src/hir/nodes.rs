@@ -780,8 +780,8 @@ pub enum HirExprKind {
         finally: Option<HirBlock>,
     },
 
-    /// Closure with parameters, optional return type, and expression body.
-    Clausura(Vec<HirParam>, Option<TypeId>, Box<HirExpr>),
+    /// Closure with parameters, optional return/error types, and expression body.
+    Clausura(Vec<HirParam>, Option<TypeId>, Option<TypeId>, Box<HirExpr>),
 
     /// Await expression.
     Cede(Box<HirExpr>),

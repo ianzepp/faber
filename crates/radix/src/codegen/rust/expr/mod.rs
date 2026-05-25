@@ -247,7 +247,7 @@ fn emit_expr(emitter: &mut ExprEmitter<'_, '_>, expr: &HirExpr) -> Result<(), Co
         HirExprKind::Throw(value) => {
             generate_throw_expr_with_emitter(emitter, value)?;
         }
-        HirExprKind::Clausura(params, _ret, body) => {
+        HirExprKind::Clausura(params, _ret, _, body) => {
             emit_closure_expr(emitter, params, body)?;
         }
         HirExprKind::Cede(expr) => {

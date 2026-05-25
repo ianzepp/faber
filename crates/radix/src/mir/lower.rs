@@ -778,7 +778,7 @@ fn unsupported_expr_kind_name(kind: &HirExprKind) -> &'static str {
         HirExprKind::Throw(_) => "iace error-flow",
         HirExprKind::Handled { .. } => "structured cape before local-handler MIR lowering",
         HirExprKind::Tempta { .. } => "tempta legacy local-handler surface deferred to Phase 5C",
-        HirExprKind::Clausura(_, _, _) => "closures before callable-value MIR lowering",
+        HirExprKind::Clausura(_, _, _, _) => "closures before callable-value MIR lowering",
         HirExprKind::Cede(_) => "cede before async MIR lowering",
         HirExprKind::Verte { .. } => "verte before conversion MIR lowering",
         HirExprKind::Conversio { .. } => "conversio before runtime conversion MIR lowering",

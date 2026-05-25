@@ -366,7 +366,7 @@ impl super::FaberCodegen {
                 });
                 w.write("}");
             }
-            HirExprKind::Clausura(params, ret, body) => {
+            HirExprKind::Clausura(params, ret, err, body) => {
                 let parenthesized = params.len() != 1;
                 if parenthesized {
                     w.write("(");
@@ -385,6 +385,10 @@ impl super::FaberCodegen {
                 if let Some(ret) = ret {
                     w.write(" → ");
                     w.write(&self.type_to_faber(*ret, types, names, interner));
+                }
+                if let Some(err) = err {
+                    w.write(" ⇥ ");
+                    w.write(&self.type_to_faber(*err, types, names, interner));
                 }
                 w.write(" ∴ ");
                 if matches!(body.kind, HirExprKind::Block(_)) {

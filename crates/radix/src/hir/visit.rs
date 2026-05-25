@@ -374,7 +374,7 @@ pub fn walk_expr<V: HirVisitor>(visitor: &mut V, expr: &HirExpr) {
                 visitor.visit_block(finally);
             }
         }
-        HirExprKind::Clausura(params, _, body) => {
+        HirExprKind::Clausura(params, _, _, body) => {
             for param in params {
                 visitor.visit_param(param);
             }
@@ -808,7 +808,7 @@ pub fn walk_expr_mut<V: HirVisitorMut>(visitor: &mut V, expr: &mut HirExpr) {
                 visitor.visit_block_mut(finally);
             }
         }
-        HirExprKind::Clausura(params, _, body) => {
+        HirExprKind::Clausura(params, _, _, body) => {
             for param in params {
                 visitor.visit_param_mut(param);
             }

@@ -649,6 +649,7 @@ fn emits_optional_chain_closure_template_and_await() {
                                 span: span(),
                             }],
                             Some(numerus),
+                            None,
                             Box::new(HirExpr {
                                 id: HirId(6),
                                 kind: HirExprKind::Path(DefId(2)),

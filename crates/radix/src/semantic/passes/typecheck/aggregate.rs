@@ -90,18 +90,18 @@ impl<'a> TypeChecker<'a> {
     /// Checks a closure expression and returns its function type.
     ///
     /// Closures are both synthesized and expected-context driven. If an
-    /// expected function type exists, parameter and return positions use it as
-    /// context; otherwise the closure body and explicit annotations determine
-    /// the signature. Statement-bodied closures rely on `redde`/return tracking,
-    /// while expression bodies can be checked directly against the expected
-    /// return type. Statement-bodied closures only enable `redde` when the
-    /// closure spells its own `→` return channel; contextual expected types do
-    /// not create an implicit statement-return channel.
+    /// expected function type exists, parameter and expression-body return
+    /// positions use it as context; otherwise the closure body and explicit
+    /// annotations determine the signature. Statement-bodied closures only
+    /// enable `redde` when the closure spells its own `→` return channel, and
+    /// only enable escaping `iace` when the closure spells its own `⇥` channel.
+    /// Contextual expected types do not create implicit statement exit channels.
     #[allow(clippy::ptr_arg)]
     pub(super) fn check_closure(
         &mut self,
         params: &mut Vec<HirParam>,
         ret: Option<&mut TypeId>,
+        err: Option<&mut TypeId>,
         body: &mut HirExpr,
         expected: Option<TypeId>,
     ) -> TypeId {
@@ -119,9 +119,11 @@ impl<'a> TypeChecker<'a> {
         }
 
         let explicit_ret = ret.as_ref().map(|ty| **ty);
+        let explicit_err = err.as_ref().map(|ty| **ty);
         let expected_ret = explicit_ret.or_else(|| expected_sig.as_ref().map(|sig| sig.ret));
 
         let prev_return = self.current_return;
+        let prev_error = self.current_error;
         let prev_inferred = self.inferred_return;
         let prev_allow_inferred = self.allow_inferred_return;
         let body_uses_statement_returns = matches!(
@@ -133,6 +135,7 @@ impl<'a> TypeChecker<'a> {
         } else {
             expected_ret
         };
+        self.current_error = explicit_err.map(ErrorSink::Function);
         self.inferred_return = None;
         self.allow_inferred_return = !body_uses_statement_returns;
 
@@ -144,6 +147,7 @@ impl<'a> TypeChecker<'a> {
         let inferred_return = self.inferred_return.take();
 
         self.current_return = prev_return;
+        self.current_error = prev_error;
         self.inferred_return = prev_inferred;
         self.allow_inferred_return = prev_allow_inferred;
 
@@ -175,7 +179,7 @@ impl<'a> TypeChecker<'a> {
                 })
                 .collect(),
             ret: ret_ty,
-            err: None,
+            err: explicit_err,
             is_async: false,
             is_generator: false,
         };

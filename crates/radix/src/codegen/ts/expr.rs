@@ -245,7 +245,7 @@ pub fn generate_expr(
             }
             w.write(" })()");
         }
-        HirExprKind::Clausura(params, ret_ty, body) => {
+        HirExprKind::Clausura(params, ret_ty, _, body) => {
             w.write("(");
             for (idx, param) in params.iter().enumerate() {
                 if idx > 0 {
