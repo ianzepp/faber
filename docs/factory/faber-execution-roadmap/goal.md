@@ -50,6 +50,7 @@ Coordinate the current Faber execution work into a long-running factory roadmap:
 - `docs/factory/exempla-rust-e2e/goal.md`: umbrella e2e goal with `71/138` pass baseline, `67` failing files, failure taxonomy, and validation phases.
 - `docs/factory/remove-ab-dsl/goal.md`: focused language simplification goal for removing `ab`, `ubi`, `prima`, `ultima`, and `summa` collection-DSL syntax.
 - `docs/factory/capability-calls/goal.md`: focused `ad` capability-call goal with permissive unresolved-provider compilation and future strict mode.
+- `docs/factory/ad-frame-stream/goal.md`: focused follow-up goal to rewrite `ad` from scalar success continuation semantics to frame-stream item handling.
 - `hosts/macos-arm64/ARCHITECTURE.md`: host architecture direction, Wasm Component Model target, core/capability split, non-strict/strict capability modes, and `norma` direction.
 - `hosts/macos-arm64/SYSCALL_MODEL.md`: host syscall/frame model based on Muninn frames/kernel, including `Frame`, routing, sigcalls, and structured errors.
 - `hosts/macos-arm64/README.md`: placeholder host crate intent and links to the host architecture/syscall docs.
@@ -427,6 +428,7 @@ Future step added after Epic 6 design review.
 
 Primary references:
 
+- `docs/factory/ad-frame-stream/goal.md`
 - `hosts/macos-arm64/SYSCALL_MODEL.md`
 - `hosts/macos-arm64/src/kernel/`
 - `/Users/ianzepp/work/ianzepp/monk-os-kernel/src/dispatch/dispatcher.ts`
@@ -437,6 +439,7 @@ Primary references:
 Intent:
 
 - Stop treating every outside-world interface as a candidate for compiled-in host kernel code.
+- Align provider routing with the frame-stream `ad` semantics: Faber sends one syscall request and consumes `item*`/`bulk*` response frames until terminal `done`, `error`, or `cancel`.
 - Make the host dispatcher choose between built-in syscalls and registered sigcall providers for the same source-level `ad` route shape.
 - Keep `ad "provider:operation"` stable as source syntax while moving implementation selection into host manifests, provider registration, and runtime routing.
 - Define provider lifecycle, registration, request correlation, streaming responses, cancellation, timeout, and `E_NO_ROUTE` behavior before adding broad IO surfaces such as databases, TUI frameworks, browser automation, or cloud APIs.
