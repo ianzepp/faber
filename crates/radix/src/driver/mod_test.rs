@@ -435,10 +435,9 @@ fn compile_rejects_redde_without_explicit_return_type() {
 
     assert!(result.output.is_none());
     assert!(!result.success());
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|d| d.is_error() && d.message.contains("redde requires an explicit normal return type")));
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("redde requires an explicit normal return type")));
 }
 
 #[test]
@@ -1480,6 +1479,40 @@ fn compact_fac_closure_body_typechecks_with_redde() {
 }
 
 #[test]
+fn compact_fac_closure_rejects_redde_without_explicit_return_type() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum _ predicate ← numerus n ∴ fac {
+    redde n > 1
+  }
+}"#;
+    let result = compile(&session, "closure-implicit-return.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("redde requires an explicit normal return type")));
+}
+
+#[test]
+fn contextual_compact_fac_closure_rejects_redde_without_local_return_type() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum (numerus) → bivalens predicate ← numerus n ∴ fac {
+    redde n > 1
+  }
+}"#;
+    let result = compile(&session, "closure-contextual-implicit-return.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("redde requires an explicit normal return type")));
+}
+
+#[test]
 fn compact_fac_closure_cape_body_typechecks_with_redde() {
     let session = session(Target::Faber);
     let source = r#"functio parseFlag(textus value) → bivalens ⇥ textus {
@@ -1498,6 +1531,23 @@ incipit {
     let result = compile(&session, "test.fab", source);
 
     assert!(result.success(), "{:?}", result.diagnostics);
+}
+
+#[test]
+fn legacy_block_closure_rejects_redde_without_explicit_return_type() {
+    let session = session(Target::Rust);
+    let source = r#"incipit {
+  fixum _ predicate ← clausura numerus n {
+    redde n > 1
+  }
+}"#;
+    let result = compile(&session, "legacy-closure-implicit-return.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("redde requires an explicit normal return type")));
 }
 
 #[test]

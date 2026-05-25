@@ -11,9 +11,9 @@
 //! ==========
 //! - A local binding is inserted only after its declared or inferred type has
 //!   been established.
-//! - `redde` contributes only to an explicitly declared normal return channel,
-//!   except in expression forms such as closures that explicitly allow inferred
-//!   return typing. Alternate exits are checked through `current_error` in
+//! - `redde` contributes only to an explicitly declared normal return channel.
+//!   Expression-bodied closures can infer a result from their expression without
+//!   using `redde`. Alternate exits are checked through `current_error` in
 //!   expression/control-flow code.
 //! - Blocks always introduce a lexical scope and type to their trailing
 //!   expression when present, otherwise to `vacuum`.
@@ -28,9 +28,9 @@ impl<'a> TypeChecker<'a> {
     ///
     /// Annotated functions use their declared return type as an expected type so
     /// nested expressions can benefit from top-down information. Bodyful named
-    /// functions without `→` are effect-only and reject `redde`; expression
-    /// surfaces that opt into inferred returns, such as closures, still collect
-    /// the first observed return type and unify later returns against it.
+    /// functions and statement-bodied closures without `→` are effect-only and
+    /// reject `redde`; expression surfaces that opt into inferred returns still
+    /// collect the first observed return type and unify later returns against it.
     pub(super) fn check_return(&mut self, value: Option<&mut HirExpr>, span: crate::lexer::Span) {
         if self.current_return.is_none() && !self.allow_inferred_return {
             if let Some(expr) = value {

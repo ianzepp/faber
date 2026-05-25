@@ -60,7 +60,9 @@ fn rejects_redde_without_explicit_return_type() {
     let errors = result.unwrap_err();
     assert!(errors.iter().any(|err| {
         err.kind == SemanticErrorKind::MissingReturn
-            && err.message.contains("redde requires an explicit normal return type")
+            && err
+                .message
+                .contains("redde requires an explicit normal return type")
     }));
 }
 

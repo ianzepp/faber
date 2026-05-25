@@ -94,7 +94,9 @@ impl<'a> TypeChecker<'a> {
     /// context; otherwise the closure body and explicit annotations determine
     /// the signature. Statement-bodied closures rely on `redde`/return tracking,
     /// while expression bodies can be checked directly against the expected
-    /// return type.
+    /// return type. Statement-bodied closures only enable `redde` when the
+    /// closure spells its own `→` return channel; contextual expected types do
+    /// not create an implicit statement-return channel.
     #[allow(clippy::ptr_arg)]
     pub(super) fn check_closure(
         &mut self,
@@ -116,22 +118,23 @@ impl<'a> TypeChecker<'a> {
             self.insert_binding(param.def_id, param.ty, mutable);
         }
 
-        let expected_ret = ret
-            .as_ref()
-            .map(|ty| **ty)
-            .or_else(|| expected_sig.as_ref().map(|sig| sig.ret));
+        let explicit_ret = ret.as_ref().map(|ty| **ty);
+        let expected_ret = explicit_ret.or_else(|| expected_sig.as_ref().map(|sig| sig.ret));
 
         let prev_return = self.current_return;
         let prev_inferred = self.inferred_return;
         let prev_allow_inferred = self.allow_inferred_return;
-        self.current_return = expected_ret;
-        self.inferred_return = None;
-        self.allow_inferred_return = true;
-
         let body_uses_statement_returns = matches!(
             body.kind,
             HirExprKind::Block(_) | HirExprKind::Handled { .. } | HirExprKind::Loop(_)
         );
+        self.current_return = if body_uses_statement_returns {
+            explicit_ret
+        } else {
+            expected_ret
+        };
+        self.inferred_return = None;
+        self.allow_inferred_return = !body_uses_statement_returns;
 
         let body_ty = if body_uses_statement_returns {
             self.check_expr(body)
@@ -150,6 +153,12 @@ impl<'a> TypeChecker<'a> {
                     self.unify(body_ty, *ty, body.span, "closure return type mismatch");
                 }
                 *ty
+            }
+            None if body_uses_statement_returns => {
+                if let Some(expected) = expected_ret {
+                    self.unify(body_ty, expected, body.span, "closure return type mismatch");
+                }
+                body_ty
             }
             None => expected_ret.or(inferred_return).unwrap_or(body_ty),
         };

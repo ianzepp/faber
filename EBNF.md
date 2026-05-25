@@ -56,7 +56,7 @@ clausuraParams := clausuraParam (',' clausuraParam)*
 clausuraParam  := typeAnnotation IDENTIFIER
 ```
 
-- Return syntax: `→` declares the normal success type. A bodyful function with no `→` is effect-only (`vacuum`) and must not contain `redde`.
+- Return syntax: `→` declares the normal success type. A bodyful function with no `→` is effect-only (`vacuum`) and must not contain `redde`. A statement-bodied closure (`fac { ... }` or legacy block body) must also spell `→ T` before it can use `redde`; expression-bodied closures may infer their result from the expression.
 - Recoverable alternate-exit syntax: `⇥` declares the error-channel type. It can appear after `→ T` or alone on an effect-only failable function.
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - Post-name markers: `sponte` (voluntary/optional provision), `fixus` (fixed after first assignment); canonical order `sponte fixus`
