@@ -425,6 +425,44 @@ fn compile_reports_semantic_errors() {
 }
 
 #[test]
+fn compile_rejects_redde_without_explicit_return_type() {
+    let session = session(Target::Rust);
+    let source = r#"functio implicit() {
+  redde 1
+}"#;
+
+    let result = compile(&session, "implicit-return.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("redde requires an explicit normal return type")));
+}
+
+#[test]
+fn compile_accepts_effect_only_failable_function_without_return_arrow() {
+    let session = session(Target::Faber);
+    let source = r#"functio logOrFail(textus line) ⇥ textus {
+  si line ≡ "" ∴ iace "empty"
+  nota line
+}"#;
+
+    let result = compile(&session, "effect-failable.fab", source);
+
+    assert!(
+        result.success(),
+        "expected compile success, got diagnostics: {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.clone())
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn incipit_argumenta_compiles_for_faber_target() {
     let session = session(Target::Faber);
     let source = r#"incipit argumenta args {

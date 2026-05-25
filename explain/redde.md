@@ -9,7 +9,7 @@ aliases = ["return"]
 related = ["→", "⇥", "∴", "iace", "tacet"]
 +++
 
-Returns a value from a function.
+Returns a value from a function. The enclosing bodyful function must declare an explicit normal return type with `→`; a function that omits `→` is effect-only and cannot use `redde`.
 
 ```fab
 functio parse(textus input) → numerus ⇥ textus {

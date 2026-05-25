@@ -123,8 +123,10 @@ impl<'a> TypeChecker<'a> {
 
         let prev_return = self.current_return;
         let prev_inferred = self.inferred_return;
+        let prev_allow_inferred = self.allow_inferred_return;
         self.current_return = expected_ret;
         self.inferred_return = None;
+        self.allow_inferred_return = true;
 
         let body_uses_statement_returns = matches!(
             body.kind,
@@ -140,6 +142,7 @@ impl<'a> TypeChecker<'a> {
 
         self.current_return = prev_return;
         self.inferred_return = prev_inferred;
+        self.allow_inferred_return = prev_allow_inferred;
 
         let ret_ty = match ret {
             Some(ty) => {

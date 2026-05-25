@@ -39,12 +39,12 @@ objectDestruct := ('fixum' | 'varia') objectPattern '←' expression
 ### Functions
 
 ```ebnf
-funcDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
+funcDecl     := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? alternateExitClause? blockStmt?
 paramList    := (typeParamDecl ',')* (parameter (',' parameter)*)?
 typeParamDecl := 'prae' 'typus' IDENTIFIER
 parameter    := ('de' | 'in' | 'ex')? 'ceteri'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? ('ut' IDENTIFIER)? ('vel' expression)?
 funcModifier := 'argumenta' IDENTIFIER | 'curata' IDENTIFIER ('ut' IDENTIFIER)? | 'errata' IDENTIFIER | 'exitus' (IDENTIFIER | NUMBER) | 'immutata' | 'iacit' | 'optiones' IDENTIFIER
-returnClause := '→' typeAnnotation alternateExitClause?
+returnClause := '→' typeAnnotation
 alternateExitClause := '⇥' typeAnnotation
 ergoToken      := '∴' | 'ergo'
 clausuraExpr   := compactClausuraExpr | legacyClausuraExpr
@@ -56,7 +56,8 @@ clausuraParams := clausuraParam (',' clausuraParam)*
 clausuraParam  := typeAnnotation IDENTIFIER
 ```
 
-- Return syntax: `→` (normal arrow) with optional `⇥` recoverable alternate-exit type
+- Return syntax: `→` declares the normal success type. A bodyful function with no `→` is effect-only (`vacuum`) and must not contain `redde`.
+- Recoverable alternate-exit syntax: `⇥` declares the error-channel type. It can appear after `→ T` or alone on an effect-only failable function.
 - Parameter prefixes: `de` (read), `in` (mutate), `ex` (consume)
 - Post-name markers: `sponte` (voluntary/optional provision), `fixus` (fixed after first assignment); canonical order `sponte fixus`
 - `ceteri` marks rest parameter
@@ -70,7 +71,7 @@ clausuraParam  := typeAnnotation IDENTIFIER
 genusDecl    := 'abstractus'? 'genus' IDENTIFIER typeParams? ('sub' IDENTIFIER)? ('implet' IDENTIFIER (',' IDENTIFIER)*)? '{' genusMember* '}'
 genusMember  := annotation* (fieldDecl | methodDecl)
 fieldDecl    := 'generis'? 'nexum'? typeAnnotation IDENTIFIER ('sponte' 'fixus'? | 'fixus')? ('=' expression)?
-methodDecl   := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? blockStmt?
+methodDecl   := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? alternateExitClause? blockStmt?
 annotation   := '@' IDENTIFIER+ | stdlibAnnotation
 ```
 
@@ -120,7 +121,7 @@ targetMapping := IDENTIFIER STRING
 
 ```ebnf
 pactumDecl   := 'pactum' IDENTIFIER typeParams? '{' pactumMethod* '}'
-pactumMethod := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause?
+pactumMethod := 'functio' IDENTIFIER '(' paramList ')' funcModifier* returnClause? alternateExitClause?
 ```
 
 ### Type Aliases

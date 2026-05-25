@@ -13,8 +13,8 @@
 //!   function body.
 //! - `current_return` tracks the normal return channel, while `current_error`
 //!   tracks the alternate-exit channel used by `iace`/catchable control flow.
-//! - Unannotated function returns are finalized from observed `redde` values,
-//!   falling back to `vacuum` only when no return expression is seen.
+//! - Bodyful named functions without `→` are effect-only. They finalize to
+//!   `vacuum` and reject `redde` instead of inferring a value return.
 //! - Struct field defaults are checked against their declared field types; they
 //!   do not create fresh field types.
 
@@ -26,9 +26,9 @@ impl<'a> TypeChecker<'a> {
     /// This temporarily installs the function's normal and alternate-exit
     /// result types so nested `redde` and `iace` expressions validate against
     /// the signature rather than against an enclosing body. When the normal
-    /// return type is omitted, the checker infers it from all `redde` sites and
-    /// updates the collected function signature so later calls see the same
-    /// resolved contract as the HIR.
+    /// return type is omitted, the function is effect-only: it accepts
+    /// statement-only bodies, rejects `redde`, and finalizes the normal return
+    /// channel to `vacuum`.
     pub(super) fn check_function(&mut self, def_id: DefId, func: &mut HirFunction) {
         self.push_scope();
         for param in &mut func.params {
@@ -46,9 +46,11 @@ impl<'a> TypeChecker<'a> {
         let prev_return = self.current_return;
         let prev_error = self.current_error;
         let prev_inferred = self.inferred_return;
+        let prev_allow_inferred = self.allow_inferred_return;
         self.current_return = func.ret_ty;
         self.current_error = func.err_ty.map(ErrorSink::Function);
         self.inferred_return = None;
+        self.allow_inferred_return = false;
 
         if let Some(body) = &mut func.body {
             self.check_block(body, None);
@@ -66,6 +68,7 @@ impl<'a> TypeChecker<'a> {
         self.current_return = prev_return;
         self.current_error = prev_error;
         self.inferred_return = prev_inferred;
+        self.allow_inferred_return = prev_allow_inferred;
         self.pop_scope();
     }
 

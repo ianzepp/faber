@@ -23,7 +23,7 @@ fn literal_string(id: u32) -> HirExpr {
 }
 
 #[test]
-fn infers_function_return_type() {
+fn rejects_redde_without_explicit_return_type() {
     let mut types = TypeTable::new();
     let mut program = HirProgram {
         items: vec![HirItem {
@@ -56,13 +56,61 @@ fn infers_function_return_type() {
 
     let resolver = Resolver::new();
     let result = typecheck(&mut program, &resolver, &mut types);
+    assert!(result.is_err());
+    let errors = result.unwrap_err();
+    assert!(errors.iter().any(|err| {
+        err.kind == SemanticErrorKind::MissingReturn
+            && err.message.contains("redde requires an explicit normal return type")
+    }));
+}
+
+#[test]
+fn omitted_return_effect_function_finalizes_to_vacuum() {
+    let mut types = TypeTable::new();
+    let textus = types.primitive(Primitive::Textus);
+    let mut program = HirProgram {
+        items: vec![HirItem {
+            id: crate::hir::HirId(0),
+            def_id: DefId(0),
+            kind: HirItemKind::Function(HirFunction {
+                cli_args: None,
+                name: crate::lexer::Symbol(1),
+                type_params: Vec::new(),
+                params: Vec::new(),
+                ret_ty: None,
+                err_ty: Some(textus),
+                body: Some(HirBlock {
+                    stmts: vec![HirStmt {
+                        id: crate::hir::HirId(1),
+                        kind: HirStmtKind::Expr(HirExpr {
+                            id: crate::hir::HirId(2),
+                            kind: HirExprKind::Throw(Box::new(literal_string(3))),
+                            ty: None,
+                            span: span(),
+                        }),
+                        span: span(),
+                    }],
+                    expr: None,
+                    span: span(),
+                }),
+                is_async: false,
+                is_generator: false,
+                test: None,
+            }),
+            span: span(),
+        }],
+        entry: None,
+    };
+
+    let resolver = Resolver::new();
+    let result = typecheck(&mut program, &resolver, &mut types);
     assert!(result.is_ok());
 
     let item = &program.items[0];
     let HirItemKind::Function(func) = &item.kind else {
         panic!("expected function item");
     };
-    assert_eq!(func.ret_ty, Some(types.primitive(Primitive::Numerus)));
+    assert_eq!(func.ret_ty, Some(types.primitive(Primitive::Vacuum)));
 }
 
 #[test]

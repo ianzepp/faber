@@ -86,7 +86,7 @@ ad "notificatio:mitte" ("x") ⇥ ignotum {} cape err {
 - `docs/factory/capability-calls/goal.md`: Epic 3 implemented scalar/non-strict Rust `ad` behavior and records unresolved providers as explicit runtime failures.
 - `hosts/macos-arm64/SYSCALL_MODEL.md`: host capability calls are frame-shaped syscalls routed through built-in syscalls or sigcall providers; long-term target includes `Item`/`Bulk`, cancellation, structured errors, and provider routing.
 - Follow-up research into `fieldboard`: `bulk` was created to reduce protocol overhead when many small item frames made envelope cost dominate payload transfer. `board:join` batches many object rows into `Bulk` frames, and the client expands them through the same object queue path used for single `Item` frames.
-- Current compiler behavior: bodyful functions without `→` are currently accepted and may infer a return type from `redde`. The desired hardened direction is stricter: omitting `→` means effect-only, and any `redde` inside that body should become a diagnostic in a dedicated language-hardening slice.
+- Language hardening completed after this goal draft: bodyful functions without `→` are effect-only, finalize normal success to `vacuum`, and reject `redde` instead of inferring a value return.
 - `crates/radix/src/parser/stmt.rs`: parser records the route string, arguments, optional success binding, body, and catch clause.
 - `crates/radix/src/hir/nodes.rs`: `HirAd` currently preserves path, args, optional binding, error type, body, and catch block.
 - `crates/radix/src/codegen/rust/stmt.rs`: current Rust codegen emits a scalar `match __faber_ad::<T, _>(...) { Ok(__faber_result) => body, Err(...) => ... }`.
@@ -125,7 +125,7 @@ Before implementation, inspect:
 - `error` is host/provider-initiated terminal failure and must not silently succeed.
 - `cancel` is caller-initiated terminal cancellation and must remain recognizable as cancellation even if it initially travels through an error-shaped alternate-exit value.
 - A non-empty per-item body requires a success binding. Effect-only calls that intentionally ignore response items should not fake a return channel; they may use an empty body with no success binding. The `⇥` error channel is for typed failure handling, not for declaring terminal success.
-- Omitted `→` means effect-only in the desired hardened language shape. It must not be treated as permission to infer a value return from `redde`.
+- Omitted `→` means effect-only. It must not be treated as permission to infer a value return from `redde`.
 - The implementation must not guess source types in codegen. The per-item binding type must come from source or future strict metadata.
 - Backpressure and cancellation are part of the host/frame model, but the first compiler rewrite may model only finite in-process item iteration if that is the smallest executable proof.
 
@@ -204,7 +204,7 @@ Included.
 - `bulk` is documented and tested as transparent batching: each batch element is expanded into the same per-item path as an `item` frame.
 - Terminal `done`, `error`, and `cancel` semantics are recorded, including the distinction that `error` is host/provider initiated and `cancel` is caller initiated.
 - Effect-only calls are documented as terminal-success-only calls with no fake success binding. Optional `⇥` error typing is documented as failure handling, not as a required return channel.
-- The goal records the desired hardening that bodyful no-`→` forms are effect-only and must not contain `redde`; if that compiler behavior is changed, it should be done as an explicit language-hardening slice.
+- Bodyful no-`→` forms are effect-only and must not contain `redde`; the implemented compiler behavior should be preserved while changing `ad`.
 - Generated Rust no longer treats primitive `ad` as a single scalar `Result<T, String>` success path.
 - Existing unresolved-provider behavior still fails clearly.
 - Host docs explain that provider SDKs convert to frame data at the host boundary, and Faber decodes frame data into local caller-owned shapes.

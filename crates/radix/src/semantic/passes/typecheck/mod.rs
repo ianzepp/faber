@@ -187,8 +187,11 @@ struct TypeChecker<'a> {
     /// Active alternate-exit target while checking `iace` or failable calls.
     current_error: Option<ErrorSink>,
 
-    /// Synthesized return type for functions without an explicit return type.
+    /// Synthesized return type for expression contexts that allow inferred returns.
     inferred_return: Option<TypeId>,
+
+    /// Whether the active return context may synthesize its normal return type from `redde`.
+    allow_inferred_return: bool,
 
     /// Monotonic counter for fresh inference variables within this checker.
     next_infer: u32,
@@ -253,6 +256,7 @@ impl<'a> TypeChecker<'a> {
             current_return: None,
             current_error: None,
             inferred_return: None,
+            allow_inferred_return: false,
             next_infer: 0,
             infer_ids: FxHashMap::default(),
             substitutions: FxHashMap::default(),

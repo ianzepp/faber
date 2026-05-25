@@ -63,7 +63,7 @@ fn lowers_function_params_as_mir_locals() {
 
 #[test]
 fn lowers_explicit_no_value_redde_as_trivial_return() {
-    let dump = dump_source("functio saluta() { redde }");
+    let dump = dump_source("functio saluta() → vacuum { redde }");
 
     assert_eq!(
         dump,
@@ -284,7 +284,7 @@ function f1 -> ty#1 {
 
 #[test]
 fn lowers_vacuum_direct_calls_without_destinations() {
-    let dump = dump_source("functio ping() { redde } functio usa() { ping() redde }");
+    let dump = dump_source("functio ping() → vacuum { redde } functio usa() → vacuum { ping() redde }");
 
     assert_eq!(
         dump,

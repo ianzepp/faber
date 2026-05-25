@@ -11,8 +11,10 @@
 //! ==========
 //! - A local binding is inserted only after its declared or inferred type has
 //!   been established.
-//! - `redde` contributes only to the normal return channel. Alternate exits are
-//!   checked through `current_error` in expression/control-flow code.
+//! - `redde` contributes only to an explicitly declared normal return channel,
+//!   except in expression forms such as closures that explicitly allow inferred
+//!   return typing. Alternate exits are checked through `current_error` in
+//!   expression/control-flow code.
 //! - Blocks always introduce a lexical scope and type to their trailing
 //!   expression when present, otherwise to `vacuum`.
 //! - Ignored expression statements must not leave unresolved inference variables
@@ -25,11 +27,23 @@ impl<'a> TypeChecker<'a> {
     /// Validate a `redde` statement against the current normal return contract.
     ///
     /// Annotated functions use their declared return type as an expected type so
-    /// nested expressions can benefit from top-down information. Unannotated
-    /// functions collect the first observed return type and unify later returns
-    /// against it; `check_function` writes the final type back to the function
-    /// signature after the body has been checked.
+    /// nested expressions can benefit from top-down information. Bodyful named
+    /// functions without `→` are effect-only and reject `redde`; expression
+    /// surfaces that opt into inferred returns, such as closures, still collect
+    /// the first observed return type and unify later returns against it.
     pub(super) fn check_return(&mut self, value: Option<&mut HirExpr>, span: crate::lexer::Span) {
+        if self.current_return.is_none() && !self.allow_inferred_return {
+            if let Some(expr) = value {
+                self.check_expr(expr);
+            }
+            self.error(
+                SemanticErrorKind::MissingReturn,
+                "redde requires an explicit normal return type",
+                span,
+            );
+            return;
+        }
+
         let value_ty = match value {
             Some(expr) => {
                 if let Some(expected) = self.current_return {
