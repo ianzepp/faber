@@ -282,6 +282,7 @@ fn generate_ad_stmt(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_ad_success_block(
     codegen: &RustCodegen<'_>,
     ad: &HirAd,
@@ -392,6 +393,7 @@ fn generate_ad_error_block(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_ad_plain_block(
     codegen: &RustCodegen<'_>,
     block: &HirBlock,
@@ -415,6 +417,7 @@ fn generate_ad_plain_block(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_ad_prefixed_block<F>(
     codegen: &RustCodegen<'_>,
     block: &HirBlock,
