@@ -96,6 +96,21 @@ impl MirError {
 /// validation failures share the same error type so callers can treat the MIR
 /// pipeline as one fail-closed developer command.
 pub fn lower_analyzed_unit(unit: &AnalyzedUnit) -> Result<MirProgram, Vec<MirError>> {
+    lower_analyzed_unit_with_context(unit).map(|lowered| lowered.program)
+}
+
+/// MIR output plus the semantic validation context used to prove it.
+pub struct LoweredMirUnit<'a> {
+    pub program: MirProgram,
+    pub validation: MirValidationContext<'a>,
+}
+
+/// Lower a semantically analyzed HIR unit and retain validation metadata.
+///
+/// MIR itself stays target-neutral, but some target probes need the same
+/// declaration metadata that validation used to type-check compact MIR
+/// references such as struct fields and enum variant fields.
+pub fn lower_analyzed_unit_with_context(unit: &AnalyzedUnit) -> Result<LoweredMirUnit<'_>, Vec<MirError>> {
     let mut lowerer = MirLowerer { unit, errors: Vec::new(), functions: Vec::new() };
     lowerer.lower();
 
@@ -110,7 +125,7 @@ pub fn lower_analyzed_unit(unit: &AnalyzedUnit) -> Result<MirProgram, Vec<MirErr
                 .map(|error| MirError::validation(error.span, error.message))
                 .collect::<Vec<_>>()
         })?;
-        Ok(program)
+        Ok(LoweredMirUnit { program, validation })
     }
 }
 
@@ -128,7 +143,7 @@ struct MirLowerer<'a> {
     functions: Vec<MirFunction>,
 }
 
-impl MirLowerer<'_> {
+impl<'a> MirLowerer<'a> {
     /// Run the whole-unit lowering sequence before MIR validation.
     ///
     /// Whole-unit maps are collected up front because function bodies need
@@ -212,7 +227,7 @@ impl MirLowerer<'_> {
     /// The validation maps are derived from immutable HIR/type data rather than
     /// from partially lowered functions, so validation checks the MIR against the
     /// same semantic source of truth as lowering.
-    fn validation_context(&self) -> MirValidationContext<'_> {
+    fn validation_context(&self) -> MirValidationContext<'a> {
         LoweringContextMaps::collect(self.unit).validation
     }
 

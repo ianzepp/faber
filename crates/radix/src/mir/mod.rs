@@ -35,8 +35,8 @@ mod wasm_text;
 
 pub use dump::dump_program;
 pub use llvm_text::{emit_llvm_text_probe, MirLlvmTextProbeError};
-pub use lower::{dump_analyzed_unit, lower_analyzed_unit, MirError};
+pub use lower::{dump_analyzed_unit, lower_analyzed_unit, lower_analyzed_unit_with_context, LoweredMirUnit, MirError};
 pub use nodes::*;
 pub use rust_probe::{emit_rust_probe, MirRustProbeError};
 pub use validate::{validate_program, MirFunctionSignature, MirValidationContext, MirValidationError};
-pub use wasm_text::{emit_wasm_text_probe, MirWasmTextProbeError};
+pub use wasm_text::{emit_wasm_text_probe, emit_wasm_text_probe_with_context, MirWasmTextProbeError};

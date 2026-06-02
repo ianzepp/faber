@@ -124,8 +124,8 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
 fn generate_output(target: Target, analysis: &AnalyzedUnit) -> Result<crate::Output, codegen::CodegenError> {
     match target {
         Target::WasmText => {
-            let mir = lower_mir_for_target(analysis)?;
-            let code = crate::mir::emit_wasm_text_probe(&mir, &analysis.types, &analysis.interner)
+            let mir = lower_mir_with_context_for_target(analysis)?;
+            let code = crate::mir::emit_wasm_text_probe_with_context(&mir.program, &mir.validation, &analysis.interner)
                 .map_err(|error| codegen::CodegenError { message: error.message })?;
             Ok(crate::Output::WasmText(crate::WasmTextOutput { code }))
         }
@@ -141,6 +141,19 @@ fn generate_output(target: Target, analysis: &AnalyzedUnit) -> Result<crate::Out
 
 fn lower_mir_for_target(analysis: &AnalyzedUnit) -> Result<crate::mir::MirProgram, codegen::CodegenError> {
     crate::mir::lower_analyzed_unit(analysis).map_err(|errors| {
+        let message = errors
+            .into_iter()
+            .map(|error| error.message)
+            .collect::<Vec<_>>()
+            .join("; ");
+        codegen::CodegenError { message }
+    })
+}
+
+fn lower_mir_with_context_for_target(
+    analysis: &AnalyzedUnit,
+) -> Result<crate::mir::LoweredMirUnit<'_>, codegen::CodegenError> {
+    crate::mir::lower_analyzed_unit_with_context(analysis).map_err(|errors| {
         let message = errors
             .into_iter()
             .map(|error| error.message)

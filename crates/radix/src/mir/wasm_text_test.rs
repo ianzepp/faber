@@ -195,6 +195,62 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_aggregate_index_projection_reads() {
+    let source = r#"
+incipit {
+    fixum lista<numerus> values ← [1, 2, 3]
+    nota values[0]
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(
+            r#"(import "faber_aggregate" "index_i64_to_i64" (func $__faber_aggregate_index_i64_to_i64 (param i32 i64) (result i64)))"#
+        )
+    );
+    assert!(output.contains("(call $__faber_aggregate_index_i64_to_i64 (local.get $l0) (i64.const 0))"));
+    assert!(output.contains("(call $__faber_diag_nota_i64"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_emits_aggregate_field_projection_reads() {
+    let source = r#"
+genus Punctum {
+    numerus x
+    textus label
+}
+
+incipit {
+    fixum _ p ← Punctum {
+        x = 10,
+        label = "Roma"
+    }
+    nota p.x
+    nota p.label
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(
+            r#"(import "faber_aggregate" "field_i32_to_i64" (func $__faber_aggregate_field_i32_to_i64 (param i32 i32) (result i64)))"#
+        )
+    );
+    assert!(
+        output.contains(
+            r#"(import "faber_aggregate" "field_i32_to_text" (func $__faber_aggregate_field_i32_to_text (param i32 i32) (result i32)))"#
+        )
+    );
+    assert!(output.contains("(call $__faber_aggregate_field_i32_to_i64 (local.get $l0) (i32.const"));
+    assert!(output.contains("(call $__faber_aggregate_field_i32_to_text (local.get $l0) (i32.const"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_branch_dispatch_for_numeric_functions() {
     let source = r#"
 functio clamp(numerus value, numerus min, numerus max) → numerus {
@@ -246,8 +302,8 @@ incipit {
 fn wasm_target_rejects_unsupported_mir_shapes() {
     let source = r#"
 incipit {
-    fixum lista<numerus> values ← [1, 2, 3]
-    nota values[0]
+    varia lista<numerus> values ← [1, 2, 3]
+    values[0] ← 4
 }
 "#;
 

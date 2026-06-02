@@ -499,7 +499,7 @@ fn classify_wasm_exemplum(
         }
     };
 
-    let mir = match crate::mir::lower_analyzed_unit(&analysis) {
+    let mir = match crate::mir::lower_analyzed_unit_with_context(&analysis) {
         Ok(mir) => mir,
         Err(errors) => {
             return WasmE2eResult {
@@ -517,7 +517,7 @@ fn classify_wasm_exemplum(
         }
     };
 
-    let wat = match crate::mir::emit_wasm_text_probe(&mir, &analysis.types, &analysis.interner) {
+    let wat = match crate::mir::emit_wasm_text_probe_with_context(&mir.program, &mir.validation, &analysis.interner) {
         Ok(wat) => wat,
         Err(error) => {
             return WasmE2eResult {

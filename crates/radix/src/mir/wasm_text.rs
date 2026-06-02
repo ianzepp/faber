@@ -36,12 +36,22 @@ pub fn emit_wasm_text_probe(
     types: &TypeTable,
     interner: &Interner,
 ) -> Result<String, MirWasmTextProbeError> {
-    WasmTextProbe { program, types, interner }.emit_program()
+    let validation = MirValidationContext::new(types);
+    emit_wasm_text_probe_with_context(program, &validation, interner)
+}
+
+pub fn emit_wasm_text_probe_with_context(
+    program: &MirProgram,
+    validation: &MirValidationContext<'_>,
+    interner: &Interner,
+) -> Result<String, MirWasmTextProbeError> {
+    WasmTextProbe { program, types: validation.types, validation, interner }.emit_program()
 }
 
 struct WasmTextProbe<'a> {
     program: &'a MirProgram,
     types: &'a TypeTable,
+    validation: &'a MirValidationContext<'a>,
     interner: &'a Interner,
 }
 
@@ -50,6 +60,8 @@ struct FunctionContext {
     value_tys: FxHashMap<MirValueId, WasmValue>,
     locals: FxHashMap<MirLocalId, WasmValue>,
     temps: FxHashMap<MirTempId, WasmValue>,
+    local_mir_tys: FxHashMap<MirLocalId, MirType>,
+    temp_mir_tys: FxHashMap<MirTempId, MirType>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -76,6 +88,20 @@ struct TextFormatImport {
 struct AggregateImport {
     kind: AggregateImportKind,
     args: Vec<WasmValue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ProjectionImport {
+    kind: ProjectionImportKind,
+    key: WasmValue,
+    result: WasmValue,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+enum ProjectionImportKind {
+    Field,
+    VariantField,
+    Index,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -119,6 +145,15 @@ impl WasmTextProbe<'_> {
                 "(import \"faber_aggregate\" \"{}\" (func ${}{params} (result i32)))",
                 aggregate_import_name(&import),
                 aggregate_import_symbol(&import),
+            ));
+        }
+        for import in self.required_projection_imports()? {
+            writer.writeln(&format!(
+                "(import \"faber_aggregate\" \"{}\" (func ${} (param i32 {}) (result {})))",
+                projection_import_name(&import),
+                projection_import_symbol(&import),
+                import.key.wat(),
+                import.result.wat(),
             ));
         }
         for import in self.required_text_format_imports()? {
@@ -400,10 +435,7 @@ impl WasmTextProbe<'_> {
     }
 
     fn place_expr(&self, place: &MirPlace, context: &FunctionContext) -> Result<String, MirWasmTextProbeError> {
-        if !place.projections.is_empty() {
-            return Err(MirWasmTextProbeError::unsupported("place projection"));
-        }
-        match place.base {
+        let mut expr = match place.base {
             MirPlaceBase::Local(id) => context
                 .locals
                 .get(&id)
@@ -414,7 +446,16 @@ impl WasmTextProbe<'_> {
                 .get(&id)
                 .map(|_| format!("(local.get ${})", temp_name(id)))
                 .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined temp t{}", id.0))),
+        }?;
+
+        let mut ty = self.place_base_mir_ty(place, context)?;
+        for projection in &place.projections {
+            let (import, key_expr, result_ty) = self.projection_import(projection, ty, context)?;
+            expr = format!("(call ${} {expr} {key_expr})", projection_import_symbol(&import));
+            ty = result_ty;
         }
+
+        Ok(expr)
     }
 
     fn operand_ty(&self, operand: &MirOperand, context: &FunctionContext) -> Result<WasmValue, MirWasmTextProbeError> {
@@ -439,20 +480,65 @@ impl WasmTextProbe<'_> {
     }
 
     fn place_ty(&self, place: &MirPlace, context: &FunctionContext) -> Result<WasmValue, MirWasmTextProbeError> {
-        if !place.projections.is_empty() {
-            return Err(MirWasmTextProbeError::unsupported("place projection"));
+        self.scalar_ty(self.place_mir_ty(place, context)?)
+    }
+
+    fn place_mir_ty(&self, place: &MirPlace, context: &FunctionContext) -> Result<MirType, MirWasmTextProbeError> {
+        let mut ty = self.place_base_mir_ty(place, context)?;
+        for projection in &place.projections {
+            let (_, _, result_ty) = self.projection_import(projection, ty, context)?;
+            ty = result_ty;
         }
+        Ok(ty)
+    }
+
+    fn place_base_mir_ty(&self, place: &MirPlace, context: &FunctionContext) -> Result<MirType, MirWasmTextProbeError> {
         match place.base {
             MirPlaceBase::Local(id) => context
-                .locals
+                .local_mir_tys
                 .get(&id)
                 .copied()
                 .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined local l{}", id.0))),
             MirPlaceBase::Temp(id) => context
-                .temps
+                .temp_mir_tys
                 .get(&id)
                 .copied()
                 .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined temp t{}", id.0))),
+        }
+    }
+
+    fn projection_import(
+        &self,
+        projection: &MirProjection,
+        base_ty: MirType,
+        context: &FunctionContext,
+    ) -> Result<(ProjectionImport, String, MirType), MirWasmTextProbeError> {
+        match projection {
+            MirProjection::Field(field) => {
+                let result_ty = self.project_field_ty(base_ty, *field)?;
+                let import = ProjectionImport {
+                    kind: ProjectionImportKind::Field,
+                    key: WasmValue::I32,
+                    result: self.scalar_ty(result_ty)?,
+                };
+                Ok((import, format!("(i32.const {})", field.0), result_ty))
+            }
+            MirProjection::VariantField { variant, field } => {
+                let result_ty = self.project_variant_field_ty(*variant, *field)?;
+                let import = ProjectionImport {
+                    kind: ProjectionImportKind::VariantField,
+                    key: WasmValue::I32,
+                    result: self.scalar_ty(result_ty)?,
+                };
+                Ok((import, format!("(i32.const {})", field.0), result_ty))
+            }
+            MirProjection::Index(index) => {
+                let key = self.operand_ty(index, context)?;
+                let result_ty = self.project_index_ty(base_ty)?;
+                let import =
+                    ProjectionImport { kind: ProjectionImportKind::Index, key, result: self.scalar_ty(result_ty)? };
+                Ok((import, self.operand_expr(index, context)?, result_ty))
+            }
         }
     }
 
@@ -487,12 +573,16 @@ impl WasmTextProbe<'_> {
 
     fn function_context(&self, function: &MirFunction) -> Result<FunctionContext, MirWasmTextProbeError> {
         let mut locals = FxHashMap::default();
+        let mut local_mir_tys = FxHashMap::default();
         for local in &function.locals {
             locals.insert(local.id, self.scalar_ty(local.ty)?);
+            local_mir_tys.insert(local.id, local.ty);
         }
         let mut temps = FxHashMap::default();
+        let mut temp_mir_tys = FxHashMap::default();
         for temp in &function.temps {
             temps.insert(temp.id, self.scalar_ty(temp.ty)?);
+            temp_mir_tys.insert(temp.id, temp.ty);
         }
         let mut value_tys = FxHashMap::default();
         for block in &function.blocks {
@@ -502,7 +592,7 @@ impl WasmTextProbe<'_> {
                 }
             }
         }
-        Ok(FunctionContext { values: FxHashMap::default(), value_tys, locals, temps })
+        Ok(FunctionContext { values: FxHashMap::default(), value_tys, locals, temps, local_mir_tys, temp_mir_tys })
     }
 
     fn scalar_ty(&self, ty: MirType) -> Result<WasmValue, MirWasmTextProbeError> {
@@ -516,6 +606,52 @@ impl WasmTextProbe<'_> {
             }
             Type::Alias(_, target) => self.scalar_ty(MirType::semantic(*target)),
             other => Err(MirWasmTextProbeError::unsupported(format!("type {other:?}"))),
+        }
+    }
+
+    fn project_field_ty(
+        &self,
+        base_ty: MirType,
+        field: crate::lexer::Symbol,
+    ) -> Result<MirType, MirWasmTextProbeError> {
+        match self.types.get(base_ty.semantic_id()) {
+            Type::Struct(def_id) => self
+                .validation
+                .struct_fields
+                .get(def_id)
+                .and_then(|fields| fields.get(&field))
+                .copied()
+                .ok_or_else(|| MirWasmTextProbeError::unsupported("struct field projection metadata")),
+            Type::Record(fields) => fields
+                .get(&field)
+                .copied()
+                .map(MirType::semantic)
+                .ok_or_else(|| MirWasmTextProbeError::unsupported("record field projection metadata")),
+            Type::Alias(_, target) => self.project_field_ty(MirType::semantic(*target), field),
+            _ => Err(MirWasmTextProbeError::unsupported("field projection base")),
+        }
+    }
+
+    fn project_variant_field_ty(
+        &self,
+        variant: DefId,
+        field: crate::lexer::Symbol,
+    ) -> Result<MirType, MirWasmTextProbeError> {
+        self.validation
+            .variant_fields
+            .get(&variant)
+            .and_then(|fields| fields.get(&field))
+            .copied()
+            .ok_or_else(|| MirWasmTextProbeError::unsupported("variant field projection metadata"))
+    }
+
+    fn project_index_ty(&self, base_ty: MirType) -> Result<MirType, MirWasmTextProbeError> {
+        match self.types.get(base_ty.semantic_id()) {
+            Type::Array(inner) => Ok(MirType::semantic(*inner)),
+            Type::Map(_, value) => Ok(MirType::semantic(*value)),
+            Type::Primitive(Primitive::Textus) => Ok(MirType::semantic(self.types.primitive(Primitive::Textus))),
+            Type::Alias(_, target) => self.project_index_ty(MirType::semantic(*target)),
+            _ => Err(MirWasmTextProbeError::unsupported("index projection base")),
         }
     }
 
@@ -711,6 +847,128 @@ impl WasmTextProbe<'_> {
         let mut imports = imports.into_iter().collect::<Vec<_>>();
         imports.sort_by_key(aggregate_import_name);
         Ok(imports)
+    }
+
+    fn required_projection_imports(&self) -> Result<Vec<ProjectionImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    self.collect_stmt_projection_imports(stmt, &context, &mut imports)?;
+                }
+                self.collect_terminator_projection_imports(&block.terminator, &context, &mut imports)?;
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(projection_import_name);
+        Ok(imports)
+    }
+
+    fn collect_stmt_projection_imports(
+        &self,
+        stmt: &MirStmt,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        match &stmt.kind {
+            MirStmtKind::Assign { place, value } => {
+                self.collect_place_projection_imports(place, context, imports)?;
+                self.collect_value_projection_imports(value, context, imports)
+            }
+            MirStmtKind::Call { destination, args, .. } => {
+                if let Some(destination) = destination {
+                    self.collect_place_projection_imports(destination, context, imports)?;
+                }
+                for arg in args {
+                    self.collect_operand_projection_imports(arg, context, imports)?;
+                }
+                Ok(())
+            }
+            MirStmtKind::RuntimeCall { destination, call } => {
+                if let Some(destination) = destination {
+                    self.collect_place_projection_imports(destination, context, imports)?;
+                }
+                for arg in &call.args {
+                    self.collect_operand_projection_imports(arg, context, imports)?;
+                }
+                Ok(())
+            }
+            MirStmtKind::Construct { destination, aggregate } => {
+                self.collect_place_projection_imports(destination, context, imports)?;
+                for operand in aggregate_operands(&aggregate.fields) {
+                    self.collect_operand_projection_imports(operand, context, imports)?;
+                }
+                Ok(())
+            }
+        }
+    }
+
+    fn collect_value_projection_imports(
+        &self,
+        value: &MirValue,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        match &value.kind {
+            MirValueKind::Operand(operand) => self.collect_operand_projection_imports(operand, context, imports),
+            MirValueKind::Binary { lhs, rhs, .. } => {
+                self.collect_operand_projection_imports(lhs, context, imports)?;
+                self.collect_operand_projection_imports(rhs, context, imports)
+            }
+            MirValueKind::Unary { operand, .. } => self.collect_operand_projection_imports(operand, context, imports),
+            MirValueKind::Option(_) => Ok(()),
+        }
+    }
+
+    fn collect_terminator_projection_imports(
+        &self,
+        terminator: &MirTerminator,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        match &terminator.kind {
+            MirTerminatorKind::Return(Some(operand))
+            | MirTerminatorKind::ReturnError(operand)
+            | MirTerminatorKind::Branch { condition: operand, .. } => {
+                self.collect_operand_projection_imports(operand, context, imports)
+            }
+            MirTerminatorKind::TryCall { args, .. } => {
+                for arg in args {
+                    self.collect_operand_projection_imports(arg, context, imports)?;
+                }
+                Ok(())
+            }
+            MirTerminatorKind::Switch { value, .. } => self.collect_operand_projection_imports(value, context, imports),
+            MirTerminatorKind::Return(None) | MirTerminatorKind::Goto(_) | MirTerminatorKind::Unreachable => Ok(()),
+        }
+    }
+
+    fn collect_operand_projection_imports(
+        &self,
+        operand: &MirOperand,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        if let MirOperand::Place(place) = operand {
+            self.collect_place_projection_imports(place, context, imports)?;
+        }
+        Ok(())
+    }
+
+    fn collect_place_projection_imports(
+        &self,
+        place: &MirPlace,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        let mut ty = self.place_base_mir_ty(place, context)?;
+        for projection in &place.projections {
+            let (import, _, result_ty) = self.projection_import(projection, ty, context)?;
+            imports.insert(import);
+            ty = result_ty;
+        }
+        Ok(())
     }
 }
 
@@ -925,6 +1183,19 @@ fn aggregate_import_name(import: &AggregateImport) -> String {
 
 fn aggregate_import_symbol(import: &AggregateImport) -> String {
     format!("__faber_aggregate_{}", aggregate_import_name(import))
+}
+
+fn projection_import_name(import: &ProjectionImport) -> String {
+    let kind = match import.kind {
+        ProjectionImportKind::Field => "field",
+        ProjectionImportKind::VariantField => "variant_field",
+        ProjectionImportKind::Index => "index",
+    };
+    format!("{kind}_{}_to_{}", import.key.abi_name(), import.result.abi_name())
+}
+
+fn projection_import_symbol(import: &ProjectionImport) -> String {
+    format!("__faber_aggregate_{}", projection_import_name(import))
 }
 
 #[cfg(test)]

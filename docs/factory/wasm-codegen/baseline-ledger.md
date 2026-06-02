@@ -631,3 +631,77 @@ The next compile-valid Wasm phase should target type-directed aggregate
 projections. The current blockers need field and index projection helper imports
 chosen from MIR place projection result types; this should stay separate from
 aggregate construction so runtime layout decisions remain explicit.
+
+## Phase 009 Update: Aggregate Projection Wasm Emission
+
+**Commit target**: Phase 009
+**Change**: the Wasm text probe now emits compile-valid reads from aggregate
+field and index projections. Wasm emission receives the same
+`MirValidationContext` used to validate the MIR, so projection result types come
+from target-neutral semantic metadata rather than Wasm-specific MIR nodes.
+
+### Tier Counts After Phase 009
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 32/101
+  Wasm emitted: 32/101
+  compile-valid: 32/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+The following exemplars advanced from MIR-lowered Wasm-emission failure to
+compile-valid:
+
+- `examples/exempla/destructura/destructura.fab`
+- `examples/exempla/genus/genus.fab`
+- `examples/exempla/novum/novum.fab`
+- `examples/exempla/varia/destructura.fab`
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+Measured compile-valid coverage increased from 28/101 to 32/101. No
+emitted-invalid modules were reported by the harness.
+
+All currently MIR-lowered exemplars now emit compile-valid Wasm. The next
+coverage ceiling is the `MIR lowered` tier, not Wasm emission for validated MIR.
+
+### Remaining Wasm-Emission Clusters
+
+- No remaining failures at `MirLowered` in the current harness result.
+- Projected assignment destinations remain intentionally unsupported in the
+  Wasm probe, but no current MIR-lowered exemplar reaches that shape.
+- Runtime-managed values beyond opaque helper imports remain host/runtime work,
+  including actual aggregate layout and behavior.
+
+### Remaining MIR-Lowering Clusters
+
+The established MIR-lowering clusters remain: iterator/range lowering,
+switch/pattern lowering, assertion intrinsics, method/runtime gaps, compound
+assignment/operator gaps, predicate unary gaps, aggregate/optional validation
+gaps, top-level consts, and several diagnostic runtime arity validation gaps.
+
+### Phase 009 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed, including WAT validation
+  for aggregate field and index projection reads.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select the next phase from MIR-lowering clusters. The most direct way to keep
+compile-valid coverage moving is to raise `MIR lowered` beyond 32/101, then let
+the now-complete Wasm-emission subset classify the newly lowered programs.
