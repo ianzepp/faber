@@ -824,6 +824,22 @@ functio log(textus name) → vacuum {
 }
 
 #[test]
+fn lowers_multi_arg_diagnostics_to_unary_runtime_calls() {
+    let dump = dump_source(
+        r#"
+functio log(textus name, numerus age) → vacuum {
+    nota "Name:", name, "Age:", age
+}
+"#,
+    );
+
+    assert!(dump.contains("runtime diagnostic nota(const string sym#"));
+    assert!(dump.contains("runtime diagnostic nota(_0)"));
+    assert!(dump.contains("runtime diagnostic nota(_1)"));
+    assert!(!dump.contains(", _0,"));
+}
+
+#[test]
 fn lowers_format_conversion_collection_and_provider_runtime_intrinsics() {
     let format_dump = dump_source(r#"functio greet(textus name) → textus { redde "Salve, §!"(name) }"#);
     assert!(format_dump.contains("runtime format_string template sym#"));

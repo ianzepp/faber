@@ -233,12 +233,13 @@ impl FunctionBuilder<'_> {
 
     /// Lower diagnostic output expressions to diagnostic intrinsics.
     pub(super) fn lower_scribe(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
-        let mut lowered_args = Vec::with_capacity(args.len());
+        let intrinsic = MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind));
+        let return_ty = self.expr_ty(expr)?;
         for arg in args {
-            lowered_args.push(self.lower_expr_value(arg)?);
+            let arg = self.lower_expr_value(arg)?;
+            self.runtime_call_value(intrinsic.clone(), vec![arg], return_ty, expr.span);
         }
-        let ty = self.expr_ty(expr)?;
-        Some(self.runtime_call_value(MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind)), lowered_args, ty, expr.span))
+        Some(MirOperand::Constant(MirConstant::Unit))
     }
 
     /// Lower a string-template application to a format-string intrinsic.

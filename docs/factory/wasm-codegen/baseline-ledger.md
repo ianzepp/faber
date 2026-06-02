@@ -705,3 +705,82 @@ gaps, top-level consts, and several diagnostic runtime arity validation gaps.
 Select the next phase from MIR-lowering clusters. The most direct way to keep
 compile-valid coverage moving is to raise `MIR lowered` beyond 32/101, then let
 the now-complete Wasm-emission subset classify the newly lowered programs.
+
+## Phase 010 Update: Diagnostic Fan-Out MIR Lowering
+
+**Commit target**: Phase 010
+**Change**: multi-argument diagnostic source expressions now lower into one
+unary `MirIntrinsic::Diagnostic` runtime call per source argument. MIR
+validation still requires diagnostic runtime calls to have exactly one operand;
+the lowering now satisfies that invariant instead of emitting invalid MIR.
+
+### Tier Counts After Phase 010
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 42/101
+  Wasm emitted: 40/101
+  compile-valid: 40/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 32/101 to 40/101. MIR-lowered
+coverage increased from 32/101 to 42/101.
+
+New compile-valid exemplars include:
+
+- `examples/exempla/dum/conditio-complexa.fab`
+- `examples/exempla/dum/dum.fab`
+- `examples/exempla/dum/in-functione.fab`
+- `examples/exempla/incipit/functionibus.fab`
+- `examples/exempla/nota/gradus.fab`
+- `examples/exempla/nota/nota.fab`
+- `examples/exempla/perge/perge.fab`
+- `examples/exempla/rumpe/rumpe.fab`
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+The previous diagnostic runtime arity validation cluster is removed for the
+files above. Two files now advance to validated MIR but stop at Wasm emission:
+
+- `examples/exempla/conversio/conversio.fab`: value-returning conversion
+  runtime calls remain unsupported by the Wasm text probe.
+- `examples/exempla/mori/mori.fab`: panic runtime calls remain unsupported by
+  the Wasm text probe.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are iterator/range lowering,
+switch/pattern lowering, assertion intrinsics, method/runtime gaps, compound
+assignment/operator gaps, predicate unary gaps, aggregate/optional validation
+gaps, and top-level consts.
+
+### Remaining Wasm-Emission Clusters
+
+- Value-returning runtime conversion calls.
+- Panic runtime calls.
+
+### Phase 010 Validation Log
+
+- `cargo test -p radix diagnostic -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Either add Wasm probe support for runtime conversion/panic calls to clear the
+two newly visible Wasm-emission failures, or continue raising the `MIR lowered`
+tier through another MIR-lowering cluster such as assertions or iterator/range
+lowering.
