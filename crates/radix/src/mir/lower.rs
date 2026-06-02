@@ -428,6 +428,27 @@ impl<'a> FunctionBuilder<'a> {
         Some(MirOperand::Place(place))
     }
 
+    fn lower_assign_op_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
+        let HirExprKind::AssignOp(op, lhs, rhs) = &expr.kind else {
+            return self.lower_expr_value(expr);
+        };
+
+        let Some(op) = mir_bin_op(*op) else {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "compound assignment operator without a MIR primitive",
+            ));
+            return None;
+        };
+        let fallback_ty = self.expr_ty(expr)?;
+        let (place, ty) = self.lower_assignment_place_with_fallback(lhs, fallback_ty)?;
+        let lhs = MirOperand::Place(place.clone());
+        let rhs = self.lower_expr_value(rhs)?;
+        let value = self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, expr.span);
+        self.assign(place.clone(), value, ty, expr.span);
+        Some(MirOperand::Place(place))
+    }
+
     fn lower_assignment_place_with_fallback(
         &mut self,
         expr: &HirExpr,

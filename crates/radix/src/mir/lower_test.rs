@@ -230,6 +230,24 @@ function f0 -> ty#1 {
 }
 
 #[test]
+fn lowers_compound_assignment_to_binary_and_assign() {
+    let numeric_dump = dump_source("functio computa() → numerus { varia numerus x ← 1 x ⊕ 2 x ⊛ 3 redde x }");
+
+    assert!(numeric_dump.contains("%0 = _0 + const int 2: ty#1"));
+    assert!(numeric_dump.contains("_0 = %0: ty#1"));
+    assert!(numeric_dump.contains("%1 = _0 * const int 3: ty#1"));
+    assert!(numeric_dump.contains("_0 = %1: ty#1"));
+    assert!(!numeric_dump.contains("compound assignment before assignment-op MIR lowering"));
+
+    let text_dump = dump_source(r#"functio adiunge() → textus { varia textus s ← "salve" s ⊕ " mundi" redde s }"#);
+
+    assert!(text_dump.contains("%0 = _0 + const string"));
+    assert!(text_dump.contains(": ty#0"));
+    assert!(text_dump.contains("_0 = %0: ty#0"));
+    assert!(!text_dump.contains("compound assignment before assignment-op MIR lowering"));
+}
+
+#[test]
 fn lowers_unary_ops_to_typed_temps() {
     let dump = dump_source("functio logicum(bivalens a) → bivalens { redde non a }");
 

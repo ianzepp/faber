@@ -76,10 +76,16 @@ impl HirVisitor for FunctionBuilder<'_> {
     /// `MirPlace`; every other expression can be lowered for its value and then
     /// discarded if the caller does not need the operand.
     fn visit_expr(&mut self, expr: &HirExpr) {
-        if matches!(expr.kind, HirExprKind::Assign(_, _)) {
-            self.lower_assignment_expr(expr);
-        } else {
-            let _ = self.lower_expr_value(expr);
+        match expr.kind {
+            HirExprKind::Assign(_, _) => {
+                self.lower_assignment_expr(expr);
+            }
+            HirExprKind::AssignOp(_, _, _) => {
+                self.lower_assign_op_expr(expr);
+            }
+            _ => {
+                let _ = self.lower_expr_value(expr);
+            }
         }
     }
 }

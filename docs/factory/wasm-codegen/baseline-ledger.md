@@ -1281,3 +1281,98 @@ Compound assignment is a contained next target and should move
 operations are already covered by Wasm emission. Runtime/provider method
 lowering is larger and likely unlocks more exemplars, but it needs tighter ABI
 policy before implementation.
+
+## Phase 017 Update: Compound Assignment MIR Lowering
+
+**Commit target**: Phase 017
+**Change**: compound assignment expressions now lower through target-neutral MIR
+as an ordinary binary value assigned back to the original place. No
+compound-assignment MIR node or Wasm-specific MIR policy was added.
+
+### Tier Counts After Phase 017
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 63/101
+  Wasm emitted: 61/101
+  compile-valid: 61/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 60/101 to 61/101. MIR-lowered
+coverage increased from 61/101 to 63/101.
+
+New compile-valid exemplar:
+
+- `examples/exempla/assignatio/assignatio.fab`
+
+Newly exposed Wasm-emission blocker:
+
+- `examples/exempla/binarius/binarius.fab` now reaches validated MIR but stops
+  at Wasm emission with `MIR-to-WASM unsupported: option value`.
+
+`examples/exempla/si/est.fab` still reaches MIR but stops at Wasm emission with
+`MIR-to-WASM unsupported: type Primitive(Ignotum)`.
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+Compound assignment now reuses the existing assignment-place resolver for paths,
+fields, and indexes. The lowerer reads the target place as the binary left-hand
+operand, lowers the right-hand side normally, assigns the binary temp back to
+the same place, and returns that place when the expression value is needed.
+
+This moved `assignatio.fab` to compile-valid and separated `binarius.fab` from
+the compound-assignment cluster; `binarius` is now blocked by option/nullable
+Wasm value emission instead.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are map/cursor/provider
+iteration, runtime/provider method calls, remaining operator gaps such as
+`inter`/`intra`, non-literal and enum `discerne`, aggregate/optional validation
+gaps, top-level consts, `ad` provider blocks, closures, and async `cede`.
+
+### Remaining Wasm-Emission Clusters
+
+- Option/nullable values have no Wasm value model yet, surfaced by
+  `examples/exempla/binarius/binarius.fab`.
+- Dynamic `ignotum` has no Wasm value model yet, surfaced by
+  `examples/exempla/si/est.fab`.
+
+### Remaining Host/Runtime Clusters
+
+- Define map, set, text, cursor, and provider iterator ABI for `itera ex` and
+  `itera de`.
+- Provide real `faber_runtime` import implementations for assertion,
+  conversion, panic, and collection length.
+- Provide real `faber_text` comparison behavior.
+- Define and implement nullable and dynamic value ABIs before claiming
+  instantiate/run behavior.
+- Add a local instantiate/run host before measuring instantiate-valid,
+  runnable, or behavior-checked tiers.
+
+### Phase 017 Validation Log
+
+- `cargo test -p radix lowers_compound_assignment_to_binary_and_assign -- --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+A focused option-value compile-valid MVP could move `binarius.fab`, but it must
+not claim runtime nullable semantics. Runtime/provider method lowering remains
+the larger coverage cluster and likely unlocks more exemplars, but it requires
+clear ABI policy before implementation.

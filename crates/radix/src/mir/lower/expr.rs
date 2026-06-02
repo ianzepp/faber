@@ -311,11 +311,7 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
     }
 
     fn visit_assign_op_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
-        self.errors.push(MirError::unsupported(
-            expr.span,
-            "compound assignment before assignment-op MIR lowering",
-        ));
-        None
+        self.lower_assign_op_expr(expr)
     }
 
     fn visit_unsupported_expr(&mut self, kind: &HirExprKind, expr: &HirExpr) -> Option<MirOperand> {
