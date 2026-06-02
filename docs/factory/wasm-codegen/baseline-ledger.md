@@ -1683,3 +1683,78 @@ The current compile-valid coverage is 71/101, crossing the lower end of the
 should come from honest ABI-bearing phases, especially runtime/provider method
 lowering and collection/aggregate host imports, or from resolving the
 remaining MIR validation clusters without weakening MIR validation.
+
+## Phase 021 Update: Expected-Tier Regression Gate And Handoff
+
+**Commit target**: Phase 021
+**Change**: the ignored Wasm e2e harness now enforces expected tier floors for
+the current exemplar corpus. All files default to at least
+`FrontendAnalyzed`; the current 71 compile-valid exemplars must remain
+`CompileValid` or better; `examples/exempla/si/est.fab` must remain
+`MirLowered` or better.
+
+### Tier Counts After Phase 021
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 72/101
+  Wasm emitted: 71/101
+  compile-valid: 71/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Result
+
+This phase does not chase new pass-count movement. It makes the Phase 020
+baseline a real regression gate: if any expected compile-valid exemplar drops
+to Wasm-emitted, MIR-lowered, frontend-only, or source-readable, the ignored
+harness fails and prints the file, expected tier, reached tier, and failure
+reason.
+
+Improvements remain non-failing. A future phase that intentionally improves a
+file should update the ledger and raise the expected floor in the harness.
+
+### Completion Audit
+
+- Compile-valid coverage is 71/101, inside the requested 70-80% first target.
+- MIR-lowered and Wasm-emitted counts are higher than or equal to
+  compile-valid in the expected shape: 72 MIR-lowered, 71 Wasm-emitted, 71
+  compile-valid. The one MIR/Wasm delta is `si/est.fab`, blocked by dynamic
+  boxing/coercion into an `ignotum` aggregate handle.
+- Instantiate-valid, runnable, and behavior-checked tiers remain at 0/101 and
+  are reported as host/runtime skipped because `wasmtime` is unavailable and
+  no entrypoint/run policy exists.
+- The Wasm path remains HIR -> typed HIR -> validated MIR -> Wasm text; the
+  harness calls `lower_analyzed_unit_with_context` before
+  `emit_wasm_text_probe_with_context`.
+- Every completed factory phase has a delivery artifact and commit through
+  Phase 021.
+- The next remaining clusters are broad ABI/runtime or MIR validation efforts,
+  not a small clearly high-value cleanup suitable for extending this run.
+
+### Phase 021 Validation Log
+
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above with expected-tier floors enforced.
+- `cargo test -p radix mir -- --nocapture`: passed, 114 MIR-focused tests.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix`: passed, 516 unit tests, 8 hygiene tests, and radix
+  doc tests.
+- `./scripta/lint`: passed.
+
+### Handoff For Next Factory Run
+
+Plan the next run around one coherent ABI-bearing surface rather than pass
+count arithmetic:
+
+- local Wasm host/runtime support for instantiate and run tiers;
+- runtime/provider and collection method MIR lowering;
+- collection and aggregate host imports for mutation, lookup, and iteration;
+- dynamic `ignotum` boxing/coercion ABI;
+- remaining MIR validation clusters for optional/object/member shapes.
+
+Do not claim instantiate, runnable, or behavior-checked progress until the host
+imports and entrypoint/run policy are implemented and measured.

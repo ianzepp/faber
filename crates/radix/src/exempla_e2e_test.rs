@@ -46,6 +46,80 @@ struct WasmToolchain {
 
 const RUST_EXPECTED_FAILURES: &[&str] = &[];
 const RUST_EXPECTED_RUNTIME_FAILURES: &[(&str, &str)] = &[("ad/ad.fab", "E_NO_ROUTE: unresolved capability")];
+const WASM_EXPECTED_TIER_FLOORS: &[(&str, WasmTier)] = &[
+    ("abstractus/abstractus.fab", WasmTier::CompileValid),
+    ("adfirma/adfirma.fab", WasmTier::CompileValid),
+    ("adfirma/in-functione.fab", WasmTier::CompileValid),
+    ("ante/ante.fab", WasmTier::CompileValid),
+    ("assignatio/assignatio.fab", WasmTier::CompileValid),
+    ("aut/aut.fab", WasmTier::CompileValid),
+    ("binarius/binarius.fab", WasmTier::CompileValid),
+    ("ceteri/ceteri.fab", WasmTier::CompileValid),
+    ("conversio/conversio.fab", WasmTier::CompileValid),
+    ("cura/cura.fab", WasmTier::CompileValid),
+    ("cura/nidificatus.fab", WasmTier::CompileValid),
+    ("custodi/custodi.fab", WasmTier::CompileValid),
+    ("destructura/destructura.fab", WasmTier::CompileValid),
+    ("discretio/discretio.fab", WasmTier::CompileValid),
+    ("dum/conditio-complexa.fab", WasmTier::CompileValid),
+    ("dum/dum.fab", WasmTier::CompileValid),
+    ("dum/in-functione.fab", WasmTier::CompileValid),
+    ("ego/ego.fab", WasmTier::CompileValid),
+    ("elige/ceterum.fab", WasmTier::CompileValid),
+    ("elige/elige.fab", WasmTier::CompileValid),
+    ("elige/ergo-redde.fab", WasmTier::CompileValid),
+    ("elige/in-functione.fab", WasmTier::CompileValid),
+    ("est/est.fab", WasmTier::CompileValid),
+    ("et/et.fab", WasmTier::CompileValid),
+    ("finge/finge.fab", WasmTier::CompileValid),
+    ("fixum/fixum.fab", WasmTier::CompileValid),
+    ("functio/functio.fab", WasmTier::CompileValid),
+    ("functio/recursio.fab", WasmTier::CompileValid),
+    ("functio/typicus.fab", WasmTier::CompileValid),
+    ("genus/creo.fab", WasmTier::CompileValid),
+    ("genus/genus.fab", WasmTier::CompileValid),
+    ("genus/methodi.fab", WasmTier::CompileValid),
+    ("implet/implet.fab", WasmTier::CompileValid),
+    ("incipit/functionibus.fab", WasmTier::CompileValid),
+    ("incipit/incipit.fab", WasmTier::CompileValid),
+    ("itera/ex.fab", WasmTier::CompileValid),
+    ("itera/in-functione.fab", WasmTier::CompileValid),
+    ("itera/intervallum-gradus.fab", WasmTier::CompileValid),
+    ("itera/intervallum.fab", WasmTier::CompileValid),
+    ("itera/nidificatus.fab", WasmTier::CompileValid),
+    ("lista/lista.fab", WasmTier::CompileValid),
+    ("mone/mone.fab", WasmTier::CompileValid),
+    ("mori/mori.fab", WasmTier::CompileValid),
+    ("nexum/nexum.fab", WasmTier::CompileValid),
+    ("nota/gradus.fab", WasmTier::CompileValid),
+    ("nota/nota.fab", WasmTier::CompileValid),
+    ("novum/novum.fab", WasmTier::CompileValid),
+    ("pactum/pactum.fab", WasmTier::CompileValid),
+    ("per/per.fab", WasmTier::CompileValid),
+    ("perge/perge.fab", WasmTier::CompileValid),
+    ("privata/privata.fab", WasmTier::CompileValid),
+    ("protecta/protecta.fab", WasmTier::CompileValid),
+    ("publica/publica.fab", WasmTier::CompileValid),
+    ("redde/redde.fab", WasmTier::CompileValid),
+    ("rumpe/rumpe.fab", WasmTier::CompileValid),
+    ("salve-munde.fab", WasmTier::CompileValid),
+    ("scriptum/scriptum.fab", WasmTier::CompileValid),
+    ("si/ergo.fab", WasmTier::CompileValid),
+    ("si/est.fab", WasmTier::MirLowered),
+    ("si/nidificatus.fab", WasmTier::CompileValid),
+    ("si/secus.fab", WasmTier::CompileValid),
+    ("si/si.fab", WasmTier::CompileValid),
+    ("si/sin.fab", WasmTier::CompileValid),
+    ("sparge/sparge.fab", WasmTier::CompileValid),
+    ("sub/sub.fab", WasmTier::CompileValid),
+    ("typus/typus.fab", WasmTier::CompileValid),
+    ("unarius/unarius.fab", WasmTier::CompileValid),
+    ("usque/usque.fab", WasmTier::CompileValid),
+    ("varia/destructura.fab", WasmTier::CompileValid),
+    ("varia/typicus.fab", WasmTier::CompileValid),
+    ("varia/varia.fab", WasmTier::CompileValid),
+    ("vide/vide.fab", WasmTier::CompileValid),
+];
 
 #[test]
 #[ignore = "slow end-to-end harness; run explicitly with cargo test exempla_rust_e2e -- --ignored"]
@@ -444,6 +518,7 @@ fn exempla_wasm_e2e() {
     }
 
     print_wasm_e2e_report(&results, toolchain);
+    assert_wasm_expected_tiers(&results);
 }
 
 fn rustc_available() -> bool {
@@ -668,6 +743,45 @@ fn print_wasm_e2e_report(results: &[WasmE2eResult], toolchain: WasmToolchain) {
 
 fn count_wasm_tier(results: &[WasmE2eResult], tier: WasmTier) -> usize {
     results.iter().filter(|result| result.tier >= tier).count()
+}
+
+fn assert_wasm_expected_tiers(results: &[WasmE2eResult]) {
+    let regressions = results
+        .iter()
+        .filter_map(|result| {
+            let expected = expected_wasm_tier(&result.path);
+            (result.tier < expected).then_some(format!(
+                "{} expected at least {:?}, reached {:?}: {}",
+                wasm_exemplum_key(&result.path),
+                expected,
+                result.tier,
+                result.reason
+            ))
+        })
+        .collect::<Vec<_>>();
+
+    assert!(
+        regressions.is_empty(),
+        "unexpected Wasm e2e tier regressions:\n{}",
+        regressions.join("\n")
+    );
+}
+
+fn expected_wasm_tier(path: &Path) -> WasmTier {
+    let key = wasm_exemplum_key(path);
+    WASM_EXPECTED_TIER_FLOORS
+        .iter()
+        .find_map(|(expected, tier)| (*expected == key).then_some(*tier))
+        .unwrap_or(WasmTier::FrontendAnalyzed)
+}
+
+fn wasm_exemplum_key(path: &Path) -> String {
+    let normalized = path.to_string_lossy().replace('\\', "/");
+    normalized
+        .split("/examples/exempla/")
+        .nth(1)
+        .unwrap_or(normalized.as_str())
+        .to_owned()
 }
 
 fn make_temp_root() -> PathBuf {
