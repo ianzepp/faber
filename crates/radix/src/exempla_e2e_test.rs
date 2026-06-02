@@ -14,6 +14,18 @@ struct E2eResult {
 
 const RUST_EXPECTED_FAILURES: &[&str] = &[];
 const RUST_EXPECTED_RUNTIME_FAILURES: &[(&str, &str)] = &[("ad/ad.fab", "E_NO_ROUTE: unresolved capability")];
+const GO_EXPECTED_FAILURES: &[&str] = &[
+    "ad/ad.fab",
+    "functio/optionalis.fab",
+    "genus/creo.fab",
+    "inter/inter.fab",
+    "itera/cursor-iteratio.fab",
+    "itera/nidificatus.fab",
+    "si/ergo-redde.fab",
+    "syntaxis/arena-mixta.fab",
+    "syntaxis/destructura-sparsa.fab",
+    "syntaxis/fluxus-cede.fab",
+];
 
 #[test]
 #[ignore = "slow end-to-end harness; run explicitly with cargo test exempla_rust_e2e -- --ignored"]
@@ -304,12 +316,25 @@ fn exempla_go_e2e() {
         eprintln!("[fail] {} :: {}", fail.path.display(), fail.reason);
     }
 
-    let salve_ok = results
+    let unexpected_failures = results
         .iter()
-        .find(|r| r.path.ends_with("salve-munde.fab"))
-        .map(|r| r.passed)
-        .unwrap_or(false);
-    assert!(salve_ok, "salve-munde.fab should pass end-to-end on Go");
+        .filter(|r| !r.passed && !is_expected_failure(&r.path, GO_EXPECTED_FAILURES))
+        .collect::<Vec<_>>();
+    let unexpected_passes = results
+        .iter()
+        .filter(|r| r.passed && is_expected_failure(&r.path, GO_EXPECTED_FAILURES))
+        .collect::<Vec<_>>();
+
+    assert!(
+        unexpected_failures.is_empty(),
+        "unexpected Go e2e failures: {}",
+        format_result_paths(&unexpected_failures)
+    );
+    assert!(
+        unexpected_passes.is_empty(),
+        "Go e2e expected failures now pass and should be removed from metadata: {}",
+        format_result_paths(&unexpected_passes)
+    );
 }
 
 #[test]

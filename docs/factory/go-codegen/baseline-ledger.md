@@ -5,6 +5,7 @@
 **Branch**: `factory/go-codegen`  
 **Baseline date**: 2026-06-02  
 **Base commit observed**: `32bc7819`  
+**Harness truthfulness status**: strict expected-failure gate added in Phase 0  
 **Go toolchain**: `go version go1.26.3 darwin/arm64`
 
 ## Required Baseline Command
@@ -20,9 +21,16 @@ Go e2e exempla: 91/101 exempla files pass end-to-end
 Expected-output checks enabled for 1 exempla files
 ```
 
-The ignored harness test itself passed. The pass count is lower than total
-because the harness records individual exemplar failures and reports them while
-still leaving the Rust test green.
+The ignored harness now gates the full expected corpus state. The pass count is
+lower than total because the ten failures below are recorded in Go
+expected-failure metadata. The test fails on any unexpected Go e2e failure and
+also fails when one of these expected-failure exempla starts passing, so the
+metadata must be removed promptly after backend fixes.
+
+At the original observed baseline commit `32bc7819`, the same command printed
+`91/101` and exited green while only asserting that `salve-munde.fab` passed.
+That earlier green result was not a strict corpus gate and must not be treated
+as completion evidence for Go codegen.
 
 ## Failure Inventory
 
@@ -120,8 +128,8 @@ are planned.
 
 ## Phase Selection Evidence
 
-The baseline already exceeds the factory goal's first practical target range
-with `91/101` passing. The most valuable next implementation cluster is
+The truthful baseline records `91/101` passing as an expected corpus state, not
+as a completed backend target. The most valuable next implementation cluster is
 optional and nullable values because it touches common function-call and return
 semantics and has two concrete failing exempla with clear Go compile errors.
 
@@ -130,4 +138,3 @@ Recommended first implementation phase:
 ```text
 Phase 1: Optional/default parameters and nullable Go return wrapping
 ```
-
