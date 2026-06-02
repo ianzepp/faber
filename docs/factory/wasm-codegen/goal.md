@@ -4,11 +4,29 @@
 **Created**: 2026-06-02  
 **Target Repo Worktree**: `/Users/ianzepp/work/ianzepp/faber-wasm-codegen`  
 **Base Repo**: `/Users/ianzepp/work/ianzepp/faber`  
-**Base Commit**: `b568253d`  
+**Base Commit**: `5b544fda`  
 **Factory Artifact Dir**: `docs/factory/wasm-codegen/`  
 **Target Backend**: MIR-backed Wasm codegen in `crates/radix/src/mir/`  
 **Primary Gate**: tiered Wasm exemplar harness added by this factory run  
 **Commit Policy**: commit after each completed phase with passing focused and checkpoint validation
+
+## Worktree Assignment
+
+This factory goal is assigned to exactly this worktree:
+
+```bash
+/Users/ianzepp/work/ianzepp/faber-wasm-codegen
+```
+
+The assigned branch is:
+
+```bash
+factory/wasm-codegen
+```
+
+The worker must run implementation, validation, phase artifacts, ledgers, and
+commits from that worktree. Do not run this goal from the main
+`/Users/ianzepp/work/ianzepp/faber` checkout or from the Go worktree.
 
 ## Objective
 

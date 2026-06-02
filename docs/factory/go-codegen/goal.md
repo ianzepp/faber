@@ -4,11 +4,29 @@
 **Created**: 2026-06-02  
 **Target Repo Worktree**: `/Users/ianzepp/work/ianzepp/faber-go-codegen`  
 **Base Repo**: `/Users/ianzepp/work/ianzepp/faber`  
-**Base Commit**: `b568253d`  
+**Base Commit**: `5b544fda`  
 **Factory Artifact Dir**: `docs/factory/go-codegen/`  
 **Target Backend**: HIR-backed Go codegen in `crates/radix/src/codegen/go/`  
 **Primary Gate**: `cargo test -p radix exempla_go_e2e -- --ignored --nocapture`  
 **Commit Policy**: commit after each completed phase with passing focused and checkpoint validation
+
+## Worktree Assignment
+
+This factory goal is assigned to exactly this worktree:
+
+```bash
+/Users/ianzepp/work/ianzepp/faber-go-codegen
+```
+
+The assigned branch is:
+
+```bash
+factory/go-codegen
+```
+
+The worker must run implementation, validation, phase artifacts, ledgers, and
+commits from that worktree. Do not run this goal from the main
+`/Users/ianzepp/work/ianzepp/faber` checkout or from the Wasm worktree.
 
 ## Objective
 
