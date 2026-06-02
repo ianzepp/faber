@@ -153,7 +153,7 @@ impl MirLowerer<'_> {
         ItemLoweringPass::new(self, &context_maps, &struct_fields).lower_items();
 
         if let Some(entry) = &self.unit.hir.entry {
-            self.lower_entry(entry);
+            self.lower_entry(entry, &context_maps, &struct_fields);
         }
     }
 
@@ -216,29 +216,34 @@ impl MirLowerer<'_> {
         LoweringContextMaps::collect(self.unit).validation
     }
 
-    /// Lower the synthetic top-level entry block accepted by the current MIR subset.
+    /// Lower the top-level entry block as a synthetic vacuum-returning function.
     ///
-    /// Non-empty entry bodies remain unsupported here because top-level entry
-    /// semantics still need a fuller statement and runtime policy before they
-    /// can be represented faithfully in MIR.
-    fn lower_entry(&mut self, entry: &HirBlock) {
-        if !entry_is_empty(entry) {
-            self.errors.push(MirError::unsupported(
-                entry.span,
-                "non-empty entry blocks before primitive expression lowering",
-            ));
-            return;
-        }
-
+    /// Entry lowering reuses ordinary function-body MIR construction so the MIR
+    /// stays target-neutral and unsupported entry contents fail through the same
+    /// diagnostics as unsupported function contents.
+    fn lower_entry(
+        &mut self,
+        entry: &HirBlock,
+        context_maps: &LoweringContextMaps<'_>,
+        struct_fields: &FxHashMap<DefId, Vec<&HirField>>,
+    ) {
         let vacuum = self.unit.types.primitive(Primitive::Vacuum);
+        let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
+        let (locals, temps, blocks, errors) = {
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, None, context);
+            let blocks = builder.lower_body(entry);
+            (builder.locals, builder.temps, blocks, builder.errors)
+        };
+        self.errors.extend(errors);
+
         self.functions.push(MirFunction {
             id: MirFunctionId(self.functions.len() as u32),
             source: None,
             name: None,
             params: Vec::new(),
-            locals: Vec::new(),
-            temps: Vec::new(),
-            blocks: vec![empty_return_block(entry.span)],
+            locals,
+            temps,
+            blocks,
             return_ty: MirType::semantic(vacuum),
             error_ty: None,
             span: entry.span,
@@ -714,10 +719,6 @@ impl<'a> FunctionBuilder<'a> {
     }
 }
 
-fn entry_is_empty(block: &HirBlock) -> bool {
-    block.stmts.is_empty() && block.expr.is_none()
-}
-
 fn mir_un_op(op: HirUnOp) -> Option<MirUnOp> {
     match op {
         HirUnOp::Neg => Some(MirUnOp::Neg),
@@ -802,15 +803,6 @@ fn scribe_kind_name(kind: HirScribeKind) -> &'static str {
         HirScribeKind::Vide => "vide before print/runtime intrinsic MIR lowering",
         HirScribeKind::Mone => "mone before print/runtime intrinsic MIR lowering",
         HirScribeKind::Scribe => "scribe before print/runtime intrinsic MIR lowering",
-    }
-}
-
-fn empty_return_block(span: Span) -> MirBlock {
-    MirBlock {
-        id: MirBlockId(0),
-        statements: Vec::new(),
-        terminator: MirTerminator { kind: MirTerminatorKind::Return(None), span },
-        span,
     }
 }
 

@@ -115,3 +115,70 @@ Select a MIR-lowering coverage phase for non-empty entry blocks. The first
 useful target is not Wasm stack emission; it is getting simple exemplars through
 validated MIR without weakening MIR validation or hiding unsupported runtime
 surfaces.
+
+## Phase 002 Update: Non-Empty Entry MIR Lowering
+
+**Commit target**: Phase 002  
+**Change**: top-level entry blocks now lower through the ordinary
+`FunctionBuilder` body path as synthetic vacuum-returning MIR functions.
+
+### Tier Counts After Phase 002
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 32/101
+  Wasm emitted: 0/101
+  compile-valid: 0/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Result
+
+The universal entry-block failure is removed. Thirty-two exemplars now reach
+validated MIR. No exemplar reaches Wasm emission yet because the currently
+lowered modules still contain MIR shapes outside the Wasm text probe subset.
+
+### Remaining MIR-Lowering Clusters
+
+- Iterator/range lowering: `itera before iterator MIR lowering`.
+- Switch/pattern lowering: `discerne before switch MIR lowering`.
+- Runtime assertions: `adfirma before assert intrinsic MIR lowering`.
+- Method/runtime gaps: `method call before runtime/provider MIR lowering`.
+- Compound assignment/operator gaps: `compound assignment before assignment-op
+  MIR lowering`, `binary operator without a MIR primitive`, and `unary operator
+  without a MIR primitive`.
+- Aggregate/optional validation gaps surfaced by broader entry lowering:
+  field projection, optional-chain, map aggregate, and named aggregate
+  validation errors.
+- Top-level declarations remain separate: `top-level const`.
+
+### Wasm-Emission Clusters Now Visible
+
+- Runtime calls are not emitted by the Wasm text probe.
+- Text/string values are not represented in the Wasm type/value model.
+- Aggregate construction is not emitted.
+- Comparison and boolean binary ops such as `Eq`, `Gt`, `Lt`, `And`, and `Or`
+  are not emitted.
+- Branch/control-flow terminators are not emitted.
+
+### Phase 002 Validation Log
+
+- `cargo test -p radix entry -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed, 86 MIR-focused tests.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed, 488 unit tests, 8 hygiene tests, and radix
+  doc tests.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select a Wasm type/value model and primitive emission phase. The highest-value
+next step is to emit compile-valid Wasm for primitive entry/function modules by
+adding Wasm support for local declarations, direct calls, boolean/comparison
+operators, and conservative unsupported diagnostics for runtime/text/aggregate
+values.

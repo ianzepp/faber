@@ -319,14 +319,35 @@ function f0 -> ty#5 {
 }
 
 #[test]
-fn rejects_non_empty_entry_blocks_with_explicit_unsupported_error() {
-    let unit = analyze(r#"incipit { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in MIR");
+fn lowers_non_empty_entry_block_as_synthetic_function_body() {
+    let dump = dump_source(r#"incipit { fixum numerus n ← 1 + 2 }"#);
+
+    assert_eq!(
+        dump,
+        "\
+function f0 -> ty#5 {
+  locals:
+    let _0: ty#1
+  temps:
+    %0: ty#1
+  bb0:
+    %0 = const int 1 + const int 2: ty#1
+    _0 = %0: ty#1
+    return
+}
+"
+    );
+}
+
+#[test]
+fn non_empty_entry_preserves_unsupported_inner_diagnostics() {
+    let unit = analyze(r#"incipit { tacet }"#);
+    let errors = lower_analyzed_unit(&unit).expect_err("unsupported entry content should still fail closed");
 
     assert_eq!(errors.len(), 1);
     assert!(errors[0]
         .message
-        .contains("unsupported MIR lowering: non-empty entry blocks"));
+        .contains("unsupported MIR lowering: tacet before statement-level MIR lowering"));
 }
 
 #[test]
