@@ -392,7 +392,7 @@ pub enum MirIntrinsic {
 }
 
 /// Diagnostic runtime channels surfaced by Faber source constructs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MirDiagnosticKind {
     Nota,
     Vide,

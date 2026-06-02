@@ -182,3 +182,68 @@ next step is to emit compile-valid Wasm for primitive entry/function modules by
 adding Wasm support for local declarations, direct calls, boolean/comparison
 operators, and conservative unsupported diagnostics for runtime/text/aggregate
 values.
+
+## Phase 003 Update: Primitive Wasm Emission
+
+**Commit target**: Phase 003  
+**Change**: the Wasm text probe now emits a conservative primitive scalar
+subset: `numerus` as `i64`, `bivalens` as `i32`, non-param locals, temps,
+direct calls, numeric comparisons, boolean `and`/`or`, and numeric/bool
+diagnostic calls through explicit `faber_diag` imports.
+
+### Tier Counts After Phase 003
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 32/101
+  Wasm emitted: 2/101
+  compile-valid: 2/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Exemplars
+
+- `examples/exempla/aut/aut.fab`
+- `examples/exempla/et/et.fab`
+
+Both validate with `wasm-tools validate`. They remain below instantiate/run
+tiers because `wasmtime` is unavailable on PATH and the modules use explicit
+diagnostic imports that need a host implementation.
+
+### Remaining Wasm-Emission Clusters
+
+- Text/string constants and `textus` values remain unsupported.
+- Branch/control-flow terminators remain unsupported.
+- Aggregate and enum/struct/array construction remains unsupported.
+- Runtime diagnostics with text arguments remain unsupported.
+- Runtime-managed types such as `textus`, arrays, structs, enums, nullable
+  values, and dynamic values remain unsupported by design in this primitive
+  subset.
+
+### Remaining MIR-Lowering Clusters
+
+The Phase 002 MIR-lowering clusters remain broadly unchanged: iterator/range
+lowering, switch/pattern lowering, assertion intrinsics, method/runtime gaps,
+compound assignment/operator gaps, aggregate/optional validation gaps, and
+top-level consts.
+
+### Phase 003 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed, including WAT validation
+  in focused Wasm tests when `wasm-tools` is available.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed, 88 MIR-focused tests.
+- `cargo test -p radix`: passed, 490 unit tests, 8 hygiene tests, and radix
+  doc tests.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select a control-flow Wasm emission phase. Branch terminators now block several
+already-MIR-lowered exemplars (`custodi`, `functio/recursio`, and `si/*`).
+Keep text diagnostics separate: branch support should improve primitive control
+flow without pretending string output is solved.

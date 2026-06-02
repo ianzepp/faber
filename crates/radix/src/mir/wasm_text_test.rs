@@ -1,5 +1,8 @@
 use crate::driver::{Config, Session};
 use crate::{driver, Output, Target};
+use std::fs;
+use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
 fn wasm_target_emits_wat_from_validated_mir() {
@@ -25,6 +28,48 @@ functio adde(numerus a, numerus b) → numerus {
     assert!(output
         .code
         .contains("(i64.add (local.get $l0) (local.get $l1))"));
+    validate_wat_if_available(&output.code);
+}
+
+#[test]
+fn wasm_target_emits_primitive_entry_calls_and_diagnostics() {
+    let source = r#"
+functio adde(numerus a, numerus b) → numerus {
+    redde a + b
+}
+
+incipit {
+    fixum _ n ← adde(1, 2)
+    nota n
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains(r#"(import "faber_diag" "nota_i64" (func $__faber_diag_nota_i64 (param i64)))"#));
+    assert!(output.contains("(func $f1 (export \"f1\")"));
+    assert!(output.contains("(local $l0 i64)"));
+    assert!(output.contains("(local.set $t0 (call $adde (i64.const 1) (i64.const 2)))"));
+    assert!(output.contains("(local.set $l0 (local.get $t0))"));
+    assert!(output.contains("(call $__faber_diag_nota_i64 (local.get $l0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_emits_boolean_diagnostic_imports() {
+    let source = r#"
+incipit {
+    fixum _ left ← verum
+    fixum _ right ← falsum
+    nota left aut right
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains(r#"(import "faber_diag" "nota_i32" (func $__faber_diag_nota_i32 (param i32)))"#));
+    assert!(output.contains("(i32.or (local.get $l0) (local.get $l1))"));
+    validate_wat_if_available(&output);
 }
 
 #[test]
@@ -46,4 +91,55 @@ functio label() → textus {
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.message.contains("MIR-to-WASM unsupported")));
+}
+
+fn compile_wasm_text(source: &str) -> String {
+    let result = driver::compile(
+        &Session::new(Config::default().with_target(Target::WasmText)),
+        "wasm.fab",
+        source,
+    );
+    let Some(Output::WasmText(output)) = result.output else {
+        let diagnostics = result
+            .diagnostics
+            .iter()
+            .map(|diagnostic| diagnostic.message.clone())
+            .collect::<Vec<_>>()
+            .join(" | ");
+        panic!("expected WASM text output, got diagnostics: {diagnostics}");
+    };
+    output.code
+}
+
+fn validate_wat_if_available(wat: &str) {
+    if Command::new("wasm-tools")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
+        return;
+    }
+
+    let path = temp_wat_path();
+    fs::write(&path, wat).expect("write temporary WAT");
+    let output = Command::new("wasm-tools")
+        .arg("validate")
+        .arg(&path)
+        .output()
+        .expect("run wasm-tools validate");
+    let _ = fs::remove_file(&path);
+
+    assert!(
+        output.status.success(),
+        "wasm-tools validate failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+fn temp_wat_path() -> std::path::PathBuf {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    std::env::temp_dir().join(format!("radix-wasm-text-test-{nanos}.wat"))
 }
