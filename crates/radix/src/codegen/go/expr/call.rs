@@ -41,11 +41,14 @@ pub(super) fn generate_call_expr(
     }
     generate_expr(codegen, callee, types, w)?;
     w.write("(");
-    for (idx, arg) in args.iter().enumerate() {
-        if idx > 0 {
-            w.write(", ");
+    if let HirExprKind::Path(def_id) = callee.kind {
+        if let Some(params) = codegen.function_params(def_id) {
+            generate_direct_call_args_with_optional_params(codegen, params, args, types, w)?;
+        } else {
+            generate_call_args(codegen, args, types, w)?;
         }
-        generate_expr(codegen, &arg.expr, types, w)?;
+    } else {
+        generate_call_args(codegen, args, types, w)?;
     }
     w.write(")");
     Ok(())
@@ -295,6 +298,49 @@ pub(super) fn try_generate_spread_call_recovery(
     w.write(")");
     Ok(true)
 }
+
+fn generate_direct_call_args_with_optional_params(
+    codegen: &GoCodegen<'_>,
+    params: &[crate::codegen::go::FunctionParamInfo<'_>],
+    args: &[HirCallArg],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    for (idx, param) in params.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+
+        if let Some(arg) = args.get(idx) {
+            if param.optional && param.default.is_none() {
+                generate_option_wrapped_expr(codegen, &arg.expr, param.ty, types, w)?;
+            } else {
+                generate_expr_for_go_type(codegen, &arg.expr, param.ty, types, w)?;
+            }
+        } else if let Some(default) = param.default {
+            generate_expr_for_go_type(codegen, default, param.ty, types, w)?;
+        } else if param.optional {
+            w.write("nil");
+        }
+    }
+    Ok(())
+}
+
+fn generate_call_args(
+    codegen: &GoCodegen<'_>,
+    args: &[HirCallArg],
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    for (idx, arg) in args.iter().enumerate() {
+        if idx > 0 {
+            w.write(", ");
+        }
+        generate_expr(codegen, &arg.expr, types, w)?;
+    }
+    Ok(())
+}
+
 pub(super) fn try_generate_intrinsic_call(
     codegen: &GoCodegen<'_>,
     callee: &HirExpr,

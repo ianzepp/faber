@@ -96,6 +96,69 @@ pub(super) fn generate_binary_expr(
     Ok(())
 }
 
+pub(super) fn generate_binary_expr_for_go_type(
+    codegen: &GoCodegen<'_>,
+    expected_ty: crate::semantic::TypeId,
+    op: HirBinOp,
+    lhs: &HirExpr,
+    rhs: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    if !matches!(
+        normalize_receiver_type(types.get(expected_ty), types),
+        Type::Primitive(Primitive::Fractus)
+    ) || !matches!(op, HirBinOp::Add | HirBinOp::Sub | HirBinOp::Mul | HirBinOp::Div)
+    {
+        w.write("(");
+        generate_expr(codegen, lhs, types, w)?;
+        w.write(" ");
+        w.write(binary_op_to_go(op));
+        w.write(" ");
+        generate_expr(codegen, rhs, types, w)?;
+        w.write(")");
+        return Ok(());
+    }
+
+    w.write("(");
+    generate_fractus_operand(codegen, lhs, types, w)?;
+    w.write(" ");
+    w.write(binary_op_to_go(op));
+    w.write(" ");
+    generate_fractus_operand(codegen, rhs, types, w)?;
+    w.write(")");
+    Ok(())
+}
+
+fn generate_fractus_operand(
+    codegen: &GoCodegen<'_>,
+    expr: &HirExpr,
+    types: &TypeTable,
+    w: &mut CodeWriter,
+) -> Result<(), CodegenError> {
+    if matches!(
+        expr.ty
+            .map(|ty| normalize_receiver_type(types.get(ty), types)),
+        Some(Type::Primitive(Primitive::Numerus))
+    ) {
+        w.write("float64(");
+        generate_expr(codegen, expr, types, w)?;
+        w.write(")");
+        return Ok(());
+    }
+
+    match &expr.kind {
+        HirExprKind::Binary(op, lhs, rhs) => {
+            if let Some(ty) = expr.ty {
+                generate_binary_expr_for_go_type(codegen, ty, *op, lhs, rhs, types, w)
+            } else {
+                generate_expr(codegen, expr, types, w)
+            }
+        }
+        _ => generate_expr(codegen, expr, types, w),
+    }
+}
+
 pub(super) fn generate_assign_expr(
     codegen: &GoCodegen<'_>,
     lhs: &HirExpr,
@@ -105,7 +168,11 @@ pub(super) fn generate_assign_expr(
 ) -> Result<(), CodegenError> {
     generate_expr(codegen, lhs, types, w)?;
     w.write(" = ");
-    generate_expr(codegen, rhs, types, w)
+    if let Some(expected_ty) = assignment_target_type(codegen, lhs, types) {
+        generate_expr_for_go_type(codegen, rhs, expected_ty, types, w)
+    } else {
+        generate_expr(codegen, rhs, types, w)
+    }
 }
 
 pub(super) fn generate_assign_op_expr(
@@ -121,6 +188,29 @@ pub(super) fn generate_assign_op_expr(
     w.write(assign_op_to_go(op));
     w.write(" ");
     generate_expr(codegen, rhs, types, w)
+}
+
+fn assignment_target_type(
+    codegen: &GoCodegen<'_>,
+    lhs: &HirExpr,
+    types: &TypeTable,
+) -> Option<crate::semantic::TypeId> {
+    match &lhs.kind {
+        HirExprKind::Path(def_id) => codegen.binding_type(*def_id).or(lhs.ty),
+        HirExprKind::Field(object, field) => match &object.kind {
+            HirExprKind::Path(def_id) if codegen.is_struct_def(*def_id) => {
+                codegen.struct_field_type(*def_id, *field).or(lhs.ty)
+            }
+            _ => object
+                .ty
+                .and_then(|ty| match normalize_receiver_type(types.get(ty), types) {
+                    Type::Struct(def_id) => codegen.struct_field_type(*def_id, *field),
+                    _ => None,
+                })
+                .or(lhs.ty),
+        },
+        _ => lhs.ty,
+    }
 }
 
 pub(super) fn assign_op_to_go(op: HirBinOp) -> &'static str {

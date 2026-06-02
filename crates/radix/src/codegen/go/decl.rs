@@ -49,7 +49,10 @@ pub fn generate_function(
 
     if let Some(body) = &func.body {
         w.write(" ");
-        generate_block_with_prelude(codegen, body, types, w, &func.params, func.ret_ty)?;
+        let previous_return_ty = codegen.replace_current_return_ty(func.ret_ty);
+        let result = generate_block_with_prelude(codegen, body, types, w, &func.params, func.ret_ty);
+        codegen.replace_current_return_ty(previous_return_ty);
+        result?;
     }
     w.newline();
     Ok(())
@@ -115,7 +118,11 @@ pub fn generate_struct(
                     .iter()
                     .map(|param| (Some(param.def_id), codegen.resolve_symbol(param.name))),
             );
-            generate_block_with_custom_prelude(codegen, body, types, w, &prelude_params, method.func.ret_ty)?;
+            let previous_return_ty = codegen.replace_current_return_ty(method.func.ret_ty);
+            let result =
+                generate_block_with_custom_prelude(codegen, body, types, w, &prelude_params, method.func.ret_ty);
+            codegen.replace_current_return_ty(previous_return_ty);
+            result?;
         }
         w.newline();
     }
@@ -170,7 +177,7 @@ fn generate_block_with_custom_prelude(
             if result.is_err() {
                 return;
             }
-            result = generate_stmt(codegen, stmt, types, w);
+            result = generate_stmt(codegen, stmt, types, w, ret_ty);
         }
         if result.is_ok() {
             if let Some(expr) = &body.expr {
@@ -376,6 +383,9 @@ fn generate_params(codegen: &GoCodegen<'_>, params: &[HirParam], types: &TypeTab
         }
         w.write(codegen.resolve_symbol(param.name));
         w.write(" ");
+        if param.optional && param.default.is_none() {
+            w.write("*");
+        }
         w.write(&type_to_go(codegen, param.ty, types));
     }
     w.write(")");

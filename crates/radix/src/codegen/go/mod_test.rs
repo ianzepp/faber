@@ -569,6 +569,77 @@ incipit {
 }
 
 #[test]
+fn optional_parameters_with_defaults_expand_at_direct_call_sites() {
+    let code = compile_go(
+        r#"functio greet(textus nomen, textus titulus sponte) → textus {
+  si titulus est nihil {
+    redde nomen
+  }
+  redde titulus
+}
+
+functio paginate(numerus pagina sponte vel 1, numerus per_pagina sponte vel 10) → numerus {
+  redde pagina + per_pagina
+}
+
+incipit {
+  nota greet("Marcus")
+  nota greet("Marcus", "Dominus")
+  nota paginate()
+  nota paginate(5)
+  nota paginate(5, 25)
+}"#,
+    );
+
+    assert!(code.contains("func greet(nomen string, titulus *string) string"));
+    assert!(code.contains("return *titulus"));
+    assert!(code.contains(r#"greet("Marcus", nil)"#));
+    assert!(code.contains(r#"greet("Marcus", func() *string { v := "Dominus"; return &v }())"#));
+    assert!(code.contains("paginate(1, 10)"));
+    assert!(code.contains("paginate(5, 10)"));
+    assert!(code.contains("paginate(5, 25)"));
+}
+
+#[test]
+fn explicit_nullable_returns_wrap_non_nil_values() {
+    let code = compile_go(
+        r#"functio divide(numerus a, numerus b) → numerus ∪ nihil {
+  si b ≡ 0 ergo redde nihil
+  redde a / b
+}
+
+functio findFirst(lista<numerus> items, numerus target) → numerus ∪ nihil {
+  itera ex items fixum item {
+    si item ≡ target ergo redde item
+  }
+  redde nihil
+}"#,
+    );
+
+    assert!(code.contains("func divide(a int, b int) *int"));
+    assert!(code.contains("return nil"));
+    assert!(code.contains("return func() *int { v := (a / b); return &v }()"));
+    assert!(code.contains("return func() *int { v := item; return &v }()"));
+}
+
+#[test]
+fn fractus_field_assignments_promote_numerus_operands() {
+    let code = compile_go(
+        r#"genus Circle {
+  numerus radius = 1
+  fractus area = 0
+
+  functio creo() {
+    ego.area ← 3.14159 * ego.radius * ego.radius
+  }
+}"#,
+    );
+
+    assert!(code.contains("Area float64"));
+    assert!(code.contains("self.Area = ((3.14159 * float64(self.Radius)) * float64(self.Radius))"));
+}
+
+#[test]
 fn proba_names_are_sanitized_for_go_functions() {
     let code = compile_go(
         r#"proba "one plus one equals two" {

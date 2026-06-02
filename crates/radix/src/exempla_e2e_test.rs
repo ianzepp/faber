@@ -12,8 +12,23 @@ struct E2eResult {
     reason: String,
 }
 
+#[derive(Debug)]
+struct E2eFinding {
+    path: PathBuf,
+    reason: String,
+}
+
 const RUST_EXPECTED_FAILURES: &[&str] = &[];
 const RUST_EXPECTED_RUNTIME_FAILURES: &[(&str, &str)] = &[("ad/ad.fab", "E_NO_ROUTE: unresolved capability")];
+const GO_EXPECTED_FAILURES: &[&str] = &[
+    "ad/ad.fab",
+    "inter/inter.fab",
+    "itera/cursor-iteratio.fab",
+    "itera/nidificatus.fab",
+    "syntaxis/arena-mixta.fab",
+    "syntaxis/destructura-sparsa.fab",
+    "syntaxis/fluxus-cede.fab",
+];
 
 #[test]
 #[ignore = "slow end-to-end harness; run explicitly with cargo test exempla_rust_e2e -- --ignored"]
@@ -209,6 +224,7 @@ fn exempla_go_e2e() {
     let compiler = Compiler::new(Config::default().with_target(Target::Go));
     let temp_root = make_temp_root();
     let mut results = Vec::with_capacity(exempla.len());
+    let mut vet_findings = Vec::new();
     let mut expected_count = 0usize;
 
     for file in &exempla {
@@ -239,9 +255,17 @@ fn exempla_go_e2e() {
             }
         };
 
-        // Exercise the new --format + --linter path in the e2e harness
-        let mut output = crate::tool::format_generated_code(crate::codegen::Target::Go, &output).unwrap_or(output);
+        let mut output = match crate::tool::format_generated_code(crate::codegen::Target::Go, &output) {
+            Ok(output) => output,
+            Err(err) => {
+                results.push(E2eResult { path: file.clone(), passed: false, reason: format!("gofmt failed: {err}") });
+                continue;
+            }
+        };
 
+        // Go lint is currently best-effort in the shared hook. Keep calling it
+        // so the harness exercises the tool path, but report real vet findings
+        // separately below until the backend is stable enough to make vet hard.
         if let Ok(fixed) = crate::tool::lint_generated_code(crate::codegen::Target::Go, &output) {
             output = fixed;
         }
@@ -255,6 +279,31 @@ fn exempla_go_e2e() {
                 reason: format!("cannot write go output: {err}"),
             });
             continue;
+        }
+
+        let go_vet = Command::new("go")
+            .arg("vet")
+            .arg("main.go")
+            .current_dir(&temp_root)
+            .output();
+
+        match go_vet {
+            Ok(go_vet) if !go_vet.status.success() => {
+                let stderr = String::from_utf8_lossy(&go_vet.stderr).trim().to_owned();
+                let stdout = String::from_utf8_lossy(&go_vet.stdout).trim().to_owned();
+                let reason = if stderr.is_empty() {
+                    stdout
+                } else if stdout.is_empty() {
+                    stderr
+                } else {
+                    format!("{stderr}\n{stdout}")
+                };
+                vet_findings.push(E2eFinding { path: file.clone(), reason: format!("go vet failed: {reason}") });
+            }
+            Ok(_) => {}
+            Err(err) => {
+                vet_findings.push(E2eFinding { path: file.clone(), reason: format!("cannot execute go vet: {err}") });
+            }
         }
 
         let go_run = Command::new("go")
@@ -303,13 +352,29 @@ fn exempla_go_e2e() {
     for fail in results.iter().filter(|r| !r.passed) {
         eprintln!("[fail] {} :: {}", fail.path.display(), fail.reason);
     }
+    for finding in &vet_findings {
+        eprintln!("[vet] {} :: {}", finding.path.display(), finding.reason);
+    }
 
-    let salve_ok = results
+    let unexpected_failures = results
         .iter()
-        .find(|r| r.path.ends_with("salve-munde.fab"))
-        .map(|r| r.passed)
-        .unwrap_or(false);
-    assert!(salve_ok, "salve-munde.fab should pass end-to-end on Go");
+        .filter(|r| !r.passed && !is_expected_failure(&r.path, GO_EXPECTED_FAILURES))
+        .collect::<Vec<_>>();
+    let unexpected_passes = results
+        .iter()
+        .filter(|r| r.passed && is_expected_failure(&r.path, GO_EXPECTED_FAILURES))
+        .collect::<Vec<_>>();
+
+    assert!(
+        unexpected_failures.is_empty(),
+        "unexpected Go e2e failures: {}",
+        format_result_paths(&unexpected_failures)
+    );
+    assert!(
+        unexpected_passes.is_empty(),
+        "Go e2e expected failures now pass and should be removed from metadata: {}",
+        format_result_paths(&unexpected_passes)
+    );
 }
 
 #[test]
