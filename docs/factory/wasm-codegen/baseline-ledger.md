@@ -247,3 +247,74 @@ Select a control-flow Wasm emission phase. Branch terminators now block several
 already-MIR-lowered exemplars (`custodi`, `functio/recursio`, and `si/*`).
 Keep text diagnostics separate: branch support should improve primitive control
 flow without pretending string output is solved.
+
+## Phase 004 Update: Primitive Control-Flow Wasm Emission
+
+**Commit target**: Phase 004  
+**Change**: the Wasm text probe now emits primitive multi-block functions with
+an explicit dispatch loop over MIR block IDs. `branch`, `goto`, `return`, and
+`unreachable` terminators are supported for the primitive scalar subset without
+changing MIR or bypassing typed HIR -> MIR.
+
+### Tier Counts After Phase 004
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 32/101
+  Wasm emitted: 3/101
+  compile-valid: 3/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Exemplars
+
+- `examples/exempla/aut/aut.fab`
+- `examples/exempla/et/et.fab`
+- `examples/exempla/functio/recursio.fab`
+
+All three validate with `wasm-tools validate`. Instantiate and run tiers remain
+at zero because `wasmtime` is unavailable on PATH; that is reported by the
+harness as a skipped host tier, not as a compiler failure.
+
+### Result
+
+The Phase 003 primitive compile-valid exemplars remain valid, and one
+branch-heavy numeric exemplar now advances through compile-valid Wasm. This is
+still a small measured gain, not a broad success claim.
+
+### Remaining Wasm-Emission Clusters
+
+- Unary primitive values now block nearby numeric examples such as
+  `custodi/custodi.fab`.
+- Text/string constants and `textus` values remain unsupported.
+- Aggregate and enum/struct/array construction remains unsupported.
+- Runtime diagnostics with text arguments remain unsupported.
+- Switch, try-call, return-error, runtime-managed values, nullable values, and
+  dynamic values remain unsupported by design in this primitive subset.
+
+### Remaining MIR-Lowering Clusters
+
+The established MIR-lowering clusters remain: iterator/range lowering,
+switch/pattern lowering, assertion intrinsics, method/runtime gaps, compound
+assignment/operator gaps, aggregate/optional validation gaps, and top-level
+consts.
+
+### Phase 004 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed, including WAT validation
+  in focused Wasm tests when `wasm-tools` is available.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select a unary primitive Wasm emission phase. That should cover numeric
+negation and boolean not in the same fail-closed scalar model, and should be
+validated by checking whether `custodi/custodi.fab` can advance past the current
+`unary value` emission blocker.

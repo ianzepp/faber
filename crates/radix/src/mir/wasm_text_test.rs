@@ -73,6 +73,54 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_branch_dispatch_for_numeric_functions() {
+    let source = r#"
+functio clamp(numerus value, numerus min, numerus max) → numerus {
+    si value < min {
+        redde min
+    }
+    si value > max {
+        redde max
+    }
+    redde value
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(local $__block i32)"));
+    assert!(output.contains("(loop $__dispatch"));
+    assert!(output.contains("(i64.lt_s (local.get $l0) (local.get $l1))"));
+    assert!(output.contains("(i64.gt_s (local.get $l0) (local.get $l2))"));
+    assert!(output.contains("(br $__dispatch)"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_emits_recursive_numeric_calls_with_branches() {
+    let source = r#"
+functio factorial(numerus n) → numerus {
+    si n ≤ 1 {
+        redde 1
+    }
+    redde n * factorial(n - 1)
+}
+
+incipit {
+    nota factorial(5)
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(func $factorial (export \"factorial\")"));
+    assert!(output.contains("(i64.le_s (local.get $l0) (i64.const 1))"));
+    assert!(output.contains("(call $factorial (local.get $t2))"));
+    assert!(output.contains("(call $__faber_diag_nota_i64 (local.get $t0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_rejects_unsupported_mir_shapes() {
     let source = r#"
 functio label() → textus {

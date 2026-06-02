@@ -63,6 +63,11 @@ struct DiagnosticImport {
     scalar: WasmScalar,
 }
 
+enum TerminatorMode {
+    SingleBlock,
+    Dispatch,
+}
+
 impl WasmTextProbe<'_> {
     fn emit_program(&self) -> Result<String, MirWasmTextProbeError> {
         let mut writer = CodeWriter::new();
@@ -110,17 +115,57 @@ impl WasmTextProbe<'_> {
         for temp in &function.temps {
             writer.writeln(&format!("  (local ${} {})", temp_name(temp.id), self.wasm_ty(temp.ty)?));
         }
-        for block in &function.blocks {
-            if block.id != MirBlockId(0) {
-                return Err(MirWasmTextProbeError::unsupported("multiple basic blocks"));
-            }
-            for stmt in &block.statements {
-                self.emit_stmt(stmt, &mut context, writer)?;
-            }
-            self.emit_terminator(&block.terminator, &context, writer)?;
+        if function.blocks.len() == 1 && function.blocks[0].id == MirBlockId(0) {
+            self.emit_single_block_function(function, &mut context, writer)?;
+        } else {
+            writer.writeln("  (local $__block i32)");
+            self.emit_dispatch_function(function, &mut context, writer)?;
         }
         writer.dedent();
         writer.writeln(")");
+        Ok(())
+    }
+
+    fn emit_single_block_function(
+        &self,
+        function: &MirFunction,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<(), MirWasmTextProbeError> {
+        let block = &function.blocks[0];
+        for stmt in &block.statements {
+            self.emit_stmt(stmt, context, writer)?;
+        }
+        self.emit_terminator(&block.terminator, context, writer, TerminatorMode::SingleBlock)
+    }
+
+    fn emit_dispatch_function(
+        &self,
+        function: &MirFunction,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<(), MirWasmTextProbeError> {
+        writer.writeln("  (local.set $__block (i32.const 0))");
+        writer.writeln("  (loop $__dispatch");
+        writer.indent();
+        for block in &function.blocks {
+            writer.writeln(&format!("  (if (i32.eq (local.get $__block) (i32.const {}))", block.id.0));
+            writer.indent();
+            writer.writeln("  (then");
+            writer.indent();
+            for stmt in &block.statements {
+                self.emit_stmt(stmt, context, writer)?;
+            }
+            self.emit_terminator(&block.terminator, context, writer, TerminatorMode::Dispatch)?;
+            writer.dedent();
+            writer.writeln("  )");
+            writer.dedent();
+            writer.writeln("  )");
+        }
+        writer.writeln("  (unreachable)");
+        writer.dedent();
+        writer.writeln("  )");
+        writer.writeln("  (unreachable)");
         Ok(())
     }
 
@@ -216,6 +261,7 @@ impl WasmTextProbe<'_> {
         terminator: &MirTerminator,
         context: &FunctionContext,
         writer: &mut CodeWriter,
+        mode: TerminatorMode,
     ) -> Result<(), MirWasmTextProbeError> {
         match &terminator.kind {
             MirTerminatorKind::Return(Some(operand)) => {
@@ -226,8 +272,41 @@ impl WasmTextProbe<'_> {
                 writer.writeln("  (return)");
                 Ok(())
             }
+            MirTerminatorKind::Goto(target) if matches!(mode, TerminatorMode::Dispatch) => {
+                self.emit_dispatch_jump(*target, writer);
+                Ok(())
+            }
+            MirTerminatorKind::Branch { condition, then_block, else_block }
+                if matches!(mode, TerminatorMode::Dispatch) =>
+            {
+                let condition = self.operand_expr(condition, context)?;
+                writer.writeln(&format!("  (if {condition}"));
+                writer.indent();
+                writer.writeln("  (then");
+                writer.indent();
+                self.emit_dispatch_jump(*then_block, writer);
+                writer.dedent();
+                writer.writeln("  )");
+                writer.writeln("  (else");
+                writer.indent();
+                self.emit_dispatch_jump(*else_block, writer);
+                writer.dedent();
+                writer.writeln("  )");
+                writer.dedent();
+                writer.writeln("  )");
+                Ok(())
+            }
+            MirTerminatorKind::Unreachable => {
+                writer.writeln("  (unreachable)");
+                Ok(())
+            }
             other => Err(MirWasmTextProbeError::unsupported(terminator_kind_name(other))),
         }
+    }
+
+    fn emit_dispatch_jump(&self, target: MirBlockId, writer: &mut CodeWriter) {
+        writer.writeln(&format!("  (local.set $__block (i32.const {}))", target.0));
+        writer.writeln("  (br $__dispatch)");
     }
 
     fn operand_expr(&self, operand: &MirOperand, context: &FunctionContext) -> Result<String, MirWasmTextProbeError> {
