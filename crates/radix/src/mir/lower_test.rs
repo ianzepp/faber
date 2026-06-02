@@ -602,9 +602,43 @@ fn lowers_numeric_range_itera_pro_to_loop_cfg() {
 }
 
 #[test]
+fn lowers_array_itera_ex_and_de_to_index_loops() {
+    let ex_dump = dump_source(
+        r#"functio sumArray(numerus[] nums) → numerus {
+  varia numerus total ← 0
+  itera ex nums fixum n {
+    total ← total + n
+  }
+  redde total
+}"#,
+    );
+
+    assert!(ex_dump.contains("runtime collection length(_0)"));
+    assert!(ex_dump.contains("_3 = _0[_2]: ty#1"));
+    assert!(ex_dump.contains("_1 + _3: ty#1"));
+    assert!(!ex_dump.contains("itera collection before iterator MIR lowering"));
+
+    let de_dump = dump_source(
+        r#"functio firstIndex(numerus[] nums) → numerus {
+  itera de nums fixum index {
+    redde index
+  }
+  redde 0
+}"#,
+    );
+
+    assert!(de_dump.contains("runtime collection length(_0)"));
+    assert!(de_dump.contains("_2 = _1: ty#1"));
+    assert!(de_dump.contains("return _2"));
+    assert!(!de_dump.contains("itera collection before iterator MIR lowering"));
+}
+
+#[test]
 fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
     let iter_unit = analyze(
-        "functio iterare(lista<numerus> nums) → numerus { varia numerus total ← 0 itera ex nums fixum n { total ← total + n } redde total }",
+        r#"functio iterare(tabula<textus, numerus> nums) → vacuum {
+            itera de nums fixum key { nota key }
+        }"#,
     );
     let iter_errors = lower_analyzed_unit(&iter_unit).expect_err("itera is deferred");
     assert_eq!(iter_errors.len(), 1);

@@ -307,7 +307,7 @@ impl FunctionBuilder<'_> {
     /// This keeps runtime-call lowering consistent across providers,
     /// diagnostics, formatting, and conversions: `vacuum` calls are statements,
     /// while value calls allocate one destination temp.
-    fn runtime_call_value(
+    pub(super) fn runtime_call_value(
         &mut self,
         intrinsic: MirIntrinsic,
         args: Vec<MirOperand>,

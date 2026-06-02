@@ -1188,3 +1188,96 @@ The largest remaining route to the 70-80% compile-valid target is collection
 iteration or method/runtime lowering. A smaller next phase is compound
 assignment lowering, which should move `assignatio`/`binarius` if Wasm emission
 for the resulting scalar operations is already present.
+
+## Phase 016 Update: Array Iteration Wasm Path
+
+**Commit target**: Phase 016
+**Change**: array-backed `itera ex` and `itera de` now lower through
+target-neutral MIR CFG and emit compile-valid Wasm. Map, set, text, cursor, and
+provider-backed iteration remain explicit iterator/runtime ABI gaps.
+
+### Tier Counts After Phase 016
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 61/101
+  Wasm emitted: 60/101
+  compile-valid: 60/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 55/101 to 60/101. MIR-lowered
+coverage increased from 56/101 to 61/101.
+
+New compile-valid exemplars:
+
+- `examples/exempla/ceteri/ceteri.fab`
+- `examples/exempla/itera/ex.fab`
+- `examples/exempla/itera/in-functione.fab`
+- `examples/exempla/itera/nidificatus.fab`
+- `examples/exempla/sparge/sparge.fab`
+
+`examples/exempla/si/est.fab` still reaches MIR but stops at Wasm emission with
+`MIR-to-WASM unsupported: type Primitive(Ignotum)`.
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+Array collection loops now use existing target-neutral MIR building blocks:
+mutable index locals, collection length runtime intrinsics, numeric comparison,
+branch/goto control flow, and aggregate index projections. `itera ex` binds the
+indexed element; `itera de` binds the numeric index.
+
+No Wasm-specific loop or iterator nodes were added to MIR. Non-array collection
+iteration still fails before codegen with the existing explicit unsupported
+diagnostic.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are map/cursor/provider
+iteration, runtime/provider method calls, compound assignment/operator gaps such
+as `inter`/`intra`, non-literal and enum `discerne`, aggregate/optional
+validation gaps, top-level consts, `ad` provider blocks, closures, and async
+`cede`.
+
+### Remaining Wasm-Emission Clusters
+
+- Dynamic `ignotum` has no Wasm value model yet, surfaced by
+  `examples/exempla/si/est.fab`.
+
+### Remaining Host/Runtime Clusters
+
+- Define map, set, text, cursor, and provider iterator ABI for `itera ex` and
+  `itera de`.
+- Provide real `faber_runtime` import implementations for assertion,
+  conversion, panic, and collection length.
+- Provide real `faber_text` comparison behavior.
+- Define and implement nullable and dynamic value ABIs before claiming
+  instantiate/run behavior.
+- Add a local instantiate/run host before measuring instantiate-valid,
+  runnable, or behavior-checked tiers.
+
+### Phase 016 Validation Log
+
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Compound assignment is a contained next target and should move
+`assignatio/assignatio.fab` and `binarius/binarius.fab` if the resulting scalar
+operations are already covered by Wasm emission. Runtime/provider method
+lowering is larger and likely unlocks more exemplars, but it needs tighter ABI
+policy before implementation.

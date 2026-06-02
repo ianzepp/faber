@@ -36,6 +36,15 @@ struct RangeIteraLowering<'a> {
     span: Span,
 }
 
+struct ArrayIteraLowering<'a> {
+    mode: HirIteraMode,
+    binding: DefId,
+    name: Symbol,
+    iter: &'a HirExpr,
+    body: &'a HirBlock,
+    span: Span,
+}
+
 impl FunctionBuilder<'_> {
     /// Lower `iace` either to the innermost active `cape` handler or to a
     /// function-level alternate return.
@@ -217,11 +226,11 @@ impl FunctionBuilder<'_> {
         Some(MirOperand::Constant(MirConstant::Unit))
     }
 
-    /// Lower the numeric `itera pro` range subset into target-neutral MIR.
+    /// Lower supported `itera` subsets into target-neutral MIR.
     ///
-    /// Collection iteration (`ex`/`de`) still needs a runtime iterator ABI.
-    /// Ranges can use ordinary locals, branches, and gotos without adding
-    /// target-specific MIR.
+    /// Numeric ranges and array-backed collection loops can use ordinary locals,
+    /// branches, gotos, runtime length calls, and index projections. Map, set,
+    /// text, and cursor iteration still need iterator/runtime ABI policy.
     pub(super) fn lower_itera_expr(
         &mut self,
         mode: HirIteraMode,
@@ -237,30 +246,29 @@ impl FunctionBuilder<'_> {
                 .push(MirError::unsupported(expr.span, "itera expression with non-vacuum result"));
             return None;
         }
-        if !matches!(mode, HirIteraMode::Pro) {
-            self.errors
-                .push(MirError::unsupported(expr.span, "itera collection before iterator MIR lowering"));
-            return None;
+        match mode {
+            HirIteraMode::Pro => {
+                let HirExprKind::Intervallum { start, end, step, kind } = &iter.kind else {
+                    self.errors
+                        .push(MirError::unsupported(iter.span, "itera pro source before range MIR lowering"));
+                    return None;
+                };
+
+                self.lower_range_itera(RangeIteraLowering {
+                    binding,
+                    name,
+                    start,
+                    end,
+                    step: step.as_deref(),
+                    kind: *kind,
+                    body,
+                    span: expr.span,
+                });
+            }
+            HirIteraMode::Ex | HirIteraMode::De => {
+                self.lower_array_itera(ArrayIteraLowering { mode, binding, name, iter, body, span: expr.span })?;
+            }
         }
-
-        let HirExprKind::Intervallum { start, end, step, kind } = &iter.kind else {
-            self.errors.push(MirError::unsupported(
-                iter.span,
-                "itera pro source before range MIR lowering",
-            ));
-            return None;
-        };
-
-        self.lower_range_itera(RangeIteraLowering {
-            binding,
-            name,
-            start,
-            end,
-            step: step.as_deref(),
-            kind: *kind,
-            body,
-            span: expr.span,
-        });
         Some(MirOperand::Constant(MirConstant::Unit))
     }
 
@@ -702,11 +710,7 @@ impl FunctionBuilder<'_> {
             range.span,
         );
         self.terminate_current(
-            MirTerminatorKind::Branch {
-                condition: positive_continues,
-                then_block: body_id,
-                else_block: after_id,
-            },
+            MirTerminatorKind::Branch { condition: positive_continues, then_block: body_id, else_block: after_id },
             range.span,
         );
 
@@ -740,11 +744,7 @@ impl FunctionBuilder<'_> {
             range.span,
         );
         self.terminate_current(
-            MirTerminatorKind::Branch {
-                condition: negative_continues,
-                then_block: body_id,
-                else_block: after_id,
-            },
+            MirTerminatorKind::Branch { condition: negative_continues, then_block: body_id, else_block: after_id },
             range.span,
         );
 
@@ -767,6 +767,128 @@ impl FunctionBuilder<'_> {
         self.terminate_current(MirTerminatorKind::Goto(cond_id), range.span);
 
         self.switch_to(after_id);
+    }
+
+    fn lower_array_itera(&mut self, iter: ArrayIteraLowering<'_>) -> Option<()> {
+        let Some(iter_ty) = iter.iter.ty else {
+            self.errors
+                .push(MirError::missing_type(iter.iter.span, "itera collection source"));
+            return None;
+        };
+        let item_ty = match self.normalized_type(iter_ty) {
+            Type::Array(item) => MirType::semantic(*item),
+            _ => {
+                self.errors.push(MirError::unsupported(
+                    iter.iter.span,
+                    "itera collection before iterator MIR lowering",
+                ));
+                return None;
+            }
+        };
+
+        let numerus = MirType::semantic(self.types.primitive(Primitive::Numerus));
+        let bivalens = MirType::semantic(self.types.primitive(Primitive::Bivalens));
+        let collection_ty = MirType::semantic(iter_ty);
+        let collection = self.lower_expr_value(iter.iter)?;
+        let collection = self.materialize_operand_place(collection, collection_ty, iter.iter.span);
+
+        let index = self.next_local_id();
+        self.locals
+            .push(MirLocalDecl { id: index, name: None, ty: numerus, mutable: true, span: iter.span });
+        self.assign(
+            MirPlace::local(index),
+            MirOperand::Constant(MirConstant::Int(0)),
+            numerus,
+            iter.span,
+        );
+
+        let length = self.runtime_call_value(
+            MirIntrinsic::Collection(MirCollectionOp::Length),
+            vec![MirOperand::Place(collection.clone())],
+            numerus,
+            iter.span,
+        );
+        if !self.current_is_open() {
+            return None;
+        }
+
+        let binding_ty = if matches!(iter.mode, HirIteraMode::De) {
+            numerus
+        } else {
+            item_ty
+        };
+        let binding = self.next_local_id();
+        self.locals.push(MirLocalDecl {
+            id: binding,
+            name: Some(iter.name),
+            ty: binding_ty,
+            mutable: true,
+            span: iter.span,
+        });
+        self.bindings
+            .insert(iter.binding, LocalBinding { local: binding, ty: binding_ty });
+
+        let cond_id = self.fresh_block(iter.span);
+        let body_id = self.fresh_block(iter.body.span);
+        let increment_id = self.fresh_block(iter.span);
+        let after_id = self.fresh_block(iter.span);
+        self.terminate_current(MirTerminatorKind::Goto(cond_id), iter.span);
+
+        self.switch_to(cond_id);
+        let condition = self.binary_temp(
+            MirBinOp::Lt,
+            MirOperand::Place(MirPlace::local(index)),
+            length,
+            bivalens,
+            iter.span,
+        );
+        self.terminate_current(
+            MirTerminatorKind::Branch { condition, then_block: body_id, else_block: after_id },
+            iter.span,
+        );
+
+        self.switch_to(body_id);
+        let value = if matches!(iter.mode, HirIteraMode::De) {
+            MirOperand::Place(MirPlace::local(index))
+        } else {
+            let mut item_place = collection;
+            item_place
+                .projections
+                .push(MirProjection::Index(MirOperand::Place(MirPlace::local(index))));
+            MirOperand::Place(item_place)
+        };
+        self.assign(MirPlace::local(binding), value, binding_ty, iter.span);
+        self.loops
+            .push(LoopContext { perge_target: increment_id, rumpe_target: after_id });
+        self.visit_block(iter.body);
+        self.loops.pop();
+        self.terminate_open_current(MirTerminatorKind::Goto(increment_id), iter.span);
+
+        self.switch_to(increment_id);
+        let next = self.binary_temp(
+            MirBinOp::Add,
+            MirOperand::Place(MirPlace::local(index)),
+            MirOperand::Constant(MirConstant::Int(1)),
+            numerus,
+            iter.span,
+        );
+        self.assign(MirPlace::local(index), next, numerus, iter.span);
+        self.terminate_current(MirTerminatorKind::Goto(cond_id), iter.span);
+
+        self.switch_to(after_id);
+        Some(())
+    }
+
+    fn materialize_operand_place(&mut self, operand: MirOperand, ty: MirType, span: Span) -> MirPlace {
+        match operand {
+            MirOperand::Place(place) => place,
+            MirOperand::Temp(temp) => MirPlace::temp(temp),
+            other => {
+                let temp = self.push_temp(ty, span);
+                self.assign(MirPlace::temp(temp), other, ty, span);
+                MirPlace::temp(temp)
+            }
+        }
     }
 
     fn lower_default_range_step(
@@ -815,14 +937,7 @@ impl FunctionBuilder<'_> {
         self.terminate_current(MirTerminatorKind::Goto(cond_id), span);
     }
 
-    fn binary_temp(
-        &mut self,
-        op: MirBinOp,
-        lhs: MirOperand,
-        rhs: MirOperand,
-        ty: MirType,
-        span: Span,
-    ) -> MirOperand {
+    fn binary_temp(&mut self, op: MirBinOp, lhs: MirOperand, rhs: MirOperand, ty: MirType, span: Span) -> MirOperand {
         self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, span)
     }
 
