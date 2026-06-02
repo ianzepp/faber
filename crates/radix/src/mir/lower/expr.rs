@@ -47,6 +47,7 @@ pub(super) trait HirExprLoweringVisitor {
             HirExprKind::Index(object, index) => self.visit_index_expr(object, index, expr),
             HirExprKind::OptionalChain(object, chain) => self.visit_optional_chain_expr(object, chain, expr),
             HirExprKind::NonNull(object, chain) => self.visit_non_null_expr(object, chain, expr),
+            HirExprKind::Vacua => self.visit_vacua_expr(expr),
             HirExprKind::Array(elements) => self.visit_array_expr(elements, expr),
             HirExprKind::Struct(def_id, fields) => self.visit_struct_expr(*def_id, fields, expr),
             HirExprKind::Tuple(items) => self.visit_tuple_expr(items, expr),
@@ -99,6 +100,7 @@ pub(super) trait HirExprLoweringVisitor {
         expr: &HirExpr,
     ) -> Option<MirOperand>;
     fn visit_non_null_expr(&mut self, object: &HirExpr, chain: &HirNonNullKind, expr: &HirExpr) -> Option<MirOperand>;
+    fn visit_vacua_expr(&mut self, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_array_expr(&mut self, elements: &[HirArrayElement], expr: &HirExpr) -> Option<MirOperand>;
     fn visit_struct_expr(&mut self, def_id: DefId, fields: &[(Symbol, HirExpr)], expr: &HirExpr) -> Option<MirOperand>;
     fn visit_tuple_expr(&mut self, items: &[HirExpr], expr: &HirExpr) -> Option<MirOperand>;
@@ -207,6 +209,10 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
 
     fn visit_non_null_expr(&mut self, object: &HirExpr, chain: &HirNonNullKind, expr: &HirExpr) -> Option<MirOperand> {
         self.lower_non_null(object, chain, expr)
+    }
+
+    fn visit_vacua_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
+        self.lower_vacua(expr)
     }
 
     fn visit_array_expr(&mut self, elements: &[HirArrayElement], expr: &HirExpr) -> Option<MirOperand> {

@@ -106,6 +106,24 @@ function f0 -> ty#3 {
 }
 
 #[test]
+fn lowers_vacua_to_empty_collection_aggregates() {
+    let dump = dump_source(
+        r#"functio inanes() → numerus {
+  fixum lista<numerus> numeri ← vacua
+  fixum tabula<textus, numerus> pondera ← vacua
+  fixum copia<textus> nomina ← vacua
+  redde 0
+}"#,
+    );
+
+    assert!(dump.contains("construct array:"));
+    assert!(dump.contains("construct map:"));
+    assert!(dump.contains("construct set:"));
+    assert!(dump.contains("[]"));
+    assert!(dump.contains("{}"));
+}
+
+#[test]
 fn materializes_constant_redde_operands_with_types() {
     let int_dump = dump_source("functio unum() → numerus { redde 1 }");
     assert_eq!(

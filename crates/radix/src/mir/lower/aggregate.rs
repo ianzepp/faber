@@ -18,6 +18,44 @@
 use super::*;
 
 impl FunctionBuilder<'_> {
+    /// Lower `vacua` into the empty aggregate form selected by its typed
+    /// collection context.
+    pub(super) fn lower_vacua(&mut self, expr: &HirExpr) -> Option<MirOperand> {
+        let Some(type_id) = expr.ty else {
+            self.errors
+                .push(MirError::missing_type(expr.span, "vacua expression"));
+            return None;
+        };
+        let ty = MirType::semantic(type_id);
+        match self.normalized_type(type_id) {
+            Type::Array(_) => Some(self.construct_temp(
+                MirAggregateKind::Array,
+                MirAggregateFields::Ordered(Vec::new()),
+                ty,
+                expr.span,
+            )),
+            Type::Map(_, _) => Some(self.construct_temp(
+                MirAggregateKind::Map,
+                MirAggregateFields::Keyed(Vec::new()),
+                ty,
+                expr.span,
+            )),
+            Type::Set(_) => Some(self.construct_temp(
+                MirAggregateKind::Set,
+                MirAggregateFields::Ordered(Vec::new()),
+                ty,
+                expr.span,
+            )),
+            _ => {
+                self.errors.push(MirError::unsupported(
+                    expr.span,
+                    "vacua without collection type before aggregate MIR lowering",
+                ));
+                None
+            }
+        }
+    }
+
     /// Lower a tuple literal into an ordered MIR aggregate temp.
     pub(super) fn lower_tuple(&mut self, items: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut fields = Vec::with_capacity(items.len());

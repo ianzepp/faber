@@ -1471,3 +1471,103 @@ The only remaining Wasm-emission blocker in the current harness is dynamic
 lowering clusters such as runtime/provider method calls, map/cursor iteration,
 and non-literal `discerne`, but those need more policy than the small scalar
 emission phases.
+
+## Phase 019 Update: `vacua` MIR Lowering
+
+**Commit target**: Phase 019
+**Change**: typed `vacua` expressions now lower through target-neutral MIR as
+empty array, map, or set aggregate construction. This removes a generic
+primitive-expression MIR stop without adding Wasm-only collection shortcuts.
+
+### Tier Counts After Phase 019
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 64/101
+  Wasm emitted: 63/101
+  compile-valid: 63/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 62/101 to 63/101. MIR-lowered
+coverage increased from 63/101 to 64/101, and Wasm-emitted coverage increased
+from 62/101 to 63/101.
+
+New compile-valid exemplar:
+
+- `examples/exempla/lista/lista.fab`
+
+`examples/exempla/innatum/innatum.fab` no longer reports `vacua` as a primitive
+MIR expression, but still stops at runtime/provider method-call MIR lowering.
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This is still a skipped host/runtime tier, not a compiler, codegen, or
+validator failure.
+
+### Result
+
+The MIR lowering path now preserves the semantic type of `vacua` and emits an
+ordinary `Construct` statement:
+
+- `lista<T>` -> empty `MirAggregateKind::Array` with ordered fields.
+- `tabula<K, V>` -> empty `MirAggregateKind::Map` with keyed fields.
+- `copia<T>` -> empty `MirAggregateKind::Set` with ordered fields.
+
+Alias normalization follows the existing MIR type helper. Unsupported
+non-collection `vacua` shapes remain fail-closed with a specific aggregate MIR
+diagnostic.
+
+### Remaining MIR-Lowering Clusters
+
+- Runtime/provider and user-defined method calls.
+- `ad` provider blocks.
+- Async `cede` and cursor iteration.
+- Closures/callable values.
+- Collection iteration for maps/text/cursors.
+- Non-literal and enum `discerne`.
+- Aggregate and optional validation gaps around object/member projections.
+- Remaining operator/top-level declaration gaps such as `inter` and top-level
+  const.
+
+### Remaining Wasm-Emission Clusters
+
+- Dynamic `ignotum` still blocks `examples/exempla/si/est.fab` after MIR.
+- Collection mutation/index/contains intrinsics have MIR shapes but no Wasm host
+  ABI emission yet.
+- Full nullable ABI remains incomplete beyond the narrow handle coalesce subset.
+
+### Remaining Host/Runtime Clusters
+
+- Define map, set, text, cursor, and provider iterator ABI for `itera ex` and
+  `itera de`.
+- Provide real `faber_runtime` import implementations for assertion,
+  conversion, panic, collection length, and future collection operations.
+- Provide real `faber_text` comparison behavior.
+- Add a local instantiate/run host before measuring instantiate-valid,
+  runnable, or behavior-checked tiers.
+
+### Phase 019 Validation Log
+
+- `cargo test -p radix lowers_vacua -- --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+`cargo fmt --check` still reports pre-existing formatting drift in
+`crates/radix/src/mir/lower.rs`; the Phase 019 edits were manually kept in the
+same formatted style without accepting unrelated churn.
+
+### Next Phase Candidate
+
+The highest-value next compile-valid candidates are runtime/provider method
+calls and collection method Wasm host ABI emission. Treat those as separate
+policy phases: method lowering must remain MIR-based, and collection Wasm
+support must define imports honestly before claiming instantiate or runnable
+tiers.
