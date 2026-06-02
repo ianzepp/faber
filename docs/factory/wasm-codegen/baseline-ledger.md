@@ -318,3 +318,74 @@ Select a unary primitive Wasm emission phase. That should cover numeric
 negation and boolean not in the same fail-closed scalar model, and should be
 validated by checking whether `custodi/custodi.fab` can advance past the current
 `unary value` emission blocker.
+
+## Phase 005 Update: Primitive Unary Wasm Emission
+
+**Commit target**: Phase 005  
+**Change**: the Wasm text probe now emits scalar MIR unary values for numeric
+negation, boolean not, and numeric bitwise not. Nullable predicates and
+runtime-managed unary values remain explicitly unsupported.
+
+### Tier Counts After Phase 005
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 32/101
+  Wasm emitted: 4/101
+  compile-valid: 4/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Exemplars
+
+- `examples/exempla/aut/aut.fab`
+- `examples/exempla/custodi/custodi.fab`
+- `examples/exempla/et/et.fab`
+- `examples/exempla/functio/recursio.fab`
+
+All four validate with `wasm-tools validate`. Instantiate and run tiers remain
+at zero because `wasmtime` is unavailable on PATH; this remains a skipped host
+tier rather than a compiler or codegen failure.
+
+### Result
+
+`custodi/custodi.fab` advanced from Wasm emission failure to compile-valid
+after numeric negation support. This raises measured compile-valid coverage from
+3/101 to 4/101. `unarius/unarius.fab` still stops before MIR because several
+predicate-style unary forms do not yet lower to MIR primitives, so it is not
+counted as a Wasm-codegen miss.
+
+### Remaining Wasm-Emission Clusters
+
+- Text/string constants and `textus` values remain unsupported.
+- Aggregate and enum/struct/array construction remains unsupported.
+- Runtime diagnostics with text arguments remain unsupported.
+- Switch, try-call, return-error, runtime-managed values, nullable values, and
+  dynamic values remain unsupported by design in this primitive subset.
+
+### Remaining MIR-Lowering Clusters
+
+The established MIR-lowering clusters remain: iterator/range lowering,
+switch/pattern lowering, assertion intrinsics, method/runtime gaps, compound
+assignment/operator gaps, predicate unary gaps, aggregate/optional validation
+gaps, and top-level consts.
+
+### Phase 005 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed, including WAT validation
+  in focused Wasm tests when `wasm-tools` is available.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select the next measured blocker from the harness rather than jumping to a
+percentage claim. The largest visible Wasm-emission cluster is still
+text/string representation and diagnostics, while several other exemplars are
+blocked earlier in MIR lowering.

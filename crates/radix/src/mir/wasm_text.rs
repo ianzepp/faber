@@ -230,7 +230,13 @@ impl WasmTextProbe<'_> {
                 writer.writeln(&format!("  ;; v{} = {expr}", value.id.0));
                 Ok(expr)
             }
-            MirValueKind::Unary { .. } => Err(MirWasmTextProbeError::unsupported("unary value")),
+            MirValueKind::Unary { op, operand } => {
+                let operand_expr = self.operand_expr(operand, context)?;
+                let operand_ty = self.operand_ty(operand, context)?;
+                let expr = wasm_un_op(*op, operand_ty, &operand_expr)?;
+                writer.writeln(&format!("  ;; v{} = {expr}", value.id.0));
+                Ok(expr)
+            }
             MirValueKind::Option(_) => Err(MirWasmTextProbeError::unsupported("option value")),
         }
     }
@@ -541,6 +547,15 @@ fn wasm_bin_op(op: MirBinOp, lhs_ty: WasmScalar) -> Result<&'static str, MirWasm
         MirBinOp::And => Ok("i32.and"),
         MirBinOp::Or => Ok("i32.or"),
         _ => Err(MirWasmTextProbeError::unsupported(format!("binary op {op:?}"))),
+    }
+}
+
+fn wasm_un_op(op: MirUnOp, operand_ty: WasmScalar, operand: &str) -> Result<String, MirWasmTextProbeError> {
+    match (op, operand_ty) {
+        (MirUnOp::Neg, WasmScalar::I64) => Ok(format!("(i64.sub (i64.const 0) {operand})")),
+        (MirUnOp::Not, WasmScalar::I32) => Ok(format!("(i32.eqz {operand})")),
+        (MirUnOp::BitNot, WasmScalar::I64) => Ok(format!("(i64.xor {operand} (i64.const -1))")),
+        _ => Err(MirWasmTextProbeError::unsupported(format!("unary op {op:?}"))),
     }
 }
 

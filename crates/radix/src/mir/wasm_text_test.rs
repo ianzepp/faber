@@ -73,6 +73,30 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_primitive_unary_values() {
+    let source = r#"
+functio negative(numerus n) → numerus {
+    redde -n
+}
+
+functio flipped(bivalens flag) → bivalens {
+    redde non flag
+}
+
+incipit {
+    nota negative(5)
+    nota flipped(verum)
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(i64.sub (i64.const 0) (local.get $l0))"));
+    assert!(output.contains("(i32.eqz (local.get $l0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_branch_dispatch_for_numeric_functions() {
     let source = r#"
 functio clamp(numerus value, numerus min, numerus max) → numerus {
