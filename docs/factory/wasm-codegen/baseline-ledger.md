@@ -1376,3 +1376,98 @@ A focused option-value compile-valid MVP could move `binarius.fab`, but it must
 not claim runtime nullable semantics. Runtime/provider method lowering remains
 the larger coverage cluster and likely unlocks more exemplars, but it requires
 clear ABI policy before implementation.
+
+## Phase 018 Update: Option Coalesce And Bitwise Wasm Emission
+
+**Commit target**: Phase 018
+**Change**: handle-level option coalesce and integer bitwise MIR binary
+operations now emit compile-valid Wasm. This closes the `binarius.fab`
+Wasm-emission path without claiming full nullable runtime semantics.
+
+### Tier Counts After Phase 018
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 63/101
+  Wasm emitted: 62/101
+  compile-valid: 62/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 61/101 to 62/101. Wasm-emitted
+coverage increased from 61/101 to 62/101. MIR-lowered coverage stayed at
+63/101.
+
+New compile-valid exemplar:
+
+- `examples/exempla/binarius/binarius.fab`
+
+`examples/exempla/si/est.fab` still reaches MIR but stops at Wasm emission with
+`MIR-to-WASM unsupported: type Primitive(Ignotum)`.
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+Nullable text coalesce now emits a raw-handle `select`, using `0` as the nil
+handle and only when nullable value, fallback, and result share the same Wasm
+carrier. Other option operations remain explicit unsupported shapes.
+
+Integer bitwise operations now map to `i64.and`, `i64.or`, `i64.xor`,
+`i64.shl`, and signed `i64.shr_s`.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are map/cursor/provider
+iteration, runtime/provider method calls, remaining operator gaps such as
+`inter`/`intra`, non-literal and enum `discerne`, aggregate/optional validation
+gaps, top-level consts, `ad` provider blocks, closures, and async `cede`.
+
+### Remaining Wasm-Emission Clusters
+
+- Dynamic `ignotum` has no Wasm value model yet, surfaced by
+  `examples/exempla/si/est.fab`.
+- Full nullable ABI is still incomplete for `Some`, unwrap, optional chains, and
+  mixed-carrier nullable primitive values.
+
+### Remaining Host/Runtime Clusters
+
+- Define map, set, text, cursor, and provider iterator ABI for `itera ex` and
+  `itera de`.
+- Provide real `faber_runtime` import implementations for assertion,
+  conversion, panic, and collection length.
+- Provide real `faber_text` comparison behavior.
+- Define and implement nullable and dynamic value ABIs before claiming
+  instantiate/run behavior.
+- Add a local instantiate/run host before measuring instantiate-valid,
+  runnable, or behavior-checked tiers.
+
+### Phase 018 Validation Log
+
+- `cargo test -p radix wasm_target_emits_integer_bitwise_ops -- --nocapture`: passed.
+- `cargo test -p radix wasm_target_emits_option_coalesce_for_nullable_handles -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+An initial combined focused-test command used an invalid Cargo filter form and
+failed before running tests. The individual focused filters and full
+Wasm-focused suite passed.
+
+### Next Phase Candidate
+
+The only remaining Wasm-emission blocker in the current harness is dynamic
+`ignotum` in `si/est.fab`. Larger compile-valid gains are more likely from MIR
+lowering clusters such as runtime/provider method calls, map/cursor iteration,
+and non-literal `discerne`, but those need more policy than the small scalar
+emission phases.

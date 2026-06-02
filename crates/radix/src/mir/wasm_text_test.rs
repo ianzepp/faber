@@ -76,6 +76,30 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_integer_bitwise_ops() {
+    let source = r#"
+incipit {
+    fixum _ flags ← 10
+    fixum _ mask ← 12
+    nota flags ∧ mask
+    nota flags ∨ mask
+    nota flags ⊻ mask
+    nota 1 ≪ 4
+    nota 16 ≫ 2
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(i64.and (local.get $l0) (local.get $l1))"));
+    assert!(output.contains("(i64.or (local.get $l0) (local.get $l1))"));
+    assert!(output.contains("(i64.xor (local.get $l0) (local.get $l1))"));
+    assert!(output.contains("(i64.shl (i64.const 1) (i64.const 4))"));
+    assert!(output.contains("(i64.shr_s (i64.const 16) (i64.const 2))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_text_handles_and_text_diagnostics() {
     let source = r#"
 functio label() → textus {
@@ -167,6 +191,26 @@ functio checks(numerus n, fractus f, bivalens flag, textus ∪ nihil maybe) → 
     assert!(output.contains("(i32.eq (local.get $l2) (i32.const 1))"));
     assert!(output.contains("(i32.eq (local.get $l2) (i32.const 0))"));
     assert!(output.contains("(i32.eqz (local.get $l3))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_emits_option_coalesce_for_nullable_handles() {
+    let source = r#"
+incipit {
+    fixum textus ∪ nihil maybe ← nihil
+    fixum _ resolved ← maybe vel "fallback"
+    nota resolved
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(local $l0 i32)"));
+    assert!(output.contains("(local.set $l0 (i32.const 0))"));
+    assert!(output.contains("(select (local.get $l0) (i32.const"));
+    assert!(output.contains("(i32.ne (local.get $l0) (i32.const 0))"));
+    assert!(output.contains("(call $__faber_diag_nota_text (local.get $l1))"));
     validate_wat_if_available(&output);
 }
 

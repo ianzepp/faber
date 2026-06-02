@@ -452,7 +452,39 @@ impl WasmTextProbe<'_> {
                 writer.writeln(&format!("  ;; v{} = {expr}", value.id.0));
                 Ok(expr)
             }
-            MirValueKind::Option(_) => Err(MirWasmTextProbeError::unsupported("option value")),
+            MirValueKind::Option(op) => self.option_expr(op, value.ty, context, writer),
+        }
+    }
+
+    fn option_expr(
+        &self,
+        op: &MirOptionOp,
+        result_ty: MirType,
+        context: &FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<String, MirWasmTextProbeError> {
+        match op {
+            MirOptionOp::Coalesce { value, fallback } => {
+                let value_expr = self.operand_expr(value, context)?;
+                let fallback_expr = self.operand_expr(fallback, context)?;
+                let value_ty = self.operand_ty(value, context)?;
+                let fallback_ty = self.operand_ty(fallback, context)?;
+                let result_ty = self.scalar_ty(result_ty)?;
+                let raw_ty = value_ty.wat();
+                if fallback_ty.wat() != raw_ty || result_ty.wat() != raw_ty {
+                    return Err(MirWasmTextProbeError::unsupported("option coalesce mixed wasm carriers"));
+                }
+                let expr = format!("(select {value_expr} {fallback_expr} (i32.ne {value_expr} (i32.const 0)))");
+                writer.writeln(&format!("  ;; option coalesce = {expr}"));
+                Ok(expr)
+            }
+            MirOptionOp::None => Err(MirWasmTextProbeError::unsupported("option none value")),
+            MirOptionOp::Some(_) => Err(MirWasmTextProbeError::unsupported("option some value")),
+            MirOptionOp::IsNil(_) | MirOptionOp::IsNonNil(_) => {
+                Err(MirWasmTextProbeError::unsupported("option test value"))
+            }
+            MirOptionOp::Unwrap { .. } => Err(MirWasmTextProbeError::unsupported("option unwrap value")),
+            MirOptionOp::Chain { .. } => Err(MirWasmTextProbeError::unsupported("option chain value")),
         }
     }
 
@@ -1257,7 +1289,29 @@ impl WasmTextProbe<'_> {
                 self.collect_operand_projection_imports(rhs, context, imports)
             }
             MirValueKind::Unary { operand, .. } => self.collect_operand_projection_imports(operand, context, imports),
-            MirValueKind::Option(_) => Ok(()),
+            MirValueKind::Option(op) => self.collect_option_projection_imports(op, context, imports),
+        }
+    }
+
+    fn collect_option_projection_imports(
+        &self,
+        op: &MirOptionOp,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        match op {
+            MirOptionOp::Coalesce { value, fallback } => {
+                self.collect_operand_projection_imports(value, context, imports)?;
+                self.collect_operand_projection_imports(fallback, context, imports)
+            }
+            MirOptionOp::Some(value)
+            | MirOptionOp::IsNil(value)
+            | MirOptionOp::IsNonNil(value)
+            | MirOptionOp::Unwrap { value, .. }
+            | MirOptionOp::Chain { base: value, .. } => {
+                self.collect_operand_projection_imports(value, context, imports)
+            }
+            MirOptionOp::None => Ok(()),
         }
     }
 
@@ -1359,6 +1413,11 @@ fn wasm_bin_op(op: MirBinOp, lhs_ty: WasmValue) -> Result<&'static str, MirWasmT
         MirBinOp::NotEq if lhs_ty == WasmValue::I32 => Ok("i32.ne"),
         MirBinOp::And => Ok("i32.and"),
         MirBinOp::Or => Ok("i32.or"),
+        MirBinOp::BitAnd if lhs_ty == WasmValue::I64 => Ok("i64.and"),
+        MirBinOp::BitOr if lhs_ty == WasmValue::I64 => Ok("i64.or"),
+        MirBinOp::BitXor if lhs_ty == WasmValue::I64 => Ok("i64.xor"),
+        MirBinOp::Shl if lhs_ty == WasmValue::I64 => Ok("i64.shl"),
+        MirBinOp::Shr if lhs_ty == WasmValue::I64 => Ok("i64.shr_s"),
         _ => Err(MirWasmTextProbeError::unsupported(format!("binary op {op:?}"))),
     }
 }
