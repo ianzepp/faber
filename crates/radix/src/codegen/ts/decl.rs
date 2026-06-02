@@ -69,6 +69,7 @@ pub fn generate_function(
 /// object-layout validity to earlier semantic passes.
 pub fn generate_class(
     codegen: &TsCodegen<'_>,
+    struct_def: DefId,
     strukt: &HirStruct,
     types: &TypeTable,
     w: &mut CodeWriter,
@@ -100,6 +101,9 @@ pub fn generate_class(
                 w.write("static ");
             }
             w.write(codegen.resolve_symbol(field.name));
+            if field.init.is_none() {
+                w.write("!");
+            }
             w.write(": ");
             w.write(&type_to_ts(codegen, field.ty, types));
             if let Some(init) = &field.init {
@@ -113,9 +117,6 @@ pub fn generate_class(
             if result.is_err() {
                 return;
             }
-            if matches!(method.receiver, HirReceiver::None) {
-                w.write("static ");
-            }
             if method.func.is_async {
                 w.write("async ");
             }
@@ -128,7 +129,10 @@ pub fn generate_class(
             }
             if let Some(body) = &method.func.body {
                 w.write(" ");
+                let previous_self = codegen.replace_current_self_def(Some(struct_def));
                 result = generate_block(codegen, body, types, w);
+                codegen.replace_current_self_def(previous_self);
+                w.newline();
             } else {
                 w.writeln(";");
             }

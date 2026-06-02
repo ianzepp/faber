@@ -224,3 +224,68 @@ The highest-value next cluster is declarations and calls for `genus`, methods,
 constructors, and interface implementation. It affects the largest number of
 typecheck failures and should improve representative `genus`, `finge`-adjacent,
 `pactum`, and method-call exemplars without changing the harness boundary.
+
+## Phase 2 Update: Genus Instance Methods
+
+**Phase Artifact**: `docs/factory/ts-codegen/phase-2-genus-methods-delivery.md`
+
+Phase 2 changed TypeScript genus lowering so ordinary methods are emitted as
+instance methods, `ego` lowers to `this` inside method bodies, uninitialized
+class fields use definite-assignment declarations, and struct-target
+construction emits `Object.assign(new Type(), { ... })` so generated instances
+retain prototype methods and field defaults.
+
+Representative improvements:
+
+- `examples/exempla/genus/methodi.fab` now passes strict `tsc`.
+- `examples/exempla/implet/implet.fab` now passes strict `tsc`.
+
+Updated harness result:
+
+```text
+TypeScript e2e exempla:
+  frontend analyzed: 101/101
+  TypeScript emitted: 100/101
+  formatted: 0/101 (skipped: no prettier or deno)
+  linted: 0/101 (skipped: no biome or eslint)
+  typecheck-valid: 76/101
+  runnable: 75/101
+  behavior-checked: 1/101
+```
+
+Remaining failure clusters after Phase 2:
+
+- Unsupported TypeScript target shape: `ad/ad.fab`.
+- Strict literal narrowing: `adfirma/adfirma.fab`, `binarius/binarius.fab`.
+- Async/cursor lowering: `cede/cede.fab`, `futura/futura.fab`,
+  `incipiet/incipiet.fab`, `itera/cursor-iteratio.fab`,
+  `syntaxis/fluxus-cede.fab`.
+- Tagged union and pattern constructors: `discerne/discerne.fab`,
+  `discretio/discretio.fab`, `finge/finge.fab`, `omnia/omnia.fab`,
+  `ordo/ordo.fab`, `syntaxis/discerne-insanum.fab`.
+- Optional parameter/nullability shape: `functio/optionalis.fab`.
+- Collections and stdlib translations: `innatum/innatum.fab`,
+  `morphologia/morphologia.fab`.
+- Expression-valued control flow: `elige/ergo-redde.fab`,
+  `si/ergo-redde.fab`, plus overlap with async/cursor and pattern matching.
+- Break/continue across generated closures: `perge/perge.fab`,
+  `rumpe/rumpe.fab`.
+- Target-specific type mismatches or deliberate diagnostics still needing
+  triage: `membrum/membrum.fab`, `mori/mori.fab`, `sub/sub.fab`,
+  `vocatio/vocatio.fab`.
+- Runtime-only failure after typecheck: `functio/recursio.fab`.
+
+Phase 2 validation evidence:
+
+- `cargo test -p radix codegen::ts -- --nocapture`: passed, 12 tests.
+- Direct strict `tsc` for emitted `examples/exempla/genus/methodi.fab`: passed.
+- Direct strict `tsc` for emitted `examples/exempla/implet/implet.fab`: passed.
+- `cargo test -p radix exempla_ts_e2e -- --ignored --nocapture`: passed, with
+  the updated tier counts above.
+- `cargo test -p radix`: passed, 488 regular tests, 4 ignored tests, hygiene
+  tests, and doctests.
+- `./scripta/lint`: passed.
+
+The successful coverage threshold is now met. Continue only if the next cluster
+is small and high-value; otherwise this is a valid handoff point for the
+TypeScript factory run.
