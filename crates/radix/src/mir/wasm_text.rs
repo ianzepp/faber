@@ -55,6 +55,7 @@ struct FunctionContext {
 enum WasmValue {
     I32,
     I64,
+    F64,
     TextHandle,
 }
 
@@ -386,6 +387,7 @@ impl WasmTextProbe<'_> {
                 .copied()
                 .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined value v{}", id.0))),
             MirOperand::Constant(MirConstant::Int(_)) => Ok(WasmValue::I64),
+            MirOperand::Constant(MirConstant::Float(_)) => Ok(WasmValue::F64),
             MirOperand::Constant(MirConstant::Bool(_)) => Ok(WasmValue::I32),
             MirOperand::Constant(MirConstant::String(_)) => Ok(WasmValue::TextHandle),
             MirOperand::Constant(other) => Err(MirWasmTextProbeError::unsupported(format!("constant {other:?}"))),
@@ -418,10 +420,10 @@ impl WasmTextProbe<'_> {
     fn constant_expr(&self, constant: &MirConstant) -> Result<String, MirWasmTextProbeError> {
         match constant {
             MirConstant::Int(value) => Ok(format!("(i64.const {value})")),
+            MirConstant::Float(value) => Ok(format!("(f64.const {value:?})")),
             MirConstant::Bool(value) => Ok(format!("(i32.const {})", if *value { 1 } else { 0 })),
             MirConstant::String(symbol) => Ok(format!("(i32.const {})", symbol.0)),
             MirConstant::Unit => Ok("(i32.const 0)".to_owned()),
-            MirConstant::Float(_) => Err(MirWasmTextProbeError::unsupported("float constant")),
             MirConstant::Nil => Err(MirWasmTextProbeError::unsupported("nil constant")),
         }
     }
@@ -467,6 +469,7 @@ impl WasmTextProbe<'_> {
     fn scalar_ty(&self, ty: MirType) -> Result<WasmValue, MirWasmTextProbeError> {
         match self.types.get(ty.semantic_id()) {
             Type::Primitive(Primitive::Numerus) => Ok(WasmValue::I64),
+            Type::Primitive(Primitive::Fractus) => Ok(WasmValue::F64),
             Type::Primitive(Primitive::Bivalens) => Ok(WasmValue::I32),
             Type::Primitive(Primitive::Textus) => Ok(WasmValue::TextHandle),
             Type::Alias(_, target) => self.scalar_ty(MirType::semantic(*target)),
@@ -640,12 +643,22 @@ fn wasm_bin_op(op: MirBinOp, lhs_ty: WasmValue) -> Result<&'static str, MirWasmT
         MirBinOp::Mul if lhs_ty == WasmValue::I64 => Ok("i64.mul"),
         MirBinOp::Div if lhs_ty == WasmValue::I64 => Ok("i64.div_s"),
         MirBinOp::Mod if lhs_ty == WasmValue::I64 => Ok("i64.rem_s"),
+        MirBinOp::Add if lhs_ty == WasmValue::F64 => Ok("f64.add"),
+        MirBinOp::Sub if lhs_ty == WasmValue::F64 => Ok("f64.sub"),
+        MirBinOp::Mul if lhs_ty == WasmValue::F64 => Ok("f64.mul"),
+        MirBinOp::Div if lhs_ty == WasmValue::F64 => Ok("f64.div"),
         MirBinOp::Eq if lhs_ty == WasmValue::I64 => Ok("i64.eq"),
         MirBinOp::NotEq if lhs_ty == WasmValue::I64 => Ok("i64.ne"),
         MirBinOp::Lt if lhs_ty == WasmValue::I64 => Ok("i64.lt_s"),
         MirBinOp::Gt if lhs_ty == WasmValue::I64 => Ok("i64.gt_s"),
         MirBinOp::LtEq if lhs_ty == WasmValue::I64 => Ok("i64.le_s"),
         MirBinOp::GtEq if lhs_ty == WasmValue::I64 => Ok("i64.ge_s"),
+        MirBinOp::Eq if lhs_ty == WasmValue::F64 => Ok("f64.eq"),
+        MirBinOp::NotEq if lhs_ty == WasmValue::F64 => Ok("f64.ne"),
+        MirBinOp::Lt if lhs_ty == WasmValue::F64 => Ok("f64.lt"),
+        MirBinOp::Gt if lhs_ty == WasmValue::F64 => Ok("f64.gt"),
+        MirBinOp::LtEq if lhs_ty == WasmValue::F64 => Ok("f64.le"),
+        MirBinOp::GtEq if lhs_ty == WasmValue::F64 => Ok("f64.ge"),
         MirBinOp::Eq if lhs_ty == WasmValue::I32 => Ok("i32.eq"),
         MirBinOp::NotEq if lhs_ty == WasmValue::I32 => Ok("i32.ne"),
         MirBinOp::And => Ok("i32.and"),
@@ -657,6 +670,7 @@ fn wasm_bin_op(op: MirBinOp, lhs_ty: WasmValue) -> Result<&'static str, MirWasmT
 fn wasm_un_op(op: MirUnOp, operand_ty: WasmValue, operand: &str) -> Result<String, MirWasmTextProbeError> {
     match (op, operand_ty) {
         (MirUnOp::Neg, WasmValue::I64) => Ok(format!("(i64.sub (i64.const 0) {operand})")),
+        (MirUnOp::Neg, WasmValue::F64) => Ok(format!("(f64.neg {operand})")),
         (MirUnOp::Not, WasmValue::I32) => Ok(format!("(i32.eqz {operand})")),
         (MirUnOp::BitNot, WasmValue::I64) => Ok(format!("(i64.xor {operand} (i64.const -1))")),
         _ => Err(MirWasmTextProbeError::unsupported(format!("unary op {op:?}"))),
@@ -668,6 +682,7 @@ impl WasmValue {
         match self {
             WasmValue::I32 | WasmValue::TextHandle => "i32",
             WasmValue::I64 => "i64",
+            WasmValue::F64 => "f64",
         }
     }
 
@@ -675,6 +690,7 @@ impl WasmValue {
         match self {
             WasmValue::I32 => "i32",
             WasmValue::I64 => "i64",
+            WasmValue::F64 => "f64",
             WasmValue::TextHandle => "text",
         }
     }
@@ -703,15 +719,19 @@ fn diagnostic_import_name(import: DiagnosticImport) -> &'static str {
     match (import.kind, import.value) {
         (MirDiagnosticKind::Nota, WasmValue::I32) => "nota_i32",
         (MirDiagnosticKind::Nota, WasmValue::I64) => "nota_i64",
+        (MirDiagnosticKind::Nota, WasmValue::F64) => "nota_f64",
         (MirDiagnosticKind::Nota, WasmValue::TextHandle) => "nota_text",
         (MirDiagnosticKind::Vide, WasmValue::I32) => "vide_i32",
         (MirDiagnosticKind::Vide, WasmValue::I64) => "vide_i64",
+        (MirDiagnosticKind::Vide, WasmValue::F64) => "vide_f64",
         (MirDiagnosticKind::Vide, WasmValue::TextHandle) => "vide_text",
         (MirDiagnosticKind::Mone, WasmValue::I32) => "mone_i32",
         (MirDiagnosticKind::Mone, WasmValue::I64) => "mone_i64",
+        (MirDiagnosticKind::Mone, WasmValue::F64) => "mone_f64",
         (MirDiagnosticKind::Mone, WasmValue::TextHandle) => "mone_text",
         (MirDiagnosticKind::Scribe, WasmValue::I32) => "scribe_i32",
         (MirDiagnosticKind::Scribe, WasmValue::I64) => "scribe_i64",
+        (MirDiagnosticKind::Scribe, WasmValue::F64) => "scribe_f64",
         (MirDiagnosticKind::Scribe, WasmValue::TextHandle) => "scribe_text",
     }
 }

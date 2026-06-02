@@ -484,3 +484,72 @@ Select a small scalar expansion phase for `fractus` support. Only two currently
 MIR-lowered exemplars visibly stop on `Primitive(Fractus)`, but this is a clean
 compile-valid Wasm type/value-model extension and should be cheaper than
 starting aggregate layout.
+
+## Phase 007 Update: Fractus Wasm Emission
+
+**Commit target**: Phase 007  
+**Change**: the Wasm text probe now represents `fractus` as Wasm `f64`, emits
+float constants, `f64` arithmetic/comparisons/unary negation, calls, returns,
+locals, parameters, and `*_f64` diagnostic imports.
+
+### Tier Counts After Phase 007
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 32/101
+  Wasm emitted: 26/101
+  compile-valid: 26/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+The following exemplars advanced from MIR-lowered Wasm-emission failure to
+compile-valid:
+
+- `examples/exempla/functio/typicus.fab`
+- `examples/exempla/varia/typicus.fab`
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH and the modules depend on explicit host imports for diagnostics/text.
+
+### Result
+
+Measured compile-valid coverage increased from 24/101 to 26/101. No
+emitted-invalid modules were reported by the harness.
+
+### Remaining Wasm-Emission Clusters
+
+- Aggregate and enum/struct/array construction remains unsupported:
+  `destructura/destructura.fab`, `finge/finge.fab`, `genus/genus.fab`,
+  `novum/novum.fab`, `typus/typus.fab`, and `varia/destructura.fab`.
+- Runtime-managed values beyond text handles remain unsupported, including
+  structs, enums, arrays, nullable values, dynamic values, switch, try-call, and
+  return-error paths.
+
+### Remaining MIR-Lowering Clusters
+
+The established MIR-lowering clusters remain: iterator/range lowering,
+switch/pattern lowering, assertion intrinsics, method/runtime gaps, compound
+assignment/operator gaps, predicate unary gaps, aggregate/optional validation
+gaps, top-level consts, and several diagnostic runtime arity validation gaps.
+
+### Phase 007 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed, including WAT validation
+  for `fractus` values and `nota_f64` diagnostics.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+The remaining MIR-lowered Wasm blockers are now mostly aggregate/runtime-managed
+values. The next small compile-valid phase should either add an opaque handle
+subset for arrays/structs/enums or shift earlier to MIR-lowering clusters if the
+goal is to increase the `MIR lowered` tier first.

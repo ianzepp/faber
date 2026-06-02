@@ -145,6 +145,28 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_fractus_values_and_diagnostics() {
+    let source = r#"
+functio media(fractus a, fractus b) → fractus {
+    redde (a + b) / 2.0
+}
+
+incipit {
+    nota media(3.0, 7.0)
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains(r#"(import "faber_diag" "nota_f64" (func $__faber_diag_nota_f64 (param f64)))"#));
+    assert!(output.contains(r#"(func $media (export "media") (param $l0 f64) (param $l1 f64) (result f64)"#));
+    assert!(output.contains("(f64.add (local.get $l0) (local.get $l1))"));
+    assert!(output.contains("(f64.div (local.get $t0) (f64.const 2.0))"));
+    assert!(output.contains("(call $__faber_diag_nota_f64 (local.get $t0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_branch_dispatch_for_numeric_functions() {
     let source = r#"
 functio clamp(numerus value, numerus min, numerus max) → numerus {
