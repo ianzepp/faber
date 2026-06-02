@@ -442,6 +442,27 @@ functio by_status(textus status) → numerus {
 }
 
 #[test]
+fn wasm_target_emits_numeric_range_itera_pro_dispatch() {
+    let source = r#"
+incipit {
+    itera pro 0‥8 per 2 fixum i {
+        nota i
+    }
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(i64.const 8)"));
+    assert!(output.contains("(i64.const 2)"));
+    assert!(output.contains("(i64.gt_s (local.get $l2) (i64.const 0))"));
+    assert!(output.contains("(i64.lt_s (local.get $l0) (local.get $l1))"));
+    assert!(output.contains("(call $__faber_diag_nota_i64 (local.get $l0))"));
+    assert!(output.contains("(i64.add (local.get $l0) (local.get $l2))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_rejects_unsupported_mir_shapes() {
     let source = r#"
 incipit {

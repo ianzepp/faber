@@ -1098,3 +1098,93 @@ Iterator/range lowering remains the largest cluster and is now the most
 important route toward the 70-80% compile-valid target. A smaller alternative
 is compound assignment lowering, but it is less likely to move as many
 exemplars as iterator support.
+
+## Phase 015 Update: Numeric Range Iteration Wasm Path
+
+**Commit target**: Phase 015
+**Change**: `itera pro` over numeric `Intervallum` sources now lowers through
+target-neutral MIR CFG and emits compile-valid Wasm. Collection iteration is
+still separated behind explicit iterator/runtime ABI diagnostics.
+
+### Tier Counts After Phase 015
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 56/101
+  Wasm emitted: 55/101
+  compile-valid: 55/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 50/101 to 55/101. MIR-lowered
+coverage increased from 51/101 to 56/101.
+
+New compile-valid exemplars:
+
+- `examples/exempla/ante/ante.fab`
+- `examples/exempla/itera/intervallum-gradus.fab`
+- `examples/exempla/itera/intervallum.fab`
+- `examples/exempla/per/per.fab`
+- `examples/exempla/usque/usque.fab`
+
+`examples/exempla/si/est.fab` still reaches MIR but stops at Wasm emission with
+`MIR-to-WASM unsupported: type Primitive(Ignotum)`.
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+The numeric range subset of the iterator cluster is now compile-valid through
+MIR-backed Wasm. The lowering uses ordinary MIR locals, comparisons, branches,
+gotos, and assignments; it does not introduce Wasm-specific MIR nodes.
+
+`perge` targets the synthetic increment block and `rumpe` targets the loop exit
+block. Default range steps are selected with a MIR branch based on the start/end
+direction. Inclusive and exclusive ranges use the corresponding comparison
+operators instead of precomputing a target-specific range object.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are collection/cursor iteration,
+runtime/provider method calls, compound assignment/operator gaps such as
+`inter`/`intra`, non-literal and enum `discerne`, aggregate/optional validation
+gaps, top-level consts, `ad` provider blocks, closures, and async `cede`.
+
+### Remaining Wasm-Emission Clusters
+
+- Dynamic `ignotum` has no Wasm value model yet, surfaced by
+  `examples/exempla/si/est.fab`.
+
+### Remaining Host/Runtime Clusters
+
+- Define collection/cursor iterator ABI for `itera ex` and `itera de`.
+- Provide real `faber_runtime` import implementations for assertion,
+  conversion, panic, and collection length.
+- Provide real `faber_text` comparison behavior.
+- Define and implement nullable and dynamic value ABIs before claiming
+  instantiate/run behavior.
+- Add a local instantiate/run host before measuring instantiate-valid,
+  runnable, or behavior-checked tiers.
+
+### Phase 015 Validation Log
+
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+The largest remaining route to the 70-80% compile-valid target is collection
+iteration or method/runtime lowering. A smaller next phase is compound
+assignment lowering, which should move `assignatio`/`binarius` if Wasm emission
+for the resulting scalar operations is already present.

@@ -65,6 +65,9 @@ pub(super) trait HirExprLoweringVisitor {
             }
             HirExprKind::Discerne(scrutinees, arms) => self.visit_discerne_expr(scrutinees, arms, expr),
             HirExprKind::Dum(cond, block) => self.visit_dum_expr(cond, block, expr),
+            HirExprKind::Itera(mode, binding, name, iter, block) => {
+                self.visit_itera_expr(*mode, *binding, *name, iter, block, expr)
+            }
             HirExprKind::Handled { body, catch } => self.visit_handled_expr(body, catch, expr),
             HirExprKind::Assign(_, _) => self.visit_assignment_expr(expr),
             HirExprKind::Throw(value) => self.visit_throw_expr(value, expr),
@@ -133,6 +136,15 @@ pub(super) trait HirExprLoweringVisitor {
         expr: &HirExpr,
     ) -> Option<MirOperand>;
     fn visit_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand>;
+    fn visit_itera_expr(
+        &mut self,
+        mode: HirIteraMode,
+        binding: DefId,
+        name: Symbol,
+        iter: &HirExpr,
+        block: &HirBlock,
+        expr: &HirExpr,
+    ) -> Option<MirOperand>;
     fn visit_handled_expr(&mut self, body: &HirBlock, catch: &HirCape, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_assignment_expr(&mut self, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_throw_expr(&mut self, value: &HirExpr, expr: &HirExpr) -> Option<MirOperand>;
@@ -268,6 +280,18 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
 
     fn visit_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {
         self.lower_dum_expr(cond, block, expr)
+    }
+
+    fn visit_itera_expr(
+        &mut self,
+        mode: HirIteraMode,
+        binding: DefId,
+        name: Symbol,
+        iter: &HirExpr,
+        block: &HirBlock,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        self.lower_itera_expr(mode, binding, name, iter, block, expr)
     }
 
     fn visit_handled_expr(&mut self, body: &HirBlock, catch: &HirCape, expr: &HirExpr) -> Option<MirOperand> {

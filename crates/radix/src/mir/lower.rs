@@ -36,8 +36,8 @@ use crate::driver::AnalyzedUnit;
 use crate::hir::visit::HirVisitor;
 use crate::hir::{
     DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirExpr, HirExprKind, HirField, HirFunction,
-    HirItem, HirItemKind, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
-    HirPattern, HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
+    HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey,
+    HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
 };
 use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{

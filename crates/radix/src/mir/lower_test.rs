@@ -580,6 +580,28 @@ function f0 -> ty#1 {
 }
 
 #[test]
+fn lowers_numeric_range_itera_pro_to_loop_cfg() {
+    let dump = dump_source(
+        r#"functio range_sum() → numerus {
+  varia numerus total ← 0
+  itera pro 0‥4 fixum i {
+    total ← total + i
+  }
+  redde total
+}"#,
+    );
+
+    assert!(dump.contains("var _1: ty#1"));
+    assert!(dump.contains("_1 = const int 0: ty#1"));
+    assert!(dump.contains("_2 = const int 4: ty#1"));
+    assert!(dump.contains("_3 = const int 1: ty#1"));
+    assert!(dump.contains("_1 < _2: ty#3"));
+    assert!(dump.contains("_0 + _1: ty#1"));
+    assert!(dump.contains("_1 + _3: ty#1"));
+    assert!(!dump.contains("itera before iterator MIR lowering"));
+}
+
+#[test]
 fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
     let iter_unit = analyze(
         "functio iterare(lista<numerus> nums) → numerus { varia numerus total ← 0 itera ex nums fixum n { total ← total + n } redde total }",
@@ -588,7 +610,7 @@ fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
     assert_eq!(iter_errors.len(), 1);
     assert!(iter_errors[0]
         .message
-        .contains("itera before iterator MIR lowering"));
+        .contains("itera collection before iterator MIR lowering"));
 
     let discerne_unit = analyze(
         "discretio Status { Active, Inactive } functio differ(Status s) → numerus { discerne s { casu Active { redde 1 } casu Inactive { redde 0 } } }",
