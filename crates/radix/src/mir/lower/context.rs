@@ -36,6 +36,7 @@ pub(super) struct LoweringContextMaps<'a> {
     variant_parents: FxHashMap<DefId, DefId>,
     variant_fields: FxHashMap<DefId, Vec<Symbol>>,
     provider_imports: FxHashMap<DefId, ProviderImport>,
+    method_targets: FxHashMap<(DefId, Symbol), MethodTarget>,
     pub(super) validation: MirValidationContext<'a>,
 }
 
@@ -52,6 +53,7 @@ impl<'a> LoweringContextMaps<'a> {
             variant_parents: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
             provider_imports: FxHashMap::default(),
+            method_targets: FxHashMap::default(),
             validation: MirValidationContext::new(&unit.types),
         };
         maps.visit_program(&unit.hir);
@@ -75,6 +77,7 @@ impl<'a> LoweringContextMaps<'a> {
             variant_parents: self.variant_parents.clone(),
             variant_fields: self.variant_fields.clone(),
             provider_imports: self.provider_imports.clone(),
+            method_targets: self.method_targets.clone(),
         }
     }
 }
@@ -122,6 +125,7 @@ impl<'a> HirVisitor for LoweringContextMaps<'a> {
                 }
             }
             HirItemKind::Struct(strukt) => {
+                let receiver_ty = self.validation.types.find_struct(item.def_id);
                 let mut fields = FxHashMap::default();
                 for field in &strukt.fields {
                     if !field.is_static {
@@ -129,6 +133,32 @@ impl<'a> HirVisitor for LoweringContextMaps<'a> {
                     }
                 }
                 self.validation.struct_fields.insert(item.def_id, fields);
+
+                if let Some(receiver_ty) = receiver_ty {
+                    for method in &strukt.methods {
+                        self.method_targets.insert(
+                            (item.def_id, method.func.name),
+                            MethodTarget { def_id: method.def_id },
+                        );
+                        if let Some(err_ty) = method.func.err_ty {
+                            self.function_errors
+                                .insert(method.def_id, MirType::semantic(err_ty));
+                        }
+                        if let Some(return_ty) = method.func.ret_ty {
+                            let mut params = Vec::with_capacity(method.func.params.len() + 1);
+                            params.push(MirType::semantic(receiver_ty));
+                            params.extend(method.func.params.iter().map(|param| MirType::semantic(param.ty)));
+                            self.validation.functions.insert(
+                                method.def_id,
+                                MirFunctionSignature {
+                                    params,
+                                    return_ty: MirType::semantic(return_ty),
+                                    error_ty: method.func.err_ty.map(MirType::semantic),
+                                },
+                            );
+                        }
+                    }
+                }
             }
             HirItemKind::Enum(enum_item) => {
                 for variant in &enum_item.variants {

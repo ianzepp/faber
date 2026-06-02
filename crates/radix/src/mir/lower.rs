@@ -35,9 +35,10 @@
 use crate::driver::AnalyzedUnit;
 use crate::hir::visit::HirVisitor;
 use crate::hir::{
-    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirExpr, HirExprKind, HirField, HirFunction, HirItem,
-    HirItemKind, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
-    HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
+    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirExpr, HirExprKind, HirField, HirFunction,
+    HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField,
+    HirObjectKey, HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirStruct,
+    HirUnOp,
 };
 use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{
@@ -45,8 +46,8 @@ use crate::mir::{
     MirBlock, MirBlockId, MirCallee, MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor,
     MirDiagnosticKind, MirFunction, MirFunctionId, MirIntrinsic, MirKeyValueOperand, MirLocal as MirLocalDecl,
     MirLocalId, MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirParam, MirPlace,
-    MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmt, MirStmtKind, MirTemp, MirTempId, MirTerminator,
-    MirTerminatorKind, MirType, MirUnOp, MirValidationContext, MirValue, MirValueId, MirValueKind,
+    MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmt, MirStmtKind, MirSwitchCase, MirTemp, MirTempId,
+    MirTerminator, MirTerminatorKind, MirType, MirUnOp, MirValidationContext, MirValue, MirValueId, MirValueKind,
 };
 use crate::semantic::{Primitive, Type, TypeId, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -96,6 +97,21 @@ impl MirError {
 /// validation failures share the same error type so callers can treat the MIR
 /// pipeline as one fail-closed developer command.
 pub fn lower_analyzed_unit(unit: &AnalyzedUnit) -> Result<MirProgram, Vec<MirError>> {
+    lower_analyzed_unit_with_context(unit).map(|lowered| lowered.program)
+}
+
+/// MIR output plus the semantic validation context used to prove it.
+pub struct LoweredMirUnit<'a> {
+    pub program: MirProgram,
+    pub validation: MirValidationContext<'a>,
+}
+
+/// Lower a semantically analyzed HIR unit and retain validation metadata.
+///
+/// MIR itself stays target-neutral, but some target probes need the same
+/// declaration metadata that validation used to type-check compact MIR
+/// references such as struct fields and enum variant fields.
+pub fn lower_analyzed_unit_with_context(unit: &AnalyzedUnit) -> Result<LoweredMirUnit<'_>, Vec<MirError>> {
     let mut lowerer = MirLowerer { unit, errors: Vec::new(), functions: Vec::new() };
     lowerer.lower();
 
@@ -110,7 +126,7 @@ pub fn lower_analyzed_unit(unit: &AnalyzedUnit) -> Result<MirProgram, Vec<MirErr
                 .map(|error| MirError::validation(error.span, error.message))
                 .collect::<Vec<_>>()
         })?;
-        Ok(program)
+        Ok(LoweredMirUnit { program, validation })
     }
 }
 
@@ -128,7 +144,7 @@ struct MirLowerer<'a> {
     functions: Vec<MirFunction>,
 }
 
-impl MirLowerer<'_> {
+impl<'a> MirLowerer<'a> {
     /// Run the whole-unit lowering sequence before MIR validation.
     ///
     /// Whole-unit maps are collected up front because function bodies need
@@ -153,7 +169,7 @@ impl MirLowerer<'_> {
         ItemLoweringPass::new(self, &context_maps, &struct_fields).lower_items();
 
         if let Some(entry) = &self.unit.hir.entry {
-            self.lower_entry(entry);
+            self.lower_entry(entry, &context_maps, &struct_fields);
         }
     }
 
@@ -207,38 +223,95 @@ impl MirLowerer<'_> {
         });
     }
 
+    /// Lower a genus method as an ordinary MIR function with an explicit
+    /// receiver parameter bound to the struct definition used by `ego`.
+    fn lower_method(
+        &mut self,
+        struct_item: &HirItem,
+        strukt: &HirStruct,
+        method: &HirMethod,
+        context_maps: &LoweringContextMaps<'_>,
+        struct_fields: &FxHashMap<DefId, Vec<&HirField>>,
+    ) {
+        let Some(return_ty) = method.func.ret_ty else {
+            self.errors
+                .push(MirError::missing_type(method.span, "method return type"));
+            return;
+        };
+        let Some(receiver_ty) = self.unit.types.find_struct(struct_item.def_id) else {
+            self.errors
+                .push(MirError::missing_type(method.span, "method receiver type"));
+            return;
+        };
+
+        let error_ty = method.func.err_ty.map(MirType::semantic);
+        let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
+        let (params, locals, temps, blocks, errors) = {
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context);
+            builder.add_param(struct_item.def_id, strukt.name, receiver_ty, method.span);
+            for param in &method.func.params {
+                builder.add_param(param.def_id, param.name, param.ty, param.span);
+            }
+
+            let blocks = match &method.func.body {
+                Some(body) => builder.lower_body(body),
+                None => Vec::new(),
+            };
+            (builder.params, builder.locals, builder.temps, blocks, builder.errors)
+        };
+        self.errors.extend(errors);
+
+        self.functions.push(MirFunction {
+            id: MirFunctionId(self.functions.len() as u32),
+            source: Some(method.def_id),
+            name: Some(method.func.name),
+            params,
+            locals,
+            temps,
+            blocks,
+            return_ty: MirType::semantic(return_ty),
+            error_ty,
+            span: method.span,
+        });
+    }
+
     /// Rebuild validation context from the analyzed unit for the final handoff.
     ///
     /// The validation maps are derived from immutable HIR/type data rather than
     /// from partially lowered functions, so validation checks the MIR against the
     /// same semantic source of truth as lowering.
-    fn validation_context(&self) -> MirValidationContext<'_> {
+    fn validation_context(&self) -> MirValidationContext<'a> {
         LoweringContextMaps::collect(self.unit).validation
     }
 
-    /// Lower the synthetic top-level entry block accepted by the current MIR subset.
+    /// Lower the top-level entry block as a synthetic vacuum-returning function.
     ///
-    /// Non-empty entry bodies remain unsupported here because top-level entry
-    /// semantics still need a fuller statement and runtime policy before they
-    /// can be represented faithfully in MIR.
-    fn lower_entry(&mut self, entry: &HirBlock) {
-        if !entry_is_empty(entry) {
-            self.errors.push(MirError::unsupported(
-                entry.span,
-                "non-empty entry blocks before primitive expression lowering",
-            ));
-            return;
-        }
-
+    /// Entry lowering reuses ordinary function-body MIR construction so the MIR
+    /// stays target-neutral and unsupported entry contents fail through the same
+    /// diagnostics as unsupported function contents.
+    fn lower_entry(
+        &mut self,
+        entry: &HirBlock,
+        context_maps: &LoweringContextMaps<'_>,
+        struct_fields: &FxHashMap<DefId, Vec<&HirField>>,
+    ) {
         let vacuum = self.unit.types.primitive(Primitive::Vacuum);
+        let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
+        let (locals, temps, blocks, errors) = {
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, None, context);
+            let blocks = builder.lower_body(entry);
+            (builder.locals, builder.temps, blocks, builder.errors)
+        };
+        self.errors.extend(errors);
+
         self.functions.push(MirFunction {
             id: MirFunctionId(self.functions.len() as u32),
             source: None,
             name: None,
             params: Vec::new(),
-            locals: Vec::new(),
-            temps: Vec::new(),
-            blocks: vec![empty_return_block(entry.span)],
+            locals,
+            temps,
+            blocks,
             return_ty: MirType::semantic(vacuum),
             error_ty: None,
             span: entry.span,
@@ -277,6 +350,11 @@ struct ProviderImport {
     item: Symbol,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct MethodTarget {
+    def_id: DefId,
+}
+
 /// Immutable whole-unit facts needed while lowering one function body.
 ///
 /// This context is intentionally cloned into each [`FunctionBuilder`] instead of
@@ -290,6 +368,7 @@ struct FunctionBuilderContext<'a> {
     variant_parents: FxHashMap<DefId, DefId>,
     variant_fields: FxHashMap<DefId, Vec<crate::lexer::Symbol>>,
     provider_imports: FxHashMap<DefId, ProviderImport>,
+    method_targets: FxHashMap<(DefId, Symbol), MethodTarget>,
 }
 
 impl FunctionBuilderContext<'_> {
@@ -302,6 +381,7 @@ impl FunctionBuilderContext<'_> {
             variant_parents: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
             provider_imports: FxHashMap::default(),
+            method_targets: FxHashMap::default(),
         }
     }
 }
@@ -408,6 +488,27 @@ impl<'a> FunctionBuilder<'a> {
         Some(MirOperand::Place(place))
     }
 
+    fn lower_assign_op_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
+        let HirExprKind::AssignOp(op, lhs, rhs) = &expr.kind else {
+            return self.lower_expr_value(expr);
+        };
+
+        let Some(op) = mir_bin_op(*op) else {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "compound assignment operator without a MIR primitive",
+            ));
+            return None;
+        };
+        let fallback_ty = self.expr_ty(expr)?;
+        let (place, ty) = self.lower_assignment_place_with_fallback(lhs, fallback_ty)?;
+        let lhs = MirOperand::Place(place.clone());
+        let rhs = self.lower_expr_value(rhs)?;
+        let value = self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, expr.span);
+        self.assign(place.clone(), value, ty, expr.span);
+        Some(MirOperand::Place(place))
+    }
+
     fn lower_assignment_place_with_fallback(
         &mut self,
         expr: &HirExpr,
@@ -491,6 +592,9 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_unary(&mut self, op: HirUnOp, operand: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
+        if let Some(predicate) = self.lower_unary_predicate(op, operand, expr) {
+            return Some(predicate);
+        }
         let Some(op) = mir_un_op(op) else {
             self.errors
                 .push(MirError::unsupported(expr.span, "unary operator without a MIR primitive"));
@@ -503,6 +607,11 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_binary(&mut self, op: HirBinOp, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
+        if matches!(op, HirBinOp::Is | HirBinOp::IsNot) {
+            if let Some(predicate) = self.lower_is_predicate(op, lhs, rhs, expr) {
+                return Some(predicate);
+            }
+        }
         let Some(op) = mir_bin_op(op) else {
             self.errors
                 .push(MirError::unsupported(expr.span, "binary operator without a MIR primitive"));
@@ -513,6 +622,103 @@ impl<'a> FunctionBuilder<'a> {
         let ty = self.expr_ty(expr)?;
 
         Some(self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, expr.span))
+    }
+
+    fn lower_unary_predicate(&mut self, op: HirUnOp, operand: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
+        match op {
+            HirUnOp::IsNeg => {
+                let result_ty = self.expr_ty(expr)?;
+                let zero = self.numeric_zero_constant(operand)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Lt,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(zero),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            HirUnOp::IsPos => {
+                let result_ty = self.expr_ty(expr)?;
+                let zero = self.numeric_zero_constant(operand)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Gt,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(zero),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            HirUnOp::IsTrue => {
+                let result_ty = self.expr_ty(expr)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Eq,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(MirConstant::Bool(true)),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            HirUnOp::IsFalse => {
+                let result_ty = self.expr_ty(expr)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Eq,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(MirConstant::Bool(false)),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            _ => None,
+        }
+    }
+
+    fn numeric_zero_constant(&mut self, operand: &HirExpr) -> Option<MirConstant> {
+        let ty = operand.ty?;
+        match self.normalized_type(ty) {
+            Type::Primitive(Primitive::Fractus) => Some(MirConstant::Float(0.0)),
+            _ => Some(MirConstant::Int(0)),
+        }
+    }
+
+    fn lower_is_predicate(
+        &mut self,
+        op: HirBinOp,
+        lhs: &HirExpr,
+        rhs: &HirExpr,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let result_ty = self.expr_ty(expr)?;
+        if matches!(rhs.kind, HirExprKind::Literal(HirLiteral::Nil)) {
+            let operand = self.lower_expr_value(lhs)?;
+            let op = if matches!(op, HirBinOp::Is) {
+                MirUnOp::IsNil
+            } else {
+                MirUnOp::IsNonNil
+            };
+            return Some(self.assign_temp(MirValueKind::Unary { op, operand }, result_ty, expr.span));
+        }
+        if matches!(lhs.kind, HirExprKind::Literal(HirLiteral::Nil)) {
+            let operand = self.lower_expr_value(rhs)?;
+            let op = if matches!(op, HirBinOp::Is) {
+                MirUnOp::IsNil
+            } else {
+                MirUnOp::IsNonNil
+            };
+            return Some(self.assign_temp(MirValueKind::Unary { op, operand }, result_ty, expr.span));
+        }
+        None
     }
 
     fn lower_coalesce(&mut self, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
@@ -714,10 +920,6 @@ impl<'a> FunctionBuilder<'a> {
     }
 }
 
-fn entry_is_empty(block: &HirBlock) -> bool {
-    block.stmts.is_empty() && block.expr.is_none()
-}
-
 fn mir_un_op(op: HirUnOp) -> Option<MirUnOp> {
     match op {
         HirUnOp::Neg => Some(MirUnOp::Neg),
@@ -750,7 +952,9 @@ fn mir_bin_op(op: HirBinOp) -> Option<MirBinOp> {
         HirBinOp::BitXor => Some(MirBinOp::BitXor),
         HirBinOp::Shl => Some(MirBinOp::Shl),
         HirBinOp::Shr => Some(MirBinOp::Shr),
-        HirBinOp::Is | HirBinOp::IsNot | HirBinOp::InRange | HirBinOp::Between => None,
+        HirBinOp::Is => Some(MirBinOp::Eq),
+        HirBinOp::IsNot => Some(MirBinOp::NotEq),
+        HirBinOp::InRange | HirBinOp::Between => None,
     }
 }
 
@@ -802,15 +1006,6 @@ fn scribe_kind_name(kind: HirScribeKind) -> &'static str {
         HirScribeKind::Vide => "vide before print/runtime intrinsic MIR lowering",
         HirScribeKind::Mone => "mone before print/runtime intrinsic MIR lowering",
         HirScribeKind::Scribe => "scribe before print/runtime intrinsic MIR lowering",
-    }
-}
-
-fn empty_return_block(span: Span) -> MirBlock {
-    MirBlock {
-        id: MirBlockId(0),
-        statements: Vec::new(),
-        terminator: MirTerminator { kind: MirTerminatorKind::Return(None), span },
-        span,
     }
 }
 

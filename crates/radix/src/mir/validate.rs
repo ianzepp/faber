@@ -555,6 +555,29 @@ impl Validator<'_, '_> {
                     "diagnostic runtime call does not return vacuum",
                 );
             }
+            MirIntrinsic::Assert => {
+                if !(1..=2).contains(&call.args.len()) {
+                    self.error(span, "assert runtime call expects 1 or 2 MIR arguments");
+                }
+                if let Some(cond_ty) = call
+                    .args
+                    .first()
+                    .and_then(|arg| self.validate_operand(scope, arg, span))
+                {
+                    self.require_exact(
+                        cond_ty,
+                        self.primitive(Primitive::Bivalens),
+                        span,
+                        "assert runtime condition is not bivalens",
+                    );
+                }
+                self.require_exact(
+                    call.return_ty,
+                    self.primitive(Primitive::Vacuum),
+                    span,
+                    "assert runtime call does not return vacuum",
+                );
+            }
             MirIntrinsic::FormatString { .. } => {
                 self.require_exact(
                     call.return_ty,

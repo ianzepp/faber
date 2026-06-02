@@ -333,7 +333,7 @@ pub enum MirUnOp {
 }
 
 /// Binary operation lowered into MIR.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MirBinOp {
     Add,
     Sub,
@@ -384,6 +384,7 @@ pub struct MirRuntimeCall {
 #[derive(Debug, Clone, PartialEq)]
 pub enum MirIntrinsic {
     Diagnostic(MirDiagnosticKind),
+    Assert,
     FormatString { template: Symbol },
     Convert(MirConversion),
     Collection(MirCollectionOp),
@@ -392,7 +393,7 @@ pub enum MirIntrinsic {
 }
 
 /// Diagnostic runtime channels surfaced by Faber source constructs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MirDiagnosticKind {
     Nota,
     Vide,

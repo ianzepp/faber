@@ -47,6 +47,7 @@ pub(super) trait HirExprLoweringVisitor {
             HirExprKind::Index(object, index) => self.visit_index_expr(object, index, expr),
             HirExprKind::OptionalChain(object, chain) => self.visit_optional_chain_expr(object, chain, expr),
             HirExprKind::NonNull(object, chain) => self.visit_non_null_expr(object, chain, expr),
+            HirExprKind::Vacua => self.visit_vacua_expr(expr),
             HirExprKind::Array(elements) => self.visit_array_expr(elements, expr),
             HirExprKind::Struct(def_id, fields) => self.visit_struct_expr(*def_id, fields, expr),
             HirExprKind::Tuple(items) => self.visit_tuple_expr(items, expr),
@@ -55,6 +56,7 @@ pub(super) trait HirExprLoweringVisitor {
             }
             HirExprKind::Scribe(kind, args) => self.visit_scribe_expr(*kind, args, expr),
             HirExprKind::Scriptum(template, args) => self.visit_scriptum_expr(*template, args, expr),
+            HirExprKind::Adfirma(cond, message) => self.visit_adfirma_expr(cond, message.as_deref(), expr),
             HirExprKind::Conversio { source, target, params, fallback } => {
                 self.visit_conversio_expr(source, *target, params, fallback.as_deref(), expr)
             }
@@ -62,7 +64,11 @@ pub(super) trait HirExprLoweringVisitor {
             HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.visit_si_expr(cond, then_block, then_catch.as_deref(), else_block, expr)
             }
+            HirExprKind::Discerne(scrutinees, arms) => self.visit_discerne_expr(scrutinees, arms, expr),
             HirExprKind::Dum(cond, block) => self.visit_dum_expr(cond, block, expr),
+            HirExprKind::Itera(mode, binding, name, iter, block) => {
+                self.visit_itera_expr(*mode, *binding, *name, iter, block, expr)
+            }
             HirExprKind::Handled { body, catch } => self.visit_handled_expr(body, catch, expr),
             HirExprKind::Assign(_, _) => self.visit_assignment_expr(expr),
             HirExprKind::Throw(value) => self.visit_throw_expr(value, expr),
@@ -94,6 +100,7 @@ pub(super) trait HirExprLoweringVisitor {
         expr: &HirExpr,
     ) -> Option<MirOperand>;
     fn visit_non_null_expr(&mut self, object: &HirExpr, chain: &HirNonNullKind, expr: &HirExpr) -> Option<MirOperand>;
+    fn visit_vacua_expr(&mut self, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_array_expr(&mut self, elements: &[HirArrayElement], expr: &HirExpr) -> Option<MirOperand>;
     fn visit_struct_expr(&mut self, def_id: DefId, fields: &[(Symbol, HirExpr)], expr: &HirExpr) -> Option<MirOperand>;
     fn visit_tuple_expr(&mut self, items: &[HirExpr], expr: &HirExpr) -> Option<MirOperand>;
@@ -106,6 +113,7 @@ pub(super) trait HirExprLoweringVisitor {
     ) -> Option<MirOperand>;
     fn visit_scribe_expr(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand>;
     fn visit_scriptum_expr(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand>;
+    fn visit_adfirma_expr(&mut self, cond: &HirExpr, message: Option<&HirExpr>, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_conversio_expr(
         &mut self,
         source: &HirExpr,
@@ -123,7 +131,22 @@ pub(super) trait HirExprLoweringVisitor {
         else_block: &Option<HirBlock>,
         expr: &HirExpr,
     ) -> Option<MirOperand>;
+    fn visit_discerne_expr(
+        &mut self,
+        scrutinees: &[HirExpr],
+        arms: &[HirCasuArm],
+        expr: &HirExpr,
+    ) -> Option<MirOperand>;
     fn visit_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand>;
+    fn visit_itera_expr(
+        &mut self,
+        mode: HirIteraMode,
+        binding: DefId,
+        name: Symbol,
+        iter: &HirExpr,
+        block: &HirBlock,
+        expr: &HirExpr,
+    ) -> Option<MirOperand>;
     fn visit_handled_expr(&mut self, body: &HirBlock, catch: &HirCape, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_assignment_expr(&mut self, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_throw_expr(&mut self, value: &HirExpr, expr: &HirExpr) -> Option<MirOperand>;
@@ -188,6 +211,10 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
         self.lower_non_null(object, chain, expr)
     }
 
+    fn visit_vacua_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
+        self.lower_vacua(expr)
+    }
+
     fn visit_array_expr(&mut self, elements: &[HirArrayElement], expr: &HirExpr) -> Option<MirOperand> {
         self.lower_array(elements, expr, MirAggregateKind::Array)
     }
@@ -218,6 +245,10 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
         self.lower_scriptum(template, args, expr)
     }
 
+    fn visit_adfirma_expr(&mut self, cond: &HirExpr, message: Option<&HirExpr>, expr: &HirExpr) -> Option<MirOperand> {
+        self.lower_adfirma(cond, message, expr)
+    }
+
     fn visit_conversio_expr(
         &mut self,
         source: &HirExpr,
@@ -244,8 +275,29 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
         self.lower_si_expr(cond, then_block, then_catch, else_block, expr)
     }
 
+    fn visit_discerne_expr(
+        &mut self,
+        scrutinees: &[HirExpr],
+        arms: &[HirCasuArm],
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        self.lower_discerne_expr(scrutinees, arms, expr)
+    }
+
     fn visit_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {
         self.lower_dum_expr(cond, block, expr)
+    }
+
+    fn visit_itera_expr(
+        &mut self,
+        mode: HirIteraMode,
+        binding: DefId,
+        name: Symbol,
+        iter: &HirExpr,
+        block: &HirBlock,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        self.lower_itera_expr(mode, binding, name, iter, block, expr)
     }
 
     fn visit_handled_expr(&mut self, body: &HirBlock, catch: &HirCape, expr: &HirExpr) -> Option<MirOperand> {
@@ -265,11 +317,7 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
     }
 
     fn visit_assign_op_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
-        self.errors.push(MirError::unsupported(
-            expr.span,
-            "compound assignment before assignment-op MIR lowering",
-        ));
-        None
+        self.lower_assign_op_expr(expr)
     }
 
     fn visit_unsupported_expr(&mut self, kind: &HirExprKind, expr: &HirExpr) -> Option<MirOperand> {

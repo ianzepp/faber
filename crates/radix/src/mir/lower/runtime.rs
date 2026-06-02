@@ -33,6 +33,15 @@ impl FunctionBuilder<'_> {
         args: &[HirCallArg],
         expr: &HirExpr,
     ) -> Option<MirOperand> {
+        if let Some(target) = self.genus_method_target(receiver, method) {
+            let mut lowered_args = Vec::with_capacity(args.len() + 1);
+            lowered_args.push(self.lower_expr_value(receiver)?);
+            for arg in args {
+                lowered_args.push(self.lower_expr_value(&arg.expr)?);
+            }
+            return self.lower_definition_call(target.def_id, lowered_args, expr);
+        }
+
         if let HirExprKind::Path(def_id) = receiver.kind {
             if let Some(import) = self.context.provider_imports.get(&def_id).cloned() {
                 let mut lowered_args = Vec::with_capacity(args.len());
@@ -66,6 +75,14 @@ impl FunctionBuilder<'_> {
         }
         let ty = self.expr_ty(expr)?;
         Some(self.runtime_call_value(MirIntrinsic::Collection(op), lowered_args, ty, expr.span))
+    }
+
+    fn genus_method_target(&self, receiver: &HirExpr, method: Symbol) -> Option<MethodTarget> {
+        let receiver_ty = receiver.ty?;
+        let Type::Struct(def_id) = self.normalized_type(receiver_ty) else {
+            return None;
+        };
+        self.context.method_targets.get(&(*def_id, method)).copied()
     }
 
     /// Lower a direct call, enum variant constructor, or locally handled
@@ -105,7 +122,18 @@ impl FunctionBuilder<'_> {
             return Some(self.construct_temp(MirAggregateKind::EnumVariant(*def_id), fields, ty, expr.span));
         }
 
-        if let Some(_err_ty) = self.context.function_errors.get(def_id).copied() {
+        self.lower_definition_call(*def_id, lowered_args, expr)
+    }
+
+    fn lower_definition_call(
+        &mut self,
+        def_id: DefId,
+        lowered_args: Vec<MirOperand>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let ty = self.expr_ty(expr)?;
+
+        if let Some(_err_ty) = self.context.function_errors.get(&def_id).copied() {
             let Some(handler) = self.handlers.last().cloned() else {
                 self.errors.push(MirError::unsupported(
                     expr.span,
@@ -119,7 +147,7 @@ impl FunctionBuilder<'_> {
                 self.terminate_current(
                     MirTerminatorKind::TryCall {
                         destination: None,
-                        callee: MirCallee::Definition(*def_id),
+                        callee: MirCallee::Definition(def_id),
                         args: lowered_args,
                         ok_block,
                         error_place: handler.error_place,
@@ -133,12 +161,12 @@ impl FunctionBuilder<'_> {
 
             let destination = self.push_temp(ty, expr.span);
             self.terminate_current(
-                MirTerminatorKind::TryCall {
-                    destination: Some(MirPlace::temp(destination)),
-                    callee: MirCallee::Definition(*def_id),
-                    args: lowered_args,
-                    ok_block,
-                    error_place: handler.error_place,
+                    MirTerminatorKind::TryCall {
+                        destination: Some(MirPlace::temp(destination)),
+                        callee: MirCallee::Definition(def_id),
+                        args: lowered_args,
+                        ok_block,
+                        error_place: handler.error_place,
                     error_block: handler.error_block,
                 },
                 expr.span,
@@ -151,7 +179,7 @@ impl FunctionBuilder<'_> {
             self.append_stmt(MirStmt {
                 kind: MirStmtKind::Call {
                     destination: None,
-                    callee: MirCallee::Definition(*def_id),
+                    callee: MirCallee::Definition(def_id),
                     args: lowered_args,
                 },
                 span: expr.span,
@@ -163,7 +191,7 @@ impl FunctionBuilder<'_> {
         self.append_stmt(MirStmt {
             kind: MirStmtKind::Call {
                 destination: Some(MirPlace::temp(destination)),
-                callee: MirCallee::Definition(*def_id),
+                callee: MirCallee::Definition(def_id),
                 args: lowered_args,
             },
             span: expr.span,
@@ -233,12 +261,31 @@ impl FunctionBuilder<'_> {
 
     /// Lower diagnostic output expressions to diagnostic intrinsics.
     pub(super) fn lower_scribe(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
-        let mut lowered_args = Vec::with_capacity(args.len());
+        let intrinsic = MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind));
+        let return_ty = self.expr_ty(expr)?;
         for arg in args {
-            lowered_args.push(self.lower_expr_value(arg)?);
+            let arg = self.lower_expr_value(arg)?;
+            self.runtime_call_value(intrinsic.clone(), vec![arg], return_ty, expr.span);
         }
-        let ty = self.expr_ty(expr)?;
-        Some(self.runtime_call_value(MirIntrinsic::Diagnostic(mir_diagnostic_kind(kind)), lowered_args, ty, expr.span))
+        Some(MirOperand::Constant(MirConstant::Unit))
+    }
+
+    /// Lower `adfirma` into a target-neutral assertion runtime intrinsic.
+    ///
+    /// The condition has already been typechecked as `bivalens`; MIR validation
+    /// rechecks that invariant so backend probes can trust the first operand.
+    pub(super) fn lower_adfirma(
+        &mut self,
+        cond: &HirExpr,
+        message: Option<&HirExpr>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let mut args = vec![self.lower_expr_value(cond)?];
+        if let Some(message) = message {
+            args.push(self.lower_expr_value(message)?);
+        }
+        let return_ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(MirIntrinsic::Assert, args, return_ty, expr.span))
     }
 
     /// Lower a string-template application to a format-string intrinsic.
@@ -288,7 +335,7 @@ impl FunctionBuilder<'_> {
     /// This keeps runtime-call lowering consistent across providers,
     /// diagnostics, formatting, and conversions: `vacuum` calls are statements,
     /// while value calls allocate one destination temp.
-    fn runtime_call_value(
+    pub(super) fn runtime_call_value(
         &mut self,
         intrinsic: MirIntrinsic,
         args: Vec<MirOperand>,

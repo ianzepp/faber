@@ -106,6 +106,44 @@ function f0 -> ty#3 {
 }
 
 #[test]
+fn lowers_vacua_to_empty_collection_aggregates() {
+    let dump = dump_source(
+        r#"functio inanes() → numerus {
+  fixum lista<numerus> numeri ← vacua
+  fixum tabula<textus, numerus> pondera ← vacua
+  fixum copia<textus> nomina ← vacua
+  redde 0
+}"#,
+    );
+
+    assert!(dump.contains("construct array:"));
+    assert!(dump.contains("construct map:"));
+    assert!(dump.contains("construct set:"));
+    assert!(dump.contains("[]"));
+    assert!(dump.contains("{}"));
+}
+
+#[test]
+fn lowers_genus_method_calls_with_explicit_receiver_param() {
+    let dump = dump_source(
+        r#"genus Capsa {
+  numerus n = 1
+  functio value() → numerus { redde ego.n }
+}
+
+incipit {
+  fixum _ c ← Capsa { n = 4 }
+  nota c.value()
+}"#,
+    );
+
+    assert!(dump.contains("function f0 -> ty#1 {\n  params:\n    _0:"));
+    assert!(dump.contains("return _0.sym#"));
+    assert!(dump.contains("%1 = call def#"));
+    assert!(dump.contains("runtime diagnostic nota(%1)"));
+}
+
+#[test]
 fn materializes_constant_redde_operands_with_types() {
     let int_dump = dump_source("functio unum() → numerus { redde 1 }");
     assert_eq!(
@@ -230,6 +268,24 @@ function f0 -> ty#1 {
 }
 
 #[test]
+fn lowers_compound_assignment_to_binary_and_assign() {
+    let numeric_dump = dump_source("functio computa() → numerus { varia numerus x ← 1 x ⊕ 2 x ⊛ 3 redde x }");
+
+    assert!(numeric_dump.contains("%0 = _0 + const int 2: ty#1"));
+    assert!(numeric_dump.contains("_0 = %0: ty#1"));
+    assert!(numeric_dump.contains("%1 = _0 * const int 3: ty#1"));
+    assert!(numeric_dump.contains("_0 = %1: ty#1"));
+    assert!(!numeric_dump.contains("compound assignment before assignment-op MIR lowering"));
+
+    let text_dump = dump_source(r#"functio adiunge() → textus { varia textus s ← "salve" s ⊕ " mundi" redde s }"#);
+
+    assert!(text_dump.contains("%0 = _0 + const string"));
+    assert!(text_dump.contains(": ty#0"));
+    assert!(text_dump.contains("_0 = %0: ty#0"));
+    assert!(!text_dump.contains("compound assignment before assignment-op MIR lowering"));
+}
+
+#[test]
 fn lowers_unary_ops_to_typed_temps() {
     let dump = dump_source("functio logicum(bivalens a) → bivalens { redde non a }");
 
@@ -249,6 +305,30 @@ function f0 -> ty#3 {
 }
 "
     );
+}
+
+#[test]
+fn lowers_predicate_unary_and_nil_is_to_mir_primitives() {
+    let dump = dump_source(
+        r#"
+functio pred(numerus n, fractus f, bivalens flag, textus ∪ nihil maybe) → bivalens {
+    fixum _ positive ← positivum n
+    fixum _ negative ← negativum f
+    fixum _ enabled ← verum flag
+    fixum _ disabled ← falsum flag
+    fixum _ absent ← maybe est nihil
+    redde positive et negative et enabled et disabled et absent
+}
+"#,
+    );
+
+    assert!(dump.contains("%0 = _0 > const int 0: ty#3"));
+    assert!(dump.contains("%1 = _1 < const float 0.0: ty#3"));
+    assert!(dump.contains("%2 = _2 == const bool true: ty#3"));
+    assert!(dump.contains("%3 = _2 == const bool false: ty#3"));
+    assert!(dump.contains("%4 = is_nil _3: ty#3"));
+    assert!(!dump.contains("unary operator without a MIR primitive"));
+    assert!(!dump.contains("binary operator without a MIR primitive"));
 }
 
 #[test]
@@ -319,14 +399,35 @@ function f0 -> ty#5 {
 }
 
 #[test]
-fn rejects_non_empty_entry_blocks_with_explicit_unsupported_error() {
-    let unit = analyze(r#"incipit { nota "salve" }"#);
-    let errors = lower_analyzed_unit(&unit).expect_err("non-empty entry is unsupported in MIR");
+fn lowers_non_empty_entry_block_as_synthetic_function_body() {
+    let dump = dump_source(r#"incipit { fixum numerus n ← 1 + 2 }"#);
+
+    assert_eq!(
+        dump,
+        "\
+function f0 -> ty#5 {
+  locals:
+    let _0: ty#1
+  temps:
+    %0: ty#1
+  bb0:
+    %0 = const int 1 + const int 2: ty#1
+    _0 = %0: ty#1
+    return
+}
+"
+    );
+}
+
+#[test]
+fn non_empty_entry_preserves_unsupported_inner_diagnostics() {
+    let unit = analyze(r#"incipit { tacet }"#);
+    let errors = lower_analyzed_unit(&unit).expect_err("unsupported entry content should still fail closed");
 
     assert_eq!(errors.len(), 1);
     assert!(errors[0]
         .message
-        .contains("unsupported MIR lowering: non-empty entry blocks"));
+        .contains("unsupported MIR lowering: tacet before statement-level MIR lowering"));
 }
 
 #[test]
@@ -396,6 +497,26 @@ function f0 -> ty#1 {
 }
 "
     );
+}
+
+#[test]
+fn lowers_literal_elige_to_switch_terminator() {
+    let dump = dump_source(
+        r#"
+functio status(numerus code) → textus {
+    elige code {
+        casu 200 { redde "ok" }
+        casu 404 { redde "missing" }
+        ceterum { redde "other" }
+    }
+}
+"#,
+    );
+
+    assert!(dump.contains("switch _0 [const int 200: bb"));
+    assert!(dump.contains("const int 404: bb"));
+    assert!(dump.contains("default bb"));
+    assert!(!dump.contains("discerne before switch MIR lowering"));
 }
 
 #[test]
@@ -515,23 +636,80 @@ function f0 -> ty#1 {
 }
 
 #[test]
+fn lowers_numeric_range_itera_pro_to_loop_cfg() {
+    let dump = dump_source(
+        r#"functio range_sum() → numerus {
+  varia numerus total ← 0
+  itera pro 0‥4 fixum i {
+    total ← total + i
+  }
+  redde total
+}"#,
+    );
+
+    assert!(dump.contains("var _1: ty#1"));
+    assert!(dump.contains("_1 = const int 0: ty#1"));
+    assert!(dump.contains("_2 = const int 4: ty#1"));
+    assert!(dump.contains("_3 = const int 1: ty#1"));
+    assert!(dump.contains("_1 < _2: ty#3"));
+    assert!(dump.contains("_0 + _1: ty#1"));
+    assert!(dump.contains("_1 + _3: ty#1"));
+    assert!(!dump.contains("itera before iterator MIR lowering"));
+}
+
+#[test]
+fn lowers_array_itera_ex_and_de_to_index_loops() {
+    let ex_dump = dump_source(
+        r#"functio sumArray(numerus[] nums) → numerus {
+  varia numerus total ← 0
+  itera ex nums fixum n {
+    total ← total + n
+  }
+  redde total
+}"#,
+    );
+
+    assert!(ex_dump.contains("runtime collection length(_0)"));
+    assert!(ex_dump.contains("_3 = _0[_2]: ty#1"));
+    assert!(ex_dump.contains("_1 + _3: ty#1"));
+    assert!(!ex_dump.contains("itera collection before iterator MIR lowering"));
+
+    let de_dump = dump_source(
+        r#"functio firstIndex(numerus[] nums) → numerus {
+  itera de nums fixum index {
+    redde index
+  }
+  redde 0
+}"#,
+    );
+
+    assert!(de_dump.contains("runtime collection length(_0)"));
+    assert!(de_dump.contains("_2 = _1: ty#1"));
+    assert!(de_dump.contains("return _2"));
+    assert!(!de_dump.contains("itera collection before iterator MIR lowering"));
+}
+
+#[test]
 fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
     let iter_unit = analyze(
-        "functio iterare(lista<numerus> nums) → numerus { varia numerus total ← 0 itera ex nums fixum n { total ← total + n } redde total }",
+        r#"functio iterare(tabula<textus, numerus> nums) → vacuum {
+            itera de nums fixum key { nota key }
+        }"#,
     );
     let iter_errors = lower_analyzed_unit(&iter_unit).expect_err("itera is deferred");
     assert_eq!(iter_errors.len(), 1);
     assert!(iter_errors[0]
         .message
-        .contains("itera before iterator MIR lowering"));
+        .contains("itera collection before iterator MIR lowering"));
 
-    let discerne_unit =
-        analyze("functio differ(numerus n) → numerus { discerne n { casu 0 { redde 0 } casu _ { redde n } } }");
+    let discerne_unit = analyze(
+        "discretio Status { Active, Inactive } functio differ(Status s) → numerus { discerne s { casu Active { redde 1 } casu Inactive { redde 0 } } }",
+    );
     let discerne_errors = lower_analyzed_unit(&discerne_unit).expect_err("discerne is deferred");
     assert_eq!(discerne_errors.len(), 1);
     assert!(discerne_errors[0]
         .message
-        .contains("discerne before switch MIR lowering"));
+        .contains("non-literal discerne pattern before switch MIR lowering"));
 }
 
 #[test]
@@ -800,6 +978,38 @@ functio log(textus name) → vacuum {
     assert!(dump.contains("runtime diagnostic nota(const string sym#"));
     assert!(dump.contains("runtime diagnostic vide(_0)"));
     assert!(dump.contains("runtime diagnostic mone(const string sym#"));
+}
+
+#[test]
+fn lowers_multi_arg_diagnostics_to_unary_runtime_calls() {
+    let dump = dump_source(
+        r#"
+functio log(textus name, numerus age) → vacuum {
+    nota "Name:", name, "Age:", age
+}
+"#,
+    );
+
+    assert!(dump.contains("runtime diagnostic nota(const string sym#"));
+    assert!(dump.contains("runtime diagnostic nota(_0)"));
+    assert!(dump.contains("runtime diagnostic nota(_1)"));
+    assert!(!dump.contains(", _0,"));
+}
+
+#[test]
+fn lowers_adfirma_to_assert_runtime_intrinsics() {
+    let dump = dump_source(
+        r#"
+functio check(textus name, numerus count) → vacuum {
+    adfirma count > 0
+    adfirma name ≠ "", "name must not be empty"
+}
+"#,
+    );
+
+    assert!(dump.contains("runtime assert(%0) -> ty#"));
+    assert!(dump.contains("runtime assert(%1, const string sym#"));
+    assert!(!dump.contains("adfirma before assert intrinsic MIR lowering"));
 }
 
 #[test]

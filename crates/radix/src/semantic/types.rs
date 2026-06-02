@@ -92,6 +92,13 @@ impl TypeTable {
         self.primitives[&prim]
     }
 
+    /// Find the table-local type ID for a user-defined struct declaration.
+    pub fn find_struct(&self, def_id: DefId) -> Option<TypeId> {
+        self.types.iter().enumerate().find_map(|(index, ty)| {
+            matches!(ty, Type::Struct(found) if *found == def_id).then_some(TypeId(index as u32))
+        })
+    }
+
     /// Allocate `T ∪ nihil` as an optional type.
     pub fn option(&mut self, inner: TypeId) -> TypeId {
         self.intern(Type::Option(inner))
