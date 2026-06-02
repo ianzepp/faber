@@ -110,7 +110,7 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
     // PHASE 4: CODE GENERATION
     // Emit target-specific source code
     // -------------------------------------------------------------------------
-    match codegen::generate(session.config.target, &analysis.hir, &analysis.types, &analysis.interner) {
+    match generate_output(session.config.target, &analysis) {
         Ok(output) => CompileResult { output: Some(output), diagnostics: analysis.diagnostics },
         Err(err) => {
             analysis
@@ -119,6 +119,35 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
             CompileResult { output: None, diagnostics: analysis.diagnostics }
         }
     }
+}
+
+fn generate_output(target: Target, analysis: &AnalyzedUnit) -> Result<crate::Output, codegen::CodegenError> {
+    match target {
+        Target::Wasm => {
+            let mir = lower_mir_for_target(analysis)?;
+            let code = crate::mir::emit_wasm_text_probe(&mir, &analysis.types, &analysis.interner)
+                .map_err(|error| codegen::CodegenError { message: error.message })?;
+            Ok(crate::Output::Wasm(crate::WasmOutput { code }))
+        }
+        Target::LlvmIr => {
+            let mir = lower_mir_for_target(analysis)?;
+            let code = crate::mir::emit_llvm_ir_probe(&mir, &analysis.types, &analysis.interner)
+                .map_err(|error| codegen::CodegenError { message: error.message })?;
+            Ok(crate::Output::LlvmIr(crate::LlvmIrOutput { code }))
+        }
+        target => codegen::generate(target, &analysis.hir, &analysis.types, &analysis.interner),
+    }
+}
+
+fn lower_mir_for_target(analysis: &AnalyzedUnit) -> Result<crate::mir::MirProgram, codegen::CodegenError> {
+    crate::mir::lower_analyzed_unit(analysis).map_err(|errors| {
+        let message = errors
+            .into_iter()
+            .map(|error| error.message)
+            .collect::<Vec<_>>()
+            .join("; ");
+        codegen::CodegenError { message }
+    })
 }
 
 // CLI analysis can already describe more surface than the Phase 03 Rust CLI

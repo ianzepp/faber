@@ -52,6 +52,12 @@ pub enum Target {
 
     /// Go source for experiments in a second systems/runtime target.
     Go,
+
+    /// Experimental MIR-backed WebAssembly text probe.
+    Wasm,
+
+    /// Experimental MIR-backed LLVM IR text probe.
+    LlvmIr,
 }
 
 /// Backend emission error after semantic analysis has completed.
@@ -121,6 +127,9 @@ pub fn generate(
             let gen = go::GoCodegen::new(hir, interner);
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::Go(output))
+        }
+        Target::Wasm | Target::LlvmIr => {
+            Err(CodegenError { message: "target is MIR-backed and must be routed through the driver".to_owned() })
         }
     }
 }

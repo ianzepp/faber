@@ -107,6 +107,12 @@ pub enum Output {
 
     /// Go backend output.
     Go(GoOutput),
+
+    /// Experimental WebAssembly text output emitted from validated MIR.
+    Wasm(WasmOutput),
+
+    /// Experimental LLVM IR output emitted from validated MIR.
+    LlvmIr(LlvmIrOutput),
 }
 
 /// Rust backend output.
@@ -130,6 +136,18 @@ pub struct TypeScriptOutput {
 /// Go backend output.
 pub struct GoOutput {
     /// Complete generated Go source.
+    pub code: String,
+}
+
+/// Experimental WebAssembly text output.
+pub struct WasmOutput {
+    /// Complete generated WAT source.
+    pub code: String,
+}
+
+/// Experimental LLVM IR output.
+pub struct LlvmIrOutput {
+    /// Complete generated LLVM IR source.
     pub code: String,
 }
 

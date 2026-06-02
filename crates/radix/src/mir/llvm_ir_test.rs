@@ -1,0 +1,37 @@
+use crate::driver::{Config, Session};
+use crate::{driver, Output, Target};
+
+#[test]
+fn llvm_ir_target_emits_text_from_validated_mir() {
+    let source = r#"
+functio adde(numerus a, numerus b) → numerus {
+    redde a + b
+}
+"#;
+
+    let result = driver::compile(&Session::new(Config::default().with_target(Target::LlvmIr)), "llvm.fab", source);
+    let Some(Output::LlvmIr(output)) = result.output else {
+        panic!("expected LLVM IR output");
+    };
+
+    assert!(output.code.contains("define i64 @adde(i64 %l0, i64 %l1)"));
+    assert!(output.code.contains("add i64 %l0, %l1"));
+    assert!(output.code.contains("ret i64 %v"));
+}
+
+#[test]
+fn llvm_ir_target_rejects_unsupported_mir_shapes() {
+    let source = r#"
+functio label() → textus {
+    redde "salve"
+}
+"#;
+
+    let result = driver::compile(&Session::new(Config::default().with_target(Target::LlvmIr)), "llvm.fab", source);
+
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.message.contains("MIR-to-LLVM unsupported")));
+}

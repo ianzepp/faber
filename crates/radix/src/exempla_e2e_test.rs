@@ -128,7 +128,7 @@ fn exempla_rust_e2e() {
 
         if !run.status.success() {
             let stderr = String::from_utf8_lossy(&run.stderr).trim().to_owned();
-            if let Some(expected) = expected_runtime_failure(&file, RUST_EXPECTED_RUNTIME_FAILURES) {
+            if let Some(expected) = expected_runtime_failure(file, RUST_EXPECTED_RUNTIME_FAILURES) {
                 if stderr.contains(expected) {
                     results.push(E2eResult {
                         path: file.clone(),
@@ -141,7 +141,7 @@ fn exempla_rust_e2e() {
             results.push(E2eResult { path: file.clone(), passed: false, reason: format!("binary failed: {stderr}") });
             continue;
         }
-        if let Some(expected) = expected_runtime_failure(&file, RUST_EXPECTED_RUNTIME_FAILURES) {
+        if let Some(expected) = expected_runtime_failure(file, RUST_EXPECTED_RUNTIME_FAILURES) {
             results.push(E2eResult {
                 path: file.clone(),
                 passed: false,

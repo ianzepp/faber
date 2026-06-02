@@ -67,7 +67,7 @@ pub enum FaberCommand {
     CliIr(InputArgs),
     /// Run semantic analysis
     Check(CheckArgs),
-    /// Compile to target (rust, faber, ts, go)
+    /// Compile to target (rust, faber, ts, go, wasm, llvm-ir)
     Emit(EmitArgs),
 }
 
@@ -95,7 +95,7 @@ pub enum RadixCommand {
     CliIr(InputArgs),
     /// Run semantic analysis
     Check(CheckArgs),
-    /// Compile to target (rust, faber, ts, go)
+    /// Compile to target (rust, faber, ts, go, wasm, llvm-ir)
     Emit(EmitArgs),
     /// Show supported targets and current capability notes
     Targets,
@@ -277,6 +277,14 @@ pub enum CliTarget {
 
     /// Go backend.
     Go,
+
+    /// Experimental MIR-backed WebAssembly text target.
+    #[value(name = "wasm", alias = "wat")]
+    Wasm,
+
+    /// Experimental MIR-backed LLVM IR target.
+    #[value(name = "llvm-ir", alias = "llvm")]
+    LlvmIr,
 }
 
 impl From<CliTarget> for crate::codegen::Target {
@@ -286,6 +294,8 @@ impl From<CliTarget> for crate::codegen::Target {
             CliTarget::Faber => crate::codegen::Target::Faber,
             CliTarget::TypeScript => crate::codegen::Target::TypeScript,
             CliTarget::Go => crate::codegen::Target::Go,
+            CliTarget::Wasm => crate::codegen::Target::Wasm,
+            CliTarget::LlvmIr => crate::codegen::Target::LlvmIr,
         }
     }
 }
@@ -957,6 +967,8 @@ pub fn cmd_targets() {
     for target in [
         crate::codegen::Target::Rust,
         crate::codegen::Target::Go,
+        crate::codegen::Target::Wasm,
+        crate::codegen::Target::LlvmIr,
         crate::codegen::Target::TypeScript,
         crate::codegen::Target::Faber,
     ] {
@@ -1047,6 +1059,8 @@ fn target_extension(target: crate::codegen::Target) -> &'static str {
         crate::codegen::Target::Faber => "fab",
         crate::codegen::Target::TypeScript => "ts",
         crate::codegen::Target::Go => "go",
+        crate::codegen::Target::Wasm => "wat",
+        crate::codegen::Target::LlvmIr => "ll",
     }
 }
 
@@ -1056,6 +1070,8 @@ fn target_name(target: crate::codegen::Target) -> &'static str {
         crate::codegen::Target::Faber => "faber",
         crate::codegen::Target::TypeScript => "ts",
         crate::codegen::Target::Go => "go",
+        crate::codegen::Target::Wasm => "wasm",
+        crate::codegen::Target::LlvmIr => "llvm-ir",
     }
 }
 
@@ -1094,6 +1110,20 @@ pub fn target_capabilities(target: crate::codegen::Target) -> TargetCapabilities
             package: false,
             note: "canonical pretty-print target; package compilation not yet supported",
         },
+        crate::codegen::Target::Wasm => TargetCapabilities {
+            check: true,
+            build: true,
+            run: false,
+            package: false,
+            note: "experimental MIR-backed WAT probe; not a binary WASM backend yet",
+        },
+        crate::codegen::Target::LlvmIr => TargetCapabilities {
+            check: true,
+            build: true,
+            run: false,
+            package: false,
+            note: "experimental MIR-backed LLVM IR text probe; not native codegen yet",
+        },
     }
 }
 
@@ -1112,6 +1142,8 @@ pub fn output_code(output: crate::Output) -> String {
         crate::Output::Faber(out) => out.code,
         crate::Output::TypeScript(out) => out.code,
         crate::Output::Go(out) => out.code,
+        crate::Output::Wasm(out) => out.code,
+        crate::Output::LlvmIr(out) => out.code,
     }
 }
 
@@ -1136,6 +1168,7 @@ pub fn format_generated_code(target: crate::codegen::Target, code: &str) -> Resu
             // In the future we can hook a dedicated `faber fmt` here if one is added.
             Ok(code.to_string())
         }
+        crate::codegen::Target::Wasm | crate::codegen::Target::LlvmIr => Ok(code.to_string()),
     }
 }
 
@@ -1172,6 +1205,7 @@ pub fn lint_generated_code(target: crate::codegen::Target, code: &str) -> Result
             .map(|_| code.to_string()) // eslint --fix-dry-run doesn't rewrite; real --fix needs files
         }
         crate::codegen::Target::Faber => Ok(code.to_string()),
+        crate::codegen::Target::Wasm | crate::codegen::Target::LlvmIr => Ok(code.to_string()),
     }
 }
 
