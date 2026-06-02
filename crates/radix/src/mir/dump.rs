@@ -298,6 +298,7 @@ fn constant(value: &MirConstant) -> String {
 fn intrinsic(value: &MirIntrinsic) -> String {
     match value {
         MirIntrinsic::Diagnostic(kind) => format!("diagnostic {}", diagnostic_kind(*kind)),
+        MirIntrinsic::Assert => "assert".to_owned(),
         MirIntrinsic::FormatString { template } => format!("format_string template sym#{}", template.0),
         MirIntrinsic::Convert(conversion) => conversion_intrinsic(conversion),
         MirIntrinsic::Collection(op) => format!("collection {}", collection_op(*op)),

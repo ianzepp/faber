@@ -857,3 +857,78 @@ gaps, and top-level consts.
 Select the next phase from MIR-lowering clusters. Assertion intrinsics or
 iterator/range lowering are likely direct candidates for raising the
 `MIR lowered` ceiling.
+
+## Phase 012 Update: Assert Intrinsic Wasm Path
+
+**Commit target**: Phase 012
+**Change**: `adfirma` now lowers to a target-neutral MIR assertion runtime
+intrinsic. The Wasm text probe emits explicit assertion imports, and textus
+equality/inequality lowers to explicit `faber_text` comparison imports so the
+assertion exemplars validate as WAT.
+
+### Tier Counts After Phase 012
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 44/101
+  Wasm emitted: 44/101
+  compile-valid: 44/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 42/101 to 44/101. MIR-lowered
+coverage also increased from 42/101 to 44/101.
+
+New compile-valid exemplars:
+
+- `examples/exempla/adfirma/adfirma.fab`
+- `examples/exempla/adfirma/in-functione.fab`
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+The assertion MIR-lowering cluster is removed from the current harness result.
+There are no remaining Wasm-emission failures for the current MIR-lowered
+exemplar set. The compile-valid ceiling remains the `MIR lowered` tier.
+
+Assertion behavior and text comparison behavior are not claimed by this phase.
+The generated modules validate because their host import ABI is declared;
+behavior remains runtime-host work.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are iterator/range lowering,
+switch/pattern lowering, runtime/provider method calls, compound
+assignment/operator gaps, predicate unary gaps, aggregate/optional validation
+gaps, top-level consts, `ad` provider blocks, and async `cede`.
+
+### Remaining Host/Runtime Clusters
+
+- Provide real `faber_runtime` import implementations for assertion, conversion,
+  panic, and collection length.
+- Provide real `faber_text` comparison behavior.
+- Add a local instantiate/run host before measuring instantiate-valid, runnable,
+  or behavior-checked tiers.
+
+### Phase 012 Validation Log
+
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select the next phase from MIR-lowering clusters. Iterator/range lowering has
+the largest visible cluster, while switch/pattern lowering is another compact
+candidate if the next phase should stay control-flow focused.

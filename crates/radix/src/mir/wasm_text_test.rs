@@ -286,6 +286,34 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_assert_and_text_compare_imports() {
+    let source = r#"
+incipit {
+    fixum _ name ← "Marcus"
+    fixum _ count ← 10
+    adfirma count > 0
+    adfirma name ≠ "", "name must not be empty"
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(r#"(import "faber_text" "ne_text" (func $__faber_text_ne_text (param i32 i32) (result i32)))"#)
+    );
+    assert!(
+        output.contains(r#"(import "faber_runtime" "assert_1_i32" (func $__faber_runtime_assert_1_i32 (param i32)))"#)
+    );
+    assert!(output.contains(
+        r#"(import "faber_runtime" "assert_2_i32_text" (func $__faber_runtime_assert_2_i32_text (param i32 i32)))"#
+    ));
+    assert!(output.contains("(call $__faber_runtime_assert_1_i32"));
+    assert!(output.contains("(call $__faber_text_ne_text"));
+    assert!(output.contains("(call $__faber_runtime_assert_2_i32_text"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_panic_and_collection_length_imports() {
     let source = r#"
 functio at(lista<numerus> items, numerus index) → numerus {

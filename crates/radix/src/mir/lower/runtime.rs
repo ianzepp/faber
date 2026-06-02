@@ -242,6 +242,24 @@ impl FunctionBuilder<'_> {
         Some(MirOperand::Constant(MirConstant::Unit))
     }
 
+    /// Lower `adfirma` into a target-neutral assertion runtime intrinsic.
+    ///
+    /// The condition has already been typechecked as `bivalens`; MIR validation
+    /// rechecks that invariant so backend probes can trust the first operand.
+    pub(super) fn lower_adfirma(
+        &mut self,
+        cond: &HirExpr,
+        message: Option<&HirExpr>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let mut args = vec![self.lower_expr_value(cond)?];
+        if let Some(message) = message {
+            args.push(self.lower_expr_value(message)?);
+        }
+        let return_ty = self.expr_ty(expr)?;
+        Some(self.runtime_call_value(MirIntrinsic::Assert, args, return_ty, expr.span))
+    }
+
     /// Lower a string-template application to a format-string intrinsic.
     pub(super) fn lower_scriptum(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         let mut lowered_args = Vec::with_capacity(args.len());

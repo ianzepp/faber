@@ -55,6 +55,7 @@ pub(super) trait HirExprLoweringVisitor {
             }
             HirExprKind::Scribe(kind, args) => self.visit_scribe_expr(*kind, args, expr),
             HirExprKind::Scriptum(template, args) => self.visit_scriptum_expr(*template, args, expr),
+            HirExprKind::Adfirma(cond, message) => self.visit_adfirma_expr(cond, message.as_deref(), expr),
             HirExprKind::Conversio { source, target, params, fallback } => {
                 self.visit_conversio_expr(source, *target, params, fallback.as_deref(), expr)
             }
@@ -106,6 +107,7 @@ pub(super) trait HirExprLoweringVisitor {
     ) -> Option<MirOperand>;
     fn visit_scribe_expr(&mut self, kind: HirScribeKind, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand>;
     fn visit_scriptum_expr(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand>;
+    fn visit_adfirma_expr(&mut self, cond: &HirExpr, message: Option<&HirExpr>, expr: &HirExpr) -> Option<MirOperand>;
     fn visit_conversio_expr(
         &mut self,
         source: &HirExpr,
@@ -216,6 +218,10 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
 
     fn visit_scriptum_expr(&mut self, template: Symbol, args: &[HirExpr], expr: &HirExpr) -> Option<MirOperand> {
         self.lower_scriptum(template, args, expr)
+    }
+
+    fn visit_adfirma_expr(&mut self, cond: &HirExpr, message: Option<&HirExpr>, expr: &HirExpr) -> Option<MirOperand> {
+        self.lower_adfirma(cond, message, expr)
     }
 
     fn visit_conversio_expr(

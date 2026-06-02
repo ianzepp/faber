@@ -109,6 +109,16 @@ struct PanicImport {
     arg: WasmValue,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct AssertImport {
+    args: Vec<WasmValue>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct TextCompareImport {
+    op: MirBinOp,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum RuntimeValueImportKind {
     Convert,
@@ -146,6 +156,13 @@ impl WasmTextProbe<'_> {
         if self.requires_text_concat_import()? {
             writer
                 .writeln("(import \"faber_text\" \"concat\" (func $__faber_text_concat (param i32 i32) (result i32)))");
+        }
+        for import in self.required_text_compare_imports()? {
+            writer.writeln(&format!(
+                "(import \"faber_text\" \"{}\" (func ${} (param i32 i32) (result i32)))",
+                text_compare_import_name(import),
+                text_compare_import_symbol(import),
+            ));
         }
         for import in self.required_aggregate_imports()? {
             let params = import
@@ -194,6 +211,19 @@ impl WasmTextProbe<'_> {
                 panic_import_name(&import),
                 panic_import_symbol(&import),
                 import.arg.wat(),
+            ));
+        }
+        for import in self.required_assert_imports()? {
+            let params = import
+                .args
+                .iter()
+                .map(|arg| arg.wat())
+                .collect::<Vec<_>>()
+                .join(" ");
+            writer.writeln(&format!(
+                "(import \"faber_runtime\" \"{}\" (func ${} (param {params})))",
+                assert_import_name(&import),
+                assert_import_symbol(&import),
             ));
         }
         for import in self.required_text_format_imports()? {
@@ -337,6 +367,23 @@ impl WasmTextProbe<'_> {
                     writer.writeln(&format!("  (call ${} {arg})", diagnostic_import_symbol(import)));
                     Ok(())
                 }
+                (None, MirIntrinsic::Assert) => {
+                    let import = AssertImport {
+                        args: call
+                            .args
+                            .iter()
+                            .map(|arg| self.operand_ty(arg, context))
+                            .collect::<Result<Vec<_>, _>>()?,
+                    };
+                    let mut call_expr = format!("(call ${}", assert_import_symbol(&import));
+                    for arg in &call.args {
+                        call_expr.push(' ');
+                        call_expr.push_str(&self.operand_expr(arg, context)?);
+                    }
+                    call_expr.push(')');
+                    writer.writeln(&format!("  {call_expr}"));
+                    Ok(())
+                }
                 (Some(destination), MirIntrinsic::FormatString { template }) => {
                     let expr = self.format_string_call_expr(*template, &call.args, call.return_ty, context)?;
                     self.emit_place_set(destination, &expr, context, writer)
@@ -388,6 +435,9 @@ impl WasmTextProbe<'_> {
                 let lhs_ty = self.operand_ty(lhs, context)?;
                 let expr = if *op == MirBinOp::Add && lhs_ty == WasmValue::TextHandle {
                     format!("(call $__faber_text_concat {lhs_expr} {rhs_expr})")
+                } else if matches!(op, MirBinOp::Eq | MirBinOp::NotEq) && lhs_ty == WasmValue::TextHandle {
+                    let import = TextCompareImport { op: *op };
+                    format!("(call ${} {lhs_expr} {rhs_expr})", text_compare_import_symbol(import))
                 } else {
                     let op = wasm_bin_op(*op, lhs_ty)?;
                     format!("({op} {lhs_expr} {rhs_expr})")
@@ -896,6 +946,31 @@ impl WasmTextProbe<'_> {
         Ok(false)
     }
 
+    fn required_text_compare_imports(&self) -> Result<Vec<TextCompareImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    let MirStmtKind::Assign { value, .. } = &stmt.kind else {
+                        continue;
+                    };
+                    let MirValueKind::Binary { op, lhs, .. } = &value.kind else {
+                        continue;
+                    };
+                    if matches!(op, MirBinOp::Eq | MirBinOp::NotEq)
+                        && self.operand_ty(lhs, &context)? == WasmValue::TextHandle
+                    {
+                        imports.insert(TextCompareImport { op: *op });
+                    }
+                }
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(|import| text_compare_import_name(*import));
+        Ok(imports)
+    }
+
     fn required_text_format_imports(&self) -> Result<Vec<TextFormatImport>, MirWasmTextProbeError> {
         let mut imports = FxHashSet::default();
         for function in &self.program.functions {
@@ -992,6 +1067,33 @@ impl WasmTextProbe<'_> {
         }
         let mut imports = imports.into_iter().collect::<Vec<_>>();
         imports.sort_by_key(panic_import_name);
+        Ok(imports)
+    }
+
+    fn required_assert_imports(&self) -> Result<Vec<AssertImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    let MirStmtKind::RuntimeCall { destination: None, call } = &stmt.kind else {
+                        continue;
+                    };
+                    if !matches!(call.intrinsic, MirIntrinsic::Assert) {
+                        continue;
+                    }
+                    imports.insert(AssertImport {
+                        args: call
+                            .args
+                            .iter()
+                            .map(|arg| self.operand_ty(arg, &context))
+                            .collect::<Result<Vec<_>, _>>()?,
+                    });
+                }
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(assert_import_name);
         Ok(imports)
     }
 
@@ -1261,6 +1363,18 @@ fn text_format_import_symbol(import: &TextFormatImport) -> String {
     format!("__faber_text_{}", text_format_import_name(import))
 }
 
+fn text_compare_import_name(import: TextCompareImport) -> &'static str {
+    match import.op {
+        MirBinOp::Eq => "eq_text",
+        MirBinOp::NotEq => "ne_text",
+        _ => "unsupported_text_compare",
+    }
+}
+
+fn text_compare_import_symbol(import: TextCompareImport) -> String {
+    format!("__faber_text_{}", text_compare_import_name(import))
+}
+
 fn diagnostic_import_name(import: DiagnosticImport) -> &'static str {
     match (import.kind, import.value) {
         (MirDiagnosticKind::Nota, WasmValue::I32) => "nota_i32",
@@ -1400,6 +1514,20 @@ fn panic_import_name(import: &PanicImport) -> String {
 
 fn panic_import_symbol(import: &PanicImport) -> String {
     format!("__faber_runtime_{}", panic_import_name(import))
+}
+
+fn assert_import_name(import: &AssertImport) -> String {
+    let args = import
+        .args
+        .iter()
+        .map(|arg| arg.abi_name())
+        .collect::<Vec<_>>()
+        .join("_");
+    format!("assert_{}_{}", import.args.len(), args)
+}
+
+fn assert_import_symbol(import: &AssertImport) -> String {
+    format!("__faber_runtime_{}", assert_import_name(import))
 }
 
 #[cfg(test)]

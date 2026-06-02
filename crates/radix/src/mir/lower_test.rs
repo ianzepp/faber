@@ -840,6 +840,22 @@ functio log(textus name, numerus age) → vacuum {
 }
 
 #[test]
+fn lowers_adfirma_to_assert_runtime_intrinsics() {
+    let dump = dump_source(
+        r#"
+functio check(textus name, numerus count) → vacuum {
+    adfirma count > 0
+    adfirma name ≠ "", "name must not be empty"
+}
+"#,
+    );
+
+    assert!(dump.contains("runtime assert(%0) -> ty#"));
+    assert!(dump.contains("runtime assert(%1, const string sym#"));
+    assert!(!dump.contains("adfirma before assert intrinsic MIR lowering"));
+}
+
+#[test]
 fn lowers_format_conversion_collection_and_provider_runtime_intrinsics() {
     let format_dump = dump_source(r#"functio greet(textus name) → textus { redde "Salve, §!"(name) }"#);
     assert!(format_dump.contains("runtime format_string template sym#"));
