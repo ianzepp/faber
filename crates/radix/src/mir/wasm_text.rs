@@ -98,6 +98,13 @@ struct ProjectionImport {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ProjectionSetImport {
+    kind: ProjectionImportKind,
+    key: WasmValue,
+    value: WasmValue,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct RuntimeValueImport {
     kind: RuntimeValueImportKind,
     args: Vec<WasmValue>,
@@ -189,6 +196,15 @@ impl WasmTextProbe<'_> {
                 projection_import_symbol(&import),
                 import.key.wat(),
                 import.result.wat(),
+            ));
+        }
+        for import in self.required_projection_set_imports()? {
+            writer.writeln(&format!(
+                "(import \"faber_aggregate\" \"{}\" (func ${} (param i32 {} {})))",
+                projection_set_import_name(&import),
+                projection_set_import_symbol(&import),
+                import.key.wat(),
+                import.value.wat(),
             ));
         }
         for import in self.required_runtime_value_imports()? {
@@ -430,16 +446,24 @@ impl WasmTextProbe<'_> {
         match &value.kind {
             MirValueKind::Operand(operand) => self.operand_expr(operand, context),
             MirValueKind::Binary { op, lhs, rhs } => {
-                let lhs_expr = self.operand_expr(lhs, context)?;
-                let rhs_expr = self.operand_expr(rhs, context)?;
                 let lhs_ty = self.operand_ty(lhs, context)?;
+                let rhs_ty = self.operand_ty(rhs, context)?;
+                let mut lhs_expr = self.operand_expr(lhs, context)?;
+                let mut rhs_expr = self.operand_expr(rhs, context)?;
                 let expr = if *op == MirBinOp::Add && lhs_ty == WasmValue::TextHandle {
                     format!("(call $__faber_text_concat {lhs_expr} {rhs_expr})")
                 } else if matches!(op, MirBinOp::Eq | MirBinOp::NotEq) && lhs_ty == WasmValue::TextHandle {
                     let import = TextCompareImport { op: *op };
                     format!("(call ${} {lhs_expr} {rhs_expr})", text_compare_import_symbol(import))
                 } else {
-                    let op = wasm_bin_op(*op, lhs_ty)?;
+                    let op_ty = if lhs_ty == WasmValue::F64 || rhs_ty == WasmValue::F64 {
+                        WasmValue::F64
+                    } else {
+                        lhs_ty
+                    };
+                    lhs_expr = coerce_wasm_operand_expr(lhs_expr, lhs_ty, op_ty)?;
+                    rhs_expr = coerce_wasm_operand_expr(rhs_expr, rhs_ty, op_ty)?;
+                    let op = wasm_bin_op(*op, op_ty)?;
                     format!("({op} {lhs_expr} {rhs_expr})")
                 };
                 writer.writeln(&format!("  ;; v{} = {expr}", value.id.0));
@@ -492,11 +516,16 @@ impl WasmTextProbe<'_> {
         &self,
         place: &MirPlace,
         expr: &str,
-        _context: &FunctionContext,
+        context: &FunctionContext,
         writer: &mut CodeWriter,
     ) -> Result<(), MirWasmTextProbeError> {
         if !place.projections.is_empty() {
-            return Err(MirWasmTextProbeError::unsupported("place projection"));
+            let (base_expr, import, key_expr) = self.projection_set_call_parts(place, context)?;
+            writer.writeln(&format!(
+                "  (call ${} {base_expr} {key_expr} {expr})",
+                projection_set_import_symbol(&import)
+            ));
+            return Ok(());
         }
         match place.base {
             MirPlaceBase::Local(id) => {
@@ -507,6 +536,35 @@ impl WasmTextProbe<'_> {
             }
         }
         Ok(())
+    }
+
+    fn projection_set_call_parts(
+        &self,
+        place: &MirPlace,
+        context: &FunctionContext,
+    ) -> Result<(String, ProjectionSetImport, String), MirWasmTextProbeError> {
+        let Some((last, parent)) = place.projections.split_last() else {
+            return Err(MirWasmTextProbeError::unsupported("empty projection set"));
+        };
+        if !parent.is_empty() {
+            return Err(MirWasmTextProbeError::unsupported("nested place projection set"));
+        }
+
+        let base_expr = match place.base {
+            MirPlaceBase::Local(id) => context
+                .locals
+                .get(&id)
+                .map(|_| format!("(local.get ${})", local_name(id)))
+                .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined local l{}", id.0)))?,
+            MirPlaceBase::Temp(id) => context
+                .temps
+                .get(&id)
+                .map(|_| format!("(local.get ${})", temp_name(id)))
+                .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined temp t{}", id.0)))?,
+        };
+        let base_ty = self.place_base_mir_ty(place, context)?;
+        let (import, key_expr) = self.projection_set_import(last, base_ty, context)?;
+        Ok((base_expr, import, key_expr))
     }
 
     fn emit_terminator(
@@ -725,6 +783,46 @@ impl WasmTextProbe<'_> {
         }
     }
 
+    fn projection_set_import(
+        &self,
+        projection: &MirProjection,
+        base_ty: MirType,
+        context: &FunctionContext,
+    ) -> Result<(ProjectionSetImport, String), MirWasmTextProbeError> {
+        match projection {
+            MirProjection::Field(field) => {
+                let value_ty = self.project_field_ty(base_ty, *field)?;
+                Ok((
+                    ProjectionSetImport {
+                        kind: ProjectionImportKind::Field,
+                        key: WasmValue::I32,
+                        value: self.scalar_ty(value_ty)?,
+                    },
+                    format!("(i32.const {})", field.0),
+                ))
+            }
+            MirProjection::VariantField { variant, field } => {
+                let value_ty = self.project_variant_field_ty(*variant, *field)?;
+                Ok((
+                    ProjectionSetImport {
+                        kind: ProjectionImportKind::VariantField,
+                        key: WasmValue::I32,
+                        value: self.scalar_ty(value_ty)?,
+                    },
+                    format!("(i32.const {})", field.0),
+                ))
+            }
+            MirProjection::Index(index) => {
+                let key = self.operand_ty(index, context)?;
+                let value_ty = self.project_index_ty(base_ty)?;
+                Ok((
+                    ProjectionSetImport { kind: ProjectionImportKind::Index, key, value: self.scalar_ty(value_ty)? },
+                    self.operand_expr(index, context)?,
+                ))
+            }
+        }
+    }
+
     fn constant_expr(&self, constant: &MirConstant) -> Result<String, MirWasmTextProbeError> {
         match constant {
             MirConstant::Int(value) => Ok(format!("(i64.const {value})")),
@@ -760,6 +858,21 @@ impl WasmTextProbe<'_> {
     }
 
     fn function_name(&self, function: &MirFunction) -> String {
+        let base = self.function_base_name(function);
+        let duplicates = self
+            .program
+            .functions
+            .iter()
+            .filter(|other| self.function_base_name(other) == base)
+            .count();
+        if duplicates > 1 {
+            format!("{}_f{}", base, function.id.0)
+        } else {
+            base
+        }
+    }
+
+    fn function_base_name(&self, function: &MirFunction) -> String {
         function
             .name
             .map(|symbol| sanitize_name(self.interner.resolve(symbol)))
@@ -796,6 +909,7 @@ impl WasmTextProbe<'_> {
             Type::Primitive(Primitive::Fractus) => Ok(WasmValue::F64),
             Type::Primitive(Primitive::Bivalens) => Ok(WasmValue::I32),
             Type::Primitive(Primitive::Textus) => Ok(WasmValue::TextHandle),
+            Type::Primitive(Primitive::Ignotum) => Ok(WasmValue::AggregateHandle),
             Type::Option(_) => Ok(WasmValue::AggregateHandle),
             Type::Array(_) | Type::Map(_, _) | Type::Record(_) | Type::Set(_) | Type::Struct(_) | Type::Enum(_) => {
                 Ok(WasmValue::AggregateHandle)
@@ -1232,6 +1346,52 @@ impl WasmTextProbe<'_> {
         Ok(imports)
     }
 
+    fn required_projection_set_imports(&self) -> Result<Vec<ProjectionSetImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    self.collect_stmt_projection_set_imports(stmt, &context, &mut imports)?;
+                }
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(projection_set_import_name);
+        Ok(imports)
+    }
+
+    fn collect_stmt_projection_set_imports(
+        &self,
+        stmt: &MirStmt,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionSetImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        match &stmt.kind {
+            MirStmtKind::Assign { place, .. }
+            | MirStmtKind::Call { destination: Some(place), .. }
+            | MirStmtKind::RuntimeCall { destination: Some(place), .. }
+            | MirStmtKind::Construct { destination: place, .. } => {
+                self.collect_place_projection_set_imports(place, context, imports)
+            }
+            MirStmtKind::Call { destination: None, .. } | MirStmtKind::RuntimeCall { destination: None, .. } => Ok(()),
+        }
+    }
+
+    fn collect_place_projection_set_imports(
+        &self,
+        place: &MirPlace,
+        context: &FunctionContext,
+        imports: &mut FxHashSet<ProjectionSetImport>,
+    ) -> Result<(), MirWasmTextProbeError> {
+        if place.projections.is_empty() {
+            return Ok(());
+        }
+        let (_, import, _) = self.projection_set_call_parts(place, context)?;
+        imports.insert(import);
+        Ok(())
+    }
+
     fn collect_stmt_projection_imports(
         &self,
         stmt: &MirStmt,
@@ -1409,8 +1569,12 @@ fn wasm_bin_op(op: MirBinOp, lhs_ty: WasmValue) -> Result<&'static str, MirWasmT
         MirBinOp::Gt if lhs_ty == WasmValue::F64 => Ok("f64.gt"),
         MirBinOp::LtEq if lhs_ty == WasmValue::F64 => Ok("f64.le"),
         MirBinOp::GtEq if lhs_ty == WasmValue::F64 => Ok("f64.ge"),
-        MirBinOp::Eq if lhs_ty == WasmValue::I32 => Ok("i32.eq"),
-        MirBinOp::NotEq if lhs_ty == WasmValue::I32 => Ok("i32.ne"),
+        MirBinOp::Eq if matches!(lhs_ty, WasmValue::I32 | WasmValue::TextHandle | WasmValue::AggregateHandle) => {
+            Ok("i32.eq")
+        }
+        MirBinOp::NotEq if matches!(lhs_ty, WasmValue::I32 | WasmValue::TextHandle | WasmValue::AggregateHandle) => {
+            Ok("i32.ne")
+        }
         MirBinOp::And => Ok("i32.and"),
         MirBinOp::Or => Ok("i32.or"),
         MirBinOp::BitAnd if lhs_ty == WasmValue::I64 => Ok("i64.and"),
@@ -1435,6 +1599,20 @@ fn wasm_un_op(op: MirUnOp, operand_ty: WasmValue, operand: &str) -> Result<Strin
             Ok(format!("(i32.ne {operand} (i32.const 0))"))
         }
         _ => Err(MirWasmTextProbeError::unsupported(format!("unary op {op:?}"))),
+    }
+}
+
+fn coerce_wasm_operand_expr(
+    expr: String,
+    from: WasmValue,
+    to: WasmValue,
+) -> Result<String, MirWasmTextProbeError> {
+    if from == to {
+        return Ok(expr);
+    }
+    match (from, to) {
+        (WasmValue::I64, WasmValue::F64) => Ok(format!("(f64.convert_i64_s {expr})")),
+        _ => Err(MirWasmTextProbeError::unsupported(format!("numeric coercion {from:?} to {to:?}"))),
     }
 }
 
@@ -1613,6 +1791,19 @@ fn projection_import_name(import: &ProjectionImport) -> String {
 
 fn projection_import_symbol(import: &ProjectionImport) -> String {
     format!("__faber_aggregate_{}", projection_import_name(import))
+}
+
+fn projection_set_import_name(import: &ProjectionSetImport) -> String {
+    let kind = match import.kind {
+        ProjectionImportKind::Field => "set_field",
+        ProjectionImportKind::VariantField => "set_variant_field",
+        ProjectionImportKind::Index => "set_index",
+    };
+    format!("{kind}_{}_{}", import.key.abi_name(), import.value.abi_name())
+}
+
+fn projection_set_import_symbol(import: &ProjectionSetImport) -> String {
+    format!("__faber_aggregate_{}", projection_set_import_name(import))
 }
 
 fn runtime_value_import_name(import: &RuntimeValueImport) -> String {

@@ -124,6 +124,26 @@ fn lowers_vacua_to_empty_collection_aggregates() {
 }
 
 #[test]
+fn lowers_genus_method_calls_with_explicit_receiver_param() {
+    let dump = dump_source(
+        r#"genus Capsa {
+  numerus n = 1
+  functio value() → numerus { redde ego.n }
+}
+
+incipit {
+  fixum _ c ← Capsa { n = 4 }
+  nota c.value()
+}"#,
+    );
+
+    assert!(dump.contains("function f0 -> ty#1 {\n  params:\n    _0:"));
+    assert!(dump.contains("return _0.sym#"));
+    assert!(dump.contains("%1 = call def#"));
+    assert!(dump.contains("runtime diagnostic nota(%1)"));
+}
+
+#[test]
 fn materializes_constant_redde_operands_with_types() {
     let int_dump = dump_source("functio unum() → numerus { redde 1 }");
     assert_eq!(

@@ -36,8 +36,9 @@ use crate::driver::AnalyzedUnit;
 use crate::hir::visit::HirVisitor;
 use crate::hir::{
     DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirExpr, HirExprKind, HirField, HirFunction,
-    HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey,
-    HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
+    HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField,
+    HirObjectKey, HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirStruct,
+    HirUnOp,
 };
 use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{
@@ -222,6 +223,58 @@ impl<'a> MirLowerer<'a> {
         });
     }
 
+    /// Lower a genus method as an ordinary MIR function with an explicit
+    /// receiver parameter bound to the struct definition used by `ego`.
+    fn lower_method(
+        &mut self,
+        struct_item: &HirItem,
+        strukt: &HirStruct,
+        method: &HirMethod,
+        context_maps: &LoweringContextMaps<'_>,
+        struct_fields: &FxHashMap<DefId, Vec<&HirField>>,
+    ) {
+        let Some(return_ty) = method.func.ret_ty else {
+            self.errors
+                .push(MirError::missing_type(method.span, "method return type"));
+            return;
+        };
+        let Some(receiver_ty) = self.unit.types.find_struct(struct_item.def_id) else {
+            self.errors
+                .push(MirError::missing_type(method.span, "method receiver type"));
+            return;
+        };
+
+        let error_ty = method.func.err_ty.map(MirType::semantic);
+        let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
+        let (params, locals, temps, blocks, errors) = {
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context);
+            builder.add_param(struct_item.def_id, strukt.name, receiver_ty, method.span);
+            for param in &method.func.params {
+                builder.add_param(param.def_id, param.name, param.ty, param.span);
+            }
+
+            let blocks = match &method.func.body {
+                Some(body) => builder.lower_body(body),
+                None => Vec::new(),
+            };
+            (builder.params, builder.locals, builder.temps, blocks, builder.errors)
+        };
+        self.errors.extend(errors);
+
+        self.functions.push(MirFunction {
+            id: MirFunctionId(self.functions.len() as u32),
+            source: Some(method.def_id),
+            name: Some(method.func.name),
+            params,
+            locals,
+            temps,
+            blocks,
+            return_ty: MirType::semantic(return_ty),
+            error_ty,
+            span: method.span,
+        });
+    }
+
     /// Rebuild validation context from the analyzed unit for the final handoff.
     ///
     /// The validation maps are derived from immutable HIR/type data rather than
@@ -297,6 +350,11 @@ struct ProviderImport {
     item: Symbol,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct MethodTarget {
+    def_id: DefId,
+}
+
 /// Immutable whole-unit facts needed while lowering one function body.
 ///
 /// This context is intentionally cloned into each [`FunctionBuilder`] instead of
@@ -310,6 +368,7 @@ struct FunctionBuilderContext<'a> {
     variant_parents: FxHashMap<DefId, DefId>,
     variant_fields: FxHashMap<DefId, Vec<crate::lexer::Symbol>>,
     provider_imports: FxHashMap<DefId, ProviderImport>,
+    method_targets: FxHashMap<(DefId, Symbol), MethodTarget>,
 }
 
 impl FunctionBuilderContext<'_> {
@@ -322,6 +381,7 @@ impl FunctionBuilderContext<'_> {
             variant_parents: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
             provider_imports: FxHashMap::default(),
+            method_targets: FxHashMap::default(),
         }
     }
 }

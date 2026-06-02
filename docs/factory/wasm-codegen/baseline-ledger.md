@@ -1571,3 +1571,115 @@ calls and collection method Wasm host ABI emission. Treat those as separate
 policy phases: method lowering must remain MIR-based, and collection Wasm
 support must define imports honestly before claiming instantiate or runnable
 tiers.
+
+## Phase 020 Update: Genus Method MIR Lowering
+
+**Commit target**: Phase 020
+**Change**: bodyful genus methods now lower through target-neutral MIR as
+ordinary definition functions with an explicit receiver parameter. Calls such
+as `receiver.method(args...)` resolve to direct MIR definition calls before the
+runtime/provider fallback path. Wasm emission also handles the compile-valid
+shapes newly exposed by lowering those method bodies: duplicate same-spelled
+method names, aggregate projection assignments, narrow opaque `ignotum` handle
+carriers, handle equality, and explicit `i64` to `f64` numeric coercion.
+
+### Tier Counts After Phase 020
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 72/101
+  Wasm emitted: 71/101
+  compile-valid: 71/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 63/101 to 71/101. MIR-lowered
+coverage increased from 64/101 to 72/101, and Wasm-emitted coverage increased
+from 63/101 to 71/101.
+
+New compile-valid exemplars:
+
+- `examples/exempla/abstractus/abstractus.fab`
+- `examples/exempla/ego/ego.fab`
+- `examples/exempla/genus/creo.fab`
+- `examples/exempla/genus/methodi.fab`
+- `examples/exempla/implet/implet.fab`
+- `examples/exempla/nexum/nexum.fab`
+- `examples/exempla/pactum/pactum.fab`
+- `examples/exempla/sub/sub.fab`
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This is still a skipped host/runtime tier, not a compiler, codegen, or
+validator failure.
+
+### Result
+
+The MIR lowering context now records genus method targets by receiver struct
+and method symbol. Method signatures are registered with the receiver as
+parameter zero, and method bodies bind `ego` to that receiver local. Wasm sees
+the result as ordinary functions and direct calls; no method-specific Wasm
+shortcut or HIR bypass was added.
+
+The Wasm text probe now disambiguates duplicate function names when multiple
+definitions share a source spelling. It emits host-imported aggregate
+projection setters for non-nested field, variant-field, and index assignments.
+It also treats `ignotum` as an opaque aggregate handle for carrier/equality
+purposes and supports the narrow `i64` to `f64` numeric coercion needed by
+mixed numerus/fractus arithmetic.
+
+`examples/exempla/si/est.fab` now reaches MIR but still stops at Wasm emission
+with `MIR-to-WASM unsupported: numeric coercion I32 to AggregateHandle`. That
+is a remaining dynamic-boxing/ABI gap, not a validation-tool failure.
+
+### Remaining MIR-Lowering Clusters
+
+- Runtime/provider and collection method calls, including `innatum`,
+  `morphologia`, and syntax stress exemplars.
+- `ad` provider blocks.
+- Async `cede` and cursor/provider iteration.
+- Closures/callable values.
+- Collection iteration for maps/text/cursors.
+- Non-literal and enum `discerne`.
+- Aggregate and optional validation gaps around object/member projections,
+  optional chains, named aggregates, and coalesce.
+- Remaining operator/top-level declaration gaps such as `inter`, `intra`, map
+  spread, and `verte` cast.
+
+### Remaining Wasm-Emission Clusters
+
+- Dynamic boxing/coercion for mixed primitive values flowing into `ignotum`
+  handles.
+- Nested aggregate projection assignments remain fail-closed.
+- Full nullable ABI remains incomplete beyond the narrow handle coalesce subset.
+
+### Remaining Host/Runtime Clusters
+
+- Define map, set, text, cursor, provider iterator, and collection mutation ABI.
+- Provide real `faber_runtime`, `faber_text`, and `faber_aggregate` host
+  implementations before claiming instantiate or runnable behavior.
+- Add a local instantiate/run host before measuring instantiate-valid,
+  runnable, or behavior-checked tiers.
+
+### Phase 020 Validation Log
+
+- `cargo test -p radix genus_method -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed, 114 MIR-focused tests.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed, 516 unit tests, 8 hygiene tests, and radix
+  doc tests.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+The current compile-valid coverage is 71/101, crossing the lower end of the
+70-80% target while keeping instantiate/run tiers unclaimed. Further coverage
+should come from honest ABI-bearing phases, especially runtime/provider method
+lowering and collection/aggregate host imports, or from resolving the
+remaining MIR validation clusters without weakening MIR validation.

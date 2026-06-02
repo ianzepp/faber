@@ -56,8 +56,13 @@ impl HirVisitor for ItemLoweringPass<'_, '_, '_> {
                 self.lowerer
                     .lower_function(item, function, self.context_maps, self.struct_fields);
             }
-            HirItemKind::Struct(_)
-            | HirItemKind::Enum(_)
+            HirItemKind::Struct(strukt) => {
+                for method in &strukt.methods {
+                    self.lowerer
+                        .lower_method(item, strukt, method, self.context_maps, self.struct_fields);
+                }
+            }
+            HirItemKind::Enum(_)
             | HirItemKind::Interface(_)
             | HirItemKind::TypeAlias(_)
             | HirItemKind::Import(_) => {}

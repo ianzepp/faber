@@ -507,25 +507,19 @@ incipit {
 }
 
 #[test]
-fn wasm_target_rejects_unsupported_mir_shapes() {
-    let source = r#"
+fn wasm_target_emits_aggregate_projection_assignments() {
+    let output = compile_wasm_text(
+        r#"
 incipit {
     varia lista<numerus> values ← [1, 2, 3]
     values[0] ← 4
 }
-"#;
-
-    let result = driver::compile(
-        &Session::new(Config::default().with_target(Target::WasmText)),
-        "wasm.fab",
-        source,
+"#,
     );
 
-    assert!(result.output.is_none());
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|diagnostic| diagnostic.message.contains("MIR-to-WASM unsupported")));
+    assert!(output.contains(r#"(import "faber_aggregate" "set_index_i64_i64""#));
+    assert!(output.contains("(call $__faber_aggregate_set_index_i64_i64"));
+    validate_wat_if_available(&output);
 }
 
 fn compile_wasm_text(source: &str) -> String {
