@@ -9,8 +9,12 @@ functio adde(numerus a, numerus b) → numerus {
 }
 "#;
 
-    let result = driver::compile(&Session::new(Config::default().with_target(Target::Wasm)), "wasm.fab", source);
-    let Some(Output::Wasm(output)) = result.output else {
+    let result = driver::compile(
+        &Session::new(Config::default().with_target(Target::WasmText)),
+        "wasm.fab",
+        source,
+    );
+    let Some(Output::WasmText(output)) = result.output else {
         panic!("expected WASM text output");
     };
 
@@ -31,7 +35,11 @@ functio label() → textus {
 }
 "#;
 
-    let result = driver::compile(&Session::new(Config::default().with_target(Target::Wasm)), "wasm.fab", source);
+    let result = driver::compile(
+        &Session::new(Config::default().with_target(Target::WasmText)),
+        "wasm.fab",
+        source,
+    );
 
     assert!(result.output.is_none());
     assert!(result

@@ -1978,7 +1978,7 @@ fn output_code(output: Output) -> String {
         Output::Faber(out) => out.code,
         Output::TypeScript(out) => out.code,
         Output::Go(out) => out.code,
-        Output::Wasm(out) => out.code,
+        Output::WasmText(out) => out.code,
         Output::LlvmText(out) => out.code,
     }
 }

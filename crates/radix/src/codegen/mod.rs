@@ -54,7 +54,7 @@ pub enum Target {
     Go,
 
     /// Experimental MIR-backed WebAssembly text probe.
-    Wasm,
+    WasmText,
 
     /// Experimental MIR-backed LLVM text probe.
     LlvmText,
@@ -128,7 +128,7 @@ pub fn generate(
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::Go(output))
         }
-        Target::Wasm | Target::LlvmText => {
+        Target::WasmText | Target::LlvmText => {
             Err(CodegenError { message: "target is MIR-backed and must be routed through the driver".to_owned() })
         }
     }

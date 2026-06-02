@@ -90,7 +90,7 @@ impl PassConfig {
             Target::Faber => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
             Target::TypeScript => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
             Target::Go => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
-            Target::Wasm => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
+            Target::WasmText => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
             Target::LlvmText => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
         }
     }

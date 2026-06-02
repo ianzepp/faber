@@ -109,7 +109,7 @@ pub enum Output {
     Go(GoOutput),
 
     /// Experimental WebAssembly text output emitted from validated MIR.
-    Wasm(WasmOutput),
+    WasmText(WasmTextOutput),
 
     /// Experimental LLVM text output emitted from validated MIR.
     LlvmText(LlvmTextOutput),
@@ -140,7 +140,7 @@ pub struct GoOutput {
 }
 
 /// Experimental WebAssembly text output.
-pub struct WasmOutput {
+pub struct WasmTextOutput {
     /// Complete generated WAT source.
     pub code: String,
 }

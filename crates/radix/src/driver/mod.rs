@@ -123,11 +123,11 @@ pub fn compile(session: &Session, name: &str, source: &str) -> CompileResult {
 
 fn generate_output(target: Target, analysis: &AnalyzedUnit) -> Result<crate::Output, codegen::CodegenError> {
     match target {
-        Target::Wasm => {
+        Target::WasmText => {
             let mir = lower_mir_for_target(analysis)?;
             let code = crate::mir::emit_wasm_text_probe(&mir, &analysis.types, &analysis.interner)
                 .map_err(|error| codegen::CodegenError { message: error.message })?;
-            Ok(crate::Output::Wasm(crate::WasmOutput { code }))
+            Ok(crate::Output::WasmText(crate::WasmTextOutput { code }))
         }
         Target::LlvmText => {
             let mir = lower_mir_for_target(analysis)?;
