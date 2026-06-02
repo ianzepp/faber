@@ -5,7 +5,7 @@
 **Branch**: `factory/go-codegen`  
 **Baseline date**: 2026-06-02  
 **Base commit observed**: `32bc7819`  
-**Harness truthfulness status**: strict expected-failure gate added in Phase 0  
+**Harness truthfulness status**: strict expected-failure gate added in Phase 0; Go vet findings report separately from pass/fail  
 **Go toolchain**: `go version go1.26.3 darwin/arm64`
 
 ## Required Baseline Command
@@ -17,12 +17,12 @@ cargo test -p radix exempla_go_e2e -- --ignored --nocapture
 Result:
 
 ```text
-Go e2e exempla: 91/101 exempla files pass end-to-end
+Go e2e exempla: 93/101 exempla files pass end-to-end
 Expected-output checks enabled for 1 exempla files
 ```
 
 The ignored harness now gates the full expected corpus state. The pass count is
-lower than total because the ten failures below are recorded in Go
+lower than total because the eight failures below are recorded in Go
 expected-failure metadata. The test fails on any unexpected Go e2e failure and
 also fails when one of these expected-failure exempla starts passing, so the
 metadata must be removed promptly after backend fixes.
@@ -37,12 +37,10 @@ as completion evidence for Go codegen.
 | Exemplar | Failure kind | Probable root cause | Likely module |
 | --- | --- | --- | --- |
 | `examples/exempla/ad/ad.fab` | Go codegen diagnostic | `ad` expressions are rejected for Go targets. | Go driver/codegen target checks |
-| `examples/exempla/functio/optionalis.fab` | `go run` compile failure | Optional/default parameter lowering emits non-nullable Go primitives, nil comparisons, and calls without default argument expansion. | Go function/call lowering; HIR optional parameter metadata |
 | `examples/exempla/genus/creo.fab` | `go run` compile failure | Float literal is emitted into an integer-shaped field/value path. | Go type/value shape lowering for `fractus` vs `numerus` |
 | `examples/exempla/inter/inter.fab` | `go run` compile failure | Faber membership/interval-like `inter` syntax lowers to Go `&&` between scalar and collection operands. | Go expression lowering for `inter` |
 | `examples/exempla/itera/cursor-iteratio.fab` | `go run` compile failure | Cursor functions are emitted as scalar `int` returns instead of iterable values; loop variables degrade to `any`. | Go cursor/iterator lowering |
 | `examples/exempla/itera/nidificatus.fab` | `go run` compile failure | Range iterator variables degrade to `any`, making arithmetic invalid. | Go iteration variable typing |
-| `examples/exempla/si/ergo-redde.fab` | `go run` compile failure | Nullable return paths use `*int`, but non-nil expression branches return raw `int`. | Go nullable return conversion |
 | `examples/exempla/syntaxis/arena-mixta.fab` | `go run` compile failure | Mixed arena/control-flow expression and loop values degrade to `any` without assertions/conversions. | Go expression-valued block lowering; iteration typing |
 | `examples/exempla/syntaxis/destructura-sparsa.fab` | `go run` compile failure | Expression-valued block returns `any` where typed `int` is required. | Go expression-valued block lowering |
 | `examples/exempla/syntaxis/fluxus-cede.fab` | `go run` compile failure | Cursor/range emission returns scalar `int` and loop variable typing degrades to `any`. | Go cursor/iterator lowering; iteration typing |
@@ -51,20 +49,14 @@ as completion evidence for Go codegen.
 
 ### Optional And Nullable Values
 
+Resolved in Phase 1:
+
 - `functio/optionalis.fab`
 - `si/ergo-redde.fab`
 
-Symptoms:
-
-- Go primitives are compared with `nil`.
-- Calls omit optional/default parameters instead of applying defaults.
-- Nullable returns expect pointer values but expression branches return raw
-  primitives.
-
-Recommended next phase if chosen: implement a focused optional/nullable Go
-lowering slice that preserves pointer shapes for optional parameter slots,
-expands default arguments at call sites, and wraps non-nil nullable return
-expressions.
+The Go backend now emits no-default optional parameters as pointer-shaped Go
+values, expands omitted direct-call defaults, and wraps non-`nihil` explicit
+returns for nullable return slots.
 
 ### Cursor And Iteration Typing
 
@@ -128,13 +120,6 @@ are planned.
 
 ## Phase Selection Evidence
 
-The truthful baseline records `91/101` passing as an expected corpus state, not
-as a completed backend target. The most valuable next implementation cluster is
-optional and nullable values because it touches common function-call and return
-semantics and has two concrete failing exempla with clear Go compile errors.
-
-Recommended first implementation phase:
-
-```text
-Phase 1: Optional/default parameters and nullable Go return wrapping
-```
+The truthful baseline now records `93/101` passing as an expected corpus state,
+not as a completed backend target. The next most valuable implementation
+cluster should be selected from the remaining failures above.

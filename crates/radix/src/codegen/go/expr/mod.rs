@@ -184,7 +184,20 @@ pub(super) fn generate_expr_for_go_type(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     match (&expr.kind, types.get(expected_ty)) {
+        (HirExprKind::Path(def_id), Type::Option(inner)) if !path_binding_stores_option(codegen, *def_id, types) => {
+            let inner_go_ty = types::type_to_go(codegen, *inner, types);
+            w.write("func() *");
+            w.write(&inner_go_ty);
+            w.write(" { v := ");
+            generate_expr(codegen, expr, types, w)?;
+            w.write("; return &v }()");
+            Ok(())
+        }
         (_, Type::Option(inner)) => generate_option_wrapped_expr(codegen, expr, *inner, types, w),
+        (HirExprKind::Path(def_id), _) if codegen.binding_stores_option(*def_id) => {
+            w.write("*");
+            generate_expr(codegen, expr, types, w)
+        }
         (HirExprKind::Array(elements), Type::Array(elem_ty)) => {
             generate_typed_array_expr(codegen, *elem_ty, elements, types, w)
         }
@@ -193,6 +206,13 @@ pub(super) fn generate_expr_for_go_type(
         }
         _ => generate_expr(codegen, expr, types, w),
     }
+}
+
+fn path_binding_stores_option(codegen: &GoCodegen<'_>, def_id: crate::hir::DefId, types: &TypeTable) -> bool {
+    codegen.binding_stores_option(def_id)
+        || codegen
+            .binding_type(def_id)
+            .is_some_and(|ty| matches!(normalize_receiver_type(types.get(ty), types), Type::Option(_)))
 }
 
 pub(super) fn normalize_receiver_type<'a>(mut ty: &'a Type, types: &'a TypeTable) -> &'a Type {

@@ -39,13 +39,22 @@ use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
 use crate::hir::visit::{walk_expr, HirVisitor};
 use crate::hir::{DefId, HirExpr, HirExprKind, HirItem, HirItemKind, HirProgram};
 use crate::lexer::{Interner, Symbol};
-use crate::semantic::TypeTable;
+use crate::semantic::{TypeId, TypeTable};
 use crate::GoOutput;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::cell::Cell;
 use std::collections::BTreeSet;
 
 type StructFieldTypes = FxHashMap<DefId, FxHashMap<Symbol, crate::semantic::TypeId>>;
 type StructSponteFields = FxHashMap<DefId, FxHashMap<Symbol, bool>>;
+
+#[derive(Clone, Copy)]
+pub(super) struct FunctionParamInfo<'a> {
+    pub(super) def_id: DefId,
+    pub(super) ty: TypeId,
+    pub(super) optional: bool,
+    pub(super) default: Option<&'a HirExpr>,
+}
 
 /// Shared context for all Go backend emitters.
 ///
@@ -73,22 +82,41 @@ pub struct GoCodegen<'a> {
     /// Struct definition id to per-field `sponte` flags so emitters know which
     /// fields are represented as pointers in Go struct values.
     struct_sponte_fields: StructSponteFields,
+
+    /// Function DefId to source parameter metadata for direct-call defaults.
+    function_params: FxHashMap<DefId, Vec<FunctionParamInfo<'a>>>,
+
+    /// DefId to declared binding type for locals and parameters.
+    binding_types: FxHashMap<DefId, TypeId>,
+
+    /// Parameter definitions stored as pointer optionals in generated Go.
+    option_param_defs: FxHashSet<DefId>,
+
+    /// Current function or method return type while emitting nested statements.
+    current_return_ty: Cell<Option<TypeId>>,
 }
 
 impl<'a> GoCodegen<'a> {
-    pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
+    pub fn new(hir: &'a HirProgram, interner: &'a Interner) -> Self {
         let mut codegen = Self {
             names: NameCatalog::new(hir, interner),
             use_counts: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
             struct_fields: FxHashMap::default(),
             struct_sponte_fields: FxHashMap::default(),
+            function_params: FxHashMap::default(),
+            binding_types: FxHashMap::default(),
+            option_param_defs: FxHashSet::default(),
+            current_return_ty: Cell::new(None),
         };
         codegen.use_counts = codegen.collect_use_counts(hir);
         codegen.variant_fields = codegen.collect_variant_fields(hir);
         let (struct_fields, struct_sponte_fields) = codegen.collect_struct_fields(hir);
         codegen.struct_fields = struct_fields;
         codegen.struct_sponte_fields = struct_sponte_fields;
+        codegen.function_params = codegen.collect_function_params(hir);
+        codegen.binding_types = codegen.collect_binding_types(hir);
+        codegen.option_param_defs = codegen.collect_option_param_defs();
         codegen
     }
 
@@ -140,6 +168,26 @@ impl<'a> GoCodegen<'a> {
             .unwrap_or(false)
     }
 
+    pub(super) fn function_params(&self, def_id: DefId) -> Option<&[FunctionParamInfo<'a>]> {
+        self.function_params.get(&def_id).map(Vec::as_slice)
+    }
+
+    pub(super) fn binding_stores_option(&self, def_id: DefId) -> bool {
+        self.option_param_defs.contains(&def_id)
+    }
+
+    pub(super) fn binding_type(&self, def_id: DefId) -> Option<TypeId> {
+        self.binding_types.get(&def_id).copied()
+    }
+
+    pub(super) fn current_return_ty(&self) -> Option<TypeId> {
+        self.current_return_ty.get()
+    }
+
+    pub(super) fn replace_current_return_ty(&self, ty: Option<TypeId>) -> Option<TypeId> {
+        self.current_return_ty.replace(ty)
+    }
+
     fn collect_use_counts(&self, hir: &HirProgram) -> FxHashMap<DefId, usize> {
         let mut collector = UseCounter { counts: FxHashMap::default() };
         collector.visit_program(hir);
@@ -176,6 +224,56 @@ impl<'a> GoCodegen<'a> {
         (fields, sponte_fields)
     }
 
+    fn collect_function_params(&self, hir: &'a HirProgram) -> FxHashMap<DefId, Vec<FunctionParamInfo<'a>>> {
+        let mut params = FxHashMap::default();
+        for item in &hir.items {
+            match &item.kind {
+                HirItemKind::Function(func) => {
+                    params.insert(item.def_id, function_param_info(func));
+                }
+                HirItemKind::Struct(strukt) => {
+                    for method in &strukt.methods {
+                        params.insert(method.def_id, function_param_info(&method.func));
+                    }
+                }
+                _ => {}
+            }
+        }
+        params
+    }
+
+    fn collect_option_param_defs(&self) -> FxHashSet<DefId> {
+        self.function_params
+            .values()
+            .flat_map(|params| params.iter())
+            .filter(|param| param.optional && param.default.is_none())
+            .map(|param| param.def_id)
+            .collect()
+    }
+
+    fn collect_binding_types(&self, hir: &'a HirProgram) -> FxHashMap<DefId, TypeId> {
+        struct BindingTypeCollector {
+            bindings: FxHashMap<DefId, TypeId>,
+        }
+
+        impl HirVisitor for BindingTypeCollector {
+            fn visit_param(&mut self, param: &crate::hir::HirParam) {
+                self.bindings.insert(param.def_id, param.ty);
+            }
+
+            fn visit_local(&mut self, local: &crate::hir::HirLocal) {
+                if let Some(ty) = local.ty {
+                    self.bindings.insert(local.def_id, ty);
+                }
+                crate::hir::visit::walk_local(self, local);
+            }
+        }
+
+        let mut collector = BindingTypeCollector { bindings: FxHashMap::default() };
+        collector.visit_program(hir);
+        collector.bindings
+    }
+
     fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
         match &item.kind {
             HirItemKind::Function(func) => decl::generate_function(self, func, types, w)?,
@@ -188,6 +286,18 @@ impl<'a> GoCodegen<'a> {
         }
         Ok(())
     }
+}
+
+fn function_param_info(func: &crate::hir::HirFunction) -> Vec<FunctionParamInfo<'_>> {
+    func.params
+        .iter()
+        .map(|param| FunctionParamInfo {
+            def_id: param.def_id,
+            ty: param.ty,
+            optional: param.optional,
+            default: param.default.as_ref(),
+        })
+        .collect()
 }
 
 impl Codegen for GoCodegen<'_> {

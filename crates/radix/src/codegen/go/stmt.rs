@@ -24,7 +24,7 @@ use super::expr::generate_expr_for_go_type;
 use super::types::type_to_go;
 use super::{expr::generate_expr, CodeWriter, CodegenError, GoCodegen};
 use crate::hir::{HirBlock, HirExprKind, HirPattern, HirStmt, HirStmtKind};
-use crate::semantic::TypeTable;
+use crate::semantic::{TypeId, TypeTable};
 
 fn nil_init_type(expr: &crate::hir::HirExpr) -> Option<crate::semantic::TypeId> {
     // `nil` cannot stand alone in Go short declarations. Conversions around
@@ -71,12 +71,12 @@ where
             if result.is_err() {
                 return;
             }
-            result = generate_stmt(codegen, stmt, types, w);
+            result = generate_stmt(codegen, stmt, types, w, result_ty.or_else(|| codegen.current_return_ty()));
         }
         if result.is_ok() {
             if let Some(expr) = &block.expr {
                 w.write("return ");
-                if let Some(result_ty) = result_ty {
+                if let Some(result_ty) = result_ty.or_else(|| codegen.current_return_ty()) {
                     result = generate_expr_for_go_type(codegen, expr, result_ty, types, w);
                 } else {
                     result = generate_expr(codegen, expr, types, w);
@@ -129,7 +129,7 @@ pub fn generate_block_stmts(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     for stmt in &block.stmts {
-        generate_stmt(codegen, stmt, types, w)?;
+        generate_stmt(codegen, stmt, types, w, None)?;
     }
     if let Some(expr) = &block.expr {
         generate_expr(codegen, expr, types, w)?;
@@ -143,6 +143,7 @@ fn generate_stmt_block(
     block: &HirBlock,
     types: &TypeTable,
     w: &mut CodeWriter,
+    current_return_ty: Option<TypeId>,
 ) -> Result<(), CodegenError> {
     // Statement-position blocks keep tail expressions as expression statements.
     // Function/method blocks use declaration helpers when tails must return.
@@ -153,11 +154,11 @@ fn generate_stmt_block(
             if result.is_err() {
                 return;
             }
-            result = generate_stmt(codegen, stmt, types, w);
+            result = generate_stmt(codegen, stmt, types, w, current_return_ty);
         }
         if result.is_ok() {
             if let Some(expr) = &block.expr {
-                result = generate_expr_stmt(codegen, expr, types, w);
+                result = generate_expr_stmt(codegen, expr, types, w, current_return_ty);
             }
         }
     });
@@ -171,6 +172,7 @@ pub fn generate_stmt(
     stmt: &HirStmt,
     types: &TypeTable,
     w: &mut CodeWriter,
+    current_return_ty: Option<TypeId>,
 ) -> Result<(), CodegenError> {
     match &stmt.kind {
         HirStmtKind::Local(local) => {
@@ -219,7 +221,7 @@ pub fn generate_stmt(
             }
         }
         HirStmtKind::Expr(expr) => {
-            generate_expr_stmt(codegen, expr, types, w)?;
+            generate_expr_stmt(codegen, expr, types, w, current_return_ty)?;
         }
         HirStmtKind::Ad(ad) => {
             generate_ad_stmt(codegen, ad, types, w)?;
@@ -227,7 +229,11 @@ pub fn generate_stmt(
         HirStmtKind::Redde(expr) => {
             if let Some(expr) = expr {
                 w.write("return ");
-                generate_expr(codegen, expr, types, w)?;
+                if let Some(return_ty) = current_return_ty.or_else(|| codegen.current_return_ty()) {
+                    generate_expr_for_go_type(codegen, expr, return_ty, types, w)?;
+                } else {
+                    generate_expr(codegen, expr, types, w)?;
+                }
                 w.newline();
             } else {
                 w.writeln("return");
@@ -391,13 +397,14 @@ fn generate_expr_stmt(
     expr: &crate::hir::HirExpr,
     types: &TypeTable,
     w: &mut CodeWriter,
+    current_return_ty: Option<TypeId>,
 ) -> Result<(), CodegenError> {
     // Some Faber expressions become Go statements when their result is not
     // consumed. Keep these rewrites here so expression emission can stay focused
     // on value contexts.
     match &expr.kind {
         HirExprKind::Block(block) => {
-            generate_stmt_block(codegen, block, types, w)?;
+            generate_stmt_block(codegen, block, types, w, current_return_ty)?;
             w.newline();
             Ok(())
         }
@@ -446,10 +453,10 @@ fn generate_expr_stmt(
             w.write("if ");
             generate_expr(codegen, cond, types, w)?;
             w.write(" ");
-            generate_stmt_block(codegen, then_block, types, w)?;
+            generate_stmt_block(codegen, then_block, types, w, current_return_ty)?;
             if let Some(else_block) = else_block {
                 w.write(" else ");
-                generate_stmt_block(codegen, else_block, types, w)?;
+                generate_stmt_block(codegen, else_block, types, w, current_return_ty)?;
             }
             w.newline();
             Ok(())
@@ -461,7 +468,7 @@ fn generate_expr_stmt(
         }
         HirExprKind::Loop(block) => {
             w.write("for ");
-            generate_stmt_block(codegen, block, types, w)?;
+            generate_stmt_block(codegen, block, types, w, current_return_ty)?;
             w.newline();
             Ok(())
         }
@@ -469,7 +476,7 @@ fn generate_expr_stmt(
             w.write("for ");
             generate_expr(codegen, cond, types, w)?;
             w.write(" ");
-            generate_stmt_block(codegen, block, types, w)?;
+            generate_stmt_block(codegen, block, types, w, current_return_ty)?;
             w.newline();
             Ok(())
         }
@@ -488,7 +495,7 @@ fn generate_expr_stmt(
             }
             generate_expr(codegen, iter, types, w)?;
             w.write(" ");
-            generate_stmt_block(codegen, block, types, w)?;
+            generate_stmt_block(codegen, block, types, w, current_return_ty)?;
             w.newline();
             Ok(())
         }
@@ -571,7 +578,7 @@ fn generate_non_variant_discerne_arm(
             w.writeln(":");
             let mut result = Ok(());
             w.indented(|w| {
-                result = generate_expr_stmt(codegen, body, types, w);
+                result = generate_expr_stmt(codegen, body, types, w, None);
             });
             result
         }
@@ -579,7 +586,7 @@ fn generate_non_variant_discerne_arm(
             w.writeln("default:");
             let mut result = Ok(());
             w.indented(|w| {
-                result = generate_expr_stmt(codegen, body, types, w);
+                result = generate_expr_stmt(codegen, body, types, w, None);
             });
             result
         }
@@ -590,7 +597,7 @@ fn generate_non_variant_discerne_arm(
                 w.write(codegen.resolve_symbol(*name));
                 w.write(" := ");
                 w.writeln(scrutinee_name);
-                result = generate_expr_stmt(codegen, body, types, w);
+                result = generate_expr_stmt(codegen, body, types, w, None);
             });
             result
         }
@@ -606,7 +613,7 @@ fn generate_non_variant_discerne_arm(
                     w.write(" := ");
                     w.writeln(scrutinee_name);
                 }
-                result = generate_expr_stmt(codegen, body, types, w);
+                result = generate_expr_stmt(codegen, body, types, w, None);
             });
             result
         }
@@ -698,7 +705,7 @@ fn generate_variant_discerne_arm(
         HirPattern::Wildcard | HirPattern::Binding(_, _) => {
             w.writeln("default:");
             w.indented(|w| {
-                let _ = generate_expr_stmt(codegen, body, types, w);
+                let _ = generate_expr_stmt(codegen, body, types, w, None);
             });
             Ok(())
         }
@@ -716,7 +723,7 @@ fn generate_variant_discerne_arm(
                     if result.is_err() {
                         return;
                     }
-                    result = generate_expr_stmt(codegen, body, types, w);
+                    result = generate_expr_stmt(codegen, body, types, w, None);
                 });
                 result
             }
@@ -733,7 +740,7 @@ fn generate_variant_discerne_arm(
                 if result.is_err() {
                     return;
                 }
-                result = generate_expr_stmt(codegen, body, types, w);
+                result = generate_expr_stmt(codegen, body, types, w, None);
             });
             result
         }
