@@ -404,6 +404,120 @@ fn emits_class_interface_import_and_variable_statements() {
 }
 
 #[test]
+fn emits_instance_methods_this_and_class_construction() {
+    let mut interner = Interner::new();
+    let box_name = interner.intern("Box");
+    let value_name = interner.intern("value");
+    let get_name = interner.intern("get");
+    let local_name = interner.intern("box");
+    let mut types = TypeTable::new();
+    let numerus = types.primitive(Primitive::Numerus);
+    let box_ty = types.intern(Type::Struct(DefId(5)));
+
+    let program = HirProgram {
+        items: vec![HirItem {
+            id: HirId(1),
+            def_id: DefId(5),
+            kind: HirItemKind::Struct(HirStruct {
+                name: box_name,
+                type_params: Vec::new(),
+                fields: vec![HirField {
+                    def_id: DefId(6),
+                    name: value_name,
+                    ty: numerus,
+                    is_static: false,
+                    sponte: false,
+                    fixus: false,
+                    init: None,
+                    span: span(),
+                }],
+                methods: vec![HirMethod {
+                    def_id: DefId(7),
+                    func: HirFunction {
+                        cli_args: None,
+                        name: get_name,
+                        type_params: Vec::new(),
+                        params: Vec::new(),
+                        ret_ty: Some(numerus),
+                        err_ty: None,
+                        body: Some(HirBlock {
+                            stmts: Vec::new(),
+                            expr: Some(Box::new(HirExpr {
+                                id: HirId(8),
+                                kind: HirExprKind::Field(
+                                    Box::new(HirExpr {
+                                        id: HirId(9),
+                                        kind: HirExprKind::Path(DefId(5)),
+                                        ty: Some(box_ty),
+                                        span: span(),
+                                    }),
+                                    value_name,
+                                ),
+                                ty: Some(numerus),
+                                span: span(),
+                            })),
+                            span: span(),
+                        }),
+                        is_async: false,
+                        is_generator: false,
+                        test: None,
+                    },
+                    receiver: HirReceiver::None,
+                    span: span(),
+                }],
+                extends: None,
+                implements: Vec::new(),
+            }),
+            span: span(),
+        }],
+        entry: Some(HirBlock {
+            stmts: vec![HirStmt {
+                id: HirId(10),
+                kind: HirStmtKind::Local(HirLocal {
+                    def_id: DefId(10),
+                    name: local_name,
+                    ty: Some(box_ty),
+                    init: Some(HirExpr {
+                        id: HirId(11),
+                        kind: HirExprKind::Verte {
+                            source: Box::new(HirExpr {
+                                id: HirId(13),
+                                kind: HirExprKind::Tuple(Vec::new()),
+                                ty: Some(box_ty),
+                                span: span(),
+                            }),
+                            target: box_ty,
+                            entries: Some(vec![HirObjectField {
+                                key: HirObjectKey::Ident(value_name),
+                                value: Some(HirExpr {
+                                    id: HirId(12),
+                                    kind: HirExprKind::Literal(HirLiteral::Int(3)),
+                                    ty: Some(numerus),
+                                    span: span(),
+                                }),
+                            }]),
+                        },
+                        ty: Some(box_ty),
+                        span: span(),
+                    }),
+                    mutable: false,
+                }),
+                span: span(),
+            }],
+            expr: None,
+            span: span(),
+        }),
+    };
+
+    let code = render_ts(&program, &types, &interner);
+    assert!(code.contains("value!: number;"));
+    assert!(code.contains("get(): number"));
+    assert!(!code.contains("static get"));
+    assert!(code.contains("return this.value;"));
+    assert!(code.contains("const box: Box = Object.assign(new Box(), { value: 3 });"));
+}
+
+#[test]
 fn lowers_logical_and_comparison_operators() {
     let mut interner = Interner::new();
     let x = interner.intern("x");

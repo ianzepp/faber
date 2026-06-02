@@ -1,4 +1,4 @@
-use crate::codegen::Target;
+use crate::codegen::{self, Target};
 use crate::{Compiler, Config, Output};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -29,6 +29,62 @@ const GO_EXPECTED_FAILURES: &[&str] = &[
     "syntaxis/destructura-sparsa.fab",
     "syntaxis/fluxus-cede.fab",
 ];
+
+#[derive(Debug)]
+struct TsE2eResult {
+    path: PathBuf,
+    frontend_analyzed: bool,
+    typescript_emitted: bool,
+    formatted: TierState,
+    linted: TierState,
+    typecheck_valid: TierState,
+    runnable: TierState,
+    behavior_checked: TierState,
+    reason: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TierState {
+    Passed,
+    Failed,
+    Skipped,
+}
+
+#[derive(Debug)]
+struct TsToolchain {
+    formatter: TsFormatter,
+    linter: TsLinter,
+    typechecker: TsTypechecker,
+    runtime: TsRuntime,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum TsFormatter {
+    Prettier,
+    Deno,
+    Missing,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum TsLinter {
+    Biome,
+    Eslint,
+    Missing,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum TsTypechecker {
+    Tsc,
+    Deno,
+    Missing,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum TsRuntime {
+    NodeViaTsc,
+    Deno,
+    Missing,
+}
 
 #[test]
 #[ignore = "slow end-to-end harness; run explicitly with cargo test exempla_rust_e2e -- --ignored"]
@@ -459,12 +515,312 @@ fn exempla_faber_roundtrip_e2e() {
     assert!(salve_ok, "salve-munde.fab should stabilize through Faber round-trip");
 }
 
+#[test]
+#[ignore = "slow TypeScript end-to-end baseline; run explicitly with cargo test exempla_ts_e2e -- --ignored --nocapture"]
+fn exempla_ts_e2e() {
+    let exempla_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/exempla");
+    let mut exempla = collect_exempla_files(&exempla_dir);
+    exempla.sort();
+
+    let toolchain = detect_ts_toolchain();
+    let session = crate::driver::Session::new(Config::default().with_target(Target::TypeScript));
+    let temp_root = make_temp_root();
+    let mut results = Vec::with_capacity(exempla.len());
+    let mut expected_count = 0usize;
+
+    for (idx, file) in exempla.iter().enumerate() {
+        if read_expected_stdout(file).is_some() {
+            expected_count += 1;
+        }
+        let source = match fs::read_to_string(file) {
+            Ok(source) => source,
+            Err(err) => {
+                results.push(TsE2eResult::failed_frontend(file.clone(), format!("cannot read source: {err}")));
+                continue;
+            }
+        };
+
+        let analysis = match crate::driver::analyze_source(&session, &file.display().to_string(), &source) {
+            Ok(analysis) => analysis,
+            Err(diagnostics) => {
+                results.push(TsE2eResult::failed_frontend(
+                    file.clone(),
+                    format!("frontend failed: {}", format_diagnostic_messages(&diagnostics)),
+                ));
+                continue;
+            }
+        };
+
+        let ts = match codegen::generate(Target::TypeScript, &analysis.hir, &analysis.types, &analysis.interner) {
+            Ok(Output::TypeScript(output)) => output.code,
+            Ok(_) => {
+                results.push(TsE2eResult::failed_codegen(
+                    file.clone(),
+                    "compiler did not produce TypeScript output".to_owned(),
+                ));
+                continue;
+            }
+            Err(err) => {
+                results.push(TsE2eResult::failed_codegen(
+                    file.clone(),
+                    format!("TypeScript codegen failed: {err}"),
+                ));
+                continue;
+            }
+        };
+
+        let (formatted, code, format_reason) = run_ts_format_tier(&toolchain, &ts);
+        let (linted, code, lint_reason) = run_ts_lint_tier(&toolchain, &code);
+
+        let stem = file
+            .file_stem()
+            .and_then(|name| name.to_str())
+            .unwrap_or("exemplum");
+        let case_dir = temp_root.join(format!("{idx:03}-{stem}"));
+        if let Err(err) = fs::create_dir_all(&case_dir) {
+            results.push(TsE2eResult::after_codegen(
+                file.clone(),
+                formatted,
+                linted,
+                TierState::Failed,
+                TierState::Skipped,
+                TierState::Skipped,
+                format!("cannot create TypeScript temp dir: {err}"),
+            ));
+            continue;
+        }
+
+        let ts_file = case_dir.join("main.ts");
+        if let Err(err) = fs::write(&ts_file, &code) {
+            results.push(TsE2eResult::after_codegen(
+                file.clone(),
+                formatted,
+                linted,
+                TierState::Failed,
+                TierState::Skipped,
+                TierState::Skipped,
+                format!("cannot write TypeScript output: {err}"),
+            ));
+            continue;
+        }
+
+        let (typecheck_valid, typecheck_reason) = run_ts_typecheck_tier(&toolchain, &case_dir);
+        if typecheck_valid != TierState::Passed {
+            results.push(TsE2eResult::after_codegen(
+                file.clone(),
+                formatted,
+                linted,
+                typecheck_valid,
+                TierState::Skipped,
+                TierState::Skipped,
+                join_reasons([format_reason, lint_reason, typecheck_reason]),
+            ));
+            continue;
+        }
+
+        let (runnable, stdout, run_reason) = run_ts_runtime_tier(&toolchain, &case_dir);
+        if runnable != TierState::Passed {
+            results.push(TsE2eResult::after_codegen(
+                file.clone(),
+                formatted,
+                linted,
+                typecheck_valid,
+                runnable,
+                TierState::Skipped,
+                join_reasons([format_reason, lint_reason, run_reason]),
+            ));
+            continue;
+        }
+
+        let (behavior_checked, behavior_reason) = match read_expected_stdout(file) {
+            Some(expected) if normalize_newline(&stdout) == expected => (TierState::Passed, String::new()),
+            Some(expected) => (
+                TierState::Failed,
+                format!("stdout mismatch: expected `{expected}`, got `{}`", normalize_newline(&stdout)),
+            ),
+            None => (TierState::Skipped, "no sibling .expected file".to_owned()),
+        };
+
+        results.push(TsE2eResult::after_codegen(
+            file.clone(),
+            formatted,
+            linted,
+            typecheck_valid,
+            runnable,
+            behavior_checked,
+            join_reasons([format_reason, lint_reason, behavior_reason]),
+        ));
+    }
+
+    print_ts_e2e_report(&results, &toolchain, expected_count);
+}
+
 fn rustc_available() -> bool {
     Command::new("rustc").arg("--version").output().is_ok()
 }
 
 fn go_available() -> bool {
     Command::new("go").arg("version").output().is_ok()
+}
+
+fn command_available(command: &str, args: &[&str]) -> bool {
+    Command::new(command).args(args).output().is_ok()
+}
+
+fn detect_ts_toolchain() -> TsToolchain {
+    let formatter = if command_available("prettier", &["--version"]) {
+        TsFormatter::Prettier
+    } else if command_available("deno", &["--version"]) {
+        TsFormatter::Deno
+    } else {
+        TsFormatter::Missing
+    };
+    let linter = if command_available("biome", &["--version"]) {
+        TsLinter::Biome
+    } else if command_available("eslint", &["--version"]) {
+        TsLinter::Eslint
+    } else {
+        TsLinter::Missing
+    };
+    let typechecker = if command_available("tsc", &["--version"]) {
+        TsTypechecker::Tsc
+    } else if command_available("deno", &["--version"]) {
+        TsTypechecker::Deno
+    } else {
+        TsTypechecker::Missing
+    };
+    let runtime = if matches!(typechecker, TsTypechecker::Tsc) && command_available("node", &["--version"]) {
+        TsRuntime::NodeViaTsc
+    } else if command_available("deno", &["--version"]) {
+        TsRuntime::Deno
+    } else {
+        TsRuntime::Missing
+    };
+    TsToolchain { formatter, linter, typechecker, runtime }
+}
+
+fn run_ts_format_tier(toolchain: &TsToolchain, code: &str) -> (TierState, String, String) {
+    match toolchain.formatter {
+        TsFormatter::Missing => (
+            TierState::Skipped,
+            code.to_owned(),
+            "formatted skipped: no prettier or deno".to_owned(),
+        ),
+        TsFormatter::Prettier | TsFormatter::Deno => match crate::tool::format_generated_code(Target::TypeScript, code)
+        {
+            Ok(formatted) => (TierState::Passed, formatted, String::new()),
+            Err(err) => (TierState::Failed, code.to_owned(), format!("format failed: {err}")),
+        },
+    }
+}
+
+fn run_ts_lint_tier(toolchain: &TsToolchain, code: &str) -> (TierState, String, String) {
+    match toolchain.linter {
+        TsLinter::Missing => (
+            TierState::Skipped,
+            code.to_owned(),
+            "linted skipped: no biome or eslint".to_owned(),
+        ),
+        TsLinter::Biome | TsLinter::Eslint => match crate::tool::lint_generated_code(Target::TypeScript, code) {
+            Ok(fixed) => (TierState::Passed, fixed, String::new()),
+            Err(err) => (TierState::Failed, code.to_owned(), format!("lint failed: {err}")),
+        },
+    }
+}
+
+fn run_ts_typecheck_tier(toolchain: &TsToolchain, case_dir: &Path) -> (TierState, String) {
+    match toolchain.typechecker {
+        TsTypechecker::Missing => (TierState::Skipped, "typecheck skipped: no tsc or deno".to_owned()),
+        TsTypechecker::Tsc => {
+            let output = Command::new("tsc")
+                .args([
+                    "--strict", "--noEmit", "--target", "ES2022", "--module", "commonjs", "main.ts",
+                ])
+                .current_dir(case_dir)
+                .output();
+            command_tier(output, "tsc typecheck failed")
+        }
+        TsTypechecker::Deno => {
+            let output = Command::new("deno")
+                .args(["check", "main.ts"])
+                .current_dir(case_dir)
+                .output();
+            command_tier(output, "deno check failed")
+        }
+    }
+}
+
+fn run_ts_runtime_tier(toolchain: &TsToolchain, case_dir: &Path) -> (TierState, String, String) {
+    match toolchain.runtime {
+        TsRuntime::Missing => (
+            TierState::Skipped,
+            String::new(),
+            "runtime skipped: no node+tsc or deno".to_owned(),
+        ),
+        TsRuntime::NodeViaTsc => {
+            let transpile = Command::new("tsc")
+                .args(["--target", "ES2022", "--module", "commonjs", "main.ts"])
+                .current_dir(case_dir)
+                .output();
+            let (state, reason) = command_tier(transpile, "tsc transpile failed");
+            if state != TierState::Passed {
+                return (state, String::new(), reason);
+            }
+            let run = Command::new("node")
+                .arg("main.js")
+                .current_dir(case_dir)
+                .output();
+            match run {
+                Ok(run) if run.status.success() => (
+                    TierState::Passed,
+                    String::from_utf8_lossy(&run.stdout).to_string(),
+                    String::new(),
+                ),
+                Ok(run) => (
+                    TierState::Failed,
+                    String::from_utf8_lossy(&run.stdout).to_string(),
+                    format!("node run failed: {}", command_stderr(&run)),
+                ),
+                Err(err) => (TierState::Failed, String::new(), format!("cannot execute node: {err}")),
+            }
+        }
+        TsRuntime::Deno => {
+            let run = Command::new("deno")
+                .args(["run", "main.ts"])
+                .current_dir(case_dir)
+                .output();
+            match run {
+                Ok(run) if run.status.success() => (
+                    TierState::Passed,
+                    String::from_utf8_lossy(&run.stdout).to_string(),
+                    String::new(),
+                ),
+                Ok(run) => (
+                    TierState::Failed,
+                    String::from_utf8_lossy(&run.stdout).to_string(),
+                    format!("deno run failed: {}", command_stderr(&run)),
+                ),
+                Err(err) => (TierState::Failed, String::new(), format!("cannot execute deno: {err}")),
+            }
+        }
+    }
+}
+
+fn command_tier(output: Result<std::process::Output, std::io::Error>, failure_prefix: &str) -> (TierState, String) {
+    match output {
+        Ok(output) if output.status.success() => (TierState::Passed, String::new()),
+        Ok(output) => (TierState::Failed, format!("{failure_prefix}: {}", command_stderr(&output))),
+        Err(err) => (TierState::Failed, format!("cannot execute command: {err}")),
+    }
+}
+
+fn command_stderr(output: &std::process::Output) -> String {
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+    if stderr.is_empty() {
+        String::from_utf8_lossy(&output.stdout).trim().to_owned()
+    } else {
+        stderr
+    }
 }
 
 fn make_temp_root() -> PathBuf {
@@ -496,6 +852,161 @@ fn collect_exempla_files_recursive(dir: &Path, out: &mut Vec<PathBuf>) {
             out.push(path);
         }
     }
+}
+
+impl TsE2eResult {
+    fn failed_frontend(path: PathBuf, reason: String) -> Self {
+        Self {
+            path,
+            frontend_analyzed: false,
+            typescript_emitted: false,
+            formatted: TierState::Skipped,
+            linted: TierState::Skipped,
+            typecheck_valid: TierState::Skipped,
+            runnable: TierState::Skipped,
+            behavior_checked: TierState::Skipped,
+            reason,
+        }
+    }
+
+    fn failed_codegen(path: PathBuf, reason: String) -> Self {
+        Self {
+            path,
+            frontend_analyzed: true,
+            typescript_emitted: false,
+            formatted: TierState::Skipped,
+            linted: TierState::Skipped,
+            typecheck_valid: TierState::Skipped,
+            runnable: TierState::Skipped,
+            behavior_checked: TierState::Skipped,
+            reason,
+        }
+    }
+
+    fn after_codegen(
+        path: PathBuf,
+        formatted: TierState,
+        linted: TierState,
+        typecheck_valid: TierState,
+        runnable: TierState,
+        behavior_checked: TierState,
+        reason: String,
+    ) -> Self {
+        Self {
+            path,
+            frontend_analyzed: true,
+            typescript_emitted: true,
+            formatted,
+            linted,
+            typecheck_valid,
+            runnable,
+            behavior_checked,
+            reason,
+        }
+    }
+}
+
+fn print_ts_e2e_report(results: &[TsE2eResult], toolchain: &TsToolchain, expected_count: usize) {
+    let total = results.len();
+    let frontend = results
+        .iter()
+        .filter(|result| result.frontend_analyzed)
+        .count();
+    let emitted = results
+        .iter()
+        .filter(|result| result.typescript_emitted)
+        .count();
+    let formatted = results
+        .iter()
+        .filter(|result| result.formatted == TierState::Passed)
+        .count();
+    let linted = results
+        .iter()
+        .filter(|result| result.linted == TierState::Passed)
+        .count();
+    let typecheck_valid = results
+        .iter()
+        .filter(|result| result.typecheck_valid == TierState::Passed)
+        .count();
+    let runnable = results
+        .iter()
+        .filter(|result| result.runnable == TierState::Passed)
+        .count();
+    let behavior_checked = results
+        .iter()
+        .filter(|result| result.behavior_checked == TierState::Passed)
+        .count();
+
+    eprintln!("TypeScript toolchain:");
+    eprintln!("  formatter: {}", formatter_label(toolchain.formatter));
+    eprintln!("  linter: {}", linter_label(toolchain.linter));
+    eprintln!("  typechecker: {}", typechecker_label(toolchain.typechecker));
+    eprintln!("  runtime: {}", runtime_label(toolchain.runtime));
+    eprintln!("TypeScript e2e exempla:");
+    eprintln!("  frontend analyzed: {frontend}/{total}");
+    eprintln!("  TypeScript emitted: {emitted}/{total}");
+    eprintln!("  formatted: {formatted}/{total} ({})", formatter_label(toolchain.formatter));
+    eprintln!("  linted: {linted}/{total} ({})", linter_label(toolchain.linter));
+    eprintln!("  typecheck-valid: {typecheck_valid}/{total}");
+    eprintln!("  runnable: {runnable}/{total}");
+    eprintln!("  behavior-checked: {behavior_checked}/{total}");
+    eprintln!("Expected-output checks available for {expected_count} exempla files");
+
+    for fail in results.iter().filter(|result| !result.is_fully_clean()) {
+        eprintln!("[ts] {} :: {}", fail.path.display(), fail.reason);
+    }
+}
+
+impl TsE2eResult {
+    fn is_fully_clean(&self) -> bool {
+        self.frontend_analyzed
+            && self.typescript_emitted
+            && !matches!(self.formatted, TierState::Failed)
+            && !matches!(self.linted, TierState::Failed)
+            && matches!(self.typecheck_valid, TierState::Passed)
+            && matches!(self.runnable, TierState::Passed)
+            && !matches!(self.behavior_checked, TierState::Failed)
+    }
+}
+
+fn formatter_label(formatter: TsFormatter) -> &'static str {
+    match formatter {
+        TsFormatter::Prettier => "prettier --parser typescript",
+        TsFormatter::Deno => "deno fmt --ext ts -",
+        TsFormatter::Missing => "skipped: no prettier or deno",
+    }
+}
+
+fn linter_label(linter: TsLinter) -> &'static str {
+    match linter {
+        TsLinter::Biome => "biome check",
+        TsLinter::Eslint => "eslint",
+        TsLinter::Missing => "skipped: no biome or eslint",
+    }
+}
+
+fn typechecker_label(typechecker: TsTypechecker) -> &'static str {
+    match typechecker {
+        TsTypechecker::Tsc => "tsc --noEmit main.ts",
+        TsTypechecker::Deno => "deno check main.ts",
+        TsTypechecker::Missing => "skipped: no tsc or deno",
+    }
+}
+
+fn runtime_label(runtime: TsRuntime) -> &'static str {
+    match runtime {
+        TsRuntime::NodeViaTsc => "tsc main.ts; node main.js",
+        TsRuntime::Deno => "deno run main.ts",
+        TsRuntime::Missing => "skipped: no node+tsc or deno",
+    }
+}
+
+fn join_reasons<const N: usize>(reasons: [String; N]) -> String {
+    reasons
+        .into_iter()
+        .filter(|reason| !reason.is_empty())
+        .collect::<Vec<_>>()
+        .join(" | ")
 }
 
 fn read_expected_stdout(fab_path: &Path) -> Option<String> {
@@ -534,6 +1045,18 @@ fn format_diagnostics(result: &crate::CompileResult) -> String {
     } else {
         result
             .diagnostics
+            .iter()
+            .map(|diag| diag.message.clone())
+            .collect::<Vec<_>>()
+            .join(" | ")
+    }
+}
+
+fn format_diagnostic_messages(diagnostics: &[crate::Diagnostic]) -> String {
+    if diagnostics.is_empty() {
+        "no diagnostics".to_owned()
+    } else {
+        diagnostics
             .iter()
             .map(|diag| diag.message.clone())
             .collect::<Vec<_>>()

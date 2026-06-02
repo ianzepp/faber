@@ -31,9 +31,11 @@ use crate::hir::{DefId, HirItem, HirItemKind, HirProgram};
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::TypeTable;
 use crate::TypeScriptOutput;
+use std::cell::Cell;
 
 pub struct TsCodegen<'a> {
     names: NameCatalog<'a>,
+    current_self_def: Cell<Option<DefId>>,
 }
 
 impl<'a> TsCodegen<'a> {
@@ -44,7 +46,7 @@ impl<'a> TsCodegen<'a> {
     /// decisions. That keeps cross-file helpers from inventing target names
     /// independently.
     pub fn new(hir: &HirProgram, interner: &'a Interner) -> Self {
-        Self { names: NameCatalog::new(hir, interner) }
+        Self { names: NameCatalog::new(hir, interner), current_self_def: Cell::new(None) }
     }
 
     /// Resolves a source symbol into the spelling selected for TypeScript text.
@@ -57,6 +59,19 @@ impl<'a> TsCodegen<'a> {
         self.names.resolve_def(def_id)
     }
 
+    pub(super) fn resolve_expr_def(&self, def_id: DefId) -> &str {
+        if self.current_self_def.get() == Some(def_id) {
+            return "this";
+        }
+        self.resolve_def(def_id)
+    }
+
+    pub(super) fn replace_current_self_def(&self, def_id: Option<DefId>) -> Option<DefId> {
+        let previous = self.current_self_def.get();
+        self.current_self_def.set(def_id);
+        previous
+    }
+
     /// Dispatches one top-level HIR item to the declaration emitter.
     ///
     /// Item-specific formatting lives in `decl` so this module can remain the
@@ -65,7 +80,7 @@ impl<'a> TsCodegen<'a> {
     fn generate_item(&self, item: &HirItem, types: &TypeTable, w: &mut CodeWriter) -> Result<(), CodegenError> {
         match &item.kind {
             HirItemKind::Function(func) => decl::generate_function(self, func, types, w)?,
-            HirItemKind::Struct(strukt) => decl::generate_class(self, strukt, types, w)?,
+            HirItemKind::Struct(strukt) => decl::generate_class(self, item.def_id, strukt, types, w)?,
             HirItemKind::Enum(enum_item) => decl::generate_enum(self, enum_item, types, w)?,
             HirItemKind::Interface(interface) => decl::generate_interface(self, interface, types, w)?,
             HirItemKind::TypeAlias(alias) => decl::generate_type_alias(self, alias, types, w)?,

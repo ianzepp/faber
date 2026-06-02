@@ -51,7 +51,7 @@ pub fn generate_expr(
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
     match &expr.kind {
-        HirExprKind::Path(def_id) => w.write(codegen.resolve_def(*def_id)),
+        HirExprKind::Path(def_id) => w.write(codegen.resolve_expr_def(*def_id)),
         HirExprKind::Literal(lit) => generate_literal(codegen, lit, w),
         HirExprKind::Binary(op, lhs, rhs) => {
             w.write("(");
@@ -185,8 +185,10 @@ pub fn generate_expr(
             w.write("]");
         }
         HirExprKind::Vacua => generate_vacua_expr(expr, types, w),
-        HirExprKind::Struct(_, fields) => {
-            w.write("{ ");
+        HirExprKind::Struct(def_id, fields) => {
+            w.write("Object.assign(new ");
+            w.write(codegen.resolve_def(*def_id));
+            w.write("(), { ");
             for (idx, (name, value)) in fields.iter().enumerate() {
                 if idx > 0 {
                     w.write(", ");
@@ -195,7 +197,7 @@ pub fn generate_expr(
                 w.write(": ");
                 generate_expr(codegen, value, types, w)?;
             }
-            w.write(" }");
+            w.write(" })");
         }
         HirExprKind::Tuple(elements) => {
             w.write("[");
@@ -271,7 +273,10 @@ pub fn generate_expr(
             generate_expr(codegen, inner, types, w)?;
         }
         HirExprKind::Verte { source, target, entries } => match types.get(*target) {
-            Type::Struct(_) => {
+            Type::Struct(def_id) => {
+                w.write("Object.assign(new ");
+                w.write(codegen.resolve_def(*def_id));
+                w.write("(), ");
                 if let Some(entries) = entries {
                     w.write("{ ");
                     let mut wrote_any = false;
@@ -305,9 +310,8 @@ pub fn generate_expr(
                     w.write(" }");
                 } else {
                     generate_expr(codegen, source, types, w)?;
-                    w.write(" as ");
-                    w.write(&types::type_to_ts(codegen, *target, types));
                 }
+                w.write(")");
             }
             Type::Map(_, _) => {
                 if let Some(entries) = entries {
