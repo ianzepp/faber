@@ -389,3 +389,98 @@ Select the next measured blocker from the harness rather than jumping to a
 percentage claim. The largest visible Wasm-emission cluster is still
 text/string representation and diagnostics, while several other exemplars are
 blocked earlier in MIR lowering.
+
+## Phase 006 Update: Text Handle Wasm Emission
+
+**Commit target**: Phase 006  
+**Change**: the Wasm text probe now treats `textus` as an opaque `i32` handle
+for the compile-valid tier. String constants emit handle constants, text
+diagnostics use distinct `*_text` imports, text concatenation calls
+`faber_text.concat`, and format-string runtime calls use signature-specific
+`faber_text.format_*` imports.
+
+### Tier Counts After Phase 006
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 32/101
+  Wasm emitted: 24/101
+  compile-valid: 24/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Exemplars
+
+- `examples/exempla/aut/aut.fab`
+- `examples/exempla/cura/cura.fab`
+- `examples/exempla/cura/nidificatus.fab`
+- `examples/exempla/custodi/custodi.fab`
+- `examples/exempla/discretio/discretio.fab`
+- `examples/exempla/et/et.fab`
+- `examples/exempla/fixum/fixum.fab`
+- `examples/exempla/functio/functio.fab`
+- `examples/exempla/functio/recursio.fab`
+- `examples/exempla/incipit/incipit.fab`
+- `examples/exempla/mone/mone.fab`
+- `examples/exempla/privata/privata.fab`
+- `examples/exempla/protecta/protecta.fab`
+- `examples/exempla/publica/publica.fab`
+- `examples/exempla/redde/redde.fab`
+- `examples/exempla/salve-munde.fab`
+- `examples/exempla/scriptum/scriptum.fab`
+- `examples/exempla/si/ergo.fab`
+- `examples/exempla/si/nidificatus.fab`
+- `examples/exempla/si/secus.fab`
+- `examples/exempla/si/si.fab`
+- `examples/exempla/si/sin.fab`
+- `examples/exempla/varia/varia.fab`
+- `examples/exempla/vide/vide.fab`
+
+All listed modules validate with `wasm-tools validate`. Instantiate and run
+tiers remain at zero because `wasmtime` is unavailable on PATH and the modules
+now also depend on explicit `faber_text` host imports.
+
+### Result
+
+Measured compile-valid coverage increased from 4/101 to 24/101. The phase also
+removed the emitted-but-invalid `redde/redde.fab` failure that appeared during
+development by routing text concatenation through an explicit text import
+instead of numeric Wasm arithmetic.
+
+### Remaining Wasm-Emission Clusters
+
+- Aggregate and enum/struct/array construction remains unsupported:
+  `destructura/destructura.fab`, `finge/finge.fab`, `genus/genus.fab`,
+  `novum/novum.fab`, `typus/typus.fab`, and `varia/destructura.fab`.
+- `fractus` values remain unsupported by the Wasm scalar model:
+  `functio/typicus.fab` and `varia/typicus.fab`.
+- Runtime-managed values beyond text handles remain unsupported, including
+  structs, enums, arrays, nullable values, dynamic values, switch, try-call, and
+  return-error paths.
+
+### Remaining MIR-Lowering Clusters
+
+The established MIR-lowering clusters remain: iterator/range lowering,
+switch/pattern lowering, assertion intrinsics, method/runtime gaps, compound
+assignment/operator gaps, predicate unary gaps, aggregate/optional validation
+gaps, top-level consts, and several diagnostic runtime arity validation gaps.
+
+### Phase 006 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed, including WAT validation
+  for text handles, text diagnostics, text concat, and format-string imports.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select a small scalar expansion phase for `fractus` support. Only two currently
+MIR-lowered exemplars visibly stop on `Primitive(Fractus)`, but this is a clean
+compile-valid Wasm type/value-model extension and should be cheaper than
+starting aggregate layout.

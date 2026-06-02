@@ -73,6 +73,54 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_text_handles_and_text_diagnostics() {
+    let source = r#"
+functio label() → textus {
+    redde "salve" + "munde"
+}
+
+incipit {
+    fixum _ greeting ← label()
+    nota greeting
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains(r#"(import "faber_diag" "nota_text" (func $__faber_diag_nota_text (param i32)))"#));
+    assert!(
+        output.contains(r#"(import "faber_text" "concat" (func $__faber_text_concat (param i32 i32) (result i32)))"#)
+    );
+    assert!(output.contains(r#"(func $label (export "label") (result i32)"#));
+    assert!(output.contains("(call $__faber_text_concat (i32.const"));
+    assert!(output.contains("(call $__faber_diag_nota_text (local.get $l0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_emits_format_string_text_imports() {
+    let source = r#"
+incipit {
+    fixum _ name ← "Marcus"
+    fixum _ age ← 30
+    fixum _ info ← "§ is § years old"(name, age)
+    nota info
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(
+            r#"(import "faber_text" "format_2_text_i64" (func $__faber_text_format_2_text_i64 (param i32 i32 i64) (result i32)))"#
+        )
+    );
+    assert!(output.contains("(call $__faber_text_format_2_text_i64 (i32.const"));
+    assert!(output.contains("(call $__faber_diag_nota_text"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_primitive_unary_values() {
     let source = r#"
 functio negative(numerus n) → numerus {
@@ -147,8 +195,9 @@ incipit {
 #[test]
 fn wasm_target_rejects_unsupported_mir_shapes() {
     let source = r#"
-functio label() → textus {
-    redde "salve"
+incipit {
+    fixum lista<numerus> values ← [1, 2, 3]
+    nota values
 }
 "#;
 
