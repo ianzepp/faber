@@ -63,6 +63,7 @@ pub(super) trait HirExprLoweringVisitor {
             HirExprKind::Si { cond, then_block, then_catch, else_block } => {
                 self.visit_si_expr(cond, then_block, then_catch.as_deref(), else_block, expr)
             }
+            HirExprKind::Discerne(scrutinees, arms) => self.visit_discerne_expr(scrutinees, arms, expr),
             HirExprKind::Dum(cond, block) => self.visit_dum_expr(cond, block, expr),
             HirExprKind::Handled { body, catch } => self.visit_handled_expr(body, catch, expr),
             HirExprKind::Assign(_, _) => self.visit_assignment_expr(expr),
@@ -123,6 +124,12 @@ pub(super) trait HirExprLoweringVisitor {
         then_block: &HirBlock,
         then_catch: Option<&HirCape>,
         else_block: &Option<HirBlock>,
+        expr: &HirExpr,
+    ) -> Option<MirOperand>;
+    fn visit_discerne_expr(
+        &mut self,
+        scrutinees: &[HirExpr],
+        arms: &[HirCasuArm],
         expr: &HirExpr,
     ) -> Option<MirOperand>;
     fn visit_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand>;
@@ -248,6 +255,15 @@ impl HirExprLoweringVisitor for FunctionBuilder<'_> {
         expr: &HirExpr,
     ) -> Option<MirOperand> {
         self.lower_si_expr(cond, then_block, then_catch, else_block, expr)
+    }
+
+    fn visit_discerne_expr(
+        &mut self,
+        scrutinees: &[HirExpr],
+        arms: &[HirCasuArm],
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        self.lower_discerne_expr(scrutinees, arms, expr)
     }
 
     fn visit_dum_expr(&mut self, cond: &HirExpr, block: &HirBlock, expr: &HirExpr) -> Option<MirOperand> {

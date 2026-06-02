@@ -517,6 +517,24 @@ impl WasmTextProbe<'_> {
                 writer.writeln("  )");
                 Ok(())
             }
+            MirTerminatorKind::Switch { value, cases, default } if matches!(mode, TerminatorMode::Dispatch) => {
+                let value_ty = self.operand_ty(value, context)?;
+                let value_expr = self.operand_expr(value, context)?;
+                for case in cases {
+                    let condition = self.switch_case_condition(&value_expr, value_ty, &case.value)?;
+                    writer.writeln(&format!("  (if {condition}"));
+                    writer.indent();
+                    writer.writeln("  (then");
+                    writer.indent();
+                    self.emit_dispatch_jump(case.target, writer);
+                    writer.dedent();
+                    writer.writeln("  )");
+                    writer.dedent();
+                    writer.writeln("  )");
+                }
+                self.emit_dispatch_jump(*default, writer);
+                Ok(())
+            }
             MirTerminatorKind::Unreachable => {
                 writer.writeln("  (unreachable)");
                 Ok(())
@@ -528,6 +546,26 @@ impl WasmTextProbe<'_> {
     fn emit_dispatch_jump(&self, target: MirBlockId, writer: &mut CodeWriter) {
         writer.writeln(&format!("  (local.set $__block (i32.const {}))", target.0));
         writer.writeln("  (br $__dispatch)");
+    }
+
+    fn switch_case_condition(
+        &self,
+        value_expr: &str,
+        value_ty: WasmValue,
+        constant: &MirConstant,
+    ) -> Result<String, MirWasmTextProbeError> {
+        let constant_ty = self.constant_wasm_ty(constant)?;
+        if value_ty != constant_ty {
+            return Err(MirWasmTextProbeError::unsupported("switch case type mismatch"));
+        }
+        let constant_expr = self.constant_expr(constant)?;
+        if value_ty == WasmValue::TextHandle {
+            return Ok(format!("(call $__faber_text_eq_text {value_expr} {constant_expr})"));
+        }
+        Ok(format!(
+            "({} {value_expr} {constant_expr})",
+            wasm_bin_op(MirBinOp::Eq, value_ty)?
+        ))
     }
 
     fn operand_expr(&self, operand: &MirOperand, context: &FunctionContext) -> Result<String, MirWasmTextProbeError> {
@@ -663,6 +701,18 @@ impl WasmTextProbe<'_> {
             MirConstant::String(symbol) => Ok(format!("(i32.const {})", symbol.0)),
             MirConstant::Unit => Ok("(i32.const 0)".to_owned()),
             MirConstant::Nil => Err(MirWasmTextProbeError::unsupported("nil constant")),
+        }
+    }
+
+    fn constant_wasm_ty(&self, constant: &MirConstant) -> Result<WasmValue, MirWasmTextProbeError> {
+        match constant {
+            MirConstant::Int(_) => Ok(WasmValue::I64),
+            MirConstant::Float(_) => Ok(WasmValue::F64),
+            MirConstant::Bool(_) => Ok(WasmValue::I32),
+            MirConstant::String(_) => Ok(WasmValue::TextHandle),
+            MirConstant::Unit | MirConstant::Nil => {
+                Err(MirWasmTextProbeError::unsupported(format!("switch case constant {constant:?}")))
+            }
         }
     }
 
@@ -962,6 +1012,15 @@ impl WasmTextProbe<'_> {
                         && self.operand_ty(lhs, &context)? == WasmValue::TextHandle
                     {
                         imports.insert(TextCompareImport { op: *op });
+                    }
+                }
+                if let MirTerminatorKind::Switch { value, cases, .. } = &block.terminator.kind {
+                    if self.operand_ty(value, &context)? == WasmValue::TextHandle
+                        && cases
+                            .iter()
+                            .any(|case| matches!(case.value, MirConstant::String(_)))
+                    {
+                        imports.insert(TextCompareImport { op: MirBinOp::Eq });
                     }
                 }
             }

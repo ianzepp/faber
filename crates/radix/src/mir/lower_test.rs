@@ -420,6 +420,26 @@ function f0 -> ty#1 {
 }
 
 #[test]
+fn lowers_literal_elige_to_switch_terminator() {
+    let dump = dump_source(
+        r#"
+functio status(numerus code) → textus {
+    elige code {
+        casu 200 { redde "ok" }
+        casu 404 { redde "missing" }
+        ceterum { redde "other" }
+    }
+}
+"#,
+    );
+
+    assert!(dump.contains("switch _0 [const int 200: bb"));
+    assert!(dump.contains("const int 404: bb"));
+    assert!(dump.contains("default bb"));
+    assert!(!dump.contains("discerne before switch MIR lowering"));
+}
+
+#[test]
 fn lowers_dum_to_condition_body_and_after_blocks() {
     let dump = dump_source(
         "functio totalis(numerus n) → numerus { varia numerus i ← 0 varia numerus total ← 0 dum i < n { total ← total + i i ← i + 1 } redde total }",
@@ -546,13 +566,14 @@ fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
         .message
         .contains("itera before iterator MIR lowering"));
 
-    let discerne_unit =
-        analyze("functio differ(numerus n) → numerus { discerne n { casu 0 { redde 0 } casu _ { redde n } } }");
+    let discerne_unit = analyze(
+        "discretio Status { Active, Inactive } functio differ(Status s) → numerus { discerne s { casu Active { redde 1 } casu Inactive { redde 0 } } }",
+    );
     let discerne_errors = lower_analyzed_unit(&discerne_unit).expect_err("discerne is deferred");
     assert_eq!(discerne_errors.len(), 1);
     assert!(discerne_errors[0]
         .message
-        .contains("discerne before switch MIR lowering"));
+        .contains("non-literal discerne pattern before switch MIR lowering"));
 }
 
 #[test]

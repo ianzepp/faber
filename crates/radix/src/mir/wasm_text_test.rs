@@ -387,6 +387,38 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_switch_dispatch_for_literal_elige() {
+    let source = r#"
+functio by_code(numerus code) → textus {
+    elige code {
+        casu 200 { redde "ok" }
+        casu 404 { redde "missing" }
+        ceterum { redde "other" }
+    }
+}
+
+functio by_status(textus status) → numerus {
+    elige status {
+        casu "active" { redde 1 }
+        casu "paused" { redde 2 }
+        ceterum { redde 0 }
+    }
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(r#"(import "faber_text" "eq_text" (func $__faber_text_eq_text (param i32 i32) (result i32)))"#)
+    );
+    assert!(output.contains("(i64.eq (local.get $l0) (i64.const 200))"));
+    assert!(output.contains("(call $__faber_text_eq_text (local.get $l0) (i32.const"));
+    assert!(output.contains("(local.set $__block"));
+    assert!(output.contains("(br $__dispatch)"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_rejects_unsupported_mir_shapes() {
     let source = r#"
 incipit {

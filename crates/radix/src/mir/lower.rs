@@ -35,9 +35,9 @@
 use crate::driver::AnalyzedUnit;
 use crate::hir::visit::HirVisitor;
 use crate::hir::{
-    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirExpr, HirExprKind, HirField, HirFunction, HirItem,
-    HirItemKind, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
-    HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
+    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirExpr, HirExprKind, HirField, HirFunction,
+    HirItem, HirItemKind, HirLiteral, HirLocal, HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind,
+    HirPattern, HirScribeKind, HirStmt, HirStmtKind, HirUnOp,
 };
 use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{
@@ -45,8 +45,8 @@ use crate::mir::{
     MirBlock, MirBlockId, MirCallee, MirCollectionOp, MirConstant, MirConversion, MirConversionFlavor,
     MirDiagnosticKind, MirFunction, MirFunctionId, MirIntrinsic, MirKeyValueOperand, MirLocal as MirLocalDecl,
     MirLocalId, MirNamedOperand, MirOperand, MirOptionChainLink, MirOptionOp, MirOptionUnwrapMode, MirParam, MirPlace,
-    MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmt, MirStmtKind, MirTemp, MirTempId, MirTerminator,
-    MirTerminatorKind, MirType, MirUnOp, MirValidationContext, MirValue, MirValueId, MirValueKind,
+    MirProgram, MirProjection, MirProvider, MirRuntimeCall, MirStmt, MirStmtKind, MirSwitchCase, MirTemp, MirTempId,
+    MirTerminator, MirTerminatorKind, MirType, MirUnOp, MirValidationContext, MirValue, MirValueId, MirValueKind,
 };
 use crate::semantic::{Primitive, Type, TypeId, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};

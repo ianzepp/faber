@@ -206,6 +206,119 @@ impl FunctionBuilder<'_> {
         Some(MirOperand::Constant(MirConstant::Unit))
     }
 
+    /// Lower the literal `elige` subset into a MIR switch.
+    ///
+    /// HIR represents `elige` as `Discerne` with one scrutinee and literal
+    /// patterns. Destructuring, enum variants, guards, multi-subject matching,
+    /// and value-producing matches remain explicit later-phase work.
+    pub(super) fn lower_discerne_expr(
+        &mut self,
+        scrutinees: &[HirExpr],
+        arms: &[HirCasuArm],
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let ty = self.expr_ty(expr)?;
+        if !self.is_vacuum(ty) {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "value-producing discerne before switch MIR lowering",
+            ));
+            return None;
+        }
+        let [scrutinee] = scrutinees else {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "multi-subject discerne before switch MIR lowering",
+            ));
+            return None;
+        };
+
+        let value = self.lower_expr_value(scrutinee)?;
+        let join_id = self.fresh_block(expr.span);
+        let mut cases = Vec::new();
+        let mut bodies = Vec::new();
+        let mut default_id = join_id;
+        let mut default_body = None;
+
+        for arm in arms {
+            if arm.guard.is_some() {
+                self.errors
+                    .push(MirError::unsupported(arm.span, "guarded discerne before switch MIR lowering"));
+                return None;
+            }
+            let [pattern] = arm.patterns.as_slice() else {
+                self.errors.push(MirError::unsupported(
+                    arm.span,
+                    "multi-pattern discerne arm before switch MIR lowering",
+                ));
+                return None;
+            };
+            match pattern {
+                HirPattern::Literal(literal) => {
+                    let constant = self.literal_switch_constant(literal, arm.span)?;
+                    let target = self.fresh_block(arm.span);
+                    cases.push(MirSwitchCase { value: constant, target });
+                    bodies.push((target, &arm.body, arm.span));
+                }
+                HirPattern::Wildcard if default_body.is_none() => {
+                    default_id = self.fresh_block(arm.span);
+                    default_body = Some((&arm.body, arm.span));
+                }
+                HirPattern::Wildcard => {
+                    self.errors.push(MirError::unsupported(
+                        arm.span,
+                        "multiple discerne defaults before switch MIR lowering",
+                    ));
+                    return None;
+                }
+                _ => {
+                    self.errors.push(MirError::unsupported(
+                        arm.span,
+                        "non-literal discerne pattern before switch MIR lowering",
+                    ));
+                    return None;
+                }
+            }
+        }
+
+        self.terminate_current(MirTerminatorKind::Switch { value, cases, default: default_id }, expr.span);
+
+        let mut reaches_join = default_body.is_none();
+
+        for (target, body, span) in bodies {
+            self.switch_to(target);
+            let _ = self.lower_expr_value(body);
+            reaches_join |= self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+        }
+
+        if let Some((body, span)) = default_body {
+            self.switch_to(default_id);
+            let _ = self.lower_expr_value(body);
+            reaches_join |= self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+        }
+
+        if reaches_join {
+            self.switch_to(join_id);
+        } else {
+            self.seal_unreachable(join_id, expr.span);
+        }
+        Some(MirOperand::Constant(MirConstant::Unit))
+    }
+
+    fn literal_switch_constant(&mut self, literal: &HirLiteral, span: Span) -> Option<MirConstant> {
+        match literal {
+            HirLiteral::Int(value) => Some(MirConstant::Int(*value)),
+            HirLiteral::Float(value) => Some(MirConstant::Float(*value)),
+            HirLiteral::String(symbol) => Some(MirConstant::String(*symbol)),
+            HirLiteral::Bool(value) => Some(MirConstant::Bool(*value)),
+            HirLiteral::Nil | HirLiteral::Regex(_, _) => {
+                self.errors
+                    .push(MirError::unsupported(span, "literal pattern before switch MIR lowering"));
+                None
+            }
+        }
+    }
+
     /// Lower a block into a destination place, preserving early terminators.
     ///
     /// Statement prefixes are emitted first. If they leave the current block
