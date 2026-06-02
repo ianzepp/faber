@@ -6,6 +6,7 @@
 //! lowering pass.
 
 use crate::codegen::CodeWriter;
+use crate::hir::DefId;
 use crate::lexer::Interner;
 use crate::mir::*;
 use crate::semantic::{Primitive, Type, TypeTable};
@@ -57,6 +58,7 @@ enum WasmValue {
     I64,
     F64,
     TextHandle,
+    AggregateHandle,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -68,6 +70,22 @@ struct DiagnosticImport {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct TextFormatImport {
     args: Vec<WasmValue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct AggregateImport {
+    kind: AggregateImportKind,
+    args: Vec<WasmValue>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+enum AggregateImportKind {
+    Tuple,
+    Array,
+    Map,
+    Set,
+    Struct,
+    Variant,
 }
 
 enum TerminatorMode {
@@ -84,6 +102,24 @@ impl WasmTextProbe<'_> {
         if self.requires_text_concat_import()? {
             writer
                 .writeln("(import \"faber_text\" \"concat\" (func $__faber_text_concat (param i32 i32) (result i32)))");
+        }
+        for import in self.required_aggregate_imports()? {
+            let params = import
+                .params()
+                .iter()
+                .map(|arg| arg.wat())
+                .collect::<Vec<_>>()
+                .join(" ");
+            let params = if params.is_empty() {
+                String::new()
+            } else {
+                format!(" (param {params})")
+            };
+            writer.writeln(&format!(
+                "(import \"faber_aggregate\" \"{}\" (func ${}{params} (result i32)))",
+                aggregate_import_name(&import),
+                aggregate_import_symbol(&import),
+            ));
         }
         for import in self.required_text_format_imports()? {
             let params = std::iter::once("i32")
@@ -233,7 +269,10 @@ impl WasmTextProbe<'_> {
                 (Some(_), _) => Err(MirWasmTextProbeError::unsupported("value-returning runtime call")),
                 (None, _) => Err(MirWasmTextProbeError::unsupported("runtime call")),
             },
-            MirStmtKind::Construct { .. } => Err(MirWasmTextProbeError::unsupported("construct")),
+            MirStmtKind::Construct { destination, aggregate } => {
+                let expr = self.construct_expr(aggregate, context)?;
+                self.emit_place_set(destination, &expr, context, writer)
+            }
         }
     }
 
@@ -472,6 +511,9 @@ impl WasmTextProbe<'_> {
             Type::Primitive(Primitive::Fractus) => Ok(WasmValue::F64),
             Type::Primitive(Primitive::Bivalens) => Ok(WasmValue::I32),
             Type::Primitive(Primitive::Textus) => Ok(WasmValue::TextHandle),
+            Type::Array(_) | Type::Map(_, _) | Type::Record(_) | Type::Set(_) | Type::Struct(_) | Type::Enum(_) => {
+                Ok(WasmValue::AggregateHandle)
+            }
             Type::Alias(_, target) => self.scalar_ty(MirType::semantic(*target)),
             other => Err(MirWasmTextProbeError::unsupported(format!("type {other:?}"))),
         }
@@ -488,6 +530,35 @@ impl WasmTextProbe<'_> {
         for arg in args {
             call.push(' ');
             call.push_str(&self.operand_expr(arg, context)?);
+        }
+        call.push(')');
+        Ok(call)
+    }
+
+    fn construct_expr(
+        &self,
+        aggregate: &MirAggregate,
+        context: &FunctionContext,
+    ) -> Result<String, MirWasmTextProbeError> {
+        if self.scalar_ty(aggregate.ty)? != WasmValue::AggregateHandle {
+            return Err(MirWasmTextProbeError::unsupported("non-aggregate construct type"));
+        }
+
+        let operands = aggregate_operands(&aggregate.fields);
+        let import = AggregateImport {
+            kind: aggregate_import_kind(&aggregate.kind),
+            args: operands
+                .iter()
+                .map(|operand| self.operand_ty(operand, context))
+                .collect::<Result<Vec<_>, _>>()?,
+        };
+        let mut call = format!("(call ${}", aggregate_import_symbol(&import));
+        if let Some(def_id) = aggregate_definition_id(&aggregate.kind) {
+            call.push_str(&format!(" (i32.const {})", def_id.0));
+        }
+        for operand in operands {
+            call.push(' ');
+            call.push_str(&self.operand_expr(operand, context)?);
         }
         call.push(')');
         Ok(call)
@@ -614,6 +685,33 @@ impl WasmTextProbe<'_> {
         imports.sort_by_key(text_format_import_name);
         Ok(imports)
     }
+
+    fn required_aggregate_imports(&self) -> Result<Vec<AggregateImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    let MirStmtKind::Construct { aggregate, .. } = &stmt.kind else {
+                        continue;
+                    };
+                    if self.scalar_ty(aggregate.ty)? != WasmValue::AggregateHandle {
+                        continue;
+                    }
+                    imports.insert(AggregateImport {
+                        kind: aggregate_import_kind(&aggregate.kind),
+                        args: aggregate_operands(&aggregate.fields)
+                            .into_iter()
+                            .map(|operand| self.operand_ty(operand, &context))
+                            .collect::<Result<Vec<_>, _>>()?,
+                    });
+                }
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(aggregate_import_name);
+        Ok(imports)
+    }
 }
 
 fn local_name(id: MirLocalId) -> String {
@@ -680,7 +778,7 @@ fn wasm_un_op(op: MirUnOp, operand_ty: WasmValue, operand: &str) -> Result<Strin
 impl WasmValue {
     fn wat(self) -> &'static str {
         match self {
-            WasmValue::I32 | WasmValue::TextHandle => "i32",
+            WasmValue::I32 | WasmValue::TextHandle | WasmValue::AggregateHandle => "i32",
             WasmValue::I64 => "i64",
             WasmValue::F64 => "f64",
         }
@@ -692,7 +790,19 @@ impl WasmValue {
             WasmValue::I64 => "i64",
             WasmValue::F64 => "f64",
             WasmValue::TextHandle => "text",
+            WasmValue::AggregateHandle => "aggregate",
         }
+    }
+}
+
+impl AggregateImport {
+    fn params(&self) -> Vec<WasmValue> {
+        let mut params = Vec::with_capacity(self.args.len() + 1);
+        if matches!(self.kind, AggregateImportKind::Struct | AggregateImportKind::Variant) {
+            params.push(WasmValue::I32);
+        }
+        params.extend(self.args.iter().copied());
+        params
     }
 }
 
@@ -721,18 +831,22 @@ fn diagnostic_import_name(import: DiagnosticImport) -> &'static str {
         (MirDiagnosticKind::Nota, WasmValue::I64) => "nota_i64",
         (MirDiagnosticKind::Nota, WasmValue::F64) => "nota_f64",
         (MirDiagnosticKind::Nota, WasmValue::TextHandle) => "nota_text",
+        (MirDiagnosticKind::Nota, WasmValue::AggregateHandle) => "nota_aggregate",
         (MirDiagnosticKind::Vide, WasmValue::I32) => "vide_i32",
         (MirDiagnosticKind::Vide, WasmValue::I64) => "vide_i64",
         (MirDiagnosticKind::Vide, WasmValue::F64) => "vide_f64",
         (MirDiagnosticKind::Vide, WasmValue::TextHandle) => "vide_text",
+        (MirDiagnosticKind::Vide, WasmValue::AggregateHandle) => "vide_aggregate",
         (MirDiagnosticKind::Mone, WasmValue::I32) => "mone_i32",
         (MirDiagnosticKind::Mone, WasmValue::I64) => "mone_i64",
         (MirDiagnosticKind::Mone, WasmValue::F64) => "mone_f64",
         (MirDiagnosticKind::Mone, WasmValue::TextHandle) => "mone_text",
+        (MirDiagnosticKind::Mone, WasmValue::AggregateHandle) => "mone_aggregate",
         (MirDiagnosticKind::Scribe, WasmValue::I32) => "scribe_i32",
         (MirDiagnosticKind::Scribe, WasmValue::I64) => "scribe_i64",
         (MirDiagnosticKind::Scribe, WasmValue::F64) => "scribe_f64",
         (MirDiagnosticKind::Scribe, WasmValue::TextHandle) => "scribe_text",
+        (MirDiagnosticKind::Scribe, WasmValue::AggregateHandle) => "scribe_aggregate",
     }
 }
 
@@ -750,6 +864,67 @@ fn terminator_kind_name(kind: &MirTerminatorKind) -> &'static str {
         MirTerminatorKind::Switch { .. } => "switch",
         MirTerminatorKind::Unreachable => "unreachable",
     }
+}
+
+fn aggregate_import_kind(kind: &MirAggregateKind) -> AggregateImportKind {
+    match kind {
+        MirAggregateKind::Tuple => AggregateImportKind::Tuple,
+        MirAggregateKind::Array => AggregateImportKind::Array,
+        MirAggregateKind::Map => AggregateImportKind::Map,
+        MirAggregateKind::Set => AggregateImportKind::Set,
+        MirAggregateKind::Struct(_) => AggregateImportKind::Struct,
+        MirAggregateKind::EnumVariant(_) => AggregateImportKind::Variant,
+    }
+}
+
+fn aggregate_definition_id(kind: &MirAggregateKind) -> Option<DefId> {
+    match kind {
+        MirAggregateKind::Struct(def_id) | MirAggregateKind::EnumVariant(def_id) => Some(*def_id),
+        _ => None,
+    }
+}
+
+fn aggregate_operands(fields: &MirAggregateFields) -> Vec<&MirOperand> {
+    match fields {
+        MirAggregateFields::Ordered(items) => items
+            .iter()
+            .map(|item| match item {
+                MirAggregateItem::Operand(operand) | MirAggregateItem::Spread(operand) => operand,
+            })
+            .collect(),
+        MirAggregateFields::Named(items) => items.iter().map(|item| &item.value).collect(),
+        MirAggregateFields::Keyed(items) => items
+            .iter()
+            .flat_map(|item| [&item.key, &item.value])
+            .collect(),
+    }
+}
+
+fn aggregate_import_name(import: &AggregateImport) -> String {
+    let kind = match import.kind {
+        AggregateImportKind::Tuple => "tuple",
+        AggregateImportKind::Array => "array",
+        AggregateImportKind::Map => "map",
+        AggregateImportKind::Set => "set",
+        AggregateImportKind::Struct => "struct",
+        AggregateImportKind::Variant => "variant",
+    };
+    let suffix = if import.args.is_empty() {
+        "0".to_owned()
+    } else {
+        let args = import
+            .args
+            .iter()
+            .map(|arg| arg.abi_name())
+            .collect::<Vec<_>>()
+            .join("_");
+        format!("{}_{}", import.args.len(), args)
+    };
+    format!("{kind}_{suffix}")
+}
+
+fn aggregate_import_symbol(import: &AggregateImport) -> String {
+    format!("__faber_aggregate_{}", aggregate_import_name(import))
 }
 
 #[cfg(test)]

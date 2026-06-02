@@ -2,7 +2,10 @@ use crate::driver::{Config, Session};
 use crate::{driver, Output, Target};
 use std::fs;
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+static TEMP_WAT_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 #[test]
 fn wasm_target_emits_wat_from_validated_mir() {
@@ -167,6 +170,31 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_opaque_aggregate_handles() {
+    let source = r#"
+incipit {
+    fixum lista<numerus> values ← [1, 2, 3]
+    nota values
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(
+            r#"(import "faber_aggregate" "array_3_i64_i64_i64" (func $__faber_aggregate_array_3_i64_i64_i64 (param i64 i64 i64) (result i32)))"#
+        )
+    );
+    assert!(
+        output.contains(r#"(import "faber_diag" "nota_aggregate" (func $__faber_diag_nota_aggregate (param i32)))"#)
+    );
+    assert!(output.contains("(local $l0 i32)"));
+    assert!(output.contains("(call $__faber_aggregate_array_3_i64_i64_i64 (i64.const 1) (i64.const 2) (i64.const 3))"));
+    assert!(output.contains("(call $__faber_diag_nota_aggregate (local.get $l0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_branch_dispatch_for_numeric_functions() {
     let source = r#"
 functio clamp(numerus value, numerus min, numerus max) → numerus {
@@ -219,7 +247,7 @@ fn wasm_target_rejects_unsupported_mir_shapes() {
     let source = r#"
 incipit {
     fixum lista<numerus> values ← [1, 2, 3]
-    nota values
+    nota values[0]
 }
 "#;
 
@@ -284,5 +312,6 @@ fn temp_wat_path() -> std::path::PathBuf {
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_nanos())
         .unwrap_or(0);
-    std::env::temp_dir().join(format!("radix-wasm-text-test-{nanos}.wat"))
+    let counter = TEMP_WAT_COUNTER.fetch_add(1, Ordering::Relaxed);
+    std::env::temp_dir().join(format!("radix-wasm-text-test-{nanos}-{counter}.wat"))
 }
