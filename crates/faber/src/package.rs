@@ -1979,6 +1979,6 @@ fn output_code(output: Output) -> String {
         Output::TypeScript(out) => out.code,
         Output::Go(out) => out.code,
         Output::Wasm(out) => out.code,
-        Output::LlvmIr(out) => out.code,
+        Output::LlvmText(out) => out.code,
     }
 }

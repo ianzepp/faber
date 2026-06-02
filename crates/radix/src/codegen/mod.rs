@@ -56,8 +56,8 @@ pub enum Target {
     /// Experimental MIR-backed WebAssembly text probe.
     Wasm,
 
-    /// Experimental MIR-backed LLVM IR text probe.
-    LlvmIr,
+    /// Experimental MIR-backed LLVM text probe.
+    LlvmText,
 }
 
 /// Backend emission error after semantic analysis has completed.
@@ -128,7 +128,7 @@ pub fn generate(
             let output = gen.generate(hir, types, interner)?;
             Ok(crate::Output::Go(output))
         }
-        Target::Wasm | Target::LlvmIr => {
+        Target::Wasm | Target::LlvmText => {
             Err(CodegenError { message: "target is MIR-backed and must be routed through the driver".to_owned() })
         }
     }

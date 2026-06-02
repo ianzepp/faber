@@ -111,8 +111,8 @@ pub enum Output {
     /// Experimental WebAssembly text output emitted from validated MIR.
     Wasm(WasmOutput),
 
-    /// Experimental LLVM IR output emitted from validated MIR.
-    LlvmIr(LlvmIrOutput),
+    /// Experimental LLVM text output emitted from validated MIR.
+    LlvmText(LlvmTextOutput),
 }
 
 /// Rust backend output.
@@ -145,9 +145,9 @@ pub struct WasmOutput {
     pub code: String,
 }
 
-/// Experimental LLVM IR output.
-pub struct LlvmIrOutput {
-    /// Complete generated LLVM IR source.
+/// Experimental LLVM text output.
+pub struct LlvmTextOutput {
+    /// Complete generated LLVM text source.
     pub code: String,
 }
 

@@ -2,16 +2,20 @@ use crate::driver::{Config, Session};
 use crate::{driver, Output, Target};
 
 #[test]
-fn llvm_ir_target_emits_text_from_validated_mir() {
+fn llvm_text_target_emits_text_from_validated_mir() {
     let source = r#"
 functio adde(numerus a, numerus b) → numerus {
     redde a + b
 }
 "#;
 
-    let result = driver::compile(&Session::new(Config::default().with_target(Target::LlvmIr)), "llvm.fab", source);
-    let Some(Output::LlvmIr(output)) = result.output else {
-        panic!("expected LLVM IR output");
+    let result = driver::compile(
+        &Session::new(Config::default().with_target(Target::LlvmText)),
+        "llvm.fab",
+        source,
+    );
+    let Some(Output::LlvmText(output)) = result.output else {
+        panic!("expected LLVM text output");
     };
 
     assert!(output.code.contains("define i64 @adde(i64 %l0, i64 %l1)"));
@@ -20,14 +24,18 @@ functio adde(numerus a, numerus b) → numerus {
 }
 
 #[test]
-fn llvm_ir_target_rejects_unsupported_mir_shapes() {
+fn llvm_text_target_rejects_unsupported_mir_shapes() {
     let source = r#"
 functio label() → textus {
     redde "salve"
 }
 "#;
 
-    let result = driver::compile(&Session::new(Config::default().with_target(Target::LlvmIr)), "llvm.fab", source);
+    let result = driver::compile(
+        &Session::new(Config::default().with_target(Target::LlvmText)),
+        "llvm.fab",
+        source,
+    );
 
     assert!(result.output.is_none());
     assert!(result

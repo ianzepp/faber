@@ -67,7 +67,7 @@ pub enum FaberCommand {
     CliIr(InputArgs),
     /// Run semantic analysis
     Check(CheckArgs),
-    /// Compile to target (rust, faber, ts, go, wasm, llvm-ir)
+    /// Compile to target (rust, faber, ts, go, wasm, llvm-text)
     Emit(EmitArgs),
 }
 
@@ -95,7 +95,7 @@ pub enum RadixCommand {
     CliIr(InputArgs),
     /// Run semantic analysis
     Check(CheckArgs),
-    /// Compile to target (rust, faber, ts, go, wasm, llvm-ir)
+    /// Compile to target (rust, faber, ts, go, wasm, llvm-text)
     Emit(EmitArgs),
     /// Show supported targets and current capability notes
     Targets,
@@ -282,9 +282,9 @@ pub enum CliTarget {
     #[value(name = "wasm", alias = "wat")]
     Wasm,
 
-    /// Experimental MIR-backed LLVM IR target.
-    #[value(name = "llvm-ir", alias = "llvm")]
-    LlvmIr,
+    /// Experimental MIR-backed LLVM text target.
+    #[value(name = "llvm-text", alias = "llvm-ir", alias = "llvm")]
+    LlvmText,
 }
 
 impl From<CliTarget> for crate::codegen::Target {
@@ -295,7 +295,7 @@ impl From<CliTarget> for crate::codegen::Target {
             CliTarget::TypeScript => crate::codegen::Target::TypeScript,
             CliTarget::Go => crate::codegen::Target::Go,
             CliTarget::Wasm => crate::codegen::Target::Wasm,
-            CliTarget::LlvmIr => crate::codegen::Target::LlvmIr,
+            CliTarget::LlvmText => crate::codegen::Target::LlvmText,
         }
     }
 }
@@ -968,7 +968,7 @@ pub fn cmd_targets() {
         crate::codegen::Target::Rust,
         crate::codegen::Target::Go,
         crate::codegen::Target::Wasm,
-        crate::codegen::Target::LlvmIr,
+        crate::codegen::Target::LlvmText,
         crate::codegen::Target::TypeScript,
         crate::codegen::Target::Faber,
     ] {
@@ -1060,7 +1060,7 @@ fn target_extension(target: crate::codegen::Target) -> &'static str {
         crate::codegen::Target::TypeScript => "ts",
         crate::codegen::Target::Go => "go",
         crate::codegen::Target::Wasm => "wat",
-        crate::codegen::Target::LlvmIr => "ll",
+        crate::codegen::Target::LlvmText => "ll",
     }
 }
 
@@ -1071,7 +1071,7 @@ fn target_name(target: crate::codegen::Target) -> &'static str {
         crate::codegen::Target::TypeScript => "ts",
         crate::codegen::Target::Go => "go",
         crate::codegen::Target::Wasm => "wasm",
-        crate::codegen::Target::LlvmIr => "llvm-ir",
+        crate::codegen::Target::LlvmText => "llvm-text",
     }
 }
 
@@ -1117,12 +1117,12 @@ pub fn target_capabilities(target: crate::codegen::Target) -> TargetCapabilities
             package: false,
             note: "experimental MIR-backed WAT probe; not a binary WASM backend yet",
         },
-        crate::codegen::Target::LlvmIr => TargetCapabilities {
+        crate::codegen::Target::LlvmText => TargetCapabilities {
             check: true,
             build: true,
             run: false,
             package: false,
-            note: "experimental MIR-backed LLVM IR text probe; not native codegen yet",
+            note: "experimental MIR-backed LLVM text probe; not native codegen yet",
         },
     }
 }
@@ -1143,7 +1143,7 @@ pub fn output_code(output: crate::Output) -> String {
         crate::Output::TypeScript(out) => out.code,
         crate::Output::Go(out) => out.code,
         crate::Output::Wasm(out) => out.code,
-        crate::Output::LlvmIr(out) => out.code,
+        crate::Output::LlvmText(out) => out.code,
     }
 }
 
@@ -1168,7 +1168,7 @@ pub fn format_generated_code(target: crate::codegen::Target, code: &str) -> Resu
             // In the future we can hook a dedicated `faber fmt` here if one is added.
             Ok(code.to_string())
         }
-        crate::codegen::Target::Wasm | crate::codegen::Target::LlvmIr => Ok(code.to_string()),
+        crate::codegen::Target::Wasm | crate::codegen::Target::LlvmText => Ok(code.to_string()),
     }
 }
 
@@ -1205,7 +1205,7 @@ pub fn lint_generated_code(target: crate::codegen::Target, code: &str) -> Result
             .map(|_| code.to_string()) // eslint --fix-dry-run doesn't rewrite; real --fix needs files
         }
         crate::codegen::Target::Faber => Ok(code.to_string()),
-        crate::codegen::Target::Wasm | crate::codegen::Target::LlvmIr => Ok(code.to_string()),
+        crate::codegen::Target::Wasm | crate::codegen::Target::LlvmText => Ok(code.to_string()),
     }
 }
 

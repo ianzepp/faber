@@ -91,7 +91,7 @@ impl PassConfig {
             Target::TypeScript => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
             Target::Go => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
             Target::Wasm => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
-            Target::LlvmIr => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
+            Target::LlvmText => Self { borrow_analysis: false, exhaustiveness: true, lint: true },
         }
     }
 }

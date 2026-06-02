@@ -25,7 +25,7 @@
 //! the `radix mir` inspection command, and a deliberately temporary Rust probe.
 
 mod dump;
-mod llvm_ir;
+mod llvm_text;
 mod lower;
 mod nodes;
 mod rust_probe;
@@ -34,7 +34,7 @@ pub mod visit;
 mod wasm_text;
 
 pub use dump::dump_program;
-pub use llvm_ir::{emit_llvm_ir_probe, MirLlvmIrProbeError};
+pub use llvm_text::{emit_llvm_text_probe, MirLlvmTextProbeError};
 pub use lower::{dump_analyzed_unit, lower_analyzed_unit, MirError};
 pub use nodes::*;
 pub use rust_probe::{emit_rust_probe, MirRustProbeError};

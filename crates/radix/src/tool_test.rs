@@ -143,8 +143,8 @@ fn cmd_targets_reports_known_capabilities() {
     assert_eq!(target_extension(crate::codegen::Target::Go), "go");
     assert_eq!(target_name(crate::codegen::Target::Wasm), "wasm");
     assert_eq!(target_extension(crate::codegen::Target::Wasm), "wat");
-    assert_eq!(target_name(crate::codegen::Target::LlvmIr), "llvm-ir");
-    assert_eq!(target_extension(crate::codegen::Target::LlvmIr), "ll");
+    assert_eq!(target_name(crate::codegen::Target::LlvmText), "llvm-text");
+    assert_eq!(target_extension(crate::codegen::Target::LlvmText), "ll");
 }
 
 #[test]
@@ -234,7 +234,13 @@ fn cli_accepts_target_aliases() {
 
     let cli = RadixCli::try_parse_from(["radix", "emit", "-t", "llvm", "main.fab"]).expect("cli parse");
     match cli.command {
-        RadixCommand::Emit(args) => assert_eq!(args.target, CliTarget::LlvmIr),
+        RadixCommand::Emit(args) => assert_eq!(args.target, CliTarget::LlvmText),
+        other => panic!("expected emit, got {:?}", other),
+    }
+
+    let cli = RadixCli::try_parse_from(["radix", "emit", "-t", "llvm-ir", "main.fab"]).expect("cli parse");
+    match cli.command {
+        RadixCommand::Emit(args) => assert_eq!(args.target, CliTarget::LlvmText),
         other => panic!("expected emit, got {:?}", other),
     }
 

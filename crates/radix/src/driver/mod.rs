@@ -129,11 +129,11 @@ fn generate_output(target: Target, analysis: &AnalyzedUnit) -> Result<crate::Out
                 .map_err(|error| codegen::CodegenError { message: error.message })?;
             Ok(crate::Output::Wasm(crate::WasmOutput { code }))
         }
-        Target::LlvmIr => {
+        Target::LlvmText => {
             let mir = lower_mir_for_target(analysis)?;
-            let code = crate::mir::emit_llvm_ir_probe(&mir, &analysis.types, &analysis.interner)
+            let code = crate::mir::emit_llvm_text_probe(&mir, &analysis.types, &analysis.interner)
                 .map_err(|error| codegen::CodegenError { message: error.message })?;
-            Ok(crate::Output::LlvmIr(crate::LlvmIrOutput { code }))
+            Ok(crate::Output::LlvmText(crate::LlvmTextOutput { code }))
         }
         target => codegen::generate(target, &analysis.hir, &analysis.types, &analysis.interner),
     }
