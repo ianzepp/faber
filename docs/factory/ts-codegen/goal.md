@@ -4,7 +4,7 @@
 **Created**: 2026-06-02  
 **Target Repo Worktree**: `/Users/ianzepp/work/ianzepp/faber-ts-codegen`  
 **Base Repo**: `/Users/ianzepp/work/ianzepp/faber`  
-**Base Commit**: `32bc7819`  
+**Base Commit**: `a31eba06`  
 **Factory Artifact Dir**: `docs/factory/ts-codegen/`  
 **Target Backend**: HIR-backed TypeScript codegen in `crates/radix/src/codegen/ts/`  
 **Primary Gate**: TypeScript exemplar e2e harness added by this factory run  
