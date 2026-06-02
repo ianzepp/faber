@@ -784,3 +784,76 @@ Either add Wasm probe support for runtime conversion/panic calls to clear the
 two newly visible Wasm-emission failures, or continue raising the `MIR lowered`
 tier through another MIR-lowering cluster such as assertions or iterator/range
 lowering.
+
+## Phase 011 Update: Runtime Wasm Imports
+
+**Commit target**: Phase 011
+**Change**: value-returning conversion runtime calls, collection length runtime
+calls, and panic runtime calls now emit explicit `faber_runtime` Wasm imports
+from MIR. These imports make the generated WAT compile-valid while keeping
+runtime/host execution separate from compiler/codegen success.
+
+### Tier Counts After Phase 011
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 42/101
+  Wasm emitted: 42/101
+  compile-valid: 42/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 40/101 to 42/101. MIR-lowered
+coverage remains 42/101.
+
+New compile-valid exemplars:
+
+- `examples/exempla/conversio/conversio.fab`
+- `examples/exempla/mori/mori.fab`
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This is still a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+There are no remaining Wasm-emission failures for the current MIR-lowered
+exemplar set. The compile-valid ceiling is again the `MIR lowered` tier.
+
+Conversion hint semantics and actual aggregate/text runtime behavior are not
+claimed by this phase. The generated modules validate because their host import
+ABI is declared; behavior remains runtime-host work.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are iterator/range lowering,
+switch/pattern lowering, assertion intrinsics, method/runtime gaps, compound
+assignment/operator gaps, predicate unary gaps, aggregate/optional validation
+gaps, and top-level consts.
+
+### Remaining Host/Runtime Clusters
+
+- Provide real `faber_runtime` import implementations for conversion, panic, and
+  collection length.
+- Add a local instantiate/run host before measuring instantiate-valid, runnable,
+  or behavior-checked tiers.
+
+### Phase 011 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Select the next phase from MIR-lowering clusters. Assertion intrinsics or
+iterator/range lowering are likely direct candidates for raising the
+`MIR lowered` ceiling.

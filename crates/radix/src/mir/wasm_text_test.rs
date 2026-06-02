@@ -251,6 +251,66 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_runtime_conversion_imports() {
+    let source = r#"
+incipit {
+    fixum _ parsed ← "42" ⇒ numerus
+    fixum _ fallback ← "bad" ⇒ numerus vel 0
+    fixum _ display ← parsed ⇒ textus
+    nota fallback
+    nota display
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(
+            r#"(import "faber_runtime" "convert_1_text_to_i64" (func $__faber_runtime_convert_1_text_to_i64 (param i32) (result i64)))"#
+        )
+    );
+    assert!(
+        output.contains(
+            r#"(import "faber_runtime" "convert_2_text_i64_to_i64" (func $__faber_runtime_convert_2_text_i64_to_i64 (param i32 i64) (result i64)))"#
+        )
+    );
+    assert!(
+        output.contains(
+            r#"(import "faber_runtime" "convert_1_i64_to_text" (func $__faber_runtime_convert_1_i64_to_text (param i64) (result i32)))"#
+        )
+    );
+    assert!(output.contains("(call $__faber_runtime_convert_1_text_to_i64 (i32.const"));
+    assert!(output.contains("(call $__faber_runtime_convert_2_text_i64_to_i64 (i32.const"));
+    assert!(output.contains("(call $__faber_runtime_convert_1_i64_to_text (local.get $l0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_emits_panic_and_collection_length_imports() {
+    let source = r#"
+functio at(lista<numerus> items, numerus index) → numerus {
+    si index ≥ items.longitudo() {
+        mori "Index out of bounds"
+    }
+    redde items[index]
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(
+            r#"(import "faber_runtime" "length_1_aggregate_to_i64" (func $__faber_runtime_length_1_aggregate_to_i64 (param i32) (result i64)))"#
+        )
+    );
+    assert!(output.contains(r#"(import "faber_runtime" "panic_text" (func $__faber_runtime_panic_text (param i32)))"#));
+    assert!(output.contains("(call $__faber_runtime_length_1_aggregate_to_i64 (local.get $l0))"));
+    assert!(output.contains("(call $__faber_runtime_panic_text (i32.const"));
+    assert!(output.contains("(unreachable)"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_branch_dispatch_for_numeric_functions() {
     let source = r#"
 functio clamp(numerus value, numerus min, numerus max) → numerus {

@@ -97,6 +97,24 @@ struct ProjectionImport {
     result: WasmValue,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct RuntimeValueImport {
+    kind: RuntimeValueImportKind,
+    args: Vec<WasmValue>,
+    result: WasmValue,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct PanicImport {
+    arg: WasmValue,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+enum RuntimeValueImportKind {
+    Convert,
+    CollectionLength,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum ProjectionImportKind {
     Field,
@@ -154,6 +172,28 @@ impl WasmTextProbe<'_> {
                 projection_import_symbol(&import),
                 import.key.wat(),
                 import.result.wat(),
+            ));
+        }
+        for import in self.required_runtime_value_imports()? {
+            let params = import
+                .args
+                .iter()
+                .map(|arg| arg.wat())
+                .collect::<Vec<_>>()
+                .join(" ");
+            writer.writeln(&format!(
+                "(import \"faber_runtime\" \"{}\" (func ${} (param {params}) (result {})))",
+                runtime_value_import_name(&import),
+                runtime_value_import_symbol(&import),
+                import.result.wat(),
+            ));
+        }
+        for import in self.required_panic_imports()? {
+            writer.writeln(&format!(
+                "(import \"faber_runtime\" \"{}\" (func ${} (param {})))",
+                panic_import_name(&import),
+                panic_import_symbol(&import),
+                import.arg.wat(),
             ));
         }
         for import in self.required_text_format_imports()? {
@@ -300,6 +340,29 @@ impl WasmTextProbe<'_> {
                 (Some(destination), MirIntrinsic::FormatString { template }) => {
                     let expr = self.format_string_call_expr(*template, &call.args, call.return_ty, context)?;
                     self.emit_place_set(destination, &expr, context, writer)
+                }
+                (Some(destination), MirIntrinsic::Convert(conversion)) => {
+                    let expr = self.conversion_call_expr(conversion, &call.args, call.return_ty, context)?;
+                    self.emit_place_set(destination, &expr, context, writer)
+                }
+                (Some(destination), MirIntrinsic::Collection(MirCollectionOp::Length)) => {
+                    let args = call.args.iter().collect::<Vec<_>>();
+                    let expr = self.runtime_value_call_expr(
+                        RuntimeValueImportKind::CollectionLength,
+                        &args,
+                        call.return_ty,
+                        context,
+                    )?;
+                    self.emit_place_set(destination, &expr, context, writer)
+                }
+                (None, MirIntrinsic::Panic) => {
+                    let [arg] = call.args.as_slice() else {
+                        return Err(MirWasmTextProbeError::unsupported("panic runtime arity"));
+                    };
+                    let import = PanicImport { arg: self.operand_ty(arg, context)? };
+                    let arg = self.operand_expr(arg, context)?;
+                    writer.writeln(&format!("  (call ${} {arg})", panic_import_symbol(&import)));
+                    Ok(())
                 }
                 (Some(_), _) => Err(MirWasmTextProbeError::unsupported("value-returning runtime call")),
                 (None, _) => Err(MirWasmTextProbeError::unsupported("runtime call")),
@@ -725,6 +788,47 @@ impl WasmTextProbe<'_> {
         Ok(call)
     }
 
+    fn conversion_call_expr(
+        &self,
+        conversion: &MirConversion,
+        args: &[MirOperand],
+        return_ty: MirType,
+        context: &FunctionContext,
+    ) -> Result<String, MirWasmTextProbeError> {
+        let [source] = args else {
+            return Err(MirWasmTextProbeError::unsupported("conversion runtime arity"));
+        };
+        let mut operands = vec![source];
+        if let Some(fallback) = &conversion.fallback {
+            operands.push(fallback);
+        }
+        self.runtime_value_call_expr(RuntimeValueImportKind::Convert, &operands, return_ty, context)
+    }
+
+    fn runtime_value_call_expr(
+        &self,
+        kind: RuntimeValueImportKind,
+        args: &[&MirOperand],
+        return_ty: MirType,
+        context: &FunctionContext,
+    ) -> Result<String, MirWasmTextProbeError> {
+        let import = RuntimeValueImport {
+            kind,
+            args: args
+                .iter()
+                .map(|arg| self.operand_ty(arg, context))
+                .collect::<Result<Vec<_>, _>>()?,
+            result: self.scalar_ty(return_ty)?,
+        };
+        let mut call = format!("(call ${}", runtime_value_import_symbol(&import));
+        for arg in args {
+            call.push(' ');
+            call.push_str(&self.operand_expr(arg, context)?);
+        }
+        call.push(')');
+        Ok(call)
+    }
+
     fn callee_name(&self, callee: &MirCallee) -> Result<String, MirWasmTextProbeError> {
         match callee {
             MirCallee::Function(id) => self
@@ -822,6 +926,75 @@ impl WasmTextProbe<'_> {
         Ok(imports)
     }
 
+    fn required_runtime_value_imports(&self) -> Result<Vec<RuntimeValueImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    let MirStmtKind::RuntimeCall { destination: Some(_), call } = &stmt.kind else {
+                        continue;
+                    };
+                    match &call.intrinsic {
+                        MirIntrinsic::Convert(conversion) => {
+                            let [source] = call.args.as_slice() else {
+                                continue;
+                            };
+                            let mut args = vec![self.operand_ty(source, &context)?];
+                            if let Some(fallback) = &conversion.fallback {
+                                args.push(self.operand_ty(fallback, &context)?);
+                            }
+                            imports.insert(RuntimeValueImport {
+                                kind: RuntimeValueImportKind::Convert,
+                                args,
+                                result: self.scalar_ty(call.return_ty)?,
+                            });
+                        }
+                        MirIntrinsic::Collection(MirCollectionOp::Length) => {
+                            imports.insert(RuntimeValueImport {
+                                kind: RuntimeValueImportKind::CollectionLength,
+                                args: call
+                                    .args
+                                    .iter()
+                                    .map(|arg| self.operand_ty(arg, &context))
+                                    .collect::<Result<Vec<_>, _>>()?,
+                                result: self.scalar_ty(call.return_ty)?,
+                            });
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(runtime_value_import_name);
+        Ok(imports)
+    }
+
+    fn required_panic_imports(&self) -> Result<Vec<PanicImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    let MirStmtKind::RuntimeCall { destination: None, call } = &stmt.kind else {
+                        continue;
+                    };
+                    if !matches!(call.intrinsic, MirIntrinsic::Panic) {
+                        continue;
+                    }
+                    let [arg] = call.args.as_slice() else {
+                        continue;
+                    };
+                    imports.insert(PanicImport { arg: self.operand_ty(arg, &context)? });
+                }
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(panic_import_name);
+        Ok(imports)
+    }
+
     fn required_aggregate_imports(&self) -> Result<Vec<AggregateImport>, MirWasmTextProbeError> {
         let mut imports = FxHashSet::default();
         for function in &self.program.functions {
@@ -891,6 +1064,11 @@ impl WasmTextProbe<'_> {
                 }
                 for arg in &call.args {
                     self.collect_operand_projection_imports(arg, context, imports)?;
+                }
+                if let MirIntrinsic::Convert(conversion) = &call.intrinsic {
+                    if let Some(fallback) = &conversion.fallback {
+                        self.collect_operand_projection_imports(fallback, context, imports)?;
+                    }
                 }
                 Ok(())
             }
@@ -1196,6 +1374,32 @@ fn projection_import_name(import: &ProjectionImport) -> String {
 
 fn projection_import_symbol(import: &ProjectionImport) -> String {
     format!("__faber_aggregate_{}", projection_import_name(import))
+}
+
+fn runtime_value_import_name(import: &RuntimeValueImport) -> String {
+    let kind = match import.kind {
+        RuntimeValueImportKind::Convert => "convert",
+        RuntimeValueImportKind::CollectionLength => "length",
+    };
+    let args = import
+        .args
+        .iter()
+        .map(|arg| arg.abi_name())
+        .collect::<Vec<_>>()
+        .join("_");
+    format!("{kind}_{}_{}_to_{}", import.args.len(), args, import.result.abi_name())
+}
+
+fn runtime_value_import_symbol(import: &RuntimeValueImport) -> String {
+    format!("__faber_runtime_{}", runtime_value_import_name(import))
+}
+
+fn panic_import_name(import: &PanicImport) -> String {
+    format!("panic_{}", import.arg.abi_name())
+}
+
+fn panic_import_symbol(import: &PanicImport) -> String {
+    format!("__faber_runtime_{}", panic_import_name(import))
 }
 
 #[cfg(test)]
