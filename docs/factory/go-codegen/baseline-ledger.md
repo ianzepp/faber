@@ -17,12 +17,12 @@ cargo test -p radix exempla_go_e2e -- --ignored --nocapture
 Result:
 
 ```text
-Go e2e exempla: 93/101 exempla files pass end-to-end
+Go e2e exempla: 94/101 exempla files pass end-to-end
 Expected-output checks enabled for 1 exempla files
 ```
 
 The ignored harness now gates the full expected corpus state. The pass count is
-lower than total because the eight failures below are recorded in Go
+lower than total because the seven failures below are recorded in Go
 expected-failure metadata. The test fails on any unexpected Go e2e failure and
 also fails when one of these expected-failure exempla starts passing, so the
 metadata must be removed promptly after backend fixes.
@@ -37,7 +37,6 @@ as completion evidence for Go codegen.
 | Exemplar | Failure kind | Probable root cause | Likely module |
 | --- | --- | --- | --- |
 | `examples/exempla/ad/ad.fab` | Go codegen diagnostic | `ad` expressions are rejected for Go targets. | Go driver/codegen target checks |
-| `examples/exempla/genus/creo.fab` | `go run` compile failure | Float literal is emitted into an integer-shaped field/value path. | Go type/value shape lowering for `fractus` vs `numerus` |
 | `examples/exempla/inter/inter.fab` | `go run` compile failure | Faber membership/interval-like `inter` syntax lowers to Go `&&` between scalar and collection operands. | Go expression lowering for `inter` |
 | `examples/exempla/itera/cursor-iteratio.fab` | `go run` compile failure | Cursor functions are emitted as scalar `int` returns instead of iterable values; loop variables degrade to `any`. | Go cursor/iterator lowering |
 | `examples/exempla/itera/nidificatus.fab` | `go run` compile failure | Range iterator variables degrade to `any`, making arithmetic invalid. | Go iteration variable typing |
@@ -91,15 +90,13 @@ the HIR type proves the concrete value.
 
 ### Primitive Numeric Shape
 
+Resolved in Phase 2:
+
 - `genus/creo.fab`
 
-Symptoms:
-
-- `3.14159` is emitted in an integer context.
-
-Recommended next phase if chosen: trace the constructor/field type path and fix
-the upstream type classification or Go type mapping rather than coercing in
-codegen.
+Assignments into known typed destinations now use context-aware expression
+emission, and expected-`fractus` arithmetic promotes `numerus` operands to
+`float64` where the HIR proves the destination is fractional.
 
 ### Target-Specific Unsupported Syntax
 
@@ -120,6 +117,6 @@ are planned.
 
 ## Phase Selection Evidence
 
-The truthful baseline now records `93/101` passing as an expected corpus state,
+The truthful baseline now records `94/101` passing as an expected corpus state,
 not as a completed backend target. The next most valuable implementation
 cluster should be selected from the remaining failures above.

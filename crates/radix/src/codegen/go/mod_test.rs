@@ -623,6 +623,23 @@ functio findFirst(lista<numerus> items, numerus target) → numerus ∪ nihil {
 }
 
 #[test]
+fn fractus_field_assignments_promote_numerus_operands() {
+    let code = compile_go(
+        r#"genus Circle {
+  numerus radius = 1
+  fractus area = 0
+
+  functio creo() {
+    ego.area ← 3.14159 * ego.radius * ego.radius
+  }
+}"#,
+    );
+
+    assert!(code.contains("Area float64"));
+    assert!(code.contains("self.Area = ((3.14159 * float64(self.Radius)) * float64(self.Radius))"));
+}
+
+#[test]
 fn proba_names_are_sanitized_for_go_functions() {
     let code = compile_go(
         r#"proba "one plus one equals two" {

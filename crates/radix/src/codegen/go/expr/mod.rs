@@ -198,6 +198,17 @@ pub(super) fn generate_expr_for_go_type(
             w.write("*");
             generate_expr(codegen, expr, types, w)
         }
+        (HirExprKind::Binary(op, lhs, rhs), Type::Primitive(Primitive::Fractus))
+            if matches!(
+                op,
+                crate::hir::HirBinOp::Add
+                    | crate::hir::HirBinOp::Sub
+                    | crate::hir::HirBinOp::Mul
+                    | crate::hir::HirBinOp::Div
+            ) =>
+        {
+            generate_binary_expr_for_go_type(codegen, expected_ty, *op, lhs, rhs, types, w)
+        }
         (HirExprKind::Array(elements), Type::Array(elem_ty)) => {
             generate_typed_array_expr(codegen, *elem_ty, elements, types, w)
         }

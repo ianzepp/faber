@@ -22,7 +22,6 @@ const RUST_EXPECTED_FAILURES: &[&str] = &[];
 const RUST_EXPECTED_RUNTIME_FAILURES: &[(&str, &str)] = &[("ad/ad.fab", "E_NO_ROUTE: unresolved capability")];
 const GO_EXPECTED_FAILURES: &[&str] = &[
     "ad/ad.fab",
-    "genus/creo.fab",
     "inter/inter.fab",
     "itera/cursor-iteratio.fab",
     "itera/nidificatus.fab",
