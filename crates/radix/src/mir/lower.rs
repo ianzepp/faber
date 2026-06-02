@@ -511,6 +511,9 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_unary(&mut self, op: HirUnOp, operand: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
+        if let Some(predicate) = self.lower_unary_predicate(op, operand, expr) {
+            return Some(predicate);
+        }
         let Some(op) = mir_un_op(op) else {
             self.errors
                 .push(MirError::unsupported(expr.span, "unary operator without a MIR primitive"));
@@ -523,6 +526,11 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     fn lower_binary(&mut self, op: HirBinOp, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
+        if matches!(op, HirBinOp::Is | HirBinOp::IsNot) {
+            if let Some(predicate) = self.lower_is_predicate(op, lhs, rhs, expr) {
+                return Some(predicate);
+            }
+        }
         let Some(op) = mir_bin_op(op) else {
             self.errors
                 .push(MirError::unsupported(expr.span, "binary operator without a MIR primitive"));
@@ -533,6 +541,103 @@ impl<'a> FunctionBuilder<'a> {
         let ty = self.expr_ty(expr)?;
 
         Some(self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, expr.span))
+    }
+
+    fn lower_unary_predicate(&mut self, op: HirUnOp, operand: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
+        match op {
+            HirUnOp::IsNeg => {
+                let result_ty = self.expr_ty(expr)?;
+                let zero = self.numeric_zero_constant(operand)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Lt,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(zero),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            HirUnOp::IsPos => {
+                let result_ty = self.expr_ty(expr)?;
+                let zero = self.numeric_zero_constant(operand)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Gt,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(zero),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            HirUnOp::IsTrue => {
+                let result_ty = self.expr_ty(expr)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Eq,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(MirConstant::Bool(true)),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            HirUnOp::IsFalse => {
+                let result_ty = self.expr_ty(expr)?;
+                let operand = self.lower_expr_value(operand)?;
+                Some(self.assign_temp(
+                    MirValueKind::Binary {
+                        op: MirBinOp::Eq,
+                        lhs: operand,
+                        rhs: MirOperand::Constant(MirConstant::Bool(false)),
+                    },
+                    result_ty,
+                    expr.span,
+                ))
+            }
+            _ => None,
+        }
+    }
+
+    fn numeric_zero_constant(&mut self, operand: &HirExpr) -> Option<MirConstant> {
+        let ty = operand.ty?;
+        match self.normalized_type(ty) {
+            Type::Primitive(Primitive::Fractus) => Some(MirConstant::Float(0.0)),
+            _ => Some(MirConstant::Int(0)),
+        }
+    }
+
+    fn lower_is_predicate(
+        &mut self,
+        op: HirBinOp,
+        lhs: &HirExpr,
+        rhs: &HirExpr,
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let result_ty = self.expr_ty(expr)?;
+        if matches!(rhs.kind, HirExprKind::Literal(HirLiteral::Nil)) {
+            let operand = self.lower_expr_value(lhs)?;
+            let op = if matches!(op, HirBinOp::Is) {
+                MirUnOp::IsNil
+            } else {
+                MirUnOp::IsNonNil
+            };
+            return Some(self.assign_temp(MirValueKind::Unary { op, operand }, result_ty, expr.span));
+        }
+        if matches!(lhs.kind, HirExprKind::Literal(HirLiteral::Nil)) {
+            let operand = self.lower_expr_value(rhs)?;
+            let op = if matches!(op, HirBinOp::Is) {
+                MirUnOp::IsNil
+            } else {
+                MirUnOp::IsNonNil
+            };
+            return Some(self.assign_temp(MirValueKind::Unary { op, operand }, result_ty, expr.span));
+        }
+        None
     }
 
     fn lower_coalesce(&mut self, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
@@ -766,7 +871,9 @@ fn mir_bin_op(op: HirBinOp) -> Option<MirBinOp> {
         HirBinOp::BitXor => Some(MirBinOp::BitXor),
         HirBinOp::Shl => Some(MirBinOp::Shl),
         HirBinOp::Shr => Some(MirBinOp::Shr),
-        HirBinOp::Is | HirBinOp::IsNot | HirBinOp::InRange | HirBinOp::Between => None,
+        HirBinOp::Is => Some(MirBinOp::Eq),
+        HirBinOp::IsNot => Some(MirBinOp::NotEq),
+        HirBinOp::InRange | HirBinOp::Between => None,
     }
 }
 

@@ -148,6 +148,29 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_predicate_unary_and_nil_tests() {
+    let source = r#"
+functio checks(numerus n, fractus f, bivalens flag, textus ∪ nihil maybe) → bivalens {
+    fixum _ positive ← positivum n
+    fixum _ negative ← negativum f
+    fixum _ enabled ← verum flag
+    fixum _ disabled ← falsum flag
+    fixum _ absent ← maybe est nihil
+    redde positive et negative et enabled et disabled et absent
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(i64.gt_s (local.get $l0) (i64.const 0))"));
+    assert!(output.contains("(f64.lt (local.get $l1) (f64.const 0.0))"));
+    assert!(output.contains("(i32.eq (local.get $l2) (i32.const 1))"));
+    assert!(output.contains("(i32.eq (local.get $l2) (i32.const 0))"));
+    assert!(output.contains("(i32.eqz (local.get $l3))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_fractus_values_and_diagnostics() {
     let source = r#"
 functio media(fractus a, fractus b) → fractus {

@@ -1010,3 +1010,91 @@ Iterator/range lowering remains the largest visible cluster. If the next phase
 should stay compact, continue with another narrow control-flow subset such as
 enum-pattern `discerne`; otherwise, attack iterator MIR lowering to raise the
 compile-valid ceiling more substantially.
+
+## Phase 014 Update: Predicate Operators Wasm Path
+
+**Commit target**: Phase 014
+**Change**: scalar predicate operators now lower through target-neutral MIR and
+emit compile-valid Wasm for the supported scalar/handle subset. This includes
+sign checks, boolean truth checks, and nil/non-nil tests.
+
+### Tier Counts After Phase 014
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 51/101
+  Wasm emitted: 50/101
+  compile-valid: 50/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 48/101 to 50/101. MIR-lowered
+coverage increased from 48/101 to 51/101.
+
+New compile-valid exemplars:
+
+- `examples/exempla/est/est.fab`
+- `examples/exempla/unarius/unarius.fab`
+
+New MIR-lowered but not Wasm-emitted exemplar:
+
+- `examples/exempla/si/est.fab`: stops at Wasm emission with
+  `MIR-to-WASM unsupported: type Primitive(Ignotum)`.
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler or codegen
+failure.
+
+### Result
+
+The predicate unary cluster is removed for the scalar and nullable-handle
+subset. The phase also makes `est nihil` lower to explicit nil-test MIR instead
+of blocking as a missing binary primitive.
+
+The nullable Wasm representation added here is compile-valid only: nullable
+slots are represented as opaque `i32` handles for the text probe, with zero used
+for `nihil`. This is not a complete runtime ABI and does not claim behavior at
+instantiate/run tiers.
+
+### Remaining MIR-Lowering Clusters
+
+The remaining high-level MIR-lowering clusters are iterator/range lowering,
+runtime/provider method calls, compound assignment/operator gaps such as
+`inter`/`intra`, non-literal and enum `discerne`, aggregate/optional validation
+gaps, top-level consts, `ad` provider blocks, closures, and async `cede`.
+
+### Remaining Wasm-Emission Clusters
+
+- Dynamic `ignotum` has no Wasm value model yet, surfaced by
+  `examples/exempla/si/est.fab`.
+
+### Remaining Host/Runtime Clusters
+
+- Provide real `faber_runtime` import implementations for assertion,
+  conversion, panic, and collection length.
+- Provide real `faber_text` comparison behavior.
+- Define and implement nullable and dynamic value ABIs before claiming
+  instantiate/run behavior.
+- Add a local instantiate/run host before measuring instantiate-valid,
+  runnable, or behavior-checked tiers.
+
+### Phase 014 Validation Log
+
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed and
+  produced the tier counts above.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Iterator/range lowering remains the largest cluster and is now the most
+important route toward the 70-80% compile-valid target. A smaller alternative
+is compound assignment lowering, but it is less likely to move as many
+exemplars as iterator support.

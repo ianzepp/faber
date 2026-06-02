@@ -252,6 +252,30 @@ function f0 -> ty#3 {
 }
 
 #[test]
+fn lowers_predicate_unary_and_nil_is_to_mir_primitives() {
+    let dump = dump_source(
+        r#"
+functio pred(numerus n, fractus f, bivalens flag, textus ∪ nihil maybe) → bivalens {
+    fixum _ positive ← positivum n
+    fixum _ negative ← negativum f
+    fixum _ enabled ← verum flag
+    fixum _ disabled ← falsum flag
+    fixum _ absent ← maybe est nihil
+    redde positive et negative et enabled et disabled et absent
+}
+"#,
+    );
+
+    assert!(dump.contains("%0 = _0 > const int 0: ty#3"));
+    assert!(dump.contains("%1 = _1 < const float 0.0: ty#3"));
+    assert!(dump.contains("%2 = _2 == const bool true: ty#3"));
+    assert!(dump.contains("%3 = _2 == const bool false: ty#3"));
+    assert!(dump.contains("%4 = is_nil _3: ty#3"));
+    assert!(!dump.contains("unary operator without a MIR primitive"));
+    assert!(!dump.contains("binary operator without a MIR primitive"));
+}
+
+#[test]
 fn lowers_direct_calls_to_definition_callees() {
     let dump =
         dump_source("functio duplex(numerus n) → numerus { redde n * 2 } functio usa() → numerus { redde duplex(4) }");

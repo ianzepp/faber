@@ -700,7 +700,7 @@ impl WasmTextProbe<'_> {
             MirConstant::Bool(value) => Ok(format!("(i32.const {})", if *value { 1 } else { 0 })),
             MirConstant::String(symbol) => Ok(format!("(i32.const {})", symbol.0)),
             MirConstant::Unit => Ok("(i32.const 0)".to_owned()),
-            MirConstant::Nil => Err(MirWasmTextProbeError::unsupported("nil constant")),
+            MirConstant::Nil => Ok("(i32.const 0)".to_owned()),
         }
     }
 
@@ -764,6 +764,7 @@ impl WasmTextProbe<'_> {
             Type::Primitive(Primitive::Fractus) => Ok(WasmValue::F64),
             Type::Primitive(Primitive::Bivalens) => Ok(WasmValue::I32),
             Type::Primitive(Primitive::Textus) => Ok(WasmValue::TextHandle),
+            Type::Option(_) => Ok(WasmValue::AggregateHandle),
             Type::Array(_) | Type::Map(_, _) | Type::Record(_) | Type::Set(_) | Type::Struct(_) | Type::Enum(_) => {
                 Ok(WasmValue::AggregateHandle)
             }
@@ -1368,6 +1369,12 @@ fn wasm_un_op(op: MirUnOp, operand_ty: WasmValue, operand: &str) -> Result<Strin
         (MirUnOp::Neg, WasmValue::F64) => Ok(format!("(f64.neg {operand})")),
         (MirUnOp::Not, WasmValue::I32) => Ok(format!("(i32.eqz {operand})")),
         (MirUnOp::BitNot, WasmValue::I64) => Ok(format!("(i64.xor {operand} (i64.const -1))")),
+        (MirUnOp::IsNil, WasmValue::I32 | WasmValue::TextHandle | WasmValue::AggregateHandle) => {
+            Ok(format!("(i32.eqz {operand})"))
+        }
+        (MirUnOp::IsNonNil, WasmValue::I32 | WasmValue::TextHandle | WasmValue::AggregateHandle) => {
+            Ok(format!("(i32.ne {operand} (i32.const 0))"))
+        }
         _ => Err(MirWasmTextProbeError::unsupported(format!("unary op {op:?}"))),
     }
 }
