@@ -314,17 +314,38 @@ and structural glyphs to make program intent easy to scan and hard to confuse.
 
 Faber feels declarative, narrated, and review-oriented.
 
-This target-language shape is not Faber:
+The lines below can look identical in some fonts because `->` (two ASCII
+characters) and `→` (one return glyph) are easy to confuse. Faber is not “the
+same function with a prettier arrow.” The whole surface is ordered and marked
+differently.
+
+This target-shaped sketch is **not** Faber — it mixes familiar backend habits
+(name-after-colon types, ASCII `->`, `?`, `if`/`return`, `==`):
 
 ```text
-functio divide(numerus a, numerus b) -> numerus
+functio divide(a: numerus, b: numerus) -> numerus? {
+    if (b == 0) return null
+    return a / b
+}
 ```
 
-Faber writes the type first and uses the canonical return glyph:
+The Faber shape for the same idea keeps types before names, Latin control words,
+and structural glyphs:
 
 ```fab
-functio divide(numerus a, numerus b) → numerus
+functio divide(numerus a, numerus b) → numerus ∪ nihil {
+    si b ≡ 0 ∴ redde nihil
+    redde a / b
+}
 ```
+
+| Habit readers often carry over | Not Faber | Faber |
+| ------------------------------ | --------- | ----- |
+| Parameter and return types | `a: numerus`, `-> numerus?` | `numerus a`, `→ numerus ∪ nihil` |
+| Absence / nullability | `?`, `Option<…>`, `null` | `T ∪ nihil`, `nihil` |
+| Branch + return | `if (…) return …` | `si … ∴ redde …` |
+| Equality | `==` | `≡` |
+| Return keyword | `return` | `redde` |
 
 Local binding is not `let name: Type = value`; it is a declaration role, a type,
 a name, and runtime binding:
