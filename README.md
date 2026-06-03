@@ -22,6 +22,8 @@ repository; they are useful for archaeology, not for current commands or CI.
 - [Language Snapshot](#language-snapshot)
 - [Commandments](#commandments)
 - [Language Orientation](#language-orientation)
+- [Runtime binding vs structural definition](#runtime-binding--vs-structural-definition)
+- [String-template application](#string-template-application-textus)
 - [Common LLM Failure Modes](#common-llm-failure-modes)
 - [Website / Documentation Site](#website--documentation-site)
 - [Archive Note](#archive-note)
@@ -266,12 +268,14 @@ incipit {
 The fastest way to recognize Faber:
 
 - Types come before names: `textus nomen`, not `nomen: textus`.
-- Runtime binding and assignment use `←`.
+- Runtime binding and reassignment use `←`; `=` is for structural field shape only.
 - Function returns use `→`.
 - Compact branch bodies use `∴` or accepted alias `ergo`.
 - Nullable values use `T ∪ nihil`.
 - Latin words carry declarations, statements, lifecycle, and behavior.
 - Glyphs carry value flow, type flow, and structural joints.
+- Formatted `textus` uses **string-template application**: a double-quoted template
+  with `§` holes, then `(args…)` to fill them — not target `f"…"` / `format!` in source.
 
 Use [`EBNF.md`](EBNF.md) as the formal grammar and spec-commentary source. Use
 `faber explain <term>` or the Markdown files in [`explain`](explain) for
@@ -361,8 +365,9 @@ If the initializer determines the type, use `_`:
 fixum _ names ← ["Marcus", "Julia"]
 ```
 
-Declarations read from semantic shape toward binding name. Runtime value flow is
-marked with `←`; compile-time definition uses `=`.
+Declarations read from semantic shape toward binding name. For the full `←` /
+`=` split (Faber does **not** use `=` for runtime assignment), see
+[Runtime binding vs structural definition](#runtime-binding--vs-structural-definition).
 
 ### Compared To Python
 
@@ -423,11 +428,97 @@ numerus ∪ nihil
 
 Do not invent `numerus?`, `Option<numerus>`, or `nihil numerus`.
 
-Faber has ownership-flavored markers such as `de`, `in`, and `ex`, and Radix
-enables Rust-specific borrow analysis for the Rust target. Still, Faber is not
-Rust. Its source is more about preserving high-level intent and giving the
-compiler enough structure to lower honestly. When Rust-specific representation
-or borrow facts matter, check Radix and the Rust backend.
+#### Borrowing and mutability (`de`, `in`, `ex`)
+
+Faber marks **how a value is passed** with short prepositions on parameters (and
+sometimes on types). They are meant to be easy to scan in review-oriented source;
+when the target is Rust, Radix lowers them to references and moves and runs a
+borrow check (`crates/radix/src/semantic/passes/borrow.rs`) before codegen.
+
+| Faber (parameter) | Intent | Typical Rust lowering |
+| ----------------- | ------ | --------------------- |
+| *(none)* | Owned value at the call boundary | `T` / `String` / `Vec<…>` by value |
+| `de` | Shared borrow — read, do not move or assign through | `&T` |
+| `in` | Mutable borrow — caller's value may change | `&mut T` |
+| `ex` | Consume — value is moved into the callee | `T` (by move) |
+
+**Read-only borrow (`de`)** — inspect without taking ownership:
+
+```fab
+functio imprime(de textus label) → vacuum {
+    nota label
+}
+```
+
+```rust
+fn imprime(label: &str) {
+    println!("{}", label);
+}
+```
+
+**Mutable borrow (`in`)** — callee may update the caller's binding:
+
+```fab
+functio duplica(in numerus value) → vacuum {
+    value ← value * 2
+}
+```
+
+```rust
+fn duplica(value: &mut i64) {
+    *value *= 2;
+}
+```
+
+**Consume (`ex`)** — callee takes ownership (similar to passing a `String` by value):
+
+```fab
+functio consume(ex textus buffer) → textus {
+    redde buffer
+}
+```
+
+```rust
+fn consume(buffer: String) -> String {
+    buffer
+}
+```
+
+**Owned (no preposition)** — ordinary by-value parameter; Faber still uses type-first order:
+
+```fab
+functio salve(textus nomen) → textus {
+    redde "Salve, §!"(nomen)
+}
+```
+
+```rust
+fn salve(nomen: String) -> String {
+    format!("Salve, {}!", nomen)
+}
+```
+
+Borrow markers can also appear on **types** (`de textus`, `in numerus`) and combine
+with optional parameters (`de numerus depth sponte` — borrowed slot that may be
+absent). See [`examples/exempla/functio/optionalis.fab`](examples/exempla/functio/optionalis.fab).
+
+**Same words, different jobs.** Faber reuses `de` and `ex` in other constructs;
+do not read every `ex` as “consume”:
+
+| Surface | Role |
+| ------- | ---- |
+| `de textus name` on a parameter | Shared borrow |
+| `in numerus count` on a parameter | Mutable borrow |
+| `ex textus buffer` on a parameter | Move / consume into callee |
+| `itera ex items fixum item` | Iterate **values** (for-of shape) |
+| `itera de tabula fixum key` | Iterate **keys** (for-in shape) |
+| `ex source fixum x, ceteri rest` | Destructure fields into locals |
+| `importa ex "path"` | Import from a module path |
+
+Go and TypeScript backends accept the same Faber syntax today, but **borrow
+analysis and `&T` / `&mut T` lowering are Rust-target concerns**. Faber is not
+Rust: it keeps intent explicit in source without requiring lifetime annotations in
+the Faber file. Precise lifetime proof remains the generated Rust compiler's job.
 
 ### Compared To TypeScript
 
@@ -558,6 +649,98 @@ fac {
 `tempta` is legacy and Radix rejects it with a migration diagnostic. `demum`
 cleanup semantics are deferred.
 
+### Runtime binding (`←`) vs structural definition (`=`)
+
+Most languages overload `=` for both “define this field in a type/literal” and
+“put a runtime value in this variable.” Faber splits those jobs:
+
+| Glyph | Role | Use for |
+| ----- | ---- | ------- |
+| `←` | **Runtime flow** | Initial binding, reassignment, and mutation at execution time |
+| `=` | **Structural shape** | Field names inside literals and declaration metadata — not runtime stores |
+
+**Runtime binding** attaches a value to a name when the program runs:
+
+```fab
+fixum numerus count ← 0
+varia textus label ← "ready"
+count ← count + 1
+```
+
+In Rust terms, think `let` / reassignment / `*x = …` on a binding — but in Faber
+the glyph is always `←`, not `=`.
+
+**Structural definition** lists members inside a composite value or declaration:
+
+```fab
+genus Point {
+    numerus x
+    numerus y
+}
+
+fixum _ p ← Point {
+    x = 10,
+    y = 20,
+}
+```
+
+Here `x = 10` and `y = 20` spell the **shape** of the `Point` value. The runtime
+step is the outer `fixum _ p ← Point { … }`: create the value, then bind `p`.
+
+**What not to write.** These are foreign habits, not Faber:
+
+```text
+varia numerus count = 0          # = is not runtime assignment
+fixum _ p = Point { x = 1 }     # use ← to bind the whole value
+```
+
+Faber keeps `=` from meaning “store into this variable at runtime,” which makes
+review easier: every `←` is live data flow; every `=` inside `{ … }` is field
+layout. Compare `∷` (static ascription) and `⇒` (runtime conversion) in
+[Conversion And Construction](#conversion-and-construction) — three different
+arrows, three different jobs.
+
+### String-template application (`textus`)
+
+Faber formats text with **string-template application**: a string literal in
+**double quotes**, optional `§` placeholders inside it, then a parenthesized
+argument list that supplies values in order. This is the canonical source form;
+the compiler lowers it to an internal `scriptum("…", …)` call.
+
+```fab
+functio greet(textus nomen) → textus {
+    redde "Salve, §!"(nomen)
+}
+
+fixum _ msg ← "Page § of §"(pagina, totum)
+nota "Salve, §"(p.x)
+```
+
+Three details matter because the shape is unusual compared to Rust, Python, or Go:
+
+1. **Double-quoted template.** Ordinary `textus` literals and templates use `"…"`.
+   Block text may use the `❝ … ❞` delimiters (see [`EBNF.md`](EBNF.md)). Faber is
+   **Unicode-first**: source is normalized (NFC) and string indexing is
+   Unicode-scalar based, so templates naturally include Latin, glyphs, and `§`.
+
+2. **`§` is the format hole, not a runtime value.** Inside the quotes, `§` marks
+   where the next argument is injected. Positional holes are written `§0`, `§1`,
+   … when order must be explicit (`"status: §1 (§0)"("ok", sample_status())`).
+   A trailing `!` on the hole (as in `"Salve, §!"`) selects display formatting on
+   backends that distinguish it; otherwise the compiler picks a sensible default.
+
+3. **Parentheses apply the template.** The call-like suffix `(nomen)` is not a
+   function named `"Salve…"` — it is **template application**: build a `textus`
+   value by substituting the arguments into the holes. Prefer this over writing
+   `format!(…)` / `f"…"` / `fmt.Sprintf(…)` directly in Faber source.
+
+Do not confuse `§` inside a string with **`§` at the start of a line**, which
+introduces a file-scope directive (`§ opus`, `§ dependentia`, …). Same glyph,
+different grammar role.
+
+For output statements, `nota`, `vide`, and `mone` accept the same template form.
+Use `faber explain scriptum` or `faber explain string` for the embedded reference.
+
 ### Glyphs And Words
 
 Faber uses glyphs where the symbol is structural:
@@ -570,6 +753,7 @@ Faber uses glyphs where the symbol is structural:
 - `∪` for inline union types.
 - `∷` for static type ascription.
 - `⇒` for runtime conversion.
+- `§` inside `"…"` for string-template holes (and at line start for directives).
 
 Faber uses Latin words where the construct has behavioral or grammatical shape:
 
@@ -655,6 +839,10 @@ These are the mistakes to avoid during warm-up or code generation:
 - Using ASCII arrows when glyph forms are canonical.
 - Treating every file under `examples/exempla` as canonical current style. Some example names and files preserve older surfaces for migration or coverage.
 - Reintroducing old aliases such as `qua`, `innatum`, or `novum` as conversion syntax.
+- Using target interpolation (Rust f-strings, JavaScript template literals, `format!`,
+  ad-hoc concatenation) instead of Faber string-template application (`"Salve, §!"(name)`).
+- Using `=` for runtime assignment or rebinding; Faber uses `←` for live flow and reserves
+  `=` for structural fields inside literals and declarations.
 - Using `tempta` or `demum` for current error handling.
 - Guessing missing types in codegen-shaped explanations. Missing type information is an upstream analysis issue.
 - Assuming package builds work for every file-emission target. Package builds are Rust-backed today.
