@@ -1,6 +1,6 @@
 use super::common::{
-    collect_exempla_files, expected_runtime_failure, format_result_paths, is_expected_failure,
-    make_temp_root, normalize_newline, read_expected_stdout,
+    collect_exempla_files, expected_runtime_failure, format_result_paths, is_expected_failure, make_temp_root,
+    normalize_newline, read_expected_stdout,
 };
 use super::types::E2eResult;
 use crate::{Compiler, Config, Output};

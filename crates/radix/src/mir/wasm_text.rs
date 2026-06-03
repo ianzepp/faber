@@ -1602,17 +1602,15 @@ fn wasm_un_op(op: MirUnOp, operand_ty: WasmValue, operand: &str) -> Result<Strin
     }
 }
 
-fn coerce_wasm_operand_expr(
-    expr: String,
-    from: WasmValue,
-    to: WasmValue,
-) -> Result<String, MirWasmTextProbeError> {
+fn coerce_wasm_operand_expr(expr: String, from: WasmValue, to: WasmValue) -> Result<String, MirWasmTextProbeError> {
     if from == to {
         return Ok(expr);
     }
     match (from, to) {
         (WasmValue::I64, WasmValue::F64) => Ok(format!("(f64.convert_i64_s {expr})")),
-        _ => Err(MirWasmTextProbeError::unsupported(format!("numeric coercion {from:?} to {to:?}"))),
+        _ => Err(MirWasmTextProbeError::unsupported(format!(
+            "numeric coercion {from:?} to {to:?}"
+        ))),
     }
 }
 

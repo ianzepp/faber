@@ -36,9 +36,8 @@ use crate::driver::AnalyzedUnit;
 use crate::hir::visit::HirVisitor;
 use crate::hir::{
     DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirExpr, HirExprKind, HirField, HirFunction,
-    HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField,
-    HirObjectKey, HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirStruct,
-    HirUnOp,
+    HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField, HirObjectKey,
+    HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirStruct, HirUnOp,
 };
 use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{
@@ -631,11 +630,7 @@ impl<'a> FunctionBuilder<'a> {
                 let zero = self.numeric_zero_constant(operand)?;
                 let operand = self.lower_expr_value(operand)?;
                 Some(self.assign_temp(
-                    MirValueKind::Binary {
-                        op: MirBinOp::Lt,
-                        lhs: operand,
-                        rhs: MirOperand::Constant(zero),
-                    },
+                    MirValueKind::Binary { op: MirBinOp::Lt, lhs: operand, rhs: MirOperand::Constant(zero) },
                     result_ty,
                     expr.span,
                 ))
@@ -645,11 +640,7 @@ impl<'a> FunctionBuilder<'a> {
                 let zero = self.numeric_zero_constant(operand)?;
                 let operand = self.lower_expr_value(operand)?;
                 Some(self.assign_temp(
-                    MirValueKind::Binary {
-                        op: MirBinOp::Gt,
-                        lhs: operand,
-                        rhs: MirOperand::Constant(zero),
-                    },
+                    MirValueKind::Binary { op: MirBinOp::Gt, lhs: operand, rhs: MirOperand::Constant(zero) },
                     result_ty,
                     expr.span,
                 ))
@@ -692,13 +683,7 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    fn lower_is_predicate(
-        &mut self,
-        op: HirBinOp,
-        lhs: &HirExpr,
-        rhs: &HirExpr,
-        expr: &HirExpr,
-    ) -> Option<MirOperand> {
+    fn lower_is_predicate(&mut self, op: HirBinOp, lhs: &HirExpr, rhs: &HirExpr, expr: &HirExpr) -> Option<MirOperand> {
         let result_ty = self.expr_ty(expr)?;
         if matches!(rhs.kind, HirExprKind::Literal(HirLiteral::Nil)) {
             let operand = self.lower_expr_value(lhs)?;

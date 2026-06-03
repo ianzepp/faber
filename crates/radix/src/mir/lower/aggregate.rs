@@ -34,18 +34,12 @@ impl FunctionBuilder<'_> {
                 ty,
                 expr.span,
             )),
-            Type::Map(_, _) => Some(self.construct_temp(
-                MirAggregateKind::Map,
-                MirAggregateFields::Keyed(Vec::new()),
-                ty,
-                expr.span,
-            )),
-            Type::Set(_) => Some(self.construct_temp(
-                MirAggregateKind::Set,
-                MirAggregateFields::Ordered(Vec::new()),
-                ty,
-                expr.span,
-            )),
+            Type::Map(_, _) => {
+                Some(self.construct_temp(MirAggregateKind::Map, MirAggregateFields::Keyed(Vec::new()), ty, expr.span))
+            }
+            Type::Set(_) => {
+                Some(self.construct_temp(MirAggregateKind::Set, MirAggregateFields::Ordered(Vec::new()), ty, expr.span))
+            }
             _ => {
                 self.errors.push(MirError::unsupported(
                     expr.span,

@@ -136,10 +136,8 @@ impl<'a> HirVisitor for LoweringContextMaps<'a> {
 
                 if let Some(receiver_ty) = receiver_ty {
                     for method in &strukt.methods {
-                        self.method_targets.insert(
-                            (item.def_id, method.func.name),
-                            MethodTarget { def_id: method.def_id },
-                        );
+                        self.method_targets
+                            .insert((item.def_id, method.func.name), MethodTarget { def_id: method.def_id });
                         if let Some(err_ty) = method.func.err_ty {
                             self.function_errors
                                 .insert(method.def_id, MirType::semantic(err_ty));
@@ -147,7 +145,13 @@ impl<'a> HirVisitor for LoweringContextMaps<'a> {
                         if let Some(return_ty) = method.func.ret_ty {
                             let mut params = Vec::with_capacity(method.func.params.len() + 1);
                             params.push(MirType::semantic(receiver_ty));
-                            params.extend(method.func.params.iter().map(|param| MirType::semantic(param.ty)));
+                            params.extend(
+                                method
+                                    .func
+                                    .params
+                                    .iter()
+                                    .map(|param| MirType::semantic(param.ty)),
+                            );
                             self.validation.functions.insert(
                                 method.def_id,
                                 MirFunctionSignature {

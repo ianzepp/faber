@@ -1,6 +1,6 @@
 use super::common::{
-    command_available, collect_exempla_files, format_diagnostic_messages, make_temp_root,
-    normalize_newline, read_expected_stdout,
+    collect_exempla_files, command_available, format_diagnostic_messages, make_temp_root, normalize_newline,
+    read_expected_stdout,
 };
 use crate::codegen::{self, Target};
 use crate::{Config, Output};

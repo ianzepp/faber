@@ -31,7 +31,6 @@
 //! - Formatting and linting are best-effort post-processing steps; failures are
 //!   warnings that leave generated compiler output available.
 
-
 pub mod cli;
 pub mod commands;
 

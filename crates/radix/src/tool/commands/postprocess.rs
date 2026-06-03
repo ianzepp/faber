@@ -156,4 +156,3 @@ fn run_formatter(cmd: &str, args: &[&str], input: &str) -> Result<String, String
 
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
-

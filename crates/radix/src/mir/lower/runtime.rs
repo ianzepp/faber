@@ -161,12 +161,12 @@ impl FunctionBuilder<'_> {
 
             let destination = self.push_temp(ty, expr.span);
             self.terminate_current(
-                    MirTerminatorKind::TryCall {
-                        destination: Some(MirPlace::temp(destination)),
-                        callee: MirCallee::Definition(def_id),
-                        args: lowered_args,
-                        ok_block,
-                        error_place: handler.error_place,
+                MirTerminatorKind::TryCall {
+                    destination: Some(MirPlace::temp(destination)),
+                    callee: MirCallee::Definition(def_id),
+                    args: lowered_args,
+                    ok_block,
+                    error_place: handler.error_place,
                     error_block: handler.error_block,
                 },
                 expr.span,

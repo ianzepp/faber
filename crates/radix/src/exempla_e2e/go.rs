@@ -1,6 +1,6 @@
 use super::common::{
-    collect_exempla_files, format_diagnostics, format_result_paths, is_expected_failure,
-    make_temp_root, normalize_newline, read_expected_stdout,
+    collect_exempla_files, format_diagnostics, format_result_paths, is_expected_failure, make_temp_root,
+    normalize_newline, read_expected_stdout,
 };
 use super::types::{E2eFinding, E2eResult};
 use crate::codegen::Target;
