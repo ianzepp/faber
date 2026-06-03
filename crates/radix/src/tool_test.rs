@@ -1,5 +1,9 @@
-use super::super::cli::{CliTarget, RadixCli, RadixCommand};
 use super::*;
+use crate::tool::{
+    build_output_path, check_diagnostics_for_source, compile_cli_path, compile_cli_source, target_capabilities,
+    target_extension, target_name, BuildCommand, CheckCommand, CliTarget, DiagnosticMode, EmitCommand, RadixCli,
+    RadixCommand,
+};
 use clap::error::ErrorKind;
 use clap::{CommandFactory, Parser};
 use std::path::PathBuf;

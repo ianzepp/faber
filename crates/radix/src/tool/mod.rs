@@ -1,7 +1,8 @@
 //! Command implementation layer for Faber CLI surfaces.
 //!
 //! This module is the executable boundary around the `radix` compiler library.
-//! Clap shapes live in [`cli`]; handlers and shared helpers live in [`commands`].
+//! Clap shapes live in [`cli`]; handlers live in [`commands`] (`inspect`, `check`,
+//! `emit`, `compile`, `targets`, `postprocess`, `json`, `source`, `package`).
 //! It owns stdin/file source loading, terminal diagnostics,
 //! JSON-ish inspection output, target formatting/linting hooks, and the policy
 //! split between the developer `radix` binary and the user-facing `faber`
