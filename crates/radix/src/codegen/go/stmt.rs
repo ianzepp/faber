@@ -487,7 +487,7 @@ fn generate_expr_stmt(
                     w.write(codegen.resolve_def(*def_id));
                     w.write(" := range ");
                 }
-                crate::hir::HirIteraMode::Ex | crate::hir::HirIteraMode::Pro => {
+                crate::hir::HirIteraMode::Ex | crate::hir::HirIteraMode::Range => {
                     w.write("_, ");
                     w.write(codegen.resolve_def(*def_id));
                     w.write(" := range ");

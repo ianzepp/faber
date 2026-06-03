@@ -11,7 +11,7 @@ related = ["ante", "usque"]
 Sets the step for a range.
 
 ```fab
-itera pro 0‥10 per 2 fixum i {
+itera ab 0‥10 per 2 fixum i {
     scribe i
 }
 ```

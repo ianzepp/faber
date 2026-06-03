@@ -31,7 +31,7 @@ incipit {
     }
 
     varia lista<numerus> gradus ← vacua
-    itera pro 0 usque 6 per 2 fixum i {
+    itera ab 0 usque 6 per 2 fixum i {
         gradus.appende(i * 3)
     }
 

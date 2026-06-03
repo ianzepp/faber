@@ -1,7 +1,7 @@
 # usque forms an inclusive upper bound.
 
 incipit {
-    itera pro 0 usque 3 fixum i {
+    itera ab 0 usque 3 fixum i {
         nota i
     }
 }

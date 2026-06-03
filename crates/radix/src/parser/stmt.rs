@@ -135,9 +135,9 @@ impl Parser {
     ///
     /// GRAMMAR:
     ///   itera-stmt := 'itera' mode expr ('fixum'|'varia') ident if-body ['cape' ident block]
-    ///   mode := 'ex' | 'de' | 'pro'
+    ///   mode := 'ex' | 'de' | 'ab'
     ///
-    /// The parser records `ex`, `de`, or `pro` as source-level iteration intent.
+    /// The parser records `ex`, `de`, or range iteration intent.
     /// Typechecking and lowering decide whether the chosen mode is valid for the
     /// iterable expression.
     pub(super) fn parse_itera_stmt(&mut self) -> Result<StmtKind, ParseError> {
@@ -147,10 +147,10 @@ impl Parser {
             IteraMode::Ex
         } else if self.eat_keyword(TokenKind::De) {
             IteraMode::De
-        } else if self.eat_keyword(TokenKind::Pro) {
-            IteraMode::Pro
+        } else if self.eat_identifier_text("ab") {
+            IteraMode::Range
         } else {
-            return Err(self.error(ParseErrorKind::Expected, "expected 'ex', 'de', or 'pro'"));
+            return Err(self.error(ParseErrorKind::Expected, "expected 'ex', 'de', or 'ab'"));
         };
 
         let iterable = Box::new(self.parse_expression()?);

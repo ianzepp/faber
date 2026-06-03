@@ -593,7 +593,7 @@ Iteration says whether it is walking values, keys, or a range:
 ```fab
 itera ex items fixum item { ... }  # values
 itera de table fixum key { ... }   # keys
-itera pro 0‥10 fixum i { ... }     # range
+itera ab 0‥10 fixum i { ... }     # range
 ```
 
 Branch bodies use a block or a one-statement consequent introduced by `∴` or its

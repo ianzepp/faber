@@ -311,7 +311,7 @@ fn assert_embedded_filename(term: &str, legacy: bool) {
 
 fn expected_legacy_canonical(term: &str) -> &'static str {
     match term {
-        "ab" => "lista",
+        "ab pipeline" => "lista",
         "==" => "≡",
         "!=" => "≠",
         "<=" => "≤",
@@ -329,7 +329,7 @@ fn expected_legacy_canonical(term: &str) -> &'static str {
 fn expected_filename(term: &str, legacy: bool) -> String {
     let slug = if legacy {
         match term {
-            "ab" => "ab",
+            "ab pipeline" => "ab",
             "==" => "eq-eq",
             "!=" => "bang-eq",
             "<=" => "lt-eq",

@@ -636,11 +636,11 @@ function f0 -> ty#1 {
 }
 
 #[test]
-fn lowers_numeric_range_itera_pro_to_loop_cfg() {
+fn lowers_numeric_range_itera_ab_to_loop_cfg() {
     let dump = dump_source(
         r#"functio range_sum() → numerus {
   varia numerus total ← 0
-  itera pro 0‥4 fixum i {
+  itera ab 0‥4 fixum i {
     total ← total + i
   }
   redde total

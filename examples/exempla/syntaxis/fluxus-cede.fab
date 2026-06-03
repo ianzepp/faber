@@ -7,7 +7,7 @@ functio accipeNomen() → textus {
 
 @ cursor
 functio paria(numerus finis) → numerus {
-    itera pro 0 ante finis fixum i {
+    itera ab 0 ante finis fixum i {
         si i % 2 ≡ 0 {
             cede i
         }

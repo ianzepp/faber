@@ -265,6 +265,22 @@ impl Parser {
         }
     }
 
+    /// Consume an identifier with exact source text.
+    ///
+    /// WHY: Some source words are contextual rather than globally reserved. This
+    /// keeps spellings like `ab` available as ordinary identifiers except where
+    /// a parser-owned grammar slot claims them.
+    fn eat_identifier_text(&mut self, text: &str) -> bool {
+        let TokenKind::Ident(sym) = self.peek().kind else {
+            return false;
+        };
+        if self.interner.resolve(sym) != text {
+            return false;
+        }
+        self.advance();
+        true
+    }
+
     /// Expect a specific token, error if not found.
     ///
     /// WHY: Required syntax elements produce errors when missing, allowing the

@@ -103,7 +103,7 @@ Non-strict mode is the default authoring mode.
 Example:
 
 ```fab
-ad "pg:query" ("select * from users") → lista<tabula<textus, ignotum>> pro rows {
+ad "pg:query" ("select * from users") → lista<tabula<textus, ignotum>> rows {
     nota rows
 }
 ```

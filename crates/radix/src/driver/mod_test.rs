@@ -415,6 +415,27 @@ fn compile_reports_parse_errors() {
 }
 
 #[test]
+fn compile_rejects_retired_itera_pro_mode() {
+    let session = session(Target::Rust);
+    let result = compile(
+        &session,
+        "test.fab",
+        r#"incipit {
+  itera pro 0‥3 fixum i {
+    nota i
+  }
+}"#,
+    );
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.is_error() && d.message.contains("expected 'ex', 'de', or 'ab'")));
+}
+
+#[test]
 fn compile_reports_semantic_errors() {
     let session = session(Target::Rust);
     let result = compile(&session, "test.fab", "incipit {\n  nota nope\n}");
@@ -422,6 +443,27 @@ fn compile_reports_semantic_errors() {
     assert!(result.output.is_none());
     assert!(!result.success());
     assert!(result.diagnostics.iter().any(|d| d.is_error()));
+}
+
+#[test]
+fn compile_rejects_itera_ab_over_collection() {
+    let session = session(Target::Rust);
+    let result = compile(
+        &session,
+        "test.fab",
+        r#"incipit {
+  fixum lista<numerus> nums ← [1, 2, 3]
+  itera ab nums fixum n {
+    nota n
+  }
+}"#,
+    );
+
+    assert!(result.output.is_none());
+    assert!(!result.success());
+    assert!(result.diagnostics.iter().any(|d| d.is_error()
+        && d.message
+            .contains("itera ab source must be a range expression")));
 }
 
 #[test]
@@ -1700,10 +1742,10 @@ fn itera_de_array_index_no_longer_leaves_infer_types() {
 }
 
 #[test]
-fn itera_pro_range_no_longer_leaves_infer_types() {
+fn itera_ab_range_no_longer_leaves_infer_types() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  itera pro 0‥5 fixum i {
+  itera ab 0‥5 fixum i {
     nota i
   }
 }"#;
@@ -1717,10 +1759,10 @@ fn itera_pro_range_no_longer_leaves_infer_types() {
 }
 
 #[test]
-fn itera_pro_inclusive_range_glyph_compiles() {
+fn itera_ab_inclusive_range_glyph_compiles() {
     let session = session(Target::Rust);
     let source = r#"incipit {
-  itera pro 0…5 fixum i {
+  itera ab 0…5 fixum i {
     nota i
   }
 }"#;
@@ -2162,7 +2204,7 @@ fn cursor_iteration_accumulator_from_empty_array_no_longer_reports_inference_err
     let session = session(Target::Rust);
     let source = r#"@ cursor
 functio rangeSync(numerus n) → numerus {
-  itera pro 0‥n fixum i {
+  itera ab 0‥n fixum i {
     cede i
   }
 }

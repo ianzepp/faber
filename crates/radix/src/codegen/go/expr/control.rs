@@ -114,7 +114,7 @@ pub(super) fn generate_while_expr(
     types: &TypeTable,
     w: &mut CodeWriter,
 ) -> Result<(), CodegenError> {
-    // Faber `itera de` binds map/object keys; `itera ex` and `pro` bind values.
+    // Faber `itera de` binds map/object keys; `itera ex` and range mode bind values.
     w.write("func() { for ");
     generate_expr(codegen, cond, types, w)?;
     w.write(" ");
@@ -138,7 +138,7 @@ pub(super) fn generate_for_expr(
             w.write(codegen.resolve_def(def_id));
             w.write(", _ := range ");
         }
-        HirIteraMode::Ex | HirIteraMode::Pro => {
+        HirIteraMode::Ex | HirIteraMode::Range => {
             w.write("_, ");
             w.write(codegen.resolve_def(def_id));
             w.write(" := range ");

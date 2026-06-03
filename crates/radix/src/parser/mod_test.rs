@@ -872,7 +872,7 @@ fn parses_control_flow_transfer_and_clause_keywords() {
         r#"
 si verum ergo nota "yes" cape err {} sin falsum ergo redde 1 secus ergo tacet
 dum verum { perge } cape err {}
-itera pro items fixum item ergo redde item cape err {}
+itera ab items fixum item ergo redde item cape err {}
 elige value { casu 1 ergo redde 1 ceterum ergo tacet } cape err {}
 discerne omnia value, other { casu Ok ut result, _ ergo redde result ceterum ergo mori "bad" }
 custodi { si verum ergo redde 1 si falsum ergo nota "no" }
@@ -920,7 +920,7 @@ tacet
     let StmtKind::Itera(iter_stmt) = &program.stmts[2].kind else {
         panic!("expected itera statement");
     };
-    assert!(matches!(iter_stmt.mode, IteraMode::Pro));
+    assert!(matches!(iter_stmt.mode, IteraMode::Range));
     assert!(matches!(iter_stmt.mutability, Mutability::Immutable));
     assert!(matches!(iter_stmt.body, IfBody::Ergo(_)));
 
@@ -987,7 +987,7 @@ fn parses_ergo_symbol_as_statement_tail() {
         r#"
 si verum ∴ nota "yes"
 dum falsum ∴ tacet
-itera pro items fixum item ∴ redde item
+itera ab items fixum item ∴ redde item
 "#,
     );
     let program = result.program.as_ref().expect("program");
@@ -1000,6 +1000,11 @@ itera pro items fixum item ∴ redde item
         panic!("expected dum statement");
     };
     assert!(matches!(stmt.body, IfBody::Ergo(_)));
+}
+
+#[test]
+fn rejects_retired_itera_pro_mode() {
+    assert_parse_error_contains(r#"itera pro 0‥3 fixum i { nota i }"#, "expected 'ex', 'de', or 'ab'");
 }
 
 #[test]

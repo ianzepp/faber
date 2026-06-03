@@ -906,8 +906,8 @@ pub enum HirIteraMode {
     /// Iterate entries/keys from an object-like source.
     De,
 
-    /// Iterate numeric/progressive ranges.
-    Pro,
+    /// Iterate numeric ranges.
+    Range,
 }
 
 /// Range endpoint inclusion policy.

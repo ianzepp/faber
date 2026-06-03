@@ -64,19 +64,33 @@ impl<'a> TypeChecker<'a> {
             }
             HirExprKind::Itera(mode, binding, _, iter, block) => {
                 let iter_ty = self.check_expr(iter);
-                let elem_ty = match self.types.get(self.resolve_type(iter_ty)) {
-                    Type::Array(inner) => match mode {
-                        crate::hir::HirIteraMode::De => self.numerus_type(),
-                        crate::hir::HirIteraMode::Ex | crate::hir::HirIteraMode::Pro => *inner,
-                    },
-                    Type::Map(key, value) => match mode {
-                        crate::hir::HirIteraMode::Ex => *value,
-                        crate::hir::HirIteraMode::De | crate::hir::HirIteraMode::Pro => *key,
-                    },
-                    Type::Union(items) if matches!(mode, crate::hir::HirIteraMode::Pro) && items.len() >= 2 => {
-                        self.numerus_type()
+                let elem_ty = if matches!(mode, crate::hir::HirIteraMode::Range) {
+                    if !matches!(iter.kind, HirExprKind::Intervallum { .. }) {
+                        self.error(
+                            SemanticErrorKind::TypeMismatch,
+                            "itera ab source must be a range expression",
+                            iter.span,
+                        );
                     }
-                    _ => self.numerus_type(),
+                    self.numerus_type()
+                } else {
+                    match self.types.get(self.resolve_type(iter_ty)) {
+                        Type::Array(inner) => match mode {
+                            crate::hir::HirIteraMode::De => self.numerus_type(),
+                            crate::hir::HirIteraMode::Ex => *inner,
+                            crate::hir::HirIteraMode::Range => {
+                                unreachable!("range mode handled before collection typing")
+                            }
+                        },
+                        Type::Map(key, value) => match mode {
+                            crate::hir::HirIteraMode::Ex => *value,
+                            crate::hir::HirIteraMode::De => *key,
+                            crate::hir::HirIteraMode::Range => {
+                                unreachable!("range mode handled before collection typing")
+                            }
+                        },
+                        _ => self.numerus_type(),
+                    }
                 };
                 self.push_scope();
                 self.insert_binding(*binding, elem_ty, true);

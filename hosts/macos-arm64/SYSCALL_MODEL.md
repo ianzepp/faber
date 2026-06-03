@@ -19,7 +19,7 @@ Faber capability calls should be modeled as host syscalls.
 The source-level spelling can remain:
 
 ```fab
-ad "pg:query" ("select * from users") → lista<tabula<textus, ignotum>> pro rows {
+ad "pg:query" ("select * from users") → lista<tabula<textus, ignotum>> rows {
     nota rows
 }
 ```
@@ -201,7 +201,7 @@ The long-term target should support streaming (`Item`/`Bulk`), cancellation, and
 An `ad` statement should lower to a capability syscall request:
 
 ```text
-ad "pg:query" (sql) → Rows pro rows { body }
+ad "pg:query" (sql) → Rows rows { body }
 ```
 
 becomes:

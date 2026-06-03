@@ -278,13 +278,13 @@ elseArm    := (blockStmt | ergoToken statement) catchClause?
 
 ```ebnf
 whileStmt  := 'dum' expression (blockStmt | ergoToken statement) catchClause?
-iteraStmt  := 'itera' (('ex' | 'de') expression | 'pro' expression ('per' expression)?) ('fixum' | 'varia') IDENTIFIER (blockStmt | ergoToken statement) catchClause?
+iteraStmt  := 'itera' (('ex' | 'de') expression | 'ab' expression) ('fixum' | 'varia') IDENTIFIER (blockStmt | ergoToken statement) catchClause?
 ```
 
 - `dum` = while
 - `itera ex...fixum`/`itera ex...varia` = for-of (values)
 - `itera de...fixum`/`itera de...varia` = for-in (keys)
-- `itera pro range ('per' step)? fixum/varia i` = range iteration (e.g. `itera pro 0‥10 per 2 fixum i { nota i }`)
+- `itera ab range fixum/varia i` = range iteration (e.g. `itera ab 0‥10 per 2 fixum i { nota i }`; `per` belongs to the range expression)
 
 ### Switch/Match
 
@@ -626,7 +626,7 @@ Not all Faber features are supported across all compilation targets. Some featur
 |                     | `dum`                         | while               |
 |                     | `itera ex...fixum`            | for-of (values)     |
 |                     | `itera de...fixum`            | for-in (keys)       |
-|                     | `itera pro...fixum`           | range iteration     |
+|                     | `itera ab...fixum`            | range iteration     |
 |                     | `elige` / `casu`              | switch / case       |
 |                     | `discerne`                    | pattern match       |
 |                     | `custodi`                     | guard               |
@@ -670,6 +670,6 @@ Not all Faber features are supported across all compilation targets. Some featur
 
 1. **Type-first parameters**: `functio f(numerus x)` NOT `functio f(x: numerus)`
 2. **Type-first declarations**: `fixum textus name` NOT `fixum name: textus`
-3. **Iteration loops**: `itera ex/de/pro collection/range fixum/varia item { }` (verb-first, source, then binding)
+3. **Iteration loops**: `itera ex/de collection fixum/varia item { }` or `itera ab range fixum/varia item { }` (verb-first, source, then binding)
 4. **Parentheses around conditions are valid but not idiomatic**: prefer `si x > 0 { }` or `si positivum x { }` over `si (x > 0) { }`
 5. **Diagnostic keywords are statements**, not functions — `nota x` works, `nota(x)` also works (parentheses group the expression), but `nota` is not a callable value

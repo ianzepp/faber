@@ -486,10 +486,10 @@ functio by_status(textus status) → numerus {
 }
 
 #[test]
-fn wasm_target_emits_numeric_range_itera_pro_dispatch() {
+fn wasm_target_emits_numeric_range_itera_ab_dispatch() {
     let source = r#"
 incipit {
-    itera pro 0‥8 per 2 fixum i {
+    itera ab 0‥8 per 2 fixum i {
         nota i
     }
 }

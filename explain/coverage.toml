@@ -1,5 +1,6 @@
 canonical_terms = [
   "abstractus",
+  "ab",
   "ad",
   "adfirma",
   "alias",
@@ -120,7 +121,6 @@ canonical_terms = [
   "prima",
   "promissum",
   "privata",
-  "pro",
   "proba",
   "probandum",
   "protecta",
@@ -174,7 +174,7 @@ canonical_terms = [
 ]
 
 legacy_terms = [
-  "ab",
+  "ab pipeline",
   "==",
   "!=",
   "<=",

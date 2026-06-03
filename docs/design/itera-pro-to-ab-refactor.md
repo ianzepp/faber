@@ -1,6 +1,6 @@
 # Approved refactor: `itera pro` → `itera ab` (range iteration)
 
-**Status:** Approved for implementation
+**Status:** Implemented
 **Decision basis:** Pre-release source-surface refinement; no external codebase compatibility contract
 **Last updated:** 2026-06-03
 
@@ -198,14 +198,14 @@ Decision: **hard cut**. There is no external compatibility requirement, and the 
 
 ## Implementation checklist
 
-- [ ] Add/enable contextual `ab` loop mode without reviving pipeline `ab`.
-- [ ] Replace parser acceptance of `itera pro` with `itera ab`.
-- [ ] Rename AST/HIR/MIR/codegen mode away from `Pro`; prefer `Range`/`Interval`.
-- [ ] Tighten typecheck so interval mode accepts only range expressions.
-- [ ] Update live `.fab` exempla and active test source strings.
-- [ ] Update `EBNF.md`, `README.md`, `explain/`, and current website-generated docs.
-- [ ] Preserve or update negative coverage for `ad ... → pro name` as an unrelated invalid syntax.
-- [ ] Run `./scripta/test` or a narrower justified test set plus affected e2e checks.
+- [x] Add/enable contextual `ab` loop mode without reviving pipeline `ab`.
+- [x] Replace parser acceptance of `itera pro` with `itera ab`.
+- [x] Rename AST/HIR/MIR/codegen mode away from `Pro`; prefer `Range`/`Interval`.
+- [x] Tighten typecheck so interval mode accepts only range expressions.
+- [x] Update live `.fab` exempla and active test source strings.
+- [x] Update `EBNF.md`, `README.md`, `explain/`, and current website-generated docs.
+- [x] Preserve or update negative coverage for `ad ... → pro name` as an unrelated invalid syntax.
+- [x] Run `./scripta/test` or a narrower justified test set plus affected e2e checks.
 
 ---
 
@@ -214,7 +214,7 @@ Decision: **hard cut**. There is no external compatibility requirement, and the 
 - Grammar: [`EBNF.md`](../../EBNF.md) — `iteraStmt`, range (`‥`, `ante`, `usque`, `per`)
 - Retired pipeline: [`docs/factory/remove-ab-dsl/goal.md`](../factory/remove-ab-dsl/goal.md)
 - Exempla ranges: [`examples/exempla/itera/intervallum.fab`](../../examples/exempla/itera/intervallum.fab)
-- MIR lowering: `crates/radix/src/mir/lower/control.rs` (`HirIteraMode::Pro`)
+- MIR lowering: `crates/radix/src/mir/lower/control.rs` (`HirIteraMode::Range`)
 - Related design note: [`tla-radix-notes.md`](tla-radix-notes.md) (unrelated mechanically; same `docs/design/` home)
 
 ---
@@ -225,3 +225,4 @@ Decision: **hard cut**. There is no external compatibility requirement, and the 
 |------|---------|
 | 2026-06-03 | Document created; **no implementation** |
 | 2026-06-03 | Approved for hard-cut implementation before release. |
+| 2026-06-03 | Implemented contextual `itera ab`, semantic `Range` mode, live docs/examples updates, and hard-cut tests. |

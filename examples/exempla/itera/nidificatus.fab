@@ -12,15 +12,15 @@ incipit {
     }
 
     # Multiplication table
-    itera pro 1‥4 fixum i {
-        itera pro 1‥4 fixum j {
+    itera ab 1‥4 fixum i {
+        itera ab 1‥4 fixum j {
             nota i, "*", j, "←", i * j
         }
     }
 
     # Nested ranges
-    itera pro 0‥3 fixum x {
-        itera pro 0‥3 fixum y {
+    itera ab 0‥3 fixum x {
+        itera ab 0‥3 fixum y {
             nota x, y
         }
     }

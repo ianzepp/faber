@@ -176,20 +176,20 @@ incipit {
 }
 
 #[test]
-fn emits_iterable_rust_ranges_for_itera_pro() {
+fn emits_iterable_rust_ranges_for_itera_ab() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
 incipit {
-    itera pro 0‥3 fixum i {
+    itera ab 0‥3 fixum i {
         nota i
     }
-    itera pro 0…3 fixum j {
+    itera ab 0…3 fixum j {
         nota j
     }
-    itera pro 0‥6 per 2 fixum k {
+    itera ab 0‥6 per 2 fixum k {
         nota k
     }
-    itera pro 6‥0 per -2 fixum n {
+    itera ab 6‥0 per -2 fixum n {
         nota n
     }
 }
@@ -488,7 +488,7 @@ fn emits_cursor_functions_as_vec_producers() {
     let source = r#"
 @ cursor
 functio rangeSync(numerus n) → numerus {
-    itera pro 0‥n fixum i {
+    itera ab 0‥n fixum i {
         cede i
     }
 }
@@ -496,7 +496,7 @@ functio rangeSync(numerus n) → numerus {
 @ futura
 @ cursor
 functio rangeAsync(numerus n) → numerus {
-    itera pro 0‥n fixum i {
+    itera ab 0‥n fixum i {
         cede i
     }
 }

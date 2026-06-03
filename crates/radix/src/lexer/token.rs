@@ -228,7 +228,7 @@ pub enum TokenKind {
     De,        // borrow/from
     In,        // mutable borrow/in
     Ut,        // as/alias
-    Pro,       // for (iteration)
+    Pro,       // legacy endpoint binding marker
     Omnia,     // all (exhaustive match)
     Sparge,    // spread operator
     Praefixum, // comptime

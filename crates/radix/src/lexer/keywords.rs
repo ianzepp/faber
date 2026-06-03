@@ -209,7 +209,8 @@ const FUNCTION_MODIFIER: &[KeywordOwner] = &[KeywordOwner::FunctionModifier];
 const ENTRY_OR_FUNCTION_MODIFIER: &[KeywordOwner] = &[KeywordOwner::EntryModifier, KeywordOwner::FunctionModifier];
 const PARAMETER_MODE: &[KeywordOwner] = &[KeywordOwner::ParameterMode, KeywordOwner::IterationMode];
 const ALIAS_MARKER: &[KeywordOwner] = &[KeywordOwner::AliasMarker];
-const ITERATION_MODE: &[KeywordOwner] = &[KeywordOwner::IterationMode, KeywordOwner::EndpointBinding];
+const ITERATION_MODE: &[KeywordOwner] = &[KeywordOwner::IterationMode];
+const ENDPOINT_BINDING: &[KeywordOwner] = &[KeywordOwner::EndpointBinding];
 const SPREAD_EXPRESSION: &[KeywordOwner] = &[KeywordOwner::SpreadExpression];
 const PREDICATE_OPERATOR: &[KeywordOwner] = &[KeywordOwner::PredicateOperator];
 const ANNOTATION_MODIFIER: &[KeywordOwner] = &[KeywordOwner::AnnotationModifier];
@@ -679,9 +680,15 @@ pub static KEYWORD_SPECS: &[KeywordSpec] = &[
         category: KeywordCategory::Misc,
     },
     KeywordSpec {
+        text: "ab",
+        token_kind: None,
+        scope: KeywordScope::Contextual(ITERATION_MODE),
+        category: KeywordCategory::Misc,
+    },
+    KeywordSpec {
         text: "pro",
         token_kind: Some(TokenKind::Pro),
-        scope: KeywordScope::Contextual(ITERATION_MODE),
+        scope: KeywordScope::Contextual(ENDPOINT_BINDING),
         category: KeywordCategory::Misc,
     },
     KeywordSpec {
