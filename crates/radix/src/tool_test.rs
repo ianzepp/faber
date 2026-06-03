@@ -1,6 +1,7 @@
+use super::super::cli::{CliTarget, RadixCli, RadixCommand};
 use super::*;
 use clap::error::ErrorKind;
-use clap::CommandFactory;
+use clap::{CommandFactory, Parser};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -372,6 +373,16 @@ fn cli_help_surface_lists_current_commands_and_hides_legacy_alias() {
     assert!(help.contains("emit"));
     assert!(help.contains("mir"));
     assert!(!help.contains("emit-package"));
+}
+
+#[test]
+fn cli_long_help_includes_llm_guidance_and_output_contract() {
+    let help = RadixCli::command().render_long_help().to_string();
+
+    assert!(help.contains("LLM Guidance"));
+    assert!(help.contains("Output contract"));
+    assert!(help.contains("radix check"));
+    assert!(help.contains("faber check"));
 }
 
 #[test]

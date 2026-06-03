@@ -1,9 +1,7 @@
 //! Thin binary entry point for the compiler-developer `radix` tool.
 //!
-//! The command grammar and execution policy live in `radix::tool`; this file is
-//! intentionally only the clap parse boundary plus subcommand dispatch. Keeping
-//! it thin lets the same command implementation stay callable from tests and
-//! from any future wrapper without depending on process argument parsing.
+//! Clap shapes live in `radix::tool::cli`; handlers live in `radix::tool::commands`.
+//! This file is only the parse boundary plus subcommand dispatch.
 //!
 //! INVARIANT
 //! =========
