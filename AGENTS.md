@@ -38,7 +38,7 @@ The stdlib source of truth is [`stdlib/norma`](stdlib/norma). These `.fab` files
 # From stdlib/norma/innatum/lista.fab  (innatum/ here is @ annotation metadata + dir name, not expression syntax)
 @ verte ts "push"
 @ verte rs "push"
-functio adde(T elem) → vacuum
+functio appende(T elem) → vacuum
 ```
 
 Runtime-backed Rust support lives in [`crates/norma`](crates/norma).
@@ -47,7 +47,7 @@ How it works:
 
 1. `stdlib/norma/*.fab` defines stdlib methods and metadata.
 2. The compiler loads stdlib translation metadata through the norma registry.
-3. Calls such as `myList.adde(x)` lower to target-specific calls like `push`.
+3. Calls such as `myList.appende(x)` lower to target-specific calls like `push`.
 
 ## Critical Rules
 

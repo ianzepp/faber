@@ -16,6 +16,8 @@ repository; they are useful for archaeology, not for current commands or CI.
 - [Package Manifest](#package-manifest)
 - [CLI Roles](#cli-roles)
 - [Compilation Pipeline](#compilation-pipeline)
+- [Codegen Targets and HIR/MIR Split](#codegen-targets-and-hir-mir-split)
+- [Exempla End-to-End Harnesses](#exempla-end-to-end-harnesses)
 - [Standard Library](#standard-library)
 - [Language Snapshot](#language-snapshot)
 - [Commandments](#commandments)
@@ -34,6 +36,7 @@ repository; they are useful for archaeology, not for current commands or CI.
 | Rust runtime | [`crates/norma`](crates/norma) | You are changing runtime support used by generated Rust and stdlib-backed features. |
 | Stdlib source | [`stdlib/norma`](stdlib/norma) | You are changing Faber stdlib declarations, HAL contracts, or `@ verte` target translation metadata. |
 | Examples | [`examples/exempla`](examples/exempla) | You need small Faber programs for syntax, behavior, and backend coverage. Treat older migration examples with care. |
+| Boundary fixtures | [`examples/fixtures/exempla-boundary`](examples/fixtures/exempla-boundary) | You need proba package fixtures, harness edge cases, or negative selection examples. |
 | Grammar | [`EBNF.md`](EBNF.md) | You need the canonical grammar and spec commentary. |
 | Explain corpus | [`explain`](explain) | You need user-facing keyword/glyph docs embedded by `faber explain`. |
 | Docs | [`docs`](docs) | You need delivery plans, release notes, and design history. |
@@ -65,8 +68,11 @@ cargo run -p faber -- explain --search equality
 cargo run -p faber -- explain --json proba
 cargo run -p faber -- check examples/exempla/salve-munde.fab
 cargo run -p faber -- build -o /tmp/faber-out examples/exempla/salve-munde.fab
-cargo run -p faber -- test examples/exempla/proba/packages/passing
+cargo run -p faber -- test examples/fixtures/exempla-boundary/proba/packages/passing
 cargo run -p faber -- emit -t rust examples/exempla/salve-munde.fab
+cargo run -p faber -- emit -t ts examples/exempla/salve-munde.fab
+cargo run -p faber -- emit -t go examples/exempla/salve-munde.fab
+cargo run -p faber -- emit -t wasm-text examples/exempla/salve-munde.fab
 
 cargo run -p radix --bin radix -- targets
 cargo run -p radix --bin radix -- mir examples/exempla/salve-munde.fab
@@ -133,7 +139,7 @@ commands.
 
 ## Compilation Pipeline
 
-The active compiler authority is Radix. The main HIR-backed pipeline is:
+The active compiler authority is Radix. Every target shares the same frontend:
 
 ```text
 Source (.fab)
@@ -141,29 +147,81 @@ Source (.fab)
   -> Parse
   -> Collect + Resolve + Lower
   -> Typecheck + Analysis
-  -> Codegen (Rust, Faber, TypeScript, or Go)
 ```
 
-The active compiler also has a validated MIR inspection branch:
+After analysis, Radix chooses one of two emission paths:
 
 ```text
-Lex -> Parse -> Collect -> Resolve -> Lower -> Typecheck -> Analysis
-  -> typed HIR -> default target codegen
-  -> validated MIR -> inspection / internal executable probe
+HIR backends (typed HirProgram + TypeTable)
+  -> Rust | Faber | TypeScript | Go
+
+MIR backends (validated MirProgram)
+  -> wasm-text (.wat probe) | llvm-text (LLVM IR text probe)
 ```
 
 `radix mir` prints the validated middle IR for compiler-development inspection.
-Normal Rust output still uses the stable HIR-to-Rust backend; the MIR Rust probe
-is an internal boundary test, not the user-facing Rust backend.
+User-facing Rust still comes from the stable HIR-to-Rust backend in
+`crates/radix/src/codegen/rust/`. The MIR path is where Wasm and LLVM text probes
+grow before any binary Component Model or native codegen work lands.
 
-Current target shape:
+## Codegen Targets and HIR/MIR Split
 
-| Target | Status |
-| ------ | ------ |
-| Rust | Primary executable backend; full package build, run, and test through `faber`. |
-| Faber | Canonical pretty-printer and round-trip target. |
-| TypeScript | File emission supported; package compilation is not yet supported. |
-| Go | File emission supported; package compilation is not yet supported. |
+See `faber targets` or `radix targets` for live capability flags. Package builds
+from `faber.toml` remain **Rust-only** today; other targets support single-file
+`check`, `emit`, and `build -t <target>`.
+
+| Target | CLI | Backend path | Package build | Notes |
+| ------ | --- | ------------ | ------------- | ----- |
+| `rust` | `-t rust` | HIR → `codegen/rust` | Yes | Primary executable backend; `rustc` + Cargo via `faber run` / `faber test`. |
+| `faber` | `-t faber` | HIR → `codegen/faber` | No | Canonical pretty-printer and round-trip surface. |
+| `ts` | `-t ts` | HIR → `codegen/ts` | No | TypeScript file emission; optional `tsc` / Node in the exempla harness. |
+| `go` | `-t go` | HIR → `codegen/go` | No | Go file emission; `gofmt`, `go vet`, and `go run` in the exempla harness. |
+| `wasm-text` | `-t wasm-text` (alias `wasm`) | MIR → `mir/wasm_text` | No | Experimental WAT probe with `faber_diag` imports; not a `.wasm` binary backend. |
+| `llvm-text` | `-t llvm-text` | MIR → `mir/llvm_text` | No | Experimental LLVM IR text probe; not native codegen. |
+
+**HIR backends** map the typed high-level IR directly to target source. They are
+the right place for language-shaped features: generics, classes, failable flow,
+and stdlib `@ verte` translation metadata.
+
+**MIR backends** lower the analyzed unit to validated MIR first, then emit a
+small probe artifact. This keeps Wasm and LLVM experiments behind one semantic
+lowering layer instead of duplicating control-flow and runtime policy in every
+HIR backend.
+
+## Exempla End-to-End Harnesses
+
+The compiler ships slow, explicit exempla harnesses under
+`crates/radix/src/exempla_e2e/`. They are `#[ignore]` in normal `cargo test` runs;
+invoke them when validating a backend lane:
+
+```bash
+cargo test -p radix --lib exempla_rust_e2e -- --ignored --nocapture
+cargo test -p radix --lib exempla_ts_e2e -- --ignored --nocapture
+cargo test -p radix --lib exempla_go_e2e -- --ignored --nocapture
+cargo test -p radix --lib exempla_wasm_e2e -- --ignored --nocapture
+cargo test -p radix --lib exempla_faber_roundtrip_e2e -- --ignored --nocapture
+```
+
+Latest run on this repository (101 files under `examples/exempla/`, Jun 2026):
+
+| Harness | Result | What it exercises |
+| ------- | ------ | ----------------- |
+| `exempla_rust_e2e` | **101/101** compile + `rustc` + run | HIR → Rust, format/lint hooks, stdout `.expected` checks |
+| `exempla_go_e2e` | **94/101** `go run` (7 expected failures) | HIR → Go, `gofmt`, best-effort `go vet`, stdout checks |
+| `exempla_ts_e2e` | **100/101** emit; **76/101** `tsc`; **75/101** runnable | HIR → TS; needs `tsc` + `node` for typecheck/run tiers |
+| `exempla_wasm_e2e` | **71/101** `wasm-tools validate` | MIR → `.wat`; tier floors in `wasm_expectations.rs` |
+| `exempla_faber_roundtrip_e2e` | **91/101** stabilize after one Faber emit | HIR → Faber → re-parse; asserts `salve-munde.fab` |
+
+Toolchain notes from that run:
+
+- **Go** requires `go` on `PATH`.
+- **TypeScript** benefits from `tsc` and `node` (formatter/linter tiers skip without
+  `prettier`/`deno` or `biome`/`eslint`).
+- **Wasm** used `wasm-tools validate` for compile-valid tiers; `wasmtime` was not
+  installed, so instantiate/run tiers stayed at 0/101.
+
+The TS harness is informational (tier report, no hard assert). Rust, Go, and Wasm
+harnesses enforce expected-failure metadata and tier floors respectively.
 
 ## Standard Library
 
@@ -588,7 +646,7 @@ The public Faber documentation site lives in [`website/`](website/) as part of t
 - Presentation layer: `templates/layout.html` + `styles/main.css`
 - Curated content sources: `content/`
 - Legacy pre-migration content (for reference during refresh): `content/legacy-from-faber-www/`
-- Migration plan and history: `docs/faber-website-refresh-plan.md`
+- Migration plan and history: [`website/docs/faber-website-refresh-plan.md`](website/docs/faber-website-refresh-plan.md)
 
 The site is intentionally lightweight and static. A repo-local generator (Rust/xtask preferred) will be added to produce `website/dist/`, `llms.txt`, and `faber-complete.md` from the content while pulling live grammar and examples from the repository root. See the plan doc for phases, acceptance criteria, and open questions.
 

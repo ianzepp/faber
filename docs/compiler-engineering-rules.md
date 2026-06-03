@@ -10,6 +10,34 @@ Compiler code should make the language contract visible. Prefer explicit syntax
 rules, typed phase boundaries, recoverable diagnostics, and fail-closed lowering
 over convenient guesses.
 
+Write each module as if a PL-theory reader and a production compiler engineer
+were pair reviewing it: know which phase you are in, what invariants hold, handle
+malformed input without panicking, document the WHY, and keep phases testable in
+isolation where practical.
+
+## Module Documentation
+
+Large `crates/radix` modules should open with a Rust module doc that states:
+
+- **Compiler phase** — lexical, syntactic, semantic, lowering, codegen, or runtime.
+- **Role** — how the module fits the pipeline.
+- **Input/output contract** — what the phase receives, produces, and which errors it may report.
+- **Invariants** — facts later phases may rely on.
+- **Grammar** (when applicable) — the EBNF production or note pointing at `EBNF.md`.
+
+Parser helpers should carry `GRAMMAR:` notes for subtle productions. Codegen
+helpers should carry `TARGET:` notes when behavior differs by backend. Use section
+dividers for major responsibilities when a file spans multiple concerns.
+
+## IR Design
+
+- Preserve spans (and other source anchors) on syntax-shaped nodes for diagnostics.
+- Prefer Rust enums and typed IDs over stringly node or diagnostic kinds.
+- Keep parser output source-shaped; do not resolve names, infer types, or lower
+  control flow in the parser.
+- Keep semantic facts in HIR/MIR tables (`DefId`, `TypeId`, resolved structure),
+  not duplicated ad hoc in codegen.
+
 ## Parser And Syntax
 
 - Keep parser functions close to the grammar they implement. Add `GRAMMAR:` notes
@@ -65,8 +93,23 @@ over convenient guesses.
   malformed case.
 - Every new semantic rule needs a positive example and a diagnostic example.
 - Every new codegen behavior needs output coverage for the target it changes.
+- Prefer feeding a phase directly (tokens into the parser, HIR into a lowering
+  helper) instead of always running the full pipeline when the contract under
+  test is local.
+- Malformed-input tests should assert recoverable continuation where the phase
+  promises it: later statements or nodes still parse, and diagnostics are
+  collected rather than panicking.
 - Branch-heavy compiler code should be written so important paths are reachable
   from focused tests. If a branch cannot be tested, reconsider the structure.
+
+## Pre-Commit Checklist
+
+- Module or item docs state phase role and contracts where non-obvious.
+- Parser changes reference grammar; codegen changes reference target behavior.
+- Diagnostics use stable codes; help text teaches repair, not repetition.
+- No panics on malformed input; error sentinels do not reach emission silently.
+- Spans preserved on user-visible nodes; tests cover success and at least one
+  failure path for new behavior.
 
 ## Style
 

@@ -112,7 +112,7 @@ targetMapping := IDENTIFIER STRING
 - `@ operandus [ceteri] TYPE NAME ...` defines a CLI positional argument
 - `@ futura` marks a function as async
 - `@ cursor` marks a function as generator
-- `@ publica`, `@ protecta`, and `@ privata` are still parsed as annotations, but the active `radix-rs` contract does not treat them as a stable genus member-visibility model
+- `@ publica`, `@ protecta`, and `@ privata` are still parsed as annotations, but the active Radix compiler contract does not treat them as a stable genus member-visibility model
 
 - `sub` = extends, `implet` = implements
 - `generis` = static, `nexum` = bound/property
@@ -595,10 +595,12 @@ Not all Faber features are supported across all compilation targets. Some featur
 
 - Some runtime stdlib functions
 
-### Planned Manual-Memory Features
+### Manual-Memory Features (partial)
 
-- `curata` Zig allocator binding (for manual memory management)
-- Arena and page allocators (`cura "arena"`, `cura "page"`)
+- `curata` allocator-alias modifiers parse and bind in Faber; Zig-specific lowering
+  remains incomplete.
+- Arena and page allocators (`cura "arena"`, `cura "page"`) are design targets, not
+  fully shipped runtime surfaces.
 
 ### Cross-Target Features
 
