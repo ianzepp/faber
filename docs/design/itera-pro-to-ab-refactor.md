@@ -1,14 +1,14 @@
-# Proposed refactor: `itera pro` → `itera ab` (range iteration)
+# Approved refactor: `itera pro` → `itera ab` (range iteration)
 
-**Status:** Proposed — not approved for implementation  
-**Author intent:** Capture design reasoning for review and a second opinion before any grammar or compiler work  
+**Status:** Approved for implementation
+**Decision basis:** Pre-release source-surface refinement; no external codebase compatibility contract
 **Last updated:** 2026-06-03
 
 ---
 
 ## Summary
 
-Replace range-loop syntax
+Replace range-loop syntax:
 
 ```fab
 itera pro 0‥10 fixum i { ... }
@@ -29,6 +29,8 @@ itera de tabula fixum key { ... }   # keys / indices
 
 The numeric span (`0‥10`, `0 ante 5`, `0 usque 3`, `0…5`, optional `per 2` **inside** the range expression) is **not** part of this rename.
 
+This is a hard cut. Faber is still pre-release, has no customer corpus, and should not carry a compatibility alias for this change.
+
 ---
 
 ## Motivation
@@ -37,7 +39,7 @@ The numeric span (`0‥10`, `0 ante 5`, `0 usque 3`, `0…5`, optional `per 2` *
 
 1. **Latin fit:** `ab` (from / away from a starting point) matches interval iteration (“from 0 through the span”) better than treating range loops as a third peer of `ex`/`de` under a purpose word (`pro` = for).
 2. **Clearer taxonomy:** `ex` / `de` are **collection projections** (values vs keys/indices). `ab` would mark **interval iteration** only, without overloading `de` (“from” on maps vs “from 0”).
-3. **Keyword slot:** Pipeline collection DSL **`ab`** is retired ([`docs/factory/remove-ab-dsl/`](../factory/remove-ab-dsl/goal.md), [`explain/ab.legacy.md`](../../explain/ab.legacy.md)). `ab` is not in the active lexer. Reuse is possible with an explicit break narrative.
+3. **Keyword slot:** Pipeline collection DSL **`ab`** is retired ([`docs/factory/remove-ab-dsl/`](../factory/remove-ab-dsl/goal.md), [`explain/ab.legacy.md`](../../explain/ab.legacy.md)). `ab` is not in the active lexer today. Reuse is approved with an explicit break narrative.
 4. **Avoid bad alternatives considered in discussion:**
    - **`itera in 0‥10`** — collides with mutable-borrow `in` on parameters/types and with English “for x in collection.”
    - **`itera de 0‥10`** — operand-driven overload on `de` (keys/indices on collections vs range on intervals).
@@ -45,7 +47,7 @@ The numeric span (`0‥10`, `0 ante 5`, `0 usque 3`, `0…5`, optional `per 2` *
 
 ### Why not keep `pro`?
 
-`itera pro` is defensible Latin (“for each index in the span”) and is already shipped in exempla, MIR/WASM notes, and docs. Keeping it is the **zero-migration** default. This proposal trades stability for a clearer interval marker.
+`itera pro` is defensible Latin (“for each index in the span”) and is already shipped in exempla, MIR/WASM notes, and docs. Keeping it is the **zero-migration** default. This decision trades that internal migration cost for a source surface that looks and reads better before release.
 
 ---
 
@@ -65,7 +67,7 @@ Note: optional `per` on the `itera` line in EBNF is **not** implemented in the p
 | Form | Operand | Binding / behavior |
 |------|---------|-------------------|
 | `itera ex` | collection | element values |
-| `itera de` | array/lista | indices; on map/tabula | keys |
+| `itera de` | array/lista or map/tabula | indices for arrays/lists; keys for maps |
 | `itera pro` | **range** (`Intervallum`) | numeric loop variable along span |
 
 MIR lowering (`crates/radix/src/mir/lower/control.rs`) requires `HirIteraMode::Pro` sources to be `Intervallum`; other shapes diagnose *"itera pro source before range MIR lowering"*.
@@ -85,7 +87,7 @@ Typecheck has legacy branches for `Pro` on array/map types, but **codegen/MIR pa
 
 ---
 
-## Proposed contract
+## Approved contract
 
 ### Syntax
 
@@ -93,6 +95,8 @@ Typecheck has legacy branches for `Pro` on array/map types, but **codegen/MIR pa
 iteraStmt := 'itera' (('ex' | 'de') expression | 'ab' expression)
            ('fixum' | 'varia') IDENTIFIER (blockStmt | ergoToken statement) catchClause?
 ```
+
+`ab` is the source spelling for range iteration only. Prefer implementing it as a contextual `itera` mode rather than reserving `ab` as a global user identifier, unless the implementation deliberately chooses global reservation and updates identifier rules/tests accordingly.
 
 Examples (same ranges as today):
 
@@ -121,31 +125,32 @@ Operational risk: **`ab` / `ad` typos** in editors and LLM output. Mitigation: d
 
 ---
 
-## Implementation blast radius (if approved)
+## Implementation scope
 
 ### Compiler (`crates/radix`)
 
-- **Lexer:** add `ab` keyword → `TokenKind::Ab` (or reuse name); remove or alias `pro` on `itera` path.
-- **Parser:** `parse_itera_stmt` — `ab` instead of `pro`; error text *expected 'ex', 'de', or 'ab'*.
-- **HIR:** `HirIteraMode::Pro` → `Ab` (or keep internal `Pro` as alias during transition).
-- **Semantic / borrow / typecheck:** update mode matches and diagnostic strings.
-- **MIR:** `lower_itera` Pro branch → Ab; error messages.
-- **Codegen (Rust, Go, TS, Faber):** iteration emission labels / comments only if they print source modes.
-- **Tests:** broad string replace in `itera pro` fixtures; negative tests for retired `→ pro` on `ad` unchanged.
+- **Lexer / keyword policy:** make `ab` available for `itera ab`. Keep it contextual if practical so ordinary `ab` identifiers remain valid outside the loop-mode slot. Do not revive retired collection-pipeline parsing.
+- **Parser:** `parse_itera_stmt` accepts `ab` instead of `pro`; error text becomes *expected 'ex', 'de', or 'ab'*. Do **not** keep `itera pro` as a parse alias.
+- **AST / HIR:** replace source-level `IteraMode::Pro`. Prefer semantic internal names such as `Range` or `Interval` over `Ab`; `Ab` is source syntax, not the compiler invariant.
+- **Semantic / borrow / typecheck:** update mode matches and diagnostic strings. Tighten typecheck so range mode requires an `Intervallum`-shaped source instead of preserving legacy array/map `Pro` branches.
+- **MIR:** range-iteration lowering follows the renamed semantic mode; unsupported-source diagnostics should say `itera ab`.
+- **Codegen (Rust, Go, TS, Faber):** update iteration mode matches. Faber round-trip emission must print `itera ab`.
+- **Tests:** update live parser, semantic, MIR, codegen, driver, and e2e source strings from `itera pro` to `itera ab`. Keep or update negative tests for rejected `ad ... → pro name`; that syntax remains invalid but is independent of range iteration.
 
 ### Faber CLI / explain
 
 - Regenerate or hand-update embedded explain: retire [`explain/pro.md`](../../explain/pro.md) or replace with `explain/ab.md` (interval iteration).
 - Keep [`explain/ab.legacy.md`](../../explain/ab.legacy.md) as legacy pipeline; cross-link “not loop `ab`.”
 - Update [`explain/itera.md`](../../explain/itera.md), [`explain/per.md`](../../explain/per.md) examples.
+- Ensure `faber explain ab` resolves to the new interval-iteration entry while still preserving a discoverable legacy note for the removed pipeline.
 
 ### Exempla and harnesses
 
-All current `itera pro` exempla (under `examples/exempla/itera/`, `ante/`, `per/`, `usque/`, etc.) — mechanical update.
+All live `itera pro` exempla must be changed mechanically to `itera ab` so compilation and e2e harnesses continue to pass. Known live areas include `examples/exempla/itera/`, `examples/exempla/ante/`, `examples/exempla/per/`, `examples/exempla/usque/`, and syntax examples that compile as part of the active corpus.
 
 E2E / MIR tests referencing `itera pro` in source strings.
 
-Wasm factory docs: e.g. `phase-015-range-itera-pro-wasm.md` naming (rename or add forward pointer).
+Historical design, factory, release, and legacy website references may continue to mention `itera pro` when they are explicitly historical. Do not spend implementation effort rewriting old release notes or archived website content unless they are used as live generated docs.
 
 ### User-facing docs
 
@@ -156,19 +161,19 @@ Wasm factory docs: e.g. `phase-015-range-itera-pro-wasm.md` naming (rename or ad
 
 ### Website
 
-- Curated content / grammar pages if synced from repo sources.
+- Curated content / grammar pages if synced from repo sources. Ignore legacy imported website content unless it is republished as current documentation.
 
 ---
 
-## Migration strategies
+## Migration decision
 
 | Strategy | Pros | Cons |
 |----------|------|------|
-| **Hard cut** | One canonical form | Breaks existing `.fab` until updated |
+| **Hard cut** | One canonical form; no compatibility residue | Requires internal exempla/tests update in same change |
 | **Parse alias** (`pro` → `ab` with deprecation diagnostic) | Softer upgrade | Carries legacy keyword longer |
 | **Dual accept, emit `ab`** | Round-trip pretty-print teaches new form | More parser/HIR complexity |
 
-Recommendation if the refactor lands: **one release with parse alias + deprecation warning**, then remove `pro` on `itera` in the following release. Internal enums can rename immediately.
+Decision: **hard cut**. There is no external compatibility requirement, and the repo should converge on the canonical spelling now. `itera pro` should fail after the implementation lands.
 
 ---
 
@@ -176,29 +181,31 @@ Recommendation if the refactor lands: **one release with parse alias + deprecati
 
 1. **Keep `itera pro`** — status quo; document ex/de vs pro as collection-pair vs interval-head.
 2. **`itera de` on ranges** — overload `de` by operand type; fewer keywords, harder spec.
-3. **`itera ab`** — this proposal.
+3. **`itera ab`** — approved decision.
 4. **New word `inter` / `per` as loop head** — `per` already means step inside ranges.
 
 ---
 
-## Open questions for reviewers
+## Resolved review questions
 
-1. **Is reusing `ab` worth reviving confusion with retired pipeline `ab` and neighbor `ad`?**
-2. **Hard cut vs deprecation alias** — what is the expected external corpus size (user packages, archive repo)?
-3. **Should internal HIR stay `Pro` (comment: interval) or rename to `Ab` for maintainers?**
-4. **Explain corpus:** one canonical `ab` term vs `ab` (interval) + `ab.legacy` (pipeline) — enough for LLMs?
-5. **Any downstream book/tooling** outside this repo that hard-codes `itera pro`?
+1. **Is reusing `ab` worth reviving confusion with retired pipeline `ab` and neighbor `ad`?** Yes, before release. The syntax is always the two-word phrase `itera ab`, and docs/explain must distinguish it from retired pipeline `ab`.
+2. **Hard cut vs deprecation alias?** Hard cut. No external corpus exists.
+3. **Should internal HIR stay `Pro` or rename to `Ab`?** Rename away from `Pro`, but prefer semantic `Range`/`Interval` naming over source-level `Ab`.
+4. **Explain corpus:** one canonical `ab` interval entry plus preserved `ab.legacy` pipeline note is enough.
+5. **Any downstream book/tooling outside this repo that hard-codes `itera pro`?** None known; historical in-repo references can remain historical.
 
 ---
 
-## Suggested review checklist
+## Implementation checklist
 
-- [ ] Latin / pedagogy: interval head = `ab` vs `pro` vs overloaded `de`
-- [ ] Operational: `ab`/`ad` typo cost acceptable?
-- [ ] Compiler: MIR range path only — confirm no hidden `itera pro collection` reliance
-- [ ] Docs: plan for stale `ad → pro` host examples
-- [ ] Migration: alias period length and policy
-- [ ] Second opinion sign-off before lexer/token churn
+- [ ] Add/enable contextual `ab` loop mode without reviving pipeline `ab`.
+- [ ] Replace parser acceptance of `itera pro` with `itera ab`.
+- [ ] Rename AST/HIR/MIR/codegen mode away from `Pro`; prefer `Range`/`Interval`.
+- [ ] Tighten typecheck so interval mode accepts only range expressions.
+- [ ] Update live `.fab` exempla and active test source strings.
+- [ ] Update `EBNF.md`, `README.md`, `explain/`, and current website-generated docs.
+- [ ] Preserve or update negative coverage for `ad ... → pro name` as an unrelated invalid syntax.
+- [ ] Run `./scripta/test` or a narrower justified test set plus affected e2e checks.
 
 ---
 
@@ -217,5 +224,4 @@ Recommendation if the refactor lands: **one release with parse alias + deprecati
 | Date | Outcome |
 |------|---------|
 | 2026-06-03 | Document created; **no implementation** |
-
-When decided, append here: **Approved** / **Rejected** / **Deferred**, with reviewer and follow-up issue or PR link.
+| 2026-06-03 | Approved for hard-cut implementation before release. |
