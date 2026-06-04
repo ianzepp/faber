@@ -1,6 +1,6 @@
 # Norma HTTP HAL Factory Plan
 
-**Status**: design captured, not started
+**Status**: phases 0-5 implemented, validation gate pending
 **Created**: 2026-06-04
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/norma-http-hal/`
@@ -151,6 +151,17 @@ runtime tests in `crates/norma` require it.
 | 4 | Package Fixture | Add a repeatable Faber package fixture proving import, request, response status/body/header access, and JSON value access without public internet dependency. | `faber test` or `faber run` fixture passes locally. |
 | 5 | Docs And Expansion Pattern | Document the Norma HAL implementation pattern for future modules. | Factory plan and docs identify the reusable interface/runtime/bridge/fixture checklist. |
 | 6 | Validation Gate | Run focused and broad checks. | Required Cargo, Faber, and fixture commands pass. |
+
+Progress artifacts:
+
+- Phase 0: [`phase-0-delivery.md`](phase-0-delivery.md),
+  [`ledger.md`](ledger.md)
+- Phase 1: [`phase-1-delivery.md`](phase-1-delivery.md)
+- Phase 2: [`phase-2-delivery.md`](phase-2-delivery.md)
+- Phase 3: [`phase-3-delivery.md`](phase-3-delivery.md)
+- Phase 4: [`phase-4-delivery.md`](phase-4-delivery.md)
+- Phase 5: [`phase-5-delivery.md`](phase-5-delivery.md),
+  [`expansion-pattern.md`](expansion-pattern.md)
 
 ## Phase Details
 
