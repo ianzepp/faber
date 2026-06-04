@@ -2,7 +2,7 @@
 //!
 //! `faber` treats built-in libraries as source-level interfaces under
 //! `stdlib/`, not as hard-coded compiler magic. The resolver translates an
-//! import specifier such as `norma/hal/solum` into the `.fab` interface that
+//! import specifier such as `norma:hal/solum` into the `.fab` interface that
 //! package loading can parse, typecheck, and wire into generated output.
 //!
 //! The current provider surface is intentionally small. `norma` is resolved
@@ -12,12 +12,14 @@
 //!
 //! INVARIANTS
 //! ==========
-//! - A resolver returns `Ok(None)` when an import does not name a known library
-//!   provider; local package import resolution owns those paths.
+//! - A resolver returns `Ok(None)` when an import is not provider-shaped; local
+//!   package import resolution owns those paths.
 //! - Once a known provider is selected, malformed or missing modules are
 //!   diagnostics with known-module hints.
 //! - Resolved modules always point at `.fab` interface files, keeping stdlib
 //!   APIs on the normal parse/typecheck path.
+//! - Old built-in slash forms such as `norma/json` are rejected instead of
+//!   silently reinterpreted.
 
 use std::path::{Path, PathBuf};
 
@@ -76,6 +78,33 @@ impl ResolvedLibraryModule {
 /// Errors that mean a specifier selected a library provider but not a module.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum LibraryResolveError {
+    /// The old built-in slash form was used for a Norma module.
+    OldBuiltinNormaSpecifier {
+        /// Original import specifier from source.
+        specifier: String,
+
+        /// Provider-qualified replacement.
+        replacement: String,
+    },
+
+    /// The specifier is provider-shaped but malformed.
+    InvalidProviderSpecifier {
+        /// Original import specifier from source.
+        specifier: String,
+
+        /// Targeted reason for the invalid shape.
+        reason: String,
+    },
+
+    /// The provider separator selected a provider that is not implemented.
+    UnknownProvider {
+        /// Original import specifier from source.
+        specifier: String,
+
+        /// Provider segment from the source specifier.
+        provider: String,
+    },
+
     /// A built-in package was named, but no matching interface exists.
     UnknownBuiltinModule {
         /// Original import specifier from source.
@@ -91,9 +120,9 @@ pub(crate) enum LibraryResolveError {
 
 /// Resolver for built-in and package-backed Faber library imports.
 ///
-/// `resolve` returns `Ok(None)` when the specifier does not belong to a known
-/// library provider. That lets package loading fall through to local import
-/// resolution without treating every unknown string as a library error.
+/// `resolve` returns `Ok(None)` when the specifier is not provider-shaped. That
+/// lets package loading fall through to local import resolution without
+/// treating every plain package path as a library error.
 #[derive(Debug, Clone)]
 pub(crate) struct LibraryResolver {
     stdlib_root: PathBuf,
@@ -114,35 +143,68 @@ impl LibraryResolver {
 
     /// Resolve a Faber import specifier to a library interface, if applicable.
     ///
-    /// The resolver only claims specifiers whose first path segment is a known
-    /// provider. For `norma`, malformed paths and missing interface files are
-    /// reported as library diagnostics because the user clearly selected the
-    /// built-in provider and should see available module names.
+    /// The resolver claims provider-qualified specifiers and old built-in Norma
+    /// slash specifiers. For `norma`, malformed paths and missing interface
+    /// files are reported as library diagnostics because the user clearly
+    /// selected the built-in provider and should see available module names.
     pub(crate) fn resolve(
         &self,
         specifier: &str,
     ) -> Result<Option<ResolvedLibraryModule>, LibraryResolveError> {
-        let segments = specifier
-            .split('/')
-            .filter(|segment| !segment.is_empty())
-            .collect::<Vec<_>>();
-        if segments.first() != Some(&"norma") {
+        if specifier.starts_with("./") || specifier.starts_with("../") {
             return Ok(None);
         }
 
-        if segments.len() < 2
-            || !segments[1..]
-                .iter()
-                .all(|segment| is_valid_module_segment(segment))
-        {
-            return Err(LibraryResolveError::UnknownBuiltinModule {
+        if let Some(module_path) = specifier.strip_prefix("norma/") {
+            return Err(LibraryResolveError::OldBuiltinNormaSpecifier {
                 specifier: specifier.to_owned(),
-                package: "norma".to_owned(),
-                known_modules: self.known_norma_modules(),
+                replacement: format!("norma:{module_path}"),
             });
         }
 
-        let module_path = segments[1..].join("/");
+        let Some((provider, module_path)) = specifier.split_once(':') else {
+            return Ok(None);
+        };
+
+        if provider.is_empty() {
+            return Err(LibraryResolveError::InvalidProviderSpecifier {
+                specifier: specifier.to_owned(),
+                reason: "provider segment must not be empty".to_owned(),
+            });
+        }
+
+        if module_path.is_empty() {
+            return Err(LibraryResolveError::InvalidProviderSpecifier {
+                specifier: specifier.to_owned(),
+                reason: "module path segment must not be empty".to_owned(),
+            });
+        }
+
+        if module_path.contains(':') {
+            return Err(LibraryResolveError::InvalidProviderSpecifier {
+                specifier: specifier.to_owned(),
+                reason: "library specifier must contain exactly one provider separator".to_owned(),
+            });
+        }
+
+        if provider != "norma" {
+            return Err(LibraryResolveError::UnknownProvider {
+                specifier: specifier.to_owned(),
+                provider: provider.to_owned(),
+            });
+        }
+
+        let segments = module_path.split('/').collect::<Vec<_>>();
+        if !segments
+            .iter()
+            .all(|segment| is_valid_module_segment(segment))
+        {
+            return Err(LibraryResolveError::InvalidProviderSpecifier {
+                specifier: specifier.to_owned(),
+                reason: "module path must not contain empty, dot, or dot-dot segments".to_owned(),
+            });
+        }
+
         let interface_path = self
             .stdlib_root
             .join("norma")
@@ -157,7 +219,7 @@ impl LibraryResolver {
 
         Ok(Some(ResolvedLibraryModule::new(
             "norma",
-            segments[1..]
+            segments
                 .iter()
                 .map(|segment| (*segment).to_owned())
                 .collect(),

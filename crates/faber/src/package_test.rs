@@ -48,7 +48,7 @@ fn compile_package_resolves_builtin_norma_library_imports_without_local_modules(
     fs::write(
         &entry,
         r#"
-importa ex "norma/json" privata json
+importa ex "norma:json" privata json
 
 incipit {
   fixum _ parsed ← json.solve("{}")
@@ -60,7 +60,7 @@ incipit {
     let result = compile_package(&Config::default(), &entry);
     assert!(
         result.success(),
-        "expected norma/json package compile success, got {:?}",
+        "expected norma:json package compile success, got {:?}",
         result
             .diagnostics
             .iter()
@@ -82,7 +82,7 @@ fn compile_package_resolves_builtin_norma_toml_library_imports() {
     fs::write(
         &entry,
         r#"
-importa ex "norma/toml" privata toml
+importa ex "norma:toml" privata toml
 
 incipit {
   fixum _ parsed ← toml.solve("name = \"faber\"")
@@ -94,7 +94,7 @@ incipit {
     let result = compile_package(&Config::default(), &entry);
     assert!(
         result.success(),
-        "expected norma/toml package compile success, got {:?}",
+        "expected norma:toml package compile success, got {:?}",
         result
             .diagnostics
             .iter()
@@ -116,7 +116,7 @@ fn compile_package_resolves_builtin_norma_hal_consolum_imports() {
     fs::write(
         &entry,
         r#"
-importa ex "norma/hal/consolum" privata consolum
+importa ex "norma:hal/consolum" privata consolum
 
 incipit {
   consolum.dic("salve")
@@ -128,7 +128,7 @@ incipit {
     let result = compile_package(&Config::default(), &entry);
     assert!(
         result.success(),
-        "expected norma/hal/consolum package compile success, got {:?}",
+        "expected norma:hal/consolum package compile success, got {:?}",
         result
             .diagnostics
             .iter()
@@ -166,7 +166,7 @@ version = "0.1.0"
         dir.join("src/main.fab"),
         format!(
             r#"
-importa ex "norma/hal/http" privata http
+importa ex "norma:hal/http" privata http
 
 incipiet {{
     fixum _ responsum ← cede http.petet("http://127.0.0.1:{port}/test")
@@ -255,9 +255,9 @@ incipiet {{
 #[test]
 fn library_resolver_discovers_builtin_norma_hal_modules_without_allowlist() {
     let resolved = LibraryResolver::default()
-        .resolve("norma/hal/solum")
+        .resolve("norma:hal/solum")
         .expect("resolve should not fail")
-        .expect("norma/hal/solum should resolve");
+        .expect("norma:hal/solum should resolve");
 
     assert_eq!(resolved.package, "norma");
     assert_eq!(resolved.module_path, vec!["hal", "solum"]);
@@ -274,7 +274,7 @@ fn check_package_typechecks_builtin_library_imports_against_interfaces() {
     fs::write(
         &entry,
         r#"
-importa ex "norma/json" privata json
+importa ex "norma:json" privata json
 
 incipit {
   json.nonexistent("{}")
@@ -296,7 +296,7 @@ fn compile_package_reports_unknown_builtin_library_modules() {
     fs::write(
         &entry,
         r#"
-importa ex "norma/nope" privata nope
+importa ex "norma:nope" privata nope
 incipit {}
 "#,
     )
@@ -306,11 +306,89 @@ incipit {}
     assert!(result.output.is_none());
     assert!(result.diagnostics.iter().any(|diag| diag
         .message
-        .contains("unknown built-in library module `norma/nope`")));
+        .contains("unknown built-in library module `norma:nope`")));
     assert!(result
         .diagnostics
         .iter()
         .any(|diag| diag.message.contains("hal/consolum") && diag.message.contains("hal/solum")));
+}
+
+#[test]
+fn compile_package_rejects_old_norma_slash_library_imports() {
+    let dir = temp_dir("norma-old-slash");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "norma/hal/http" privata http
+incipit {}
+"#,
+    )
+    .expect("write entry");
+
+    let result = compile_package(&Config::default(), &entry);
+    assert!(result.output.is_none());
+    assert!(result.diagnostics.iter().any(|diag| diag
+        .message
+        .contains("built-in Norma imports use provider syntax; write \"norma:hal/http\"")));
+}
+
+#[test]
+fn compile_package_keeps_relative_norma_paths_as_local_imports() {
+    let dir = temp_dir("relative-norma-path");
+    fs::create_dir_all(dir.join("norma")).expect("norma dir");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "./norma/json" privata local
+incipit {}
+"#,
+    )
+    .expect("write entry");
+    fs::write(
+        dir.join("norma/json.fab"),
+        r#"
+functio salve() → textus {
+    redde "salve"
+}
+"#,
+    )
+    .expect("write local module");
+
+    let result = compile_package(&Config::default(), &entry);
+    assert!(
+        result.success(),
+        "expected relative local import success, got {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn compile_package_reports_unknown_provider_without_local_fallback() {
+    let dir = temp_dir("unknown-provider");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "sqlite:client" privata client
+incipit {}
+"#,
+    )
+    .expect("write entry");
+
+    let result = compile_package(&Config::default(), &entry);
+    assert!(result.output.is_none());
+    assert!(result.diagnostics.iter().any(|diag| diag
+        .message
+        .contains("unknown library provider `sqlite` in import `sqlite:client`")));
+    assert!(!result.diagnostics.iter().any(|diag| diag
+        .message
+        .contains("only supports local intra-package imports")));
 }
 
 #[test]

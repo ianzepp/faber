@@ -1396,6 +1396,24 @@ fn library_import_binding(
 
 fn library_resolve_diagnostic(file: &Path, err: LibraryResolveError) -> Diagnostic {
     match err {
+        LibraryResolveError::OldBuiltinNormaSpecifier {
+            specifier: _,
+            replacement,
+        } => Diagnostic::error(format!(
+            "built-in Norma imports use provider syntax; write \"{replacement}\""
+        ))
+        .with_file(file.display().to_string()),
+        LibraryResolveError::InvalidProviderSpecifier { specifier, reason } => Diagnostic::error(format!(
+            "invalid library import specifier `{specifier}`: {reason}"
+        ))
+        .with_file(file.display().to_string()),
+        LibraryResolveError::UnknownProvider {
+            specifier,
+            provider,
+        } => Diagnostic::error(format!(
+            "unknown library provider `{provider}` in import `{specifier}`"
+        ))
+        .with_file(file.display().to_string()),
         LibraryResolveError::UnknownBuiltinModule {
             specifier,
             package,
