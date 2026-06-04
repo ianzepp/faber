@@ -267,13 +267,13 @@ pub enum ParamMode {
     Owned,
 
     /// `de`: shared borrow-like parameter mode.
-    Ref,
+    De,
 
     /// `in`: mutable borrow-like parameter mode.
-    MutRef,
+    In,
 
     /// `ex`: explicit move mode.
-    Move,
+    Ex,
 }
 
 /// Function modifiers parsed from declaration syntax.
@@ -412,8 +412,11 @@ pub struct ImportDecl {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Visibility {
-    Private,
-    Public,
+    /// `privata` import visibility marker.
+    Privata,
+
+    /// `publica` import visibility marker.
+    Publica,
 }
 
 /// Parser-level import binding form.
@@ -1215,10 +1218,10 @@ pub struct TypeExpr {
 #[derive(Debug, Clone, Copy)]
 pub enum TypeMode {
     /// `de`: shared reference-like mode.
-    Ref,
+    De,
 
     /// `in`: mutable reference-like mode.
-    MutRef,
+    In,
 }
 
 /// Source-level type syntax.

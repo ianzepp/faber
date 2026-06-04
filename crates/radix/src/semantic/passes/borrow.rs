@@ -251,7 +251,7 @@ impl<'a> BorrowChecker<'a> {
                             if matches!(param.mode, ParamMode::Move) {
                                 arg_usage.passed_ex = true;
                             }
-                            if matches!(arg_usage.mode, HirParamMode::Ref)
+                            if matches!(arg_usage.mode, HirParamMode::De)
                                 && matches!(param.mode, ParamMode::MutRef | ParamMode::Move)
                             {
                                 self.error(
@@ -333,13 +333,13 @@ impl<'a> BorrowChecker<'a> {
 
     fn write_use(&mut self, def_id: DefId, span: crate::lexer::Span) {
         if let Some(usage) = self.param_usage.get_mut(&def_id) {
-            if matches!(usage.mode, HirParamMode::Ref) {
+            if matches!(usage.mode, HirParamMode::De) {
                 self.error(
                     SemanticErrorKind::AssignToImmutableBorrow,
                     "cannot assign to `de` parameter",
                     span,
                 );
-            } else if matches!(usage.mode, HirParamMode::MutRef) {
+            } else if matches!(usage.mode, HirParamMode::In) {
                 usage.mutated = true;
             }
         }
@@ -440,7 +440,7 @@ impl<'a> BorrowChecker<'a> {
         let mut warnings = Vec::new();
         for usage in self.param_usage.values() {
             match usage.mode {
-                HirParamMode::MutRef => {
+                HirParamMode::In => {
                     if !usage.mutated && !usage.passed_in_or_ex {
                         warnings.push(SemanticError::new(
                             SemanticErrorKind::Warning(WarningKind::UnusedMutRefParam),
@@ -449,7 +449,7 @@ impl<'a> BorrowChecker<'a> {
                         ));
                     }
                 }
-                HirParamMode::Move => {
+                HirParamMode::Ex => {
                     if !usage.passed_ex && !usage.returned && !usage.moved {
                         warnings.push(SemanticError::new(
                             SemanticErrorKind::Warning(WarningKind::UnusedMoveParam),
@@ -458,7 +458,7 @@ impl<'a> BorrowChecker<'a> {
                         ));
                     }
                 }
-                HirParamMode::Owned | HirParamMode::Ref => {}
+                HirParamMode::Owned | HirParamMode::De => {}
             }
         }
         self.errors.extend(warnings);

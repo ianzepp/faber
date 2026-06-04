@@ -130,7 +130,7 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                     binding_name.name,
                     binding_name.span,
                     SymbolKind::Param,
-                    param.mode == crate::syntax::ParamMode::MutRef,
+                    param.mode == crate::syntax::ParamMode::In,
                     errors,
                 );
                 if let Some(default) = &param.default {
@@ -187,7 +187,7 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                                 binding_name.name,
                                 binding_name.span,
                                 SymbolKind::Param,
-                                param.mode == crate::syntax::ParamMode::MutRef,
+                                param.mode == crate::syntax::ParamMode::In,
                                 errors,
                             );
                             if let Some(default) = &param.default {
@@ -223,7 +223,7 @@ fn resolve_stmt(resolver: &mut Resolver, interner: &Interner, stmt: &Stmt, error
                         param.name.name,
                         param.name.span,
                         SymbolKind::Param,
-                        param.mode == crate::syntax::ParamMode::MutRef,
+                        param.mode == crate::syntax::ParamMode::In,
                         errors,
                     );
                 }
@@ -1187,8 +1187,8 @@ fn lower_type_expr(
 
     if let Some(mode) = ty.mode {
         let mutability = match mode {
-            crate::syntax::TypeMode::Ref => Mutability::Immutable,
-            crate::syntax::TypeMode::MutRef => Mutability::Mutable,
+            crate::syntax::TypeMode::De => Mutability::Immutable,
+            crate::syntax::TypeMode::In => Mutability::Mutable,
         };
         ty_id = types.reference(mutability, ty_id);
     }

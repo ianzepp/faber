@@ -36,7 +36,7 @@ impl<'a> TypeChecker<'a> {
                 let default_ty = self.check_expr_with_expected(default, Some(param.ty));
                 self.unify(default_ty, param.ty, default.span, "parameter default type mismatch");
             }
-            let mutable = matches!(param.mode, HirParamMode::MutRef);
+            let mutable = matches!(param.mode, HirParamMode::In);
             self.insert_binding(param.def_id, param.ty, mutable);
         }
         if let Some(param) = &func.cli_args {

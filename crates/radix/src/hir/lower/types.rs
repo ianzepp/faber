@@ -109,8 +109,8 @@ impl<'a> Lowerer<'a> {
 
         if let Some(mode) = ty.mode {
             let mutability = match mode {
-                crate::syntax::TypeMode::Ref => Mutability::Immutable,
-                crate::syntax::TypeMode::MutRef => Mutability::Mutable,
+                crate::syntax::TypeMode::De => Mutability::Immutable,
+                crate::syntax::TypeMode::In => Mutability::Mutable,
             };
             ty_id = self.types.reference(mutability, ty_id);
         }

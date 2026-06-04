@@ -340,11 +340,11 @@ impl Parser {
 
             // Mode: de/in/ex (prefix on type)
             let mode = if self.eat_keyword(TokenKind::De) {
-                ParamMode::Ref
+                ParamMode::De
             } else if self.eat_keyword(TokenKind::In) {
-                ParamMode::MutRef
+                ParamMode::In
             } else if self.eat_keyword(TokenKind::Ex) {
-                ParamMode::Move
+                ParamMode::Ex
             } else {
                 ParamMode::Owned
             };
@@ -745,11 +745,11 @@ impl Parser {
         let path = self.parse_string()?;
 
         let visibility = if self.eat_keyword(TokenKind::Privata) {
-            Visibility::Private
+            Visibility::Privata
         } else if self.eat_keyword(TokenKind::Publica) {
-            Visibility::Public
+            Visibility::Publica
         } else {
-            Visibility::Private
+            Visibility::Privata
         };
 
         let kind = if self.eat(&TokenKind::Star) {

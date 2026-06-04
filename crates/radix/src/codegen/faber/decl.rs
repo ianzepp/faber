@@ -88,8 +88,8 @@ impl super::FaberCodegen {
                 self.write_symbol_literal(import.path, interner, w);
                 w.write(" ");
                 w.write(match import.visibility {
-                    crate::syntax::Visibility::Private => "privata",
-                    crate::syntax::Visibility::Public => "publica",
+                    crate::syntax::Visibility::Privata => "privata",
+                    crate::syntax::Visibility::Publica => "publica",
                 });
                 if let Some(item) = import.items.first() {
                     w.write(" ");
@@ -163,9 +163,9 @@ impl super::FaberCodegen {
                 w.write("si ");
             }
             match param.mode {
-                crate::hir::HirParamMode::Ref => w.write("de "),
-                crate::hir::HirParamMode::MutRef => w.write("in "),
-                crate::hir::HirParamMode::Move => w.write("ex "),
+                crate::hir::HirParamMode::De => w.write("de "),
+                crate::hir::HirParamMode::In => w.write("in "),
+                crate::hir::HirParamMode::Ex => w.write("ex "),
                 crate::hir::HirParamMode::Owned => {}
             }
             w.write(&self.type_to_faber(param.ty, types, names, interner));

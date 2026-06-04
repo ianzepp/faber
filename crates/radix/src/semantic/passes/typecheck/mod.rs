@@ -281,9 +281,9 @@ impl<'a> TypeChecker<'a> {
 fn param_mode_from_hir(mode: HirParamMode) -> ParamMode {
     match mode {
         HirParamMode::Owned => ParamMode::Owned,
-        HirParamMode::Ref => ParamMode::Ref,
-        HirParamMode::MutRef => ParamMode::MutRef,
-        HirParamMode::Move => ParamMode::Move,
+        HirParamMode::De => ParamMode::Ref,
+        HirParamMode::In => ParamMode::MutRef,
+        HirParamMode::Ex => ParamMode::Move,
     }
 }
 

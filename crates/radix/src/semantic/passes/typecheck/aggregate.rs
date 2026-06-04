@@ -109,7 +109,7 @@ impl<'a> TypeChecker<'a> {
 
         self.push_scope();
         for (idx, param) in params.iter().enumerate() {
-            let mutable = matches!(param.mode, HirParamMode::MutRef);
+            let mutable = matches!(param.mode, HirParamMode::In);
             if let Some(sig) = &expected_sig {
                 if let Some(expected_param) = sig.params.get(idx) {
                     self.unify(param.ty, expected_param.ty, param.span, "closure parameter type mismatch");

@@ -576,13 +576,13 @@ discretio Resultatus<T> { Ok { T valor }, Err { textus nuntius } }
     assert_eq!(func.params.len(), 3);
     assert!(func.body.is_some());
     assert!(func.params[0].sponte);
-    assert!(matches!(func.params[0].mode, ParamMode::Ref));
+    assert!(matches!(func.params[0].mode, ParamMode::De));
     assert_eq!(
         symbol_name(&result, func.params[0].alias.as_ref().expect("alias").name),
         "alias"
     );
     assert!(func.params[0].default.is_some());
-    assert!(matches!(func.params[1].mode, ParamMode::Move));
+    assert!(matches!(func.params[1].mode, ParamMode::Ex));
     assert!(func.params[2].rest);
     assert_eq!(func.modifiers.len(), 6);
 

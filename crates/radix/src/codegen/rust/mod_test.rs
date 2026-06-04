@@ -862,7 +862,7 @@ fn emits_usage_driven_and_importa_use_statements() {
                 def_id: DefId(10),
                 kind: HirItemKind::Import(HirImport {
                     path,
-                    visibility: Visibility::Private,
+                    visibility: Visibility::Privata,
                     items: vec![HirImportItem { def_id: DefId(11), name, alias: Some(alias_name) }],
                 }),
                 span: span(),

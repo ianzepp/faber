@@ -69,9 +69,9 @@ impl Parser {
 
         // Ownership mode: de/in (prefix). Nullable is no longer a prefix; use T ∪ nihil.
         let mode = if self.eat_keyword(TokenKind::De) {
-            Some(TypeMode::Ref)
+            Some(TypeMode::De)
         } else if self.eat_keyword(TokenKind::In) {
-            Some(TypeMode::MutRef)
+            Some(TypeMode::In)
         } else {
             None
         };

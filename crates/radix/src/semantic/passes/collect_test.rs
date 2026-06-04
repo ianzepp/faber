@@ -131,13 +131,13 @@ fn allows_duplicate_import_module_bindings() {
     let path = interner.intern("helpers");
     let import1 = ImportDecl {
         path,
-        visibility: Visibility::Private,
+        visibility: Visibility::Privata,
         kind: ImportKind::Named { name: ident(&mut interner, "item"), alias: None },
         span: Span::default(),
     };
     let import2 = ImportDecl {
         path,
-        visibility: Visibility::Private,
+        visibility: Visibility::Privata,
         kind: ImportKind::Named { name: ident(&mut interner, "item"), alias: None },
         span: Span::default(),
     };

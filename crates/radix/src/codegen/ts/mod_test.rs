@@ -266,7 +266,7 @@ fn emits_class_interface_import_and_variable_statements() {
                 def_id: DefId(1),
                 kind: HirItemKind::Import(HirImport {
                     path: import_path,
-                    visibility: Visibility::Private,
+                    visibility: Visibility::Privata,
                     items: vec![HirImportItem { def_id: DefId(2), name: import_item, alias: None }],
                 }),
                 span: span(),
@@ -853,7 +853,7 @@ fn translates_norma_methods_and_intrinsics() {
             def_id: DefId(50),
             kind: HirItemKind::Import(HirImport {
                 path: interner.intern("norma/mathesis"),
-                visibility: Visibility::Private,
+                visibility: Visibility::Privata,
                 items: vec![HirImportItem { def_id: DefId(51), name: pavimentum, alias: None }],
             }),
             span: span(),

@@ -74,7 +74,7 @@ fn warns_on_unused_import() {
             def_id: crate::hir::DefId(10),
             kind: HirItemKind::Import(HirImport {
                 path: crate::lexer::Symbol(1),
-                visibility: Visibility::Private,
+                visibility: Visibility::Privata,
                 items: vec![HirImportItem {
                     def_id: crate::hir::DefId(11),
                     name: crate::lexer::Symbol(2),

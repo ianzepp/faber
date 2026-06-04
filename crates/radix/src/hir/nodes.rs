@@ -340,20 +340,23 @@ pub struct HirParam {
     pub span: Span,
 }
 
-/// Parameter passing mode lowered from source markers.
+/// Source ownership/borrowing markers preserved through HIR lowering.
+///
+/// Semantic analysis maps these to [`crate::semantic::ParamMode`] at the
+/// compiler-shaped boundary.
 #[derive(Debug, Clone, Copy)]
 pub enum HirParamMode {
-    /// Value is passed by ownership/value semantics.
+    /// Default value-passing mode when no ownership marker is written.
     Owned,
 
-    /// Shared reference parameter.
-    Ref,
+    /// `de`: shared reference parameter.
+    De,
 
-    /// Mutable reference parameter.
-    MutRef,
+    /// `in`: mutable reference parameter.
+    In,
 
-    /// Explicit move parameter.
-    Move,
+    /// `ex`: explicit move parameter.
+    Ex,
 }
 
 /// Product type declaration with fields, methods, and declared relationships.

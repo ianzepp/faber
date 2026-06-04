@@ -1,6 +1,6 @@
 # Compiler Naming Boundary Factory Plan
 
-**Status**: planned  
+**Status**: complete  
 **Created**: 2026-06-04  
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`  
 **Factory Artifact Dir**: `docs/factory/naming-boundary/`  

@@ -52,9 +52,9 @@ fn error_expr(lowerer: &mut Lowerer, span: Span) -> HirExpr {
 fn lower_param_mode(mode: crate::syntax::ParamMode) -> HirParamMode {
     match mode {
         crate::syntax::ParamMode::Owned => HirParamMode::Owned,
-        crate::syntax::ParamMode::Ref => HirParamMode::Ref,
-        crate::syntax::ParamMode::MutRef => HirParamMode::MutRef,
-        crate::syntax::ParamMode::Move => HirParamMode::Move,
+        crate::syntax::ParamMode::De => HirParamMode::De,
+        crate::syntax::ParamMode::In => HirParamMode::In,
+        crate::syntax::ParamMode::Ex => HirParamMode::Ex,
     }
 }
 
