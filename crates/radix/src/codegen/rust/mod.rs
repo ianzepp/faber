@@ -45,7 +45,9 @@ mod type_shape;
 mod types;
 
 use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
-use crate::hir::{DefId, HirExpr, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier};
+use crate::hir::{
+    DefId, HirExpr, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier, LibraryRegistry,
+};
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::{Type, TypeId, TypeTable};
 use crate::RustOutput;
@@ -176,6 +178,9 @@ pub struct RustCodegen<'a> {
     /// Rust traits. Codegen records exact-shape matches here so type rendering
     /// can name concrete runtime structs without guessing from unresolved names.
     runtime_interfaces: FxHashMap<DefId, RuntimeInterfaceInfo>,
+
+    /// Target-neutral library provenance supplied by package analysis.
+    libraries: LibraryRegistry,
 }
 
 impl<'a> RustCodegen<'a> {
@@ -186,6 +191,15 @@ impl<'a> RustCodegen<'a> {
     pub fn new_with_test_selection(
         hir: &'a HirProgram,
         interner: &'a Interner,
+        test_selection: Option<TestSelection>,
+    ) -> Self {
+        Self::new_with_library_registry_and_test_selection(hir, interner, &LibraryRegistry::default(), test_selection)
+    }
+
+    pub fn new_with_library_registry_and_test_selection(
+        hir: &'a HirProgram,
+        interner: &'a Interner,
+        libraries: &LibraryRegistry,
         test_selection: Option<TestSelection>,
     ) -> Self {
         let mut codegen = Self {
@@ -202,6 +216,7 @@ impl<'a> RustCodegen<'a> {
             option_param_defs: FxHashSet::default(),
             variant_info: FxHashMap::default(),
             runtime_interfaces: FxHashMap::default(),
+            libraries: libraries.clone(),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen.test_selection = Some(TestSelectionState {
@@ -448,6 +463,7 @@ impl<'a> RustCodegen<'a> {
                 continue;
             };
 
+            let _library_item = self.libraries.items.get(&item.def_id);
             let Some(info) = self.http_runtime_interface_info(interface) else {
                 continue;
             };
@@ -857,8 +873,25 @@ pub fn generate_module_with_test_selection(
     interner: &Interner,
     test_selection: Option<TestSelection>,
 ) -> Result<RustOutput, CodegenError> {
+    generate_module_with_library_registry_and_test_selection(
+        hir,
+        types,
+        interner,
+        &LibraryRegistry::default(),
+        test_selection,
+    )
+}
+
+pub fn generate_module_with_library_registry_and_test_selection(
+    hir: &HirProgram,
+    types: &TypeTable,
+    interner: &Interner,
+    libraries: &LibraryRegistry,
+    test_selection: Option<TestSelection>,
+) -> Result<RustOutput, CodegenError> {
     super::reject_hir_errors(hir)?;
-    RustCodegen::new_with_test_selection(hir, interner, test_selection).generate_output(hir, types, true, None)
+    RustCodegen::new_with_library_registry_and_test_selection(hir, interner, libraries, test_selection)
+        .generate_output(hir, types, true, None)
 }
 
 pub fn generate_module_with_cli(
@@ -882,8 +915,26 @@ pub fn generate_module_with_cli_and_test_selection(
     cli_program: &crate::cli::CliProgram,
     test_selection: Option<TestSelection>,
 ) -> Result<RustOutput, CodegenError> {
+    generate_module_with_cli_library_registry_and_test_selection(
+        hir,
+        types,
+        interner,
+        cli_program,
+        &LibraryRegistry::default(),
+        test_selection,
+    )
+}
+
+pub fn generate_module_with_cli_library_registry_and_test_selection(
+    hir: &HirProgram,
+    types: &TypeTable,
+    interner: &Interner,
+    cli_program: &crate::cli::CliProgram,
+    libraries: &LibraryRegistry,
+    test_selection: Option<TestSelection>,
+) -> Result<RustOutput, CodegenError> {
     super::reject_hir_errors(hir)?;
-    RustCodegen::new_with_test_selection(hir, interner, test_selection).generate_output(
+    RustCodegen::new_with_library_registry_and_test_selection(hir, interner, libraries, test_selection).generate_output(
         hir,
         types,
         true,

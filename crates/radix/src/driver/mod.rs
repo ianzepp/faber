@@ -34,7 +34,7 @@ pub use source::SourceFile;
 
 use crate::codegen::{self, Target};
 use crate::diagnostics::{Diagnostic, DiagnosticPhase};
-use crate::hir::HirProgram;
+use crate::hir::{HirProgram, LibraryRegistry};
 use crate::lexer;
 use crate::lexer::Interner;
 use crate::parser;
@@ -242,6 +242,9 @@ pub struct AnalyzedUnit {
     /// Runnable CLI contract discovered from source or supplied by package mode.
     pub cli_program: Option<crate::cli::CliProgram>,
 
+    /// Target-neutral provenance for library imports and imported declarations.
+    pub libraries: LibraryRegistry,
+
     /// Warnings and informational diagnostics accumulated before codegen.
     pub diagnostics: Vec<Diagnostic>,
 }
@@ -342,6 +345,7 @@ pub fn analyze_source_with_cli_program(
         interner,
         types: semantic_result.types,
         cli_program,
+        libraries: LibraryRegistry::default(),
         hir: match semantic_result.hir {
             Some(hir) => hir,
             None => {

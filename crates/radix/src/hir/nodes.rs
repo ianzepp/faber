@@ -28,6 +28,7 @@
 
 use crate::lexer::{Span, Symbol};
 use crate::semantic::TypeId;
+use rustc_hash::FxHashMap;
 
 /// Stable identity for a named semantic definition.
 ///
@@ -59,6 +60,84 @@ pub struct HirProgram {
 
     /// Executable entry block from `incipit` or package-level statements.
     pub entry: Option<HirBlock>,
+}
+
+/// Provider identity for an imported library module.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum LibraryProvider {
+    /// The built-in Norma standard library bundled with Faber.
+    BuiltinNorma,
+
+    /// Reserved shape for future package-backed providers.
+    Package(String),
+}
+
+/// Target-neutral identity of a resolved library import.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct LibraryIdentity {
+    /// Provider namespace selected by the source import.
+    pub provider: LibraryProvider,
+
+    /// Module path inside the provider.
+    pub module_path: Vec<String>,
+}
+
+/// Kind of declaration imported from a library interface.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LibraryItemKind {
+    /// Behavioral contract imported from a `pactum`.
+    Interface,
+
+    /// Callable declaration imported from a `functio`.
+    Function,
+
+    /// Type alias imported from an `alias`.
+    TypeAlias,
+
+    /// Product type imported from a `genus`.
+    Struct,
+
+    /// Sum type imported from an enum-like declaration.
+    Enum,
+
+    /// Constant imported from a top-level constant declaration.
+    Const,
+}
+
+/// Provenance for a local binding introduced by a library import.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LibraryBinding {
+    /// Local binding definition.
+    pub local_def_id: DefId,
+
+    /// Provider/module identity.
+    pub identity: LibraryIdentity,
+}
+
+/// Provenance for a declaration imported from a library interface.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LibraryItem {
+    /// Definition of the imported declaration in this source unit.
+    pub def_id: DefId,
+
+    /// Provider/module identity.
+    pub identity: LibraryIdentity,
+
+    /// Exported library name before local aliasing.
+    pub exported_name: String,
+
+    /// Imported declaration kind.
+    pub kind: LibraryItemKind,
+}
+
+/// Side table carrying library provenance across analysis and codegen.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct LibraryRegistry {
+    /// Imported module bindings keyed by their local `DefId`.
+    pub bindings: FxHashMap<DefId, LibraryBinding>,
+
+    /// Imported library declarations keyed by their own `DefId`.
+    pub items: FxHashMap<DefId, LibraryItem>,
 }
 
 /// Top-level declaration with shared identity and diagnostic context.

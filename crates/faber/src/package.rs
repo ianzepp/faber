@@ -31,6 +31,9 @@ use radix::codegen::rust::TestSelection as RustTestSelection;
 use radix::codegen::Target;
 use radix::diagnostics::Diagnostic;
 use radix::driver::{analyze_source_with_cli_program, Config, Session};
+use radix::hir::{
+    HirItemKind, LibraryBinding, LibraryIdentity, LibraryItem, LibraryItemKind, LibraryProvider,
+};
 use radix::lexer::{Interner, Span, TokenKind};
 use radix::parser;
 use radix::syntax::{AnnotationKind, ImportDecl, ImportKind, Program, StmtKind};
@@ -274,6 +277,12 @@ struct LibraryImportBinding {
     module: ResolvedLibraryModule,
 }
 
+struct LibraryInterfaceItem {
+    exported_name: String,
+    local_name: String,
+    kind: LibraryItemKind,
+}
+
 type PackageDiscoveryResult = Result<PackageSpec, Box<Diagnostic>>;
 
 /// Compile a package source graph into one backend output.
@@ -369,6 +378,10 @@ fn compile_package_internal(
                 continue;
             }
         };
+        if let Err(diag) = attach_library_provenance(&mut analysis, &file.library_imports) {
+            diagnostics.push(diag);
+            continue;
+        }
 
         let is_entry = file.path == spec.entry;
         if !is_entry {
@@ -439,21 +452,25 @@ fn generate_rust_code_for_analysis(
 ) -> Result<String, radix::codegen::CodegenError> {
     if is_entry {
         if let Some(cli_program) = analysis.cli_program.as_ref() {
-            let codegen = radix::codegen::rust::RustCodegen::new_with_test_selection(
-                &analysis.hir,
-                &analysis.interner,
-                test_selection.cloned(),
-            );
+            let codegen =
+                radix::codegen::rust::RustCodegen::new_with_library_registry_and_test_selection(
+                    &analysis.hir,
+                    &analysis.interner,
+                    &analysis.libraries,
+                    test_selection.cloned(),
+                );
             return codegen
                 .generate_cli(&analysis.hir, &analysis.types, cli_program)
                 .map(|output| output.code);
         }
 
-        let codegen = radix::codegen::rust::RustCodegen::new_with_test_selection(
-            &analysis.hir,
-            &analysis.interner,
-            test_selection.cloned(),
-        );
+        let codegen =
+            radix::codegen::rust::RustCodegen::new_with_library_registry_and_test_selection(
+                &analysis.hir,
+                &analysis.interner,
+                &analysis.libraries,
+                test_selection.cloned(),
+            );
         return radix::codegen::Codegen::generate(
             &codegen,
             &analysis.hir,
@@ -464,20 +481,22 @@ fn generate_rust_code_for_analysis(
     }
 
     if let Some(cli_program) = analysis.cli_program.as_ref() {
-        return radix::codegen::rust::generate_module_with_cli_and_test_selection(
+        return radix::codegen::rust::generate_module_with_cli_library_registry_and_test_selection(
             &analysis.hir,
             &analysis.types,
             &analysis.interner,
             cli_program,
+            &analysis.libraries,
             test_selection.cloned(),
         )
         .map(|output| output.code);
     }
 
-    radix::codegen::rust::generate_module_with_test_selection(
+    radix::codegen::rust::generate_module_with_library_registry_and_test_selection(
         &analysis.hir,
         &analysis.types,
         &analysis.interner,
+        &analysis.libraries,
         test_selection.cloned(),
     )
     .map(|output| output.code)
@@ -528,7 +547,12 @@ pub fn check_package(config: &Config, input: &Path) -> Vec<Diagnostic> {
             &analysis_source,
             file_cli,
         ) {
-            Ok(analysis) => diagnostics.extend(analysis.diagnostics),
+            Ok(mut analysis) => {
+                match attach_library_provenance(&mut analysis, &file.library_imports) {
+                    Ok(()) => diagnostics.extend(analysis.diagnostics),
+                    Err(diag) => diagnostics.push(diag),
+                }
+            }
             Err(file_diagnostics) => diagnostics.extend(file_diagnostics),
         }
     }
@@ -850,6 +874,192 @@ fn library_interface_source(import: &LibraryImportBinding) -> Result<String, Dia
     let source = fs::read_to_string(&import.module.interface_path)
         .map_err(|err| Diagnostic::io_error(&import.module.interface_path, err))?;
     rename_library_interface(&source, import)
+}
+
+#[allow(clippy::result_large_err)]
+fn attach_library_provenance(
+    analysis: &mut radix::driver::AnalyzedUnit,
+    imports: &[LibraryImportBinding],
+) -> Result<(), Diagnostic> {
+    if imports.is_empty() {
+        return Ok(());
+    }
+
+    let hir_items = analysis
+        .hir
+        .items
+        .iter()
+        .filter_map(|item| {
+            hir_item_name_and_kind(item, &analysis.interner)
+                .map(|(name, kind)| (name, kind, item.def_id))
+        })
+        .collect::<Vec<_>>();
+
+    for import in imports {
+        let identity = library_identity(&import.module);
+        let interface_items = library_interface_items(import)?;
+
+        let Some((_, _, binding_def_id)) = hir_items
+            .iter()
+            .find(|(name, _, _)| name.as_str() == import.binding)
+        else {
+            return Err(Diagnostic::error(format!(
+                "library import `{}` did not produce binding `{}` in analyzed HIR",
+                import.module.package, import.binding
+            ))
+            .with_span(import.import_span));
+        };
+
+        analysis.libraries.bindings.insert(
+            *binding_def_id,
+            LibraryBinding {
+                local_def_id: *binding_def_id,
+                identity: identity.clone(),
+            },
+        );
+
+        for interface_item in interface_items {
+            let Some((_, _, def_id)) = hir_items.iter().find(|(name, kind, _)| {
+                name == &interface_item.local_name && kind == &interface_item.kind
+            }) else {
+                return Err(Diagnostic::error(format!(
+                    "library import `{}` did not produce item `{}` in analyzed HIR",
+                    import.module.package, interface_item.local_name
+                ))
+                .with_span(import.import_span));
+            };
+
+            analysis.libraries.items.insert(
+                *def_id,
+                LibraryItem {
+                    def_id: *def_id,
+                    identity: identity.clone(),
+                    exported_name: interface_item.exported_name,
+                    kind: interface_item.kind,
+                },
+            );
+        }
+    }
+
+    Ok(())
+}
+
+fn library_identity(module: &ResolvedLibraryModule) -> LibraryIdentity {
+    let provider = if module.package == "norma"
+        && module.provider == crate::library::LibraryProviderKind::Builtin
+    {
+        LibraryProvider::BuiltinNorma
+    } else {
+        LibraryProvider::Package(module.package.clone())
+    };
+    LibraryIdentity {
+        provider,
+        module_path: module.module_path.clone(),
+    }
+}
+
+#[allow(clippy::result_large_err)]
+fn library_interface_items(
+    import: &LibraryImportBinding,
+) -> Result<Vec<LibraryInterfaceItem>, Diagnostic> {
+    let source = fs::read_to_string(&import.module.interface_path)
+        .map_err(|err| Diagnostic::io_error(&import.module.interface_path, err))?;
+    let parse = parser::parse(radix::lexer::lex(&source));
+    if !parse.success() {
+        let mut message = format!(
+            "library interface `{}` failed to parse",
+            import.module.interface_path.display()
+        );
+        if let Some(err) = parse.errors.first() {
+            message.push_str(&format!(": {}", err.message));
+        }
+        return Err(Diagnostic::error(message)
+            .with_file(import.module.interface_path.display().to_string()));
+    }
+
+    let Some(program) = parse.program else {
+        return Err(
+            Diagnostic::error("successful library interface parse result missing program")
+                .with_file(import.module.interface_path.display().to_string()),
+        );
+    };
+
+    let module_name = import.module.module_name().unwrap_or_default();
+    let items = program
+        .stmts
+        .iter()
+        .filter_map(|stmt| {
+            library_interface_item(stmt, &parse.interner, module_name, &import.binding)
+        })
+        .collect::<Vec<_>>();
+    Ok(items)
+}
+
+fn library_interface_item(
+    stmt: &radix::syntax::Stmt,
+    interner: &Interner,
+    module_name: &str,
+    binding: &str,
+) -> Option<LibraryInterfaceItem> {
+    let (name, kind) = match &stmt.kind {
+        StmtKind::Interface(interface) => (
+            interner.resolve(interface.name.name),
+            LibraryItemKind::Interface,
+        ),
+        StmtKind::Func(func) => (interner.resolve(func.name.name), LibraryItemKind::Function),
+        StmtKind::TypeAlias(alias) => (
+            interner.resolve(alias.name.name),
+            LibraryItemKind::TypeAlias,
+        ),
+        StmtKind::Class(class) => (interner.resolve(class.name.name), LibraryItemKind::Struct),
+        StmtKind::Enum(enm) => (interner.resolve(enm.name.name), LibraryItemKind::Enum),
+        StmtKind::Union(union) => (interner.resolve(union.name.name), LibraryItemKind::Enum),
+        StmtKind::Var(var) => {
+            let radix::syntax::BindingPattern::Ident(ident) = &var.binding else {
+                return None;
+            };
+            (interner.resolve(ident.name), LibraryItemKind::Const)
+        }
+        _ => return None,
+    };
+    let local_name = if name == module_name { binding } else { name };
+    Some(LibraryInterfaceItem {
+        exported_name: name.to_owned(),
+        local_name: local_name.to_owned(),
+        kind,
+    })
+}
+
+fn hir_item_name_and_kind(
+    item: &radix::hir::HirItem,
+    interner: &Interner,
+) -> Option<(String, LibraryItemKind)> {
+    match &item.kind {
+        HirItemKind::Interface(interface) => Some((
+            interner.resolve(interface.name).to_owned(),
+            LibraryItemKind::Interface,
+        )),
+        HirItemKind::Function(func) => Some((
+            interner.resolve(func.name).to_owned(),
+            LibraryItemKind::Function,
+        )),
+        HirItemKind::TypeAlias(alias) => Some((
+            interner.resolve(alias.name).to_owned(),
+            LibraryItemKind::TypeAlias,
+        )),
+        HirItemKind::Struct(strukt) => Some((
+            interner.resolve(strukt.name).to_owned(),
+            LibraryItemKind::Struct,
+        )),
+        HirItemKind::Enum(enm) => {
+            Some((interner.resolve(enm.name).to_owned(), LibraryItemKind::Enum))
+        }
+        HirItemKind::Const(konst) => Some((
+            interner.resolve(konst.name).to_owned(),
+            LibraryItemKind::Const,
+        )),
+        HirItemKind::Import(_) => None,
+    }
 }
 
 #[allow(clippy::result_large_err)]

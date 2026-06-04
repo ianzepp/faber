@@ -1,10 +1,13 @@
 use super::{
-    check_package, compile_package, discover_build_layout, emit_generated_crate,
-    invoke_cargo_build, read_manifest, sanitize_crate_name, BuildLayout,
+    analysis_source_for_file, attach_library_provenance, check_package, compile_package,
+    discover_build_layout, discover_package, emit_generated_crate, invoke_cargo_build,
+    library_resolver_from_config, load_package, read_manifest, sanitize_crate_name, BuildLayout,
 };
 use crate::library::{LibraryProviderKind, LibraryResolver, ResolvedLibraryModule};
 use radix::diagnostics::Diagnostic;
 use radix::driver::Config;
+use radix::driver::{analyze_source_with_cli_program, Session};
+use radix::hir::{HirItemKind, LibraryItemKind, LibraryProvider};
 use radix::Output;
 use std::fs;
 use std::io::{Read, Write};
@@ -389,6 +392,78 @@ incipit {}
     assert!(!result.diagnostics.iter().any(|diag| diag
         .message
         .contains("only supports local intra-package imports")));
+}
+
+#[test]
+fn aliased_norma_import_preserves_provider_identity_in_analysis() {
+    let dir = temp_dir("aliased-norma-provider");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "norma:hal/http" privata http ut rete
+
+incipit {
+  fixum _ responsum ← cede rete.petet("http://127.0.0.1:9")
+}
+"#,
+    )
+    .expect("write entry");
+
+    let config = Config::default();
+    let spec = discover_package(&entry).expect("package");
+    let resolver = library_resolver_from_config(&config);
+    let files = load_package(&spec, &resolver).expect("load package");
+    let file = files
+        .iter()
+        .find(|file| file.path == entry)
+        .expect("entry file");
+    let source = analysis_source_for_file(file).expect("analysis source");
+    let session = Session::new(config);
+    let mut analysis =
+        analyze_source_with_cli_program(&session, &entry.display().to_string(), &source, None)
+            .expect("analysis");
+    attach_library_provenance(&mut analysis, &file.library_imports).expect("provenance");
+
+    let rete = analysis
+        .hir
+        .items
+        .iter()
+        .find_map(|item| {
+            let HirItemKind::Interface(interface) = &item.kind else {
+                return None;
+            };
+            (analysis.interner.resolve(interface.name) == "rete").then_some(item.def_id)
+        })
+        .expect("rete interface");
+    let binding = analysis
+        .libraries
+        .bindings
+        .get(&rete)
+        .expect("rete binding provenance");
+    assert_eq!(binding.identity.provider, LibraryProvider::BuiltinNorma);
+    assert_eq!(binding.identity.module_path, vec!["hal", "http"]);
+
+    let replicatio = analysis
+        .hir
+        .items
+        .iter()
+        .find_map(|item| {
+            let HirItemKind::Interface(interface) = &item.kind else {
+                return None;
+            };
+            (analysis.interner.resolve(interface.name) == "Replicatio").then_some(item.def_id)
+        })
+        .expect("Replicatio interface");
+    let item = analysis
+        .libraries
+        .items
+        .get(&replicatio)
+        .expect("Replicatio item provenance");
+    assert_eq!(item.identity.provider, LibraryProvider::BuiltinNorma);
+    assert_eq!(item.identity.module_path, vec!["hal", "http"]);
+    assert_eq!(item.exported_name, "Replicatio");
+    assert_eq!(item.kind, LibraryItemKind::Interface);
 }
 
 #[test]

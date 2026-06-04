@@ -40,5 +40,6 @@ pub use nodes::{
     HirInterface, HirInterfaceMethod, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirMethod,
     HirNonNullKind, HirObjectField, HirObjectKey, HirOptionalChainKind, HirParam, HirParamMode, HirPattern, HirProgram,
     HirRangeKind, HirReceiver, HirRefKind, HirScribeKind, HirStmt, HirStmtKind, HirStruct, HirTestMetadata,
-    HirTestModifier, HirTypeAlias, HirTypeParam, HirUnOp, HirVariant, HirVariantField,
+    HirTestModifier, HirTypeAlias, HirTypeParam, HirUnOp, HirVariant, HirVariantField, LibraryBinding, LibraryIdentity,
+    LibraryItem, LibraryItemKind, LibraryProvider, LibraryRegistry,
 };
