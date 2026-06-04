@@ -511,63 +511,6 @@ fn llvm_text_target_emits_value_returning_runtime_calls() {
             MirTemp { id: MirTempId(0), ty: number, span: span() },
             MirTemp { id: MirTempId(1), ty: text, span: span() },
             MirTemp { id: MirTempId(2), ty: number, span: span() },
-        ],
-        vec![
-            MirStmt {
-                kind: MirStmtKind::RuntimeCall {
-                    destination: Some(MirPlace::temp(MirTempId(0))),
-                    call: MirRuntimeCall {
-                        intrinsic: MirIntrinsic::Convert(MirConversion {
-                            flavor: MirConversionFlavor::Runtime,
-                            target_ty: number,
-                            params: Vec::new(),
-                            fallback: None,
-                        }),
-                        args: vec![MirOperand::Constant(MirConstant::String(crate::lexer::Symbol(10)))],
-                        return_ty: number,
-                    },
-                },
-                span: span(),
-            },
-            MirStmt {
-                kind: MirStmtKind::RuntimeCall {
-                    destination: Some(MirPlace::temp(MirTempId(1))),
-                    call: MirRuntimeCall {
-                        intrinsic: MirIntrinsic::FormatString { template: crate::lexer::Symbol(11) },
-                        args: vec![MirOperand::Temp(MirTempId(0))],
-                        return_ty: text,
-                    },
-                },
-                span: span(),
-            },
-            MirStmt {
-                kind: MirStmtKind::RuntimeCall {
-                    destination: Some(MirPlace::temp(MirTempId(2))),
-                    call: MirRuntimeCall {
-                        intrinsic: MirIntrinsic::Collection(MirCollectionOp::Length),
-                        args: vec![MirOperand::Constant(MirConstant::Nil)],
-                        return_ty: number,
-                    },
-                },
-                span: span(),
-            },
-        ],
-        MirTerminatorKind::Return(None),
-        &types,
-    );
-
-    let error = emit_llvm_text_probe(&program, &types, &Interner::new())
-        .expect_err("nil constants remain unsupported before nullable layout");
-    assert!(error
-        .message
-        .contains("MIR-to-LLVM unsupported: nil constant"));
-
-    let program = runtime_stmt_program(
-        Vec::new(),
-        vec![
-            MirTemp { id: MirTempId(0), ty: number, span: span() },
-            MirTemp { id: MirTempId(1), ty: text, span: span() },
-            MirTemp { id: MirTempId(2), ty: number, span: span() },
             MirTemp { id: MirTempId(3), ty: list, span: span() },
         ],
         vec![
@@ -624,6 +567,182 @@ fn llvm_text_target_emits_value_returning_runtime_calls() {
     assert!(output.contains("store ptr %rtcall"));
     assert!(output.contains("call i64 @__faber_runtime_length_1_ptr_to_i64"));
     assert!(output.contains("store i64 %rtcall"));
+}
+
+#[test]
+fn llvm_text_target_emits_nil_as_null_handle() {
+    let types = TypeTable::new();
+    let number = ty(&types, Primitive::Numerus);
+    let program = runtime_stmt_program(
+        Vec::new(),
+        vec![MirTemp { id: MirTempId(0), ty: number, span: span() }],
+        vec![MirStmt {
+            kind: MirStmtKind::RuntimeCall {
+                destination: Some(MirPlace::temp(MirTempId(0))),
+                call: MirRuntimeCall {
+                    intrinsic: MirIntrinsic::Collection(MirCollectionOp::Length),
+                    args: vec![MirOperand::Constant(MirConstant::Nil)],
+                    return_ty: number,
+                },
+            },
+            span: span(),
+        }],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("nil handle emits");
+
+    assert!(output.contains("call i64 @__faber_runtime_length_1_ptr_to_i64(ptr null)"));
+}
+
+#[test]
+fn llvm_text_target_emits_scalar_option_helpers() {
+    let mut types = TypeTable::new();
+    let number = ty(&types, Primitive::Numerus);
+    let boolean = ty(&types, Primitive::Bivalens);
+    let option_number = MirType::semantic(types.option(types.primitive(Primitive::Numerus)));
+    let program = runtime_stmt_program(
+        Vec::new(),
+        vec![
+            MirTemp { id: MirTempId(0), ty: option_number, span: span() },
+            MirTemp { id: MirTempId(1), ty: option_number, span: span() },
+            MirTemp { id: MirTempId(2), ty: boolean, span: span() },
+            MirTemp { id: MirTempId(3), ty: boolean, span: span() },
+            MirTemp { id: MirTempId(4), ty: number, span: span() },
+            MirTemp { id: MirTempId(5), ty: number, span: span() },
+        ],
+        vec![
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace::temp(MirTempId(0)),
+                    value: MirValue {
+                        id: MirValueId(0),
+                        kind: MirValueKind::Option(MirOptionOp::None),
+                        ty: option_number,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace::temp(MirTempId(1)),
+                    value: MirValue {
+                        id: MirValueId(1),
+                        kind: MirValueKind::Option(MirOptionOp::Some(MirOperand::Constant(MirConstant::Int(7)))),
+                        ty: option_number,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace::temp(MirTempId(2)),
+                    value: MirValue {
+                        id: MirValueId(2),
+                        kind: MirValueKind::Option(MirOptionOp::IsNil(MirOperand::Temp(MirTempId(0)))),
+                        ty: boolean,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace::temp(MirTempId(3)),
+                    value: MirValue {
+                        id: MirValueId(3),
+                        kind: MirValueKind::Option(MirOptionOp::IsNonNil(MirOperand::Temp(MirTempId(1)))),
+                        ty: boolean,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace::temp(MirTempId(4)),
+                    value: MirValue {
+                        id: MirValueId(4),
+                        kind: MirValueKind::Option(MirOptionOp::Unwrap {
+                            value: MirOperand::Temp(MirTempId(1)),
+                            mode: MirOptionUnwrapMode::Assert,
+                        }),
+                        ty: number,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace::temp(MirTempId(5)),
+                    value: MirValue {
+                        id: MirValueId(5),
+                        kind: MirValueKind::Option(MirOptionOp::Coalesce {
+                            value: MirOperand::Temp(MirTempId(0)),
+                            fallback: MirOperand::Constant(MirConstant::Int(9)),
+                        }),
+                        ty: number,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+        ],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("scalar option helpers emit");
+
+    assert!(output.contains("declare ptr @__faber_option_none_i64()"));
+    assert!(output.contains("declare ptr @__faber_option_some_i64(i64)"));
+    assert!(output.contains("declare i1 @__faber_option_is_nil(ptr)"));
+    assert!(output.contains("declare i1 @__faber_option_is_non_nil(ptr)"));
+    assert!(output.contains("declare i64 @__faber_option_unwrap_i64(ptr)"));
+    assert!(output.contains("declare i64 @__faber_option_coalesce_i64(ptr, i64)"));
+    assert!(output.contains("call ptr @__faber_option_none_i64()"));
+    assert!(output.contains("call ptr @__faber_option_some_i64(i64 7)"));
+    assert!(output.contains("call i1 @__faber_option_is_nil(ptr %load"));
+    assert!(output.contains("call i1 @__faber_option_is_non_nil(ptr %load"));
+    assert!(output.contains("call i64 @__faber_option_unwrap_i64(ptr %load"));
+    assert!(output.contains("call i64 @__faber_option_coalesce_i64(ptr %load"));
+}
+
+#[test]
+fn llvm_text_target_rejects_option_chain() {
+    let mut types = TypeTable::new();
+    let option_text = MirType::semantic(types.option(types.primitive(Primitive::Textus)));
+    let program = runtime_stmt_program(
+        Vec::new(),
+        vec![
+            MirTemp { id: MirTempId(0), ty: option_text, span: span() },
+            MirTemp { id: MirTempId(1), ty: option_text, span: span() },
+        ],
+        vec![MirStmt {
+            kind: MirStmtKind::Assign {
+                place: MirPlace::temp(MirTempId(1)),
+                value: MirValue {
+                    id: MirValueId(0),
+                    kind: MirValueKind::Option(MirOptionOp::Chain {
+                        base: MirOperand::Temp(MirTempId(0)),
+                        link: MirOptionChainLink::Index(MirOperand::Constant(MirConstant::Int(0))),
+                    }),
+                    ty: option_text,
+                    span: span(),
+                },
+            },
+            span: span(),
+        }],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+    let error = emit_llvm_text_probe(&program, &types, &Interner::new()).expect_err("option chain remains deferred");
+
+    assert!(error
+        .message
+        .contains("MIR-to-LLVM unsupported: option chain value"));
 }
 
 #[test]

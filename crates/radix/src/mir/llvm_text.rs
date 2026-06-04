@@ -218,7 +218,7 @@ impl LlvmProbe<'_> {
                 });
                 dest
             }
-            MirValueKind::Option(_) => return Err(MirLlvmTextProbeError::unsupported("option value")),
+            MirValueKind::Option(op) => self.option_expr(op, value.ty, context, writer)?,
         };
         context.values.insert(value.id, expr.clone());
         context.value_tys.insert(value.id, value.ty);
@@ -253,6 +253,52 @@ impl LlvmProbe<'_> {
             ));
         });
         self.store_place(destination, &dest, context, writer)
+    }
+
+    fn option_expr(
+        &self,
+        op: &MirOptionOp,
+        result_ty: MirType,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<String, MirLlvmTextProbeError> {
+        let declaration = self.option_declaration(op, result_ty, context)?;
+        let mut rendered_args = Vec::new();
+        match op {
+            MirOptionOp::None => {}
+            MirOptionOp::Some(value) => {
+                let ty = self.llvm_ty(self.operand_ty(value, context)?)?;
+                let value = self.operand(value, context, writer)?;
+                rendered_args.push(format!("{ty} {value}"));
+            }
+            MirOptionOp::IsNil(value) | MirOptionOp::IsNonNil(value) => {
+                let value = self.operand(value, context, writer)?;
+                rendered_args.push(format!("ptr {value}"));
+            }
+            MirOptionOp::Unwrap { value, .. } => {
+                let value = self.operand(value, context, writer)?;
+                rendered_args.push(format!("ptr {value}"));
+            }
+            MirOptionOp::Coalesce { value, fallback } => {
+                let value = self.operand(value, context, writer)?;
+                let fallback_ty = self.llvm_ty(self.operand_ty(fallback, context)?)?;
+                let fallback = self.operand(fallback, context, writer)?;
+                rendered_args.push(format!("ptr {value}"));
+                rendered_args.push(format!("{fallback_ty} {fallback}"));
+            }
+            MirOptionOp::Chain { .. } => return Err(MirLlvmTextProbeError::unsupported("option chain value")),
+        }
+        let dest = format!("%opt{}", context.load_counter);
+        context.load_counter += 1;
+        writer.indented(|writer| {
+            writer.writeln(&format!(
+                "  {dest} = call {} @{}({})",
+                declaration.return_ty,
+                declaration.symbol,
+                rendered_args.join(", ")
+            ));
+        });
+        Ok(dest)
     }
 
     fn emit_call(
@@ -504,7 +550,7 @@ impl LlvmProbe<'_> {
             MirConstant::Unit => Ok("0".to_owned()),
             MirConstant::Float(value) => Ok(format_float(*value)),
             MirConstant::String(symbol) => Ok(format!("inttoptr (i64 {} to ptr)", symbol.0)),
-            MirConstant::Nil => Err(MirLlvmTextProbeError::unsupported("nil constant")),
+            MirConstant::Nil => Ok("null".to_owned()),
         }
     }
 
@@ -515,7 +561,7 @@ impl LlvmProbe<'_> {
             MirConstant::Bool(_) => Primitive::Bivalens,
             MirConstant::Unit => Primitive::Vacuum,
             MirConstant::String(_) => Primitive::Textus,
-            MirConstant::Nil => return Err(MirLlvmTextProbeError::unsupported("nil constant")),
+            MirConstant::Nil => Primitive::Nihil,
         };
         Ok(MirType::semantic(self.types.primitive(primitive)))
     }
@@ -653,6 +699,7 @@ impl LlvmProbe<'_> {
                     match &stmt.kind {
                         MirStmtKind::Assign { place, value } => {
                             self.collect_value_projection_declarations(value, &context, &mut declarations)?;
+                            self.collect_value_option_declarations(value, &context, &mut declarations)?;
                             self.collect_place_projection_set_declaration(place, &context, &mut declarations)?;
                             context.value_tys.insert(value.id, value.ty);
                         }
@@ -730,6 +777,19 @@ impl LlvmProbe<'_> {
         }
     }
 
+    fn collect_value_option_declarations(
+        &self,
+        value: &MirValue,
+        context: &FunctionContext,
+        declarations: &mut BTreeMap<String, ExternalDecl>,
+    ) -> Result<(), MirLlvmTextProbeError> {
+        if let MirValueKind::Option(op) = &value.kind {
+            let declaration = self.option_declaration(op, value.ty, context)?;
+            declarations.insert(declaration.symbol.clone(), declaration);
+        }
+        Ok(())
+    }
+
     fn collect_operand_projection_declarations(
         &self,
         operand: &MirOperand,
@@ -795,6 +855,82 @@ impl LlvmProbe<'_> {
         };
         let symbol = runtime_symbol(&call.intrinsic, &params, return_ty)?;
         Ok(ExternalDecl { symbol, return_ty, params })
+    }
+
+    fn option_declaration(
+        &self,
+        op: &MirOptionOp,
+        result_ty: MirType,
+        context: &FunctionContext,
+    ) -> Result<ExternalDecl, MirLlvmTextProbeError> {
+        match op {
+            MirOptionOp::None => {
+                let payload = self.option_payload_ty(result_ty)?;
+                let payload_ty = self.llvm_ty(payload)?;
+                Ok(ExternalDecl { symbol: option_symbol("none", payload_ty), return_ty: "ptr", params: Vec::new() })
+            }
+            MirOptionOp::Some(value) => {
+                let payload = self.option_payload_ty(result_ty)?;
+                let payload_ty = self.llvm_ty(payload)?;
+                let value_ty = self.llvm_ty(self.operand_ty(value, context)?)?;
+                if payload_ty != value_ty {
+                    return Err(MirLlvmTextProbeError::unsupported("option some payload type"));
+                }
+                Ok(ExternalDecl {
+                    symbol: option_symbol("some", payload_ty),
+                    return_ty: "ptr",
+                    params: vec![payload_ty],
+                })
+            }
+            MirOptionOp::IsNil(_) => {
+                Ok(ExternalDecl { symbol: "__faber_option_is_nil".to_owned(), return_ty: "i1", params: vec!["ptr"] })
+            }
+            MirOptionOp::IsNonNil(_) => Ok(ExternalDecl {
+                symbol: "__faber_option_is_non_nil".to_owned(),
+                return_ty: "i1",
+                params: vec!["ptr"],
+            }),
+            MirOptionOp::Unwrap { value, .. } => {
+                let payload = self.option_operand_payload_ty(value, context)?;
+                let payload_ty = self.llvm_ty(payload)?;
+                Ok(ExternalDecl {
+                    symbol: option_symbol("unwrap", payload_ty),
+                    return_ty: payload_ty,
+                    params: vec!["ptr"],
+                })
+            }
+            MirOptionOp::Coalesce { value, fallback } => {
+                let payload = self.option_operand_payload_ty(value, context)?;
+                let payload_ty = self.llvm_ty(payload)?;
+                let fallback_ty = self.llvm_ty(self.operand_ty(fallback, context)?)?;
+                let result_ty = self.llvm_ty(result_ty)?;
+                if payload_ty != fallback_ty || payload_ty != result_ty {
+                    return Err(MirLlvmTextProbeError::unsupported("option coalesce payload type"));
+                }
+                Ok(ExternalDecl {
+                    symbol: option_symbol("coalesce", payload_ty),
+                    return_ty: payload_ty,
+                    params: vec!["ptr", payload_ty],
+                })
+            }
+            MirOptionOp::Chain { .. } => Err(MirLlvmTextProbeError::unsupported("option chain value")),
+        }
+    }
+
+    fn option_operand_payload_ty(
+        &self,
+        operand: &MirOperand,
+        context: &FunctionContext,
+    ) -> Result<MirType, MirLlvmTextProbeError> {
+        self.option_payload_ty(self.operand_ty(operand, context)?)
+    }
+
+    fn option_payload_ty(&self, ty: MirType) -> Result<MirType, MirLlvmTextProbeError> {
+        match self.types.get(ty.semantic_id()) {
+            Type::Option(inner) => Ok(MirType::semantic(*inner)),
+            Type::Alias(_, target) => self.option_payload_ty(MirType::semantic(*target)),
+            other => Err(MirLlvmTextProbeError::unsupported(format!("option type {other:?}"))),
+        }
     }
 
     fn aggregate_declaration(
@@ -1081,6 +1217,10 @@ fn projection_symbol(kind: &str, key_ty: &str, result_ty: &str) -> String {
 
 fn projection_set_symbol(kind: &str, key_ty: &str, value_ty: &str) -> String {
     format!("__faber_aggregate_{kind}_{}_{}", abi_name(key_ty), abi_name(value_ty))
+}
+
+fn option_symbol(kind: &str, payload_ty: &str) -> String {
+    format!("__faber_option_{kind}_{}", abi_name(payload_ty))
 }
 
 fn aggregate_definition_id(kind: &MirAggregateKind) -> Option<DefId> {

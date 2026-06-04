@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 008 baseline
+**Status**: Phase 009 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -35,6 +35,10 @@ The current emitter supports scalar functions over one or more MIR basic blocks:
 - single-step field, variant-field, and index projection reads and writes
   through external `__faber_aggregate_*` helpers when metadata proves result
   and value types;
+- runtime-owned opaque `ptr` nullable values through external
+  `__faber_option_*` helpers for none, some, nil predicates, unwrap, and
+  coalesce when payloads fit the scalar-or-handle ABI;
+- `nil` as the null handle literal in handle-shaped LLVM contexts;
 - LLVM labels for MIR basic blocks in MIR storage order;
 - direct `return`, `ret void`, unconditional branches, and scalar boolean
   conditional branches.
@@ -108,14 +112,16 @@ the current scalar-or-opaque-handle ABI:
   equality/inequality.
 - `MirValueKind::Binary` for boolean `And` and `Or`.
 - `MirValueKind::Unary` for numeric negation and boolean `Not`.
+- `MirValueKind::Option` for `None`, `Some`, `IsNil`, `IsNonNil`, `Unwrap`, and
+  `Coalesce` when nullable payloads fit the scalar-or-handle ABI.
 - `MirOperand::Place`, `MirOperand::Temp`, `MirOperand::Value`, and scalar
   `MirOperand::Constant`.
 - `MirStmtKind::Construct` for tuple, array, map, set, struct, and enum-variant
   handles when operands are not spreads and fit the scalar-or-handle ABI.
 - `MirProjection::Field`, `MirProjection::VariantField`, and
   `MirProjection::Index` reads when field/index metadata proves the result type.
-- `MirConstant::Int`, `MirConstant::Float`, `MirConstant::Bool`, and
-  `MirConstant::Unit`.
+- `MirConstant::Int`, `MirConstant::Float`, `MirConstant::Bool`,
+  `MirConstant::Unit`, and `MirConstant::Nil`.
 - `MirTerminatorKind::Return`.
 - `MirTerminatorKind::Goto`.
 - `MirTerminatorKind::Branch` with scalar `bivalens` conditions.
@@ -150,8 +156,7 @@ lower them without guessing:
 
 - aggregate spreads.
 - nested projection writes.
-- `MirValueKind::Option` and all `MirOptionOp` variants.
-- `MirConstant::Nil`.
+- `MirOptionOp::Chain` and optional chain projection/call lowering.
 - text comparison or concatenation implied by `MirBinOp` over text values.
 - `MirType::layout_id`, which is reserved but not consumed by the current LLVM
   probe.
@@ -183,14 +188,13 @@ produce explicit unsupported diagnostics until their named phases:
 - `MirTerminatorKind::Unreachable`.
 - Bitwise operations and shifts until an integer bitwise phase expands the
   supported operation matrix.
-- Nullable predicate unary operations such as `IsNil` and `IsNonNil`.
 - `MirIntrinsic::Provider`.
 - Async, closures, callable values, HAL/provider effects, native entrypoints,
   and executable toolchain behavior.
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 008 measured corpus counts are 102/102 frontend
+- **E2E Visibility**: Phase 009 measured corpus counts are 102/102 frontend
   analyzed, 74/102 MIR lowered, 58/102 LLVM emitted, 28 MIR lowering failures,
   0/102 verifier-valid, 16 unsupported LLVM diagnostics, 0 unexpected LLVM
   emission failures, 0 output-write failures, and 0 verifier failures.
@@ -207,9 +211,9 @@ produce explicit unsupported diagnostics until their named phases:
   and collection intrinsics lower to named LLVM runtime declarations and calls.
   Provider/HAL runtime calls remain deferred.
 - **Layout**: LLVM uses opaque `ptr` handles for text and aggregate-like values.
-  Construction and projection are runtime-helper-backed; spreads, nullable
-  values, text operators, nested projection writes, and provider values remain
-  deferred.
+  Construction, projection, and supported nullable operations are
+  runtime-helper-backed; spreads, optional chains, text operators, nested
+  projection writes, and provider values remain deferred.
 - **Verification**: the e2e harness detects `llvm-as` or `opt` and records
   verifier-valid output only when a verifier is available. Current local
   verifier status is unavailable: `llvm-as` and `opt` were not found on PATH.
@@ -241,7 +245,14 @@ produce explicit unsupported diagnostics until their named phases:
   and panic.
 - `llvm_text_target_emits_value_returning_runtime_calls` verifies conversion,
   format, and collection runtime helpers declare, call, and store through the
-  current scalar-or-handle ABI while `nil` remains layout-blocked.
+  current scalar-or-handle ABI.
+- `llvm_text_target_emits_nil_as_null_handle` verifies `nil` lowers to `null`
+  in handle-shaped LLVM calls.
+- `llvm_text_target_emits_scalar_option_helpers` verifies scalar nullable
+  construction, predicates, unwrap, and coalesce lower through declared
+  `__faber_option_*` helpers.
+- `llvm_text_target_rejects_option_chain` verifies optional chains remain
+  explicitly deferred.
 - `llvm_text_target_rejects_provider_runtime_calls` verifies provider/HAL
   runtime calls remain explicitly deferred.
 - `llvm_text_target_emits_text_handle_returns` verifies ordinary `textus`
@@ -258,16 +269,17 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Next Implementation Slice
 
-The evidence now points to Phase 009, nullable and optional operations. The LLVM
-lane now has an opaque handle ABI for ordinary text and aggregate values, but
-`nil`, option construction, nullable predicates, unwrap/coalesce, and optional
-chains remain explicit unsupported shapes.
+The evidence now points to Phase 010, switch, pattern, and failable control flow.
+The LLVM lane now has an opaque handle ABI for ordinary text, aggregate, and
+nullable values, but `switch`, failable calls, alternate exits, `unreachable`,
+and non-literal pattern dispatch remain explicit unsupported shapes.
 
 ## Wasm Follow-Up Implications
 
-Phase 008 made no MIR shape changes and did not alter Wasm import names. Wasm
+Phase 009 made no MIR shape changes and did not alter Wasm import names. Wasm
 validation is still required because aggregate and projection MIR facts are
-shared across backends.
+shared across backends, and nullable MIR facts are shared even though LLVM and
+Wasm currently use different backend helper policies.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate
