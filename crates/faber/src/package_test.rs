@@ -1,14 +1,18 @@
 use super::{
-    check_package, compile_package, discover_build_layout, emit_generated_crate, read_manifest,
-    sanitize_crate_name, BuildLayout,
+    check_package, compile_package, discover_build_layout, emit_generated_crate,
+    invoke_cargo_build, read_manifest, sanitize_crate_name, BuildLayout,
 };
 use crate::library::{LibraryProviderKind, LibraryResolver, ResolvedLibraryModule};
 use radix::diagnostics::Diagnostic;
 use radix::driver::Config;
 use radix::Output;
 use std::fs;
+use std::io::{Read, Write};
+use std::net::TcpListener;
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::process::Command;
+use std::thread;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 fn temp_dir(label: &str) -> PathBuf {
     let nanos = SystemTime::now()
@@ -137,6 +141,112 @@ incipit {
 
     assert!(output.code.contains("norma::hal::consolum::dic"));
     assert!(!output.code.contains("crate::norma::hal::consolum"));
+}
+
+#[test]
+fn package_fixture_runs_norma_http_hal_against_local_server() {
+    let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind local HTTP fixture");
+    listener
+        .set_nonblocking(true)
+        .expect("set fixture listener nonblocking");
+    let port = listener.local_addr().expect("local addr").port();
+
+    let dir = temp_dir("norma-http-fixture");
+    fs::create_dir_all(dir.join("src")).expect("src");
+    fs::write(
+        dir.join("faber.toml"),
+        r#"
+[package]
+name = "norma-http-fixture"
+version = "0.1.0"
+"#,
+    )
+    .expect("manifest");
+    fs::write(
+        dir.join("src/main.fab"),
+        format!(
+            r#"
+importa ex "norma/hal/http" privata http
+
+incipiet {{
+    fixum _ responsum ← cede http.petet("http://127.0.0.1:{port}/test")
+    nota responsum.status()
+    fixum _ caput ← responsum.caput("x-faber-test")
+    si caput est nihil {{ nota "header:missing" }} secus {{ nota "header:present" }}
+    nota responsum.corpus()
+    fixum _ data ← responsum.corpus_json()
+    si data.is_nihil() {{ nota "json:missing" }} secus {{ nota "json:present" }}
+}}
+"#
+        ),
+    )
+    .expect("entry");
+
+    let layout = discover_build_layout(&dir).expect("layout");
+    let compile_result = compile_package(&Config::default(), &dir);
+    assert!(
+        compile_result.success(),
+        "expected HTTP package compile success, got {:?}",
+        compile_result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+    let Some(Output::Rust(output)) = compile_result.output else {
+        panic!("expected rust output");
+    };
+    assert!(output.code.contains("norma::hal::http::petet"));
+    assert!(output.code.contains(".corpus_json()"));
+
+    emit_generated_crate(
+        &layout,
+        &output.code,
+        Some(&read_manifest(&layout.manifest_path).expect("manifest")),
+    )
+    .expect("emit generated crate");
+    let binary = invoke_cargo_build(&layout, false).expect("cargo build");
+    let server = thread::spawn(move || {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let (mut stream, _) = loop {
+            match listener.accept() {
+                Ok(connection) => break connection,
+                Err(err)
+                    if err.kind() == std::io::ErrorKind::WouldBlock
+                        && Instant::now() < deadline =>
+                {
+                    thread::sleep(Duration::from_millis(10));
+                }
+                Err(err) => panic!("accept one request: {err}"),
+            }
+        };
+        let mut request = [0_u8; 1024];
+        let _ = stream.read(&mut request).expect("read request");
+
+        let body = r#"{"ok":true,"message":"salve"}"#;
+        let response = format!(
+            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\nx-faber-test: local\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+            body.len(),
+            body
+        );
+        stream
+            .write_all(response.as_bytes())
+            .expect("write response");
+    });
+    let run = Command::new(binary).output().expect("run generated binary");
+    server.join().expect("server thread");
+
+    assert!(run.status.success(), "fixture binary failed: {:?}", run);
+    let stdout = String::from_utf8(run.stdout).expect("stdout utf8");
+    assert_eq!(
+        stdout.lines().collect::<Vec<_>>(),
+        vec![
+            "200",
+            "header:present",
+            r#"{"ok":true,"message":"salve"}"#,
+            "json:present"
+        ]
+    );
 }
 
 #[test]
@@ -869,6 +979,7 @@ version = "0.3.0"
     assert!(cargo_toml.contains("0.3.0"));
     assert!(cargo_toml.contains("[dependencies]"));
     assert!(cargo_toml.contains("norma = { path = "));
+    assert!(cargo_toml.contains(r#"tokio = { version = "1", features = ["rt", "net", "time"] }"#));
 
     let main_rs = fs::read_to_string(&layout.generated_rust_entry).expect("read main");
     assert!(main_rs.contains("Generated by faber build"));

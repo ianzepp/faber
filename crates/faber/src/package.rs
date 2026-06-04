@@ -1584,6 +1584,7 @@ edition = "2021"
 
 [dependencies]
 norma = {{ path = "{norma_path}" }}
+tokio = {{ version = "1", features = ["rt", "net", "time"] }}
 "#,
         name = binary_name,
         version = version,
@@ -1634,6 +1635,7 @@ edition = "2021"
 
 [dependencies]
 norma = {{ path = "{norma_path}" }}
+tokio = {{ version = "1", features = ["rt", "net", "time"] }}
 "#,
             name = layout.binary_name(),
             norma_path = norma_path.display()

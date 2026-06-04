@@ -276,29 +276,13 @@ pub(super) fn block_contains_await(block: &HirBlock) -> bool {
 pub(super) fn generate_block_on_helper(writer: &mut CodeWriter) {
     writer.writeln("fn __faber_block_on<F: std::future::Future>(future: F) -> F::Output {");
     writer.indented(|writer| {
-        writer.writeln("fn raw_waker() -> std::task::RawWaker {");
+        writer.writeln("tokio::runtime::Builder::new_current_thread()");
         writer.indented(|writer| {
-            writer.writeln("unsafe fn clone(_: *const ()) -> std::task::RawWaker { raw_waker() }");
-            writer.writeln("unsafe fn wake(_: *const ()) {}");
-            writer.writeln("unsafe fn wake_by_ref(_: *const ()) {}");
-            writer.writeln("unsafe fn drop(_: *const ()) {}");
-            writer.writeln("static VTABLE: std::task::RawWakerVTable = std::task::RawWakerVTable::new(clone, wake, wake_by_ref, drop);");
-            writer.writeln("std::task::RawWaker::new(std::ptr::null(), &VTABLE)");
+            writer.writeln(".enable_all()");
+            writer.writeln(".build()");
+            writer.writeln(".expect(\"failed to build Faber async runtime\")");
+            writer.writeln(".block_on(future)");
         });
-        writer.writeln("}");
-        writer.writeln("let waker = unsafe { std::task::Waker::from_raw(raw_waker()) };");
-        writer.writeln("let mut context = std::task::Context::from_waker(&waker);");
-        writer.writeln("let mut future = std::pin::pin!(future);");
-        writer.writeln("loop {");
-        writer.indented(|writer| {
-            writer.writeln("match std::future::Future::poll(future.as_mut(), &mut context) {");
-            writer.indented(|writer| {
-                writer.writeln("std::task::Poll::Ready(value) => return value,");
-                writer.writeln("std::task::Poll::Pending => std::thread::yield_now(),");
-            });
-            writer.writeln("}");
-        });
-        writer.writeln("}");
     });
     writer.writeln("}");
 }

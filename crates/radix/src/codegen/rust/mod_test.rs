@@ -479,7 +479,7 @@ incipiet {
     assert!(rust.code.contains("async fn fetchData() -> String"));
     assert!(rust
         .code
-        .contains("fn __faber_block_on<F: std::future::Future>"));
+        .contains("tokio::runtime::Builder::new_current_thread()"));
     assert!(rust.code.contains("__faber_block_on(async {"));
     assert!(rust.code.contains("fetchData().await"));
 }
