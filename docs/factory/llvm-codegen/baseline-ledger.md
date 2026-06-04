@@ -147,6 +147,10 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Current Failure Clusters
 
+- **E2E Visibility**: Phase 002 adds an ignored LLVM exempla harness. Current
+  measured corpus counts are 101/101 frontend analyzed, 73/101 MIR lowered,
+  0/101 LLVM emitted, 28 MIR lowering failures, 73 unsupported LLVM diagnostics,
+  0 unexpected LLVM emission failures, and 0 output-write failures.
 - **Scalar Type Coverage**: no `fractus`, scalar comparisons, boolean unary
   operations, or boolean binary operations.
 - **Control Flow**: ordinary branch-shaped scalar MIR fails with
@@ -160,8 +164,8 @@ produce explicit unsupported diagnostics until their named phases:
   and provider values have no LLVM representation.
 - **Verification**: there is no local LLVM verifier integration or skip policy
   recorded.
-- **E2E Visibility**: there is no LLVM exempla harness, so corpus progress is
-  not yet measured.
+- **E2E Emission Floor**: the current exempla corpus has no LLVM-emitted files;
+  this is expected until scalar coverage expands beyond the unit-level probe.
 
 ## Fail-Closed Test Inventory
 
@@ -170,21 +174,18 @@ produce explicit unsupported diagnostics until their named phases:
 - `llvm_text_target_rejects_multi_block_cfg_until_phase_004` verifies ordinary
   scalar branch-shaped MIR is rejected explicitly as `branch` before
   multi-block CFG support lands.
+- `exempla_llvm_e2e` is ignored by default and records unsupported LLVM
+  diagnostics separately from MIR-lowering and unexpected emission failures.
 
 ## Next Implementation Slice
 
-The evidence points to Phase 002, the LLVM exempla e2e harness, before scalar
-coverage expansion. LLVM currently has only focused unit tests, so adding more
-lowering first would still leave corpus progress and unsupported clusters
-invisible. The harness should classify at least:
-
-- frontend analyzed;
-- MIR lowered;
-- LLVM emitted;
-- LLVM unsupported diagnostic;
-- verifier-valid only if a verifier policy is available.
-
-Execution/native tiers remain out of scope.
+The evidence now points to Phase 003, scalar type and operation coverage. The
+exempla harness shows zero corpus files reach LLVM emission because ordinary
+examples hit scalar comparisons, boolean operators, `fractus`, text/runtime
+calls, aggregates, or CFG before they fit the current integer-only single-block
+probe. The next slice should expand scalar operations while keeping text,
+aggregates, nullable values, runtime calls, and verifier/native claims out of
+scope.
 
 ## Wasm Follow-Up Implications
 
