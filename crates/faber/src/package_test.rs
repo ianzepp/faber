@@ -220,6 +220,9 @@ incipiet {{
                 Err(err) => panic!("accept one request: {err}"),
             }
         };
+        stream
+            .set_nonblocking(false)
+            .expect("set fixture stream blocking");
         let mut request = [0_u8; 1024];
         let _ = stream.read(&mut request).expect("read request");
 

@@ -1,6 +1,6 @@
 # Norma HTTP HAL Factory Plan
 
-**Status**: phases 0-5 implemented, validation gate pending
+**Status**: implemented and validated
 **Created**: 2026-06-04
 **Target Repo**: `/Users/ianzepp/work/ianzepp/faber`
 **Factory Artifact Dir**: `docs/factory/norma-http-hal/`
@@ -162,6 +162,7 @@ Progress artifacts:
 - Phase 4: [`phase-4-delivery.md`](phase-4-delivery.md)
 - Phase 5: [`phase-5-delivery.md`](phase-5-delivery.md),
   [`expansion-pattern.md`](expansion-pattern.md)
+- Phase 6: [`phase-6-delivery.md`](phase-6-delivery.md)
 
 ## Phase Details
 
