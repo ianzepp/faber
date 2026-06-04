@@ -862,7 +862,35 @@ impl LlvmProbe<'_> {
                 self.collect_operand_projection_declarations(lhs, context, declarations)?;
                 self.collect_operand_projection_declarations(rhs, context, declarations)
             }
-            MirValueKind::Option(_) => Ok(()),
+            MirValueKind::Option(op) => self.collect_option_projection_declarations(op, context, declarations),
+        }
+    }
+
+    fn collect_option_projection_declarations(
+        &self,
+        op: &MirOptionOp,
+        context: &FunctionContext,
+        declarations: &mut BTreeMap<String, ExternalDecl>,
+    ) -> Result<(), MirLlvmTextProbeError> {
+        match op {
+            MirOptionOp::None => Ok(()),
+            MirOptionOp::Some(value)
+            | MirOptionOp::IsNil(value)
+            | MirOptionOp::IsNonNil(value)
+            | MirOptionOp::Unwrap { value, .. } => {
+                self.collect_operand_projection_declarations(value, context, declarations)
+            }
+            MirOptionOp::Coalesce { value, fallback } => {
+                self.collect_operand_projection_declarations(value, context, declarations)?;
+                self.collect_operand_projection_declarations(fallback, context, declarations)
+            }
+            MirOptionOp::Chain { base, link } => {
+                self.collect_operand_projection_declarations(base, context, declarations)?;
+                if let MirOptionChainLink::Index(index) = link {
+                    self.collect_operand_projection_declarations(index, context, declarations)?;
+                }
+                Ok(())
+            }
         }
     }
 

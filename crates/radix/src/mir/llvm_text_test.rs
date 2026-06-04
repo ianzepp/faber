@@ -792,6 +792,44 @@ fn llvm_text_target_emits_scalar_option_helpers() {
 }
 
 #[test]
+fn llvm_text_target_declares_projection_helpers_inside_option_operands() {
+    let mut types = TypeTable::new();
+    let boolean = ty(&types, Primitive::Bivalens);
+    let option_number = MirType::semantic(types.option(types.primitive(Primitive::Numerus)));
+    let option_list = MirType::semantic(types.array(option_number.semantic_id()));
+    let program = runtime_stmt_program(
+        Vec::new(),
+        vec![
+            MirTemp { id: MirTempId(0), ty: option_list, span: span() },
+            MirTemp { id: MirTempId(1), ty: boolean, span: span() },
+        ],
+        vec![MirStmt {
+            kind: MirStmtKind::Assign {
+                place: MirPlace::temp(MirTempId(1)),
+                value: MirValue {
+                    id: MirValueId(0),
+                    kind: MirValueKind::Option(MirOptionOp::IsNil(MirOperand::Place(MirPlace {
+                        base: MirPlaceBase::Temp(MirTempId(0)),
+                        projections: vec![MirProjection::Index(MirOperand::Constant(MirConstant::Int(0)))],
+                    }))),
+                    ty: boolean,
+                    span: span(),
+                },
+            },
+            span: span(),
+        }],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("option projection emits");
+
+    assert!(output.contains("declare ptr @__faber_aggregate_index_i64_to_ptr(ptr, i64)"));
+    assert!(output.contains("declare i1 @__faber_option_is_nil(ptr)"));
+    assert!(output.contains("call ptr @__faber_aggregate_index_i64_to_ptr"));
+    assert!(output.contains("call i1 @__faber_option_is_nil(ptr %proj"));
+}
+
+#[test]
 fn llvm_text_target_rejects_option_chain() {
     let mut types = TypeTable::new();
     let option_text = MirType::semantic(types.option(types.primitive(Primitive::Textus)));
