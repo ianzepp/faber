@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 005 baseline
+**Status**: Phase 006 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -32,6 +32,13 @@ The current emitter supports scalar functions over one or more MIR basic blocks:
 
 Everything outside that subset must fail closed with a diagnostic beginning
 `MIR-to-LLVM unsupported`.
+
+The ignored exempla harness now distinguishes LLVM text emission from
+verifier-valid LLVM IR. Verifier validation is optional and external-tool based:
+the harness prefers `llvm-as -o /dev/null <file.ll>`, then
+`opt -disable-output <file.ll>`, and reports verifier-valid tiers only when one
+of those tools is available. In this measured environment neither `llvm-as` nor
+`opt` is on PATH, so verifier-valid floors remain zero.
 
 ## Command Evidence
 
@@ -136,14 +143,16 @@ lower them without guessing:
 
 ### Verifier-Blocked
 
-These shapes may be text-emittable later, but Phase 001 cannot claim LLVM-valid
-IR because there is no verifier policy yet:
+These shapes may be text-emittable later, but the LLVM lane should not claim
+LLVM-valid IR unless the optional verifier tier proves it in the current
+environment:
 
-- Any emitted `.ll` text beyond the current probe examples.
-- Multi-block CFG beyond the focused scalar examples until `llvm-as`, `opt`, or
-  an equivalent verifier policy is selected.
-- Direct calls beyond the focused scalar examples until declarations, symbol
-  policy, and result typing are verified.
+- Any emitted `.ll` text beyond the current probe examples unless the optional
+  e2e verifier tier reports it as verifier-valid in the current environment.
+- Multi-block CFG beyond the focused scalar examples until measured through the
+  optional verifier tier.
+- Direct calls beyond the focused scalar examples until measured through the
+  optional verifier tier and later declaration/linkage policy.
 - External definitions and runtime declarations.
 
 ### Intentionally Deferred
@@ -166,11 +175,12 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 005 measured corpus counts are 102/102 frontend
+- **E2E Visibility**: Phase 006 measured corpus counts are 102/102 frontend
   analyzed, 74/102 MIR lowered, 1/102 LLVM emitted, 28 MIR lowering failures,
-  73 unsupported LLVM diagnostics, 0 unexpected LLVM emission failures, and
-  0 output-write failures. Counts are unchanged because the exempla corpus has
-  no runtime-free direct-scalar-call fixture yet.
+  0/102 verifier-valid, 73 unsupported LLVM diagnostics, 0 unexpected LLVM
+  emission failures, 0 output-write failures, and 0 verifier failures. Counts
+  are unchanged because the exempla corpus has no runtime-free
+  direct-scalar-call fixture yet.
 - **Scalar Type Coverage**: `fractus`, scalar comparisons, boolean unary
   `Not`, and boolean `And`/`Or` are supported for scalar functions.
   Integer bitwise operations and shifts remain unsupported.
@@ -184,10 +194,11 @@ produce explicit unsupported diagnostics until their named phases:
   and collection intrinsics have no LLVM ABI.
 - **Layout**: text, aggregate, nullable, projection, enum, struct, collection,
   and provider values have no LLVM representation.
-- **Verification**: there is no local LLVM verifier integration or skip policy
-  recorded.
+- **Verification**: the e2e harness detects `llvm-as` or `opt` and records
+  verifier-valid output only when a verifier is available. Current local
+  verifier status is unavailable: `llvm-as` and `opt` were not found on PATH.
 - **E2E Emission Floor**: the current exempla corpus has one LLVM-emitted
-  scalar-only file.
+  scalar-only file. The current verifier-valid floor is zero.
 
 ## Fail-Closed Test Inventory
 
@@ -210,17 +221,19 @@ produce explicit unsupported diagnostics until their named phases:
 - `llvm_text_target_rejects_external_definition_call` verifies definitions not
   lowered into the current MIR program remain explicitly unsupported.
 - `exempla_llvm_e2e` is ignored by default and records unsupported LLVM
-  diagnostics separately from MIR-lowering and unexpected emission failures.
+  diagnostics, emitted LLVM text, verifier-valid LLVM IR, and verifier failures
+  separately from MIR-lowering and unexpected emission failures.
 
 ## Next Implementation Slice
 
-The evidence now points to Phase 006, LLVM verifier policy. The LLVM lane can
-emit scalar arithmetic, scalar CFG, and same-program direct scalar calls, but it
-still cannot honestly distinguish emitted text from verifier-valid LLVM IR.
+The evidence now points to Phase 007, runtime calls and host boundary. The LLVM
+lane can now report whether emitted text is merely emitted or verifier-valid;
+runtime-call-backed MIR remains the next major unsupported cluster in ordinary
+examples.
 
 ## Wasm Follow-Up Implications
 
-Phase 005 made no MIR changes. No Wasm code changes are required.
+Phase 006 made no MIR changes. No Wasm code changes are required.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate
