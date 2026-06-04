@@ -467,6 +467,42 @@ incipit {
 }
 
 #[test]
+fn aliased_norma_http_import_lowers_by_provider_identity() {
+    let dir = temp_dir("aliased-norma-http-lowering");
+    let entry = dir.join("main.fab");
+    fs::write(
+        &entry,
+        r#"
+importa ex "norma:hal/http" privata http ut rete
+
+incipiet {
+  fixum _ responsum ← cede rete.petet("http://127.0.0.1:9")
+}
+"#,
+    )
+    .expect("write entry");
+
+    let result = compile_package(&Config::default(), &entry);
+    assert!(
+        result.success(),
+        "expected aliased HTTP package compile success, got {:?}",
+        result
+            .diagnostics
+            .iter()
+            .map(|diag| diag.message.as_str())
+            .collect::<Vec<_>>()
+    );
+    let Some(Output::Rust(output)) = result.output else {
+        panic!("expected rust output");
+    };
+
+    assert!(output
+        .code
+        .contains("norma::hal::http::petet(\"http://127.0.0.1:9\".to_string()).await"));
+    assert!(!output.code.contains("rete.petet"));
+}
+
+#[test]
 fn resolved_library_module_shape_can_describe_future_sqlite_without_rust_metadata() {
     let module = ResolvedLibraryModule::new(
         "sqlite",

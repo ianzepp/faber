@@ -1,5 +1,5 @@
 #[test]
-fn http_hal_calls_emit_norma_runtime_bridge_and_concrete_response_type() {
+fn user_defined_http_without_provenance_does_not_emit_norma_runtime_call() {
     let compiler = crate::Compiler::new(crate::Config::default());
     let source = r#"
 pactum http {
@@ -112,9 +112,10 @@ incipiet {
         panic!("expected Rust output, got diagnostics: {:?}", result.diagnostics);
     };
 
+    assert!(!rust.code.contains("norma::hal::http::petet"));
     assert!(rust
         .code
-        .contains("norma::hal::http::petet(\"http://127.0.0.1:9\".to_string()).await"));
+        .contains("http.petet(\"http://127.0.0.1:9\".to_string()).await"));
     assert!(rust
         .code
         .contains("let responsum: norma::hal::http::Replicatio ="));

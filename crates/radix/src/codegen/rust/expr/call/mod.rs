@@ -125,8 +125,7 @@ pub(super) fn generate_method_call_expr(
     // WHY: Built-in pactum imports typecheck as module-like values in Faber,
     // but Rust links them as functions in the norma runtime crate.
     if let HirExprKind::Path(def_id) = &receiver.kind {
-        let recv_name = emitter.codegen.resolve_def(*def_id);
-        if let Some(runtime_module) = norma_runtime_module_path(recv_name) {
+        if let Some(runtime_module) = norma_runtime_module_path(*def_id, &emitter.codegen.libraries) {
             emitter.writer.write(runtime_module);
             emitter.writer.write("::");
             emitter

@@ -1,11 +1,25 @@
 //! Runtime module bridge helpers for built-in norma calls.
 
-pub(super) fn norma_runtime_module_path(receiver_name: &str) -> Option<&'static str> {
-    match receiver_name {
-        "json" => Some("norma::json"),
-        "toml" => Some("norma::toml"),
-        "consolum" => Some("norma::hal::consolum"),
-        "http" => Some("norma::hal::http"),
+use crate::hir::{DefId, LibraryProvider, LibraryRegistry};
+
+pub(super) fn norma_runtime_module_path(receiver_def_id: DefId, libraries: &LibraryRegistry) -> Option<&'static str> {
+    let binding = libraries.bindings.get(&receiver_def_id)?;
+    if binding.identity.provider != LibraryProvider::BuiltinNorma {
+        return None;
+    }
+
+    match binding
+        .identity
+        .module_path
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<_>>()
+        .as_slice()
+    {
+        ["json"] => Some("norma::json"),
+        ["toml"] => Some("norma::toml"),
+        ["hal", "consolum"] => Some("norma::hal::consolum"),
+        ["hal", "http"] => Some("norma::hal::http"),
         _ => None,
     }
 }
