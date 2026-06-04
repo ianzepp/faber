@@ -34,7 +34,7 @@ pub mod visit;
 mod wasm_text;
 
 pub use dump::dump_program;
-pub use llvm_text::{emit_llvm_text_probe, MirLlvmTextProbeError};
+pub use llvm_text::{emit_llvm_text_probe, emit_llvm_text_probe_with_context, MirLlvmTextProbeError};
 pub use lower::{dump_analyzed_unit, lower_analyzed_unit, lower_analyzed_unit_with_context, LoweredMirUnit, MirError};
 pub use nodes::*;
 pub use rust_probe::{emit_rust_probe, MirRustProbeError};

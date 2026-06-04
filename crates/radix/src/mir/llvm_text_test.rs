@@ -123,6 +123,10 @@ fn runtime_stmt_program(
     }
 }
 
+fn aggregate_stmt_program(temps: Vec<MirTemp>, statements: Vec<MirStmt>, types: &TypeTable) -> MirProgram {
+    runtime_stmt_program(Vec::new(), temps, statements, MirTerminatorKind::Return(None), types)
+}
+
 #[test]
 fn llvm_text_target_emits_text_from_validated_mir() {
     let source = r#"
@@ -233,7 +237,7 @@ functio idem(numerus a, numerus b) → bivalens {
 }
 
 #[test]
-fn llvm_text_target_rejects_unsupported_mir_shapes() {
+fn llvm_text_target_emits_text_handle_returns() {
     let source = r#"
 functio label() → textus {
     redde "salve"
@@ -246,11 +250,12 @@ functio label() → textus {
         source,
     );
 
-    assert!(result.output.is_none());
-    assert!(result
-        .diagnostics
-        .iter()
-        .any(|diagnostic| diagnostic.message.contains("MIR-to-LLVM unsupported")));
+    let Some(Output::LlvmText(output)) = result.output else {
+        panic!("expected LLVM text output");
+    };
+
+    assert!(output.code.contains("define ptr @label()"));
+    assert!(output.code.contains("ret ptr"));
 }
 
 #[test]
@@ -619,6 +624,133 @@ fn llvm_text_target_emits_value_returning_runtime_calls() {
     assert!(output.contains("store ptr %rtcall"));
     assert!(output.contains("call i64 @__faber_runtime_length_1_ptr_to_i64"));
     assert!(output.contains("store i64 %rtcall"));
+}
+
+#[test]
+fn llvm_text_target_emits_aggregate_handle_construction() {
+    let mut types = TypeTable::new();
+    let list = MirType::semantic(types.array(types.primitive(Primitive::Numerus)));
+    let program = aggregate_stmt_program(
+        vec![MirTemp { id: MirTempId(0), ty: list, span: span() }],
+        vec![MirStmt {
+            kind: MirStmtKind::Construct {
+                destination: MirPlace::temp(MirTempId(0)),
+                aggregate: MirAggregate {
+                    kind: MirAggregateKind::Array,
+                    ty: list,
+                    fields: MirAggregateFields::Ordered(vec![
+                        MirAggregateItem::Operand(MirOperand::Constant(MirConstant::Int(1))),
+                        MirAggregateItem::Operand(MirOperand::Constant(MirConstant::Int(2))),
+                        MirAggregateItem::Operand(MirOperand::Constant(MirConstant::Int(3))),
+                    ]),
+                },
+            },
+            span: span(),
+        }],
+        &types,
+    );
+
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("aggregate construct emits");
+
+    assert!(output.contains("declare ptr @__faber_aggregate_array_3_i64_i64_i64(i64, i64, i64)"));
+    assert!(output.contains("%agg0 = call ptr @__faber_aggregate_array_3_i64_i64_i64(i64 1, i64 2, i64 3)"));
+    assert!(output.contains("store ptr %agg0, ptr %t0.addr"));
+    assert!(output.contains("%t0.addr = alloca ptr"));
+}
+
+#[test]
+fn llvm_text_target_emits_index_projection_reads_and_writes() {
+    let mut types = TypeTable::new();
+    let number = ty(&types, Primitive::Numerus);
+    let list = MirType::semantic(types.array(types.primitive(Primitive::Numerus)));
+    let program = aggregate_stmt_program(
+        vec![
+            MirTemp { id: MirTempId(0), ty: list, span: span() },
+            MirTemp { id: MirTempId(1), ty: number, span: span() },
+        ],
+        vec![
+            MirStmt {
+                kind: MirStmtKind::Construct {
+                    destination: MirPlace::temp(MirTempId(0)),
+                    aggregate: MirAggregate {
+                        kind: MirAggregateKind::Array,
+                        ty: list,
+                        fields: MirAggregateFields::Ordered(vec![
+                            MirAggregateItem::Operand(MirOperand::Constant(MirConstant::Int(1))),
+                            MirAggregateItem::Operand(MirOperand::Constant(MirConstant::Int(2))),
+                        ]),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace::temp(MirTempId(1)),
+                    value: MirValue {
+                        id: MirValueId(0),
+                        kind: MirValueKind::Operand(MirOperand::Place(MirPlace {
+                            base: MirPlaceBase::Temp(MirTempId(0)),
+                            projections: vec![MirProjection::Index(MirOperand::Constant(MirConstant::Int(0)))],
+                        })),
+                        ty: number,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::Assign {
+                    place: MirPlace {
+                        base: MirPlaceBase::Temp(MirTempId(0)),
+                        projections: vec![MirProjection::Index(MirOperand::Constant(MirConstant::Int(1)))],
+                    },
+                    value: MirValue {
+                        id: MirValueId(1),
+                        kind: MirValueKind::Operand(MirOperand::Constant(MirConstant::Int(9))),
+                        ty: number,
+                        span: span(),
+                    },
+                },
+                span: span(),
+            },
+        ],
+        &types,
+    );
+
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("projection helpers emit");
+
+    assert!(output.contains("declare i64 @__faber_aggregate_index_i64_to_i64(ptr, i64)"));
+    assert!(output.contains("declare void @__faber_aggregate_set_index_i64_i64(ptr, i64, i64)"));
+    assert!(output.contains("call i64 @__faber_aggregate_index_i64_to_i64(ptr %load"));
+    assert!(output.contains("store i64 %proj"));
+    assert!(output.contains("call void @__faber_aggregate_set_index_i64_i64(ptr %load"));
+}
+
+#[test]
+fn llvm_text_target_rejects_aggregate_spread() {
+    let mut types = TypeTable::new();
+    let list = MirType::semantic(types.array(types.primitive(Primitive::Numerus)));
+    let program = aggregate_stmt_program(
+        vec![MirTemp { id: MirTempId(0), ty: list, span: span() }],
+        vec![MirStmt {
+            kind: MirStmtKind::Construct {
+                destination: MirPlace::temp(MirTempId(0)),
+                aggregate: MirAggregate {
+                    kind: MirAggregateKind::Array,
+                    ty: list,
+                    fields: MirAggregateFields::Ordered(vec![MirAggregateItem::Spread(MirOperand::Temp(MirTempId(0)))]),
+                },
+            },
+            span: span(),
+        }],
+        &types,
+    );
+
+    let error = emit_llvm_text_probe(&program, &types, &Interner::new()).expect_err("spread remains deferred");
+
+    assert!(error
+        .message
+        .contains("MIR-to-LLVM unsupported: aggregate spread"));
 }
 
 #[test]

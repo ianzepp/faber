@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 007 baseline
+**Status**: Phase 008 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -30,6 +30,11 @@ The current emitter supports scalar functions over one or more MIR basic blocks:
   runtime intrinsics;
 - opaque `ptr` runtime handles for text and aggregate-like runtime values when
   used as runtime-call arguments, destinations, or helper results;
+- `ptr` returns for text and aggregate-like handle values;
+- aggregate construction through external `__faber_aggregate_*` helpers;
+- single-step field, variant-field, and index projection reads and writes
+  through external `__faber_aggregate_*` helpers when metadata proves result
+  and value types;
 - LLVM labels for MIR basic blocks in MIR storage order;
 - direct `return`, `ret void`, unconditional branches, and scalar boolean
   conditional branches.
@@ -84,13 +89,15 @@ result: 535 passed, 0 failed, 5 ignored; hygiene 8 passed; doctests 1 passed, 1 
 
 ### Directly LLVM-Lowerable Today
 
-These shapes have current LLVM text support when all operands and return values
-are scalar `numerus`, `fractus`, `bivalens`, or `vacuum`:
+These shapes have current LLVM text support when operands and return values fit
+the current scalar-or-opaque-handle ABI:
 
 - `MirProgram` function order as deterministic emission order.
 - `MirFunction` declarations with direct parameters and return type.
 - `MirParam` lowered as `%lN` LLVM parameters and stored into `%lN.addr`.
 - `MirStmtKind::Assign` without projections.
+- `MirStmtKind::Assign` with a single projection write when base/result typing
+  is known.
 - `MirStmtKind::Call` with `MirCallee::Function`.
 - `MirStmtKind::Call` with `MirCallee::Definition` when the definition resolves
   to a MIR function in the current program.
@@ -103,6 +110,10 @@ are scalar `numerus`, `fractus`, `bivalens`, or `vacuum`:
 - `MirValueKind::Unary` for numeric negation and boolean `Not`.
 - `MirOperand::Place`, `MirOperand::Temp`, `MirOperand::Value`, and scalar
   `MirOperand::Constant`.
+- `MirStmtKind::Construct` for tuple, array, map, set, struct, and enum-variant
+  handles when operands are not spreads and fit the scalar-or-handle ABI.
+- `MirProjection::Field`, `MirProjection::VariantField`, and
+  `MirProjection::Index` reads when field/index metadata proves the result type.
 - `MirConstant::Int`, `MirConstant::Float`, `MirConstant::Bool`, and
   `MirConstant::Unit`.
 - `MirTerminatorKind::Return`.
@@ -137,17 +148,11 @@ Supported runtime ABI classes are `i1`, `i64`, `f64`, `ptr`, and `void`.
 These shapes need physical layout, handle, or ABI decisions before LLVM can
 lower them without guessing:
 
-- `MirStmtKind::Construct`.
-- `MirAggregate` and all `MirAggregateKind` variants.
-- `MirAggregateFields` ordered, named, and keyed forms.
-- `MirProjection::Field`, `MirProjection::VariantField`, and
-  `MirProjection::Index`.
+- aggregate spreads.
+- nested projection writes.
 - `MirValueKind::Option` and all `MirOptionOp` variants.
 - `MirConstant::Nil`.
-- ordinary function returns of `textus`, nullable unions, aggregates, enums,
-  structs, collections, provider values, and other non-probe semantic types.
 - text comparison or concatenation implied by `MirBinOp` over text values.
-- aggregate projection reads or writes when represented through runtime handles.
 - `MirType::layout_id`, which is reserved but not consumed by the current LLVM
   probe.
 
@@ -185,9 +190,9 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 007 measured corpus counts are 102/102 frontend
-  analyzed, 74/102 MIR lowered, 35/102 LLVM emitted, 28 MIR lowering failures,
-  0/102 verifier-valid, 39 unsupported LLVM diagnostics, 0 unexpected LLVM
+- **E2E Visibility**: Phase 008 measured corpus counts are 102/102 frontend
+  analyzed, 74/102 MIR lowered, 58/102 LLVM emitted, 28 MIR lowering failures,
+  0/102 verifier-valid, 16 unsupported LLVM diagnostics, 0 unexpected LLVM
   emission failures, 0 output-write failures, and 0 verifier failures.
 - **Scalar Type Coverage**: `fractus`, scalar comparisons, boolean unary
   `Not`, and boolean `And`/`Or` are supported for scalar functions.
@@ -201,13 +206,14 @@ produce explicit unsupported diagnostics until their named phases:
 - **Runtime Boundary**: diagnostics, assertions, panic, conversion, formatting,
   and collection intrinsics lower to named LLVM runtime declarations and calls.
   Provider/HAL runtime calls remain deferred.
-- **Layout**: ordinary text returns, aggregate construction, nullable values,
-  projections, enum, struct, collection layout, and provider values have no
-  physical LLVM representation beyond opaque runtime handles.
+- **Layout**: LLVM uses opaque `ptr` handles for text and aggregate-like values.
+  Construction and projection are runtime-helper-backed; spreads, nullable
+  values, text operators, nested projection writes, and provider values remain
+  deferred.
 - **Verification**: the e2e harness detects `llvm-as` or `opt` and records
   verifier-valid output only when a verifier is available. Current local
   verifier status is unavailable: `llvm-as` and `opt` were not found on PATH.
-- **E2E Emission Floor**: the current exempla corpus has 35 LLVM-emitted files.
+- **E2E Emission Floor**: the current exempla corpus has 58 LLVM-emitted files.
   The current verifier-valid floor is zero.
 
 ## Fail-Closed Test Inventory
@@ -238,21 +244,30 @@ produce explicit unsupported diagnostics until their named phases:
   current scalar-or-handle ABI while `nil` remains layout-blocked.
 - `llvm_text_target_rejects_provider_runtime_calls` verifies provider/HAL
   runtime calls remain explicitly deferred.
+- `llvm_text_target_emits_text_handle_returns` verifies ordinary `textus`
+  returns use the opaque pointer ABI.
+- `llvm_text_target_emits_aggregate_handle_construction` verifies aggregate
+  construction lowers to declared `__faber_aggregate_*` helpers.
+- `llvm_text_target_emits_index_projection_reads_and_writes` verifies
+  projection reads and single-step writes lower to declared aggregate helpers.
+- `llvm_text_target_rejects_aggregate_spread` verifies spread construction
+  remains deferred.
 - `exempla_llvm_e2e` is ignored by default and records unsupported LLVM
   diagnostics, emitted LLVM text, verifier-valid LLVM IR, and verifier failures
   separately from MIR-lowering and unexpected emission failures.
 
 ## Next Implementation Slice
 
-The evidence now points to Phase 008, text and aggregate handle ABI. Runtime
-helper calls can move opaque handles, but ordinary text returns, aggregate
-construction, projections, nullable values, and collection layout still need a
-physical ABI before the LLVM lane can claim broader handle support.
+The evidence now points to Phase 009, nullable and optional operations. The LLVM
+lane now has an opaque handle ABI for ordinary text and aggregate values, but
+`nil`, option construction, nullable predicates, unwrap/coalesce, and optional
+chains remain explicit unsupported shapes.
 
 ## Wasm Follow-Up Implications
 
-Phase 007 made no MIR shape changes and did not alter Wasm import names. Wasm
-validation is still required because runtime intrinsics are shared MIR facts.
+Phase 008 made no MIR shape changes and did not alter Wasm import names. Wasm
+validation is still required because aggregate and projection MIR facts are
+shared across backends.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate

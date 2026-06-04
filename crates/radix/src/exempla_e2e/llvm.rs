@@ -41,9 +41,9 @@ struct LlvmToolchain {
 
 const EXPECTED_FRONTEND_ANALYZED_FLOOR: usize = 102;
 const EXPECTED_MIR_LOWERED_FLOOR: usize = 74;
-const EXPECTED_LLVM_EMITTED_FLOOR: usize = 35;
+const EXPECTED_LLVM_EMITTED_FLOOR: usize = 58;
 const EXPECTED_LLVM_VERIFIER_VALID_FLOOR: usize = 0;
-const EXPECTED_UNSUPPORTED_DIAGNOSTIC_FLOOR: usize = 39;
+const EXPECTED_UNSUPPORTED_DIAGNOSTIC_FLOOR: usize = 16;
 
 #[derive(Debug)]
 struct LlvmE2eResult {
@@ -136,7 +136,7 @@ fn classify_llvm_exemplum(
         }
     };
 
-    let mir = match crate::mir::lower_analyzed_unit(&analysis) {
+    let mir = match crate::mir::lower_analyzed_unit_with_context(&analysis) {
         Ok(mir) => mir,
         Err(errors) => {
             return llvm_result(
@@ -155,7 +155,7 @@ fn classify_llvm_exemplum(
         }
     };
 
-    let llvm = match crate::mir::emit_llvm_text_probe(&mir, &analysis.types, &analysis.interner) {
+    let llvm = match crate::mir::emit_llvm_text_probe_with_context(&mir.program, &mir.validation, &analysis.interner) {
         Ok(llvm) => llvm,
         Err(error) if error.message.starts_with("MIR-to-LLVM unsupported:") => {
             return llvm_result(
