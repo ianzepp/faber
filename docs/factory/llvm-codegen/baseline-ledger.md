@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 011 baseline
+**Status**: Phase 012 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -204,7 +204,7 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 011 measured corpus counts are 102/102 frontend
+- **E2E Visibility**: Phase 012 measured corpus counts are 102/102 frontend
   analyzed, 74/102 MIR lowered, 59/102 LLVM emitted, 28 MIR lowering failures,
   0/102 verifier-valid, 15 unsupported LLVM diagnostics, 0 unexpected LLVM
   emission failures, 0 output-write failures, and 0 verifier failures.
@@ -291,23 +291,30 @@ produce explicit unsupported diagnostics until their named phases:
   diagnostics, emitted LLVM text, verifier-valid LLVM IR, and verifier failures
   separately from MIR-lowering and unexpected emission failures.
 
-## Next Implementation Slice
+## Next Implementation Slices
 
-The evidence now points to Phase 012, provider, async, closures, and deferred
-surfaces. The LLVM lane now has a stable `@incipit` text symbol for synthetic
-entry functions, but top-level constants, source-order global initialization,
-native executable startup, provider effects, async/cursor lowering, closures,
-failable calls, alternate exits, and non-literal pattern dispatch remain
-explicit unsupported shapes.
+The initial LLVM continuation plan is now complete through the deferred-surface
+classification phase. Future work should split into separate delivery plans
+rather than expanding the text probe with guessed runtime semantics:
+
+- Provider/HAL runtime ABI.
+- Callable values and closures.
+- Async/cursor lowering.
+- LLVM native execution and runtime linking.
+- Global initialization and top-level constants.
+- Failable control flow and alternate-exit ABI.
+- Text/pattern switch dispatch.
 
 ## Wasm Follow-Up Implications
 
-Phase 011 made no MIR shape changes and did not alter Wasm import names. Wasm
+Phase 012 made no MIR shape changes and did not alter Wasm import names. Wasm
 validation is still required because aggregate and projection MIR facts are
 shared across backends, nullable MIR facts are shared even though LLVM and Wasm
 currently use different backend helper policies, and switch CFG semantics are
 shared by both backend lanes. The LLVM entry symbol now mirrors Wasm's existing
-`incipit` export name without changing Wasm output.
+`incipit` export name without changing Wasm output. Future provider, async,
+closure, and native-runtime plans must compare against Wasm behavior where the
+source semantics overlap.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate
