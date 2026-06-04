@@ -1,430 +1,303 @@
 # LLVM Codegen Factory Continuation Plan
 
-**Status**: complete through Phase 012; future work split into new delivery plans
-**Created**: 2026-06-04  
-**Repo**: `/Users/ianzepp/work/ianzepp/faber-llvm-codegen`
-**Factory Artifact Dir**: `docs/factory/llvm-codegen/`  
-**Template Source**: `docs/factory/wasm-codegen/continuation-plan.md`  
-**Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`  
+**Status**: refreshed after Phase 012 and main-branch integration; continue from remaining gaps only
+**Created**: 2026-06-04
+**Last refreshed**: 2026-06-04
+**Repo**: `/Users/ianzepp/work/ianzepp/faber`
+**Factory Artifact Dir**: `docs/factory/llvm-codegen/`
+**Historical Ledger**: [`baseline-ledger.md`](baseline-ledger.md)
+**Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
+**Current Harness**: `cargo test -p radix --lib exempla_llvm_e2e -- --ignored --nocapture`
 **Companion Backend**: MIR-backed Wasm text lowering in
 `crates/radix/src/mir/wasm_text.rs`
 
 ## Objective
 
-Begin the MIR-backed LLVM text lowering work as a separate backend lane while
-the Wasm factory continues processing the broader MIR/Wasm plan. The LLVM lane
-should use the Wasm factory document as its operating template: each phase gets
-a durable delivery spec, live baseline evidence, focused and broad validation,
-explicit unsupported-shape handling, and a coherent commit.
+Continue the MIR-backed LLVM text lowering work from the post-merge main branch
+baseline. The first LLVM factory sequence, Phases 001-012, is complete and
+should remain historical context rather than future work. Those phases created
+the ledger, added the ignored e2e harness, wired target selection, expanded
+scalar/CFG/call/runtime/text/aggregate/nullable/entrypoint/switch coverage, and
+classified the large deferred surfaces.
 
-LLVM should start as an experimental text probe, not as a native executable
-toolchain promise. The early goal is to prove that current MIR is a strong
-enough shared contract for another low-level target and to feed useful pressure
-back into MIR without importing LLVM-specific ABI, layout, or runtime shortcuts
-into source-shaped or target-neutral compiler layers.
+Do not rerun Phases 001-012 as a continuation plan. Future work should pick one
+remaining cluster below, create a new phase delivery spec, update live counts,
+and preserve fail-closed diagnostics for unsupported shapes.
 
-Any MIR changes made for LLVM must preserve the Wasm path. Wasm and LLVM can
-choose different physical layouts, import/runtime ABIs, and validation tools,
-but they should consume the same source-semantic MIR facts wherever the language
-operation is the same.
+LLVM remains an experimental text probe, not a native executable toolchain
+promise. Text emission, verifier-valid IR, linked native execution, and runtime
+behavior are separate tiers and must not be conflated.
 
 ## Live Baseline
 
-The original startup baseline has been superseded by the completed phase
-artifacts. The current authoritative baseline is
-[`baseline-ledger.md`](baseline-ledger.md), which was updated through Phase 012
-on 2026-06-04.
-
-Current measured baseline:
+Verified on 2026-06-04 from the main worktree:
 
 ```text
 LLVM focused tests:
   cargo test -p radix llvm -- --nocapture
-  result: 29 passed, 0 failed, 1 ignored
+  current focused gate covers 30 passing tests and 1 ignored execution test
+
+LLVM e2e toolchain:
+  verifier: unavailable (llvm-as/opt not found)
+  execution/runtime: unavailable
 
 LLVM exempla e2e:
-  cargo test -p radix exempla_llvm_e2e -- --ignored --nocapture
   frontend analyzed: 102/102
-  MIR lowered: 74/102
-  LLVM emitted: 59/102
+  MIR lowered: 87/102
+  LLVM emitted: 62/102
   verifier-valid: 0/102
-  unsupported diagnostic: 15
-
-Full package:
-  cargo test -p radix
-  result: 561 passed, 0 failed, 6 ignored; hygiene 8 passed; doctests 1 passed, 1 ignored
-
-Lint:
-  ./scripta/lint
-  result: passed
-
-Current LLVM target shape:
-  frontend/driver target: wired as `llvm-text`
-  MIR lowering: `lower_analyzed_unit`
-  emitter: `crates/radix/src/mir/llvm_text.rs`
-  validation tool: optional external `llvm-as` or `opt` detection in e2e
-  exempla e2e harness: ignored by default, explicit run tiered by status
-  run/native execution tier: none
+  frontend failed: 0
+  MIR lowering failed: 15
+  unsupported diagnostic: 25
+  emission failed: 0
+  output write failed: 0
+  verifier failed: 0
 ```
 
-Current probe support remains intentionally bounded. It now includes:
+The e2e harness currently treats missing verifier/runtime tooling as explicit
+zero-count tiers. No future plan should claim verifier-valid or runnable LLVM
+progress without installing or packaging the required toolchain and runtime.
 
-- scalar integer, float, boolean, and vacuum functions;
-- multi-block scalar CFG with labels, `br`, integer/boolean `switch`, and
-  `unreachable`;
-- direct same-program calls;
-- LLVM-side runtime helper declarations for diagnostics, assert, panic,
-  conversion, format, and collection intrinsics;
-- opaque `ptr` handles for text, aggregate-like values, and nullable values;
-- aggregate construction and single-step projection helpers when metadata proves
-  the types;
-- nullable helper calls for none, some, predicates, unwrap, and coalesce;
-- synthetic entry functions emitted as `@incipit`;
-- explicit `MIR-to-LLVM unsupported` diagnostics for deferred shapes.
+## Completed And Protected Surface
 
-Current known gaps are intentionally split into future delivery plans rather
-than treated as accidental continuation work:
-
-- Provider/HAL runtime ABI.
-- Callable values and closures.
-- Async/cursor lowering.
-- LLVM native execution and runtime linking.
-- Global initialization and top-level constants.
-- Failable control flow and alternate-exit ABI.
-- Text/pattern switch dispatch.
+- Driver target selection for `llvm-text`.
+- Ignored exempla e2e harness with frontend, MIR, emission, unsupported,
+  verifier, and failure buckets.
+- Scalar integer, float, boolean, and vacuum functions.
+- Scalar arithmetic, comparisons, boolean operations, casts, and direct returns.
+- Multi-block scalar CFG with labels, branches, returns, loops, scalar
+  branches, and scalar/boolean literal switches.
+- Direct same-program calls with scalar arguments and results.
+- LLVM runtime declarations for diagnostics, assert, panic, conversion, format,
+  text, aggregate, nullable, and collection helper surfaces already used by
+  supported MIR.
+- Opaque `ptr` handle policy for text, aggregate-like values, and nullable
+  values.
+- Aggregate construction and single-step projection helpers when metadata
+  proves the type.
+- Nullable helper calls for none, some, predicates, unwrap, coalesce, and the
+  currently supported option-projection operand shapes.
+- Synthetic `@incipit` entry function emission.
+- Explicit `MIR-to-LLVM unsupported` diagnostics for deferred provider,
+  callable, external, failable, spread, text switch, option-chain, and
+  layout-dependent shapes.
 
 ## Non-Negotiable Rules
 
 - Keep LLVM lowering MIR-backed; do not bypass MIR from HIR or source.
 - Keep MIR target-neutral. LLVM pointer policy, data layout, calling convention,
   symbol linkage, and runtime ABI belong in the LLVM emitter/runtime layer or in
-  explicit layout metadata, not in source-shaped compiler nodes.
+  explicit layout metadata.
 - Treat Wasm as an active design client of MIR. MIR changes for LLVM must remain
   lowerable by Wasm or fail closed in Wasm with explicit diagnostics.
 - Do not add MIR shapes whose only valid interpretation is "emit this LLVM IR
-  instruction." Represent source semantics in MIR and let LLVM choose the
+  instruction." Represent source semantics in MIR and let each backend choose
   target-specific lowering.
 - Missing type facts in MIR lowering or validation are upstream bugs.
 - Unsupported MIR shapes must fail explicitly and remain visible in focused
-  tests and any future e2e harness.
-- Do not claim LLVM-valid progress without a concrete verifier policy. Text
-  emission alone is not the same as verifier-valid IR.
+  tests and e2e buckets.
+- Do not claim LLVM-valid progress without a concrete verifier policy.
 - Do not claim runnable/native progress without a concrete execution toolchain,
-  entrypoint ABI, and measured results.
-- Keep the current Rust backend and Wasm factory gates green when LLVM changes
-  shared MIR, validation, driver, or target-selection behavior.
+  entrypoint ABI, runtime linkage, and measured results.
+- Keep Rust and Wasm gates green when LLVM changes shared MIR, validation,
+  driver, or target-selection behavior.
 
 ## Factory Loop
 
-For every phase:
+For every future phase:
 
 1. Write `docs/factory/llvm-codegen/phase-0NN-<topic>-delivery.md`.
 2. Implement only the selected phase.
 3. Run focused tests for touched MIR/LLVM/runtime code.
 4. Run `cargo test -p radix llvm -- --nocapture`.
 5. Run `cargo test -p radix mir -- --nocapture`.
-6. Run `cargo test -p radix wasm -- --nocapture` when the phase changes MIR
-   shape, validation, type representation, calls, control flow, projections, or
-   runtime abstractions.
-7. Run any LLVM exempla e2e harness once it exists.
+6. Run `cargo test -p radix wasm -- --nocapture` when the phase changes shared
+   MIR shape, validation, types, calls, control flow, projections, or runtime
+   abstractions.
+7. Run `cargo test -p radix --lib exempla_llvm_e2e -- --ignored --nocapture`.
 8. Run `cargo test -p radix` and `./scripta/lint` unless the phase is docs-only.
-9. Update a ledger or phase result section with live counts and remaining
-   clusters.
-10. Record whether any MIR change has a Wasm follow-up implication.
-11. Run a completion audit against the phase spec.
-12. Commit the phase.
+9. Record live counts, changed failure clusters, and any Wasm implication.
+10. Run a completion audit against the phase spec.
+11. Commit the phase.
 
-## Recommended Phase Set
+## Remaining Phase Set
 
-Completion status: Phases 001 through 012 are implemented, validated, and
-committed. Durable delivery specs exist for every phase in
-`docs/factory/llvm-codegen/phase-0NN-...-delivery.md`; the final current-state
-classification lives in [`baseline-ledger.md`](baseline-ledger.md).
+### Phase L-013: Verifier Toolchain And IR Validity
 
-### Phase 001: LLVM Readiness Audit And Baseline Ledger
-
-Problem: LLVM has a target surface and two focused probe tests, but no durable
-factory baseline. Starting feature lowering without classifying current MIR
-would make LLVM chase Wasm changes blindly.
+Problem: emitted LLVM text is still not verifier-valid because this environment
+does not provide `llvm-as` or `opt`. Verifier-valid floors remain zero even when
+text emission succeeds.
 
 Scope:
 
-- Review current MIR nodes, validation rules, Wasm lowering shapes, and the
-  current LLVM probe.
-- Classify each MIR shape as directly LLVM-lowerable, runtime-call-backed,
-  layout-dependent, verifier-blocked, or intentionally deferred.
-- Create `docs/factory/llvm-codegen/baseline-ledger.md` with current support
-  facts, command output summaries, and explicit unsupported clusters.
-- Add or preserve fail-closed tests for representative unsupported shapes.
-- Identify the first implementation slice based on live evidence rather than
-  assumed backend difficulty.
+- Decide whether the project should depend on an external LLVM toolchain, a
+  repo-owned validation dependency, or a documented skip policy.
+- Capture verifier version and command when verifier-valid claims are made.
+- Keep text-emission tests independent from verifier availability.
+- Fix any IR spelling or type issues exposed by the verifier without weakening
+  unsupported diagnostics.
 
 Checkpoint:
 
-- A durable LLVM ledger exists.
-- Unsupported MIR shapes are intentionally documented rather than accidental.
-- `cargo test -p radix llvm -- --nocapture`, `cargo test -p radix mir -- --nocapture`,
-  and `./scripta/lint` pass.
+- The harness distinguishes emitted text from verifier-valid IR with measured
+  nonzero verifier counts, or it documents the skip policy explicitly.
 
-### Phase 002: LLVM Exempla E2E Harness
+### Phase L-014: Unsupported Operator Matrix
 
-Problem: Wasm progress is measurable because it has a corpus harness. LLVM
-currently only has focused unit tests, so pass counts and regressions are not
-visible.
+Problem: 25 exempla emit unsupported diagnostics after MIR lowering. Several
+are ordinary operator surfaces on handles, option predicates, or less common
+scalar operations rather than large runtime designs.
 
 Scope:
 
-- Add an ignored `exempla_llvm_e2e` harness modeled on the Wasm harness.
-- Classify tiers honestly, starting with frontend analyzed, MIR lowered,
-  LLVM emitted, and unsupported diagnostic.
-- Add verifier-valid only if a local verifier tool is available or a
-  repo-owned validation dependency is selected.
-- Do not add execution/run tiers yet.
-- Record expected floors only after a measured baseline exists.
+- Add type-driven lowering for currently unsupported direct scalar operations,
+  including bitwise and shift cases where MIR type facts are sufficient.
+- Decide runtime-helper lowering for text/handle equality and concatenation, or
+  keep them as precise unsupported diagnostics.
+- Lower `IsNil` and `IsNonNil` operand shapes that the nullable helper ABI can
+  represent.
+- Recheck `vel/vel.fab` and coalesce on primitive nullable values before adding
+  any ad hoc LLVM workaround.
 
 Checkpoint:
 
-- The LLVM harness can scan the same exempla corpus and report stable counts.
-- The harness distinguishes MIR-lowering failures from LLVM-emission failures.
-- No unsupported LLVM shape is counted as a compiler crash.
+- Unsupported diagnostics fall below 25 without introducing verifier-invalid
+  IR or target-specific MIR assumptions.
 
-### Phase 003: Scalar Type And Operation Coverage
+### Phase L-015: Text, Pattern, And Dynamic Switch Dispatch
 
-Problem: the current LLVM probe handles only integer scalar arithmetic and a few
-primitive type spellings.
+Problem: `elige`/`discerne` examples with text, aggregate, enum, or dynamic
+subjects still need runtime comparison and dispatch policy. Literal scalar and
+boolean switches are already covered.
 
 Scope:
 
-- Add `fractus` constants and floating arithmetic with correct LLVM op spelling.
-- Add scalar comparisons for `numerus`, `fractus`, and `bivalens` where MIR
-  already carries enough type facts.
-- Add boolean unary/binary operations that map directly to scalar LLVM IR.
-- Keep text, aggregates, nullable values, and runtime calls out of this phase.
+- Keep scalar literal switch support intact.
+- Add runtime comparator-backed dispatch only when value type and comparator
+  symbol are known.
+- Preserve fail-closed behavior for layout-dependent patterns.
+- Coordinate with Wasm if shared MIR pattern lowering changes.
 
 Checkpoint:
 
-- Focused LLVM tests cover integer, float, and boolean scalar functions.
-- The e2e LLVM emitted tier rises if Phase 002 exists.
-- Wasm scalar behavior remains unchanged.
+- Text or enum-pattern dispatch progresses under a documented runtime policy,
+  and unsupported dynamic patterns remain explicit.
 
-### Phase 004: Multi-Block Scalar CFG
+### Phase L-016: Aggregate Spread And Nested Projection
 
-Problem: LLVM currently rejects every MIR function with more than one basic
-block. That blocks `si`, `dum`, short-circuiting, and many ordinary programs
-that MIR already represents cleanly.
+Problem: list/object spread, some nested projection bases, and option-chain
+field/index shapes still block LLVM emission after MIR succeeds.
 
 Scope:
 
-- Emit LLVM labels for MIR basic blocks.
-- Lower `Goto`, scalar `Branch`, and scalar `Return`.
-- Preserve MIR block order for deterministic output while respecting
-  terminator edges.
-- Add focused tests for `si`, simple loops if already represented by MIR, and
-  branch-return functions.
-- Keep `Switch`, `TryCall`, and alternate-exit control flow separate.
+- Define runtime helper calls or layout policy for aggregate spread.
+- Extend projection lowering only when base metadata proves the aggregate type.
+- Recheck `destructura/objectum.fab`, `praefixum/praefixum.fab`,
+  `lista/lista.fab`, `sparge/sparge.fab`, and
+  `syntaxis/destructura-sparsa.fab`.
+- Keep rich layout and ownership decisions explicit rather than inferred from
+  source spelling.
 
 Checkpoint:
 
-- Multi-block scalar MIR no longer fails with `multiple basic blocks`.
-- Unsupported terminators still fail with specific diagnostics.
+- Supported aggregate/projection examples emit LLVM text, while unsupported
+  spread/layout cases name the missing policy.
 
-### Phase 005: Direct Function Calls
+### Phase L-017: Shared MIR Failure Repair
 
-Problem: useful scalar LLVM programs need direct calls between MIR functions,
-but the current probe only returns local arithmetic.
+Problem: 15 exempla still fail before MIR for both Wasm and LLVM. LLVM should
+not add backend-local bypasses for those failures.
 
 Scope:
 
-- Lower `MirStmtKind::Call` and direct `MirCallee::Function` calls for scalar
-  argument and result types.
-- Add declarations or fail-closed diagnostics for known external definitions.
-- Preserve destination typing and reject value callees until callable-value MIR
-  is ready.
-- Add focused tests for scalar helper functions and call chains.
+- Coordinate with the Wasm remaining phases for provider, async/cursor,
+  closure/callable, iterator/object, optional/default, generic, and aggregate
+  validation fixes.
+- Add LLVM tests only after a shared MIR shape exists.
+- Keep LLVM e2e buckets reporting these as MIR-lowering failures, not LLVM
+  emission failures.
 
 Checkpoint:
 
-- Direct scalar function calls emit verifier-shaped LLVM text.
-- External/user-value callees remain explicit unsupported cases.
+- MIR-lowered coverage rises above 87/102 for both low-level backends or the
+  remaining failures are earlier, clearer source diagnostics.
 
-### Phase 006: LLVM Verifier Policy
+### Phase L-018: Provider, Async, Callable, And Failable ABI
 
-Problem: emitted LLVM text is not yet checked by an LLVM verifier, so the
-factory cannot honestly claim LLVM-valid output.
+Problem: provider/HAL calls, async/cursor functions, first-class callable
+values, closures, and failable control flow require runtime, calling
+convention, and alternate-exit design decisions larger than scalar text
+emission.
 
 Scope:
 
-- Decide between an external `llvm-as`/`opt` prerequisite, a Rust crate, or a
-  documented skip policy.
-- Add verifier detection and tier classification if tooling is present.
-- Keep emission tests independent from verifier availability.
-- Record exact tool version and command in the ledger when verifier-valid tiers
-  are claimed.
+- Split provider, async/cursor, callable/closure, and failable control flow into
+  separate delivery specs before implementation.
+- Define the runtime symbol, state layout, and alternate-exit ABI for the
+  selected surface.
+- Preserve explicit unsupported diagnostics for unselected surfaces.
+- Keep Wasm lowerability or fail-closed behavior visible for any shared MIR
+  shape introduced here.
 
 Checkpoint:
 
-- The factory can distinguish emitted LLVM text from verifier-valid LLVM IR.
-- Expected floors are raised only for measured verifier-valid output.
+- One large deferred surface reaches a narrow ABI contract with focused tests,
+  or remains documented as intentionally unsupported.
 
-### Phase 007: Runtime Calls And Host Boundary
+### Phase L-019: Native Execution And Runtime Linking
 
-Problem: Wasm uses imports for diagnostics, text, aggregate, conversion, panic,
-assert, and collection runtime operations. LLVM needs an equivalent target
-policy without pushing Wasm import names into MIR.
+Problem: LLVM has no run tier. A native tier needs verifier tooling, object or
+executable generation, runtime symbols, startup ABI, and process policy.
 
 Scope:
 
-- Classify `MirIntrinsic` variants into direct lowering, runtime declaration,
-  layout-dependent, and deferred groups.
-- Lower diagnostics, assert, panic, conversion, and collection operations as
-  calls to an LLVM-side Faber runtime ABI where the signature is known.
-- Keep provider/HAL effects separate unless this phase explicitly defines the
-  host boundary.
-- Document every runtime symbol introduced by the LLVM emitter.
+- Start only after the verifier policy is settled.
+- Decide CLI/runtime integration separately from text-emission coverage.
+- Define startup around `incipit`, runtime library linkage, arguments, and
+  diagnostics capture.
+- Keep execution failures separate from verifier failures and emission
+  unsupported diagnostics.
 
 Checkpoint:
 
-- Runtime-call-backed MIR either lowers to named LLVM runtime calls or fails
-  with operation-specific diagnostics.
-- Wasm import ABI remains unchanged.
+- The harness gains a measured native run tier, or the runtime-linking boundary
+  is documented for a future factory plan.
 
-### Phase 008: Text And Aggregate Handle ABI
+## Current Failure Clusters
 
-Problem: text, arrays, maps, structs, and enum variants need a physical ABI
-before LLVM can lower many MIR shapes. Wasm currently uses opaque handles and
-runtime imports; LLVM needs an equally explicit policy.
+Re-run the ignored harness before choosing a phase. The 2026-06-04 remaining
+clusters are:
 
-Scope:
+- Shared MIR-lowering failures: `ad/ad.fab`, `cede/cede.fab`,
+  `clausa/clausa.fab`, `functio/optionalis.fab`, `futura/futura.fab`,
+  `generis/generis.fab`, `incipiet/incipiet.fab`, `itera/cursor-iteratio.fab`,
+  `itera/de.fab`, `membrum/membrum.fab`, `objectum/objectum.fab`,
+  `si/ergo-redde.fab`, `syntaxis/arena-mixta.fab`,
+  `syntaxis/fluxus-cede.fab`, and `vocatio/vocatio.fab`.
+- Unsupported binary operations or handle operations:
+  `adfirma/adfirma.fab`, `assignatio/assignatio.fab`, `binarius/binarius.fab`,
+  `discerne/discerne.fab`, `ego/ego.fab`, `omnia/omnia.fab`,
+  `ordo/ordo.fab`, `redde/redde.fab`, `sub/sub.fab`, and
+  `syntaxis/discerne-insanum.fab`.
+- Unsupported switch/value dispatch: `elige/elige.fab`,
+  `elige/elige-cum-defalta.fab`, and `elige/elige-sine-defalta.fab`.
+- Unsupported nullable predicates and option shapes: `est/est.fab`,
+  `si/est.fab`, `unarius/unarius.fab`, `ternarius/ternarius.fab`,
+  `optionalis/optionalis.fab`, and `vel/vel.fab`.
+- Unsupported spread/projection shapes: `lista/lista.fab`,
+  `sparge/sparge.fab`, `syntaxis/destructura-sparsa.fab`,
+  `destructura/objectum.fab`, and `praefixum/praefixum.fab`.
 
-- Decide the first LLVM probe ABI for `textus` and aggregate values: opaque
-  pointers, integer handles, or explicit runtime-owned structs.
-- Attach any required physical representation through target-local lowering or
-  explicit layout metadata, not by weakening semantic MIR types.
-- Lower aggregate construction/projection only where layout and ownership are
-  defined.
-- Keep spread, dynamic values, and rich enum payload layout deferred unless the
-  ABI is clear.
+## Success Criteria For The Next Continuation
 
-Checkpoint:
+A successful future LLVM factory run should stop at one of these gates:
 
-- The ABI decision is documented before broad aggregate lowering begins.
-- Any implemented aggregate/text lowering has focused tests and verifier policy.
-
-### Phase 009: Nullable And Optional Operations
-
-Problem: MIR has explicit nullable operations, but LLVM needs a representation
-for payload presence, nil, unwrap, coalesce, and optional chaining.
-
-Scope:
-
-- Choose representation separately for scalar nullable values and
-  runtime-backed nullable handles if needed.
-- Lower `None`, `Some`, `IsNil`, `IsNonNil`, `Unwrap`, and `Coalesce` only where
-  the payload layout is known.
-- Keep optional chains through fields, indexes, and calls dependent on the
-  aggregate/call support phases.
-- Add verifier-focused tests for scalar nullable operations before aggregate
-  nullable operations.
-
-Checkpoint:
-
-- Nullable lowering is explicit and type-driven.
-- Unsupported nullable shapes fail before emitting invalid LLVM.
-
-### Phase 010: Switch, Pattern, And Failable Control Flow
-
-Problem: `Switch`, pattern-driven branching, and failable calls need explicit
-LLVM CFG lowering and runtime/error ABI decisions.
-
-Scope:
-
-- Lower literal scalar `Switch` to LLVM `switch` or branch chains.
-- Keep text/aggregate/dynamic matching runtime-backed.
-- Define `ReturnError` and `TryCall` lowering only after alternate-exit ABI is
-  chosen.
-- Add fail-closed tests for unsupported non-literal and layout-dependent
-  patterns.
-
-Checkpoint:
-
-- Literal scalar switch lowering is tested.
-- Failable control flow remains explicit, not silently erased.
-
-### Phase 011: Top-Level Initialization And Entrypoint ABI
-
-Problem: LLVM will eventually need globals, source-order initialization, and an
-entrypoint shape, but the current probe only emits standalone functions.
-
-Scope:
-
-- Decide how top-level constants and synthetic initialization enter MIR or LLVM.
-- Define the text target's export/entrypoint naming policy for `incipit`.
-- Keep process arguments, environment, filesystem, and HTTP out of this phase.
-- Coordinate with Wasm Phase 024/028 decisions where source semantics overlap.
-
-Checkpoint:
-
-- Top-level initialization and entrypoint policy are documented before run tiers
-  are attempted.
-
-### Phase 012: Provider, Async, Closures, And Deferred Surfaces
-
-Problem: provider calls, `ad` blocks, async/cursor functions, and closures
-cross runtime and calling-convention boundaries that are larger than scalar LLVM
-lowering.
-
-Scope:
-
-- Prefer design notes and explicit unsupported diagnostics before implementation
-  unless the runtime model is already settled.
-- Split provider, async, and closures into separate future factory plans if
-  implementation becomes substantial.
-- Keep the LLVM probe useful by failing clearly on these surfaces.
-
-Checkpoint:
-
-- Deferred language surfaces are named and classified, not left as accidental
-  unsupported errors.
-
-## Current Failure Clusters To Recheck Before Future Plans
-
-The initial continuation has completed the recommended Phase 001 through Phase
-012 set. Future workers should start from [`baseline-ledger.md`](baseline-ledger.md),
-then rerun focused tests and the ignored LLVM e2e harness before choosing a new
-delivery plan.
-
-Current known clusters after Phase 012:
-
-- Provider/HAL runtime calls remain deferred pending a host ABI and runtime
-  dispatch/linkage plan.
-- Callable values, closures, and higher-order collection methods remain
-  deferred pending capture layout and call-dispatch policy.
-- Async/cursor lowering remains deferred pending suspension, yield/await, and
-  scheduler/runtime policy.
-- Native execution remains deferred pending verifier/toolchain availability,
-  runtime library linkage, C `main` or startup ABI, process args, and runtime
-  symbol implementation.
-- Global initialization and top-level constants remain deferred pending source
-  order and storage policy.
-- Failable control flow (`TryCall`, `ReturnError`) remains deferred pending
-  alternate-exit ABI.
-- Text/pattern switch dispatch remains deferred pending runtime comparison and
-  pattern dispatch policy.
-- Verifier-valid floors remain zero in environments without `llvm-as` or `opt`;
-  emitted LLVM text must not be claimed verifier-valid without that tier.
-
-## Success Criteria For This Continuation
-
-This continuation has reached the intended handoff gate. A successful future
-LLVM factory run should stop at one of these gates:
-
-- A durable LLVM baseline ledger exists and classifies current MIR support.
-- An ignored LLVM exempla e2e harness reports honest tiers and protects expected
-  floors.
-- Scalar LLVM emitted coverage rises materially without weakening MIR
-  validation.
-- A verifier-valid tier exists and is protected by expected floors.
-- A runtime or layout phase reaches a clear ABI boundary and leaves explicit
-  follow-up delivery specs rather than ambiguous TODOs.
+- LLVM emitted coverage rises materially above 62/102 with no emission failures.
+- Unsupported diagnostics fall below 25 while staying precise.
+- MIR-lowered coverage rises above 87/102 through shared frontend/MIR fixes.
+- Verifier-valid coverage rises above zero under a concrete verifier policy.
+- A provider, async, callable, failable, aggregate, or native execution phase
+  reaches a clear ABI boundary and leaves explicit follow-up specs instead of
+  broad TODOs.
 
 Opus faciendum: make LLVM prove MIR, not distort it.

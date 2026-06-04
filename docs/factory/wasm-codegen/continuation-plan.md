@@ -1,55 +1,91 @@
 # Wasm Codegen Factory Continuation Plan
 
-**Status**: ready for next factory assignment  
-**Created**: 2026-06-04  
-**Repo**: `/Users/ianzepp/work/ianzepp/faber`  
-**Factory Artifact Dir**: `docs/factory/wasm-codegen/`  
-**Baseline Gate**: `phase-021-regression-gate-handoff.md`  
-**Current Harness**: `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`  
+**Status**: refreshed after Phases 022-031; continue from remaining gaps only
+**Created**: 2026-06-04
+**Last refreshed**: 2026-06-04
+**Repo**: `/Users/ianzepp/work/ianzepp/faber`
+**Factory Artifact Dir**: `docs/factory/wasm-codegen/`
+**Historical Ledger**: [`baseline-ledger.md`](baseline-ledger.md)
+**Current Harness**: `cargo test -p radix --lib exempla_wasm_e2e -- --ignored --nocapture`
 **Companion Backend**: experimental MIR-backed LLVM text probe in
 `crates/radix/src/mir/llvm_text.rs`
 
 ## Objective
 
-Continue the MIR-backed Wasm text lowering work after the first successful
-compile-valid coverage gate. The prior run reached and protected the initial
-70-80% compile-valid goal. The next factory run should make the Wasm path more
-real by moving past compile-valid WAT into measured instantiation and execution,
-while continuing to close high-value MIR-lowering and Wasm-emission gaps.
+Continue the MIR-backed Wasm text lowering work from the current measured
+runtime-capable baseline. The earlier completion plan asked for host tooling,
+stub imports, entrypoint policy, runtime method lowering, optional/member
+correctness, dynamic switch support, top-level constants, provider planning,
+async/closure triage, and LLVM readiness. Those items are either implemented,
+protected by focused tests, or split into explicit remaining gaps below.
 
-Any MIR changes made for this work should also preserve a clean path for the
-LLVM text lowering implementation that follows. Wasm and LLVM can make different
-layout, ABI, and runtime choices, but they should consume the same target-neutral
-MIR facts wherever the source semantics are the same.
+Do not rerun the old Phase 022-031 sequence as if it were still open. Future
+factory work should pick one of the remaining clusters, save a new delivery
+spec, run the live harness, and update this plan or the ledger with measured
+movement.
 
-The plan is intentionally phase-oriented. Each phase should save its own
-delivery spec, update the ledger with live harness counts, run focused and broad
-validation, and commit only a coherent slice.
+Any MIR changes made for Wasm must keep LLVM as a design client. Wasm and LLVM
+can choose different physical layout, host ABI, and runtime policies, but they
+should consume the same target-neutral MIR facts wherever source semantics are
+the same.
 
 ## Live Baseline
 
-Verified on 2026-06-04 from this worktree:
+Verified on 2026-06-04 from the main worktree:
 
 ```text
 Wasm e2e toolchain:
   compile validator: wasm-tools validate
-  instantiator/runtime: unavailable
+  instantiator/runtime: wasmtime dev-dependency (in-process linker probe)
+
 Wasm e2e exempla:
-  frontend analyzed: 101/101
-  MIR lowered: 72/101
-  Wasm emitted: 71/101
-  compile-valid: 71/101
-  instantiate-valid: 0/101
-  runnable: 0/101
-  behavior-checked: 0/101
+  frontend analyzed: 102/102
+  MIR lowered: 87/102
+  Wasm emitted: 87/102
+  compile-valid: 87/102
+  instantiate-valid: 87/102
+  runnable: 84/102
+  behavior-checked: 6/102
+
+Wasm instantiation buckets, compile-valid subset, stubless linker:
+  missing-import: 86
+  instantiation-trap: 0
+  instantiate-valid: 1
+  no-runtime: 0
+
+Wasm instantiation buckets, compile-valid subset, stub host:
+  instantiate-valid: 87
+  missing-import: 0
+  instantiation-trap: 0
+
+Wasm run buckets:
+  runnable: 84
+  no-entry-export: 1
+  entry-trap: 2
 ```
 
-Tooling:
+Current target support is no longer just compile-valid WAT. The harness has a
+repo-owned `wasmtime` host probe, stub imports, entrypoint execution for
+`incipit`, trap buckets, and a small behavior fixture tier.
 
-- `wasm-tools 1.251.0` is available.
-- `wasmtime` is not currently on `PATH`.
-- The ignored e2e harness has expected-tier floors, so regressions below the
-  Phase 021 baseline fail.
+## Completed And Protected Surface
+
+- WAT validation through `wasm-tools validate`.
+- In-process `wasmtime` dev-dependency host probing.
+- Stub host imports for diagnostics, text, aggregate handles, assertions,
+  panic, conversion, format, and collection/runtime helpers.
+- Export and run policy for synthetic `incipit` entrypoints.
+- Scalar functions, direct calls, multi-block control flow, loops, branch
+  dispatch, scalar switches, and numeric range iteration.
+- Opaque text, aggregate, nullable, enum, and collection handle lowering.
+- Runtime-backed text/aggregate comparisons and collection operations,
+  including current `appende`, `prima`, `mappata`, and `filtrata` coverage.
+- Optional helper lowering for nil, some, predicates, unwrap, coalesce, and
+  supported chain/projection reads.
+- Top-level constants and source-order initialization shapes currently covered
+  by focused Wasm tests.
+- Payload and unit enum construction, variant tests, payload extraction, and
+  `discerne` coverage for the currently supported shapes.
 
 ## Non-Negotiable Rules
 
@@ -58,290 +94,199 @@ Tooling:
   belong in the Wasm emitter/runtime layer.
 - Treat LLVM lowering as a design client of MIR. New MIR nodes, terminators,
   type facts, projection forms, call forms, and runtime abstractions need a
-  backend-neutral meaning that could be lowered to LLVM later.
-- Do not add MIR shapes whose only valid interpretation is "call this Wasm
-  import" or "use this Wasm stack trick." Represent source semantics in MIR and
-  let Wasm/LLVM choose target-specific ABI lowering.
+  backend-neutral meaning that LLVM can also reject or lower deliberately.
 - Missing type facts in MIR lowering or validation are upstream bugs.
 - Unsupported MIR shapes must fail explicitly and remain visible in the harness.
 - Do not raise expected-tier floors unless the new tier is proven by the
-  harness and recorded in the ledger.
-- Do not claim instantiation, runnable, or behavior-checked progress without a
-  concrete host/import/entrypoint policy and measured results.
+  harness and recorded in a ledger or phase result.
+- Do not claim behavior progress unless observable output or trap behavior is
+  captured by the host and compared to a fixture.
 
 ## Factory Loop
 
-For every phase:
+For every future phase:
 
 1. Write `docs/factory/wasm-codegen/phase-0NN-<topic>-delivery.md`.
 2. Implement only the selected phase.
 3. Run focused tests for touched MIR/Wasm/runtime code.
 4. Run `cargo test -p radix mir -- --nocapture`.
 5. Run `cargo test -p radix wasm -- --nocapture`.
-6. Run `cargo test -p radix llvm -- --nocapture` when the phase changes MIR
-   shape, validation, type representation, calls, control flow, projections, or
-   runtime abstractions.
-7. Run `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`.
+6. Run `cargo test -p radix llvm -- --nocapture` when the phase changes shared
+   MIR shape, validation, types, calls, control flow, projections, or runtime
+   abstractions.
+7. Run `cargo test -p radix --lib exempla_wasm_e2e -- --ignored --nocapture`.
 8. Run `cargo test -p radix` and `./scripta/lint` unless the phase is docs-only.
-9. Update `baseline-ledger.md` or add a short phase result section with live
-   counts and remaining clusters.
-10. Record whether any MIR change has an LLVM follow-up implication.
-11. Run a completion audit against the phase spec.
-12. Commit the phase.
+9. Record live counts, changed failure clusters, and any LLVM implication.
+10. Run a completion audit against the phase spec.
+11. Commit the phase.
 
-## Recommended Phase Set
+## Remaining Phase Set
 
-### Phase 022: Host Tooling And Instantiation Harness
+### Phase W-032: Remaining MIR Validation And Call-Shape Bugs
 
-Problem: compile-valid coverage is protected, but every compile-valid exemplar
-stops below instantiate-valid because no Wasm runtime is available locally.
-
-Scope:
-
-- Decide whether the factory should depend on a developer-installed `wasmtime`
-  binary or a Rust dev-dependency host such as the `wasmtime` crate.
-- Prefer repo-reproducible validation if adding the dependency is acceptable;
-  otherwise document the external tool prerequisite and keep skips explicit.
-- Extend the e2e harness so compile-valid modules with unresolved imports are
-  classified into host/import buckets, not a single runtime-unavailable bucket.
-- Do not implement Faber runtime imports yet except tiny no-op stubs needed to
-  prove module instantiation honestly.
-
-Checkpoint:
-
-- Harness distinguishes no-runtime, missing-import, instantiation trap, and
-  successful instantiation.
-- Existing `71/101` compile-valid floor still passes.
-
-### Phase 023: Minimal Import Stub Host
-
-Problem: most compile-valid modules import `faber_diag`, `faber_text`,
-`faber_aggregate`, or `faber_runtime`, so instantiation cannot advance without a
-host surface.
+Problem: 15 exempla still fail before validated MIR. The current cluster mixes
+real deferred language surfaces with fixable call/default/generic/aggregate
+shape bugs.
 
 Scope:
 
-- Define a minimal host/import contract for current compile-valid WAT imports.
-- Stub diagnostics, text handles, aggregate handles, assertions, panic, and
-  conversions enough to instantiate modules without pretending full behavior is
-  implemented.
-- Keep handle values opaque and deterministic for tests.
-- Record every import provided by the host in a small reference document or
-  test fixture.
+- Classify each pre-MIR failure as semantic diagnostic, HIR typing issue, MIR
+  lowering issue, or intentionally deferred language surface.
+- Fix default/optional argument and call arity issues represented by
+  `functio/optionalis.fab` and `vocatio/vocatio.fab`.
+- Fix generic named aggregate field and map/object aggregate value issues where
+  the source semantics are already typed.
+- Keep provider, async/cursor, and closure lifecycle work out of this phase
+  unless a narrow validation fix is required.
 
 Checkpoint:
 
-- A meaningful subset of the 71 compile-valid exemplars reaches
-  instantiate-valid.
-- Runnable and behavior-checked tiers remain unclaimed unless an entrypoint is
-  actually invoked.
+- Fixable examples move to validated MIR or earlier, clearer diagnostics.
+- The Wasm emitter does not guess around missing type information.
 
-### Phase 024: Entrypoint And Run Policy
+### Phase W-033: Iterator And Collection Surface Completion
 
-Problem: current modules do not have a user-facing execution policy. The harness
-intentionally probes a missing export, so it cannot distinguish runnable
-programs from merely instantiable modules.
+Problem: object/map iteration and some collection stress examples still stop
+before MIR even though array/range iteration and several runtime collection
+methods are already supported.
 
 Scope:
 
-- Define the Wasm export shape for synthetic `incipit` functions and ordinary
-  top-level functions.
-- Export enough names for the harness to invoke simple entry programs.
-- Keep CLI arguments, environment, filesystem, and HTTP out of this phase.
-- Add a small behavior fixture mechanism only for examples that have stable
-  observable output under the stub host.
+- Implement or explicitly reject `itera de` object/map iteration using typed,
+  target-neutral MIR operations.
+- Recheck `si/ergo-redde.fab` and related iterator failures after any iterator
+  shape changes.
+- Preserve current `appende`, `prima`, `mappata`, and `filtrata` behavior.
+- Keep captured closures and first-class callable values split unless the
+  iterator design actually requires them.
 
 Checkpoint:
 
-- At least `salve-munde.fab`, primitive diagnostic examples, and simple function
-  examples reach runnable.
-- Behavior-checked is introduced only where expected output can be captured
-  through the host.
+- Object/map iteration either reaches MIR/Wasm under a clear runtime contract
+  or fails with a source-level diagnostic that explains the unsupported shape.
 
-### Phase 025: Runtime Method And Collection MIR Lowering
+### Phase W-034: Callable Values And Captured Closures
 
-Problem: several remaining exemplars stop before MIR on collection or provider
-method calls, especially `innatum`, `morphologia`, and syntax collection cases.
+Problem: simple higher-order collection callback lowering exists, but
+first-class callable values and closure/capture examples remain outside the
+current execution subset.
 
 Scope:
 
-- Extend target-neutral MIR lowering for known norma collection/runtime methods
-  where analysis can resolve provenance and receiver type.
-- Preserve genus-method direct calls from Phase 020.
-- Keep provider/HAL `ad` blocks separate unless this phase explicitly handles
-  their effect model.
-- Do not lower by spelling alone; use library/provenance metadata.
-- Model collection operations as semantic runtime/intrinsic operations, not
-  Wasm imports. The same MIR should be lowerable later to LLVM calls, inline
-  runtime helpers, or native data-structure operations.
+- Separate compile-time callback lowering from runtime callable values.
+- Define capture layout and call dispatch before adding broad closure support.
+- Add fail-closed tests for unsupported value callees and capture shapes.
+- Coordinate with LLVM before introducing shared MIR callable representation.
 
 Checkpoint:
 
-- More exemplars move from frontend-analyzed to validated MIR.
-- Unsupported provider/effectful calls still fail with specific diagnostics.
-- The LLVM probe either keeps failing closed on the new runtime shapes or gains
-  a narrow, target-appropriate lowering without changing the MIR contract.
+- `clausa/clausa.fab` and `syntaxis/arena-mixta.fab` either progress under a
+  designed callable model or keep precise unsupported diagnostics.
 
-### Phase 026: Optional And Member Shape Correctness
+### Phase W-035: Provider And HAL Effect Boundary
 
-Problem: several examples fail MIR validation rather than Wasm emission:
-optional chains on non-nullable bases, call argument mismatches, field
-projection base mismatches, named aggregate field errors, and malformed
-coalesce inputs.
+Problem: `ad/ad.fab` still blocks before effectful MIR lowering. Provider/HAL
+calls are a host boundary, not ordinary runtime methods.
 
 Scope:
 
-- Treat this as correctness mode, not pass-count grinding.
-- Audit whether each failure is a real source diagnostic, a HIR typing bug, a
-  MIR lowering bug, or a validator invariant that is too narrow.
-- Fix root causes in the earliest responsible phase.
-- Preserve enough MIR type/projection metadata for both Wasm opaque-handle
-  lowering and future LLVM aggregate/nullable layout lowering.
-- Add regression tests for representative failures:
-  `functio/optionalis.fab`, `optionalis/optionalis.fab`, `vel/vel.fab`,
-  `destructura/objectum.fab`, `membrum/membrum.fab`, and `vocatio/vocatio.fab`.
+- Define target-neutral MIR for provider calls and effectful alternate exits.
+- Map only the minimal Wasm import ABI required for the first provider
+  exemplar.
+- Keep HTTP, filesystem, process, and environment surfaces split unless one is
+  required for the selected exemplar.
+- Leave LLVM with either matching runtime-call lowering or explicit fail-closed
+  diagnostics for the same MIR shapes.
 
 Checkpoint:
 
-- Invalid MIR clusters either become valid MIR or earlier, clearer source/semantic
-  diagnostics.
-- No Wasm emitter guesses around missing type information.
+- Provider examples move from frontend-analyzed to explicit MIR/provider shapes
+  or clearer unsupported host-boundary diagnostics.
 
-### Phase 027: Non-Literal Pattern And Dynamic Switch Lowering
+### Phase W-036: Async And Cursor Lifecycle
 
-Problem: `discerne`, `omnia`, `ordo`, and syntax stress examples still stop on
-non-literal patterns or unresolved switch subjects.
+Problem: `cede`, `futura`, `incipiet`, cursor iteration, and flux syntax still
+lack a settled suspension, yield, and scheduler/runtime model.
 
 Scope:
 
-- Extend MIR switch/pattern lowering only where semantics are already typed and
-  target-neutral.
-- Keep dynamic matching and destructuring explicit; do not encode Wasm-specific
-  pattern policy in MIR.
-- Reuse existing text/aggregate comparison imports where the Wasm emitter can
-  honestly support the lowered shape.
-- Keep switch and pattern MIR low enough that LLVM can eventually lower it to
-  `switch`, branch chains, or runtime comparator calls depending on value type.
+- Write a design delivery note before implementation if lifecycle semantics are
+  not already settled.
+- Split async functions, cursor iteration, and `cede`/yield behavior into
+  separately testable slices.
+- Preserve current explicit diagnostics until the lifecycle model is real.
 
 Checkpoint:
 
-- Literal and simple non-literal pattern examples move at least to validated
-  MIR, and compile-valid where imports already exist.
+- No broad async or cursor implementation starts without lifecycle invariants,
+  runtime expectations, and focused tests.
 
-### Phase 028: Top-Level Declarations And Source-Order Initialization
+### Phase W-037: Run And Behavior Hardening
 
-Problem: `intra/intra.fab` stops on top-level consts; this is a program model
-question, not a Wasm text formatting problem.
+Problem: 84 examples are runnable, but behavior checking is still only 6/102.
+Two examples instantiate then trap, and one lacks an entry export.
 
 Scope:
 
-- Define how top-level constants enter MIR: immutable globals, synthetic
-  initialization, or explicit rejection depending on current language rules.
-- Keep source-order initialization and side-effect rules explicit.
-- Add MIR validation for the chosen shape before Wasm emission.
-- Choose a MIR representation that can map to both Wasm globals/init functions
-  and LLVM globals/init blocks without target-specific leakage.
+- Classify `mori/mori.fab` and `ordo/ordo.fab` as expected traps or real runtime
+  bugs.
+- Classify `scalaria/scalaria.fab` as intentionally no-entry or add the correct
+  entry export if source rules require it.
+- Expand behavior fixtures for stable diagnostic and simple runtime outputs.
+- Keep trap, no-entry, missing-import, and behavior mismatches as separate
+  buckets.
 
 Checkpoint:
 
-- Top-level const examples no longer fail with a generic unsupported MIR
-  diagnostic.
+- Unexpected traps are fixed or explicitly classified.
+- Behavior-checked coverage rises above 6 without weakening the run tier.
 
-### Phase 029: Provider Blocks And HAL Boundary
+### Phase W-038: Binary Runtime Packaging
 
-Problem: `ad/ad.fab` and related future service/HTTP work require an effectful
-host boundary. This is larger than ordinary runtime-method lowering.
+Problem: the current backend validates and runs generated text modules through
+the test host. It does not yet promise packaged `.wasm`, component-model, or
+deployment-ready runtime artifacts.
 
 Scope:
 
-- Define the MIR representation for provider calls and effectful alternate
-  exits needed by `ad` blocks.
-- Map the minimal provider ABI into Wasm imports without committing to the full
-  Component Model or Cloudflare Worker deployment story.
-- Keep the MIR operation at the provider/effect boundary, not at the Wasm import
-  boundary, so LLVM can lower the same operation to host runtime calls later.
-- Keep HTTP, filesystem, process, and environment surfaces split into follow-up
-  phases unless one is needed for a narrow exemplar.
+- Decide whether the next goal is `.wasm` binary output, component-model
+  packaging, CLI integration, or real runtime library linkage.
+- Keep this phase separate from language semantic gaps.
+- Require measured validation and run evidence for any new artifact claim.
 
 Checkpoint:
 
-- `ad` examples move from frontend-analyzed to explicit MIR/provider shapes or
-  clearer unsupported host-boundary diagnostics.
+- The selected packaging/runtime surface has a narrow artifact contract and
+  does not blur current WAT, stub-host, and behavior tiers.
 
-### Phase 030: Async, Closures, And Deferred Language Surfaces
+## Current Failure Clusters
 
-Problem: `cede`, `futura`, `incipiet`, cursor iteration, and closure examples
-remain outside the current MIR/Wasm execution subset.
+Re-run the ignored harness before choosing a phase. The 2026-06-04 remaining
+clusters are:
 
-Scope:
+- Provider/effect MIR gap: `ad/ad.fab`.
+- Async/cursor gaps: `cede/cede.fab`, `futura/futura.fab`,
+  `incipiet/incipiet.fab`, `itera/cursor-iteratio.fab`, and
+  `syntaxis/fluxus-cede.fab`.
+- Callable/closure gaps: `clausa/clausa.fab` and `syntaxis/arena-mixta.fab`.
+- Optional/default/call-shape bugs: `functio/optionalis.fab` and
+  `vocatio/vocatio.fab`.
+- Generic/aggregate bugs: `generis/generis.fab`, `membrum/membrum.fab`, and
+  `objectum/objectum.fab`.
+- Iterator/object gaps: `itera/de.fab` and `si/ergo-redde.fab`.
+- Run-tier follow-up: `mori/mori.fab` and `ordo/ordo.fab` trap on entry;
+  `scalaria/scalaria.fab` instantiates but has no `incipit` export.
 
-- Do not start here unless earlier host/runtime phases are stable.
-- Split async and closures into separate delivery specs.
-- Prefer a design note plus explicit diagnostics before implementation if the
-  runtime model is not settled.
+## Success Criteria For The Next Continuation
 
-Checkpoint:
+A successful future factory run should stop at one of these gates:
 
-- No broad implementation starts without a concrete lifecycle model and tests.
+- MIR-lowered, Wasm-emitted, compile-valid, and instantiate-valid coverage rises
+  materially above 87/102 without weakening validation.
+- Runnable coverage rises above 84/102 with no unexplained traps.
+- Behavior-checked coverage rises above 6/102 with host-captured expected
+  output or expected trap fixtures.
+- A provider, async, callable, or packaging phase reaches a clear design
+  boundary and leaves explicit follow-up specs instead of broad TODOs.
 
-### Phase 031: LLVM Readiness Audit
-
-Problem: the Wasm phases are likely to expand MIR faster than the LLVM text
-probe. Before starting serious LLVM lowering, the repo needs a short audit that
-separates good MIR growth from Wasm-shaped shortcuts.
-
-Scope:
-
-- Review MIR nodes, validation rules, and Wasm lowering added since Phase 021.
-- Classify each new MIR shape as directly LLVM-lowerable, runtime-call-backed,
-  layout-dependent, or intentionally deferred.
-- Add fail-closed LLVM tests for important MIR shapes that should not silently
-  miscompile yet.
-- Identify the smallest LLVM text expansion phase, likely multi-block control
-  flow, scalar calls, or `fractus` support.
-
-Checkpoint:
-
-- A durable LLVM follow-up note exists before LLVM implementation begins.
-- The Wasm path keeps its measured tiers, and LLVM unsupported diagnostics
-  remain explicit rather than accidental.
-
-## Current Failure Clusters To Recheck Before Each Phase
-
-The next worker should rerun the ignored harness and select from live data, but
-the 2026-06-04 clusters are:
-
-- Host/runtime unavailable: all `71/101` compile-valid exemplars stop below
-  instantiate-valid.
-- Wasm emission gap: `si/est.fab` reaches MIR and stops on numeric coercion from
-  `I32` to `AggregateHandle`.
-- Provider/effect MIR gaps: `ad` blocks.
-- Async/callable MIR gaps: `cede`, `futura`, `incipiet`, cursor iteration, and
-  closures.
-- Runtime/provider method MIR gaps: `innatum`, `morphologia`, and syntax
-  collection examples.
-- Collection iteration MIR gaps: `itera/de.fab` and `si/ergo-redde.fab`.
-- Optional/member/aggregate validation bugs: optional chains, field projection
-  base mismatches, named aggregate fields, map aggregate values, and coalesce
-  nullability.
-- Pattern/switch gaps: non-literal `discerne`, `omnia`, `ordo`, and syntax
-  stress cases.
-- Top-level const: `intra/intra.fab`.
-- Aggregate spread/cast gaps: `objectum/objectum.fab` and
-  `ternarius/ternarius.fab`.
-
-## Success Criteria For This Continuation
-
-A successful next factory run should stop at one of these gates:
-
-- A real instantiate-valid tier exists and is protected by expected floors.
-- A runnable tier exists for simple `incipit` programs with host-captured
-  diagnostics.
-- MIR-lowered coverage rises materially above `72/101` without weakening
-  validation.
-- Compile-valid coverage rises materially above `71/101` and the new floors are
-  recorded.
-- A larger ABI phase reaches a clear design boundary and leaves explicit
-  follow-up delivery specs rather than ambiguous TODOs.
-
-Opus faciendum: make each tier mean what it says.
+Opus faciendum: spend the next phases on gaps that still exist.
