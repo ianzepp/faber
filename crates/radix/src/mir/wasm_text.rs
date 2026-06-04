@@ -511,11 +511,7 @@ impl WasmTextProbe<'_> {
         }
     }
 
-    fn value_expr_ty(
-        &self,
-        value: &MirValue,
-        context: &FunctionContext,
-    ) -> Result<WasmValue, MirWasmTextProbeError> {
+    fn value_expr_ty(&self, value: &MirValue, context: &FunctionContext) -> Result<WasmValue, MirWasmTextProbeError> {
         match &value.kind {
             MirValueKind::Operand(operand) => self.operand_ty(operand, context),
             MirValueKind::Binary { .. } | MirValueKind::Unary { .. } | MirValueKind::Option(_) => {

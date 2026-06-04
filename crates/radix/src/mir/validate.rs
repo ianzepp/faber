@@ -698,10 +698,7 @@ impl Validator<'_, '_> {
                             "collection first/last result is not an option of the element type",
                         );
                     } else {
-                        self.error(
-                            span,
-                            "collection first/last result is not an option of the element type",
-                        );
+                        self.error(span, "collection first/last result is not an option of the element type");
                     }
                 }
             }

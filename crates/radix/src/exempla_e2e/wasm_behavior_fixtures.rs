@@ -10,14 +10,8 @@ pub struct WasmBehaviorFixture {
 }
 
 pub const WASM_BEHAVIOR_FIXTURES: &[WasmBehaviorFixture] = &[
-    WasmBehaviorFixture {
-        exemplum: "salve-munde.fab",
-        expected_diag: &["nota_text:0"],
-    },
-    WasmBehaviorFixture {
-        exemplum: "incipit/incipit.fab",
-        expected_diag: &["nota_text:3"],
-    },
+    WasmBehaviorFixture { exemplum: "salve-munde.fab", expected_diag: &["nota_text:0"] },
+    WasmBehaviorFixture { exemplum: "incipit/incipit.fab", expected_diag: &["nota_text:3"] },
     WasmBehaviorFixture {
         exemplum: "nota/nota.fab",
         expected_diag: &[
@@ -53,10 +47,7 @@ pub const WASM_BEHAVIOR_FIXTURES: &[WasmBehaviorFixture] = &[
             "nota_i32:1",
         ],
     },
-    WasmBehaviorFixture {
-        exemplum: "vide/vide.fab",
-        expected_diag: &["vide_text:1"],
-    },
+    WasmBehaviorFixture { exemplum: "vide/vide.fab", expected_diag: &["vide_text:1"] },
 ];
 
 pub fn expected_wasm_behavior(exemplum: &str) -> Option<&'static [&'static str]> {
@@ -66,5 +57,9 @@ pub fn expected_wasm_behavior(exemplum: &str) -> Option<&'static [&'static str]>
 }
 
 pub fn behavior_matches(expected: &[&str], actual: &[String]) -> bool {
-    expected.len() == actual.len() && expected.iter().zip(actual).all(|(expected, actual)| expected == actual)
+    expected.len() == actual.len()
+        && expected
+            .iter()
+            .zip(actual)
+            .all(|(expected, actual)| expected == actual)
 }

@@ -138,8 +138,7 @@ fn classify_wasm_exemplum(
         }
     };
 
-    let wat = match crate::mir::emit_wasm_text_probe_with_context(&mir.program, &mir.validation, &analysis.interner)
-    {
+    let wat = match crate::mir::emit_wasm_text_probe_with_context(&mir.program, &mir.validation, &analysis.interner) {
         Ok(wat) => wat,
         Err(error) => {
             return wasm_result(
@@ -190,11 +189,7 @@ fn classify_wasm_exemplum(
     let run_probe = run_wat_entry_with_stub_host(&wat);
     let exemplum_key = wasm_exemplum_key(file);
     let (tier, reason) = match stub_probe.bucket {
-        WasmInstantiationBucket::InstantiateValid => classify_run_tier(
-            &exemplum_key,
-            &stub_probe,
-            &run_probe,
-        ),
+        WasmInstantiationBucket::InstantiateValid => classify_run_tier(&exemplum_key, &stub_probe, &run_probe),
         WasmInstantiationBucket::MissingImport => (
             WasmTier::CompileValid,
             format!(
@@ -254,13 +249,7 @@ fn classify_run_tier(
                     ),
                 );
             }
-            (
-                WasmTier::Runnable,
-                format!(
-                    "{}; {}",
-                    stub_probe.reason, run_probe.reason
-                ),
-            )
+            (WasmTier::Runnable, format!("{}; {}", stub_probe.reason, run_probe.reason))
         }
         WasmRunBucket::NoEntryExport => (
             WasmTier::InstantiateValid,
@@ -281,14 +270,7 @@ fn wasm_result(
     stub_bucket: Option<WasmInstantiationBucket>,
     run_bucket: Option<WasmRunBucket>,
 ) -> WasmE2eResult {
-    WasmE2eResult {
-        path: file.to_path_buf(),
-        tier,
-        reason,
-        stubless_bucket,
-        stub_bucket,
-        run_bucket,
-    }
+    WasmE2eResult { path: file.to_path_buf(), tier, reason, stubless_bucket, stub_bucket, run_bucket }
 }
 
 fn validate_wat(validator: WasmValidator, wat_file: &Path, wasm_file: &Path) -> Result<(), String> {
@@ -387,18 +369,12 @@ fn print_wasm_e2e_report(results: &[WasmE2eResult], toolchain: WasmToolchain) {
         count_stub_bucket(&compile_valid, WasmInstantiationBucket::InstantiationTrap)
     );
     eprintln!("Wasm run buckets (compile-valid subset, stub host):");
-    eprintln!(
-        "  runnable: {}",
-        count_run_bucket(&compile_valid, WasmRunBucket::Runnable)
-    );
+    eprintln!("  runnable: {}", count_run_bucket(&compile_valid, WasmRunBucket::Runnable));
     eprintln!(
         "  no-entry-export: {}",
         count_run_bucket(&compile_valid, WasmRunBucket::NoEntryExport)
     );
-    eprintln!(
-        "  entry-trap: {}",
-        count_run_bucket(&compile_valid, WasmRunBucket::EntryTrap)
-    );
+    eprintln!("  entry-trap: {}", count_run_bucket(&compile_valid, WasmRunBucket::EntryTrap));
 
     for result in results
         .iter()

@@ -148,13 +148,8 @@ impl FunctionBuilder<'_> {
         let result = self.materialize_operand_place(result, result_ty, expr.span);
 
         let index = self.next_local_id();
-        self.locals.push(MirLocalDecl {
-            id: index,
-            name: None,
-            ty: numerus,
-            mutable: true,
-            span: expr.span,
-        });
+        self.locals
+            .push(MirLocalDecl { id: index, name: None, ty: numerus, mutable: true, span: expr.span });
         self.assign(
             MirPlace::local(index),
             MirOperand::Constant(MirConstant::Int(0)),
@@ -188,11 +183,7 @@ impl FunctionBuilder<'_> {
             expr.span,
         );
         self.terminate_current(
-            MirTerminatorKind::Branch {
-                condition: continues,
-                then_block: body_id,
-                else_block: after_id,
-            },
+            MirTerminatorKind::Branch { condition: continues, then_block: body_id, else_block: after_id },
             expr.span,
         );
 
@@ -214,11 +205,7 @@ impl FunctionBuilder<'_> {
         match kind {
             TransformKind::Filter => {
                 self.terminate_current(
-                    MirTerminatorKind::Branch {
-                        condition: mapped,
-                        then_block: append_id,
-                        else_block: increment_id,
-                    },
+                    MirTerminatorKind::Branch { condition: mapped, then_block: append_id, else_block: increment_id },
                     expr.span,
                 );
                 self.switch_to(append_id);
@@ -269,11 +256,7 @@ impl FunctionBuilder<'_> {
     ) -> MirOperand {
         if self.is_vacuum(return_ty) {
             self.append_stmt(MirStmt {
-                kind: MirStmtKind::Call {
-                    destination: None,
-                    callee: MirCallee::Function(callee),
-                    args,
-                },
+                kind: MirStmtKind::Call { destination: None, callee: MirCallee::Function(callee), args },
                 span,
             });
             return MirOperand::Constant(MirConstant::Unit);

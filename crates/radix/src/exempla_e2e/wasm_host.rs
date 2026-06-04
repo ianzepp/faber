@@ -99,11 +99,7 @@ pub fn probe_wat_instantiation_with_stub_host(wat: &str) -> WasmInstantiationPro
             let mut store = Store::new(&engine, FaberStubHostState::default());
             let mut linker = Linker::new(&engine);
             if let Err(reason) = link_faber_stub_host(&mut linker, &mut store, &module) {
-                return WasmInstantiationProbe {
-                    bucket: WasmInstantiationBucket::InstantiationTrap,
-                    reason,
-                    imports,
-                };
+                return WasmInstantiationProbe { bucket: WasmInstantiationBucket::InstantiationTrap, reason, imports };
             }
             match linker.instantiate(&mut store, &module) {
                 Ok(_) => WasmInstantiationProbe {
@@ -111,10 +107,7 @@ pub fn probe_wat_instantiation_with_stub_host(wat: &str) -> WasmInstantiationPro
                     reason: if imports.is_empty() {
                         "stub host instantiated module with no imports".to_owned()
                     } else {
-                        format!(
-                            "stub host instantiated module ({} imports satisfied)",
-                            imports.len()
-                        )
+                        format!("stub host instantiated module ({} imports satisfied)", imports.len())
                     },
                     imports,
                 },
@@ -125,11 +118,7 @@ pub fn probe_wat_instantiation_with_stub_host(wat: &str) -> WasmInstantiationPro
                 },
             }
         }
-        Err(reason) => WasmInstantiationProbe {
-            bucket: WasmInstantiationBucket::InstantiationTrap,
-            reason,
-            imports,
-        },
+        Err(reason) => WasmInstantiationProbe { bucket: WasmInstantiationBucket::InstantiationTrap, reason, imports },
     }
 }
 
@@ -139,11 +128,7 @@ pub fn run_wat_entry_with_stub_host(wat: &str) -> WasmRunProbe {
             let mut store = Store::new(&engine, FaberStubHostState::default());
             let mut linker = Linker::new(&engine);
             if let Err(reason) = link_faber_stub_host(&mut linker, &mut store, &module) {
-                return WasmRunProbe {
-                    bucket: WasmRunBucket::EntryTrap,
-                    reason,
-                    diag_events: Vec::new(),
-                };
+                return WasmRunProbe { bucket: WasmRunBucket::EntryTrap, reason, diag_events: Vec::new() };
             }
             let instance = match linker.instantiate(&mut store, &module) {
                 Ok(instance) => instance,
@@ -175,11 +160,7 @@ pub fn run_wat_entry_with_stub_host(wat: &str) -> WasmRunProbe {
                 },
             }
         }
-        Err(reason) => WasmRunProbe {
-            bucket: WasmRunBucket::EntryTrap,
-            reason,
-            diag_events: Vec::new(),
-        },
+        Err(reason) => WasmRunProbe { bucket: WasmRunBucket::EntryTrap, reason, diag_events: Vec::new() },
     }
 }
 
@@ -251,7 +232,11 @@ fn link_faber_stub_host(
         let event_prefix = import_name.clone();
         linker
             .func_new(import.module(), import.name(), func_ty, move |mut caller, params, _results| {
-                let formatted = params.iter().map(|val| format_val(*val)).collect::<Vec<_>>().join(",");
+                let formatted = params
+                    .iter()
+                    .map(|val| format_val(*val))
+                    .collect::<Vec<_>>()
+                    .join(",");
                 caller
                     .data_mut()
                     .diag_events
