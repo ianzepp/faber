@@ -28,14 +28,26 @@ impl FunctionBuilder<'_> {
                 .push(MirError::missing_type(receiver.span, "mappata receiver"));
             return None;
         };
-        let Some(element_ty) = self.collection_element_ty(receiver_ty) else {
+        if self.collection_element_ty(receiver_ty).is_none() {
             self.errors.push(MirError::unsupported(
                 receiver.span,
                 "mappata receiver is not a supported collection type",
             ));
             return None;
         };
-        let mapper = self.lower_closure_function(closure, element_ty)?;
+        let Some(result_ty) = expr.ty else {
+            self.errors
+                .push(MirError::missing_type(expr.span, "mappata result"));
+            return None;
+        };
+        let Some(result_element_ty) = self.collection_element_ty(result_ty) else {
+            self.errors.push(MirError::unsupported(
+                expr.span,
+                "mappata result is not a supported collection type",
+            ));
+            return None;
+        };
+        let mapper = self.lower_closure_function(closure, result_element_ty)?;
         self.lower_collection_transform(receiver, mapper, TransformKind::Map, expr)
     }
 
@@ -83,6 +95,7 @@ impl FunctionBuilder<'_> {
                 nested.finish_blocks()
             }
         };
+        let nested_synthetics = nested.take_synthetic_functions();
         self.errors.extend(nested.errors);
         if blocks.is_empty() {
             self.errors.push(MirError::unsupported(
@@ -105,6 +118,7 @@ impl FunctionBuilder<'_> {
             error_ty: None,
             span: closure.span,
         });
+        self.synthetic_functions.extend(nested_synthetics);
         Some(id)
     }
 
@@ -121,8 +135,8 @@ impl FunctionBuilder<'_> {
             return None;
         };
         let normalized = self.normalized_type(receiver_ty);
-        let item_ty = match normalized {
-            Type::Array(item) => MirType::semantic(*item),
+        match normalized {
+            Type::Array(_) => {}
             _ => {
                 self.errors.push(MirError::unsupported(
                     receiver.span,
@@ -130,9 +144,19 @@ impl FunctionBuilder<'_> {
                 ));
                 return None;
             }
-        };
+        }
         let collection_ty = MirType::semantic(receiver_ty);
         let result_ty = self.expr_ty(expr)?;
+        let result_element_ty = match self.normalized_type(result_ty.semantic_id()) {
+            Type::Array(item) => MirType::semantic(*item),
+            _ => {
+                self.errors.push(MirError::unsupported(
+                    expr.span,
+                    "collection transform result before array MIR lowering",
+                ));
+                return None;
+            }
+        };
         let numerus = MirType::semantic(self.types.primitive(Primitive::Numerus));
         let bivalens = MirType::semantic(self.types.primitive(Primitive::Bivalens));
         let vacuum = MirType::semantic(self.types.primitive(Primitive::Vacuum));
@@ -195,7 +219,7 @@ impl FunctionBuilder<'_> {
         let item = MirOperand::Place(item_place);
         let callback_return = match kind {
             TransformKind::Filter => bivalens,
-            TransformKind::Map => item_ty,
+            TransformKind::Map => result_element_ty,
         };
         let mapped = self.call_function_value(callback, vec![item.clone()], callback_return, expr.span);
         if !self.current_is_open() {

@@ -1239,6 +1239,33 @@ fn lowers_collection_higher_order_methods_with_synthetic_closures() {
 }
 
 #[test]
+fn lowers_nested_collection_higher_order_synthetic_closures() {
+    let dump = dump_source(
+        r#"functio counts(lista<numerus> xs) → lista<numerus> {
+  redde xs.mappata(numerus x ∴ [x].filtrata(numerus y ∴ y ≥ 0).longitudo())
+}"#,
+    );
+
+    assert!(dump.contains("function f1"));
+    assert!(dump.contains("function f2"));
+    assert!(dump.contains("call f2"));
+    assert!(dump.contains("call f1"));
+}
+
+#[test]
+fn lowers_mappata_callback_to_result_element_type() {
+    let dump = dump_source(
+        r#"functio labels(lista<numerus> xs) → lista<textus> {
+  redde xs.mappata(numerus x → textus ∴ "§"(x))
+}"#,
+    );
+
+    assert!(dump.contains("function f1 -> ty#0"));
+    assert!(dump.contains("call f1"));
+    assert!(dump.contains("runtime collection append"));
+}
+
+#[test]
 fn rejects_assignment_targets_that_are_not_places() {
     use crate::hir::{DefId, HirExpr, HirExprKind, HirId, HirLiteral};
     use crate::lexer::Symbol;
