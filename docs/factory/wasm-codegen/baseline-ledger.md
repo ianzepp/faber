@@ -1930,3 +1930,46 @@ be added once entrypoint/run policy stabilizes.
 
 Phase 024 entrypoint and run policy (`incipit` exports, harness invocation, diagnostic
 capture for behavior-checked fixtures).
+
+## Phase 024 Update: Entrypoint And Run Policy
+
+**Commit target**: Phase 024
+**Change**: synthetic entry MIR functions export as Wasm `incipit`, the stub host records
+`faber_diag` calls, the harness invokes `incipit` after instantiation, and a small behavior
+fixture table asserts stable diagnostic traces for selected exempla.
+
+### Tier Counts After Phase 024
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 73/101
+  Wasm emitted: 72/101
+  compile-valid: 72/101
+  instantiate-valid: 72/101
+  runnable: 71/101
+  behavior-checked: 6/101
+```
+
+### Run Notes
+
+- `71/72` compile-valid exemplars invoke export `incipit` without trapping.
+- `mori/mori.fab` remains `instantiate-valid` only: entry calls panic/assert paths that trap
+  under default-value stubs.
+- Behavior-checked exempla with fixtures: `salve-munde.fab`, `incipit/incipit.fab`,
+  `nota/nota.fab`, `functio/functio.fab`, `unarius/unarius.fab`, `vide/vide.fab`.
+
+### Phase 024 Validation Log
+
+- `cargo test -p radix wasm_host -- --nocapture`: passed.
+- `cargo test -p radix wasm_behavior_fixtures_match -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix --lib mir -- --nocapture`: passed.
+- `cargo test -p radix --lib wasm -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Phase 025 follow-ups (`filtrata`/`mappata`, `si/est.fab` boxing) or Phase 026 optional/member
+MIR correctness clusters per continuation-plan.md.

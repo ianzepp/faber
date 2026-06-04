@@ -5,5 +5,6 @@ mod rust;
 mod ts;
 mod types;
 mod wasm;
+mod wasm_behavior_fixtures;
 mod wasm_expectations;
 mod wasm_host;

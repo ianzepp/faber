@@ -50,7 +50,7 @@ incipit {
     let output = compile_wasm_text(source);
 
     assert!(output.contains(r#"(import "faber_diag" "nota_i64" (func $__faber_diag_nota_i64 (param i64)))"#));
-    assert!(output.contains("(func $f1 (export \"f1\")"));
+    assert!(output.contains("(func $f1 (export \"incipit\")"));
     assert!(output.contains("(local $l0 i64)"));
     assert!(output.contains("(local.set $t0 (call $adde (i64.const 1) (i64.const 2)))"));
     assert!(output.contains("(local.set $l0 (local.get $t0))"));

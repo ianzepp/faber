@@ -20,5 +20,19 @@ The harness uses wasmtime `define_unknown_imports_as_default_values`:
 - Results use wasmtime default values (numeric zero, null reference where applicable).
 - No real text, aggregate, or collection state is modeled.
 
-This is sufficient to prove **instantiate-valid** honestly. Runnable and behavior-checked
-tiers require real host semantics and entrypoint policy in later phases.
+This is sufficient to prove **instantiate-valid** honestly.
+
+## Entry Export (Phase 024)
+
+Synthetic entry MIR functions (no `source`, no `name`) export as Wasm `incipit` while
+keeping internal `$fN` names for intra-module calls. Named functions keep their sanitized
+export names.
+
+The exempla harness invokes export `incipit` after stub-host instantiation. Programs
+without an entry export remain `instantiate-valid` only.
+
+## Behavior Recording
+
+`faber_diag` imports are wired to record `import_name:param` events (for example
+`nota_text:3`). A small fixture table in `wasm_behavior_fixtures.rs` asserts stable traces
+for selected exempla under the stub host.

@@ -299,7 +299,8 @@ impl WasmTextProbe<'_> {
 
     fn emit_function(&self, function: &MirFunction, writer: &mut CodeWriter) -> Result<(), MirWasmTextProbeError> {
         let name = self.function_name(function);
-        let mut signature = format!("(func ${name} (export \"{name}\")");
+        let export_name = self.wasm_export_name(function);
+        let mut signature = format!("(func ${name} (export \"{export_name}\")");
         for param in &function.params {
             signature.push_str(&format!(" (param ${} {})", local_name(param.local), self.wasm_ty(param.ty)?));
         }
@@ -899,6 +900,18 @@ impl WasmTextProbe<'_> {
         } else {
             base
         }
+    }
+
+    fn wasm_export_name(&self, function: &MirFunction) -> String {
+        if self.is_entry_function(function) {
+            "incipit".to_owned()
+        } else {
+            self.function_name(function)
+        }
+    }
+
+    fn is_entry_function(&self, function: &MirFunction) -> bool {
+        function.source.is_none() && function.name.is_none()
     }
 
     fn function_base_name(&self, function: &MirFunction) -> String {

@@ -1,6 +1,6 @@
 use super::{
     parse_wat_import_sites, probe_wat_instantiation, probe_wat_instantiation_with_stub_host,
-    WasmInstantiationBucket, WasmInstantiationProbe,
+    run_wat_entry_with_stub_host, WasmInstantiationBucket, WasmInstantiationProbe, WasmRunBucket,
 };
 
 #[test]
@@ -48,6 +48,21 @@ fn stub_host_instantiates_imported_module() {
     let WasmInstantiationProbe { bucket, reason, .. } = probe_wat_instantiation_with_stub_host(wat);
     assert_eq!(bucket, WasmInstantiationBucket::InstantiateValid);
     assert!(reason.contains("stub host"));
+}
+
+#[test]
+fn stub_host_runs_incipit_export() {
+    let wat = r#"
+(module
+    (import "faber_diag" "nota_i32" (func $__faber_diag_nota_i32 (param i32)))
+    (func $f0 (export "incipit")
+        (call $__faber_diag_nota_i32 (i32.const 7))
+    )
+)
+"#;
+    let probe = run_wat_entry_with_stub_host(wat);
+    assert_eq!(probe.bucket, WasmRunBucket::Runnable);
+    assert_eq!(probe.diag_events, vec!["nota_i32:7".to_owned()]);
 }
 
 #[test]
