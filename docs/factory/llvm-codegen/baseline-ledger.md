@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 009 baseline
+**Status**: Phase 010 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -41,7 +41,9 @@ The current emitter supports scalar functions over one or more MIR basic blocks:
 - `nil` as the null handle literal in handle-shaped LLVM contexts;
 - LLVM labels for MIR basic blocks in MIR storage order;
 - direct `return`, `ret void`, unconditional branches, and scalar boolean
-  conditional branches.
+  conditional branches;
+- native LLVM `switch` terminators for integer and boolean literal dispatch;
+- native LLVM `unreachable` terminators.
 
 Everything outside that subset must fail closed with a diagnostic beginning
 `MIR-to-LLVM unsupported`.
@@ -125,6 +127,9 @@ the current scalar-or-opaque-handle ABI:
 - `MirTerminatorKind::Return`.
 - `MirTerminatorKind::Goto`.
 - `MirTerminatorKind::Branch` with scalar `bivalens` conditions.
+- `MirTerminatorKind::Switch` with `numerus` or `bivalens` operands and
+  matching literal cases.
+- `MirTerminatorKind::Unreachable`.
 
 ### Runtime-Call-Backed Today
 
@@ -182,10 +187,10 @@ produce explicit unsupported diagnostics until their named phases:
 
 - `MirStmtKind::Call` with external `MirCallee::Definition`.
 - `MirStmtKind::Call` with `MirCallee::Value`.
-- `MirTerminatorKind::Switch`.
 - `MirTerminatorKind::TryCall`.
 - `MirTerminatorKind::ReturnError`.
-- `MirTerminatorKind::Unreachable`.
+- Text, aggregate, dynamic, nullable-handle, and floating switch dispatch until
+  a runtime/pattern dispatch policy exists.
 - Bitwise operations and shifts until an integer bitwise phase expands the
   supported operation matrix.
 - `MirIntrinsic::Provider`.
@@ -194,16 +199,17 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 009 measured corpus counts are 102/102 frontend
-  analyzed, 74/102 MIR lowered, 58/102 LLVM emitted, 28 MIR lowering failures,
-  0/102 verifier-valid, 16 unsupported LLVM diagnostics, 0 unexpected LLVM
+- **E2E Visibility**: Phase 010 measured corpus counts are 102/102 frontend
+  analyzed, 74/102 MIR lowered, 59/102 LLVM emitted, 28 MIR lowering failures,
+  0/102 verifier-valid, 15 unsupported LLVM diagnostics, 0 unexpected LLVM
   emission failures, 0 output-write failures, and 0 verifier failures.
 - **Scalar Type Coverage**: `fractus`, scalar comparisons, boolean unary
   `Not`, and boolean `And`/`Or` are supported for scalar functions.
   Integer bitwise operations and shifts remain unsupported.
-- **Control Flow**: branch-return, branch-join, and simple loop scalar MIR now
-  emit labels, `br label`, and `br i1`. `switch`, failable control flow,
-  alternate exits, and unreachable policy remain unsupported.
+- **Control Flow**: branch-return, branch-join, simple loop scalar MIR, integer
+  and boolean literal `switch`, and `unreachable` now emit LLVM terminators.
+  Text/pattern switch, failable control flow, and alternate exits remain
+  unsupported.
 - **Calls**: direct scalar MIR calls between same-program functions are
   supported. External definitions, value callees, failable calls, and
   non-scalar call signatures remain unsupported.
@@ -217,7 +223,7 @@ produce explicit unsupported diagnostics until their named phases:
 - **Verification**: the e2e harness detects `llvm-as` or `opt` and records
   verifier-valid output only when a verifier is available. Current local
   verifier status is unavailable: `llvm-as` and `opt` were not found on PATH.
-- **E2E Emission Floor**: the current exempla corpus has 58 LLVM-emitted files.
+- **E2E Emission Floor**: the current exempla corpus has 59 LLVM-emitted files.
   The current verifier-valid floor is zero.
 
 ## Fail-Closed Test Inventory
@@ -230,8 +236,14 @@ produce explicit unsupported diagnostics until their named phases:
   `si` emits join-block branches and a shared local result.
 - `llvm_text_target_emits_simple_loop_cfg` verifies scalar `dum` emits a loop
   backedge.
-- `llvm_text_target_still_rejects_switch_cfg` verifies `switch` remains an
-  explicit unsupported CFG terminator.
+- `llvm_text_target_emits_literal_scalar_switch_cfg` verifies source-level
+  integer literal `elige` lowers to LLVM `switch` and `unreachable`.
+- `llvm_text_target_emits_boolean_switch_cfg` verifies boolean literal switch
+  MIR lowers to LLVM `switch`.
+- `llvm_text_target_rejects_text_switch_cfg` verifies text switch dispatch
+  remains explicitly deferred.
+- `llvm_text_target_rejects_failable_terminators` verifies `ReturnError` and
+  `TryCall` remain explicitly deferred.
 - `llvm_text_target_emits_direct_scalar_function_calls` verifies direct scalar
   helper calls store returned values.
 - `llvm_text_target_emits_direct_scalar_call_chains` verifies scalar call
@@ -269,17 +281,19 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Next Implementation Slice
 
-The evidence now points to Phase 010, switch, pattern, and failable control flow.
-The LLVM lane now has an opaque handle ABI for ordinary text, aggregate, and
-nullable values, but `switch`, failable calls, alternate exits, `unreachable`,
-and non-literal pattern dispatch remain explicit unsupported shapes.
+The evidence now points to Phase 011, top-level initialization and entrypoint
+ABI. The LLVM lane now has scalar switch and native unreachable CFG support, but
+top-level constants, source-order initialization, executable entrypoints,
+failable calls, alternate exits, and non-literal pattern dispatch remain
+explicit unsupported shapes.
 
 ## Wasm Follow-Up Implications
 
-Phase 009 made no MIR shape changes and did not alter Wasm import names. Wasm
+Phase 010 made no MIR shape changes and did not alter Wasm import names. Wasm
 validation is still required because aggregate and projection MIR facts are
-shared across backends, and nullable MIR facts are shared even though LLVM and
-Wasm currently use different backend helper policies.
+shared across backends, nullable MIR facts are shared even though LLVM and Wasm
+currently use different backend helper policies, and switch CFG semantics are
+shared by both backend lanes.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate

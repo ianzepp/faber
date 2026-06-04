@@ -903,7 +903,7 @@ fn llvm_text_target_rejects_provider_runtime_calls() {
 }
 
 #[test]
-fn llvm_text_target_still_rejects_switch_cfg() {
+fn llvm_text_target_emits_literal_scalar_switch_cfg() {
     let source = r#"
 functio status(numerus code) → numerus {
     elige code {
@@ -922,11 +922,162 @@ functio status(numerus code) → numerus {
         "llvm.fab",
         source,
     );
+    let Some(Output::LlvmText(output)) = result.output else {
+        panic!("expected LLVM text output");
+    };
 
-    assert!(result.output.is_none());
-    assert!(result.diagnostics.iter().any(|diagnostic| diagnostic
+    assert!(output.code.contains("switch i64 %load0, label %bb"));
+    assert!(output.code.contains("i64 200, label %bb"));
+    assert!(output.code.contains("store i64 1, ptr %t0.addr"));
+    assert!(output.code.contains("store i64 0, ptr %t1.addr"));
+    assert!(output.code.contains("unreachable"));
+}
+
+#[test]
+fn llvm_text_target_emits_boolean_switch_cfg() {
+    let types = TypeTable::new();
+    let boolean = ty(&types, Primitive::Bivalens);
+    let program = MirProgram {
+        functions: vec![MirFunction {
+            id: MirFunctionId(0),
+            source: None,
+            name: None,
+            params: vec![MirParam { local: MirLocalId(0), name: None, ty: boolean, span: span() }],
+            locals: Vec::new(),
+            temps: Vec::new(),
+            blocks: vec![
+                MirBlock {
+                    id: MirBlockId(0),
+                    statements: Vec::new(),
+                    terminator: MirTerminator {
+                        kind: MirTerminatorKind::Switch {
+                            value: MirOperand::Place(MirPlace::local(MirLocalId(0))),
+                            cases: vec![MirSwitchCase { value: MirConstant::Bool(true), target: MirBlockId(1) }],
+                            default: MirBlockId(2),
+                        },
+                        span: span(),
+                    },
+                    span: span(),
+                },
+                MirBlock {
+                    id: MirBlockId(1),
+                    statements: Vec::new(),
+                    terminator: MirTerminator {
+                        kind: MirTerminatorKind::Return(Some(MirOperand::Constant(MirConstant::Bool(true)))),
+                        span: span(),
+                    },
+                    span: span(),
+                },
+                MirBlock {
+                    id: MirBlockId(2),
+                    statements: Vec::new(),
+                    terminator: MirTerminator {
+                        kind: MirTerminatorKind::Return(Some(MirOperand::Constant(MirConstant::Bool(false)))),
+                        span: span(),
+                    },
+                    span: span(),
+                },
+            ],
+            return_ty: boolean,
+            error_ty: None,
+            span: span(),
+        }],
+    };
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("boolean switch emits");
+
+    assert!(output.contains("switch i1 %load0, label %bb2 ["));
+    assert!(output.contains("i1 1, label %bb1"));
+}
+
+#[test]
+fn llvm_text_target_rejects_text_switch_cfg() {
+    let types = TypeTable::new();
+    let text = ty(&types, Primitive::Textus);
+    let program = MirProgram {
+        functions: vec![MirFunction {
+            id: MirFunctionId(0),
+            source: None,
+            name: None,
+            params: vec![MirParam { local: MirLocalId(0), name: None, ty: text, span: span() }],
+            locals: Vec::new(),
+            temps: Vec::new(),
+            blocks: vec![MirBlock {
+                id: MirBlockId(0),
+                statements: Vec::new(),
+                terminator: MirTerminator {
+                    kind: MirTerminatorKind::Switch {
+                        value: MirOperand::Place(MirPlace::local(MirLocalId(0))),
+                        cases: vec![MirSwitchCase {
+                            value: MirConstant::String(crate::lexer::Symbol(1)),
+                            target: MirBlockId(1),
+                        }],
+                        default: MirBlockId(1),
+                    },
+                    span: span(),
+                },
+                span: span(),
+            }],
+            return_ty: ty(&types, Primitive::Vacuum),
+            error_ty: None,
+            span: span(),
+        }],
+    };
+    let error = emit_llvm_text_probe(&program, &types, &Interner::new()).expect_err("text switch remains deferred");
+
+    assert!(error
         .message
-        .contains("MIR-to-LLVM unsupported: switch")));
+        .contains("MIR-to-LLVM unsupported: switch value type"));
+}
+
+#[test]
+fn llvm_text_target_rejects_failable_terminators() {
+    let types = TypeTable::new();
+    let text = ty(&types, Primitive::Textus);
+    let return_error = runtime_stmt_program(
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        MirTerminatorKind::ReturnError(MirOperand::Constant(MirConstant::String(crate::lexer::Symbol(1)))),
+        &types,
+    );
+    let error = emit_llvm_text_probe(&return_error, &types, &Interner::new()).expect_err("return error is unsupported");
+
+    assert!(error
+        .message
+        .contains("MIR-to-LLVM unsupported: return_error"));
+
+    let try_call = MirProgram {
+        functions: vec![MirFunction {
+            id: MirFunctionId(0),
+            source: None,
+            name: None,
+            params: Vec::new(),
+            locals: vec![MirLocal { id: MirLocalId(0), name: None, ty: text, mutable: true, span: span() }],
+            temps: Vec::new(),
+            blocks: vec![MirBlock {
+                id: MirBlockId(0),
+                statements: Vec::new(),
+                terminator: MirTerminator {
+                    kind: MirTerminatorKind::TryCall {
+                        destination: None,
+                        callee: MirCallee::Function(MirFunctionId(1)),
+                        args: Vec::new(),
+                        ok_block: MirBlockId(1),
+                        error_place: MirPlace::local(MirLocalId(0)),
+                        error_block: MirBlockId(2),
+                    },
+                    span: span(),
+                },
+                span: span(),
+            }],
+            return_ty: ty(&types, Primitive::Vacuum),
+            error_ty: Some(text),
+            span: span(),
+        }],
+    };
+    let error = emit_llvm_text_probe(&try_call, &types, &Interner::new()).expect_err("try call is unsupported");
+
+    assert!(error.message.contains("MIR-to-LLVM unsupported: try_call"));
 }
 
 #[test]

@@ -432,8 +432,48 @@ impl LlvmProbe<'_> {
                 });
                 Ok(())
             }
+            MirTerminatorKind::Switch { value, cases, default } => {
+                self.emit_switch(value, cases, *default, context, writer)
+            }
+            MirTerminatorKind::Unreachable => {
+                writer.indented(|writer| writer.writeln("  unreachable"));
+                Ok(())
+            }
             other => Err(MirLlvmTextProbeError::unsupported(terminator_kind_name(other))),
         }
+    }
+
+    fn emit_switch(
+        &self,
+        value: &MirOperand,
+        cases: &[MirSwitchCase],
+        default: MirBlockId,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<(), MirLlvmTextProbeError> {
+        let value_ty = self.operand_ty(value, context)?;
+        let switch_ty = self.llvm_switch_ty(value_ty)?;
+        let value = self.operand(value, context, writer)?;
+        let mut rendered_cases = Vec::new();
+        for case in cases {
+            let case_ty = self.llvm_switch_ty(self.constant_ty(&case.value)?)?;
+            if switch_ty != case_ty {
+                return Err(MirLlvmTextProbeError::unsupported("switch case type mismatch"));
+            }
+            rendered_cases.push(format!(
+                "    {switch_ty} {}, label %{}",
+                self.constant(&case.value)?,
+                block_label(case.target)
+            ));
+        }
+        writer.indented(|writer| {
+            writer.writeln(&format!("  switch {switch_ty} {value}, label %{} [", block_label(default)));
+            for rendered_case in &rendered_cases {
+                writer.writeln(rendered_case);
+            }
+            writer.writeln("  ]");
+        });
+        Ok(())
     }
 
     fn operand(
@@ -572,6 +612,16 @@ impl LlvmProbe<'_> {
 
     fn llvm_function_return_ty(&self, ty: MirType) -> Result<&'static str, MirLlvmTextProbeError> {
         self.llvm_ty(ty)
+    }
+
+    fn llvm_switch_ty(&self, ty: MirType) -> Result<&'static str, MirLlvmTextProbeError> {
+        match self.llvm_scalar(ty)? {
+            LlvmScalar::I1 => Ok("i1"),
+            LlvmScalar::I64 => Ok("i64"),
+            LlvmScalar::F64 | LlvmScalar::Ptr | LlvmScalar::Void => {
+                Err(MirLlvmTextProbeError::unsupported("switch value type"))
+            }
+        }
     }
 
     fn llvm_scalar(&self, ty: MirType) -> Result<LlvmScalar, MirLlvmTextProbeError> {
