@@ -43,3 +43,27 @@ functio label() → textus {
         .iter()
         .any(|diagnostic| diagnostic.message.contains("MIR-to-LLVM unsupported")));
 }
+
+#[test]
+fn llvm_text_target_rejects_multi_block_cfg_until_phase_004() {
+    let source = r#"
+functio ramus(bivalens flag) → numerus {
+    si flag {
+        redde 1
+    }
+    redde 0
+}
+"#;
+
+    let result = driver::compile(
+        &Session::new(Config::default().with_target(Target::LlvmText)),
+        "llvm.fab",
+        source,
+    );
+
+    assert!(result.output.is_none());
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.message.contains("MIR-to-LLVM unsupported: branch")));
+}
