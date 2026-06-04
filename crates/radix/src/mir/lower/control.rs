@@ -247,7 +247,7 @@ impl FunctionBuilder<'_> {
             return None;
         }
         match mode {
-            HirIteraMode::Range => {
+            HirIteraMode::Ab => {
                 let HirExprKind::Intervallum { start, end, step, kind } = &iter.kind else {
                     self.errors
                         .push(MirError::unsupported(iter.span, "itera ab source before range MIR lowering"));

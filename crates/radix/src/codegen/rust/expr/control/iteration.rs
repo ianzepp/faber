@@ -50,7 +50,7 @@ pub(in crate::codegen::rust::expr) fn generate_for_expr_with_emitter(
     emitter.writer.write("for ");
     emitter.writer.write(emitter.codegen.resolve_def(binding));
     emitter.writer.write(" in ");
-    if matches!(mode, HirIteraMode::Range) {
+    if matches!(mode, HirIteraMode::Ab) {
         if let HirExprKind::Intervallum { start, end, step, kind } = &iter.kind {
             generate_range_iter_expr_with_emitter(emitter, start, end, step.as_deref(), *kind)?;
         } else {

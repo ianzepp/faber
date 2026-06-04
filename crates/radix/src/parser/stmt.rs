@@ -137,7 +137,8 @@ impl Parser {
     ///   itera-stmt := 'itera' mode expr ('fixum'|'varia') ident if-body ['cape' ident block]
     ///   mode := 'ex' | 'de' | 'ab'
     ///
-    /// The parser records `ex`, `de`, or range iteration intent.
+    /// The parser records the source preposition mode; later phases validate
+    /// the semantic source shape for that mode.
     /// Typechecking and lowering decide whether the chosen mode is valid for the
     /// iterable expression.
     pub(super) fn parse_itera_stmt(&mut self) -> Result<StmtKind, ParseError> {
@@ -148,7 +149,7 @@ impl Parser {
         } else if self.eat_keyword(TokenKind::De) {
             IteraMode::De
         } else if self.eat_identifier_text("ab") {
-            IteraMode::Range
+            IteraMode::Ab
         } else {
             return Err(self.error(ParseErrorKind::Expected, "expected 'ex', 'de', or 'ab'"));
         };

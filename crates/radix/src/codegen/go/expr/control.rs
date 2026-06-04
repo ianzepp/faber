@@ -138,7 +138,7 @@ pub(super) fn generate_for_expr(
             w.write(codegen.resolve_def(def_id));
             w.write(", _ := range ");
         }
-        HirIteraMode::Ex | HirIteraMode::Range => {
+        HirIteraMode::Ex | HirIteraMode::Ab => {
             w.write("_, ");
             w.write(codegen.resolve_def(def_id));
             w.write(" := range ");

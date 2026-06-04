@@ -68,11 +68,12 @@ Note: optional `per` on the `itera` line in EBNF is **not** implemented in the p
 |------|---------|-------------------|
 | `itera ex` | collection | element values |
 | `itera de` | array/lista or map/tabula | indices for arrays/lists; keys for maps |
-| `itera pro` | **range** (`Intervallum`) | numeric loop variable along span |
+| `itera ab` | **range** (`Intervallum`) | numeric loop variable along span |
 
-MIR lowering (`crates/radix/src/mir/lower/control.rs`) requires `HirIteraMode::Pro` sources to be `Intervallum`; other shapes diagnose *"itera pro source before range MIR lowering"*.
+MIR lowering (`crates/radix/src/mir/lower/control.rs`) requires `HirIteraMode::Ab` sources to be `Intervallum`; other shapes diagnose *"itera ab source before range MIR lowering"*.
 
-Typecheck has legacy branches for `Pro` on array/map types, but **codegen/MIR path is range-only** in practice.
+Typecheck treats `Ab` as range-only. Collection-shaped sources for `itera ab`
+are diagnostics, not fallback iterator behavior.
 
 ### Where `pro` does **not** appear
 
@@ -131,7 +132,10 @@ Operational risk: **`ab` / `ad` typos** in editors and LLM output. Mitigation: d
 
 - **Lexer / keyword policy:** make `ab` available for `itera ab`. Keep it contextual if practical so ordinary `ab` identifiers remain valid outside the loop-mode slot. Do not revive retired collection-pipeline parsing.
 - **Parser:** `parse_itera_stmt` accepts `ab` instead of `pro`; error text becomes *expected 'ex', 'de', or 'ab'*. Do **not** keep `itera pro` as a parse alias.
-- **AST / HIR:** replace source-level `IteraMode::Pro`. Prefer semantic internal names such as `Range` or `Interval` over `Ab`; `Ab` is source syntax, not the compiler invariant.
+- **AST / HIR:** replace source-level `IteraMode::Pro` with `Ab`. At this
+  layer the enum is still a source preposition mode (`Ex`, `De`, `Ab`), not a
+  backend lowering category. English helper names such as `RangeIteraLowering`
+  are acceptable after typecheck/MIR has proven the source is an interval.
 - **Semantic / borrow / typecheck:** update mode matches and diagnostic strings. Tighten typecheck so range mode requires an `Intervallum`-shaped source instead of preserving legacy array/map `Pro` branches.
 - **MIR:** range-iteration lowering follows the renamed semantic mode; unsupported-source diagnostics should say `itera ab`.
 - **Codegen (Rust, Go, TS, Faber):** update iteration mode matches. Faber round-trip emission must print `itera ab`.
@@ -190,7 +194,10 @@ Decision: **hard cut**. There is no external compatibility requirement, and the 
 
 1. **Is reusing `ab` worth reviving confusion with retired pipeline `ab` and neighbor `ad`?** Yes, before release. The syntax is always the two-word phrase `itera ab`, and docs/explain must distinguish it from retired pipeline `ab`.
 2. **Hard cut vs deprecation alias?** Hard cut. No external corpus exists.
-3. **Should internal HIR stay `Pro` or rename to `Ab`?** Rename away from `Pro`, but prefer semantic `Range`/`Interval` naming over source-level `Ab`.
+3. **Should internal HIR stay `Pro` or rename to `Ab`?** Rename away from `Pro`
+   to `Ab`. The AST/HIR iteration mode enum is on the source-shaped side of the
+   naming boundary; later MIR/backend helpers may use English semantic names
+   after the source mode has been validated.
 4. **Explain corpus:** one canonical `ab` interval entry plus preserved `ab.legacy` pipeline note is enough.
 5. **Any downstream book/tooling outside this repo that hard-codes `itera pro`?** None known; historical in-repo references can remain historical.
 
@@ -200,7 +207,7 @@ Decision: **hard cut**. There is no external compatibility requirement, and the 
 
 - [x] Add/enable contextual `ab` loop mode without reviving pipeline `ab`.
 - [x] Replace parser acceptance of `itera pro` with `itera ab`.
-- [x] Rename AST/HIR/MIR/codegen mode away from `Pro`; prefer `Range`/`Interval`.
+- [x] Rename AST/HIR/codegen mode away from `Pro` to source-shaped `Ab`.
 - [x] Tighten typecheck so interval mode accepts only range expressions.
 - [x] Update live `.fab` exempla and active test source strings.
 - [x] Update `EBNF.md`, `README.md`, `explain/`, and current website-generated docs.
@@ -214,7 +221,7 @@ Decision: **hard cut**. There is no external compatibility requirement, and the 
 - Grammar: [`EBNF.md`](../../EBNF.md) — `iteraStmt`, range (`‥`, `ante`, `usque`, `per`)
 - Retired pipeline: [`docs/factory/remove-ab-dsl/goal.md`](../factory/remove-ab-dsl/goal.md)
 - Exempla ranges: [`examples/exempla/itera/intervallum.fab`](../../examples/exempla/itera/intervallum.fab)
-- MIR lowering: `crates/radix/src/mir/lower/control.rs` (`HirIteraMode::Range`)
+- MIR lowering: `crates/radix/src/mir/lower/control.rs` (`HirIteraMode::Ab`)
 - Related design note: [`tla-radix-notes.md`](tla-radix-notes.md) (unrelated mechanically; same `docs/design/` home)
 
 ---
@@ -225,4 +232,5 @@ Decision: **hard cut**. There is no external compatibility requirement, and the 
 |------|---------|
 | 2026-06-03 | Document created; **no implementation** |
 | 2026-06-03 | Approved for hard-cut implementation before release. |
-| 2026-06-03 | Implemented contextual `itera ab`, semantic `Range` mode, live docs/examples updates, and hard-cut tests. |
+| 2026-06-03 | Implemented contextual `itera ab`, initially with an internal `Range` mode, plus live docs/examples updates and hard-cut tests. |
+| 2026-06-04 | Corrected AST/HIR iteration mode naming to `Ab`; English `Range` remains for interval helper concepts after the source-shaped boundary. |

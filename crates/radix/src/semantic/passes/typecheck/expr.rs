@@ -64,7 +64,7 @@ impl<'a> TypeChecker<'a> {
             }
             HirExprKind::Itera(mode, binding, _, iter, block) => {
                 let iter_ty = self.check_expr(iter);
-                let elem_ty = if matches!(mode, crate::hir::HirIteraMode::Range) {
+                let elem_ty = if matches!(mode, crate::hir::HirIteraMode::Ab) {
                     if !matches!(iter.kind, HirExprKind::Intervallum { .. }) {
                         self.error(
                             SemanticErrorKind::TypeMismatch,
@@ -78,14 +78,14 @@ impl<'a> TypeChecker<'a> {
                         Type::Array(inner) => match mode {
                             crate::hir::HirIteraMode::De => self.numerus_type(),
                             crate::hir::HirIteraMode::Ex => *inner,
-                            crate::hir::HirIteraMode::Range => {
+                            crate::hir::HirIteraMode::Ab => {
                                 unreachable!("range mode handled before collection typing")
                             }
                         },
                         Type::Map(key, value) => match mode {
                             crate::hir::HirIteraMode::Ex => *value,
                             crate::hir::HirIteraMode::De => *key,
-                            crate::hir::HirIteraMode::Range => {
+                            crate::hir::HirIteraMode::Ab => {
                                 unreachable!("range mode handled before collection typing")
                             }
                         },

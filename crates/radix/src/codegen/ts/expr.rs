@@ -453,7 +453,7 @@ pub fn generate_expr(
             w.write("(() => { for (const ");
             w.write(codegen.resolve_def(*def_id));
             match mode {
-                HirIteraMode::Ex | HirIteraMode::Range => w.write(" of "),
+                HirIteraMode::Ex | HirIteraMode::Ab => w.write(" of "),
                 HirIteraMode::De => w.write(" in "),
             }
             generate_expr(codegen, iter, types, w)?;

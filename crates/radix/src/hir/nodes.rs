@@ -997,8 +997,8 @@ pub enum HirIteraMode {
     /// Iterate entries/keys from an object-like source.
     De,
 
-    /// Iterate numeric ranges.
-    Range,
+    /// Iterate numeric ranges from an `ab` loop source.
+    Ab,
 }
 
 /// Range endpoint inclusion policy.

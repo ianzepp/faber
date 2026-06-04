@@ -226,7 +226,7 @@ impl super::FaberCodegen {
                 let mode_text = match mode {
                     crate::hir::HirIteraMode::Ex => "ex",
                     crate::hir::HirIteraMode::De => "de",
-                    crate::hir::HirIteraMode::Range => "ab",
+                    crate::hir::HirIteraMode::Ab => "ab",
                 };
                 w.write(mode_text);
                 w.write(" ");

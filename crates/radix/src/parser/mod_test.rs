@@ -920,7 +920,7 @@ tacet
     let StmtKind::Itera(iter_stmt) = &program.stmts[2].kind else {
         panic!("expected itera statement");
     };
-    assert!(matches!(iter_stmt.mode, IteraMode::Range));
+    assert!(matches!(iter_stmt.mode, IteraMode::Ab));
     assert!(matches!(iter_stmt.mutability, Mutability::Immutable));
     assert!(matches!(iter_stmt.body, IfBody::Ergo(_)));
 

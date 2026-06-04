@@ -661,7 +661,7 @@ fn itera_binding_type(mode: crate::hir::HirIteraMode, iter_ty: Option<TypeId>, t
     let iter_ty = iter_ty?;
     match (mode, type_shape::resolve_type(iter_ty, types)) {
         (crate::hir::HirIteraMode::Ex, Type::Array(inner)) => Some(inner),
-        (crate::hir::HirIteraMode::De, Type::Array(_)) | (crate::hir::HirIteraMode::Range, _) => {
+        (crate::hir::HirIteraMode::De, Type::Array(_)) | (crate::hir::HirIteraMode::Ab, _) => {
             Some(types.primitive(crate::semantic::Primitive::Numerus))
         }
         (crate::hir::HirIteraMode::De, Type::Map(key, _)) => Some(key),

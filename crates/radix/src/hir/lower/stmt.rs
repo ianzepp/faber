@@ -351,7 +351,7 @@ impl<'a> Lowerer<'a> {
         let mode = match iter_stmt.mode {
             crate::syntax::IteraMode::Ex => crate::hir::HirIteraMode::Ex,
             crate::syntax::IteraMode::De => crate::hir::HirIteraMode::De,
-            crate::syntax::IteraMode::Range => crate::hir::HirIteraMode::Range,
+            crate::syntax::IteraMode::Ab => crate::hir::HirIteraMode::Ab,
         };
 
         let binding = self.next_def_id();

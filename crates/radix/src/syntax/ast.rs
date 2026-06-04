@@ -566,7 +566,7 @@ pub struct IteraStmt {
 pub enum IteraMode {
     Ex,
     De,
-    Range,
+    Ab,
 }
 
 #[derive(Debug)]
