@@ -2046,3 +2046,71 @@ Phase 027 non-literal pattern and dynamic switch lowering remains the next
 planned phase. A short Wasm adjunct for option-chain values and map-field
 projection emission could also convert some Phase 026 MIR gains into
 compile-valid coverage, but it should be scoped explicitly.
+
+## Phase 027 Update: Unit Variant Pattern Lowering
+
+**Commit target**: Phase 027
+**Change**: `discerne` arms with simple unit-variant patterns now lower to
+target-neutral MIR branch chains. Each arm constructs the unit variant as a MIR
+aggregate and compares it against the scrutinee with ordinary MIR equality.
+Payload/destructuring patterns remain explicit unsupported shapes.
+
+### Tier Counts After Phase 027
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 80/101
+  Wasm emitted: 77/101
+  compile-valid: 77/101
+  instantiate-valid: 77/101
+  runnable: 76/101
+  behavior-checked: 6/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 76/101 to 77/101. MIR-lowered
+coverage increased from 79/101 to 80/101.
+
+New compile-valid exemplar:
+
+- `examples/exempla/omnia/omnia.fab`
+
+### Result
+
+The phase implements a narrow, LLVM-friendly branch-chain lowering for
+exhaustive unit-variant matches. The final no-match edge in a no-default variant
+chain is sealed as unreachable, preventing spurious fallthrough in functions
+whose arms return.
+
+Remaining pattern/switch gaps:
+
+- `examples/exempla/discerne/discerne.fab`: payload variant destructuring.
+- `examples/exempla/syntaxis/discerne-insanum.fab`: payload variant
+  destructuring.
+- `examples/exempla/ordo/ordo.fab`: enum member paths still do not resolve to
+  local values before MIR lowering.
+
+### LLVM Follow-Up
+
+No Wasm-specific MIR shape was added. LLVM can lower this pattern subset as
+ordinary aggregate construction, equality, branch, and unreachable/goto
+terminators once aggregate handles/layout have a concrete LLVM strategy.
+
+### Phase 027 Validation Log
+
+- `cargo test -p radix lowers_unit_variant_discerne_to_branch_chain -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix llvm -- --nocapture`: passed.
+- `cargo test -p radix -- --test-threads=1`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Phase 028 top-level declarations remains the next numbered continuation-plan
+phase. For the explicit 85% exempla target, a short Wasm adjunct for
+option-chain values, map-field projection emission, or typed union carriers may
+be a higher-yield interstitial phase before top-level declarations.

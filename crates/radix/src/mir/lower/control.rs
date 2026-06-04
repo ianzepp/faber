@@ -338,11 +338,7 @@ impl FunctionBuilder<'_> {
                     return None;
                 }
                 _ => {
-                    self.errors.push(MirError::unsupported(
-                        arm.span,
-                        "non-literal discerne pattern before switch MIR lowering",
-                    ));
-                    return None;
+                    return self.lower_unit_variant_discerne(value, scrutinee, arms, expr);
                 }
             }
         }
@@ -361,6 +357,96 @@ impl FunctionBuilder<'_> {
             self.switch_to(default_id);
             let _ = self.lower_expr_value(body);
             reaches_join |= self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+        }
+
+        if reaches_join {
+            self.switch_to(join_id);
+        } else {
+            self.seal_unreachable(join_id, expr.span);
+        }
+        Some(MirOperand::Constant(MirConstant::Unit))
+    }
+
+    fn lower_unit_variant_discerne(
+        &mut self,
+        value: MirOperand,
+        scrutinee: &HirExpr,
+        arms: &[HirCasuArm],
+        expr: &HirExpr,
+    ) -> Option<MirOperand> {
+        let scrutinee_ty = self.expr_ty(scrutinee)?;
+        let bool_ty = MirType::semantic(self.types.primitive(Primitive::Bivalens));
+        let join_id = self.fresh_block(expr.span);
+        let mut default_body = None;
+
+        for arm in arms {
+            if arm.guard.is_some() {
+                self.errors
+                    .push(MirError::unsupported(arm.span, "guarded discerne before switch MIR lowering"));
+                return None;
+            }
+            let [pattern] = arm.patterns.as_slice() else {
+                self.errors.push(MirError::unsupported(
+                    arm.span,
+                    "multi-pattern discerne arm before switch MIR lowering",
+                ));
+                return None;
+            };
+            match pattern {
+                HirPattern::Variant(variant, fields) if fields.is_empty() => {
+                    let then_id = self.fresh_block(arm.span);
+                    let else_id = self.fresh_block(arm.span);
+                    let variant = self.construct_temp(
+                        MirAggregateKind::EnumVariant(*variant),
+                        MirAggregateFields::Ordered(Vec::new()),
+                        scrutinee_ty,
+                        arm.span,
+                    );
+                    let condition = self.assign_temp(
+                        MirValueKind::Binary { op: MirBinOp::Eq, lhs: value.clone(), rhs: variant },
+                        bool_ty,
+                        arm.span,
+                    );
+                    self.terminate_current(
+                        MirTerminatorKind::Branch { condition, then_block: then_id, else_block: else_id },
+                        arm.span,
+                    );
+
+                    self.switch_to(then_id);
+                    let _ = self.lower_expr_value(&arm.body);
+                    self.terminate_open_current(MirTerminatorKind::Goto(join_id), arm.span);
+
+                    self.switch_to(else_id);
+                }
+                HirPattern::Wildcard if default_body.is_none() => {
+                    default_body = Some((&arm.body, arm.span));
+                    break;
+                }
+                HirPattern::Wildcard => {
+                    self.errors.push(MirError::unsupported(
+                        arm.span,
+                        "multiple discerne defaults before switch MIR lowering",
+                    ));
+                    return None;
+                }
+                _ => {
+                    self.errors.push(MirError::unsupported(
+                        arm.span,
+                        "non-literal discerne pattern before switch MIR lowering",
+                    ));
+                    return None;
+                }
+            }
+        }
+
+        let mut reaches_join = false;
+        if let Some((body, span)) = default_body {
+            let _ = self.lower_expr_value(body);
+            reaches_join |= self.terminate_open_current(MirTerminatorKind::Goto(join_id), span);
+        } else {
+            if let Some(current) = self.current {
+                self.seal_unreachable(current, expr.span);
+            }
         }
 
         if reaches_join {

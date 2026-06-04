@@ -568,6 +568,27 @@ functio status(numerus code) → textus {
 }
 
 #[test]
+fn lowers_unit_variant_discerne_to_branch_chain() {
+    let dump = dump_source(
+        r#"discretio Status {
+  Active,
+  Inactive
+}
+
+functio describe(Status status) → vacuum {
+  discerne status {
+    casu Active { nota "active" }
+    casu Inactive { nota "inactive" }
+  }
+}"#,
+    );
+
+    assert!(dump.contains("construct variant def#"));
+    assert!(dump.contains("branch %"));
+    assert!(dump.contains("runtime diagnostic nota("));
+}
+
+#[test]
 fn lowers_dum_to_condition_body_and_after_blocks() {
     let dump = dump_source(
         "functio totalis(numerus n) → numerus { varia numerus i ← 0 varia numerus total ← 0 dum i < n { total ← total + i i ← i + 1 } redde total }",
@@ -751,9 +772,9 @@ fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
         .contains("itera collection before iterator MIR lowering"));
 
     let discerne_unit = analyze(
-        "discretio Status { Active, Inactive } functio differ(Status s) → numerus { discerne s { casu Active { redde 1 } casu Inactive { redde 0 } } }",
+        "discretio Event { Click { numerus x }, Quit } functio handle(Event e) → vacuum { discerne e { casu Click fixum x { nota x } casu Quit { nota 0 } } }",
     );
-    let discerne_errors = lower_analyzed_unit(&discerne_unit).expect_err("discerne is deferred");
+    let discerne_errors = lower_analyzed_unit(&discerne_unit).expect_err("payload discerne is deferred");
     assert_eq!(discerne_errors.len(), 1);
     assert!(discerne_errors[0]
         .message
@@ -1118,7 +1139,9 @@ incipit {
 
 #[test]
 fn lowers_collection_higher_order_methods_with_synthetic_closures() {
-    let dump = dump_source(r#"functio evens(lista<numerus> xs) → lista<numerus> { redde xs.filtrata(numerus x ∴ x % 2 ≡ 0) }"#);
+    let dump = dump_source(
+        r#"functio evens(lista<numerus> xs) → lista<numerus> { redde xs.filtrata(numerus x ∴ x % 2 ≡ 0) }"#,
+    );
 
     assert!(dump.contains("runtime collection length"));
     assert!(dump.contains("runtime collection append"));
