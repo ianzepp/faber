@@ -5,6 +5,7 @@ pub(super) fn norma_runtime_module_path(receiver_name: &str) -> Option<&'static 
         "json" => Some("norma::json"),
         "toml" => Some("norma::toml"),
         "consolum" => Some("norma::hal::consolum"),
+        "http" => Some("norma::hal::http"),
         _ => None,
     }
 }

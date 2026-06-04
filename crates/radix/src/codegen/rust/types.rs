@@ -79,6 +79,10 @@ pub fn type_to_rust(codegen: &RustCodegen<'_>, type_id: TypeId, types: &TypeTabl
         Type::Enum(def_id) => codegen.resolve_def(*def_id).to_owned(),
 
         Type::Interface(def_id) => {
+            if let Some(runtime_type) = codegen.runtime_interface_type(*def_id) {
+                return runtime_type.to_owned();
+            }
+
             // Interfaces lower to trait objects in type position. Call sites
             // and declarations decide whether an additional reference or box is
             // needed for a valid Rust value shape.

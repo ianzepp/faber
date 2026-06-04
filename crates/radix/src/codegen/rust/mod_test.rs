@@ -22,6 +22,8 @@ mod decl;
 mod dynamic;
 #[path = "tests/failable_test.rs"]
 mod failable;
+#[path = "tests/http_test.rs"]
+mod http;
 #[path = "tests/optional_test.rs"]
 mod optional;
 #[path = "tests/types_test.rs"]

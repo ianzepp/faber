@@ -100,6 +100,12 @@ pub(super) struct FunctionParamInfo<'a> {
     pub(super) default: Option<&'a HirExpr>,
 }
 
+#[derive(Clone, Copy)]
+struct RuntimeInterfaceInfo {
+    rust_type: Option<&'static str>,
+    elide_decl: bool,
+}
+
 /// Rust backend state shared by all Rust sub-emitters.
 ///
 /// Construction precomputes the name catalog, failable-function closure, test
@@ -163,6 +169,13 @@ pub struct RustCodegen<'a> {
     /// parent relationship here instead of asking expression emitters to infer
     /// it from names.
     variant_info: FxHashMap<DefId, VariantInfo>,
+
+    /// Runtime-owned stdlib interfaces keyed by their HIR definition.
+    ///
+    /// The HTTP HAL source pacta are contracts for the Norma runtime, not local
+    /// Rust traits. Codegen records exact-shape matches here so type rendering
+    /// can name concrete runtime structs without guessing from unresolved names.
+    runtime_interfaces: FxHashMap<DefId, RuntimeInterfaceInfo>,
 }
 
 impl<'a> RustCodegen<'a> {
@@ -188,6 +201,7 @@ impl<'a> RustCodegen<'a> {
             function_params: FxHashMap::default(),
             option_param_defs: FxHashSet::default(),
             variant_info: FxHashMap::default(),
+            runtime_interfaces: FxHashMap::default(),
         };
         codegen.failable_defs = codegen.collect_failable_functions(hir);
         codegen.test_selection = Some(TestSelectionState {
@@ -202,6 +216,7 @@ impl<'a> RustCodegen<'a> {
         codegen.function_params = codegen.collect_function_params(hir);
         codegen.option_param_defs = codegen.collect_option_param_defs();
         codegen.variant_info = codegen.collect_variant_info(hir);
+        codegen.runtime_interfaces = codegen.collect_runtime_interfaces(hir);
         codegen
     }
 
@@ -215,6 +230,18 @@ impl<'a> RustCodegen<'a> {
 
     pub(super) fn variant_info(&self, def_id: DefId) -> Option<&VariantInfo> {
         self.variant_info.get(&def_id)
+    }
+
+    pub(super) fn runtime_interface_type(&self, def_id: DefId) -> Option<&'static str> {
+        self.runtime_interfaces
+            .get(&def_id)
+            .and_then(|info| info.rust_type)
+    }
+
+    pub(super) fn should_elide_runtime_interface_decl(&self, def_id: DefId) -> bool {
+        self.runtime_interfaces
+            .get(&def_id)
+            .is_some_and(|info| info.elide_decl)
     }
 
     pub(super) fn is_failable_def(&self, def_id: DefId) -> bool {
@@ -384,7 +411,9 @@ impl<'a> RustCodegen<'a> {
                 decl::generate_enum(self, e, types, writer)?;
             }
             HirItemKind::Interface(i) => {
-                decl::generate_trait(self, i, types, writer)?;
+                if !self.should_elide_runtime_interface_decl(item.def_id) {
+                    decl::generate_trait(self, i, types, writer)?;
+                }
             }
             HirItemKind::TypeAlias(a) => {
                 decl::generate_type_alias(self, a, types, writer)?;
@@ -409,6 +438,85 @@ impl<'a> RustCodegen<'a> {
     /// EDGE: `tempta` with a catch block suppresses propagation from its body.
     fn collect_failable_functions(&self, hir: &HirProgram) -> FxHashSet<DefId> {
         failable::collect_failable_functions(self, hir)
+    }
+
+    fn collect_runtime_interfaces(&self, hir: &HirProgram) -> FxHashMap<DefId, RuntimeInterfaceInfo> {
+        let mut interfaces = FxHashMap::default();
+
+        for item in &hir.items {
+            let HirItemKind::Interface(interface) = &item.kind else {
+                continue;
+            };
+
+            let Some(info) = self.http_runtime_interface_info(interface) else {
+                continue;
+            };
+
+            interfaces.insert(item.def_id, info);
+        }
+
+        interfaces
+    }
+
+    fn http_runtime_interface_info(&self, interface: &crate::hir::HirInterface) -> Option<RuntimeInterfaceInfo> {
+        let name = self.resolve_symbol(interface.name);
+        let method_names = interface
+            .methods
+            .iter()
+            .map(|method| self.resolve_symbol(method.name))
+            .collect::<Vec<_>>();
+
+        match name {
+            "http"
+                if method_names_match(
+                    &method_names,
+                    &[
+                        "petet",
+                        "mittet",
+                        "ponet",
+                        "delet",
+                        "mutabit",
+                        "rogabit",
+                        "exspectabit",
+                        "replica",
+                        "scribe",
+                        "funde",
+                        "json",
+                        "redirige",
+                    ],
+                ) =>
+            {
+                Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true })
+            }
+            "Replicatio"
+                if method_names_match(
+                    &method_names,
+                    &[
+                        "status",
+                        "corpus",
+                        "corpus_octeti",
+                        "corpus_json",
+                        "capita",
+                        "caput",
+                        "bene",
+                    ],
+                ) =>
+            {
+                Some(RuntimeInterfaceInfo { rust_type: Some("norma::hal::http::Replicatio"), elide_decl: true })
+            }
+            "Rogatio"
+                if method_names_match(
+                    &method_names,
+                    &["modus", "via", "corpus", "corpus_json", "capita", "caput", "param"],
+                ) =>
+            {
+                Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true })
+            }
+            "Servitor" if method_names_match(&method_names, &["siste", "portus"]) => {
+                Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true })
+            }
+            _ => None,
+        }
     }
 
     /// Precompute struct field metadata needed by Rust declaration and literal emission.
@@ -571,6 +679,10 @@ impl<'a> RustCodegen<'a> {
     pub(super) fn struct_has_creo_hook(&self, def_id: DefId) -> bool {
         self.struct_creo_hooks.contains(&def_id)
     }
+}
+
+fn method_names_match(actual: &[&str], expected: &[&str]) -> bool {
+    actual == expected
 }
 
 fn function_param_info(func: &HirFunction) -> Vec<FunctionParamInfo<'_>> {
