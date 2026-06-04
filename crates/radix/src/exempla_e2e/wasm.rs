@@ -1,5 +1,6 @@
 use super::common::{collect_exempla_files, format_diagnostic_messages, make_temp_root};
 use super::wasm_expectations::WASM_EXPECTED_TIER_FLOORS;
+use super::wasm_host::{probe_wat_instantiation, WasmInstantiationBucket};
 use crate::codegen::Target;
 use crate::driver::Session;
 use crate::Config;
@@ -24,6 +25,7 @@ struct WasmE2eResult {
     path: PathBuf,
     tier: WasmTier,
     reason: String,
+    instantiation_bucket: Option<WasmInstantiationBucket>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -35,8 +37,8 @@ enum WasmValidator {
 #[derive(Debug, Clone, Copy)]
 struct WasmToolchain {
     validator: Option<WasmValidator>,
-    wasmtime: bool,
 }
+
 #[test]
 #[ignore = "slow baseline harness; run explicitly with cargo test exempla_wasm_e2e -- --ignored --nocapture"]
 fn exempla_wasm_e2e() {
@@ -57,6 +59,7 @@ fn exempla_wasm_e2e() {
     print_wasm_e2e_report(&results, toolchain);
     assert_wasm_expected_tiers(&results);
 }
+
 fn detect_wasm_toolchain() -> WasmToolchain {
     let validator = if command_available("wasm-tools", &["--version"]) {
         Some(WasmValidator::WasmTools)
@@ -66,7 +69,7 @@ fn detect_wasm_toolchain() -> WasmToolchain {
         None
     };
 
-    WasmToolchain { validator, wasmtime: command_available("wasmtime", &["--version"]) }
+    WasmToolchain { validator }
 }
 
 fn command_available(command: &str, args: &[&str]) -> bool {
@@ -83,32 +86,29 @@ fn classify_wasm_exemplum(
     let source = match fs::read_to_string(file) {
         Ok(source) => source,
         Err(err) => {
-            return WasmE2eResult {
-                path: file.to_path_buf(),
-                tier: WasmTier::SourceReadable,
-                reason: format!("cannot read source: {err}"),
-            };
+            return wasm_result(file, WasmTier::SourceReadable, format!("cannot read source: {err}"), None);
         }
     };
 
     let analysis = match crate::driver::analyze_source(session, &file.display().to_string(), &source) {
         Ok(analysis) => analysis,
         Err(diagnostics) => {
-            return WasmE2eResult {
-                path: file.to_path_buf(),
-                tier: WasmTier::SourceReadable,
-                reason: format!("frontend failed: {}", format_diagnostic_messages(&diagnostics)),
-            };
+            return wasm_result(
+                file,
+                WasmTier::SourceReadable,
+                format!("frontend failed: {}", format_diagnostic_messages(&diagnostics)),
+                None,
+            );
         }
     };
 
     let mir = match crate::mir::lower_analyzed_unit_with_context(&analysis) {
         Ok(mir) => mir,
         Err(errors) => {
-            return WasmE2eResult {
-                path: file.to_path_buf(),
-                tier: WasmTier::FrontendAnalyzed,
-                reason: format!(
+            return wasm_result(
+                file,
+                WasmTier::FrontendAnalyzed,
+                format!(
                     "MIR lowering failed: {}",
                     errors
                         .iter()
@@ -116,18 +116,16 @@ fn classify_wasm_exemplum(
                         .collect::<Vec<_>>()
                         .join(" | ")
                 ),
-            };
+                None,
+            );
         }
     };
 
-    let wat = match crate::mir::emit_wasm_text_probe_with_context(&mir.program, &mir.validation, &analysis.interner) {
+    let wat = match crate::mir::emit_wasm_text_probe_with_context(&mir.program, &mir.validation, &analysis.interner)
+    {
         Ok(wat) => wat,
         Err(error) => {
-            return WasmE2eResult {
-                path: file.to_path_buf(),
-                tier: WasmTier::MirLowered,
-                reason: format!("Wasm emission failed: {error}"),
-            };
+            return wasm_result(file, WasmTier::MirLowered, format!("Wasm emission failed: {error}"), None);
         }
     };
 
@@ -136,49 +134,67 @@ fn classify_wasm_exemplum(
         .and_then(|name| name.to_str())
         .unwrap_or("exemplum");
     let wat_file = temp_root.join(format!("{idx:03}-{stem}.wat"));
-    if let Err(err) = fs::write(&wat_file, wat) {
-        return WasmE2eResult {
-            path: file.to_path_buf(),
-            tier: WasmTier::WasmEmitted,
-            reason: format!("cannot write WAT output: {err}"),
-        };
+    if let Err(err) = fs::write(&wat_file, &wat) {
+        return wasm_result(
+            file,
+            WasmTier::WasmEmitted,
+            format!("cannot write WAT output: {err}"),
+            None,
+        );
     }
 
     let Some(validator) = toolchain.validator else {
-        return WasmE2eResult {
-            path: file.to_path_buf(),
-            tier: WasmTier::WasmEmitted,
-            reason: "compile validation skipped: no wasm-tools or wat2wasm on PATH".to_owned(),
-        };
+        return wasm_result(
+            file,
+            WasmTier::WasmEmitted,
+            "compile validation skipped: no wasm-tools or wat2wasm on PATH".to_owned(),
+            None,
+        );
     };
 
     let wasm_file = temp_root.join(format!("{idx:03}-{stem}.wasm"));
-    let instantiation_file = match validate_wat(validator, &wat_file, &wasm_file) {
-        Ok(instantiation_file) => instantiation_file,
-        Err(reason) => {
-            return WasmE2eResult { path: file.to_path_buf(), tier: WasmTier::WasmEmitted, reason };
-        }
-    };
-
-    if !toolchain.wasmtime {
-        return WasmE2eResult {
-            path: file.to_path_buf(),
-            tier: WasmTier::CompileValid,
-            reason: "instantiate/run skipped: no wasmtime on PATH".to_owned(),
-        };
+    if let Err(reason) = validate_wat(validator, &wat_file, &wasm_file) {
+        return wasm_result(file, WasmTier::WasmEmitted, reason, None);
     }
 
-    match instantiate_wasm(&instantiation_file) {
-        Ok(()) => WasmE2eResult {
-            path: file.to_path_buf(),
-            tier: WasmTier::InstantiateValid,
-            reason: "run skipped: no Wasm entrypoint policy yet".to_owned(),
-        },
-        Err(reason) => WasmE2eResult { path: file.to_path_buf(), tier: WasmTier::CompileValid, reason },
+    let probe = probe_wat_instantiation(&wat);
+    let (tier, reason) = match probe.bucket {
+        WasmInstantiationBucket::InstantiateValid => (
+            WasmTier::InstantiateValid,
+            format!("{}; run skipped: no Wasm entrypoint policy yet", probe.reason),
+        ),
+        WasmInstantiationBucket::MissingImport => (
+            WasmTier::CompileValid,
+            format!("instantiation blocked ({}): {}", probe.bucket, probe.reason),
+        ),
+        WasmInstantiationBucket::InstantiationTrap => (
+            WasmTier::CompileValid,
+            format!("instantiation failed ({}): {}", probe.bucket, probe.reason),
+        ),
+        WasmInstantiationBucket::NoRuntime => (
+            WasmTier::CompileValid,
+            format!("instantiation skipped ({}): {}", probe.bucket, probe.reason),
+        ),
+    };
+
+    wasm_result(file, tier, reason, Some(probe.bucket))
+}
+
+fn wasm_result(
+    file: &Path,
+    tier: WasmTier,
+    reason: String,
+    instantiation_bucket: Option<WasmInstantiationBucket>,
+) -> WasmE2eResult {
+    WasmE2eResult {
+        path: file.to_path_buf(),
+        tier,
+        reason,
+        instantiation_bucket,
     }
 }
 
-fn validate_wat(validator: WasmValidator, wat_file: &Path, wasm_file: &Path) -> Result<PathBuf, String> {
+fn validate_wat(validator: WasmValidator, wat_file: &Path, wasm_file: &Path) -> Result<(), String> {
     let output = match validator {
         WasmValidator::WasmTools => Command::new("wasm-tools")
             .arg("validate")
@@ -193,31 +209,12 @@ fn validate_wat(validator: WasmValidator, wat_file: &Path, wasm_file: &Path) -> 
 
     let output = output.map_err(|err| format!("cannot execute Wasm validator: {err}"))?;
     if output.status.success() {
-        Ok(match validator {
-            WasmValidator::WasmTools => wat_file.to_path_buf(),
-            WasmValidator::Wat2Wasm => wasm_file.to_path_buf(),
-        })
+        Ok(())
     } else {
         Err(format!(
             "Wasm validation failed: {}",
             String::from_utf8_lossy(&output.stderr).trim()
         ))
-    }
-}
-
-fn instantiate_wasm(wasm_file: &Path) -> Result<(), String> {
-    let output = Command::new("wasmtime")
-        .arg("--invoke")
-        .arg("__faber_missing_entry_for_instantiation_probe__")
-        .arg(wasm_file)
-        .output()
-        .map_err(|err| format!("cannot execute wasmtime: {err}"))?;
-
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if output.status.success() || stderr.contains("unknown export") || stderr.contains("failed to find export") {
-        Ok(())
-    } else {
-        Err(format!("Wasm instantiation failed: {}", stderr.trim()))
     }
 }
 
@@ -232,10 +229,7 @@ fn print_wasm_e2e_report(results: &[WasmE2eResult], toolchain: WasmToolchain) {
             None => "unavailable",
         }
     );
-    eprintln!(
-        "  instantiator/runtime: {}",
-        if toolchain.wasmtime { "wasmtime" } else { "unavailable" }
-    );
+    eprintln!("  instantiator/runtime: wasmtime dev-dependency (in-process linker probe)");
     eprintln!("Wasm e2e exempla:");
     eprintln!(
         "  frontend analyzed: {}/{}",
@@ -261,6 +255,28 @@ fn print_wasm_e2e_report(results: &[WasmE2eResult], toolchain: WasmToolchain) {
         total
     );
 
+    let compile_valid = results
+        .iter()
+        .filter(|result| result.tier >= WasmTier::CompileValid)
+        .collect::<Vec<_>>();
+    eprintln!("Wasm instantiation buckets (compile-valid subset):");
+    eprintln!(
+        "  missing-import: {}",
+        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::MissingImport)
+    );
+    eprintln!(
+        "  instantiation-trap: {}",
+        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::InstantiationTrap)
+    );
+    eprintln!(
+        "  instantiate-valid: {}",
+        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::InstantiateValid)
+    );
+    eprintln!(
+        "  no-runtime: {}",
+        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::NoRuntime)
+    );
+
     for result in results
         .iter()
         .filter(|result| result.tier < WasmTier::BehaviorChecked)
@@ -271,6 +287,13 @@ fn print_wasm_e2e_report(results: &[WasmE2eResult], toolchain: WasmToolchain) {
 
 fn count_wasm_tier(results: &[WasmE2eResult], tier: WasmTier) -> usize {
     results.iter().filter(|result| result.tier >= tier).count()
+}
+
+fn count_instantiation_bucket(results: &[&WasmE2eResult], bucket: WasmInstantiationBucket) -> usize {
+    results
+        .iter()
+        .filter(|result| result.instantiation_bucket == Some(bucket))
+        .count()
 }
 
 fn assert_wasm_expected_tiers(results: &[WasmE2eResult]) {

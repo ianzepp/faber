@@ -6,3 +6,4 @@ mod ts;
 mod types;
 mod wasm;
 mod wasm_expectations;
+mod wasm_host;

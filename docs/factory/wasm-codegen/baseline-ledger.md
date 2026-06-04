@@ -1821,3 +1821,56 @@ lowering to host runtime calls; no Wasm-specific MIR nodes were added.
 
 Phase 022 host tooling (`wasmtime`) or callable-value lowering for
 `filtrata`/`mappata` and remaining `si/est.fab` dynamic boxing at Wasm emission.
+
+## Phase 022 Update: Host Tooling And Instantiation Harness
+
+**Commit target**: Phase 022
+**Change**: the ignored Wasm e2e harness uses an in-process `wasmtime` dev-dependency
+linker probe instead of a `wasmtime` binary on `PATH`. Compile-valid exemplars are
+classified into explicit instantiation buckets (`missing-import`, `instantiation-trap`,
+`instantiate-valid`, `no-runtime`).
+
+### Tier Counts After Phase 022
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 73/101
+  Wasm emitted: 72/101
+  compile-valid: 72/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Instantiation Buckets (Compile-Valid Subset)
+
+```text
+  missing-import: 72
+  instantiation-trap: 0
+  instantiate-valid: 0
+  no-runtime: 0
+```
+
+### Result
+
+All 72 compile-valid modules require unresolved `faber_*` imports under the stubless
+probe. The harness now reports honest missing-import reasons with import site lists
+instead of collapsing to `no wasmtime on PATH`.
+
+Runnable and behavior-checked tiers remain unclaimed. Expected compile-valid floors
+are unchanged.
+
+### Phase 022 Validation Log
+
+- `cargo test -p radix wasm_host -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix --lib mir -- --nocapture`: passed.
+- `cargo test -p radix --lib wasm -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Phase 023 minimal import stub host to move compile-valid exemplars to
+instantiate-valid, then entrypoint/run policy in Phase 024.
