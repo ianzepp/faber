@@ -386,10 +386,11 @@ impl WasmTextProbe<'_> {
         match &stmt.kind {
             MirStmtKind::Assign { place, value } => {
                 let expr = self.value_expr(value, context, writer)?;
+                let value_ty = self.value_expr_ty(value, context)?;
+                let place_ty = self.place_ty(place, context)?;
+                let expr = coerce_wasm_operand_expr(expr, value_ty, place_ty)?;
                 context.values.insert(value.id, expr.clone());
-                context
-                    .value_tys
-                    .insert(value.id, self.scalar_ty(value.ty)?);
+                context.value_tys.insert(value.id, place_ty);
                 self.emit_place_set(place, &expr, context, writer)
             }
             MirStmtKind::Call { destination, callee, args } => {
@@ -510,6 +511,19 @@ impl WasmTextProbe<'_> {
         }
     }
 
+    fn value_expr_ty(
+        &self,
+        value: &MirValue,
+        context: &FunctionContext,
+    ) -> Result<WasmValue, MirWasmTextProbeError> {
+        match &value.kind {
+            MirValueKind::Operand(operand) => self.operand_ty(operand, context),
+            MirValueKind::Binary { .. } | MirValueKind::Unary { .. } | MirValueKind::Option(_) => {
+                self.scalar_ty(value.ty)
+            }
+        }
+    }
+
     fn option_expr(
         &self,
         op: &MirOptionOp,
@@ -549,7 +563,14 @@ impl WasmTextProbe<'_> {
                 Err(MirWasmTextProbeError::unsupported("option test value"))
             }
             MirOptionOp::Unwrap { .. } => Err(MirWasmTextProbeError::unsupported("option unwrap value")),
-            MirOptionOp::Chain { .. } => Err(MirWasmTextProbeError::unsupported("option chain value")),
+            MirOptionOp::Chain { base, link } => {
+                let base_expr = self.operand_expr(base, context)?;
+                let base_ty = self.option_chain_projection_base_ty(base, context)?;
+                let (import, key_expr, _) = self.option_chain_projection_import(link, base_ty, context)?;
+                let expr = format!("(call ${} {base_expr} {key_expr})", projection_import_symbol(&import));
+                writer.writeln(&format!("  ;; option chain = {expr}"));
+                Ok(expr)
+            }
         }
     }
 
@@ -772,16 +793,21 @@ impl WasmTextProbe<'_> {
                 .get(id)
                 .copied()
                 .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined temp t{}", id.0))),
-            MirOperand::Constant(MirConstant::Int(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Numerus))),
-            MirOperand::Constant(MirConstant::Float(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Fractus))),
-            MirOperand::Constant(MirConstant::Bool(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Bivalens))),
+            MirOperand::Constant(MirConstant::Int(_)) => {
+                Ok(MirType::semantic(self.types.primitive(Primitive::Numerus)))
+            }
+            MirOperand::Constant(MirConstant::Float(_)) => {
+                Ok(MirType::semantic(self.types.primitive(Primitive::Fractus)))
+            }
+            MirOperand::Constant(MirConstant::Bool(_)) => {
+                Ok(MirType::semantic(self.types.primitive(Primitive::Bivalens)))
+            }
             MirOperand::Constant(MirConstant::Nil) => Ok(MirType::semantic(self.types.primitive(Primitive::Nihil))),
             MirOperand::Constant(MirConstant::Unit) => Ok(MirType::semantic(self.types.primitive(Primitive::Vacuum))),
-            MirOperand::Constant(MirConstant::String(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Textus))),
-            MirOperand::Value(id) => Err(MirWasmTextProbeError::unsupported(format!(
-                "MIR type for value v{}",
-                id.0
-            ))),
+            MirOperand::Constant(MirConstant::String(_)) => {
+                Ok(MirType::semantic(self.types.primitive(Primitive::Textus)))
+            }
+            MirOperand::Value(id) => Err(MirWasmTextProbeError::unsupported(format!("MIR type for value v{}", id.0))),
         }
     }
 
@@ -845,6 +871,47 @@ impl WasmTextProbe<'_> {
                     ProjectionImport { kind: ProjectionImportKind::Index, key, result: self.scalar_ty(result_ty)? };
                 Ok((import, self.operand_expr(index, context)?, result_ty))
             }
+        }
+    }
+
+    fn option_chain_projection_base_ty(
+        &self,
+        base: &MirOperand,
+        context: &FunctionContext,
+    ) -> Result<MirType, MirWasmTextProbeError> {
+        let base_ty = self.operand_mir_ty(base, context)?;
+        match self.types.get(base_ty.semantic_id()) {
+            Type::Option(inner) => Ok(MirType::semantic(*inner)),
+            Type::Alias(_, target) => self.option_chain_projection_base_ty_from_mir(MirType::semantic(*target)),
+            _ => Ok(base_ty),
+        }
+    }
+
+    fn option_chain_projection_base_ty_from_mir(&self, ty: MirType) -> Result<MirType, MirWasmTextProbeError> {
+        match self.types.get(ty.semantic_id()) {
+            Type::Option(inner) => Ok(MirType::semantic(*inner)),
+            Type::Alias(_, target) => self.option_chain_projection_base_ty_from_mir(MirType::semantic(*target)),
+            _ => Ok(ty),
+        }
+    }
+
+    fn option_chain_projection_import(
+        &self,
+        link: &MirOptionChainLink,
+        base_ty: MirType,
+        context: &FunctionContext,
+    ) -> Result<(ProjectionImport, String, MirType), MirWasmTextProbeError> {
+        match link {
+            MirOptionChainLink::Field(field) => self.projection_import(&MirProjection::Field(*field), base_ty, context),
+            MirOptionChainLink::VariantField { variant, field } => self.projection_import(
+                &MirProjection::VariantField { variant: *variant, field: *field },
+                base_ty,
+                context,
+            ),
+            MirOptionChainLink::Index(index) => {
+                self.projection_import(&MirProjection::Index(index.clone()), base_ty, context)
+            }
+            MirOptionChainLink::Call { .. } => Err(MirWasmTextProbeError::unsupported("option chain call value")),
         }
     }
 
@@ -994,6 +1061,7 @@ impl WasmTextProbe<'_> {
             Type::Primitive(Primitive::Textus) => Ok(WasmValue::TextHandle),
             Type::Primitive(Primitive::Ignotum) => Ok(WasmValue::AggregateHandle),
             Type::Option(_) => Ok(WasmValue::AggregateHandle),
+            Type::Union(_) => Ok(WasmValue::AggregateHandle),
             Type::Array(_) | Type::Map(_, _) | Type::Record(_) | Type::Set(_) | Type::Struct(_) | Type::Enum(_) => {
                 Ok(WasmValue::AggregateHandle)
             }
@@ -1020,6 +1088,12 @@ impl WasmTextProbe<'_> {
                 .copied()
                 .map(MirType::semantic)
                 .ok_or_else(|| MirWasmTextProbeError::unsupported("record field projection metadata")),
+            Type::Map(key, value) => {
+                if !matches!(self.types.get(*key), Type::Primitive(Primitive::Textus)) {
+                    return Err(MirWasmTextProbeError::unsupported("map field projection key type"));
+                }
+                Ok(MirType::semantic(*value))
+            }
             Type::Alias(_, target) => self.project_field_ty(MirType::semantic(*target), field),
             _ => Err(MirWasmTextProbeError::unsupported("field projection base")),
         }
@@ -1216,10 +1290,7 @@ impl WasmTextProbe<'_> {
     }
 
     fn is_vacuum(&self, ty: MirType) -> bool {
-        matches!(
-            self.types.get(ty.semantic_id()),
-            Type::Primitive(Primitive::Vacuum)
-        )
+        matches!(self.types.get(ty.semantic_id()), Type::Primitive(Primitive::Vacuum))
     }
 
     fn callee_name(&self, callee: &MirCallee) -> Result<String, MirWasmTextProbeError> {
@@ -1632,9 +1703,24 @@ impl WasmTextProbe<'_> {
             MirOptionOp::Some(value)
             | MirOptionOp::IsNil(value)
             | MirOptionOp::IsNonNil(value)
-            | MirOptionOp::Unwrap { value, .. }
-            | MirOptionOp::Chain { base: value, .. } => {
-                self.collect_operand_projection_imports(value, context, imports)
+            | MirOptionOp::Unwrap { value, .. } => self.collect_operand_projection_imports(value, context, imports),
+            MirOptionOp::Chain { base, link } => {
+                self.collect_operand_projection_imports(base, context, imports)?;
+                let base_ty = self.option_chain_projection_base_ty(base, context)?;
+                let (import, _, _) = self.option_chain_projection_import(link, base_ty, context)?;
+                imports.insert(import);
+                match link {
+                    MirOptionChainLink::Index(index) => {
+                        self.collect_operand_projection_imports(index, context, imports)
+                    }
+                    MirOptionChainLink::Call { args, .. } => {
+                        for arg in args {
+                            self.collect_operand_projection_imports(arg, context, imports)?;
+                        }
+                        Ok(())
+                    }
+                    MirOptionChainLink::Field(_) | MirOptionChainLink::VariantField { .. } => Ok(()),
+                }
             }
             MirOptionOp::None => Ok(()),
         }

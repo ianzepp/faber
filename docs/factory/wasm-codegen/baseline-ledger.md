@@ -2114,3 +2114,58 @@ Phase 028 top-level declarations remains the next numbered continuation-plan
 phase. For the explicit 85% exempla target, a short Wasm adjunct for
 option-chain values, map-field projection emission, or typed union carriers may
 be a higher-yield interstitial phase before top-level declarations.
+
+## Phase 028 Update: Wasm Option/Map/Union Adjunct
+
+**Commit target**: Phase 028 interstitial
+**Change**: Wasm text emission now accepts three already-lowered MIR shapes:
+option-chain projection reads, map-shaped field projections, and union-typed
+values carried as opaque aggregate handles. Pass-through scalar operands assigned
+to union-carried locals are coerced into the destination Wasm carrier.
+
+### Tier Counts After Phase 028
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 80/101
+  Wasm emitted: 80/101
+  compile-valid: 80/101
+  instantiate-valid: 80/101
+  runnable: 79/101
+  behavior-checked: 6/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 77/101 to 80/101. MIR-lowered
+coverage stayed at 80/101; this phase converted existing MIR into valid Wasm.
+
+New compile-valid exempla:
+
+- `examples/exempla/destructura/objectum.fab`
+- `examples/exempla/optionalis/optionalis.fab`
+- `examples/exempla/praefixum/praefixum.fab`
+
+### Result
+
+The phase deliberately keeps runtime behavior modest: option-chain, map-field,
+and union carrier operations are valid Wasm over opaque handles and are
+stub-host runnable, but their real runtime semantics still require a concrete
+aggregate runtime.
+
+### Phase 028 Validation Log
+
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix llvm -- --nocapture`: passed.
+- `cargo test -p radix -- --test-threads=1`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+The 85% compile-valid target requires at least 86/101 exempla, so six more
+compile-valid exempla are needed after Phase 028. The best next slice should
+come from MIR-lowering failures, because Wasm emission is currently valid for
+all 80 MIR-lowered exempla.

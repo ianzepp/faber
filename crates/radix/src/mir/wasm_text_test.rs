@@ -318,6 +318,82 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_map_field_projection_reads() {
+    let source = r#"
+incipit {
+    fixum _ codes ← praefixum({
+        ok = 200,
+        error = 500
+    })
+    nota codes.ok
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(
+        output.contains(
+            r#"(import "faber_aggregate" "field_i32_to_aggregate" (func $__faber_aggregate_field_i32_to_aggregate (param i32 i32) (result i32)))"#
+        )
+    );
+    assert!(output.contains("(call $__faber_aggregate_field_i32_to_aggregate (local.get $l0) (i32.const"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_emits_option_chain_projection_reads() {
+    let source = r#"
+genus Address {
+    textus city
+}
+
+genus User {
+    textus name
+    Address address sponte
+}
+
+incipit {
+    fixum _ user ← User {
+        name = "Aurelia",
+        address = Address { city = "Roma" }
+    }
+    fixum _ city ← user?.address?.city
+    nota city
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains(r#"(import "faber_aggregate" "field_i32_to_aggregate""#));
+    assert!(output.contains(r#"(import "faber_aggregate" "field_i32_to_text""#));
+    assert!(output.contains(";; option chain = (call $__faber_aggregate_field_i32_to_aggregate"));
+    assert!(output.contains(";; option chain = (call $__faber_aggregate_field_i32_to_text"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
+fn wasm_target_coerces_scalar_operands_into_union_carriers() {
+    let source = r#"
+incipit {
+    fixum _ data ← { count = 100, active = verum }
+    ex data varia count, active
+
+    count ← 200
+    active ← falsum
+
+    nota count
+    nota active
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains("(local.set $l1 (i32.wrap_i64 (i64.const 200)))"));
+    assert!(output.contains("(local.set $l2 (i32.const 0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_runtime_conversion_imports() {
     let source = r#"
 incipit {
