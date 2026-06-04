@@ -9,6 +9,7 @@
 #     - Imperative: sync operations
 #   - Client: petet (GET), mittet (POST), ponet (PUT), delet (DELETE), mutabit (PATCH)
 #   - Server: exspectabit starts server, handler receives Rogatio, returns Replicatio
+#     Server runtime support is deferred beyond the first Rust HTTP HAL slice.
 #   - Response builders: replica (full), scribe (text), funde (bytes), json (JSON)
 
 pactum http {
@@ -51,16 +52,19 @@ pactum http {
     functio rogabit(textus modus, textus url, tabula<textus, textus> capita, textus corpus) → Replicatio
 
     # =========================================================================
-    # HTTP SERVER
+    # HTTP SERVER - Deferred
     # =========================================================================
 
-    # Start server on port with handler
+    # Start server on port with handler.
+    # Deferred: the first Rust HAL slice implements client requests only.
     @ futura
     @ externa
     functio exspectabit(numerus portus, (Rogatio) → Replicatio handler) → Servitor
 
     # =========================================================================
-    # RESPONSE BUILDERS (for server handlers)
+    # RESPONSE BUILDERS - Deferred
+    # Deferred with server support. Signatures stay here to preserve the pactum
+    # shape while the first Rust HAL slice implements client response snapshots.
     # =========================================================================
 
     # Full control: explicit status, headers, body
@@ -77,7 +81,7 @@ pactum http {
 
     # JSON response (Content-Type: application/json, auto-serializes)
     @ externa
-    functio json(numerus status, quidlibet data) → Replicatio
+    functio json(numerus status, valor data) → Replicatio
 
     # Redirect response (302 + Location header)
     @ externa
@@ -93,10 +97,10 @@ pactum Replicatio {
     functio corpus() → textus
 
     @ externa
-    functio corpusOcteti() → octeti
+    functio corpus_octeti() → octeti
 
     @ externa
-    functio corpusJson() → quidlibet
+    functio corpus_json() → valor
 
     @ externa
     functio capita() → tabula<textus, textus>
@@ -121,7 +125,7 @@ pactum Rogatio {
     functio corpus() → textus
 
     @ externa
-    functio corpusJson() → quidlibet
+    functio corpus_json() → valor
 
     @ externa
     functio capita() → tabula<textus, textus>
