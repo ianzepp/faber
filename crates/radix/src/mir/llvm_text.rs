@@ -701,6 +701,45 @@ impl LlvmProbe<'_> {
     }
 
     fn function_name(&self, function: &MirFunction) -> String {
+        if self.is_entry_function(function) {
+            return "incipit".to_owned();
+        }
+        let base = self.function_base_name(function);
+        let entry_uses_base = base == "incipit"
+            && self
+                .program
+                .functions
+                .iter()
+                .any(|other| self.is_entry_function(other));
+        let duplicate_user_names = self
+            .program
+            .functions
+            .iter()
+            .filter(|other| !self.is_entry_function(other) && self.function_base_name(other) == base)
+            .count();
+        if entry_uses_base || duplicate_user_names > 1 {
+            format!("{}_f{}", base, function.id.0)
+        } else {
+            base
+        }
+    }
+
+    fn is_entry_function(&self, function: &MirFunction) -> bool {
+        function.source.is_none()
+            && function.name.is_none()
+            && function.params.is_empty()
+            && self.is_vacuum_ty(function.return_ty)
+    }
+
+    fn is_vacuum_ty(&self, ty: MirType) -> bool {
+        match self.types.get(ty.semantic_id()) {
+            Type::Primitive(Primitive::Vacuum) => true,
+            Type::Alias(_, target) => self.is_vacuum_ty(MirType::semantic(*target)),
+            _ => false,
+        }
+    }
+
+    fn function_base_name(&self, function: &MirFunction) -> String {
         function
             .name
             .map(|symbol| sanitize_name(self.interner.resolve(symbol)))

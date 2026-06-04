@@ -153,6 +153,87 @@ functio adde(numerus a, numerus b) → numerus {
 }
 
 #[test]
+fn llvm_text_target_emits_incipit_entry_symbol() {
+    let source = r#"
+functio adde(numerus a, numerus b) → numerus {
+    redde a + b
+}
+
+incipit {
+    fixum _ n ← adde(1, 2)
+    nota n
+}
+"#;
+
+    let result = driver::compile(
+        &Session::new(Config::default().with_target(Target::LlvmText)),
+        "llvm.fab",
+        source,
+    );
+    let Some(Output::LlvmText(output)) = result.output else {
+        panic!("expected LLVM text output");
+    };
+
+    assert!(output.code.contains("define void @incipit()"));
+    assert!(output
+        .code
+        .contains("%call0 = call i64 @adde(i64 1, i64 2)"));
+    assert!(output
+        .code
+        .contains("call void @__faber_runtime_diagnostic_nota_1_i64"));
+}
+
+#[test]
+fn llvm_text_target_keeps_user_incipit_name_from_colliding_with_entry_symbol() {
+    let types = TypeTable::new();
+    let vacuum = ty(&types, Primitive::Vacuum);
+    let mut interner = Interner::new();
+    let incipit = interner.intern("incipit");
+    let program = MirProgram {
+        functions: vec![
+            MirFunction {
+                id: MirFunctionId(0),
+                source: Some(DefId(10)),
+                name: Some(incipit),
+                params: Vec::new(),
+                locals: Vec::new(),
+                temps: Vec::new(),
+                blocks: vec![MirBlock {
+                    id: MirBlockId(0),
+                    statements: Vec::new(),
+                    terminator: MirTerminator { kind: MirTerminatorKind::Return(None), span: span() },
+                    span: span(),
+                }],
+                return_ty: vacuum,
+                error_ty: None,
+                span: span(),
+            },
+            MirFunction {
+                id: MirFunctionId(1),
+                source: None,
+                name: None,
+                params: Vec::new(),
+                locals: Vec::new(),
+                temps: Vec::new(),
+                blocks: vec![MirBlock {
+                    id: MirBlockId(0),
+                    statements: Vec::new(),
+                    terminator: MirTerminator { kind: MirTerminatorKind::Return(None), span: span() },
+                    span: span(),
+                }],
+                return_ty: vacuum,
+                error_ty: None,
+                span: span(),
+            },
+        ],
+    };
+    let output = emit_llvm_text_probe(&program, &types, &interner).expect("entry collision emits");
+
+    assert!(output.contains("define void @incipit_f0()"));
+    assert!(output.contains("define void @incipit()"));
+}
+
+#[test]
 fn llvm_text_target_emits_fractus_arithmetic_and_comparisons() {
     let source = r#"
 functio media(fractus a, fractus b) → fractus {

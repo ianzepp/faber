@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 010 baseline
+**Status**: Phase 011 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -43,7 +43,9 @@ The current emitter supports scalar functions over one or more MIR basic blocks:
 - direct `return`, `ret void`, unconditional branches, and scalar boolean
   conditional branches;
 - native LLVM `switch` terminators for integer and boolean literal dispatch;
-- native LLVM `unreachable` terminators.
+- native LLVM `unreachable` terminators;
+- synthetic entry functions emitted with the stable `@incipit` symbol, with
+  deterministic suffixing for user symbols that would collide.
 
 Everything outside that subset must fail closed with a diagnostic beginning
 `MIR-to-LLVM unsupported`.
@@ -130,6 +132,8 @@ the current scalar-or-opaque-handle ABI:
 - `MirTerminatorKind::Switch` with `numerus` or `bivalens` operands and
   matching literal cases.
 - `MirTerminatorKind::Unreachable`.
+- Synthetic MIR entry functions (`source: None`, `name: None`, no params,
+  `vacuum` return) as `@incipit`.
 
 ### Runtime-Call-Backed Today
 
@@ -194,12 +198,13 @@ produce explicit unsupported diagnostics until their named phases:
 - Bitwise operations and shifts until an integer bitwise phase expands the
   supported operation matrix.
 - `MirIntrinsic::Provider`.
-- Async, closures, callable values, HAL/provider effects, native entrypoints,
-  and executable toolchain behavior.
+- Top-level constants, source-order global initialization, C `main`, async,
+  closures, callable values, HAL/provider effects, and native executable
+  toolchain behavior.
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 010 measured corpus counts are 102/102 frontend
+- **E2E Visibility**: Phase 011 measured corpus counts are 102/102 frontend
   analyzed, 74/102 MIR lowered, 59/102 LLVM emitted, 28 MIR lowering failures,
   0/102 verifier-valid, 15 unsupported LLVM diagnostics, 0 unexpected LLVM
   emission failures, 0 output-write failures, and 0 verifier failures.
@@ -210,6 +215,8 @@ produce explicit unsupported diagnostics until their named phases:
   and boolean literal `switch`, and `unreachable` now emit LLVM terminators.
   Text/pattern switch, failable control flow, and alternate exits remain
   unsupported.
+- **Entrypoint**: synthetic entry functions now emit as `@incipit`; this is a
+  stable text symbol, not a native `main` or executable startup ABI.
 - **Calls**: direct scalar MIR calls between same-program functions are
   supported. External definitions, value callees, failable calls, and
   non-scalar call signatures remain unsupported.
@@ -230,6 +237,11 @@ produce explicit unsupported diagnostics until their named phases:
 
 - `llvm_text_target_rejects_unsupported_mir_shapes` verifies unsupported text
   return lowering reports a `MIR-to-LLVM unsupported` diagnostic.
+- `llvm_text_target_emits_incipit_entry_symbol` verifies source-level `incipit`
+  emits the stable `@incipit` symbol.
+- `llvm_text_target_keeps_user_incipit_name_from_colliding_with_entry_symbol`
+  verifies a user function named `incipit` is suffixed when a synthetic entry
+  consumes the canonical symbol.
 - `llvm_text_target_emits_branch_return_cfg` verifies ordinary scalar `si`
   return CFG emits labels and `br i1`.
 - `llvm_text_target_emits_branch_join_cfg` verifies expression-valued scalar
@@ -281,19 +293,21 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Next Implementation Slice
 
-The evidence now points to Phase 011, top-level initialization and entrypoint
-ABI. The LLVM lane now has scalar switch and native unreachable CFG support, but
-top-level constants, source-order initialization, executable entrypoints,
+The evidence now points to Phase 012, provider, async, closures, and deferred
+surfaces. The LLVM lane now has a stable `@incipit` text symbol for synthetic
+entry functions, but top-level constants, source-order global initialization,
+native executable startup, provider effects, async/cursor lowering, closures,
 failable calls, alternate exits, and non-literal pattern dispatch remain
 explicit unsupported shapes.
 
 ## Wasm Follow-Up Implications
 
-Phase 010 made no MIR shape changes and did not alter Wasm import names. Wasm
+Phase 011 made no MIR shape changes and did not alter Wasm import names. Wasm
 validation is still required because aggregate and projection MIR facts are
 shared across backends, nullable MIR facts are shared even though LLVM and Wasm
 currently use different backend helper policies, and switch CFG semantics are
-shared by both backend lanes.
+shared by both backend lanes. The LLVM entry symbol now mirrors Wasm's existing
+`incipit` export name without changing Wasm output.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate
