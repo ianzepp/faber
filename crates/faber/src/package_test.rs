@@ -499,7 +499,11 @@ incipiet {
     assert!(output
         .code
         .contains("norma::hal::http::petet(\"http://127.0.0.1:9\".to_string()).await"));
+    assert!(output
+        .code
+        .contains("let responsum: norma::hal::http::Replicatio ="));
     assert!(!output.code.contains("rete.petet"));
+    assert!(!output.code.contains("pub trait Replicatio"));
 }
 
 #[test]

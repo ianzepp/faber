@@ -46,7 +46,8 @@ mod types;
 
 use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
 use crate::hir::{
-    DefId, HirExpr, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier, LibraryRegistry,
+    DefId, HirExpr, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier, LibraryItemKind,
+    LibraryProvider, LibraryRegistry,
 };
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::{Type, TypeId, TypeTable};
@@ -459,12 +460,11 @@ impl<'a> RustCodegen<'a> {
         let mut interfaces = FxHashMap::default();
 
         for item in &hir.items {
-            let HirItemKind::Interface(interface) = &item.kind else {
+            let HirItemKind::Interface(_) = &item.kind else {
                 continue;
             };
 
-            let _library_item = self.libraries.items.get(&item.def_id);
-            let Some(info) = self.http_runtime_interface_info(interface) else {
+            let Some(info) = self.http_runtime_interface_info(item.def_id) else {
                 continue;
             };
 
@@ -474,62 +474,26 @@ impl<'a> RustCodegen<'a> {
         interfaces
     }
 
-    fn http_runtime_interface_info(&self, interface: &crate::hir::HirInterface) -> Option<RuntimeInterfaceInfo> {
-        let name = self.resolve_symbol(interface.name);
-        let method_names = interface
-            .methods
-            .iter()
-            .map(|method| self.resolve_symbol(method.name))
-            .collect::<Vec<_>>();
+    fn http_runtime_interface_info(&self, def_id: DefId) -> Option<RuntimeInterfaceInfo> {
+        let item = self.libraries.items.get(&def_id)?;
+        if item.kind != LibraryItemKind::Interface
+            || item.identity.provider != LibraryProvider::BuiltinNorma
+            || !matches!(
+                item.identity.module_path.as_slice(),
+                [first, second] if first == "hal" && second == "http"
+            )
+        {
+            return None;
+        }
 
-        match name {
-            "http"
-                if method_names_match(
-                    &method_names,
-                    &[
-                        "petet",
-                        "mittet",
-                        "ponet",
-                        "delet",
-                        "mutabit",
-                        "rogabit",
-                        "exspectabit",
-                        "replica",
-                        "scribe",
-                        "funde",
-                        "json",
-                        "redirige",
-                    ],
-                ) =>
-            {
-                Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true })
-            }
-            "Replicatio"
-                if method_names_match(
-                    &method_names,
-                    &[
-                        "status",
-                        "corpus",
-                        "corpus_octeti",
-                        "corpus_json",
-                        "capita",
-                        "caput",
-                        "bene",
-                    ],
-                ) =>
-            {
+        match item.exported_name.as_str() {
+            "http" => Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true }),
+            "Replicatio" => {
                 Some(RuntimeInterfaceInfo { rust_type: Some("norma::hal::http::Replicatio"), elide_decl: true })
             }
-            "Rogatio"
-                if method_names_match(
-                    &method_names,
-                    &["modus", "via", "corpus", "corpus_json", "capita", "caput", "param"],
-                ) =>
-            {
-                Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true })
-            }
-            "Servitor" if method_names_match(&method_names, &["siste", "portus"]) => {
-                Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true })
+            "Rogatio" => Some(RuntimeInterfaceInfo { rust_type: Some("norma::hal::http::Rogatio"), elide_decl: true }),
+            "Servitor" => {
+                Some(RuntimeInterfaceInfo { rust_type: Some("norma::hal::http::Servitor"), elide_decl: true })
             }
             _ => None,
         }
@@ -695,10 +659,6 @@ impl<'a> RustCodegen<'a> {
     pub(super) fn struct_has_creo_hook(&self, def_id: DefId) -> bool {
         self.struct_creo_hooks.contains(&def_id)
     }
-}
-
-fn method_names_match(actual: &[&str], expected: &[&str]) -> bool {
-    actual == expected
 }
 
 fn function_param_info(func: &HirFunction) -> Vec<FunctionParamInfo<'_>> {

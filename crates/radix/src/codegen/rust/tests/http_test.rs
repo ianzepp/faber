@@ -116,9 +116,7 @@ incipiet {
     assert!(rust
         .code
         .contains("http.petet(\"http://127.0.0.1:9\".to_string()).await"));
-    assert!(rust
-        .code
-        .contains("let responsum: norma::hal::http::Replicatio ="));
-    assert!(!rust.code.contains("pub trait http"));
-    assert!(!rust.code.contains("pub trait Replicatio"));
+    assert!(rust.code.contains("let responsum: dyn Replicatio ="));
+    assert!(rust.code.contains("pub trait http"));
+    assert!(rust.code.contains("pub trait Replicatio"));
 }
