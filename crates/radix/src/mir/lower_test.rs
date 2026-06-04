@@ -1070,12 +1070,13 @@ incipit {
 
 #[test]
 fn rejects_collection_higher_order_methods_before_callable_value_lowering() {
-    let unit = analyze(r#"functio evens(lista<numerus> xs) → lista<numerus> { redde xs.filtrata(numerus x ∴ x % 2 ≡ 0) }"#);
+    let unit =
+        analyze(r#"functio evens(lista<numerus> xs) → lista<numerus> { redde xs.filtrata(numerus x ∴ x % 2 ≡ 0) }"#);
     let errors = lower_analyzed_unit(&unit).expect_err("higher-order collection methods remain fail-closed");
 
-    assert!(errors.iter().any(|err| err.message.contains(
-        "collection higher-order methods before callable-value MIR lowering"
-    )));
+    assert!(errors.iter().any(|err| err
+        .message
+        .contains("collection higher-order methods before callable-value MIR lowering")));
 }
 
 #[test]

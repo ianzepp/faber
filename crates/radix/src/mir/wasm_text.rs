@@ -1147,10 +1147,7 @@ impl WasmTextProbe<'_> {
     }
 
     fn is_vacuum(&self, ty: MirType) -> bool {
-        matches!(
-            self.types.get(ty.semantic_id()),
-            Type::Primitive(Primitive::Vacuum)
-        )
+        matches!(self.types.get(ty.semantic_id()), Type::Primitive(Primitive::Vacuum))
     }
 
     fn callee_name(&self, callee: &MirCallee) -> Result<String, MirWasmTextProbeError> {
