@@ -60,6 +60,51 @@ fn parse_import_line(line: &str) -> Option<(String, String)> {
     Some((parts[1].to_owned(), parts[3].to_owned()))
 }
 
+pub fn probe_wat_instantiation_with_stub_host(wat: &str) -> WasmInstantiationProbe {
+    let imports = parse_wat_import_sites(wat);
+    let engine = wasmtime::Engine::default();
+    let module = match wasmtime::Module::new(&engine, wat) {
+        Ok(module) => module,
+        Err(err) => {
+            return WasmInstantiationProbe {
+                bucket: WasmInstantiationBucket::InstantiationTrap,
+                reason: format!("Wasm module compile failed: {err}"),
+                imports,
+            };
+        }
+    };
+
+    let mut store = wasmtime::Store::new(&engine, ());
+    let mut linker = wasmtime::Linker::new(&engine);
+    if let Err(err) = linker.define_unknown_imports_as_default_values(&mut store, &module) {
+        return WasmInstantiationProbe {
+            bucket: WasmInstantiationBucket::InstantiationTrap,
+            reason: format!("stub host linking failed: {err}"),
+            imports,
+        };
+    }
+
+    match linker.instantiate(&mut store, &module) {
+        Ok(_) => WasmInstantiationProbe {
+            bucket: WasmInstantiationBucket::InstantiateValid,
+            reason: if imports.is_empty() {
+                "stub host instantiated module with no imports".to_owned()
+            } else {
+                format!(
+                    "stub host instantiated module ({} imports defaulted)",
+                    imports.len()
+                )
+            },
+            imports,
+        },
+        Err(err) => WasmInstantiationProbe {
+            bucket: WasmInstantiationBucket::InstantiationTrap,
+            reason: format!("stub host instantiation failed: {err}"),
+            imports,
+        },
+    }
+}
+
 pub fn probe_wat_instantiation(wat: &str) -> WasmInstantiationProbe {
     let imports = parse_wat_import_sites(wat);
     let engine = wasmtime::Engine::default();
@@ -92,8 +137,7 @@ pub fn probe_wat_instantiation(wat: &str) -> WasmInstantiationProbe {
             WasmInstantiationProbe {
                 bucket,
                 reason: format!(
-                    "instantiation {:?}: {}{}",
-                    bucket,
+                    "{}{}",
                     message,
                     if imports.is_empty() {
                         String::new()

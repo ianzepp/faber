@@ -1,6 +1,8 @@
 use super::common::{collect_exempla_files, format_diagnostic_messages, make_temp_root};
 use super::wasm_expectations::WASM_EXPECTED_TIER_FLOORS;
-use super::wasm_host::{probe_wat_instantiation, WasmInstantiationBucket};
+use super::wasm_host::{
+    probe_wat_instantiation, probe_wat_instantiation_with_stub_host, WasmInstantiationBucket,
+};
 use crate::codegen::Target;
 use crate::driver::Session;
 use crate::Config;
@@ -25,7 +27,8 @@ struct WasmE2eResult {
     path: PathBuf,
     tier: WasmTier,
     reason: String,
-    instantiation_bucket: Option<WasmInstantiationBucket>,
+    stubless_bucket: Option<WasmInstantiationBucket>,
+    stub_bucket: Option<WasmInstantiationBucket>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -86,7 +89,7 @@ fn classify_wasm_exemplum(
     let source = match fs::read_to_string(file) {
         Ok(source) => source,
         Err(err) => {
-            return wasm_result(file, WasmTier::SourceReadable, format!("cannot read source: {err}"), None);
+            return wasm_result(file, WasmTier::SourceReadable, format!("cannot read source: {err}"), None, None);
         }
     };
 
@@ -97,6 +100,7 @@ fn classify_wasm_exemplum(
                 file,
                 WasmTier::SourceReadable,
                 format!("frontend failed: {}", format_diagnostic_messages(&diagnostics)),
+                None,
                 None,
             );
         }
@@ -117,6 +121,7 @@ fn classify_wasm_exemplum(
                         .join(" | ")
                 ),
                 None,
+                None,
             );
         }
     };
@@ -125,7 +130,7 @@ fn classify_wasm_exemplum(
     {
         Ok(wat) => wat,
         Err(error) => {
-            return wasm_result(file, WasmTier::MirLowered, format!("Wasm emission failed: {error}"), None);
+            return wasm_result(file, WasmTier::MirLowered, format!("Wasm emission failed: {error}"), None, None);
         }
     };
 
@@ -140,6 +145,7 @@ fn classify_wasm_exemplum(
             WasmTier::WasmEmitted,
             format!("cannot write WAT output: {err}"),
             None,
+            None,
         );
     }
 
@@ -149,48 +155,67 @@ fn classify_wasm_exemplum(
             WasmTier::WasmEmitted,
             "compile validation skipped: no wasm-tools or wat2wasm on PATH".to_owned(),
             None,
+            None,
         );
     };
 
     let wasm_file = temp_root.join(format!("{idx:03}-{stem}.wasm"));
     if let Err(reason) = validate_wat(validator, &wat_file, &wasm_file) {
-        return wasm_result(file, WasmTier::WasmEmitted, reason, None);
+        return wasm_result(file, WasmTier::WasmEmitted, reason, None, None);
     }
 
-    let probe = probe_wat_instantiation(&wat);
-    let (tier, reason) = match probe.bucket {
+    let stubless_probe = probe_wat_instantiation(&wat);
+    let stub_probe = probe_wat_instantiation_with_stub_host(&wat);
+    let (tier, reason) = match stub_probe.bucket {
         WasmInstantiationBucket::InstantiateValid => (
             WasmTier::InstantiateValid,
-            format!("{}; run skipped: no Wasm entrypoint policy yet", probe.reason),
+            format!("{}; run skipped: no Wasm entrypoint policy yet", stub_probe.reason),
         ),
         WasmInstantiationBucket::MissingImport => (
             WasmTier::CompileValid,
-            format!("instantiation blocked ({}): {}", probe.bucket, probe.reason),
+            format!(
+                "stub host blocked ({}): {}; stubless ({})",
+                stub_probe.bucket, stub_probe.reason, stubless_probe.bucket
+            ),
         ),
         WasmInstantiationBucket::InstantiationTrap => (
             WasmTier::CompileValid,
-            format!("instantiation failed ({}): {}", probe.bucket, probe.reason),
+            format!(
+                "stub host failed ({}): {}; stubless ({})",
+                stub_probe.bucket, stub_probe.reason, stubless_probe.bucket
+            ),
         ),
         WasmInstantiationBucket::NoRuntime => (
             WasmTier::CompileValid,
-            format!("instantiation skipped ({}): {}", probe.bucket, probe.reason),
+            format!(
+                "stub host skipped ({}): {}; stubless ({})",
+                stub_probe.bucket, stub_probe.reason, stubless_probe.bucket
+            ),
         ),
     };
 
-    wasm_result(file, tier, reason, Some(probe.bucket))
+    wasm_result(
+        file,
+        tier,
+        reason,
+        Some(stubless_probe.bucket),
+        Some(stub_probe.bucket),
+    )
 }
 
 fn wasm_result(
     file: &Path,
     tier: WasmTier,
     reason: String,
-    instantiation_bucket: Option<WasmInstantiationBucket>,
+    stubless_bucket: Option<WasmInstantiationBucket>,
+    stub_bucket: Option<WasmInstantiationBucket>,
 ) -> WasmE2eResult {
     WasmE2eResult {
         path: file.to_path_buf(),
         tier,
         reason,
-        instantiation_bucket,
+        stubless_bucket,
+        stub_bucket,
     }
 }
 
@@ -259,22 +284,35 @@ fn print_wasm_e2e_report(results: &[WasmE2eResult], toolchain: WasmToolchain) {
         .iter()
         .filter(|result| result.tier >= WasmTier::CompileValid)
         .collect::<Vec<_>>();
-    eprintln!("Wasm instantiation buckets (compile-valid subset):");
+    eprintln!("Wasm instantiation buckets (compile-valid subset, stubless linker):");
     eprintln!(
         "  missing-import: {}",
-        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::MissingImport)
+        count_stubless_bucket(&compile_valid, WasmInstantiationBucket::MissingImport)
     );
     eprintln!(
         "  instantiation-trap: {}",
-        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::InstantiationTrap)
+        count_stubless_bucket(&compile_valid, WasmInstantiationBucket::InstantiationTrap)
     );
     eprintln!(
         "  instantiate-valid: {}",
-        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::InstantiateValid)
+        count_stubless_bucket(&compile_valid, WasmInstantiationBucket::InstantiateValid)
     );
     eprintln!(
         "  no-runtime: {}",
-        count_instantiation_bucket(&compile_valid, WasmInstantiationBucket::NoRuntime)
+        count_stubless_bucket(&compile_valid, WasmInstantiationBucket::NoRuntime)
+    );
+    eprintln!("Wasm instantiation buckets (compile-valid subset, stub host):");
+    eprintln!(
+        "  instantiate-valid: {}",
+        count_stub_bucket(&compile_valid, WasmInstantiationBucket::InstantiateValid)
+    );
+    eprintln!(
+        "  missing-import: {}",
+        count_stub_bucket(&compile_valid, WasmInstantiationBucket::MissingImport)
+    );
+    eprintln!(
+        "  instantiation-trap: {}",
+        count_stub_bucket(&compile_valid, WasmInstantiationBucket::InstantiationTrap)
     );
 
     for result in results
@@ -289,10 +327,17 @@ fn count_wasm_tier(results: &[WasmE2eResult], tier: WasmTier) -> usize {
     results.iter().filter(|result| result.tier >= tier).count()
 }
 
-fn count_instantiation_bucket(results: &[&WasmE2eResult], bucket: WasmInstantiationBucket) -> usize {
+fn count_stubless_bucket(results: &[&WasmE2eResult], bucket: WasmInstantiationBucket) -> usize {
     results
         .iter()
-        .filter(|result| result.instantiation_bucket == Some(bucket))
+        .filter(|result| result.stubless_bucket == Some(bucket))
+        .count()
+}
+
+fn count_stub_bucket(results: &[&WasmE2eResult], bucket: WasmInstantiationBucket) -> usize {
+    results
+        .iter()
+        .filter(|result| result.stub_bucket == Some(bucket))
         .count()
 }
 

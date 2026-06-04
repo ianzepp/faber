@@ -1874,3 +1874,59 @@ are unchanged.
 
 Phase 023 minimal import stub host to move compile-valid exemplars to
 instantiate-valid, then entrypoint/run policy in Phase 024.
+
+## Phase 023 Update: Minimal Import Stub Host
+
+**Commit target**: Phase 023
+**Change**: the Wasm e2e harness links compile-valid modules with wasmtime
+`define_unknown_imports_as_default_values`, promoting them to `instantiate-valid`
+while retaining stubless `missing-import` bucket reporting.
+
+### Tier Counts After Phase 023
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 73/101
+  Wasm emitted: 72/101
+  compile-valid: 72/101
+  instantiate-valid: 72/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Instantiation Buckets (Compile-Valid Subset)
+
+```text
+stubless linker:
+  missing-import: 72
+  instantiation-trap: 0
+  instantiate-valid: 0
+stub host (default-value imports):
+  instantiate-valid: 72
+  missing-import: 0
+  instantiation-trap: 0
+```
+
+### Result
+
+All 72 compile-valid exemplars instantiate under the stub host. Host import policy is
+documented in `faber-wasm-host-imports.md`. Runnable and behavior-checked tiers remain
+unclaimed until entrypoint policy and real host semantics land in Phase 024+.
+
+Expected-tier floors remain compile-valid only; instantiate-valid regression gates can
+be added once entrypoint/run policy stabilizes.
+
+### Phase 023 Validation Log
+
+- `cargo test -p radix wasm_host -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix --lib mir -- --nocapture`: passed.
+- `cargo test -p radix --lib wasm -- --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Phase 024 entrypoint and run policy (`incipit` exports, harness invocation, diagnostic
+capture for behavior-checked fixtures).

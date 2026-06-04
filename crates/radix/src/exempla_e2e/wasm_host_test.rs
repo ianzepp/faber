@@ -1,5 +1,6 @@
 use super::{
-    parse_wat_import_sites, probe_wat_instantiation, WasmInstantiationBucket, WasmInstantiationProbe,
+    parse_wat_import_sites, probe_wat_instantiation, probe_wat_instantiation_with_stub_host,
+    WasmInstantiationBucket, WasmInstantiationProbe,
 };
 
 #[test]
@@ -32,6 +33,21 @@ fn classifies_missing_import_for_stubless_host() {
     assert_eq!(bucket, WasmInstantiationBucket::MissingImport);
     assert_eq!(imports.len(), 1);
     assert!(reason.contains("faber_diag::nota_i32") || reason.contains("unknown import"));
+}
+
+#[test]
+fn stub_host_instantiates_imported_module() {
+    let wat = r#"
+(module
+    (import "faber_diag" "nota_i32" (func $__faber_diag_nota_i32 (param i32)))
+    (func $main (export "main")
+        (call $__faber_diag_nota_i32 (i32.const 0))
+    )
+)
+"#;
+    let WasmInstantiationProbe { bucket, reason, .. } = probe_wat_instantiation_with_stub_host(wat);
+    assert_eq!(bucket, WasmInstantiationBucket::InstantiateValid);
+    assert!(reason.contains("stub host"));
 }
 
 #[test]
