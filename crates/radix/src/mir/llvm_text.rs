@@ -47,10 +47,9 @@ struct LlvmProbe<'a> {
 struct FunctionContext {
     values: FxHashMap<MirValueId, String>,
     value_tys: FxHashMap<MirValueId, MirType>,
-    locals: FxHashMap<MirLocalId, String>,
     local_tys: FxHashMap<MirLocalId, MirType>,
-    temps: FxHashMap<MirTempId, String>,
     temp_tys: FxHashMap<MirTempId, MirType>,
+    load_counter: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -86,34 +85,55 @@ impl LlvmProbe<'_> {
             self.function_name(function),
             params
         ));
-        writer.indented(|writer| {
-            writer.writeln("entry:");
-        });
+        writer.indented(|writer| writer.writeln("entry:"));
         let mut context = FunctionContext {
             values: FxHashMap::default(),
             value_tys: FxHashMap::default(),
-            locals: FxHashMap::default(),
             local_tys: function
                 .locals
                 .iter()
                 .map(|local| (local.id, local.ty))
                 .chain(function.params.iter().map(|param| (param.local, param.ty)))
                 .collect(),
-            temps: FxHashMap::default(),
             temp_tys: function
                 .temps
                 .iter()
                 .map(|temp| (temp.id, temp.ty))
                 .collect(),
+            load_counter: 0,
         };
+        for local in &function.locals {
+            let ty = self.llvm_ty(local.ty)?;
+            writer.indented(|writer| {
+                writer.writeln(&format!("  {} = alloca {}", local_slot(local.id), ty));
+            });
+        }
+        for temp in &function.temps {
+            let ty = self.llvm_ty(temp.ty)?;
+            writer.indented(|writer| {
+                writer.writeln(&format!("  {} = alloca {}", temp_slot(temp.id), ty));
+            });
+        }
+        for param in &function.params {
+            let ty = self.llvm_ty(param.ty)?;
+            writer.indented(|writer| {
+                writer.writeln(&format!(
+                    "  store {} %{}, ptr {}",
+                    ty,
+                    local_name(param.local),
+                    local_slot(param.local)
+                ));
+            });
+        }
+        writer.indented(|writer| {
+            writer.writeln("  br label %bb0");
+        });
         for block in &function.blocks {
-            if block.id != MirBlockId(0) {
-                return Err(MirLlvmTextProbeError::unsupported("multiple basic blocks"));
-            }
+            writer.indented(|writer| writer.writeln(&format!("{}:", block_label(block.id))));
             for stmt in &block.statements {
                 self.emit_stmt(stmt, &mut context, writer)?;
             }
-            self.emit_terminator(&block.terminator, &context, writer, function.return_ty)?;
+            self.emit_terminator(&block.terminator, &mut context, writer, function.return_ty)?;
         }
         writer.writeln("}");
         Ok(())
@@ -132,13 +152,13 @@ impl LlvmProbe<'_> {
             return Err(MirLlvmTextProbeError::unsupported("place projection"));
         }
         let expr = match &value.kind {
-            MirValueKind::Operand(operand) => self.operand(operand, context)?,
+            MirValueKind::Operand(operand) => self.operand(operand, context, writer)?,
             MirValueKind::Binary { op, lhs, rhs } => {
                 let lhs_ty = self.operand_ty(lhs, context)?;
                 let ty = self.llvm_ty(lhs_ty)?;
                 let op = self.llvm_bin_op(*op, lhs_ty)?;
-                let lhs = self.operand(lhs, context)?;
-                let rhs = self.operand(rhs, context)?;
+                let lhs = self.operand(lhs, context, writer)?;
+                let rhs = self.operand(rhs, context, writer)?;
                 let dest = format!("%v{}", value.id.0);
                 writer.indented(|writer| {
                     writer.writeln(&format!("  {} = {} {} {}, {}", dest, op, ty, lhs, rhs));
@@ -147,7 +167,7 @@ impl LlvmProbe<'_> {
             }
             MirValueKind::Unary { op, operand } => {
                 let operand_ty = self.operand_ty(operand, context)?;
-                let operand = self.operand(operand, context)?;
+                let operand = self.operand(operand, context, writer)?;
                 let dest = format!("%v{}", value.id.0);
                 let expr = self.llvm_unary_expr(*op, operand_ty, &operand)?;
                 writer.indented(|writer| {
@@ -159,28 +179,25 @@ impl LlvmProbe<'_> {
         };
         context.values.insert(value.id, expr.clone());
         context.value_tys.insert(value.id, value.ty);
-        match place.base {
-            MirPlaceBase::Local(id) => {
-                context.locals.insert(id, expr);
-            }
-            MirPlaceBase::Temp(id) => {
-                context.temps.insert(id, expr);
-            }
-        }
+        let ty = self.llvm_ty(self.place_ty(place, context)?)?;
+        let slot = place_slot(place)?;
+        writer.indented(|writer| {
+            writer.writeln(&format!("  store {ty} {expr}, ptr {slot}"));
+        });
         Ok(())
     }
 
     fn emit_terminator(
         &self,
         terminator: &MirTerminator,
-        context: &FunctionContext,
+        context: &mut FunctionContext,
         writer: &mut CodeWriter,
         return_ty: MirType,
     ) -> Result<(), MirLlvmTextProbeError> {
         match &terminator.kind {
             MirTerminatorKind::Return(Some(operand)) => {
                 let ty = self.llvm_ty(return_ty)?;
-                let value = self.operand(operand, context)?;
+                let value = self.operand(operand, context, writer)?;
                 writer.indented(|writer| {
                     writer.writeln(&format!("  ret {} {}", ty, value));
                 });
@@ -190,24 +207,50 @@ impl LlvmProbe<'_> {
                 writer.indented(|writer| writer.writeln("  ret void"));
                 Ok(())
             }
+            MirTerminatorKind::Goto(target) => {
+                writer.indented(|writer| {
+                    writer.writeln(&format!("  br label %{}", block_label(*target)));
+                });
+                Ok(())
+            }
+            MirTerminatorKind::Branch { condition, then_block, else_block } => {
+                let condition = self.operand(condition, context, writer)?;
+                writer.indented(|writer| {
+                    writer.writeln(&format!(
+                        "  br i1 {condition}, label %{}, label %{}",
+                        block_label(*then_block),
+                        block_label(*else_block)
+                    ));
+                });
+                Ok(())
+            }
             other => Err(MirLlvmTextProbeError::unsupported(terminator_kind_name(other))),
         }
     }
 
-    fn operand(&self, operand: &MirOperand, context: &FunctionContext) -> Result<String, MirLlvmTextProbeError> {
+    fn operand(
+        &self,
+        operand: &MirOperand,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<String, MirLlvmTextProbeError> {
         match operand {
-            MirOperand::Place(place) => self.place(place, context),
+            MirOperand::Place(place) => self.place(place, context, writer),
             MirOperand::Value(id) => context
                 .values
                 .get(id)
                 .cloned()
                 .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("undefined value v{}", id.0))),
             MirOperand::Constant(constant) => self.constant(constant),
-            MirOperand::Temp(id) => context
-                .temps
-                .get(id)
-                .cloned()
-                .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("undefined temp t{}", id.0))),
+            MirOperand::Temp(id) => self.load_slot(
+                temp_slot(*id),
+                *context
+                    .temp_tys
+                    .get(id)
+                    .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("undefined temp type t{}", id.0)))?,
+                context,
+                writer,
+            ),
         }
     }
 
@@ -228,18 +271,34 @@ impl LlvmProbe<'_> {
         }
     }
 
-    fn place(&self, place: &MirPlace, context: &FunctionContext) -> Result<String, MirLlvmTextProbeError> {
+    fn place(
+        &self,
+        place: &MirPlace,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<String, MirLlvmTextProbeError> {
         if !place.projections.is_empty() {
             return Err(MirLlvmTextProbeError::unsupported("place projection"));
         }
-        match place.base {
-            MirPlaceBase::Local(id) => Ok(context
-                .locals
-                .get(&id)
-                .cloned()
-                .unwrap_or_else(|| format!("%{}", local_name(id)))),
-            MirPlaceBase::Temp(_) => Err(MirLlvmTextProbeError::unsupported("temp place without assignment context")),
-        }
+        let ty = self.place_ty(place, context)?;
+        let slot = place_slot(place)?;
+        self.load_slot(slot, ty, context, writer)
+    }
+
+    fn load_slot(
+        &self,
+        slot: String,
+        ty: MirType,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<String, MirLlvmTextProbeError> {
+        let result = format!("%load{}", context.load_counter);
+        context.load_counter += 1;
+        let ty = self.llvm_ty(ty)?;
+        writer.indented(|writer| {
+            writer.writeln(&format!("  {result} = load {ty}, ptr {slot}"));
+        });
+        Ok(result)
     }
 
     fn place_ty(&self, place: &MirPlace, context: &FunctionContext) -> Result<MirType, MirLlvmTextProbeError> {
@@ -363,6 +422,28 @@ impl LlvmScalar {
 
 fn local_name(id: MirLocalId) -> String {
     format!("l{}", id.0)
+}
+
+fn local_slot(id: MirLocalId) -> String {
+    format!("%l{}.addr", id.0)
+}
+
+fn temp_slot(id: MirTempId) -> String {
+    format!("%t{}.addr", id.0)
+}
+
+fn place_slot(place: &MirPlace) -> Result<String, MirLlvmTextProbeError> {
+    if !place.projections.is_empty() {
+        return Err(MirLlvmTextProbeError::unsupported("place projection"));
+    }
+    match place.base {
+        MirPlaceBase::Local(id) => Ok(local_slot(id)),
+        MirPlaceBase::Temp(id) => Ok(temp_slot(id)),
+    }
+}
+
+fn block_label(id: MirBlockId) -> String {
+    format!("bb{}", id.0)
 }
 
 fn sanitize_name(name: &str) -> String {
