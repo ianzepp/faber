@@ -1,8 +1,8 @@
 # LLVM Codegen Factory Continuation Plan
 
-**Status**: ready for first factory assignment  
+**Status**: complete through Phase 012; future work split into new delivery plans
 **Created**: 2026-06-04  
-**Repo**: `/Users/ianzepp/work/ianzepp/faber`  
+**Repo**: `/Users/ianzepp/work/ianzepp/faber-llvm-codegen`
 **Factory Artifact Dir**: `docs/factory/llvm-codegen/`  
 **Template Source**: `docs/factory/wasm-codegen/continuation-plan.md`  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`  
@@ -30,40 +30,68 @@ operation is the same.
 
 ## Live Baseline
 
-Verified on 2026-06-04 from this worktree:
+The original startup baseline has been superseded by the completed phase
+artifacts. The current authoritative baseline is
+[`baseline-ledger.md`](baseline-ledger.md), which was updated through Phase 012
+on 2026-06-04.
+
+Current measured baseline:
 
 ```text
 LLVM focused tests:
   cargo test -p radix llvm -- --nocapture
-  result: 2 passed, 0 failed
+  result: 29 passed, 0 failed, 1 ignored
+
+LLVM exempla e2e:
+  cargo test -p radix exempla_llvm_e2e -- --ignored --nocapture
+  frontend analyzed: 102/102
+  MIR lowered: 74/102
+  LLVM emitted: 59/102
+  verifier-valid: 0/102
+  unsupported diagnostic: 15
+
+Full package:
+  cargo test -p radix
+  result: 561 passed, 0 failed, 6 ignored; hygiene 8 passed; doctests 1 passed, 1 ignored
+
+Lint:
+  ./scripta/lint
+  result: passed
 
 Current LLVM target shape:
   frontend/driver target: wired as `llvm-text`
   MIR lowering: `lower_analyzed_unit`
   emitter: `crates/radix/src/mir/llvm_text.rs`
-  validation tool: none yet
-  exempla e2e harness: none yet
+  validation tool: optional external `llvm-as` or `opt` detection in e2e
+  exempla e2e harness: ignored by default, explicit run tiered by status
   run/native execution tier: none
 ```
 
-Current probe support is intentionally narrow:
+Current probe support remains intentionally bounded. It now includes:
 
-- emits single-block integer scalar functions;
-- supports `numerus`, `bivalens`, and `vacuum` type spelling;
-- supports integer arithmetic `Add`, `Sub`, `Mul`, `Div`, and `Mod`;
-- supports local/parameter operands and direct returns;
-- rejects unsupported MIR shapes with `MIR-to-LLVM unsupported` diagnostics.
+- scalar integer, float, boolean, and vacuum functions;
+- multi-block scalar CFG with labels, `br`, integer/boolean `switch`, and
+  `unreachable`;
+- direct same-program calls;
+- LLVM-side runtime helper declarations for diagnostics, assert, panic,
+  conversion, format, and collection intrinsics;
+- opaque `ptr` handles for text, aggregate-like values, and nullable values;
+- aggregate construction and single-step projection helpers when metadata proves
+  the types;
+- nullable helper calls for none, some, predicates, unwrap, and coalesce;
+- synthetic entry functions emitted as `@incipit`;
+- explicit `MIR-to-LLVM unsupported` diagnostics for deferred shapes.
 
-Current known gaps include:
+Current known gaps are intentionally split into future delivery plans rather
+than treated as accidental continuation work:
 
-- no LLVM IR verifier integration;
-- no exempla e2e ledger or expected-tier floors;
-- no multi-block CFG emission;
-- no `fractus` constants or floating arithmetic;
-- no direct call emission;
-- no runtime-call, aggregate, nullable, projection, switch, provider, async, or
-  closure lowering;
-- no ABI or layout model beyond scalar probe values.
+- Provider/HAL runtime ABI.
+- Callable values and closures.
+- Async/cursor lowering.
+- LLVM native execution and runtime linking.
+- Global initialization and top-level constants.
+- Failable control flow and alternate-exit ABI.
+- Text/pattern switch dispatch.
 
 ## Non-Negotiable Rules
 
@@ -107,6 +135,11 @@ For every phase:
 12. Commit the phase.
 
 ## Recommended Phase Set
+
+Completion status: Phases 001 through 012 are implemented, validated, and
+committed. Durable delivery specs exist for every phase in
+`docs/factory/llvm-codegen/phase-0NN-...-delivery.md`; the final current-state
+classification lives in [`baseline-ledger.md`](baseline-ledger.md).
 
 ### Phase 001: LLVM Readiness Audit And Baseline Ledger
 
@@ -353,24 +386,37 @@ Checkpoint:
 - Deferred language surfaces are named and classified, not left as accidental
   unsupported errors.
 
-## Current Failure Clusters To Recheck Before Each Phase
+## Current Failure Clusters To Recheck Before Future Plans
 
-The next worker should rerun focused tests and, after Phase 002, the ignored
-LLVM e2e harness. Current known clusters are:
+The initial continuation has completed the recommended Phase 001 through Phase
+012 set. Future workers should start from [`baseline-ledger.md`](baseline-ledger.md),
+then rerun focused tests and the ignored LLVM e2e harness before choosing a new
+delivery plan.
 
-- No e2e harness or ledger for LLVM target counts.
-- No verifier policy for emitted LLVM text.
-- Multi-block MIR rejected as `multiple basic blocks`.
-- Float constants and `fractus` arithmetic rejected.
-- Non-arithmetic scalar operations mostly rejected.
-- Calls, runtime calls, constructs, projections, options, switches, and
-  non-return terminators are unsupported.
-- Text, aggregate, nullable, provider, async, closure, and entrypoint ABI
-  decisions are not made.
+Current known clusters after Phase 012:
+
+- Provider/HAL runtime calls remain deferred pending a host ABI and runtime
+  dispatch/linkage plan.
+- Callable values, closures, and higher-order collection methods remain
+  deferred pending capture layout and call-dispatch policy.
+- Async/cursor lowering remains deferred pending suspension, yield/await, and
+  scheduler/runtime policy.
+- Native execution remains deferred pending verifier/toolchain availability,
+  runtime library linkage, C `main` or startup ABI, process args, and runtime
+  symbol implementation.
+- Global initialization and top-level constants remain deferred pending source
+  order and storage policy.
+- Failable control flow (`TryCall`, `ReturnError`) remains deferred pending
+  alternate-exit ABI.
+- Text/pattern switch dispatch remains deferred pending runtime comparison and
+  pattern dispatch policy.
+- Verifier-valid floors remain zero in environments without `llvm-as` or `opt`;
+  emitted LLVM text must not be claimed verifier-valid without that tier.
 
 ## Success Criteria For This Continuation
 
-A successful LLVM factory run should stop at one of these gates:
+This continuation has reached the intended handoff gate. A successful future
+LLVM factory run should stop at one of these gates:
 
 - A durable LLVM baseline ledger exists and classifies current MIR support.
 - An ignored LLVM exempla e2e harness reports honest tiers and protects expected

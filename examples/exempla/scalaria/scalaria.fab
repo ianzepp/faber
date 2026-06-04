@@ -1,0 +1,17 @@
+# Scalar functions without runtime, text, aggregate, call, or CFG dependencies.
+
+functio numerica(numerus a, numerus b) → numerus {
+    redde (a + b) * 2
+}
+
+functio fracta(fractus a, fractus b) → fractus {
+    redde (a + b) / 2.0
+}
+
+functio comparata(numerus a, numerus b) → bivalens {
+    redde a ≤ b
+}
+
+functio logica(bivalens a, bivalens b) → bivalens {
+    redde non a et b
+}
