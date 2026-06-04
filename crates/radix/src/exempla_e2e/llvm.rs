@@ -23,9 +23,9 @@ enum LlvmEmissionBucket {
     OutputWriteFailed,
 }
 
-const EXPECTED_FRONTEND_ANALYZED_FLOOR: usize = 101;
-const EXPECTED_MIR_LOWERED_FLOOR: usize = 73;
-const EXPECTED_LLVM_EMITTED_FLOOR: usize = 0;
+const EXPECTED_FRONTEND_ANALYZED_FLOOR: usize = 102;
+const EXPECTED_MIR_LOWERED_FLOOR: usize = 74;
+const EXPECTED_LLVM_EMITTED_FLOOR: usize = 1;
 const EXPECTED_UNSUPPORTED_DIAGNOSTIC_FLOOR: usize = 73;
 
 #[derive(Debug)]

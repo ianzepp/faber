@@ -46,8 +46,19 @@ struct LlvmProbe<'a> {
 
 struct FunctionContext {
     values: FxHashMap<MirValueId, String>,
+    value_tys: FxHashMap<MirValueId, MirType>,
     locals: FxHashMap<MirLocalId, String>,
+    local_tys: FxHashMap<MirLocalId, MirType>,
     temps: FxHashMap<MirTempId, String>,
+    temp_tys: FxHashMap<MirTempId, MirType>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LlvmScalar {
+    I1,
+    I64,
+    F64,
+    Void,
 }
 
 impl LlvmProbe<'_> {
@@ -78,8 +89,23 @@ impl LlvmProbe<'_> {
         writer.indented(|writer| {
             writer.writeln("entry:");
         });
-        let mut context =
-            FunctionContext { values: FxHashMap::default(), locals: FxHashMap::default(), temps: FxHashMap::default() };
+        let mut context = FunctionContext {
+            values: FxHashMap::default(),
+            value_tys: FxHashMap::default(),
+            locals: FxHashMap::default(),
+            local_tys: function
+                .locals
+                .iter()
+                .map(|local| (local.id, local.ty))
+                .chain(function.params.iter().map(|param| (param.local, param.ty)))
+                .collect(),
+            temps: FxHashMap::default(),
+            temp_tys: function
+                .temps
+                .iter()
+                .map(|temp| (temp.id, temp.ty))
+                .collect(),
+        };
         for block in &function.blocks {
             if block.id != MirBlockId(0) {
                 return Err(MirLlvmTextProbeError::unsupported("multiple basic blocks"));
@@ -108,8 +134,9 @@ impl LlvmProbe<'_> {
         let expr = match &value.kind {
             MirValueKind::Operand(operand) => self.operand(operand, context)?,
             MirValueKind::Binary { op, lhs, rhs } => {
-                let ty = self.llvm_ty(value.ty)?;
-                let op = llvm_bin_op(*op)?;
+                let lhs_ty = self.operand_ty(lhs, context)?;
+                let ty = self.llvm_ty(lhs_ty)?;
+                let op = self.llvm_bin_op(*op, lhs_ty)?;
                 let lhs = self.operand(lhs, context)?;
                 let rhs = self.operand(rhs, context)?;
                 let dest = format!("%v{}", value.id.0);
@@ -118,10 +145,20 @@ impl LlvmProbe<'_> {
                 });
                 dest
             }
-            MirValueKind::Unary { .. } => return Err(MirLlvmTextProbeError::unsupported("unary value")),
+            MirValueKind::Unary { op, operand } => {
+                let operand_ty = self.operand_ty(operand, context)?;
+                let operand = self.operand(operand, context)?;
+                let dest = format!("%v{}", value.id.0);
+                let expr = self.llvm_unary_expr(*op, operand_ty, &operand)?;
+                writer.indented(|writer| {
+                    writer.writeln(&format!("  {dest} = {expr}"));
+                });
+                dest
+            }
             MirValueKind::Option(_) => return Err(MirLlvmTextProbeError::unsupported("option value")),
         };
         context.values.insert(value.id, expr.clone());
+        context.value_tys.insert(value.id, value.ty);
         match place.base {
             MirPlaceBase::Local(id) => {
                 context.locals.insert(id, expr);
@@ -174,6 +211,23 @@ impl LlvmProbe<'_> {
         }
     }
 
+    fn operand_ty(&self, operand: &MirOperand, context: &FunctionContext) -> Result<MirType, MirLlvmTextProbeError> {
+        match operand {
+            MirOperand::Place(place) => self.place_ty(place, context),
+            MirOperand::Value(id) => context
+                .value_tys
+                .get(id)
+                .copied()
+                .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("undefined value type v{}", id.0))),
+            MirOperand::Temp(id) => context
+                .temp_tys
+                .get(id)
+                .copied()
+                .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("undefined temp type t{}", id.0))),
+            MirOperand::Constant(constant) => self.constant_ty(constant),
+        }
+    }
+
     fn place(&self, place: &MirPlace, context: &FunctionContext) -> Result<String, MirLlvmTextProbeError> {
         if !place.projections.is_empty() {
             return Err(MirLlvmTextProbeError::unsupported("place projection"));
@@ -188,24 +242,103 @@ impl LlvmProbe<'_> {
         }
     }
 
+    fn place_ty(&self, place: &MirPlace, context: &FunctionContext) -> Result<MirType, MirLlvmTextProbeError> {
+        if !place.projections.is_empty() {
+            return Err(MirLlvmTextProbeError::unsupported("place projection"));
+        }
+        match place.base {
+            MirPlaceBase::Local(id) => context
+                .local_tys
+                .get(&id)
+                .copied()
+                .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("undefined local type l{}", id.0))),
+            MirPlaceBase::Temp(id) => context
+                .temp_tys
+                .get(&id)
+                .copied()
+                .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("undefined temp type t{}", id.0))),
+        }
+    }
+
     fn constant(&self, constant: &MirConstant) -> Result<String, MirLlvmTextProbeError> {
         match constant {
             MirConstant::Int(value) => Ok(value.to_string()),
             MirConstant::Bool(value) => Ok(if *value { "1" } else { "0" }.to_owned()),
             MirConstant::Unit => Ok("0".to_owned()),
-            MirConstant::Float(_) => Err(MirLlvmTextProbeError::unsupported("float constant")),
+            MirConstant::Float(value) => Ok(format_float(*value)),
             MirConstant::String(_) => Err(MirLlvmTextProbeError::unsupported("string constant")),
             MirConstant::Nil => Err(MirLlvmTextProbeError::unsupported("nil constant")),
         }
     }
 
+    fn constant_ty(&self, constant: &MirConstant) -> Result<MirType, MirLlvmTextProbeError> {
+        let primitive = match constant {
+            MirConstant::Int(_) => Primitive::Numerus,
+            MirConstant::Float(_) => Primitive::Fractus,
+            MirConstant::Bool(_) => Primitive::Bivalens,
+            MirConstant::Unit => Primitive::Vacuum,
+            MirConstant::String(_) => return Err(MirLlvmTextProbeError::unsupported("string constant")),
+            MirConstant::Nil => return Err(MirLlvmTextProbeError::unsupported("nil constant")),
+        };
+        Ok(MirType::semantic(self.types.primitive(primitive)))
+    }
+
     fn llvm_ty(&self, ty: MirType) -> Result<&'static str, MirLlvmTextProbeError> {
+        Ok(self.llvm_scalar(ty)?.ty())
+    }
+
+    fn llvm_scalar(&self, ty: MirType) -> Result<LlvmScalar, MirLlvmTextProbeError> {
         match self.types.get(ty.semantic_id()) {
-            Type::Primitive(Primitive::Numerus) => Ok("i64"),
-            Type::Primitive(Primitive::Bivalens) => Ok("i1"),
-            Type::Primitive(Primitive::Vacuum) => Ok("void"),
-            Type::Alias(_, target) => self.llvm_ty(MirType::semantic(*target)),
+            Type::Primitive(Primitive::Numerus) => Ok(LlvmScalar::I64),
+            Type::Primitive(Primitive::Fractus) => Ok(LlvmScalar::F64),
+            Type::Primitive(Primitive::Bivalens) => Ok(LlvmScalar::I1),
+            Type::Primitive(Primitive::Vacuum) => Ok(LlvmScalar::Void),
+            Type::Alias(_, target) => self.llvm_scalar(MirType::semantic(*target)),
             other => Err(MirLlvmTextProbeError::unsupported(format!("type {other:?}"))),
+        }
+    }
+
+    fn llvm_bin_op(&self, op: MirBinOp, lhs_ty: MirType) -> Result<&'static str, MirLlvmTextProbeError> {
+        match (op, self.llvm_scalar(lhs_ty)?) {
+            (MirBinOp::Add, LlvmScalar::I64) => Ok("add"),
+            (MirBinOp::Sub, LlvmScalar::I64) => Ok("sub"),
+            (MirBinOp::Mul, LlvmScalar::I64) => Ok("mul"),
+            (MirBinOp::Div, LlvmScalar::I64) => Ok("sdiv"),
+            (MirBinOp::Mod, LlvmScalar::I64) => Ok("srem"),
+            (MirBinOp::Add, LlvmScalar::F64) => Ok("fadd"),
+            (MirBinOp::Sub, LlvmScalar::F64) => Ok("fsub"),
+            (MirBinOp::Mul, LlvmScalar::F64) => Ok("fmul"),
+            (MirBinOp::Div, LlvmScalar::F64) => Ok("fdiv"),
+            (MirBinOp::Mod, LlvmScalar::F64) => Ok("frem"),
+            (MirBinOp::Eq, LlvmScalar::I64 | LlvmScalar::I1) => Ok("icmp eq"),
+            (MirBinOp::NotEq, LlvmScalar::I64 | LlvmScalar::I1) => Ok("icmp ne"),
+            (MirBinOp::Lt, LlvmScalar::I64) => Ok("icmp slt"),
+            (MirBinOp::Gt, LlvmScalar::I64) => Ok("icmp sgt"),
+            (MirBinOp::LtEq, LlvmScalar::I64) => Ok("icmp sle"),
+            (MirBinOp::GtEq, LlvmScalar::I64) => Ok("icmp sge"),
+            (MirBinOp::Eq, LlvmScalar::F64) => Ok("fcmp oeq"),
+            (MirBinOp::NotEq, LlvmScalar::F64) => Ok("fcmp one"),
+            (MirBinOp::Lt, LlvmScalar::F64) => Ok("fcmp olt"),
+            (MirBinOp::Gt, LlvmScalar::F64) => Ok("fcmp ogt"),
+            (MirBinOp::LtEq, LlvmScalar::F64) => Ok("fcmp ole"),
+            (MirBinOp::GtEq, LlvmScalar::F64) => Ok("fcmp oge"),
+            (MirBinOp::And, LlvmScalar::I1) => Ok("and"),
+            (MirBinOp::Or, LlvmScalar::I1) => Ok("or"),
+            _ => Err(MirLlvmTextProbeError::unsupported(format!("binary op {op:?}"))),
+        }
+    }
+
+    fn llvm_unary_expr(
+        &self,
+        op: MirUnOp,
+        operand_ty: MirType,
+        operand: &str,
+    ) -> Result<String, MirLlvmTextProbeError> {
+        match (op, self.llvm_scalar(operand_ty)?) {
+            (MirUnOp::Neg, LlvmScalar::I64) => Ok(format!("sub i64 0, {operand}")),
+            (MirUnOp::Neg, LlvmScalar::F64) => Ok(format!("fneg double {operand}")),
+            (MirUnOp::Not, LlvmScalar::I1) => Ok(format!("xor i1 {operand}, true")),
+            _ => Err(MirLlvmTextProbeError::unsupported(format!("unary op {op:?}"))),
         }
     }
 
@@ -214,6 +347,17 @@ impl LlvmProbe<'_> {
             .name
             .map(|symbol| sanitize_name(self.interner.resolve(symbol)))
             .unwrap_or_else(|| format!("f{}", function.id.0))
+    }
+}
+
+impl LlvmScalar {
+    fn ty(self) -> &'static str {
+        match self {
+            LlvmScalar::I1 => "i1",
+            LlvmScalar::I64 => "i64",
+            LlvmScalar::F64 => "double",
+            LlvmScalar::Void => "void",
+        }
     }
 }
 
@@ -233,14 +377,11 @@ fn sanitize_name(name: &str) -> String {
         .collect()
 }
 
-fn llvm_bin_op(op: MirBinOp) -> Result<&'static str, MirLlvmTextProbeError> {
-    match op {
-        MirBinOp::Add => Ok("add"),
-        MirBinOp::Sub => Ok("sub"),
-        MirBinOp::Mul => Ok("mul"),
-        MirBinOp::Div => Ok("sdiv"),
-        MirBinOp::Mod => Ok("srem"),
-        _ => Err(MirLlvmTextProbeError::unsupported(format!("binary op {op:?}"))),
+fn format_float(value: f64) -> String {
+    if value.is_finite() && value.fract() == 0.0 {
+        format!("{value:.1}")
+    } else {
+        value.to_string()
     }
 }
 
