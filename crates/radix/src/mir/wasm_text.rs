@@ -521,6 +521,17 @@ impl WasmTextProbe<'_> {
             MirOptionOp::Coalesce { value, fallback } => {
                 let value_expr = self.operand_expr(value, context)?;
                 let fallback_expr = self.operand_expr(fallback, context)?;
+                let value_mir_ty = self.operand_mir_ty(value, context)?;
+                if !matches!(
+                    self.types.get(value_mir_ty.semantic_id()),
+                    Type::Option(_) | Type::Primitive(Primitive::Nihil)
+                ) {
+                    let result_ty = self.scalar_ty(result_ty)?;
+                    let value_ty = self.operand_ty(value, context)?;
+                    let expr = coerce_wasm_operand_expr(value_expr, value_ty, result_ty)?;
+                    writer.writeln(&format!("  ;; option coalesce = {expr}"));
+                    return Ok(expr);
+                }
                 let value_ty = self.operand_ty(value, context)?;
                 let fallback_ty = self.operand_ty(fallback, context)?;
                 let result_ty = self.scalar_ty(result_ty)?;
@@ -746,6 +757,31 @@ impl WasmTextProbe<'_> {
                 .get(id)
                 .copied()
                 .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined temp t{}", id.0))),
+        }
+    }
+
+    fn operand_mir_ty(
+        &self,
+        operand: &MirOperand,
+        context: &FunctionContext,
+    ) -> Result<MirType, MirWasmTextProbeError> {
+        match operand {
+            MirOperand::Place(place) => self.place_mir_ty(place, context),
+            MirOperand::Temp(id) => context
+                .temp_mir_tys
+                .get(id)
+                .copied()
+                .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined temp t{}", id.0))),
+            MirOperand::Constant(MirConstant::Int(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Numerus))),
+            MirOperand::Constant(MirConstant::Float(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Fractus))),
+            MirOperand::Constant(MirConstant::Bool(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Bivalens))),
+            MirOperand::Constant(MirConstant::Nil) => Ok(MirType::semantic(self.types.primitive(Primitive::Nihil))),
+            MirOperand::Constant(MirConstant::Unit) => Ok(MirType::semantic(self.types.primitive(Primitive::Vacuum))),
+            MirOperand::Constant(MirConstant::String(_)) => Ok(MirType::semantic(self.types.primitive(Primitive::Textus))),
+            MirOperand::Value(id) => Err(MirWasmTextProbeError::unsupported(format!(
+                "MIR type for value v{}",
+                id.0
+            ))),
         }
     }
 

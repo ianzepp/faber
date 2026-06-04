@@ -144,6 +144,54 @@ incipit {
 }
 
 #[test]
+fn lowers_non_nullable_coalesce_without_requiring_nullable_lhs() {
+    let dump = dump_source(
+        r#"incipit {
+  fixum _ zero ← 0
+  nota zero vel 999
+}"#,
+    );
+
+    assert!(dump.contains("option coalesce("));
+    assert!(dump.contains("runtime diagnostic nota("));
+}
+
+#[test]
+fn lowers_optional_chain_on_known_present_base() {
+    let dump = dump_source(
+        r#"genus Address {
+  textus city
+}
+
+genus User {
+  textus name
+  Address address sponte
+}
+
+incipit {
+  fixum _ alice ← User { name = "Alice", address = Address { city = "Roma" } }
+  nota alice?.address?.city
+}"#,
+    );
+
+    assert!(dump.contains("option chain("));
+    assert!(dump.contains("runtime diagnostic nota("));
+}
+
+#[test]
+fn lowers_field_projection_from_object_literal_map_shape() {
+    let dump = dump_source(
+        r#"incipit {
+  fixum _ point ← { x = 10, y = 20 }
+  nota point.x
+}"#,
+    );
+
+    assert!(dump.contains("construct map:"));
+    assert!(dump.contains("runtime diagnostic nota(_0.sym#"));
+}
+
+#[test]
 fn materializes_constant_redde_operands_with_types() {
     let int_dump = dump_source("functio unum() → numerus { redde 1 }");
     assert_eq!(

@@ -64,6 +64,7 @@ pub struct MirValidationContext<'a> {
     pub types: &'a TypeTable,
     pub functions: FxHashMap<DefId, MirFunctionSignature>,
     pub struct_fields: FxHashMap<DefId, FxHashMap<Symbol, MirType>>,
+    pub optional_struct_fields: FxHashMap<DefId, FxHashSet<Symbol>>,
     pub variant_fields: FxHashMap<DefId, FxHashMap<Symbol, MirType>>,
 }
 
@@ -73,6 +74,7 @@ impl<'a> MirValidationContext<'a> {
             types,
             functions: FxHashMap::default(),
             struct_fields: FxHashMap::default(),
+            optional_struct_fields: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
         }
     }
@@ -495,7 +497,10 @@ impl Validator<'_, '_> {
                                 "option coalesce value type mismatch",
                             );
                         }
-                        _ => self.error(span, "option coalesce value is not nullable"),
+                        Type::Primitive(Primitive::Nihil) => {}
+                        _ => {
+                            self.require_assignable(value_ty, result_ty, span, "option coalesce value type mismatch");
+                        }
                     }
                 }
                 if let Some(fallback_ty) = fallback_ty {
@@ -503,11 +508,7 @@ impl Validator<'_, '_> {
                 }
             }
             MirOptionOp::Chain { base, link } => {
-                if let Some(base_ty) = self.validate_operand(scope, base, span) {
-                    if !matches!(self.type_kind(base_ty), Type::Option(_)) {
-                        self.error(span, "optional chain base is not nullable");
-                    }
-                }
+                self.validate_operand(scope, base, span);
                 self.validate_option_chain_link(scope, link, span);
                 if !matches!(self.type_kind(result_ty), Type::Option(_)) {
                     self.error(span, "optional chain result is not nullable");
@@ -860,6 +861,15 @@ impl Validator<'_, '_> {
         };
         for field in fields.keys() {
             if !seen.contains(field) {
+                if is_struct
+                    && self
+                        .context
+                        .optional_struct_fields
+                        .get(&def_id)
+                        .is_some_and(|optional| optional.contains(field))
+                {
+                    continue;
+                }
                 self.error(span, "named aggregate is missing required field");
             }
         }
@@ -1019,11 +1029,11 @@ impl Validator<'_, '_> {
     }
 
     fn project_field(&mut self, base_ty: MirType, field: Symbol, span: Span) -> Option<MirType> {
-        match self.type_kind(base_ty) {
+        match self.type_kind(base_ty).clone() {
             Type::Struct(def_id) => self
                 .context
                 .struct_fields
-                .get(def_id)
+                .get(&def_id)
                 .and_then(|fields| fields.get(&field))
                 .copied()
                 .or_else(|| {
@@ -1038,6 +1048,15 @@ impl Validator<'_, '_> {
                     self.error(span, "record field projection references unknown field");
                     None
                 }),
+            Type::Map(key, value) => {
+                self.require_assignable(
+                    self.primitive(Primitive::Textus),
+                    MirType::semantic(key),
+                    span,
+                    "map field projection key type mismatch",
+                );
+                Some(MirType::semantic(value))
+            }
             _ => {
                 self.error(span, "field projection base is not a struct or record");
                 None

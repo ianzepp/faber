@@ -1973,3 +1973,76 @@ Wasm e2e exempla:
 
 Phase 025 follow-ups (`filtrata`/`mappata`, `si/est.fab` boxing) or Phase 026 optional/member
 MIR correctness clusters per continuation-plan.md.
+
+## Phase 026 Update: Optional And Member Shape Correctness
+
+**Commit target**: Phase 026
+**Change**: MIR validation now accepts source-checked non-nullable `vel`
+operands, optional chaining on known-present bases, map-shaped field projections,
+and omitted `sponte` / defaulted struct fields. The Wasm text probe treats
+non-nullable coalesce as a left-operand expression instead of emitting a nullable
+handle select.
+
+### Tier Counts After Phase 026
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 79/101
+  Wasm emitted: 76/101
+  compile-valid: 76/101
+  instantiate-valid: 76/101
+  runnable: 75/101
+  behavior-checked: 6/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 75/101 to 76/101. MIR-lowered
+coverage increased from 75/101 to 79/101.
+
+New compile-valid exemplar:
+
+- `examples/exempla/vel/vel.fab`
+
+New MIR-lowered exemplars that now expose Wasm-side follow-up gaps:
+
+- `examples/exempla/destructura/objectum.fab`: union carrier support.
+- `examples/exempla/optionalis/optionalis.fab`: option-chain Wasm value support.
+- `examples/exempla/praefixum/praefixum.fab`: map field projection emission.
+
+### Result
+
+The phase fixed root causes in MIR validation rather than weakening Wasm
+emission. Field projection over typed object-literal maps now carries the map
+value type, optional struct fields are no longer required in named aggregate
+validation, and non-nullable coalesce follows existing semantic/Rust-backend
+behavior.
+
+`functio/optionalis.fab`, `generis/generis.fab`, `membrum/membrum.fab`, and
+`vocatio/vocatio.fab` still fail before validated MIR with explicit call,
+named-field, or map-value diagnostics.
+
+### LLVM Follow-Up
+
+The MIR contract did not add Wasm-specific nodes. LLVM should eventually lower
+map-shaped field projections through the same target-neutral projection
+semantics, likely via runtime calls or concrete aggregate layout once that
+backend leaves the scalar subset.
+
+### Phase 026 Validation Log
+
+- `cargo test -p radix lowers_ -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix llvm -- --nocapture`: passed.
+- `cargo test -p radix -- --test-threads=1`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Phase 027 non-literal pattern and dynamic switch lowering remains the next
+planned phase. A short Wasm adjunct for option-chain values and map-field
+projection emission could also convert some Phase 026 MIR gains into
+compile-valid coverage, but it should be scoped explicitly.

@@ -127,12 +127,19 @@ impl<'a> HirVisitor for LoweringContextMaps<'a> {
             HirItemKind::Struct(strukt) => {
                 let receiver_ty = self.validation.types.find_struct(item.def_id);
                 let mut fields = FxHashMap::default();
+                let mut optional_fields = FxHashSet::default();
                 for field in &strukt.fields {
                     if !field.is_static {
                         fields.insert(field.name, MirType::semantic(field.ty));
+                        if field.sponte || field.init.is_some() {
+                            optional_fields.insert(field.name);
+                        }
                     }
                 }
                 self.validation.struct_fields.insert(item.def_id, fields);
+                self.validation
+                    .optional_struct_fields
+                    .insert(item.def_id, optional_fields);
 
                 if let Some(receiver_ty) = receiver_ty {
                     for method in &strukt.methods {
