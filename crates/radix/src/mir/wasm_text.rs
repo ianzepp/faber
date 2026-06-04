@@ -739,9 +739,8 @@ impl WasmTextProbe<'_> {
                 .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("undefined value v{}", id.0))),
             MirOperand::Constant(MirConstant::Int(_)) => Ok(WasmValue::I64),
             MirOperand::Constant(MirConstant::Float(_)) => Ok(WasmValue::F64),
-            MirOperand::Constant(MirConstant::Bool(_)) => Ok(WasmValue::I32),
+            MirOperand::Constant(MirConstant::Bool(_) | MirConstant::Nil | MirConstant::Unit) => Ok(WasmValue::I32),
             MirOperand::Constant(MirConstant::String(_)) => Ok(WasmValue::TextHandle),
-            MirOperand::Constant(other) => Err(MirWasmTextProbeError::unsupported(format!("constant {other:?}"))),
             MirOperand::Temp(id) => context
                 .temps
                 .get(id)
@@ -911,7 +910,13 @@ impl WasmTextProbe<'_> {
     }
 
     fn is_entry_function(&self, function: &MirFunction) -> bool {
-        function.source.is_none() && function.name.is_none()
+        function.source.is_none()
+            && function.name.is_none()
+            && function.params.is_empty()
+            && matches!(
+                self.types.get(function.return_ty.semantic_id()),
+                Type::Primitive(Primitive::Vacuum)
+            )
     }
 
     fn function_base_name(&self, function: &MirFunction) -> String {
@@ -1013,14 +1018,42 @@ impl WasmTextProbe<'_> {
         args: &[MirOperand],
         context: &FunctionContext,
     ) -> Result<String, MirWasmTextProbeError> {
-        let callee = self.callee_name(callee)?;
-        let mut call = format!("(call ${callee}");
-        for arg in args {
+        let callee_name = self.callee_name(callee)?;
+        let param_tys = self.callee_param_wasm_tys(callee)?;
+        let mut call = format!("(call ${callee_name}");
+        for (arg, param_ty) in args.iter().zip(param_tys.iter().copied()) {
+            let arg_expr = self.operand_expr(arg, context)?;
+            let arg_ty = self.operand_ty(arg, context)?;
             call.push(' ');
-            call.push_str(&self.operand_expr(arg, context)?);
+            call.push_str(&coerce_wasm_operand_expr(arg_expr, arg_ty, param_ty)?);
         }
         call.push(')');
         Ok(call)
+    }
+
+    fn callee_param_wasm_tys(&self, callee: &MirCallee) -> Result<Vec<WasmValue>, MirWasmTextProbeError> {
+        let function = match callee {
+            MirCallee::Function(id) => self
+                .program
+                .functions
+                .iter()
+                .find(|function| function.id == *id)
+                .ok_or_else(|| MirWasmTextProbeError::unsupported(format!("unknown function f{}", id.0)))?,
+            MirCallee::Definition(def_id) => self
+                .program
+                .functions
+                .iter()
+                .find(|function| function.source == Some(*def_id))
+                .ok_or_else(|| MirWasmTextProbeError::unsupported("external definition call"))?,
+            MirCallee::Value(_) => {
+                return Err(MirWasmTextProbeError::unsupported("value callee parameter types"));
+            }
+        };
+        function
+            .params
+            .iter()
+            .map(|param| self.scalar_ty(param.ty))
+            .collect()
     }
 
     fn construct_expr(
@@ -1704,6 +1737,15 @@ fn coerce_wasm_operand_expr(expr: String, from: WasmValue, to: WasmValue) -> Res
     }
     match (from, to) {
         (WasmValue::I64, WasmValue::F64) => Ok(format!("(f64.convert_i64_s {expr})")),
+        (WasmValue::I64, WasmValue::I32 | WasmValue::AggregateHandle | WasmValue::TextHandle) => {
+            Ok(format!("(i32.wrap_i64 {expr})"))
+        }
+        (WasmValue::I32, WasmValue::TextHandle)
+        | (WasmValue::TextHandle, WasmValue::I32)
+        | (WasmValue::I32, WasmValue::AggregateHandle)
+        | (WasmValue::AggregateHandle, WasmValue::I32)
+        | (WasmValue::TextHandle, WasmValue::AggregateHandle)
+        | (WasmValue::AggregateHandle, WasmValue::TextHandle) => Ok(expr),
         _ => Err(MirWasmTextProbeError::unsupported(format!(
             "numeric coercion {from:?} to {to:?}"
         ))),

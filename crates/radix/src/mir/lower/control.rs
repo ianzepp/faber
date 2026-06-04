@@ -879,7 +879,7 @@ impl FunctionBuilder<'_> {
         Some(())
     }
 
-    fn materialize_operand_place(&mut self, operand: MirOperand, ty: MirType, span: Span) -> MirPlace {
+    pub(super) fn materialize_operand_place(&mut self, operand: MirOperand, ty: MirType, span: Span) -> MirPlace {
         match operand {
             MirOperand::Place(place) => place,
             MirOperand::Temp(temp) => MirPlace::temp(temp),
@@ -937,7 +937,14 @@ impl FunctionBuilder<'_> {
         self.terminate_current(MirTerminatorKind::Goto(cond_id), span);
     }
 
-    fn binary_temp(&mut self, op: MirBinOp, lhs: MirOperand, rhs: MirOperand, ty: MirType, span: Span) -> MirOperand {
+    pub(super) fn binary_temp(
+        &mut self,
+        op: MirBinOp,
+        lhs: MirOperand,
+        rhs: MirOperand,
+        ty: MirType,
+        span: Span,
+    ) -> MirOperand {
         self.assign_temp(MirValueKind::Binary { op, lhs, rhs }, ty, span)
     }
 

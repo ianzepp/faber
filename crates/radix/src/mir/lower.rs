@@ -52,6 +52,7 @@ use crate::semantic::{Primitive, Type, TypeId, TypeTable};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 mod aggregate;
+mod collection_higher_order;
 mod context;
 mod control;
 mod expr;
@@ -194,8 +195,10 @@ impl<'a> MirLowerer<'a> {
 
         let error_ty = function.err_ty.map(MirType::semantic);
         let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
-        let (params, locals, temps, blocks, errors) = {
-            let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context);
+        let parent_function_id = MirFunctionId(self.functions.len() as u32);
+        let (params, locals, temps, blocks, errors, synthetics) = {
+            let mut builder =
+                FunctionBuilder::for_function(&self.unit.types, error_ty, context, parent_function_id);
             for param in &function.params {
                 builder.add_param(param.def_id, param.name, param.ty, param.span);
             }
@@ -204,22 +207,33 @@ impl<'a> MirLowerer<'a> {
                 Some(body) => builder.lower_body(body),
                 None => Vec::new(),
             };
-            (builder.params, builder.locals, builder.temps, blocks, builder.errors)
+            let synthetics = builder.take_synthetic_functions();
+            (
+                builder.params,
+                builder.locals,
+                builder.temps,
+                blocks,
+                builder.errors,
+                synthetics,
+            )
         };
         self.errors.extend(errors);
 
-        self.functions.push(MirFunction {
-            id: MirFunctionId(self.functions.len() as u32),
-            source: Some(item.def_id),
-            name: Some(function.name),
-            params,
-            locals,
-            temps,
-            blocks,
-            return_ty: MirType::semantic(return_ty),
-            error_ty,
-            span: item.span,
-        });
+        self.push_function_with_synthetics(
+            MirFunction {
+                id: parent_function_id,
+                source: Some(item.def_id),
+                name: Some(function.name),
+                params,
+                locals,
+                temps,
+                blocks,
+                return_ty: MirType::semantic(return_ty),
+                error_ty,
+                span: item.span,
+            },
+            synthetics,
+        );
     }
 
     /// Lower a genus method as an ordinary MIR function with an explicit
@@ -245,8 +259,10 @@ impl<'a> MirLowerer<'a> {
 
         let error_ty = method.func.err_ty.map(MirType::semantic);
         let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
-        let (params, locals, temps, blocks, errors) = {
-            let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context);
+        let parent_function_id = MirFunctionId(self.functions.len() as u32);
+        let (params, locals, temps, blocks, errors, synthetics) = {
+            let mut builder =
+                FunctionBuilder::for_function(&self.unit.types, error_ty, context, parent_function_id);
             builder.add_param(struct_item.def_id, strukt.name, receiver_ty, method.span);
             for param in &method.func.params {
                 builder.add_param(param.def_id, param.name, param.ty, param.span);
@@ -256,22 +272,40 @@ impl<'a> MirLowerer<'a> {
                 Some(body) => builder.lower_body(body),
                 None => Vec::new(),
             };
-            (builder.params, builder.locals, builder.temps, blocks, builder.errors)
+            let synthetics = builder.take_synthetic_functions();
+            (
+                builder.params,
+                builder.locals,
+                builder.temps,
+                blocks,
+                builder.errors,
+                synthetics,
+            )
         };
         self.errors.extend(errors);
 
-        self.functions.push(MirFunction {
-            id: MirFunctionId(self.functions.len() as u32),
-            source: Some(method.def_id),
-            name: Some(method.func.name),
-            params,
-            locals,
-            temps,
-            blocks,
-            return_ty: MirType::semantic(return_ty),
-            error_ty,
-            span: method.span,
-        });
+        self.push_function_with_synthetics(
+            MirFunction {
+                id: parent_function_id,
+                source: Some(method.def_id),
+                name: Some(method.func.name),
+                params,
+                locals,
+                temps,
+                blocks,
+                return_ty: MirType::semantic(return_ty),
+                error_ty,
+                span: method.span,
+            },
+            synthetics,
+        );
+    }
+
+    fn push_function_with_synthetics(&mut self, function: MirFunction, synthetics: Vec<MirFunction>) {
+        self.functions.push(function);
+        for synthetic in synthetics {
+            self.functions.push(synthetic);
+        }
     }
 
     /// Rebuild validation context from the analyzed unit for the final handoff.
@@ -296,25 +330,31 @@ impl<'a> MirLowerer<'a> {
     ) {
         let vacuum = self.unit.types.primitive(Primitive::Vacuum);
         let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
-        let (locals, temps, blocks, errors) = {
-            let mut builder = FunctionBuilder::for_function(&self.unit.types, None, context);
+        let parent_function_id = MirFunctionId(self.functions.len() as u32);
+        let (locals, temps, blocks, errors, synthetics) = {
+            let mut builder =
+                FunctionBuilder::for_function(&self.unit.types, None, context, parent_function_id);
             let blocks = builder.lower_body(entry);
-            (builder.locals, builder.temps, blocks, builder.errors)
+            let synthetics = builder.take_synthetic_functions();
+            (builder.locals, builder.temps, blocks, builder.errors, synthetics)
         };
         self.errors.extend(errors);
 
-        self.functions.push(MirFunction {
-            id: MirFunctionId(self.functions.len() as u32),
-            source: None,
-            name: None,
-            params: Vec::new(),
-            locals,
-            temps,
-            blocks,
-            return_ty: MirType::semantic(vacuum),
-            error_ty: None,
-            span: entry.span,
-        });
+        self.push_function_with_synthetics(
+            MirFunction {
+                id: parent_function_id,
+                source: None,
+                name: None,
+                params: Vec::new(),
+                locals,
+                temps,
+                blocks,
+                return_ty: MirType::semantic(vacuum),
+                error_ty: None,
+                span: entry.span,
+            },
+            synthetics,
+        );
     }
 }
 
@@ -406,15 +446,22 @@ struct FunctionBuilder<'a> {
     handlers: Vec<HandlerContext>,
     errors: Vec<MirError>,
     next_value: u32,
+    synthetic_functions: Vec<MirFunction>,
+    parent_function_id: MirFunctionId,
 }
 
 impl<'a> FunctionBuilder<'a> {
     #[cfg(test)]
     fn new(types: &'a TypeTable) -> Self {
-        Self::for_function(types, None, FunctionBuilderContext::empty())
+        Self::for_function(types, None, FunctionBuilderContext::empty(), MirFunctionId(0))
     }
 
-    fn for_function(types: &'a TypeTable, error_ty: Option<MirType>, context: FunctionBuilderContext<'a>) -> Self {
+    fn for_function(
+        types: &'a TypeTable,
+        error_ty: Option<MirType>,
+        context: FunctionBuilderContext<'a>,
+        parent_function_id: MirFunctionId,
+    ) -> Self {
         Self {
             types,
             error_ty,
@@ -429,6 +476,8 @@ impl<'a> FunctionBuilder<'a> {
             handlers: Vec::new(),
             errors: Vec::new(),
             next_value: 0,
+            synthetic_functions: Vec::new(),
+            parent_function_id,
         }
     }
 

@@ -60,6 +60,16 @@ impl FunctionBuilder<'_> {
             }
         }
 
+        let method_name = self.resolve_method_name(method)?;
+        if matches!(method_name, "filtrata" | "mappata" | "map") && args.len() == 1 {
+            let closure = &args[0].expr;
+            return match method_name {
+                "filtrata" => self.lower_filtrata(receiver, closure, expr),
+                "mappata" | "map" => self.lower_mappata(receiver, closure, expr),
+                _ => None,
+            };
+        }
+
         let Some(op) = self.collection_method_op(receiver, method, args, expr.span) else {
             self.errors.push(MirError::unsupported(
                 expr.span,
@@ -234,13 +244,6 @@ impl FunctionBuilder<'_> {
             "inversa" if args.is_empty() && is_array => Some(MirCollectionOp::Reverse),
             "inverte" if args.is_empty() && is_array => Some(MirCollectionOp::ReverseInPlace),
             "ordinata" if args.is_empty() && is_array => Some(MirCollectionOp::Sort),
-            "filtrata" | "mappata" | "map" => {
-                self.errors.push(MirError::unsupported(
-                    span,
-                    "collection higher-order methods before callable-value MIR lowering",
-                ));
-                None
-            }
             _ => None,
         }
     }
