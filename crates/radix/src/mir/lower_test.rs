@@ -607,6 +607,34 @@ functio describe(Status status) → vacuum {
 }
 
 #[test]
+fn lowers_payload_variant_discerne_to_branch_chain_and_field_bindings() {
+    let dump = dump_source(
+        r#"discretio Event {
+  Click { numerus x, numerus y },
+  Quit
+}
+
+functio handle(Event event) → vacuum {
+  discerne event {
+    casu Click fixum x, y {
+      nota x
+      nota y
+    }
+    casu Quit {
+      nota "quit"
+    }
+  }
+}"#,
+    );
+
+    assert!(dump.contains("construct variant def#"));
+    assert!(dump.contains(".def#"));
+    assert!(dump.contains("runtime diagnostic nota(_1)"));
+    assert!(dump.contains("runtime diagnostic nota(_2)"));
+    assert!(!dump.contains("non-literal discerne pattern"));
+}
+
+#[test]
 fn lowers_dum_to_condition_body_and_after_blocks() {
     let dump = dump_source(
         "functio totalis(numerus n) → numerus { varia numerus i ← 0 varia numerus total ← 0 dum i < n { total ← total + i i ← i + 1 } redde total }",
@@ -789,10 +817,8 @@ fn rejects_deferred_control_flow_constructs_with_explicit_diagnostics() {
         .message
         .contains("itera collection before iterator MIR lowering"));
 
-    let discerne_unit = analyze(
-        "discretio Event { Click { numerus x }, Quit } functio handle(Event e) → vacuum { discerne e { casu Click fixum x { nota x } casu Quit { nota 0 } } }",
-    );
-    let discerne_errors = lower_analyzed_unit(&discerne_unit).expect_err("payload discerne is deferred");
+    let discerne_unit = analyze("functio handle(numerus n) → vacuum { discerne n { casu x { nota x } } }");
+    let discerne_errors = lower_analyzed_unit(&discerne_unit).expect_err("binding discerne is deferred");
     assert_eq!(discerne_errors.len(), 1);
     assert!(discerne_errors[0]
         .message

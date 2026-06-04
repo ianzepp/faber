@@ -1058,6 +1058,7 @@ impl WasmTextProbe<'_> {
             Type::Primitive(Primitive::Numerus) => Ok(WasmValue::I64),
             Type::Primitive(Primitive::Fractus) => Ok(WasmValue::F64),
             Type::Primitive(Primitive::Bivalens) => Ok(WasmValue::I32),
+            Type::Primitive(Primitive::Nihil) => Ok(WasmValue::I32),
             Type::Primitive(Primitive::Textus) => Ok(WasmValue::TextHandle),
             Type::Primitive(Primitive::Ignotum) => Ok(WasmValue::AggregateHandle),
             Type::Option(_) => Ok(WasmValue::AggregateHandle),

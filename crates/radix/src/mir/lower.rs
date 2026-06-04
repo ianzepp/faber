@@ -413,6 +413,7 @@ struct FunctionBuilderContext<'a> {
     structs: FxHashMap<DefId, Vec<&'a HirField>>,
     variant_parents: FxHashMap<DefId, DefId>,
     variant_fields: FxHashMap<DefId, Vec<crate::lexer::Symbol>>,
+    variant_field_tys: FxHashMap<DefId, FxHashMap<crate::lexer::Symbol, MirType>>,
     provider_imports: FxHashMap<DefId, ProviderImport>,
     method_targets: FxHashMap<(DefId, Symbol), MethodTarget>,
 }
@@ -426,6 +427,7 @@ impl FunctionBuilderContext<'_> {
             structs: FxHashMap::default(),
             variant_parents: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
+            variant_field_tys: FxHashMap::default(),
             provider_imports: FxHashMap::default(),
             method_targets: FxHashMap::default(),
         }

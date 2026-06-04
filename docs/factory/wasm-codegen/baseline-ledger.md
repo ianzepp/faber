@@ -2230,3 +2230,79 @@ The 85% compile-valid target requires at least 86/101 exempla, so five more
 compile-valid exempla are needed after Phase 029. The highest-count remaining
 clusters are async/`cede` lowering, closure/callable lowering, collection
 iteration over existing collections, and payload `discerne` patterns.
+
+## Phase 030 Update: Payload Variant `discerne` Lowering
+
+**Commit target**: Phase 030
+**Change**: Payload-bearing enum variant `discerne` arms now lower to
+target-neutral MIR branch chains. The arm probe is built from variant-field
+projections on the subject, and simple payload bindings become immutable MIR
+locals assigned from those projections.
+
+### Tier Counts After Phase 030
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 83/101
+  Wasm emitted: 83/101
+  compile-valid: 83/101
+  instantiate-valid: 83/101
+  runnable: 82/101
+  behavior-checked: 6/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 81/101 to 83/101. MIR-lowered
+coverage increased from 81/101 to 83/101.
+
+New compile-valid exempla:
+
+- `examples/exempla/discerne/discerne.fab`
+- `examples/exempla/syntaxis/discerne-insanum.fab`
+
+### Result
+
+Payload variant patterns no longer stop with `non-literal discerne pattern
+before switch MIR lowering`. The implementation keeps the MIR shape
+target-neutral by using aggregate construction, equality, branches, and
+variant-field projections already present in the MIR model.
+
+`nihil` now has a Wasm carrier (`i32`) so nullable union return paths involving
+`nihil` can emit valid WAT instead of failing during scalar carrier selection.
+
+### Caveat
+
+This phase preserves the existing aggregate-equality branch-chain model. It is
+enough for compile-valid and stub-host runnable Wasm progress, but real payload
+variant semantics still need an explicit tag-test/runtime representation before
+this construct is semantically complete across backends.
+
+### LLVM Follow-Up
+
+No Wasm-specific MIR node was added. LLVM can consume the same target-neutral
+MIR shape once aggregate handles, variant fields, and variant tag/runtime
+semantics have a concrete LLVM lowering strategy.
+
+### Phase 030 Validation Log
+
+- `cargo test -p radix payload_variant_discerne -- --nocapture`: passed.
+- `cargo test -p radix nihil_return_carrier -- --nocapture`: passed.
+- `cargo run -p radix --bin radix -- emit -t wasm examples/exempla/discerne/discerne.fab > /tmp/discerne.wat`: passed.
+- `wasm-tools validate /tmp/discerne.wat`: passed.
+- `cargo run -p radix --bin radix -- emit -t wasm examples/exempla/syntaxis/discerne-insanum.fab > /tmp/discerne-insanum.wat`: passed.
+- `wasm-tools validate /tmp/discerne-insanum.wat`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix llvm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix -- --test-threads=1`: passed.
+
+### Next Phase Candidate
+
+The 85% compile-valid target requires at least 86/101 exempla, so three more
+compile-valid exempla are needed after Phase 030. Remaining high-yield clusters
+include async/`cede`, closure/callable lowering, map-key iteration, enum member
+path resolution in `ordo/ordo.fab`, and the remaining aggregate/map expression
+gaps.

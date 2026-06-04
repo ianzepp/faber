@@ -35,6 +35,7 @@ pub(super) struct LoweringContextMaps<'a> {
     function_errors: FxHashMap<DefId, MirType>,
     variant_parents: FxHashMap<DefId, DefId>,
     variant_fields: FxHashMap<DefId, Vec<Symbol>>,
+    variant_field_tys: FxHashMap<DefId, FxHashMap<Symbol, MirType>>,
     provider_imports: FxHashMap<DefId, ProviderImport>,
     method_targets: FxHashMap<(DefId, Symbol), MethodTarget>,
     pub(super) validation: MirValidationContext<'a>,
@@ -52,6 +53,7 @@ impl<'a> LoweringContextMaps<'a> {
             function_errors: FxHashMap::default(),
             variant_parents: FxHashMap::default(),
             variant_fields: FxHashMap::default(),
+            variant_field_tys: FxHashMap::default(),
             provider_imports: FxHashMap::default(),
             method_targets: FxHashMap::default(),
             validation: MirValidationContext::new(&unit.types),
@@ -76,6 +78,7 @@ impl<'a> LoweringContextMaps<'a> {
             structs,
             variant_parents: self.variant_parents.clone(),
             variant_fields: self.variant_fields.clone(),
+            variant_field_tys: self.variant_field_tys.clone(),
             provider_imports: self.provider_imports.clone(),
             method_targets: self.method_targets.clone(),
         }
@@ -180,6 +183,8 @@ impl<'a> HirVisitor for LoweringContextMaps<'a> {
                     for field in &variant.fields {
                         fields.insert(field.name, MirType::semantic(field.ty));
                     }
+                    self.variant_field_tys
+                        .insert(variant.def_id, fields.clone());
                     self.validation
                         .variant_fields
                         .insert(variant.def_id, fields);

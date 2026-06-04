@@ -376,6 +376,7 @@ impl FunctionBuilder<'_> {
     ) -> Option<MirOperand> {
         let scrutinee_ty = self.expr_ty(scrutinee)?;
         let bool_ty = MirType::semantic(self.types.primitive(Primitive::Bivalens));
+        let scrutinee_place = self.materialize_operand_place(value.clone(), scrutinee_ty, scrutinee.span);
         let join_id = self.fresh_block(expr.span);
         let mut default_body = None;
 
@@ -393,15 +394,16 @@ impl FunctionBuilder<'_> {
                 return None;
             };
             match pattern {
-                HirPattern::Variant(variant, fields) if fields.is_empty() => {
+                HirPattern::Variant(variant, fields) => {
                     let then_id = self.fresh_block(arm.span);
                     let else_id = self.fresh_block(arm.span);
-                    let variant = self.construct_temp(
-                        MirAggregateKind::EnumVariant(*variant),
-                        MirAggregateFields::Ordered(Vec::new()),
-                        scrutinee_ty,
-                        arm.span,
-                    );
+                    let fields = if fields.is_empty() {
+                        MirAggregateFields::Ordered(Vec::new())
+                    } else {
+                        self.variant_pattern_probe_fields(*variant, &scrutinee_place, arm.span)?
+                    };
+                    let variant =
+                        self.construct_temp(MirAggregateKind::EnumVariant(*variant), fields, scrutinee_ty, arm.span);
                     let condition = self.assign_temp(
                         MirValueKind::Binary { op: MirBinOp::Eq, lhs: value.clone(), rhs: variant },
                         bool_ty,
@@ -413,6 +415,40 @@ impl FunctionBuilder<'_> {
                     );
 
                     self.switch_to(then_id);
+                    self.bind_variant_payload(pattern, &scrutinee_place, scrutinee_ty, arm.span)?;
+                    let _ = self.lower_expr_value(&arm.body);
+                    self.terminate_open_current(MirTerminatorKind::Goto(join_id), arm.span);
+
+                    self.switch_to(else_id);
+                }
+                HirPattern::Alias(_, _, inner) if matches!(inner.as_ref(), HirPattern::Variant(_, _)) => {
+                    let then_id = self.fresh_block(arm.span);
+                    let else_id = self.fresh_block(arm.span);
+                    let HirPattern::Alias(_, _, inner) = pattern else {
+                        unreachable!("alias pattern shape was matched");
+                    };
+                    let HirPattern::Variant(variant, fields) = inner.as_ref() else {
+                        unreachable!("inner variant pattern shape was matched");
+                    };
+                    let fields = if fields.is_empty() {
+                        MirAggregateFields::Ordered(Vec::new())
+                    } else {
+                        self.variant_pattern_probe_fields(*variant, &scrutinee_place, arm.span)?
+                    };
+                    let variant =
+                        self.construct_temp(MirAggregateKind::EnumVariant(*variant), fields, scrutinee_ty, arm.span);
+                    let condition = self.assign_temp(
+                        MirValueKind::Binary { op: MirBinOp::Eq, lhs: value.clone(), rhs: variant },
+                        bool_ty,
+                        arm.span,
+                    );
+                    self.terminate_current(
+                        MirTerminatorKind::Branch { condition, then_block: then_id, else_block: else_id },
+                        arm.span,
+                    );
+
+                    self.switch_to(then_id);
+                    self.bind_variant_payload(pattern, &scrutinee_place, scrutinee_ty, arm.span)?;
                     let _ = self.lower_expr_value(&arm.body);
                     self.terminate_open_current(MirTerminatorKind::Goto(join_id), arm.span);
 
@@ -455,6 +491,117 @@ impl FunctionBuilder<'_> {
             self.seal_unreachable(join_id, expr.span);
         }
         Some(MirOperand::Constant(MirConstant::Unit))
+    }
+
+    fn variant_pattern_probe_fields(
+        &mut self,
+        variant: DefId,
+        scrutinee: &MirPlace,
+        span: Span,
+    ) -> Option<MirAggregateFields> {
+        let Some(field_names) = self.context.variant_fields.get(&variant).cloned() else {
+            self.errors
+                .push(MirError::unsupported(span, "variant payload pattern is missing field metadata"));
+            return None;
+        };
+
+        Some(MirAggregateFields::Named(
+            field_names
+                .into_iter()
+                .map(|field| {
+                    let mut place = scrutinee.clone();
+                    place
+                        .projections
+                        .push(MirProjection::VariantField { variant, field });
+                    MirNamedOperand { name: field, value: MirOperand::Place(place) }
+                })
+                .collect(),
+        ))
+    }
+
+    fn bind_variant_payload(
+        &mut self,
+        pattern: &HirPattern,
+        scrutinee: &MirPlace,
+        scrutinee_ty: MirType,
+        span: Span,
+    ) -> Option<()> {
+        match pattern {
+            HirPattern::Variant(variant, fields) => self.bind_variant_fields(*variant, fields, scrutinee, span),
+            HirPattern::Alias(alias_def, alias_name, inner) => {
+                let alias = self.next_local_id();
+                self.locals.push(MirLocalDecl {
+                    id: alias,
+                    name: Some(*alias_name),
+                    ty: scrutinee_ty,
+                    mutable: false,
+                    span,
+                });
+                self.bindings
+                    .insert(*alias_def, LocalBinding { local: alias, ty: scrutinee_ty });
+                self.assign(MirPlace::local(alias), MirOperand::Place(scrutinee.clone()), scrutinee_ty, span);
+                self.bind_variant_payload(inner, scrutinee, scrutinee_ty, span)
+            }
+            _ => {
+                self.errors
+                    .push(MirError::unsupported(span, "non-variant discerne payload binding"));
+                None
+            }
+        }
+    }
+
+    fn bind_variant_fields(
+        &mut self,
+        variant: DefId,
+        fields: &[HirPattern],
+        scrutinee: &MirPlace,
+        span: Span,
+    ) -> Option<()> {
+        let Some(field_names) = self.context.variant_fields.get(&variant).cloned() else {
+            self.errors
+                .push(MirError::unsupported(span, "variant payload pattern is missing field metadata"));
+            return None;
+        };
+        let Some(field_tys) = self.context.variant_field_tys.get(&variant).cloned() else {
+            self.errors
+                .push(MirError::missing_type(span, "variant payload pattern fields"));
+            return None;
+        };
+        if fields.len() != field_names.len() {
+            self.errors
+                .push(MirError::unsupported(span, "variant payload pattern arity mismatch"));
+            return None;
+        }
+
+        for (field, subpattern) in field_names.into_iter().zip(fields) {
+            match subpattern {
+                HirPattern::Binding(def_id, name) => {
+                    let Some(ty) = field_tys.get(&field).copied() else {
+                        self.errors
+                            .push(MirError::missing_type(span, "variant payload pattern field"));
+                        return None;
+                    };
+                    let local = self.next_local_id();
+                    self.locals
+                        .push(MirLocalDecl { id: local, name: Some(*name), ty, mutable: false, span });
+                    self.bindings.insert(*def_id, LocalBinding { local, ty });
+                    let mut place = scrutinee.clone();
+                    place
+                        .projections
+                        .push(MirProjection::VariantField { variant, field });
+                    self.assign(MirPlace::local(local), MirOperand::Place(place), ty, span);
+                }
+                HirPattern::Wildcard => {}
+                _ => {
+                    self.errors.push(MirError::unsupported(
+                        span,
+                        "nested variant payload patterns before MIR lowering",
+                    ));
+                    return None;
+                }
+            }
+        }
+        Some(())
     }
 
     fn literal_switch_constant(&mut self, literal: &HirLiteral, span: Span) -> Option<MirConstant> {

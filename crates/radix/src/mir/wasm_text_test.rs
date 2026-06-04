@@ -77,6 +77,26 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_nihil_return_carrier() {
+    let output = compile_wasm_text(
+        r#"
+functio absent() → nihil {
+    redde nihil
+}
+
+incipit {
+    absent()
+}
+"#,
+    );
+
+    assert!(output.contains(r#"(func $absent (export "absent") (result i32)"#));
+    assert!(output.contains("(local.set $t0 (i32.const 0))"));
+    assert!(output.contains("(return (local.get $t0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_boolean_diagnostic_imports() {
     let source = r#"
 incipit {

@@ -305,6 +305,7 @@ impl FunctionBuilder<'_> {
             structs: context.structs.clone(),
             variant_parents: context.variant_parents.clone(),
             variant_fields: context.variant_fields.clone(),
+            variant_field_tys: context.variant_field_tys.clone(),
             provider_imports: context.provider_imports.clone(),
             method_targets: context.method_targets.clone(),
         }
