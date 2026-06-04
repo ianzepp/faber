@@ -112,6 +112,13 @@ struct RuntimeValueImport {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct CollectionImport {
+    op: MirCollectionOp,
+    args: Vec<WasmValue>,
+    result: Option<WasmValue>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct PanicImport {
     arg: WasmValue,
 }
@@ -129,7 +136,6 @@ struct TextCompareImport {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum RuntimeValueImportKind {
     Convert,
-    CollectionLength,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -220,6 +226,28 @@ impl WasmTextProbe<'_> {
                 runtime_value_import_symbol(&import),
                 import.result.wat(),
             ));
+        }
+        for import in self.required_collection_imports()? {
+            let params = import
+                .args
+                .iter()
+                .map(|arg| arg.wat())
+                .collect::<Vec<_>>()
+                .join(" ");
+            if let Some(result) = import.result {
+                writer.writeln(&format!(
+                    "(import \"faber_runtime\" \"{}\" (func ${} (param {params}) (result {})))",
+                    collection_import_name(&import),
+                    collection_import_symbol(&import),
+                    result.wat(),
+                ));
+            } else {
+                writer.writeln(&format!(
+                    "(import \"faber_runtime\" \"{}\" (func ${} (param {params})))",
+                    collection_import_name(&import),
+                    collection_import_symbol(&import),
+                ));
+            }
         }
         for import in self.required_panic_imports()? {
             writer.writeln(&format!(
@@ -408,15 +436,16 @@ impl WasmTextProbe<'_> {
                     let expr = self.conversion_call_expr(conversion, &call.args, call.return_ty, context)?;
                     self.emit_place_set(destination, &expr, context, writer)
                 }
-                (Some(destination), MirIntrinsic::Collection(MirCollectionOp::Length)) => {
+                (Some(destination), MirIntrinsic::Collection(op)) => {
                     let args = call.args.iter().collect::<Vec<_>>();
-                    let expr = self.runtime_value_call_expr(
-                        RuntimeValueImportKind::CollectionLength,
-                        &args,
-                        call.return_ty,
-                        context,
-                    )?;
+                    let expr = self.collection_call_expr(*op, &args, call.return_ty, context)?;
                     self.emit_place_set(destination, &expr, context, writer)
+                }
+                (None, MirIntrinsic::Collection(op)) => {
+                    let args = call.args.iter().collect::<Vec<_>>();
+                    let expr = self.collection_call_expr(*op, &args, call.return_ty, context)?;
+                    writer.writeln(&format!("  {expr}"));
+                    Ok(())
                 }
                 (None, MirIntrinsic::Panic) => {
                     let [arg] = call.args.as_slice() else {
@@ -1076,6 +1105,41 @@ impl WasmTextProbe<'_> {
         Ok(call)
     }
 
+    fn collection_call_expr(
+        &self,
+        op: MirCollectionOp,
+        args: &[&MirOperand],
+        return_ty: MirType,
+        context: &FunctionContext,
+    ) -> Result<String, MirWasmTextProbeError> {
+        let import = CollectionImport {
+            op,
+            args: args
+                .iter()
+                .map(|arg| self.operand_ty(arg, context))
+                .collect::<Result<Vec<_>, _>>()?,
+            result: if self.is_vacuum(return_ty) {
+                None
+            } else {
+                Some(self.scalar_ty(return_ty)?)
+            },
+        };
+        let mut call = format!("(call ${}", collection_import_symbol(&import));
+        for arg in args {
+            call.push(' ');
+            call.push_str(&self.operand_expr(arg, context)?);
+        }
+        call.push(')');
+        Ok(call)
+    }
+
+    fn is_vacuum(&self, ty: MirType) -> bool {
+        matches!(
+            self.types.get(ty.semantic_id()),
+            Type::Primitive(Primitive::Vacuum)
+        )
+    }
+
     fn callee_name(&self, callee: &MirCallee) -> Result<String, MirWasmTextProbeError> {
         match callee {
             MirCallee::Function(id) => self
@@ -1216,39 +1280,58 @@ impl WasmTextProbe<'_> {
                     let MirStmtKind::RuntimeCall { destination: Some(_), call } = &stmt.kind else {
                         continue;
                     };
-                    match &call.intrinsic {
-                        MirIntrinsic::Convert(conversion) => {
-                            let [source] = call.args.as_slice() else {
-                                continue;
-                            };
-                            let mut args = vec![self.operand_ty(source, &context)?];
-                            if let Some(fallback) = &conversion.fallback {
-                                args.push(self.operand_ty(fallback, &context)?);
-                            }
-                            imports.insert(RuntimeValueImport {
-                                kind: RuntimeValueImportKind::Convert,
-                                args,
-                                result: self.scalar_ty(call.return_ty)?,
-                            });
+                    if let MirIntrinsic::Convert(conversion) = &call.intrinsic {
+                        let [source] = call.args.as_slice() else {
+                            continue;
+                        };
+                        let mut args = vec![self.operand_ty(source, &context)?];
+                        if let Some(fallback) = &conversion.fallback {
+                            args.push(self.operand_ty(fallback, &context)?);
                         }
-                        MirIntrinsic::Collection(MirCollectionOp::Length) => {
-                            imports.insert(RuntimeValueImport {
-                                kind: RuntimeValueImportKind::CollectionLength,
-                                args: call
-                                    .args
-                                    .iter()
-                                    .map(|arg| self.operand_ty(arg, &context))
-                                    .collect::<Result<Vec<_>, _>>()?,
-                                result: self.scalar_ty(call.return_ty)?,
-                            });
-                        }
-                        _ => {}
+                        imports.insert(RuntimeValueImport {
+                            kind: RuntimeValueImportKind::Convert,
+                            args,
+                            result: self.scalar_ty(call.return_ty)?,
+                        });
                     }
                 }
             }
         }
         let mut imports = imports.into_iter().collect::<Vec<_>>();
         imports.sort_by_key(runtime_value_import_name);
+        Ok(imports)
+    }
+
+    fn required_collection_imports(&self) -> Result<Vec<CollectionImport>, MirWasmTextProbeError> {
+        let mut imports = FxHashSet::default();
+        for function in &self.program.functions {
+            let context = self.function_context(function)?;
+            for block in &function.blocks {
+                for stmt in &block.statements {
+                    let MirStmtKind::RuntimeCall { call, .. } = &stmt.kind else {
+                        continue;
+                    };
+                    let MirIntrinsic::Collection(op) = call.intrinsic else {
+                        continue;
+                    };
+                    imports.insert(CollectionImport {
+                        op,
+                        args: call
+                            .args
+                            .iter()
+                            .map(|arg| self.operand_ty(arg, &context))
+                            .collect::<Result<Vec<_>, _>>()?,
+                        result: if self.is_vacuum(call.return_ty) {
+                            None
+                        } else {
+                            Some(self.scalar_ty(call.return_ty)?)
+                        },
+                    });
+                }
+            }
+        }
+        let mut imports = imports.into_iter().collect::<Vec<_>>();
+        imports.sort_by_key(collection_import_name);
         Ok(imports)
     }
 
@@ -1804,10 +1887,42 @@ fn projection_set_import_symbol(import: &ProjectionSetImport) -> String {
     format!("__faber_aggregate_{}", projection_set_import_name(import))
 }
 
+fn collection_op_wasm_name(op: MirCollectionOp) -> &'static str {
+    match op {
+        MirCollectionOp::Append => "append",
+        MirCollectionOp::AppendImmutable => "append_immutable",
+        MirCollectionOp::Index => "index",
+        MirCollectionOp::Length => "length",
+        MirCollectionOp::Contains => "contains",
+        MirCollectionOp::First => "first",
+        MirCollectionOp::Last => "last",
+        MirCollectionOp::Reverse => "reverse",
+        MirCollectionOp::ReverseInPlace => "reverse_in_place",
+        MirCollectionOp::Sort => "sort",
+    }
+}
+
+fn collection_import_name(import: &CollectionImport) -> String {
+    let op = collection_op_wasm_name(import.op);
+    let args = import
+        .args
+        .iter()
+        .map(|arg| arg.abi_name())
+        .collect::<Vec<_>>()
+        .join("_");
+    match import.result {
+        Some(result) => format!("{op}_{}_{args}_to_{}", import.args.len(), result.abi_name()),
+        None => format!("{op}_{}_{args}", import.args.len()),
+    }
+}
+
+fn collection_import_symbol(import: &CollectionImport) -> String {
+    format!("__faber_runtime_{}", collection_import_name(import))
+}
+
 fn runtime_value_import_name(import: &RuntimeValueImport) -> String {
     let kind = match import.kind {
         RuntimeValueImportKind::Convert => "convert",
-        RuntimeValueImportKind::CollectionLength => "length",
     };
     let args = import
         .args

@@ -627,7 +627,12 @@ impl Validator<'_, '_> {
         span: Span,
     ) {
         let expected_args = match op {
-            MirCollectionOp::Length => 1,
+            MirCollectionOp::Length
+            | MirCollectionOp::First
+            | MirCollectionOp::Last
+            | MirCollectionOp::Reverse
+            | MirCollectionOp::ReverseInPlace
+            | MirCollectionOp::Sort => 1,
             MirCollectionOp::Append
             | MirCollectionOp::AppendImmutable
             | MirCollectionOp::Index
@@ -678,6 +683,44 @@ impl Validator<'_, '_> {
                         );
                     }
                 }
+            }
+            MirCollectionOp::First | MirCollectionOp::Last => {
+                if let Some(collection_ty) = first_arg_ty {
+                    let Some(element_ty) = self.collection_element_ty(collection_ty) else {
+                        return;
+                    };
+                    if let Type::Option(inner) = self.type_kind(call.return_ty) {
+                        self.require_assignable(
+                            MirType::semantic(*inner),
+                            element_ty,
+                            span,
+                            "collection first/last result is not an option of the element type",
+                        );
+                    } else {
+                        self.error(
+                            span,
+                            "collection first/last result is not an option of the element type",
+                        );
+                    }
+                }
+            }
+            MirCollectionOp::Reverse | MirCollectionOp::Sort => {
+                if let Some(collection_ty) = first_arg_ty {
+                    self.require_assignable(
+                        call.return_ty,
+                        collection_ty,
+                        span,
+                        "collection reverse/sort result type mismatch",
+                    );
+                }
+            }
+            MirCollectionOp::ReverseInPlace => {
+                self.require_exact(
+                    call.return_ty,
+                    self.primitive(Primitive::Vacuum),
+                    span,
+                    "collection reverse-in-place does not return vacuum",
+                );
             }
         }
     }

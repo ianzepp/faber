@@ -396,6 +396,11 @@ fn collection_op(op: MirCollectionOp) -> &'static str {
         MirCollectionOp::Index => "index",
         MirCollectionOp::Length => "length",
         MirCollectionOp::Contains => "contains",
+        MirCollectionOp::First => "first",
+        MirCollectionOp::Last => "last",
+        MirCollectionOp::Reverse => "reverse",
+        MirCollectionOp::ReverseInPlace => "reverse_in_place",
+        MirCollectionOp::Sort => "sort",
     }
 }
 

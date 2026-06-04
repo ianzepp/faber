@@ -1050,6 +1050,35 @@ fn rejects_unsupported_runtime_method_shapes() {
 }
 
 #[test]
+fn lowers_collection_runtime_methods_to_intrinsics() {
+    let dump = dump_source(
+        r#"
+incipit {
+    varia lista<numerus> items ← vacua
+    items.appende(1)
+    nota items.longitudo()
+    nota items.primus()
+}
+"#,
+    );
+
+    assert!(dump.contains("runtime collection append"));
+    assert!(dump.contains("runtime collection length"));
+    assert!(dump.contains("runtime collection first"));
+    assert!(!dump.contains("method call before runtime/provider MIR lowering"));
+}
+
+#[test]
+fn rejects_collection_higher_order_methods_before_callable_value_lowering() {
+    let unit = analyze(r#"functio evens(lista<numerus> xs) → lista<numerus> { redde xs.filtrata(numerus x ∴ x % 2 ≡ 0) }"#);
+    let errors = lower_analyzed_unit(&unit).expect_err("higher-order collection methods remain fail-closed");
+
+    assert!(errors.iter().any(|err| err.message.contains(
+        "collection higher-order methods before callable-value MIR lowering"
+    )));
+}
+
+#[test]
 fn rejects_assignment_targets_that_are_not_places() {
     use crate::hir::{DefId, HirExpr, HirExprKind, HirId, HirLiteral};
     use crate::lexer::Symbol;

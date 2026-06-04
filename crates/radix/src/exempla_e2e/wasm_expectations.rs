@@ -36,6 +36,7 @@ pub(super) const WASM_EXPECTED_TIER_FLOORS: &[(&str, WasmTier)] = &[
     ("implet/implet.fab", WasmTier::CompileValid),
     ("incipit/functionibus.fab", WasmTier::CompileValid),
     ("incipit/incipit.fab", WasmTier::CompileValid),
+    ("innatum/innatum.fab", WasmTier::CompileValid),
     ("itera/ex.fab", WasmTier::CompileValid),
     ("itera/in-functione.fab", WasmTier::CompileValid),
     ("itera/intervallum-gradus.fab", WasmTier::CompileValid),

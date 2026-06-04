@@ -1758,3 +1758,66 @@ count arithmetic:
 
 Do not claim instantiate, runnable, or behavior-checked progress until the host
 imports and entrypoint/run policy are implemented and measured.
+
+## Phase 025 Update: Runtime Collection MIR And Wasm Emission
+
+**Commit target**: Phase 025
+**Change**: array/tabula collection methods now lower to target-neutral
+`MirIntrinsic::Collection` operations, and the Wasm text probe emits matching
+`faber_runtime` imports for mutating and value-returning collection calls
+(including `appende`, `primus`, `inversa`, `inverte`, and `ordinata`).
+
+### Tier Counts After Phase 025
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 73/101
+  Wasm emitted: 72/101
+  compile-valid: 72/101
+  instantiate-valid: 0/101
+  runnable: 0/101
+  behavior-checked: 0/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 71/101 to 72/101. MIR-lowered
+coverage increased from 72/101 to 73/101.
+
+New compile-valid exemplar:
+
+- `examples/exempla/innatum/innatum.fab`
+
+Instantiate and run tiers remain at zero because `wasmtime` is unavailable on
+PATH. This remains a skipped host/runtime tier, not a compiler failure.
+
+### Result
+
+`primus`, `ultimus`, `inversa`, `inverte`, and `ordinata` on arrays lower through
+MIR collection intrinsics. Void collection mutators (`appende`, `inverte`) and
+value-returning calls (`longitudo`, `primus`, `addita`, `inversa`, `ordinata`)
+emit honest `faber_runtime` import names derived from operand Wasm carriers.
+
+`filtrata` and `mappata` remain explicit failures:
+`collection higher-order methods before callable-value MIR lowering`.
+
+### LLVM Follow-Up
+
+New collection MIR ops are runtime-call-backed shapes suitable for later LLVM
+lowering to host runtime calls; no Wasm-specific MIR nodes were added.
+
+### Phase 025 Validation Log
+
+- `cargo test -p radix lowers_collection_runtime -- --nocapture`: passed.
+- `cargo test -p radix wasm_target_emits_collection_append -- --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+Phase 022 host tooling (`wasmtime`) or callable-value lowering for
+`filtrata`/`mappata` and remaining `si/est.fab` dynamic boxing at Wasm emission.

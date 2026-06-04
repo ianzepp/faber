@@ -421,13 +421,18 @@ pub enum MirConversionFlavor {
 }
 
 /// Built-in collection operation category.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MirCollectionOp {
     Append,
     AppendImmutable,
     Index,
     Length,
     Contains,
+    First,
+    Last,
+    Reverse,
+    ReverseInPlace,
+    Sort,
 }
 
 /// Provider runtime identity retained from module/name resolution.

@@ -381,6 +381,29 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_collection_append_and_first_imports() {
+    let source = r#"
+incipit {
+    varia lista<numerus> items ← vacua
+    items.appende(1)
+    nota items.primus()
+}
+"#;
+
+    let output = compile_wasm_text(source);
+
+    assert!(output.contains(
+        r#"(import "faber_runtime" "append_2_aggregate_i64" (func $__faber_runtime_append_2_aggregate_i64 (param i32 i64)))"#
+    ));
+    assert!(output.contains(
+        r#"(import "faber_runtime" "first_1_aggregate_to_aggregate" (func $__faber_runtime_first_1_aggregate_to_aggregate (param i32) (result i32)))"#
+    ));
+    assert!(output.contains("(call $__faber_runtime_append_2_aggregate_i64"));
+    assert!(output.contains("(call $__faber_runtime_first_1_aggregate_to_aggregate"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_panic_and_collection_length_imports() {
     let source = r#"
 functio at(lista<numerus> items, numerus index) → numerus {

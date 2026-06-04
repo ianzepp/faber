@@ -229,6 +229,18 @@ impl FunctionBuilder<'_> {
             }
             "continet" if args.len() == 1 && (is_array || is_set || is_text) => Some(MirCollectionOp::Contains),
             "habet" if args.len() == 1 && is_map => Some(MirCollectionOp::Contains),
+            "primus" if args.is_empty() && is_array => Some(MirCollectionOp::First),
+            "ultimus" if args.is_empty() && is_array => Some(MirCollectionOp::Last),
+            "inversa" if args.is_empty() && is_array => Some(MirCollectionOp::Reverse),
+            "inverte" if args.is_empty() && is_array => Some(MirCollectionOp::ReverseInPlace),
+            "ordinata" if args.is_empty() && is_array => Some(MirCollectionOp::Sort),
+            "filtrata" | "mappata" | "map" => {
+                self.errors.push(MirError::unsupported(
+                    span,
+                    "collection higher-order methods before callable-value MIR lowering",
+                ));
+                None
+            }
             _ => None,
         }
     }
