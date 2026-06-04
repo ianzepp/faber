@@ -27,6 +27,24 @@ function f0 -> ty#5 {
 }
 
 #[test]
+fn lowers_top_level_const_as_entry_prefix_local() {
+    let dump = dump_source(
+        r#"
+fixum _ age ← 25
+
+incipit {
+    nota age
+}
+"#,
+    );
+
+    assert!(dump.contains("let _0: ty#1"));
+    assert!(dump.contains("_0 = const int 25: ty#1"));
+    assert!(dump.contains("runtime diagnostic nota(_0)"));
+    assert!(!dump.contains("top-level const"));
+}
+
+#[test]
 fn lowers_function_params_into_mir_params() {
     let dump = dump_source("functio saluta(textus nomen, numerus aetas) {}");
 

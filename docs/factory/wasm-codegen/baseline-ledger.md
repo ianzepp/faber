@@ -2169,3 +2169,64 @@ The 85% compile-valid target requires at least 86/101 exempla, so six more
 compile-valid exempla are needed after Phase 028. The best next slice should
 come from MIR-lowering failures, because Wasm emission is currently valid for
 all 80 MIR-lowered exempla.
+
+## Phase 029 Update: Top-Level Const Entry Prefixes
+
+**Commit target**: Phase 029
+**Change**: Top-level constants now lower into the synthetic entry function as
+immutable prefix locals. This keeps const initialization target-neutral and
+allows entry code to resolve paths to top-level const values without introducing
+a Wasm global or LLVM global ABI.
+
+### Tier Counts After Phase 029
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 81/101
+  Wasm emitted: 81/101
+  compile-valid: 81/101
+  instantiate-valid: 81/101
+  runnable: 80/101
+  behavior-checked: 6/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 80/101 to 81/101. The new
+compile-valid exemplar is:
+
+- `examples/exempla/intra/intra.fab`
+
+### Result
+
+`HirItemKind::Const` is no longer rejected during MIR item lowering. Entry
+lowering opens the entry block, emits top-level const initializer assignments in
+HIR item order, then lowers the entry body. The current implementation does not
+claim full executable top-level statement semantics before an explicit
+`incipit`; that remains a separate HIR/program-model issue.
+
+### LLVM Follow-Up
+
+No new target-specific MIR shape was added. LLVM can lower the same local
+initializer sequence once its entry-function path supports the relevant
+statement and diagnostic subset.
+
+### Phase 029 Validation Log
+
+- `cargo test -p radix top_level_const -- --nocapture`: passed.
+- `cargo run -p radix --bin radix -- emit -t wasm examples/exempla/intra/intra.fab`: passed.
+- `wasm-tools validate /tmp/intra.wat`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix llvm -- --nocapture`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix -- --test-threads=1`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+The 85% compile-valid target requires at least 86/101 exempla, so five more
+compile-valid exempla are needed after Phase 029. The highest-count remaining
+clusters are async/`cede` lowering, closure/callable lowering, collection
+iteration over existing collections, and payload `discerne` patterns.

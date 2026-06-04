@@ -35,9 +35,10 @@
 use crate::driver::AnalyzedUnit;
 use crate::hir::visit::HirVisitor;
 use crate::hir::{
-    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirExpr, HirExprKind, HirField, HirFunction,
-    HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField, HirObjectKey,
-    HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirStruct, HirUnOp,
+    DefId, HirArrayElement, HirBinOp, HirBlock, HirCape, HirCasuArm, HirConst, HirExpr, HirExprKind, HirField,
+    HirFunction, HirItem, HirItemKind, HirIteraMode, HirLiteral, HirLocal, HirMethod, HirNonNullKind, HirObjectField,
+    HirObjectKey, HirOptionalChainKind, HirPattern, HirRangeKind, HirScribeKind, HirStmt, HirStmtKind, HirStruct,
+    HirUnOp,
 };
 use crate::lexer::{Interner, Span, Symbol};
 use crate::mir::{
@@ -197,8 +198,7 @@ impl<'a> MirLowerer<'a> {
         let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
         let parent_function_id = MirFunctionId(self.functions.len() as u32);
         let (params, locals, temps, blocks, errors, synthetics) = {
-            let mut builder =
-                FunctionBuilder::for_function(&self.unit.types, error_ty, context, parent_function_id);
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context, parent_function_id);
             for param in &function.params {
                 builder.add_param(param.def_id, param.name, param.ty, param.span);
             }
@@ -261,8 +261,7 @@ impl<'a> MirLowerer<'a> {
         let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
         let parent_function_id = MirFunctionId(self.functions.len() as u32);
         let (params, locals, temps, blocks, errors, synthetics) = {
-            let mut builder =
-                FunctionBuilder::for_function(&self.unit.types, error_ty, context, parent_function_id);
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, error_ty, context, parent_function_id);
             builder.add_param(struct_item.def_id, strukt.name, receiver_ty, method.span);
             for param in &method.func.params {
                 builder.add_param(param.def_id, param.name, param.ty, param.span);
@@ -332,9 +331,17 @@ impl<'a> MirLowerer<'a> {
         let context = context_maps.builder_context(&self.unit.interner, struct_fields.clone());
         let parent_function_id = MirFunctionId(self.functions.len() as u32);
         let (locals, temps, blocks, errors, synthetics) = {
-            let mut builder =
-                FunctionBuilder::for_function(&self.unit.types, None, context, parent_function_id);
-            let blocks = builder.lower_body(entry);
+            let mut builder = FunctionBuilder::for_function(&self.unit.types, None, context, parent_function_id);
+            let entry_block = builder.fresh_block(entry.span);
+            builder.switch_to(entry_block);
+            for item in &self.unit.hir.items {
+                if let HirItemKind::Const(const_item) = &item.kind {
+                    builder.lower_const_binding(item.def_id, const_item, item.span);
+                }
+            }
+            builder.visit_block(entry);
+            builder.terminate_open_current(MirTerminatorKind::Return(None), entry.span);
+            let blocks = builder.finish_blocks();
             let synthetics = builder.take_synthetic_functions();
             (builder.locals, builder.temps, blocks, builder.errors, synthetics)
         };
@@ -523,6 +530,22 @@ impl<'a> FunctionBuilder<'a> {
         };
 
         self.lower_expr_to_destination(init, MirPlace::local(id), mir_ty);
+    }
+
+    fn lower_const_binding(&mut self, item_def_id: DefId, konst: &HirConst, span: Span) {
+        let Some(ty) = konst.ty else {
+            self.errors
+                .push(MirError::missing_type(span, "top-level const declaration"));
+            return;
+        };
+
+        let mir_ty = MirType::semantic(ty);
+        let id = self.next_local_id();
+        self.locals
+            .push(MirLocalDecl { id, name: Some(konst.name), ty: mir_ty, mutable: false, span });
+        self.bindings
+            .insert(item_def_id, LocalBinding { local: id, ty: mir_ty });
+        self.lower_expr_to_destination(&konst.value, MirPlace::local(id), mir_ty);
     }
 
     fn lower_assignment_expr(&mut self, expr: &HirExpr) -> Option<MirOperand> {
@@ -1040,18 +1063,6 @@ fn scribe_kind_name(kind: HirScribeKind) -> &'static str {
         HirScribeKind::Vide => "vide before print/runtime intrinsic MIR lowering",
         HirScribeKind::Mone => "mone before print/runtime intrinsic MIR lowering",
         HirScribeKind::Scribe => "scribe before print/runtime intrinsic MIR lowering",
-    }
-}
-
-fn hir_item_kind_name(kind: &HirItemKind) -> &'static str {
-    match kind {
-        HirItemKind::Function(_) => "function",
-        HirItemKind::Struct(_) => "struct",
-        HirItemKind::Enum(_) => "enum",
-        HirItemKind::Interface(_) => "interface",
-        HirItemKind::TypeAlias(_) => "type alias",
-        HirItemKind::Const(_) => "const",
-        HirItemKind::Import(_) => "import",
     }
 }
 

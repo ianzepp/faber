@@ -59,6 +59,24 @@ incipit {
 }
 
 #[test]
+fn wasm_target_emits_top_level_const_entry_prefix_locals() {
+    let output = compile_wasm_text(
+        r#"
+fixum _ age ← 25
+
+incipit {
+    nota age
+}
+"#,
+    );
+
+    assert!(output.contains("(local $l0 i64)"));
+    assert!(output.contains("(local.set $l0 (i64.const 25))"));
+    assert!(output.contains("(call $__faber_diag_nota_i64 (local.get $l0))"));
+    validate_wat_if_available(&output);
+}
+
+#[test]
 fn wasm_target_emits_boolean_diagnostic_imports() {
     let source = r#"
 incipit {
