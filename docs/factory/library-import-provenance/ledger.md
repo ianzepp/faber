@@ -100,3 +100,26 @@ The test constructs `pactum http`, `pactum Replicatio`, `pactum Rogatio`, and
 `norma::hal::http::petet` and `norma::hal::http::Replicatio`. That is useful
 baseline evidence for the unsafe name/shape bridge that later phases must
 replace.
+
+## Phase 7 Correction
+
+Date: 2026-06-04
+
+The initial provenance implementation still kept two unacceptable backend
+match tables:
+
+- Rust runtime module lookup enumerated known Norma modules.
+- HTTP runtime type lookup enumerated known HTTP exported pacta.
+
+Phase 7 replaces those tables with metadata-driven registry fields populated
+from imported library interfaces:
+
+- `@ subsidia rs ...` marks a library module as Rust-runtime-backed.
+- A resolved built-in import such as `Builtin("norma") + ["hal", "http"]`
+  derives the Rust module path `norma::hal::http`.
+- Imported interface declarations from that runtime-backed module carry
+  `rust_runtime_type` and `elide_rust_decl` metadata.
+- Rust codegen consumes only the registry metadata keyed by `DefId`.
+
+Validation is recorded in
+`docs/factory/library-import-provenance/phase-7-delivery.md`.

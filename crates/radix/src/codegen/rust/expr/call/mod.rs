@@ -121,16 +121,15 @@ pub(super) fn generate_method_call_expr(
         return Ok(());
     }
 
-    // Targeted bridge for built-in norma library modules.
-    // WHY: Built-in pactum imports typecheck as module-like values in Faber,
-    // but Rust links them as functions in the norma runtime crate.
+    // Library pactum imports typecheck as module-like values in Faber, but
+    // target metadata may link them as functions in a runtime crate.
     if let HirExprKind::Path(def_id) = &receiver.kind {
-        if let Some(runtime_module) = norma_runtime_module_path(*def_id, &emitter.codegen.libraries) {
+        if let Some(runtime_module) = library_runtime_module_path(*def_id, &emitter.codegen.libraries) {
             emitter.writer.write(runtime_module);
             emitter.writer.write("::");
             emitter
                 .writer
-                .write(&norma_runtime_method_name(emitter.codegen.resolve_symbol(method)));
+                .write(&library_runtime_method_name(emitter.codegen.resolve_symbol(method)));
             emitter.writer.write("(");
             for (i, arg) in args.iter().enumerate() {
                 if i > 0 {

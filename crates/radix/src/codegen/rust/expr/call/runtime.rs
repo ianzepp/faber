@@ -1,30 +1,13 @@
-//! Runtime module bridge helpers for built-in norma calls.
+//! Runtime module bridge helpers for library-backed calls.
 
-use crate::hir::{DefId, LibraryProvider, LibraryRegistry};
+use crate::hir::{DefId, LibraryRegistry};
 
-pub(super) fn norma_runtime_module_path(receiver_def_id: DefId, libraries: &LibraryRegistry) -> Option<&'static str> {
+pub(super) fn library_runtime_module_path(receiver_def_id: DefId, libraries: &LibraryRegistry) -> Option<&str> {
     let binding = libraries.bindings.get(&receiver_def_id)?;
-    if binding.identity.provider != LibraryProvider::BuiltinNorma {
-        return None;
-    }
-
-    match binding
-        .identity
-        .module_path
-        .iter()
-        .map(String::as_str)
-        .collect::<Vec<_>>()
-        .as_slice()
-    {
-        ["json"] => Some("norma::json"),
-        ["toml"] => Some("norma::toml"),
-        ["hal", "consolum"] => Some("norma::hal::consolum"),
-        ["hal", "http"] => Some("norma::hal::http"),
-        _ => None,
-    }
+    binding.rust_runtime_module.as_deref()
 }
 
-pub(super) fn norma_runtime_method_name(method_name: &str) -> String {
+pub(super) fn library_runtime_method_name(method_name: &str) -> String {
     let mut lowered = String::with_capacity(method_name.len());
     for (i, ch) in method_name.chars().enumerate() {
         if ch.is_ascii_uppercase() {

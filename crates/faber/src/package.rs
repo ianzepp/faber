@@ -897,6 +897,7 @@ fn attach_library_provenance(
 
     for import in imports {
         let identity = library_identity(&import.module);
+        let rust_runtime_module = library_rust_runtime_module(import)?;
         let interface_items = library_interface_items(import)?;
 
         let Some((_, _, binding_def_id)) = hir_items
@@ -915,10 +916,18 @@ fn attach_library_provenance(
             LibraryBinding {
                 local_def_id: *binding_def_id,
                 identity: identity.clone(),
+                rust_runtime_module: rust_runtime_module.clone(),
             },
         );
 
         for interface_item in interface_items {
+            let rust_runtime_type = library_item_rust_runtime_type(
+                rust_runtime_module.as_deref(),
+                &import.module,
+                &interface_item,
+            );
+            let elide_rust_decl =
+                rust_runtime_module.is_some() && interface_item.kind == LibraryItemKind::Interface;
             let Some((_, _, def_id)) = hir_items.iter().find(|(name, kind, _)| {
                 name == &interface_item.local_name && kind == &interface_item.kind
             }) else {
@@ -936,6 +945,8 @@ fn attach_library_provenance(
                     identity: identity.clone(),
                     exported_name: interface_item.exported_name,
                     kind: interface_item.kind,
+                    rust_runtime_type,
+                    elide_rust_decl,
                 },
             );
         }
@@ -944,13 +955,103 @@ fn attach_library_provenance(
     Ok(())
 }
 
-fn library_identity(module: &ResolvedLibraryModule) -> LibraryIdentity {
-    let provider = if module.package == "norma"
-        && module.provider == crate::library::LibraryProviderKind::Builtin
+#[allow(clippy::result_large_err)]
+fn library_rust_runtime_module(
+    import: &LibraryImportBinding,
+) -> Result<Option<String>, Diagnostic> {
+    let source = fs::read_to_string(&import.module.interface_path)
+        .map_err(|err| Diagnostic::io_error(&import.module.interface_path, err))?;
+    let parse = parser::parse(radix::lexer::lex(&source));
+    if !parse.success() {
+        let mut message = format!(
+            "library interface `{}` failed to parse",
+            import.module.interface_path.display()
+        );
+        if let Some(err) = parse.errors.first() {
+            message.push_str(&format!(": {}", err.message));
+        }
+        return Err(Diagnostic::error(message)
+            .with_file(import.module.interface_path.display().to_string()));
+    }
+
+    let Some(program) = parse.program else {
+        return Err(
+            Diagnostic::error("successful library interface parse result missing program")
+                .with_file(import.module.interface_path.display().to_string()),
+        );
+    };
+
+    if !has_rust_subsidia(&program, &parse.interner) {
+        return Ok(None);
+    }
+
+    Ok(Some(rust_module_path_for_library(&import.module)))
+}
+
+fn has_rust_subsidia(program: &Program, interner: &Interner) -> bool {
+    program.stmts.iter().any(|stmt| {
+        stmt.annotations
+            .iter()
+            .any(|annotation| match &annotation.kind {
+                AnnotationKind::Subsidia(mappings) => mappings
+                    .iter()
+                    .any(|mapping| interner.resolve(mapping.target.name) == "rs"),
+                AnnotationKind::Statement(annotation_stmt) => {
+                    if interner.resolve(annotation_stmt.name.name) != "subsidia" {
+                        return false;
+                    }
+                    annotation_stmt.args.iter().any(|arg| match arg.kind {
+                        TokenKind::Ident(target) => interner.resolve(target) == "rs",
+                        _ => false,
+                    })
+                }
+                _ => false,
+            })
+    })
+}
+
+fn rust_module_path_for_library(module: &ResolvedLibraryModule) -> String {
+    let mut segments = Vec::with_capacity(module.module_path.len() + 1);
+    segments.push(rust_crate_name_for_library(module));
+    segments.extend(module.module_path.iter().cloned());
+    segments.join("::")
+}
+
+fn rust_crate_name_for_library(module: &ResolvedLibraryModule) -> String {
+    match module.provider {
+        crate::library::LibraryProviderKind::Builtin
+        | crate::library::LibraryProviderKind::PackageDependency => {
+            module.package.replace('-', "_")
+        }
+    }
+}
+
+fn library_item_rust_runtime_type(
+    rust_runtime_module: Option<&str>,
+    module: &ResolvedLibraryModule,
+    item: &LibraryInterfaceItem,
+) -> Option<String> {
+    let rust_runtime_module = rust_runtime_module?;
+    if item.kind != LibraryItemKind::Interface {
+        return None;
+    }
+    if module
+        .module_name()
+        .is_some_and(|module_name| module_name == item.exported_name)
     {
-        LibraryProvider::BuiltinNorma
-    } else {
-        LibraryProvider::Package(module.package.clone())
+        return None;
+    }
+    Some(format!("{rust_runtime_module}::{}", item.exported_name))
+}
+
+fn library_identity(module: &ResolvedLibraryModule) -> LibraryIdentity {
+    let provider = match module.provider {
+        crate::library::LibraryProviderKind::Builtin => {
+            LibraryProvider::Builtin(module.package.clone())
+        }
+        crate::library::LibraryProviderKind::PackageDependency => {
+            LibraryProvider::Package(module.package.clone())
+        }
     };
     LibraryIdentity {
         provider,

@@ -12,6 +12,7 @@
 #     Server runtime support is deferred beyond the first Rust HTTP HAL slice.
 #   - Response builders: replica (full), scribe (text), funde (bytes), json (JSON)
 
+@ subsidia rs "../../../crates/norma/hal/http.rs"
 pactum http {
     # =========================================================================
     # HTTP CLIENT - Simple Methods

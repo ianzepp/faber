@@ -65,8 +65,8 @@ pub struct HirProgram {
 /// Provider identity for an imported library module.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum LibraryProvider {
-    /// The built-in Norma standard library bundled with Faber.
-    BuiltinNorma,
+    /// Built-in library bundled with this Faber distribution.
+    Builtin(String),
 
     /// Reserved shape for future package-backed providers.
     Package(String),
@@ -112,6 +112,10 @@ pub struct LibraryBinding {
 
     /// Provider/module identity.
     pub identity: LibraryIdentity,
+
+    /// Rust runtime module supplied by library metadata, when this import is
+    /// backed by a target runtime crate instead of generated local declarations.
+    pub rust_runtime_module: Option<String>,
 }
 
 /// Provenance for a declaration imported from a library interface.
@@ -128,6 +132,14 @@ pub struct LibraryItem {
 
     /// Imported declaration kind.
     pub kind: LibraryItemKind,
+
+    /// Rust runtime type supplied by library metadata for declarations whose
+    /// Faber interface is a contract over a target runtime type.
+    pub rust_runtime_type: Option<String>,
+
+    /// Whether Rust should omit the generated declaration because the runtime
+    /// crate owns the concrete surface.
+    pub elide_rust_decl: bool,
 }
 
 /// Side table carrying library provenance across analysis and codegen.

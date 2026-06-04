@@ -115,13 +115,14 @@ struct LibraryIdentity {
 }
 
 enum LibraryProvider {
-    BuiltinNorma,
+    Builtin(String),
     Package(String),
 }
 
 struct LibraryBinding {
     local_def_id: DefId,
     identity: LibraryIdentity,
+    rust_runtime_module: Option<String>,
 }
 
 struct LibraryItem {
@@ -129,6 +130,8 @@ struct LibraryItem {
     identity: LibraryIdentity,
     exported_name: String,
     kind: LibraryItemKind,
+    rust_runtime_type: Option<String>,
+    elide_rust_decl: bool,
 }
 ```
 
@@ -151,8 +154,8 @@ importa ex "norma:hal/http" privata http ut rete
 
 If aliasing is supported by the existing import grammar for this declaration
 shape, `rete.petet(...)` must still lower to the Norma HTTP runtime because the
-receiver binding's `DefId` has `BuiltinNorma + ["hal", "http"]` provenance. A
-user-defined `rete` value must not lower that way.
+receiver binding's `DefId` has `Builtin("norma") + ["hal", "http"]` provenance
+and Rust runtime metadata. A user-defined `rete` value must not lower that way.
 
 ## Rust Codegen Contract
 
@@ -170,20 +173,21 @@ with a DefId/provider-aware lookup shaped like:
 fn rust_runtime_module_for_library_binding(
     def_id: DefId,
     libraries: &LibraryRegistry,
-) -> Option<&'static str>
+) -> Option<&str>
 ```
 
-The mapping belongs in Rust backend linkage metadata:
+The runtime module path belongs in library target metadata. For built-in Norma,
+`@ subsidia rs ...` marks the module as runtime-backed and the Rust namespace is
+derived mechanically from the resolved provider and module path:
 
 ```text
-BuiltinNorma + ["json"]        -> norma::json
-BuiltinNorma + ["toml"]        -> norma::toml
-BuiltinNorma + ["hal", "http"] -> norma::hal::http
-BuiltinNorma + ["hal", "consolum"] -> norma::hal::consolum
+Builtin("norma") + ["json"]        + @ subsidia rs ... -> norma::json
+Builtin("norma") + ["toml"]        + @ subsidia rs ... -> norma::toml
+Builtin("norma") + ["hal", "http"] + @ subsidia rs ... -> norma::hal::http
 ```
 
 The backend may use source names for generated local variable names, but never
-for deciding whether a call is a Norma runtime call.
+for deciding whether a call is a runtime-backed library call.
 
 ## Runtime Interface Type Contract
 
@@ -193,13 +197,13 @@ Current shape-based recognition such as `Replicatio` plus method-list matching
 is unsafe. A local user interface with the same name and methods is still a user
 interface.
 
-The intended identity mapping is:
+The intended mapping is metadata-derived:
 
 ```text
-BuiltinNorma + ["hal", "http"] + "http"        -> elide module interface
-BuiltinNorma + ["hal", "http"] + "Replicatio" -> norma::hal::http::Replicatio
-BuiltinNorma + ["hal", "http"] + "Rogatio"    -> norma::hal::http::Rogatio
-BuiltinNorma + ["hal", "http"] + "Servitor"   -> norma::hal::http::Servitor
+Builtin("norma") + ["hal", "http"] + @ subsidia rs ... + module pactum
+  -> elide module interface
+Builtin("norma") + ["hal", "http"] + @ subsidia rs ... + imported pactum X
+  -> norma::hal::http::X
 ```
 
 Method-list checks may remain only as defensive assertions that the imported

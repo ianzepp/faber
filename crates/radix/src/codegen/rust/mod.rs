@@ -47,7 +47,7 @@ mod types;
 use super::{names::NameCatalog, CodeWriter, Codegen, CodegenError};
 use crate::hir::{
     DefId, HirExpr, HirFunction, HirItem, HirItemKind, HirProgram, HirTestMetadata, HirTestModifier, LibraryItemKind,
-    LibraryProvider, LibraryRegistry,
+    LibraryRegistry,
 };
 use crate::lexer::{Interner, Symbol};
 use crate::semantic::{Type, TypeId, TypeTable};
@@ -103,9 +103,9 @@ pub(super) struct FunctionParamInfo<'a> {
     pub(super) default: Option<&'a HirExpr>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct RuntimeInterfaceInfo {
-    rust_type: Option<&'static str>,
+    rust_type: Option<String>,
     elide_decl: bool,
 }
 
@@ -248,10 +248,10 @@ impl<'a> RustCodegen<'a> {
         self.variant_info.get(&def_id)
     }
 
-    pub(super) fn runtime_interface_type(&self, def_id: DefId) -> Option<&'static str> {
+    pub(super) fn runtime_interface_type(&self, def_id: DefId) -> Option<&str> {
         self.runtime_interfaces
             .get(&def_id)
-            .and_then(|info| info.rust_type)
+            .and_then(|info| info.rust_type.as_deref())
     }
 
     pub(super) fn should_elide_runtime_interface_decl(&self, def_id: DefId) -> bool {
@@ -464,7 +464,7 @@ impl<'a> RustCodegen<'a> {
                 continue;
             };
 
-            let Some(info) = self.http_runtime_interface_info(item.def_id) else {
+            let Some(info) = self.library_runtime_interface_info(item.def_id) else {
                 continue;
             };
 
@@ -474,29 +474,13 @@ impl<'a> RustCodegen<'a> {
         interfaces
     }
 
-    fn http_runtime_interface_info(&self, def_id: DefId) -> Option<RuntimeInterfaceInfo> {
+    fn library_runtime_interface_info(&self, def_id: DefId) -> Option<RuntimeInterfaceInfo> {
         let item = self.libraries.items.get(&def_id)?;
-        if item.kind != LibraryItemKind::Interface
-            || item.identity.provider != LibraryProvider::BuiltinNorma
-            || !matches!(
-                item.identity.module_path.as_slice(),
-                [first, second] if first == "hal" && second == "http"
-            )
-        {
+        if item.kind != LibraryItemKind::Interface || !item.elide_rust_decl {
             return None;
         }
 
-        match item.exported_name.as_str() {
-            "http" => Some(RuntimeInterfaceInfo { rust_type: None, elide_decl: true }),
-            "Replicatio" => {
-                Some(RuntimeInterfaceInfo { rust_type: Some("norma::hal::http::Replicatio"), elide_decl: true })
-            }
-            "Rogatio" => Some(RuntimeInterfaceInfo { rust_type: Some("norma::hal::http::Rogatio"), elide_decl: true }),
-            "Servitor" => {
-                Some(RuntimeInterfaceInfo { rust_type: Some("norma::hal::http::Servitor"), elide_decl: true })
-            }
-            _ => None,
-        }
+        Some(RuntimeInterfaceInfo { rust_type: item.rust_runtime_type.clone(), elide_decl: true })
     }
 
     /// Precompute struct field metadata needed by Rust declaration and literal emission.

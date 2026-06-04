@@ -441,8 +441,15 @@ incipit {
         .bindings
         .get(&rete)
         .expect("rete binding provenance");
-    assert_eq!(binding.identity.provider, LibraryProvider::BuiltinNorma);
+    assert_eq!(
+        binding.identity.provider,
+        LibraryProvider::Builtin("norma".to_owned())
+    );
     assert_eq!(binding.identity.module_path, vec!["hal", "http"]);
+    assert_eq!(
+        binding.rust_runtime_module.as_deref(),
+        Some("norma::hal::http")
+    );
 
     let replicatio = analysis
         .hir
@@ -460,10 +467,18 @@ incipit {
         .items
         .get(&replicatio)
         .expect("Replicatio item provenance");
-    assert_eq!(item.identity.provider, LibraryProvider::BuiltinNorma);
+    assert_eq!(
+        item.identity.provider,
+        LibraryProvider::Builtin("norma".to_owned())
+    );
     assert_eq!(item.identity.module_path, vec!["hal", "http"]);
     assert_eq!(item.exported_name, "Replicatio");
     assert_eq!(item.kind, LibraryItemKind::Interface);
+    assert_eq!(
+        item.rust_runtime_type.as_deref(),
+        Some("norma::hal::http::Replicatio")
+    );
+    assert!(item.elide_rust_decl);
 }
 
 #[test]
