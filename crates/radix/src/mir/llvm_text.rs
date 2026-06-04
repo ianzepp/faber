@@ -145,9 +145,22 @@ impl LlvmProbe<'_> {
         context: &mut FunctionContext,
         writer: &mut CodeWriter,
     ) -> Result<(), MirLlvmTextProbeError> {
-        let MirStmtKind::Assign { place, value } = &stmt.kind else {
-            return Err(MirLlvmTextProbeError::unsupported(stmt_kind_name(&stmt.kind)));
-        };
+        match &stmt.kind {
+            MirStmtKind::Assign { place, value } => self.emit_assign(place, value, context, writer),
+            MirStmtKind::Call { destination, callee, args } => {
+                self.emit_call(destination.as_ref(), callee, args, context, writer)
+            }
+            other => Err(MirLlvmTextProbeError::unsupported(stmt_kind_name(other))),
+        }
+    }
+
+    fn emit_assign(
+        &self,
+        place: &MirPlace,
+        value: &MirValue,
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<(), MirLlvmTextProbeError> {
         if !place.projections.is_empty() {
             return Err(MirLlvmTextProbeError::unsupported("place projection"));
         }
@@ -179,6 +192,48 @@ impl LlvmProbe<'_> {
         };
         context.values.insert(value.id, expr.clone());
         context.value_tys.insert(value.id, value.ty);
+        self.store_place(place, &expr, context, writer)
+    }
+
+    fn emit_call(
+        &self,
+        destination: Option<&MirPlace>,
+        callee: &MirCallee,
+        args: &[MirOperand],
+        context: &mut FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<(), MirLlvmTextProbeError> {
+        let function = self.callee_function(callee)?;
+        let return_ty = self.llvm_ty(function.return_ty)?;
+        let mut rendered_args = Vec::with_capacity(args.len());
+        for arg in args {
+            let arg_ty = self.llvm_ty(self.operand_ty(arg, context)?)?;
+            let arg_value = self.operand(arg, context, writer)?;
+            rendered_args.push(format!("{arg_ty} {arg_value}"));
+        }
+        let call = format!(
+            "call {return_ty} @{}({})",
+            self.function_name(function),
+            rendered_args.join(", ")
+        );
+        if let Some(destination) = destination {
+            let dest = format!("%call{}", context.load_counter);
+            context.load_counter += 1;
+            writer.indented(|writer| writer.writeln(&format!("  {dest} = {call}")));
+            self.store_place(destination, &dest, context, writer)
+        } else {
+            writer.indented(|writer| writer.writeln(&format!("  {call}")));
+            Ok(())
+        }
+    }
+
+    fn store_place(
+        &self,
+        place: &MirPlace,
+        expr: &str,
+        context: &FunctionContext,
+        writer: &mut CodeWriter,
+    ) -> Result<(), MirLlvmTextProbeError> {
         let ty = self.llvm_ty(self.place_ty(place, context)?)?;
         let slot = place_slot(place)?;
         writer.indented(|writer| {
@@ -406,6 +461,24 @@ impl LlvmProbe<'_> {
             .name
             .map(|symbol| sanitize_name(self.interner.resolve(symbol)))
             .unwrap_or_else(|| format!("f{}", function.id.0))
+    }
+
+    fn callee_function(&self, callee: &MirCallee) -> Result<&MirFunction, MirLlvmTextProbeError> {
+        match callee {
+            MirCallee::Function(id) => self
+                .program
+                .functions
+                .iter()
+                .find(|function| function.id == *id)
+                .ok_or_else(|| MirLlvmTextProbeError::unsupported(format!("unknown function f{}", id.0))),
+            MirCallee::Definition(def_id) => self
+                .program
+                .functions
+                .iter()
+                .find(|function| function.source == Some(*def_id))
+                .ok_or_else(|| MirLlvmTextProbeError::unsupported("external definition call")),
+            MirCallee::Value(_) => Err(MirLlvmTextProbeError::unsupported("value callee")),
+        }
     }
 }
 

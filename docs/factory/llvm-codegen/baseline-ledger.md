@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 004 baseline
+**Status**: Phase 005 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -24,6 +24,8 @@ The current emitter supports scalar functions over one or more MIR basic blocks:
   carries operand type facts;
 - boolean `Not`, `And`, `Or`, equality, and inequality;
 - local, temp, value, and constant operands within the current scalar policy;
+- direct function calls between MIR functions in the same program when
+  arguments and results fit the scalar policy;
 - LLVM labels for MIR basic blocks in MIR storage order;
 - direct `return`, `ret void`, unconditional branches, and scalar boolean
   conditional branches.
@@ -78,6 +80,9 @@ are scalar `numerus`, `fractus`, `bivalens`, or `vacuum`:
 - `MirFunction` declarations with direct parameters and return type.
 - `MirParam` lowered as `%lN` LLVM parameters and stored into `%lN.addr`.
 - `MirStmtKind::Assign` without projections.
+- `MirStmtKind::Call` with `MirCallee::Function`.
+- `MirStmtKind::Call` with `MirCallee::Definition` when the definition resolves
+  to a MIR function in the current program.
 - `MirValueKind::Operand`.
 - `MirValueKind::Binary` for integer and floating `Add`, `Sub`, `Mul`, `Div`,
   and `Mod`.
@@ -137,8 +142,8 @@ IR because there is no verifier policy yet:
 - Any emitted `.ll` text beyond the current probe examples.
 - Multi-block CFG beyond the focused scalar examples until `llvm-as`, `opt`, or
   an equivalent verifier policy is selected.
-- Direct calls after Phase 005 until declarations, symbol policy, and result
-  typing are verified.
+- Direct calls beyond the focused scalar examples until declarations, symbol
+  policy, and result typing are verified.
 - External definitions and runtime declarations.
 
 ### Intentionally Deferred
@@ -146,7 +151,8 @@ IR because there is no verifier policy yet:
 These shapes are outside the early scalar LLVM lane and should continue to
 produce explicit unsupported diagnostics until their named phases:
 
-- `MirStmtKind::Call` and all `MirCallee` variants.
+- `MirStmtKind::Call` with external `MirCallee::Definition`.
+- `MirStmtKind::Call` with `MirCallee::Value`.
 - `MirTerminatorKind::Switch`.
 - `MirTerminatorKind::TryCall`.
 - `MirTerminatorKind::ReturnError`.
@@ -160,19 +166,20 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 004 measured corpus counts are 102/102 frontend
+- **E2E Visibility**: Phase 005 measured corpus counts are 102/102 frontend
   analyzed, 74/102 MIR lowered, 1/102 LLVM emitted, 28 MIR lowering failures,
   73 unsupported LLVM diagnostics, 0 unexpected LLVM emission failures, and
   0 output-write failures. Counts are unchanged because the exempla corpus has
-  no runtime-free scalar CFG fixture yet.
+  no runtime-free direct-scalar-call fixture yet.
 - **Scalar Type Coverage**: `fractus`, scalar comparisons, boolean unary
   `Not`, and boolean `And`/`Or` are supported for scalar functions.
   Integer bitwise operations and shifts remain unsupported.
 - **Control Flow**: branch-return, branch-join, and simple loop scalar MIR now
   emit labels, `br label`, and `br i1`. `switch`, failable control flow,
   alternate exits, and unreachable policy remain unsupported.
-- **Calls**: direct MIR calls, definition calls, value callees, and failable
-  calls are unsupported.
+- **Calls**: direct scalar MIR calls between same-program functions are
+  supported. External definitions, value callees, failable calls, and
+  non-scalar call signatures remain unsupported.
 - **Runtime Boundary**: diagnostics, assertions, panic, conversion, formatting,
   and collection intrinsics have no LLVM ABI.
 - **Layout**: text, aggregate, nullable, projection, enum, struct, collection,
@@ -194,19 +201,26 @@ produce explicit unsupported diagnostics until their named phases:
   backedge.
 - `llvm_text_target_still_rejects_switch_cfg` verifies `switch` remains an
   explicit unsupported CFG terminator.
+- `llvm_text_target_emits_direct_scalar_function_calls` verifies direct scalar
+  helper calls store returned values.
+- `llvm_text_target_emits_direct_scalar_call_chains` verifies scalar call
+  results can flow through locals into later calls.
+- `llvm_text_target_rejects_value_callee` verifies callable values remain
+  explicitly unsupported.
+- `llvm_text_target_rejects_external_definition_call` verifies definitions not
+  lowered into the current MIR program remain explicitly unsupported.
 - `exempla_llvm_e2e` is ignored by default and records unsupported LLVM
   diagnostics separately from MIR-lowering and unexpected emission failures.
 
 ## Next Implementation Slice
 
-The evidence now points to Phase 005, direct function calls. After scalar CFG,
-ordinary examples most often fail LLVM emission on calls, runtime calls, text,
-aggregates, or layout-dependent values. Direct calls are the next scalar MIR
-surface that can expand lowering without defining the full runtime ABI.
+The evidence now points to Phase 006, LLVM verifier policy. The LLVM lane can
+emit scalar arithmetic, scalar CFG, and same-program direct scalar calls, but it
+still cannot honestly distinguish emitted text from verifier-valid LLVM IR.
 
 ## Wasm Follow-Up Implications
 
-Phase 004 made no MIR changes. No Wasm code changes are required.
+Phase 005 made no MIR changes. No Wasm code changes are required.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate
