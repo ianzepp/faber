@@ -95,6 +95,34 @@ fn function_id_call_program(types: &TypeTable) -> MirProgram {
     }
 }
 
+fn runtime_stmt_program(
+    locals: Vec<MirLocal>,
+    temps: Vec<MirTemp>,
+    statements: Vec<MirStmt>,
+    terminator: MirTerminatorKind,
+    types: &TypeTable,
+) -> MirProgram {
+    MirProgram {
+        functions: vec![MirFunction {
+            id: MirFunctionId(0),
+            source: None,
+            name: None,
+            params: Vec::new(),
+            locals,
+            temps,
+            blocks: vec![MirBlock {
+                id: MirBlockId(0),
+                statements,
+                terminator: MirTerminator { kind: terminator, span: span() },
+                span: span(),
+            }],
+            return_ty: ty(types, Primitive::Vacuum),
+            error_ty: None,
+            span: span(),
+        }],
+    }
+}
+
 #[test]
 fn llvm_text_target_emits_text_from_validated_mir() {
     let source = r#"
@@ -407,6 +435,220 @@ fn llvm_text_target_emits_function_id_callee() {
     assert!(output.contains("define i64 @f0()"));
     assert!(output.contains("define i64 @f1()"));
     assert!(output.contains("call i64 @f1()"));
+}
+
+#[test]
+fn llvm_text_target_emits_diagnostic_assert_and_panic_runtime_declarations() {
+    let types = TypeTable::new();
+    let program = runtime_stmt_program(
+        Vec::new(),
+        Vec::new(),
+        vec![
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: None,
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::Diagnostic(MirDiagnosticKind::Nota),
+                        args: vec![MirOperand::Constant(MirConstant::String(crate::lexer::Symbol(7)))],
+                        return_ty: ty(&types, Primitive::Vacuum),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: None,
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::Assert,
+                        args: vec![
+                            MirOperand::Constant(MirConstant::Bool(true)),
+                            MirOperand::Constant(MirConstant::String(crate::lexer::Symbol(8))),
+                        ],
+                        return_ty: ty(&types, Primitive::Vacuum),
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: None,
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::Panic,
+                        args: vec![MirOperand::Constant(MirConstant::String(crate::lexer::Symbol(9)))],
+                        return_ty: ty(&types, Primitive::Numquam),
+                    },
+                },
+                span: span(),
+            },
+        ],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("runtime calls emit");
+
+    assert!(output.contains("declare void @__faber_runtime_assert_2_i1_ptr(i1, ptr)"));
+    assert!(output.contains("declare void @__faber_runtime_diagnostic_nota_1_ptr(ptr)"));
+    assert!(output.contains("declare void @__faber_runtime_panic_1_ptr(ptr)"));
+    assert!(output.contains("call void @__faber_runtime_diagnostic_nota_1_ptr(ptr inttoptr (i64 7 to ptr))"));
+    assert!(output.contains("call void @__faber_runtime_assert_2_i1_ptr(i1 1, ptr inttoptr (i64 8 to ptr))"));
+    assert!(output.contains("call void @__faber_runtime_panic_1_ptr(ptr inttoptr (i64 9 to ptr))"));
+}
+
+#[test]
+fn llvm_text_target_emits_value_returning_runtime_calls() {
+    let mut types = TypeTable::new();
+    let number = ty(&types, Primitive::Numerus);
+    let text = ty(&types, Primitive::Textus);
+    let list = MirType::semantic(types.array(types.primitive(Primitive::Numerus)));
+    let program = runtime_stmt_program(
+        Vec::new(),
+        vec![
+            MirTemp { id: MirTempId(0), ty: number, span: span() },
+            MirTemp { id: MirTempId(1), ty: text, span: span() },
+            MirTemp { id: MirTempId(2), ty: number, span: span() },
+        ],
+        vec![
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: Some(MirPlace::temp(MirTempId(0))),
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::Convert(MirConversion {
+                            flavor: MirConversionFlavor::Runtime,
+                            target_ty: number,
+                            params: Vec::new(),
+                            fallback: None,
+                        }),
+                        args: vec![MirOperand::Constant(MirConstant::String(crate::lexer::Symbol(10)))],
+                        return_ty: number,
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: Some(MirPlace::temp(MirTempId(1))),
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::FormatString { template: crate::lexer::Symbol(11) },
+                        args: vec![MirOperand::Temp(MirTempId(0))],
+                        return_ty: text,
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: Some(MirPlace::temp(MirTempId(2))),
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::Collection(MirCollectionOp::Length),
+                        args: vec![MirOperand::Constant(MirConstant::Nil)],
+                        return_ty: number,
+                    },
+                },
+                span: span(),
+            },
+        ],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+
+    let error = emit_llvm_text_probe(&program, &types, &Interner::new())
+        .expect_err("nil constants remain unsupported before nullable layout");
+    assert!(error
+        .message
+        .contains("MIR-to-LLVM unsupported: nil constant"));
+
+    let program = runtime_stmt_program(
+        Vec::new(),
+        vec![
+            MirTemp { id: MirTempId(0), ty: number, span: span() },
+            MirTemp { id: MirTempId(1), ty: text, span: span() },
+            MirTemp { id: MirTempId(2), ty: number, span: span() },
+            MirTemp { id: MirTempId(3), ty: list, span: span() },
+        ],
+        vec![
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: Some(MirPlace::temp(MirTempId(0))),
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::Convert(MirConversion {
+                            flavor: MirConversionFlavor::Runtime,
+                            target_ty: number,
+                            params: Vec::new(),
+                            fallback: None,
+                        }),
+                        args: vec![MirOperand::Constant(MirConstant::String(crate::lexer::Symbol(10)))],
+                        return_ty: number,
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: Some(MirPlace::temp(MirTempId(1))),
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::FormatString { template: crate::lexer::Symbol(11) },
+                        args: vec![MirOperand::Temp(MirTempId(0))],
+                        return_ty: text,
+                    },
+                },
+                span: span(),
+            },
+            MirStmt {
+                kind: MirStmtKind::RuntimeCall {
+                    destination: Some(MirPlace::temp(MirTempId(2))),
+                    call: MirRuntimeCall {
+                        intrinsic: MirIntrinsic::Collection(MirCollectionOp::Length),
+                        args: vec![MirOperand::Temp(MirTempId(3))],
+                        return_ty: number,
+                    },
+                },
+                span: span(),
+            },
+        ],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+    let output = emit_llvm_text_probe(&program, &types, &Interner::new()).expect("runtime values emit");
+
+    assert!(output.contains("declare i64 @__faber_runtime_convert_runtime_1_ptr_to_i64(ptr)"));
+    assert!(output.contains("declare ptr @__faber_runtime_format_1_i64_to_ptr(i64)"));
+    assert!(output.contains("declare i64 @__faber_runtime_length_1_ptr_to_i64(ptr)"));
+    assert!(output.contains("%rtcall0 = call i64 @__faber_runtime_convert_runtime_1_ptr_to_i64"));
+    assert!(output.contains("store i64 %rtcall0, ptr %t0.addr"));
+    assert!(output.contains("call ptr @__faber_runtime_format_1_i64_to_ptr"));
+    assert!(output.contains("store ptr %rtcall"));
+    assert!(output.contains("call i64 @__faber_runtime_length_1_ptr_to_i64"));
+    assert!(output.contains("store i64 %rtcall"));
+}
+
+#[test]
+fn llvm_text_target_rejects_provider_runtime_calls() {
+    let types = TypeTable::new();
+    let program = runtime_stmt_program(
+        Vec::new(),
+        Vec::new(),
+        vec![MirStmt {
+            kind: MirStmtKind::RuntimeCall {
+                destination: None,
+                call: MirRuntimeCall {
+                    intrinsic: MirIntrinsic::Provider(MirProvider {
+                        module: vec![crate::lexer::Symbol(1)],
+                        name: crate::lexer::Symbol(2),
+                    }),
+                    args: Vec::new(),
+                    return_ty: ty(&types, Primitive::Vacuum),
+                },
+            },
+            span: span(),
+        }],
+        MirTerminatorKind::Return(None),
+        &types,
+    );
+    let error = emit_llvm_text_probe(&program, &types, &Interner::new()).expect_err("provider remains deferred");
+
+    assert!(error
+        .message
+        .contains("MIR-to-LLVM unsupported: provider runtime call"));
 }
 
 #[test]

@@ -1,6 +1,6 @@
 # LLVM Codegen Baseline Ledger
 
-**Status**: Phase 006 baseline
+**Status**: Phase 007 baseline
 **Measured**: 2026-06-04  
 **Current Focused Gate**: `cargo test -p radix llvm -- --nocapture`
 
@@ -26,6 +26,10 @@ The current emitter supports scalar functions over one or more MIR basic blocks:
 - local, temp, value, and constant operands within the current scalar policy;
 - direct function calls between MIR functions in the same program when
   arguments and results fit the scalar policy;
+- deterministic LLVM `declare` lines and `call` instructions for supported
+  runtime intrinsics;
+- opaque `ptr` runtime handles for text and aggregate-like runtime values when
+  used as runtime-call arguments, destinations, or helper results;
 - LLVM labels for MIR basic blocks in MIR storage order;
 - direct `return`, `ret void`, unconditional branches, and scalar boolean
   conditional branches.
@@ -105,10 +109,11 @@ are scalar `numerus`, `fractus`, `bivalens`, or `vacuum`:
 - `MirTerminatorKind::Goto`.
 - `MirTerminatorKind::Branch` with scalar `bivalens` conditions.
 
-### Runtime-Call-Backed Later
+### Runtime-Call-Backed Today
 
 These shapes represent source semantics that should remain MIR-level facts but
-need an LLVM runtime or host-boundary policy before text emission can be honest:
+now lower to LLVM runtime declarations and calls when their operands fit the
+current scalar-or-handle ABI:
 
 - `MirStmtKind::RuntimeCall`.
 - `MirIntrinsic::Diagnostic`.
@@ -117,12 +122,15 @@ need an LLVM runtime or host-boundary policy before text emission can be honest:
 - `MirIntrinsic::Convert`.
 - `MirIntrinsic::Collection`.
 - `MirIntrinsic::Panic`.
-- Text comparison or concatenation implied by `MirBinOp` over text values.
-- Aggregate projection reads or writes when represented through runtime handles.
 
-Wasm already lowers many of these through explicit imports in
-`crates/radix/src/mir/wasm_text.rs`. LLVM should define its own ABI instead of
-copying Wasm import names into MIR.
+LLVM runtime symbols use the `__faber_runtime_` prefix as external declarations
+such as `declare void @__faber_runtime_diagnostic_nota_1_ptr(ptr)`. This is an
+LLVM-side ABI, not a Wasm import ABI. Symbol suffixes record intrinsic kind,
+argument count, argument ABI classes, and result ABI class when the call returns
+a value. `panic` is declared as a void helper even though MIR records `numquam`;
+the following MIR terminator remains responsible for unreachable policy.
+
+Supported runtime ABI classes are `i1`, `i64`, `f64`, `ptr`, and `void`.
 
 ### Layout-Dependent
 
@@ -135,9 +143,11 @@ lower them without guessing:
 - `MirProjection::Field`, `MirProjection::VariantField`, and
   `MirProjection::Index`.
 - `MirValueKind::Option` and all `MirOptionOp` variants.
-- `MirConstant::String` and `MirConstant::Nil`.
-- `textus`, nullable unions, aggregates, enums, structs, collections, provider
-  values, and other non-probe semantic types.
+- `MirConstant::Nil`.
+- ordinary function returns of `textus`, nullable unions, aggregates, enums,
+  structs, collections, provider values, and other non-probe semantic types.
+- text comparison or concatenation implied by `MirBinOp` over text values.
+- aggregate projection reads or writes when represented through runtime handles.
 - `MirType::layout_id`, which is reserved but not consumed by the current LLVM
   probe.
 
@@ -175,12 +185,10 @@ produce explicit unsupported diagnostics until their named phases:
 
 ## Current Failure Clusters
 
-- **E2E Visibility**: Phase 006 measured corpus counts are 102/102 frontend
-  analyzed, 74/102 MIR lowered, 1/102 LLVM emitted, 28 MIR lowering failures,
-  0/102 verifier-valid, 73 unsupported LLVM diagnostics, 0 unexpected LLVM
-  emission failures, 0 output-write failures, and 0 verifier failures. Counts
-  are unchanged because the exempla corpus has no runtime-free
-  direct-scalar-call fixture yet.
+- **E2E Visibility**: Phase 007 measured corpus counts are 102/102 frontend
+  analyzed, 74/102 MIR lowered, 35/102 LLVM emitted, 28 MIR lowering failures,
+  0/102 verifier-valid, 39 unsupported LLVM diagnostics, 0 unexpected LLVM
+  emission failures, 0 output-write failures, and 0 verifier failures.
 - **Scalar Type Coverage**: `fractus`, scalar comparisons, boolean unary
   `Not`, and boolean `And`/`Or` are supported for scalar functions.
   Integer bitwise operations and shifts remain unsupported.
@@ -191,14 +199,16 @@ produce explicit unsupported diagnostics until their named phases:
   supported. External definitions, value callees, failable calls, and
   non-scalar call signatures remain unsupported.
 - **Runtime Boundary**: diagnostics, assertions, panic, conversion, formatting,
-  and collection intrinsics have no LLVM ABI.
-- **Layout**: text, aggregate, nullable, projection, enum, struct, collection,
-  and provider values have no LLVM representation.
+  and collection intrinsics lower to named LLVM runtime declarations and calls.
+  Provider/HAL runtime calls remain deferred.
+- **Layout**: ordinary text returns, aggregate construction, nullable values,
+  projections, enum, struct, collection layout, and provider values have no
+  physical LLVM representation beyond opaque runtime handles.
 - **Verification**: the e2e harness detects `llvm-as` or `opt` and records
   verifier-valid output only when a verifier is available. Current local
   verifier status is unavailable: `llvm-as` and `opt` were not found on PATH.
-- **E2E Emission Floor**: the current exempla corpus has one LLVM-emitted
-  scalar-only file. The current verifier-valid floor is zero.
+- **E2E Emission Floor**: the current exempla corpus has 35 LLVM-emitted files.
+  The current verifier-valid floor is zero.
 
 ## Fail-Closed Test Inventory
 
@@ -220,20 +230,29 @@ produce explicit unsupported diagnostics until their named phases:
   explicitly unsupported.
 - `llvm_text_target_rejects_external_definition_call` verifies definitions not
   lowered into the current MIR program remain explicitly unsupported.
+- `llvm_text_target_emits_diagnostic_assert_and_panic_runtime_declarations`
+  verifies void runtime helper declarations and calls for diagnostics, assert,
+  and panic.
+- `llvm_text_target_emits_value_returning_runtime_calls` verifies conversion,
+  format, and collection runtime helpers declare, call, and store through the
+  current scalar-or-handle ABI while `nil` remains layout-blocked.
+- `llvm_text_target_rejects_provider_runtime_calls` verifies provider/HAL
+  runtime calls remain explicitly deferred.
 - `exempla_llvm_e2e` is ignored by default and records unsupported LLVM
   diagnostics, emitted LLVM text, verifier-valid LLVM IR, and verifier failures
   separately from MIR-lowering and unexpected emission failures.
 
 ## Next Implementation Slice
 
-The evidence now points to Phase 007, runtime calls and host boundary. The LLVM
-lane can now report whether emitted text is merely emitted or verifier-valid;
-runtime-call-backed MIR remains the next major unsupported cluster in ordinary
-examples.
+The evidence now points to Phase 008, text and aggregate handle ABI. Runtime
+helper calls can move opaque handles, but ordinary text returns, aggregate
+construction, projections, nullable values, and collection layout still need a
+physical ABI before the LLVM lane can claim broader handle support.
 
 ## Wasm Follow-Up Implications
 
-Phase 006 made no MIR changes. No Wasm code changes are required.
+Phase 007 made no MIR shape changes and did not alter Wasm import names. Wasm
+validation is still required because runtime intrinsics are shared MIR facts.
 
 Later LLVM phases should continue to compare against Wasm support when the MIR
 shape is shared, especially for control flow, runtime intrinsics, aggregate
