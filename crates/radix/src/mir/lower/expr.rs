@@ -157,7 +157,7 @@ pub(super) trait HirExprLoweringVisitor {
 
 impl HirExprLoweringVisitor for FunctionBuilder<'_> {
     fn visit_path_expr(&mut self, def_id: DefId, expr: &HirExpr) -> Option<MirOperand> {
-        self.lower_path(def_id, expr.span)
+        self.lower_path(def_id, expr)
     }
 
     fn visit_literal_expr(&mut self, literal: &HirLiteral, expr: &HirExpr) -> Option<MirOperand> {

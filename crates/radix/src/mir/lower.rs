@@ -637,10 +637,31 @@ impl<'a> FunctionBuilder<'a> {
         self.lower_transfer_expr(expr)
     }
 
-    fn lower_path(&mut self, def_id: DefId, span: Span) -> Option<MirOperand> {
+    fn lower_path(&mut self, def_id: DefId, expr: &HirExpr) -> Option<MirOperand> {
         let Some(binding) = self.bindings.get(&def_id).copied() else {
+            if self.context.variant_parents.contains_key(&def_id) {
+                let Some(field_names) = self.context.variant_fields.get(&def_id) else {
+                    self.errors
+                        .push(MirError::unsupported(expr.span, "enum variant path is missing field metadata"));
+                    return None;
+                };
+                if !field_names.is_empty() {
+                    self.errors.push(MirError::unsupported(
+                        expr.span,
+                        "payload enum variant path without constructor call",
+                    ));
+                    return None;
+                }
+                let ty = self.expr_ty(expr)?;
+                return Some(self.construct_temp(
+                    MirAggregateKind::EnumVariant(def_id),
+                    MirAggregateFields::Ordered(Vec::new()),
+                    ty,
+                    expr.span,
+                ));
+            }
             self.errors
-                .push(MirError::unsupported(span, "path that does not resolve to a local value"));
+                .push(MirError::unsupported(expr.span, "path that does not resolve to a local value"));
             return None;
         };
 
@@ -684,6 +705,17 @@ impl<'a> FunctionBuilder<'a> {
             if let Some(predicate) = self.lower_is_predicate(op, lhs, rhs, expr) {
                 return Some(predicate);
             }
+        }
+        if matches!(op, HirBinOp::Between) {
+            let collection = self.lower_expr_value(rhs)?;
+            let value = self.lower_expr_value(lhs)?;
+            let ty = self.expr_ty(expr)?;
+            return Some(self.runtime_call_value(
+                MirIntrinsic::Collection(MirCollectionOp::Contains),
+                vec![collection, value],
+                ty,
+                expr.span,
+            ));
         }
         let Some(op) = mir_bin_op(op) else {
             self.errors

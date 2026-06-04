@@ -213,9 +213,14 @@ impl FunctionBuilder<'_> {
                 ))
             }
             _ => {
-                self.errors
-                    .push(MirError::unsupported(expr.span, "verte cast before aggregate MIR lowering"));
-                None
+                if entries.is_some() {
+                    self.errors
+                        .push(MirError::unsupported(expr.span, "verte cast before aggregate MIR lowering"));
+                    return None;
+                }
+                let operand = self.lower_expr_value(source)?;
+                let ty = MirType::semantic(target);
+                Some(self.assign_temp(MirValueKind::Operand(operand), ty, expr.span))
             }
         }
     }

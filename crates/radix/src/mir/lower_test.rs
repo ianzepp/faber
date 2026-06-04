@@ -1060,6 +1060,51 @@ functio crea() → Eventus {
 }
 
 #[test]
+fn lowers_unit_enum_variant_path_values() {
+    let dump = dump_source(
+        r#"
+ordo Color { rubrum, viridis }
+functio elige_color() → Color {
+    redde Color.rubrum
+}
+"#,
+    );
+
+    assert!(dump.contains("construct variant def#"));
+    assert!(dump.contains("return %"));
+    assert!(!dump.contains("path that does not resolve to a local value"));
+}
+
+#[test]
+fn lowers_scalar_verte_as_target_typed_passthrough() {
+    let dump = dump_source(
+        r#"
+functio absent() → textus ∪ nihil {
+    redde nihil ∷ textus ∪ nihil
+}
+"#,
+    );
+
+    assert!(dump.contains("const nil: ty#"));
+    assert!(dump.contains("return %"));
+    assert!(!dump.contains("verte cast before aggregate MIR lowering"));
+}
+
+#[test]
+fn lowers_inter_membership_to_collection_contains() {
+    let dump = dump_source(
+        r#"
+functio validum(textus status) → bivalens {
+    redde status inter ["pending", "active"]
+}
+"#,
+    );
+
+    assert!(dump.contains("runtime collection contains"));
+    assert!(!dump.contains("binary operator without a MIR primitive"));
+}
+
+#[test]
 fn rejects_unsupported_map_spread_shape() {
     let unit = analyze(
         r#"

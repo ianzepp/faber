@@ -2306,3 +2306,83 @@ compile-valid exempla are needed after Phase 030. Remaining high-yield clusters
 include async/`cede`, closure/callable lowering, map-key iteration, enum member
 path resolution in `ordo/ordo.fab`, and the remaining aggregate/map expression
 gaps.
+
+## Phase 031 Update: Enum Paths, Scalar `verte`, and `inter`
+
+**Commit target**: Phase 031
+**Change**: Three already-typed expression shapes now lower into existing
+target-neutral MIR:
+
+- Unit enum variant values construct zero-payload enum variant aggregates.
+- Non-construction `verte` ascription lowers as a target-typed passthrough temp.
+- `inter` membership lowers to the existing collection `Contains` intrinsic.
+
+### Tier Counts After Phase 031
+
+```text
+Wasm e2e exempla:
+  frontend analyzed: 101/101
+  MIR lowered: 86/101
+  Wasm emitted: 86/101
+  compile-valid: 86/101
+  instantiate-valid: 86/101
+  runnable: 84/101
+  behavior-checked: 6/101
+```
+
+### Compile-Valid Delta
+
+Measured compile-valid coverage increased from 83/101 to 86/101. MIR-lowered
+coverage increased from 83/101 to 86/101.
+
+New compile-valid exempla:
+
+- `examples/exempla/inter/inter.fab`
+- `examples/exempla/ordo/ordo.fab`
+- `examples/exempla/ternarius/ternarius.fab`
+
+### Result
+
+This phase reaches the explicit 85% compile-valid target: `86/101` exempla.
+The new lowering paths reuse existing MIR aggregate, typed value, and collection
+intrinsic shapes; no Wasm-specific MIR node was added.
+
+### Caveats
+
+`examples/exempla/ordo/ordo.fab` validates and instantiates with the stub host,
+but its `incipit` export still traps because enum equality still compares opaque
+aggregate handles. Real enum tag/runtime semantics remain future work.
+
+Map spread remains outside this phase. `MirAggregateFields::Keyed` has no spread
+entry, so `examples/exempla/objectum/objectum.fab` needs a deliberate keyed-map
+aggregate extension rather than a lowering-only patch.
+
+### LLVM Follow-Up
+
+The new MIR shapes are target-neutral. LLVM still needs concrete aggregate
+handle/tag semantics and collection intrinsic lowering before these runtime
+paths are executable there.
+
+### Phase 031 Validation Log
+
+- `cargo test -p radix unit_enum_variant_path_values -- --nocapture`: passed.
+- `cargo test -p radix scalar_verte_as_target_typed_passthrough -- --nocapture`: passed.
+- `cargo test -p radix inter_membership -- --nocapture`: passed.
+- `cargo run -p radix --bin radix -- emit -t wasm examples/exempla/ordo/ordo.fab > /tmp/ordo.wat`: passed.
+- `wasm-tools validate /tmp/ordo.wat`: passed.
+- `cargo run -p radix --bin radix -- emit -t wasm examples/exempla/ternarius/ternarius.fab > /tmp/ternarius.wat`: passed.
+- `wasm-tools validate /tmp/ternarius.wat`: passed.
+- `cargo run -p radix --bin radix -- emit -t wasm examples/exempla/inter/inter.fab > /tmp/inter.wat`: passed.
+- `wasm-tools validate /tmp/inter.wat`: passed.
+- `cargo test -p radix exempla_wasm_e2e -- --ignored --nocapture`: passed.
+- `cargo test -p radix mir -- --nocapture`: passed.
+- `cargo test -p radix wasm -- --nocapture`: passed.
+- `cargo test -p radix llvm -- --nocapture`: passed.
+- `cargo test -p radix -- --test-threads=1`: passed.
+- `./scripta/lint`: passed.
+
+### Next Phase Candidate
+
+After the 85% target, the highest-value remaining clusters are async/`cede`,
+closure/callable lowering, map-key iteration, provider `ad` effects, and keyed
+map spread/aggregate validation cleanup.
