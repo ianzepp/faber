@@ -30,7 +30,7 @@ The current implementation has useful groundwork, but no general package manager
 - Local package loading supports intra-package imports.
 - `crates/faber/src/library.rs` resolves built-in `norma/...` modules from `stdlib/norma`.
 - `LibraryProviderKind` already has a `PackageDependency` variant, but it is not wired to `requirit.toml` or a resolver graph.
-- Existing package tests prove `norma/json`, `norma/toml`, and `norma/hal/...` imports resolve as built-in library modules.
+- Existing package tests prove `norma:json`, `norma:toml`, and `norma:hal/...` imports resolve as built-in library modules.
 - `explain/requirit.md` currently documents the `requirit` test modifier, not a manifest file.
 
 So there is a real use for this design eventually: turning implicit or built-in-only library resolution into declared package requirements. There is not yet a broad enough dependency ecosystem to require a registry-backed implementation immediately.
@@ -111,7 +111,7 @@ Changing dependency intent should not modify project identity. Updating a resolv
 Source imports such as:
 
 ```fab
-importa ex "norma/json" privata json
+importa ex "norma:json" privata json
 ```
 
 should eventually be explainable from `requirit.toml` plus built-in package policy. `faber tidy` should be able to add missing requirements and remove unused requirements once package graph inspection is implemented.
@@ -279,7 +279,7 @@ This policy does not need to apply to GitHub-first dependencies, because reposit
 
 ## Open Questions
 
-- Should dependency identities use dotted names (`norma.json`) as canonical, slash imports (`norma/json`) in source, or one spelling everywhere?
+- Should dependency identities use dotted names (`norma.json`) as canonical, provider-qualified imports (`norma:json`) in source, or one spelling everywhere?
 - Should `norma` remain implicit as the standard library, or should projects eventually declare `norma` modules in `requirit.toml`?
 - Should `requirit.lock` be generated for every package, or only when non-builtin dependencies exist?
 - Should libraries commit `requirit.lock`, or only applications?

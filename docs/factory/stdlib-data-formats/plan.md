@@ -100,8 +100,8 @@ Faber library import resolution must be target-neutral. A library import resolve
 Target behavior:
 
 ```fab
-importa ex "norma/json" privata json
-importa ex "norma/toml" privata toml
+importa ex "norma:json" privata json
+importa ex "norma:toml" privata toml
 ```
 
 Future non-builtin behavior should use the same conceptual path:
@@ -121,14 +121,14 @@ The compiler should treat both examples as library imports:
 
 Target backends then consume the resolved Faber library identity and decide how to link or embed the implementation for that target:
 
-- the Rust backend may lower `norma/json` to `norma::json` and inject a Cargo dependency,
+- the Rust backend may lower `norma:json` to `norma::json` and inject a Cargo dependency,
 - a WASM backend may lower it to a component import, runtime module, or builtin section,
 - a native backend may lower it to an object/library dependency, intrinsic, or native symbol table entry.
 
 For the current data-format work, the only implemented provider should be the built-in `norma` provider:
 
 ```text
-specifier: norma/json
+specifier: norma:json
 provider: builtin
 interface: <repo>/stdlib/norma/json.fab
 ```
@@ -183,7 +183,7 @@ The tests should prove compiled Faber code calls the Rust runtime backend, not o
 | 1 | Stdlib interface parsing | Make stdlib `.fab` interface files valid, parseable, and checkable. | `faber check stdlib/norma/json.fab` and `toml.fab` succeed or fail only on intentionally deferred semantics. |
 | 2 | Canonical runtime data value | Add the shared `norma::datum::Valor` ABI and conversion helpers. | Rust tests prove conversion to/from JSON/TOML backend values for supported shapes. |
 | 3 | Rust codegen type and call bridge | Teach Radix how Faber data-format values and library-backed module calls map to Rust runtime code. | Generated Rust uses `norma::datum::Valor` and runtime module calls for known data-format symbols, with no `Box<dyn Any>` in the ABI. |
-| 4 | Library import resolution | Introduce a target-neutral Faber library resolver and implement `norma` as the first built-in provider. | `norma/json` resolves through Faber provider metadata; the model can also describe a future external SQLite package without assuming Rust. |
+| 4 | Library import resolution | Introduce a target-neutral Faber library resolver and implement `norma` as the first built-in provider. | `norma:json` resolves through Faber provider metadata; the model can also describe a future external SQLite package without assuming Rust. |
 | 5 | Rust backend linkage | Teach the Rust backend how resolved Faber libraries map to Rust modules and Cargo dependencies. | `target/faber/Cargo.toml` contains `norma` when built-in data-format modules are used, without putting Cargo knowledge in language-level import resolution. |
 | 6 | JSON reference implementation | Implement JSON end to end as the canonical example module. | Fabra package tests parse, inspect, serialize, and safely reject invalid JSON. |
 | 7 | TOML implementation | Implement TOML on the same ABI and document TOML-specific constraints. | Fabra package tests parse config tables, serialize tables, and reject invalid/root-invalid TOML. |
@@ -289,15 +289,15 @@ Steps:
 - Do not include Rust crate names, Rust module paths, Cargo dependency specs, WASM linkage, native object paths, or other target-specific implementation details in the language-level resolved import shape.
 - Represent import resolution as a distinction between local package modules and library modules, for example:
   - local relative imports keep the existing package source behavior,
-  - `norma/json` and `norma/toml` become library module resolutions,
+  - `norma:json` and `norma:toml` become library module resolutions,
   - future dependency imports such as `sqlite` or `sqlite/transactio` should fit the same data structure.
 - Centralize provider-specific string checks. `norma/` may be recognized inside the built-in provider, but `norma/` checks should not be scattered across package loading, resolver, codegen, and target backend linkage.
 - Teach package loading or analysis to include library interface files for typechecking without treating them as user package modules.
 - Preserve module alias behavior:
-  - `importa ex "norma/json" privata json`
+  - `importa ex "norma:json" privata json`
   - `json.solve(...)`
 - Record enough target-neutral provider metadata for later phases:
-  - generated Rust can ask its own backend registry how `norma/json` should lower,
+  - generated Rust can ask its own backend registry how `norma:json` should lower,
   - future WASM or native backends can provide their own linkage decisions,
   - unsupported targets can produce targeted diagnostics without changing import syntax.
 - Add diagnostics for unknown built-in library modules, such as `norma/nope`.
@@ -310,10 +310,10 @@ Steps:
 
 Checkpoint:
 
-- A package importing `norma/json` or `norma/toml` typechecks against the interface.
+- A package importing `norma:json` or `norma:toml` typechecks against the interface.
 - A misspelled built-in library import gets a useful diagnostic.
 - The resolver/provider metadata model is not `norma`-specific, does not encode Rust or Cargo concepts, and can describe a future external SQLite wrapper package.
-- Generated Rust no longer normalizes library imports like `norma/json` to `crate::norma::json`.
+- Generated Rust no longer normalizes library imports like `norma:json` to `crate::norma::json`.
 - Existing local import tests remain green.
 
 ### Phase 5: Rust Backend Linkage
@@ -323,8 +323,8 @@ Steps:
 - Consume target-neutral resolved library module identities from Phase 4.
 - Add a Rust-backend linkage registry or equivalent mapping that is explicitly outside language-level import resolution.
 - For built-in `norma`, map the resolved Faber library modules to Rust backend paths:
-  - `norma/json` -> `norma::json`,
-  - `norma/toml` -> `norma::toml`.
+  - `norma:json` -> `norma::json`,
+  - `norma:toml` -> `norma::toml`.
 - For built-in `norma`, emit a deterministic path dependency in generated `target/faber/Cargo.toml`.
 - Keep the Rust backend dependency representation broad enough for future external libraries:
   - crates.io package/version,
@@ -351,7 +351,7 @@ Steps:
 - Implement parser/serializer/access helpers through `Valor`.
 - Replace panics with language-visible failures.
 - Route calls through the Phase 3/4 library-backed call path, not special JSON-only codegen.
-- Use `norma/json` as the first proof that a Faber interface can be resolved target-neutrally and then backed by the Rust adapter for the Rust target.
+- Use `norma:json` as the first proof that a Faber interface can be resolved target-neutrally and then backed by the Rust adapter for the Rust target.
 - Add Fabra package fixture tests for:
   - parsing object text,
   - reading string/number/bool/null values,
@@ -405,7 +405,7 @@ Steps:
 
 Checkpoint:
 
-- No docs point to `norma/hal/json` if the canonical path is `norma/json`.
+- No docs point to `norma/hal/json` if the canonical path is `norma:json`.
 - Examples compile or are clearly marked as future/non-runnable.
 - Future Faber library modules have a documented pattern to follow.
 

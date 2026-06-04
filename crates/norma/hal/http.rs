@@ -1,6 +1,6 @@
 //! http.rs - HTTP Client HAL Implementation
 //!
-//! Native Rust implementation of the client side of `norma/hal/http`.
+//! Native Rust implementation of the client side of `norma:hal/http`.
 
 use std::collections::HashMap;
 

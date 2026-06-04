@@ -12,7 +12,7 @@
 
 Faber has a language-facing HTTP interface in `stdlib/norma/hal/http.fab`, but
 there is no matching Rust runtime implementation in `crates/norma/hal/http.rs`
-and no Rust backend bridge for imported `norma/hal/http` calls.
+and no Rust backend bridge for imported `norma:hal/http` calls.
 
 That makes HTTP a good first serious Norma HAL expansion:
 
@@ -24,7 +24,7 @@ That makes HTTP a good first serious Norma HAL expansion:
 
 The goal is not to design a general networking framework. The goal is to make
 the existing Faber HTTP pactum real for the Rust target, with enough compiler
-and package plumbing that a Faber package can import `norma/hal/http`, issue
+and package plumbing that a Faber package can import `norma:hal/http`, issue
 requests, and inspect responses.
 
 ## Current Baseline
@@ -48,7 +48,7 @@ Existing Rust runtime shape:
 
 Existing compiler and package shape:
 
-- built-in library import resolution can discover `norma/hal/http` from
+- built-in library import resolution can discover `norma:hal/http` from
   `stdlib/norma/hal/http.fab`.
 - generated Rust packages depend on the local `norma` crate.
 - Rust codegen has a small Norma runtime bridge for selected module bindings in
@@ -75,7 +75,7 @@ Existing compiler and package shape:
 The first shipped Rust HTTP HAL should implement the client side:
 
 ```fab
-importa ex "norma/hal/http" privata http
+importa ex "norma:hal/http" privata http
 
 @ futura
 functio lege() → Replicatio {
@@ -175,7 +175,7 @@ Create `docs/factory/norma-http-hal/ledger.md` with:
 - `cargo check -p norma`
 - current `crates/norma/hal/mod.rs`
 - current Rust Norma bridge table
-- current generated package behavior for a package importing `norma/hal/http`
+- current generated package behavior for a package importing `norma:hal/http`
 
 No source behavior changes in this phase.
 
@@ -246,7 +246,7 @@ Prefer a local deterministic fixture over public internet. Options:
 
 The first complete package fixture should prove:
 
-- import resolution for `norma/hal/http`
+- import resolution for `norma:hal/http`
 - async request call through `cede`
 - `status()`
 - `bene()`
@@ -302,7 +302,7 @@ Broad gate before marking the factory complete:
 
 ## Acceptance Criteria
 
-- Faber can import `norma/hal/http` in a package.
+- Faber can import `norma:hal/http` in a package.
 - Rust codegen emits calls to `norma::hal::http::*` for HTTP module calls.
 - `crates/norma` implements client-side HTTP without panics on normal network
   failures.

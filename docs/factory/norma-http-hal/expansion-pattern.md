@@ -37,13 +37,14 @@ support and package-level generated Rust coverage.
 
 ## 4. Rust Codegen Bridge
 
-- Add the module receiver to
+- Add the provider/module mapping to
   `crates/radix/src/codegen/rust/expr/call/runtime.rs`.
-- Keep bridge matching narrow and explicit. Do not turn every unresolved pactum
-  into a runtime call.
-- For runtime-owned pacta that should not become local Rust traits, record an
-  exact HIR shape and elide the generated trait declaration.
-- For runtime-owned concrete return values, map the specific HIR interface
+- Keep bridge matching narrow and explicit. Runtime calls must be selected from
+  library binding provenance keyed by `DefId`, not from local receiver names.
+- For runtime-owned pacta that should not become local Rust traits, use imported
+  library item provenance keyed by the interface `DefId`; do not infer identity
+  from interface names or method lists.
+- For runtime-owned concrete return values, map the imported library item
   definition to the runtime Rust type in `type_to_rust`.
 - Do not guess from missing type information in expression codegen.
 
@@ -78,7 +79,7 @@ The HTTP HAL factory proved this pattern through:
 
 - `crates/norma/hal/http.rs` and `crates/norma/hal/http_test.rs`;
 - `crates/radix/src/codegen/rust/expr/call/runtime.rs`;
-- HTTP runtime interface recognition in `crates/radix/src/codegen/rust/mod.rs`;
+- HTTP runtime interface provenance in `crates/radix/src/codegen/rust/mod.rs`;
 - concrete `Replicatio` type rendering in
   `crates/radix/src/codegen/rust/types.rs`;
 - the local-server package fixture in `crates/faber/src/package_test.rs`.
